@@ -1,32 +1,32 @@
 #import "../../Utils.h"
 
-#define QUICKSNAPENABLED(orig) return [SCIUtils getBoolPref:@"disable_instants_creation"] ? false : orig;
+#define QUICKSNAPENABLED() do { _Bool __o = %orig; return [SCIUtils getBoolPref:@"disable_instants_creation"] ? false : __o; } while (0)
 
 // Demangled name: IGQuickSnapExperimentation.IGQuickSnapExperimentationHelper
 %hook _TtC26IGQuickSnapExperimentation32IGQuickSnapExperimentationHelper
 + (_Bool)isQuicksnapEnabled:(id)enabled {
-    QUICKSNAPENABLED(%orig);
+    QUICKSNAPENABLED();
 }
 + (_Bool)isQuicksnapEnabledInFeed:(id)feed {
-    QUICKSNAPENABLED(%orig);
+    QUICKSNAPENABLED();
 }
 + (_Bool)isQuicksnapEnabledInInbox:(id)inbox {
-    QUICKSNAPENABLED(%orig);
+    QUICKSNAPENABLED();
 }
 + (_Bool)isQuicksnapEnabledInStories:(id)stories {
-    QUICKSNAPENABLED(%orig);
+    QUICKSNAPENABLED();
 }
 + (_Bool)isQuicksnapEnabledInNotesTray:(id)tray {
-    QUICKSNAPENABLED(%orig);
+    QUICKSNAPENABLED();
 }
 + (_Bool)isQuicksnapEnabledInNotesTrayWithPeek:(id)peek {
-    QUICKSNAPENABLED(%orig);
+    QUICKSNAPENABLED();
 }
 + (_Bool)isQuicksnapEnabledInNotesTrayWithPog:(id)pog {
-    QUICKSNAPENABLED(%orig);
+    QUICKSNAPENABLED();
 }
 + (_Bool)isQuicksnapNotesTrayEmptyPogEnabled:(id)enabled {
-    QUICKSNAPENABLED(%orig);
+    QUICKSNAPENABLED();
 }
 // + (_Bool)isStoriesSpringEnabled:(id)enabled {
 //     return true;

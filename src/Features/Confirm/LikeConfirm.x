@@ -4,108 +4,106 @@
 
 // Confirmation handlers
 
-#define CONFIRMPOSTLIKE(orig)                             \
+#define CONFIRMPOSTLIKE()                                 \
     if ([SCIUtils getBoolPref:@"like_confirm"]) {           \
         NSLog(@"[SCInsta] Confirm post like triggered");  \
-                                                          \
-        [SCIUtils showConfirmation:^(void) { orig; }];    \
+        [SCIUtils showConfirmation:^(void) { %orig; }];   \
     }                                                     \
     else {                                                \
-        return orig;                                      \
-    }                                                     \
+        return %orig;                                     \
+    }
 
-#define CONFIRMREELSLIKE(orig)                            \
+#define CONFIRMREELSLIKE()                                \
     if ([SCIUtils getBoolPref:@"like_confirm_reels"]) {     \
         NSLog(@"[SCInsta] Confirm reels like triggered"); \
-                                                          \
-        [SCIUtils showConfirmation:^(void) { orig; }];    \
+        [SCIUtils showConfirmation:^(void) { %orig; }];   \
     }                                                     \
     else {                                                \
-        return orig;                                      \
-    }                                                     \
+        return %orig;                                     \
+    }
 
 ///////////////////////////////////////////////////////////
 
 // Liking posts
 %hook IGUFIButtonBarView
 - (void)_onLikeButtonPressed:(id)arg1 {
-    CONFIRMPOSTLIKE(%orig);
+    CONFIRMPOSTLIKE();
 }
 %end
 %hook IGFeedPhotoView
 - (void)_onDoubleTap:(id)arg1 {
-    CONFIRMPOSTLIKE(%orig);
+    CONFIRMPOSTLIKE();
 }
 %end
 %hook IGVideoPlayerOverlayContainerView
 - (void)_handleDoubleTapGesture:(id)arg1 {
-    CONFIRMPOSTLIKE(%orig);
+    CONFIRMPOSTLIKE();
 }
 %end
 
 // Liking reels
 %hook IGSundialViewerVideoCell
 - (void)controlsOverlayControllerDidTapLikeButton:(id)arg1 {
-    CONFIRMREELSLIKE(%orig);
+    CONFIRMREELSLIKE();
 }
 - (void)controlsOverlayControllerDidLongPressLikeButton:(id)arg1 gestureRecognizer:(id)arg2 {
-    CONFIRMREELSLIKE(%orig);
+    CONFIRMREELSLIKE();
 }
 - (void)gestureController:(id)arg1 didObserveDoubleTap:(id)arg2 {
-    CONFIRMREELSLIKE(%orig);
+    CONFIRMREELSLIKE();
 }
 %end
 %hook IGSundialViewerPhotoCell
 - (void)controlsOverlayControllerDidTapLikeButton:(id)arg1 {
-    CONFIRMREELSLIKE(%orig);
+    CONFIRMREELSLIKE();
 }
 - (void)gestureController:(id)arg1 didObserveDoubleTap:(id)arg2 {
-    CONFIRMREELSLIKE(%orig);
+    CONFIRMREELSLIKE();
 }
 %end
 %hook IGSundialViewerCarouselCell
 - (void)controlsOverlayControllerDidTapLikeButton:(id)arg1 {
-    CONFIRMREELSLIKE(%orig);
+    CONFIRMREELSLIKE();
 }
 - (void)gestureController:(id)arg1 didObserveDoubleTap:(id)arg2 {
-    CONFIRMREELSLIKE(%orig);
+    CONFIRMREELSLIKE();
 }
 %end
 
 // Liking comments
 %hook IGCommentCellController
 - (void)commentCell:(id)arg1 didTapLikeButton:(id)arg2 {
-    CONFIRMPOSTLIKE(%orig);
+    CONFIRMPOSTLIKE();
 }
 - (void)commentCell:(id)arg1 didTapLikedByButtonForUser:(id)arg2 {
-    CONFIRMPOSTLIKE(%orig);
+    CONFIRMPOSTLIKE();
 }
 - (void)commentCellDidLongPressOnLikeButton:(id)arg1 {
-    CONFIRMPOSTLIKE(%orig);
+    CONFIRMPOSTLIKE();
 }
 - (void)commentCellDidEndLongPressOnLikeButton:(id)arg1 {
-    CONFIRMPOSTLIKE(%orig);
+    CONFIRMPOSTLIKE();
 }
 - (void)commentCellDidDoubleTap:(id)arg1 {
-    CONFIRMPOSTLIKE(%orig);
+    CONFIRMPOSTLIKE();
 }
 %end
 %hook IGFeedItemPreviewCommentCell
 - (void)_didTapLikeButton {
-    CONFIRMPOSTLIKE(%orig);
+    CONFIRMPOSTLIKE();
 }
 %end
 
 // Liking stories
 %hook IGStoryFullscreenDefaultFooterView
 - (void)_handleLikeTapped {
-    CONFIRMPOSTLIKE(%orig);
+    CONFIRMPOSTLIKE();
 }
 - (void)_likeTapped {
-    CONFIRMPOSTLIKE(%orig);
+    CONFIRMPOSTLIKE();
 }
 - (void)inputView:(id)arg1 didTapLikeButton:(id)arg2 {
-    CONFIRMPOSTLIKE(%orig);
+    CONFIRMPOSTLIKE();
 }
 
 // For some stupid reason they removed the "liketapped" methods on newer Instagram versions
@@ -145,6 +143,6 @@
 // DM like button (seems to be hidden)
 %hook IGDirectThreadViewController
 - (void)_didTapLikeButton {
-    CONFIRMPOSTLIKE(%orig);
+    CONFIRMPOSTLIKE();
 }
 %end

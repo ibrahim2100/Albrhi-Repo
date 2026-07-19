@@ -6,10 +6,11 @@
 ///////////////////////////////////////////////////////////
 
 // Screenshot handlers
-// Use variadic macros so the comma-containing %orig expansion
-// (_logos_orig$...(self, _cmd, ...)) isn't split into multiple macro args.
-#define VOID_HANDLESCREENSHOT(...) do { if ([SCIUtils getBoolPref:@"remove_screenshot_alert"]) return; __VA_ARGS__; } while (0)
-#define NONVOID_HANDLESCREENSHOT(...) do { if ([SCIUtils getBoolPref:@"remove_screenshot_alert"]) return nil; return __VA_ARGS__; } while (0)
+// %orig can't be passed as a macro/function argument in this Logos version
+// (it expands to a call with commas and an unbalanced paren), so these guards
+// don't take it — the caller stores %orig itself after the guard.
+#define SCREENSHOT_GUARD_VOID() do { if ([SCIUtils getBoolPref:@"remove_screenshot_alert"]) return; } while (0)
+#define SCREENSHOT_GUARD_NIL() do { if ([SCIUtils getBoolPref:@"remove_screenshot_alert"]) return nil; } while (0)
 
 ///////////////////////////////////////////////////////////
 
@@ -96,19 +97,24 @@ BOOL dmVisualMsgsViewedButtonEnabled = false;
 
 %hook IGDSLauncherConfig
 - (_Bool)isLiquidGlassInAppNotificationEnabled {
-    return [SCIUtils liquidGlassEnabledBool:%orig];
+    _Bool orig = %orig;
+    return [SCIUtils liquidGlassEnabledBool:orig];
 }
 - (_Bool)isLiquidGlassContextMenuEnabled{
-    return [SCIUtils liquidGlassEnabledBool:%orig];
+    _Bool orig = %orig;
+    return [SCIUtils liquidGlassEnabledBool:orig];
 }
 - (_Bool)isLiquidGlassToastEnabled {
-    return [SCIUtils liquidGlassEnabledBool:%orig];
+    _Bool orig = %orig;
+    return [SCIUtils liquidGlassEnabledBool:orig];
 }
 - (_Bool)isLiquidGlassToastPeekEnabled {
-    return [SCIUtils liquidGlassEnabledBool:%orig];
+    _Bool orig = %orig;
+    return [SCIUtils liquidGlassEnabledBool:orig];
 }
 - (_Bool)isLiquidGlassAlertDialogEnabled {
-    return [SCIUtils liquidGlassEnabledBool:%orig];
+    _Bool orig = %orig;
+    return [SCIUtils liquidGlassEnabledBool:orig];
 }
 %end
 
@@ -148,11 +154,11 @@ shouldPersistLastBugReportId:(id)arg6
 %end
 
 %hook IGDirectVisualMessageReplayService
-- (id)visualMessageViewerController:(id)arg1 didDetectScreenshotForVisualMessage:(id)arg2 atIndex:(NSInteger)arg3 { NONVOID_HANDLESCREENSHOT(%orig); }
+- (id)visualMessageViewerController:(id)arg1 didDetectScreenshotForVisualMessage:(id)arg2 atIndex:(NSInteger)arg3 { SCREENSHOT_GUARD_NIL(); return %orig; }
 %end
 
 %hook IGDirectVisualMessageReportService
-- (id)visualMessageViewerController:(id)arg1 didDetectScreenshotForVisualMessage:(id)arg2 atIndex:(NSInteger)arg3 { NONVOID_HANDLESCREENSHOT(%orig); }
+- (id)visualMessageViewerController:(id)arg1 didDetectScreenshotForVisualMessage:(id)arg2 atIndex:(NSInteger)arg3 { SCREENSHOT_GUARD_NIL(); return %orig; }
 %end
 
 %hook IGDirectVisualMessageScreenshotSafetyLogger
@@ -167,32 +173,32 @@ shouldPersistLastBugReportId:(id)arg6
 %end
 
 %hook IGScreenshotObserver
-- (id)initForController:(id)arg1 { NONVOID_HANDLESCREENSHOT(%orig); }
+- (id)initForController:(id)arg1 { SCREENSHOT_GUARD_NIL(); return %orig; }
 %end
 
 %hook IGScreenshotObserverDelegate
-- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 { VOID_HANDLESCREENSHOT(%orig); }
-- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 { VOID_HANDLESCREENSHOT(%orig); }
+- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 { SCREENSHOT_GUARD_VOID(); %orig; }
+- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 { SCREENSHOT_GUARD_VOID(); %orig; }
 %end
 
 %hook IGDirectMediaViewerViewController
-- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 { VOID_HANDLESCREENSHOT(%orig); }
-- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 { VOID_HANDLESCREENSHOT(%orig); }
+- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 { SCREENSHOT_GUARD_VOID(); %orig; }
+- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 { SCREENSHOT_GUARD_VOID(); %orig; }
 %end
 
 %hook IGStoryViewerViewController
-- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 { VOID_HANDLESCREENSHOT(%orig); }
-- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 { VOID_HANDLESCREENSHOT(%orig); }
+- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 { SCREENSHOT_GUARD_VOID(); %orig; }
+- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 { SCREENSHOT_GUARD_VOID(); %orig; }
 %end
 
 %hook IGSundialFeedViewController
-- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 { VOID_HANDLESCREENSHOT(%orig); }
-- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 { VOID_HANDLESCREENSHOT(%orig); }
+- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 { SCREENSHOT_GUARD_VOID(); %orig; }
+- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 { SCREENSHOT_GUARD_VOID(); %orig; }
 %end
 
 %hook IGDirectVisualMessageViewerController
-- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 { VOID_HANDLESCREENSHOT(%orig); }
-- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 { VOID_HANDLESCREENSHOT(%orig); }
+- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 { SCREENSHOT_GUARD_VOID(); %orig; }
+- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 { SCREENSHOT_GUARD_VOID(); %orig; }
 %end
 
 /////////////////////////////////////////////////////////////////////////////
