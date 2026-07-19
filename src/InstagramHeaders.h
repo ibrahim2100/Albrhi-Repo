@@ -170,6 +170,13 @@
 - (void)addLongPressGestureRecognizer; // new
 @end
 
+// Full-screen story viewer. Declared as a UIViewController so features can reach
+// `view` — without this Logos only emits a forward declaration and any property
+// access fails to compile.
+@interface IGStoryViewerViewController : UIViewController
+- (void)sciToggleStorySeen:(id)sender; // new
+@end
+
 // Post action row (like · comment · send · … · save). Hosts the inline download
 // button. Instagram also ships a Swift equivalent, IGSocialUFIView, which is
 // hooked by name in InlineDownloadButton.xm — it has no header here because a
