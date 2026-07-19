@@ -107,7 +107,11 @@
     [topMostController() presentViewController:acVC animated:true completion:nil];
 }
 + (void)showSettingsVC:(UIWindow *)window {
-    UIViewController *rootController = [window rootViewController];
+    UIViewController *rootController = [window rootViewController] ?: topMostController();
+    while (rootController.presentedViewController) {
+        rootController = rootController.presentedViewController;
+    }
+
     SCISettingsViewController *settingsViewController = [SCISettingsViewController new];
     UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:settingsViewController];
     

@@ -6,6 +6,30 @@
 static SCIDownloadDelegate *imageDownloadDelegate;
 static SCIDownloadDelegate *videoDownloadDelegate;
 static SCIDownloadDelegate *audioDownloadDelegate;
+static NSString *const SCIDownloadGestureName = @"com.albrhi.media-download.longpress";
+
+static BOOL hasGestureNamed(UIView *view, NSString *name) {
+    for (UIGestureRecognizer *gesture in view.gestureRecognizers) {
+        if ([gesture.name isEqualToString:name]) return YES;
+    }
+    return NO;
+}
+
+static void addDownloadLongPressGesture(UIView *view, id target, SEL action) {
+    if (hasGestureNamed(view, SCIDownloadGestureName)) return;
+
+    UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:target action:action];
+    longPress.name = SCIDownloadGestureName;
+    longPress.minimumPressDuration = [SCIUtils getDoublePref:@"dw_finger_duration"];
+    longPress.numberOfTouchesRequired = [SCIUtils getDoublePref:@"dw_finger_count"];
+    longPress.cancelsTouchesInView = YES;
+
+    for (UIGestureRecognizer *existing in view.gestureRecognizers) {
+        [existing requireGestureRecognizerToFail:longPress];
+    }
+
+    [view addGestureRecognizer:longPress];
+}
 
 // Whether the user wants media saved straight to their photo library.
 static BOOL saveDirectlyToPhotos () {
@@ -88,28 +112,28 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
 %new - (void)addLongPressGestureRecognizer {
     NSLog(@"[SCInsta] Adding feed photo download long press gesture recognizer");
 
-    UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
-    longPress.minimumPressDuration = [SCIUtils getDoublePref:@"dw_finger_duration"];
-    longPress.numberOfTouchesRequired = [SCIUtils getDoublePref:@"dw_finger_count"];
-
-    [self addGestureRecognizer:longPress];
+    addDownloadLongPressGesture(self, self, @selector(handleLongPress:));
 }
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
     if (sender.state != UIGestureRecognizerStateBegan) return;
 
-    // Get photo instance
-    IGPhoto *photo;
+    IGPhoto *photo = nil;
 
     if ([self.delegate isKindOfClass:%c(IGFeedItemPhotoCell)]) {
         IGFeedItemPhotoCellConfiguration *_configuration = MSHookIvar<IGFeedItemPhotoCellConfiguration *>(self.delegate, "_configuration");
-        if (!_configuration) return;
-
-        photo = MSHookIvar<IGPhoto *>(_configuration, "_photo");
+        @try { photo = [_configuration valueForKey:@"photo"]; } @catch (__unused id e) {}
+        if (!photo) {
+            @try { photo = MSHookIvar<IGPhoto *>(_configuration, "_photo"); } @catch (__unused id e) {}
+        }
     }
     else if ([self.delegate isKindOfClass:%c(IGFeedItemPagePhotoCell)]) {
         IGFeedItemPagePhotoCell *pagePhotoCell = self.delegate;
 
         photo = pagePhotoCell.pagePhotoPost.photo;
+    }
+
+    if (!photo) {
+        @try { photo = [[self.delegate valueForKey:@"post"] valueForKey:@"photo"]; } @catch (__unused id e) {}
     }
 
     NSURL *photoUrl = [SCIUtils getPhotoUrl:photo];
@@ -141,18 +165,18 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
 %new - (void)addLongPressGestureRecognizer {
     NSLog(@"[SCInsta] Adding feed video download long press gesture recognizer");
 
-    UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
-    longPress.minimumPressDuration = [SCIUtils getDoublePref:@"dw_finger_duration"];
-    longPress.numberOfTouchesRequired = [SCIUtils getDoublePref:@"dw_finger_count"];
-
-    [self addGestureRecognizer:longPress];
+    addDownloadLongPressGesture(self, self, @selector(handleLongPress:));
 }
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
     if (sender.state != UIGestureRecognizerStateBegan) return;
 
-    IGFeedItem *feedItem = [self mediaCellFeedItem];
+    id feedItem = nil;
+    @try { feedItem = [self mediaCellFeedItem]; } @catch (__unused id e) {}
     IGVideo *video = nil;
     @try { video = [feedItem valueForKey:@"video"]; } @catch (__unused id e) {}
+    if (!video) {
+        @try { video = [[self valueForKey:@"post"] valueForKey:@"video"]; } @catch (__unused id e) {}
+    }
 
     if (video) {
         downloadVideoForIGVideo(video, self);
