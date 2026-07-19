@@ -1,7 +1,6 @@
 #import "../../InstagramHeaders.h"
 #import "../../Utils.h"
-#import "../../Downloader/Download.h"
-#import "../../Downloader/Queue/SCIDownloadQueue.h"
+#import "../../Downloader/SCIMediaDownloader.h"
 #import "../../Localization/SCILocalize.h"
 
 ///
@@ -11,25 +10,13 @@
 /// (like · comment · send · … · save), so media can be saved with a single tap
 /// instead of a long press.
 ///
-/// The button is added to `IGUFIButtonBarView`, which owns the action row for
-/// feed posts and carousels. It is laid out relative to the app's own save
-/// button so it inherits Instagram's spacing, size and tint.
+/// Placement and sizing are derived from the row's own controls at layout time,
+/// so the button inherits Instagram's spacing and metrics rather than hard-coding
+/// them. Downloading itself is delegated to SCIMediaDownloader, which means the
+/// button honours the quality picker and queue exactly as a long press does.
 ///
 
 static const NSInteger SCIInlineDownloadButtonTag = 0x5CD10;
-
-static SCIDownloadDelegate *inlineImageDelegate;
-static SCIDownloadDelegate *inlineVideoDelegate;
-
-static void SCIInitInlineDelegates(void) {
-    // Re-evaluated per download so a settings change applies without a restart.
-    BOOL toPhotos = [SCIUtils getBoolPref:@"dw_save_to_camera"];
-
-    inlineImageDelegate = [[SCIDownloadDelegate alloc] initWithAction:(toPhotos ? saveToPhotos : quickLook)
-                                                        showProgress:YES];
-    inlineVideoDelegate = [[SCIDownloadDelegate alloc] initWithAction:(toPhotos ? saveToPhotos : share)
-                                                        showProgress:YES];
-}
 
 // Pulls an IGMedia-like object off an arbitrary owner using the accessor names
 // Instagram uses across its cell/delegate/view-model layers.
@@ -100,53 +87,12 @@ static NSString *SCIUsernameForMedia(id media) {
 }
 
 static void SCIDownloadMedia(id media, UIView *anchorView) {
-    if (!media) {
-        [SCIUtils showErrorHUDWithDescription:SCILocalized(@"err_no_media")];
-        return;
-    }
-
-    // Video takes precedence — a video post also carries a poster photo.
-    NSURL *videoUrl = [SCIUtils getVideoUrlForMedia:media];
-    NSURL *photoUrl = videoUrl ? nil : [SCIUtils getPhotoUrlForMedia:media];
-    NSURL *url = videoUrl ?: photoUrl;
-
-    if (!url) {
-        [SCIUtils showErrorHUDWithDescription:SCILocalized(@"err_no_media")];
-        return;
-    }
-
-    NSString *extension = [[url lastPathComponent] pathExtension];
-
-    // Queue mode: hand off and let the transfer run in the background. The user
-    // keeps scrolling; progress lives in the Download Center.
-    if ([SCIUtils getBoolPref:@"dl_use_queue"]) {
-        SCIDownloadQueue *queue = [SCIDownloadQueue shared];
-
-        SCIDownloadJob *existing = [queue completedJobForURL:url];
-        if (existing) {
-            [SCIUtils showToastForDuration:1.6
-                                     title:SCILocalized(@"dl_already_downloaded")
-                                  subtitle:existing.displayName];
-            return;
-        }
-
-        [queue enqueueURL:url
-            fileExtension:extension
-              displayName:nil
-              sourceLabel:SCIUsernameForMedia(media)];
-
-        [SCIUtils showToastForDuration:1.2 title:SCILocalized(@"dl_added_to_queue")];
-
-        return;
-    }
-
-    // Direct mode: the original blocking HUD flow.
-    SCIInitInlineDelegates();
-
-    SCIDownloadDelegate *delegate = videoUrl ? inlineVideoDelegate : inlineImageDelegate;
-    [delegate downloadFileWithURL:url fileExtension:extension hudLabel:nil];
+    // Everything — quality picker, queue routing, delegate choice — lives in the
+    // coordinator, so the button behaves identically to a long press.
+    [SCIMediaDownloader downloadMedia:media
+                          sourceLabel:SCIUsernameForMedia(media)
+                               anchor:anchorView];
 }
-
 
 ///
 /// Injection

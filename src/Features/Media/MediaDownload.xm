@@ -1,10 +1,10 @@
 #import "../../InstagramHeaders.h"
 #import "../../Utils.h"
 #import "../../Downloader/Download.h"
+#import "../../Downloader/SCIMediaDownloader.h"
 #import "../../Localization/SCILocalize.h"
 
 static SCIDownloadDelegate *imageDownloadDelegate;
-static SCIDownloadDelegate *videoDownloadDelegate;
 static SCIDownloadDelegate *audioDownloadDelegate;
 static NSString *const SCIDownloadGestureName = @"com.albrhi.media-download.longpress";
 
@@ -42,58 +42,29 @@ static void initDownloaders () {
     BOOL toPhotos = saveDirectlyToPhotos();
 
     DownloadAction imageAction = toPhotos ? saveToPhotos : quickLook;
-    DownloadAction videoAction = toPhotos ? saveToPhotos : share;
 
     imageDownloadDelegate = [[SCIDownloadDelegate alloc] initWithAction:imageAction showProgress:NO];
-    videoDownloadDelegate = [[SCIDownloadDelegate alloc] initWithAction:videoAction showProgress:YES];
     // Audio always uses the share sheet (can't write raw audio to the Photos library).
     audioDownloadDelegate = [[SCIDownloadDelegate alloc] initWithAction:share showProgress:YES];
 }
 
 // Download a video, optionally letting the user pick a resolution first.
 // `anchorView` is used to anchor the action sheet on iPad.
+// IGSundialViewerVideoCell.video is an IGMedia; the IGVideo hangs off it. Older
+// builds hand back the IGVideo directly, so accept either shape.
+static IGVideo *SCIVideoFromMediaLike(id mediaLike) {
+    if (!mediaLike) return nil;
+
+    id nested = nil;
+    @try { nested = [mediaLike valueForKey:@"video"]; } @catch (__unused id e) {}
+
+    return nested ?: mediaLike;
+}
+
+// Kept as a thin alias so existing call sites read unchanged; the quality
+// picker, queue routing and delegate choice all live in SCIMediaDownloader now.
 static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
-    if (!video) {
-        [SCIUtils showErrorHUDWithDescription:SCILocalized(@"err_no_video")];
-        return;
-    }
-
-    BOOL showPicker = [SCIUtils getBoolPref:@"show_quality_picker"];
-    NSArray<NSDictionary *> *qualities = showPicker ? [SCIUtils availableVideoQualitiesForVideo:video] : nil;
-
-    // Only bother with a picker when there's a real choice.
-    if (showPicker && qualities.count > 1) {
-        UIAlertController *sheet = [UIAlertController alertControllerWithTitle:SCILocalized(@"quality_pick_title")
-                                                                       message:nil
-                                                                preferredStyle:UIAlertControllerStyleActionSheet];
-        for (NSDictionary *q in qualities) {
-            NSURL *url = q[@"url"];
-            [sheet addAction:[UIAlertAction actionWithTitle:q[@"label"]
-                                                      style:UIAlertActionStyleDefault
-                                                    handler:^(UIAlertAction *a) {
-                initDownloaders();
-                [videoDownloadDelegate downloadFileWithURL:url
-                                             fileExtension:[[url lastPathComponent] pathExtension]
-                                                  hudLabel:nil];
-            }]];
-        }
-        [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel") style:UIAlertActionStyleCancel handler:nil]];
-        sheet.popoverPresentationController.sourceView = anchorView;
-        sheet.popoverPresentationController.sourceRect = anchorView.bounds;
-        [topMostController() presentViewController:sheet animated:YES completion:nil];
-        return;
-    }
-
-    // Default path: best quality (respects the dw_max_quality preference internally).
-    NSURL *videoUrl = [SCIUtils getVideoUrl:video];
-    if (!videoUrl) {
-        [SCIUtils showErrorHUDWithDescription:SCILocalized(@"err_no_video")];
-        return;
-    }
-    initDownloaders();
-    [videoDownloadDelegate downloadFileWithURL:videoUrl
-                                 fileExtension:[[videoUrl lastPathComponent] pathExtension]
-                                      hudLabel:nil];
+    [SCIMediaDownloader downloadVideo:video sourceLabel:nil anchor:anchorView];
 }
 
 /* * Feed * */
@@ -190,9 +161,7 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
         return;
     }
     initDownloaders();
-    [videoDownloadDelegate downloadFileWithURL:videoUrl
-                                 fileExtension:[[videoUrl lastPathComponent] pathExtension]
-                                      hudLabel:nil];
+    [SCIMediaDownloader downloadURL:videoUrl sourceLabel:nil isVideo:YES];
 }
 %end
 
@@ -276,10 +245,7 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
                                                   style:UIAlertActionStyleDefault
                                                 handler:^(UIAlertAction *a) {
             initDownloaders();
-            [videoDownloadDelegate downloadFileWithURL:videoUrl
-                                         fileExtension:[[videoUrl lastPathComponent] pathExtension]
-                                              hudLabel:nil];
-        }]];
+            [SCIMediaDownloader downloadVideo:SCIVideoFromMediaLike(self.video) sourceLabel:nil anchor:self];
         [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"dw_choice_audio")
                                                   style:UIAlertActionStyleDefault
                                                 handler:^(UIAlertAction *a) {
@@ -307,9 +273,7 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
 
     // Download video & show in share menu
     initDownloaders();
-    [videoDownloadDelegate downloadFileWithURL:videoUrl
-                                 fileExtension:[[videoUrl lastPathComponent] pathExtension]
-                                      hudLabel:nil];
+    [SCIMediaDownloader downloadVideo:SCIVideoFromMediaLike(self.video) sourceLabel:nil anchor:self];
 }
 %end
 
@@ -387,9 +351,7 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
 
     // Download video & show in share menu
     initDownloaders();
-    [videoDownloadDelegate downloadFileWithURL:videoUrl
-                                 fileExtension:[[videoUrl lastPathComponent] pathExtension]
-                                      hudLabel:nil];
+    [SCIMediaDownloader downloadURL:videoUrl sourceLabel:nil isVideo:YES];
 }
 %end
 
@@ -447,9 +409,7 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
 
     // Download video & show in share menu
     initDownloaders();
-    [videoDownloadDelegate downloadFileWithURL:videoUrl
-                                 fileExtension:[[videoUrl lastPathComponent] pathExtension]
-                                      hudLabel:nil];
+    [SCIMediaDownloader downloadURL:videoUrl sourceLabel:nil isVideo:YES];
 }
 %end
 
