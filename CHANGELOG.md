@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v3.0.11
+
+**Fixes**
+- Build fix: declared the follow-badge helper selectors on `IGProfilePictureImageView`
+  so the tweak compiles (v3.0.10 failed to build).
+
 ## v3.0.10
 
 **Diagnostics**

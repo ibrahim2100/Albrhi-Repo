@@ -422,6 +422,8 @@
 @property (nonatomic, readonly) IGUser *userGQL;
 
 - (void)addLongPressGestureRecognizer; // new
+- (void)sci_updateFollowBadge; // new
+- (void)sci_removeFollowBadge; // new
 @end
 
 @interface IGImageRequest : NSObject
