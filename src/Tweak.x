@@ -16,7 +16,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.0.2";  // Albrhi
+NSString *SCIVersionString = @"v3.0.3";  // Albrhi
 
 // Variables that work across features
 BOOL dmVisualMsgsViewedButtonEnabled = false;
@@ -40,6 +40,7 @@ BOOL dmVisualMsgsViewedButtonEnabled = false;
         // Queue downloads land in Photos. Without this the queue fetches the file
         // and leaves it sitting in the Download Center, which reads as a failure.
         @"dw_save_to_camera": @(YES),
+        @"dl_clear_after_save": @(YES),
         @"dw_feed_posts": @(YES),
         @"dw_reels": @(YES),
         @"dw_story": @(YES),

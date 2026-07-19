@@ -26,6 +26,7 @@
                 @"header": @"",
                 @"rows": @[
                     [SCISetting switchCellWithTitle:SCILocalized(@"dl_use_queue_title") subtitle:SCILocalized(@"dl_use_queue_sub") defaultsKey:@"dl_use_queue"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"dl_clear_title") subtitle:SCILocalized(@"dl_clear_sub") defaultsKey:@"dl_clear_after_save"],
                     [SCISetting stepperCellWithTitle:SCILocalized(@"dl_max_concurrent_title") subtitle:@"%@ %@" defaultsKey:@"dl_max_concurrent" min:1 max:6 step:1 label:@"downloads" singularLabel:@"download"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"inline_download_title") subtitle:SCILocalized(@"inline_download_sub") defaultsKey:@"inline_download_button"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"dw_feed_posts_title") subtitle:SCILocalized(@"dw_feed_posts_sub") defaultsKey:@"dw_feed_posts"],

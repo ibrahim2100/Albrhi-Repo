@@ -172,31 +172,66 @@ static void SCILayoutInlineButton(UIView *bar, id target) {
         return;
     }
 
-    // The save button sits at the trailing edge; everything else is clustered at
-    // the leading edge. Slot in just inside whichever is rightmost.
-    UIView *rightmost = controls.lastObject;
-    CGRect reference = rightmost.frame;
+    // Feed posts lay the row out horizontally; the reels UFI stacks vertically down
+    // the right edge. Measure the spread on each axis and follow whichever the row
+    // is actually using, instead of assuming.
+    CGFloat minX = CGFLOAT_MAX, maxX = -CGFLOAT_MAX, minY = CGFLOAT_MAX, maxY = -CGFLOAT_MAX;
 
-    CGFloat side = MAX(CGRectGetHeight(reference), 22.0);
+    for (UIView *control in controls) {
+        minX = MIN(minX, CGRectGetMinX(control.frame));
+        maxX = MAX(maxX, CGRectGetMaxX(control.frame));
+        minY = MIN(minY, CGRectGetMinY(control.frame));
+        maxY = MAX(maxY, CGRectGetMaxY(control.frame));
+    }
+
+    BOOL vertical = (maxY - minY) > (maxX - minX);
+
+    UIView *reference = controls.lastObject;
+    CGFloat side = MAX(MIN(CGRectGetHeight(reference.frame), CGRectGetWidth(reference.frame)), 22.0);
     CGFloat gap = 14.0;
-    CGFloat x = CGRectGetMinX(reference) - side - gap;
+    CGRect frame;
 
-    // Would collide with the control to its left — go outboard of the row instead.
-    if (controls.count > 1) {
-        UIView *neighbour = controls[controls.count - 2];
+    if (vertical) {
+        // Sort by vertical position and sit below the bottom-most control.
+        NSArray<UIView *> *byY = [controls sortedArrayUsingComparator:^NSComparisonResult(UIView *a, UIView *b) {
+            if (CGRectGetMinY(a.frame) == CGRectGetMinY(b.frame)) return NSOrderedSame;
+            return (CGRectGetMinY(a.frame) < CGRectGetMinY(b.frame)) ? NSOrderedAscending : NSOrderedDescending;
+        }];
 
-        if (x < CGRectGetMaxX(neighbour.frame) + 6.0) {
-            x = CGRectGetMaxX(reference) + gap;
+        UIView *bottom = byY.lastObject;
+        CGFloat y = CGRectGetMaxY(bottom.frame) + gap;
+
+        // No room below — tuck in above the top-most control instead.
+        if (y + side > CGRectGetHeight(bar.bounds)) {
+            y = CGRectGetMinY(byY.firstObject.frame) - side - gap;
         }
+
+        frame = CGRectMake(CGRectGetMidX(bottom.frame) - side / 2.0, y, side, side);
+        button.hidden = (y < 0);
+    }
+    else {
+        // The save button sits at the trailing edge; slot in just inside it.
+        UIView *rightmost = controls.lastObject;
+        CGFloat x = CGRectGetMinX(rightmost.frame) - side - gap;
+
+        if (controls.count > 1) {
+            UIView *neighbour = controls[controls.count - 2];
+
+            if (x < CGRectGetMaxX(neighbour.frame) + 6.0) {
+                x = CGRectGetMaxX(rightmost.frame) + gap;
+            }
+        }
+
+        if (x < 0 || x + side > CGRectGetWidth(bar.bounds)) {
+            x = CGRectGetWidth(bar.bounds) - side - gap;
+        }
+
+        frame = CGRectMake(x, CGRectGetMidY(rightmost.frame) - side / 2.0, side, side);
+        button.hidden = (x < 0);
     }
 
-    if (x < 0 || x + side > CGRectGetWidth(bar.bounds)) {
-        x = CGRectGetWidth(bar.bounds) - side - gap;
-    }
-
-    button.hidden = (x < 0);
     button.tintColor = [UIColor labelColor];
-    button.frame = CGRectMake(x, CGRectGetMidY(reference) - side / 2.0, side, side);
+    button.frame = frame;
 
     [bar bringSubviewToFront:button];
 }
@@ -232,6 +267,23 @@ static void SCIRefreshInlineButton(UIView *bar, id target) {
 // The row Instagram 410 renders, confirmed by scanning the live hierarchy rather
 // than by reading class names out of a dump.
 %hook IGUFIInteractionCountsView
+
+- (void)layoutSubviews {
+    %orig;
+
+    SCIRefreshInlineButton((UIView *)self, self);
+}
+
+%new - (void)sciInlineDownloadPressed:(UIButton *)sender {
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+
+    SCIDownloadMedia(SCIMediaForButtonBar((UIView *)self), sender);
+}
+
+%end
+
+// The reels action bar — vertical, on the right edge. Confirmed by hierarchy scan.
+%hook IGSundialViewerVerticalUFI
 
 - (void)layoutSubviews {
     %orig;

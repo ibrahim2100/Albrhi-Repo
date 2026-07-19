@@ -274,6 +274,8 @@ static NSDictionary *_arTable = nil;
         @"dl_use_queue_title": @"Use the download queue",
         @"dl_use_queue_sub": @"Downloads run in the background and continue if you leave the app",
         @"dl_max_concurrent_title": @"Simultaneous downloads",
+        @"dl_clear_title": @"Clear after saving",
+        @"dl_clear_sub": @"Removes the download from this list once it is in Photos, so nothing is stored twice",
         @"dl_added_to_queue": @"Added to queue",
         @"dl_already_downloaded": @"Already downloaded",
 
@@ -517,6 +519,8 @@ static NSDictionary *_arTable = nil;
         @"dl_use_queue_title": @"استخدام طابور التنزيل",
         @"dl_use_queue_sub": @"تعمل التنزيلات في الخلفية وتستمر عند مغادرة التطبيق",
         @"dl_max_concurrent_title": @"عدد التنزيلات المتزامنة",
+        @"dl_clear_title": @"الحذف بعد الحفظ",
+        @"dl_clear_sub": @"يزيل التنزيل من هذه القائمة بعد حفظه في الصور، فلا يُخزَّن مرتين",
         @"dl_added_to_queue": @"أُضيف إلى الطابور",
         @"dl_already_downloaded": @"تم تنزيله مسبقًا",
 

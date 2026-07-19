@@ -57,6 +57,10 @@ extern NSNotificationName const SCIDownloadQueueDidChangeNotification;
 // MARK: - History
 
 - (void)removeJobFromHistory:(SCIDownloadJob *)job;
+
+/// Deletes the cached file and drops the job from the Download Center. Used once
+/// media has been written to Photos, so the same video isn't stored twice.
+- (void)discardJobAndFile:(SCIDownloadJob *)job;
 - (void)clearHistory;
 
 /// Total bytes of every successful download ever recorded.

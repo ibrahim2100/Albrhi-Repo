@@ -43,6 +43,16 @@ static NSMutableSet<NSString *> *_handledJobIdentifiers = nil;
 
     if ([SCIUtils getBoolPref:@"dw_save_to_camera"]) {
         [SCIDownloadDelegate saveLocalFileToPhotos:job.localURL];
+
+        // The file now lives in Photos; the cached copy is pure duplication. Give
+        // the save a moment to finish reading the file before removing it.
+        if ([SCIUtils getBoolPref:@"dl_clear_after_save"]) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.0 * NSEC_PER_SEC)),
+                           dispatch_get_main_queue(), ^{
+                [[SCIDownloadQueue shared] discardJobAndFile:job];
+            });
+        }
+
         return;
     }
 

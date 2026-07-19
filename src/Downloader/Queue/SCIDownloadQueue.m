@@ -308,6 +308,24 @@ static NSInteger const SCIHistoryLimit = 250;
     [self notifyChangeForJob:nil];
 }
 
+- (void)discardJobAndFile:(SCIDownloadJob *)job {
+    if (!job) return;
+
+    if (job.localURL) {
+        NSError *error = nil;
+        [[NSFileManager defaultManager] removeItemAtURL:job.localURL error:&error];
+
+        if (error) NSLog(@"[Albrhi] Could not delete cached download: %@", error);
+    }
+
+    dispatch_async(self.stateQueue, ^{
+        [self.mutableHistory removeObject:job];
+        [self persistHistoryLocked];
+    });
+
+    [self notifyChangeForJob:nil];
+}
+
 - (void)clearHistory {
     dispatch_async(self.stateQueue, ^{
         [self.mutableHistory removeAllObjects];

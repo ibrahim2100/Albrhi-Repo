@@ -35,9 +35,13 @@
                 long long h = [SCIUtils qualityValueFrom:version key:@"height"];
                 long long bandwidth = [SCIUtils qualityValueFrom:version key:@"bandwidth"];
 
+                // Keep the raw string and resolve to NSURL only when downloading.
+                // Building the URL here dropped renditions silently: CDN links carry
+                // characters that make +URLWithString: return nil, and a nil url was
+                // then discarded by deduplication — three renditions became one.
                 [out addObject:@{
                     @"label": [self labelForWidth:w height:h bandwidth:bandwidth],
-                    @"url": [NSURL URLWithString:urlString],
+                    @"urlString": urlString,
                     @"area": @(w * h),
                     @"bandwidth": @(bandwidth)
                 }];
@@ -108,20 +112,41 @@
     return [NSString stringWithFormat:@"%@ · %.1f Mbps", resolution, bandwidth / 1000000.0];
 }
 
-/// Deduplicates on the URL, not the label. Two renditions can legitimately share a
+/// Tolerant URL construction. Instagram CDN links occasionally contain characters
+/// that +URLWithString: rejects outright; percent-encoding rescues those instead of
+/// losing the rendition.
++ (NSURL *)urlFromQuality:(NSDictionary *)quality {
+    NSURL *direct = quality[@"url"];
+    if (direct) return direct;
+
+    NSString *string = quality[@"urlString"];
+    if (![string length]) return nil;
+
+    NSURL *url = [NSURL URLWithString:string];
+    if (url) return url;
+
+    NSString *encoded = [string stringByAddingPercentEncodingWithAllowedCharacters:
+                         [NSCharacterSet URLQueryAllowedCharacterSet]];
+
+    return [NSURL URLWithString:encoded];
+}
+
+/// Deduplicates on the link, not the label. Two renditions can legitimately share a
 /// resolution while differing in bitrate, and both are real choices.
 + (NSArray<NSDictionary *> *)deduplicated:(NSArray<NSDictionary *> *)qualities {
     NSMutableArray<NSDictionary *> *out = [NSMutableArray array];
-    NSMutableSet<NSString *> *seenURLs = [NSMutableSet set];
+    NSMutableSet<NSString *> *seen = [NSMutableSet set];
 
     for (NSDictionary *quality in qualities) {
-        NSURL *url = quality[@"url"];
-        if (![quality[@"label"] length] || !url) continue;
+        if (![quality[@"label"] length]) continue;
 
-        NSString *key = url.absoluteString ?: @"";
-        if ([seenURLs containsObject:key]) continue;
+        NSString *key = quality[@"urlString"];
+        if (![key length]) key = [(NSURL *)quality[@"url"] absoluteString];
+        if (![key length]) continue;
 
-        [seenURLs addObject:key];
+        if ([seen containsObject:key]) continue;
+
+        [seen addObject:key];
         [out addObject:quality];
     }
 
@@ -169,7 +194,8 @@
                                       preferredStyle:UIAlertControllerStyleActionSheet];
 
     for (NSDictionary *quality in qualities) {
-        NSURL *url = quality[@"url"];
+        NSURL *url = [self urlFromQuality:quality];
+        if (!url) continue;
 
         [sheet addAction:[UIAlertAction actionWithTitle:quality[@"label"]
                                                   style:UIAlertActionStyleDefault
