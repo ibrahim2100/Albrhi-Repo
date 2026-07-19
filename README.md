@@ -9,7 +9,7 @@
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%2015.0%2B-lightgrey.svg)]()
 [![Rootless](https://img.shields.io/badge/rootless-supported-success.svg)](#rootless-support)
-[![Version](https://img.shields.io/badge/version-3.0.4-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.0.5-orange.svg)](CHANGELOG.md)
 [![Based on](https://img.shields.io/badge/based%20on-SCInsta-lightblue.svg)](https://github.com/SoCuul/SCInsta)
 
 </div>
@@ -122,7 +122,7 @@ git submodule update --init --recursive
 
 export THEOS_PACKAGE_SCHEME=rootless   # omit for rootful
 make package
-# → packages/com.albrhi.tweak_3.0.4_iphoneos-arm64.deb
+# → packages/com.albrhi.tweak_3.0.5_iphoneos-arm64.deb
 ```
 
 Install straight to a connected device:

@@ -12,6 +12,7 @@ static NSArray<NSString *> *_scanResults = nil;
 static NSInteger _lastRawVersionCount = -1;
 static NSString *_lastButtonMediaClass = nil;
 static BOOL _buttonEverPressed = NO;
+static NSString *_lastDownloadKind = nil;
 
 @implementation SCIDiagnostics
 
@@ -47,6 +48,10 @@ static BOOL _buttonEverPressed = NO;
 + (void)recordButtonMediaClass:(NSString *)className {
     _buttonEverPressed = YES;
     _lastButtonMediaClass = [className copy];
+}
+
++ (void)recordDownloadKind:(NSString *)kind {
+    _lastDownloadKind = [kind copy];
 }
 
 + (void)recordStorySeenIntercept {
@@ -225,6 +230,9 @@ static BOOL _buttonEverPressed = NO;
             @{@"title": SCILocalized(@"dw_save_to_camera_title"),
               @"detail": [SCIUtils getBoolPref:@"dw_save_to_camera"] ? SCILocalized(@"diag_on") : SCILocalized(@"diag_off"),
               @"ok": @([SCIUtils getBoolPref:@"dw_save_to_camera"])},
+            @{@"title": SCILocalized(@"diag_download_kind"),
+              @"detail": _lastDownloadKind ?: @"—",
+              @"ok": @(_lastDownloadKind != nil)},
             @{@"title": SCILocalized(@"diag_quality_source"),
               @"detail": _lastVideoClass ?: @"—",
               @"ok": @(_lastVideoClass != nil)},

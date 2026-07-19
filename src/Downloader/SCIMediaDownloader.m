@@ -280,26 +280,52 @@
     [delegate downloadFileWithURL:url fileExtension:extension hudLabel:nil];
 }
 
+/// Whether this IGVideo can actually produce a download.
+///
+/// A photo post still hands back a non-nil IGVideo — an empty shell with no
+/// renditions. Treating "video != nil" as "this is a video" sent every photo down
+/// the video path, where it failed with "could not extract URL" while the
+/// long-press path, which checks the photo directly, worked fine.
++ (BOOL)hasPlayableVideo:(IGVideo *)video {
+    if (!video) return NO;
+
+    @try {
+        if ([video respondsToSelector:@selector(videoVersions)]) {
+            id versions = [video performSelector:@selector(videoVersions)];
+
+            if ([versions respondsToSelector:@selector(count)] && [versions count] > 0) return YES;
+        }
+    } @catch (__unused id e) {}
+
+    // No rendition list, but another accessor may still resolve a URL.
+    return ([SCIUtils getVideoUrl:video] != nil);
+}
+
 + (void)downloadMedia:(id)media sourceLabel:(NSString *)sourceLabel anchor:(UIView *)anchor {
     if (!media) {
         [SCIUtils showErrorHUDWithDescription:SCILocalized(@"err_no_media")];
         return;
     }
 
-    // Video wins — a video post also carries a poster photo.
+    // Video wins — but only a real one. A video post also carries a poster photo,
+    // and a photo post carries an empty video.
     IGVideo *video = nil;
     @try { video = [media valueForKey:@"video"]; } @catch (__unused id e) {}
 
-    if (video) {
+    if ([self hasPlayableVideo:video]) {
+        [SCIDiagnostics recordDownloadKind:@"video"];
         [self downloadVideo:video sourceLabel:sourceLabel anchor:anchor];
         return;
     }
 
     NSURL *photoUrl = [SCIUtils getPhotoUrlForMedia:media];
     if (photoUrl) {
+        [SCIDiagnostics recordDownloadKind:@"photo"];
         [self downloadURL:photoUrl sourceLabel:sourceLabel isVideo:NO];
         return;
     }
+
+    [SCIDiagnostics recordDownloadKind:@"neither — resolution failed"];
 
     [SCIUtils showErrorHUDWithDescription:SCILocalized(@"err_no_media")];
 }

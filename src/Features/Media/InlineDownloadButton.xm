@@ -234,12 +234,13 @@ static void SCILayoutInlineButton(UIView *bar, id target) {
             return (CGRectGetMinY(a.frame) < CGRectGetMinY(b.frame)) ? NSOrderedAscending : NSOrderedDescending;
         }];
 
-        // Sits below the bottom-most control. Overflowing the bar's bounds is fine
-        // and expected — clipping is off — so the position is not second-guessed.
-        UIView *bottom = byY.lastObject;
-        CGFloat y = CGRectGetMaxY(bottom.frame) + gap;
+        // Sits above the top-most control — above the like button on reels, where
+        // it is immediately visible instead of buried under the action stack.
+        // Overflowing the bar's bounds is fine: clipping is off.
+        UIView *top = byY.firstObject;
+        CGFloat y = CGRectGetMinY(top.frame) - side - gap;
 
-        frame = CGRectMake(CGRectGetMidX(bottom.frame) - side / 2.0, y, side, side);
+        frame = CGRectMake(CGRectGetMidX(top.frame) - side / 2.0, y, side, side);
         button.hidden = NO;
     }
     else {
