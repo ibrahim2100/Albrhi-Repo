@@ -193,12 +193,6 @@
 - (void)sciInlineDownloadPressed:(id)sender; // new
 @end
 
-// The reels action bar — the same idea as the feed row, stacked vertically down
-// the right edge. Also confirmed by a live hierarchy scan.
-@interface IGSundialViewerVerticalUFI : UIView
-- (void)sciInlineDownloadPressed:(id)sender; // new
-@end
-
 @interface IGSundialViewerVideoCell : UIView
 @property(readonly, nonatomic) IGMedia *video;
 
@@ -446,9 +440,13 @@
 @property(nonatomic, copy, readwrite) NSArray *tools;
 @end
 
+// The reels action bar — the same idea as the feed row, stacked vertically down
+// the right edge. Hosts the inline download button there.
 @interface IGSundialViewerVerticalUFI : UIView
 - (void)_didTapLikeButton:(id)arg1;
 - (void)_didTapRepostButton:(id)arg1;
+
+- (void)sciInlineDownloadPressed:(id)sender; // new
 @end
 
 @interface IGMainAppSurfaceIntent : NSObject
