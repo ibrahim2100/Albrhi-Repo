@@ -244,8 +244,26 @@
         return;
     }
 
+    // Append the follow-back relationship when known.
+    NSString *followStatus = [self followStatusStringForUser:user];
+    if (followStatus.length) [parts addObject:followStatus];
+
     [UIPasteboard generalPasteboard].string = [parts componentsJoinedByString:@"\n"];
     [self showSuccessHUDWithDescription:SCILocalized(@"info_copied")];
+}
+
++ (NSString *)followStatusStringForUser:(id)user {
+    if (!user) return nil;
+
+    @try {
+        // `followsCurrentUser` is the authoritative "do they follow me" flag.
+        if ([user respondsToSelector:@selector(followsCurrentUser)]) {
+            BOOL followsMe = [[user valueForKey:@"followsCurrentUser"] boolValue];
+            return SCILocalized(followsMe ? @"p_follows_you" : @"p_not_follows_you");
+        }
+    } @catch (__unused id e) {}
+
+    return nil;
 }
 
 // Media
@@ -298,10 +316,12 @@
         return [u isKindOfClass:[NSString class]] ? u : nil;
     }
     @try {
-        for (NSString *sel in @[@"urlString", @"url"]) {
+        // Try every plausible accessor name — the exact one differs between
+        // Instagram builds (urlString / url / progressiveDownloadURL / etc.).
+        for (NSString *sel in @[@"urlString", @"url", @"progressiveDownloadURL", @"downloadURL", @"assetURL", @"videoURL"]) {
             if ([version respondsToSelector:NSSelectorFromString(sel)]) {
                 id u = [version valueForKey:sel];
-                if ([u isKindOfClass:[NSString class]]) return u;
+                if ([u isKindOfClass:[NSString class]] && [u length]) return u;
                 if ([u isKindOfClass:[NSURL class]]) return [(NSURL *)u absoluteString];
             }
         }

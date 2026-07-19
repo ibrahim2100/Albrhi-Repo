@@ -109,6 +109,38 @@
         }
     } @catch (__unused id e) {}
 
+    // Last resort: some builds only expose -allVideoURLs, an UNORDERED set of raw
+    // URLs with no resolution metadata. If that yields more than one link, still
+    // offer a picker — labelled generically — rather than silently taking one.
+    if (out.count <= 1) {
+        @try {
+            if ([video respondsToSelector:@selector(allVideoURLs)]) {
+                id urls = [video allVideoURLs];
+                NSArray *urlArray = nil;
+                if ([urls isKindOfClass:[NSSet class]]) urlArray = [(NSSet *)urls allObjects];
+                else if ([urls isKindOfClass:[NSArray class]]) urlArray = urls;
+
+                if (urlArray.count > 1) {
+                    NSMutableArray<NSDictionary *> *generic = [NSMutableArray array];
+                    NSInteger i = 1;
+                    for (id u in urlArray) {
+                        NSString *urlString = [u isKindOfClass:[NSURL class]] ? [(NSURL *)u absoluteString]
+                                            : ([u isKindOfClass:[NSString class]] ? u : nil);
+                        if (![urlString length]) continue;
+                        [generic addObject:@{
+                            @"label": [NSString stringWithFormat:@"%@ %ld", SCILocalized(@"quality_pick_title"), (long)i++],
+                            @"urlString": urlString,
+                            @"area": @(0),
+                            @"bandwidth": @(0)
+                        }];
+                    }
+                    NSArray *deduped = [self deduplicated:generic];
+                    if (deduped.count > out.count) return deduped;
+                }
+            }
+        } @catch (__unused id e) {}
+    }
+
     return out;
 }
 

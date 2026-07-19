@@ -33,7 +33,8 @@
                     [SCISetting switchCellWithTitle:SCILocalized(@"dw_reels_title") subtitle:SCILocalized(@"dw_reels_sub") defaultsKey:@"dw_reels"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"dw_story_title") subtitle:SCILocalized(@"dw_story_sub") defaultsKey:@"dw_story"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"save_profile_title") subtitle:SCILocalized(@"save_profile_sub") defaultsKey:@"save_profile"],
-                    [SCISetting switchCellWithTitle:SCILocalized(@"copy_account_info_title") subtitle:SCILocalized(@"copy_account_info_sub") defaultsKey:@"copy_account_info"]
+                    [SCISetting switchCellWithTitle:SCILocalized(@"copy_account_info_title") subtitle:SCILocalized(@"copy_account_info_sub") defaultsKey:@"copy_account_info"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_followstatus_t") subtitle:SCILocalized(@"p_followstatus_s") defaultsKey:@"show_follow_status"]
                 ]
             },
             @{

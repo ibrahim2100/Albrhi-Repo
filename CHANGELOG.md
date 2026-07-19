@@ -1,16 +1,23 @@
 # Albrhi Changelog
 
-## v3.0.7
+## v3.0.8
 
 **Localization**
 - Full Arabic pass: every settings page, section header, dropdown menu, stepper
   label and DM seen/replay toast is now localized — no hard-coded English left in
   the settings UI.
 
+**New**
+- **Follow-back status.** Long-press a profile picture to see whether that account
+  follows you ("Follows you" / "Doesn't follow you"), and it's added to the copied
+  account info. Toggle under Downloads → Show follow-back status.
+
 **Fixes**
 - Quality picker now applies to **story videos** too. They previously resolved a
   single URL directly and skipped the picker; they now route through the same
   coordinator as feed and reels.
+- More robust rendition extraction: broader set of URL accessors, and a last-resort
+  picker built from `allVideoURLs` when a build exposes no resolution metadata.
 
 ## v3.0.1
 

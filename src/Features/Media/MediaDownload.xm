@@ -416,7 +416,11 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
 - (void)didMoveToSuperview {
     %orig;
 
-    if ([SCIUtils getBoolPref:@"save_profile"]) {
+    // The long-press drives profile-picture saving, account-info copy and the
+    // follow-status indicator — attach it if any of them is enabled.
+    if ([SCIUtils getBoolPref:@"save_profile"]
+        || [SCIUtils getBoolPref:@"copy_account_info"]
+        || [SCIUtils getBoolPref:@"show_follow_status"]) {
         [self addLongPressGestureRecognizer];
     }
 
@@ -467,10 +471,15 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
     }
 
     BOOL copyInfoEnabled = [SCIUtils getBoolPref:@"copy_account_info"];
+    BOOL followStatusEnabled = [SCIUtils getBoolPref:@"show_follow_status"];
 
-    // When account-info copy is enabled and we have a user, present a choice.
-    if (copyInfoEnabled && user) {
-        UIAlertController *sheet = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    // When account-info copy or the follow-status feature is enabled and we have a
+    // user, present a choice sheet. The follow-back relationship shows as the sheet
+    // message ("Follows you" / "Doesn't follow you").
+    if ((copyInfoEnabled || followStatusEnabled) && user) {
+        NSString *followMsg = followStatusEnabled ? [SCIUtils followStatusStringForUser:user] : nil;
+
+        UIAlertController *sheet = [UIAlertController alertControllerWithTitle:nil message:followMsg preferredStyle:UIAlertControllerStyleActionSheet];
 
         if (imageUrl) {
             NSURL *finalUrl = imageUrl;
@@ -483,11 +492,13 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
                                                   hudLabel:SCILocalized(@"loading")];
             }]];
         }
-        [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"info_copy")
-                                                  style:UIAlertActionStyleDefault
-                                                handler:^(UIAlertAction *a) {
-            [SCIUtils copyAccountInfoForUser:user];
-        }]];
+        if (copyInfoEnabled) {
+            [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"info_copy")
+                                                      style:UIAlertActionStyleDefault
+                                                    handler:^(UIAlertAction *a) {
+                [SCIUtils copyAccountInfoForUser:user];
+            }]];
+        }
         [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel") style:UIAlertActionStyleCancel handler:nil]];
 
         sheet.popoverPresentationController.sourceView = self;

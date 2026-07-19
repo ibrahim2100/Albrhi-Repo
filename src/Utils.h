@@ -50,6 +50,9 @@
 + (JGProgressHUD *)showErrorHUDWithDescription:(NSString *)errorDesc dismissAfterDelay:(CGFloat)dismissDelay;
 + (JGProgressHUD *)showSuccessHUDWithDescription:(NSString *)desc;
 + (void)copyAccountInfoForUser:(id)user;
+/// Localized "Follows you" / "Doesn't follow you" for a given IGUser, or nil when
+/// the relationship can't be determined (e.g. your own profile).
++ (NSString *)followStatusStringForUser:(id)user;
 
 // Media
 + (NSURL *)getPhotoUrl:(IGPhoto *)photo;

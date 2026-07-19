@@ -17,7 +17,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.0.7";  // Albrhi
+NSString *SCIVersionString = @"v3.0.8";  // Albrhi
 
 // Variables that work across features
 BOOL dmVisualMsgsViewedButtonEnabled = false;
@@ -46,6 +46,7 @@ BOOL dmVisualMsgsViewedButtonEnabled = false;
         @"dw_reels": @(YES),
         @"dw_story": @(YES),
         @"save_profile": @(YES),
+        @"show_follow_status": @(YES),
         @"dw_finger_count": @(1),
         @"dw_finger_duration": @(0.5),
         @"settings_shortcut": @(YES),

@@ -387,6 +387,11 @@ static NSDictionary *_arTable = nil;
         @"p_toast_marked_seen": @"Marked messages as seen",
         @"p_toast_replay_on": @"Visual messages can now be replayed without expiring",
         @"p_toast_replay_off": @"Visual messages will now expire after viewing",
+        // Follow status
+        @"p_follows_you": @"✓ Follows you",
+        @"p_not_follows_you": @"✗ Doesn't follow you",
+        @"p_followstatus_t": @"Show follow-back status",
+        @"p_followstatus_s": @"Long-press a profile picture to see whether that account follows you",
     };
 
     _arTable = @{
@@ -728,6 +733,11 @@ static NSDictionary *_arTable = nil;
         @"p_toast_marked_seen": @"تم تعليم الرسائل كمقروءة",
         @"p_toast_replay_on": @"يمكن الآن إعادة تشغيل الرسائل المرئية دون انتهاء صلاحيتها",
         @"p_toast_replay_off": @"ستنتهي صلاحية الرسائل المرئية بعد مشاهدتها",
+        // حالة المتابعة
+        @"p_follows_you": @"✓ يتابعك",
+        @"p_not_follows_you": @"✗ لا يتابعك",
+        @"p_followstatus_t": @"إظهار حالة المتابعة المتبادلة",
+        @"p_followstatus_s": @"اضغط مطوّلًا على صورة الملف الشخصي لمعرفة إن كان الحساب يتابعك",
     };
 }
 
