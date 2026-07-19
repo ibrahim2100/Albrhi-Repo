@@ -1,0 +1,10 @@
+Package: com.albrhi.tweak
+Name: Albrhi
+Version: 2.3.0
+Architecture: iphoneos-arm64
+Description: A feature-rich Instagram enhancement tweak — download in max quality, hide ads, and more. Bilingual (AR/EN).
+Homepage: https://github.com/SoCuul/SCInsta
+Maintainer: Ibrahim
+Author: Ibrahim (based on SCInsta by SoCuul, GPLv3)
+Section: Tweaks
+Depends: mobilesubstrate
