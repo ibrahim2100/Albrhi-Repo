@@ -5,15 +5,15 @@ set -e
 CMAKE_OSX_ARCHITECTURES="arm64e;arm64"
 CMAKE_OSX_SYSROOT="iphoneos"
 
-# Prerequisites
-if [ -z "$(ls -A modules/FLEXing)" ]; then
-    echo -e '\033[1m\033[0;31mFLEXing submodule not found.\nPlease run the following command to checkout submodules:\n\n\033[0m    git submodule update --init --recursive'
-    exit 1
-fi
-
 # Building modes
 if [ "$1" == "sideload" ];
 then
+    # Prerequisites (FLEXing is only needed for the sideload/IPA build)
+    if [ -z "$(ls -A modules/FLEXing 2>/dev/null)" ]; then
+        echo -e '\033[1m\033[0;31mFLEXing submodule not found.\nPlease run the following command to checkout submodules:\n\n\033[0m    git submodule update --init --recursive'
+        exit 1
+    fi
+
 
     # Check if building with dev mode
     if [ "$2" == "--dev" ];
