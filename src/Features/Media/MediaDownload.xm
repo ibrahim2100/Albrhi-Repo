@@ -48,8 +48,6 @@ static void initDownloaders () {
     audioDownloadDelegate = [[SCIDownloadDelegate alloc] initWithAction:share showProgress:YES];
 }
 
-// Download a video, optionally letting the user pick a resolution first.
-// `anchorView` is used to anchor the action sheet on iPad.
 // IGSundialViewerVideoCell.video is an IGMedia; the IGVideo hangs off it. Older
 // builds hand back the IGVideo directly, so accept either shape.
 static IGVideo *SCIVideoFromMediaLike(id mediaLike) {
@@ -160,7 +158,6 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
         [SCIUtils showErrorHUDWithDescription:SCILocalized(@"err_no_video")];
         return;
     }
-    initDownloaders();
     [SCIMediaDownloader downloadURL:videoUrl sourceLabel:nil isVideo:YES];
 }
 %end
@@ -244,8 +241,8 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
         [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"dw_choice_video")
                                                   style:UIAlertActionStyleDefault
                                                 handler:^(UIAlertAction *a) {
-            initDownloaders();
             [SCIMediaDownloader downloadVideo:SCIVideoFromMediaLike(self.video) sourceLabel:nil anchor:self];
+        }]];
         [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"dw_choice_audio")
                                                   style:UIAlertActionStyleDefault
                                                 handler:^(UIAlertAction *a) {
@@ -271,8 +268,6 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
         return;
     }
 
-    // Download video & show in share menu
-    initDownloaders();
     [SCIMediaDownloader downloadVideo:SCIVideoFromMediaLike(self.video) sourceLabel:nil anchor:self];
 }
 %end
@@ -349,8 +344,6 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
         return;
     }
 
-    // Download video & show in share menu
-    initDownloaders();
     [SCIMediaDownloader downloadURL:videoUrl sourceLabel:nil isVideo:YES];
 }
 %end
@@ -407,8 +400,6 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
         return;
     }
 
-    // Download video & show in share menu
-    initDownloaders();
     [SCIMediaDownloader downloadURL:videoUrl sourceLabel:nil isVideo:YES];
 }
 %end
