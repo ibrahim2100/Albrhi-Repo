@@ -1,23 +1,22 @@
 #import "../../InstagramHeaders.h"
 #import "../../Utils.h"
 #import "../../Localization/SCILocalize.h"
+#import "../../Downloader/SCIMediaDownloader.h"
 
 ///
-/// Mark a story as seen, on demand.
+/// Floating controls over the story viewer.
 ///
-/// `no_seen_receipt` works by returning nil from IGStorySeenStateUploader, so the
-/// receipt is never sent — invisible viewing, but no way to opt back in for a
-/// specific story.
-///
-/// This adds a floating eye toggle over the story viewer. While it is on, the
-/// uploader is allowed through and the story you are watching registers as seen;
-/// turning it off restores invisible viewing. The flag lives here and is read by
-/// DisableStorySeen.x, mirroring how `unlimited_replay` already works for DMs.
+/// - Mark-as-seen (eye): `no_seen_receipt` blocks the receipt entirely; this eye
+///   toggle lets you opt a specific story back in. Flag lives here, read by
+///   DisableStorySeen.x. Bottom-leading.
+/// - Download: a visible download button so stories can be saved without knowing
+///   the long-press gesture. Bottom-trailing.
 ///
 
 BOOL storySeenOverrideEnabled = NO;
 
 static const NSInteger SCIStorySeenButtonTag = 0x5CE7E;
+static const NSInteger SCIStoryDownloadButtonTag = 0x5C00D;
 
 static void SCIUpdateSeenButtonAppearance(UIButton *button) {
     NSString *glyph = storySeenOverrideEnabled ? @"eye.fill" : @"eye.slash.fill";
@@ -36,6 +35,11 @@ static void SCIUpdateSeenButtonAppearance(UIButton *button) {
 - (void)viewDidAppear:(BOOL)animated {
     %orig;
 
+    [self sciEnsureStorySeenButton];
+    [self sciEnsureStoryDownloadButton];
+}
+
+%new - (void)sciEnsureStorySeenButton {
     if (![SCIUtils getBoolPref:@"story_seen_button"]) return;
     if (![SCIUtils getBoolPref:@"no_seen_receipt"]) return;  // nothing to override
 
@@ -64,6 +68,37 @@ static void SCIUpdateSeenButtonAppearance(UIButton *button) {
     ]];
 }
 
+%new - (void)sciEnsureStoryDownloadButton {
+    if (![SCIUtils getBoolPref:@"story_download_button"]) return;
+
+    if ([self.view viewWithTag:SCIStoryDownloadButtonTag]) return;
+
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
+    button.tag = SCIStoryDownloadButtonTag;
+    button.translatesAutoresizingMaskIntoConstraints = NO;
+
+    button.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.35];
+    button.layer.cornerRadius = 17.0;
+    button.tintColor = [UIColor whiteColor];
+    button.accessibilityLabel = SCILocalized(@"p_story_dl_title");
+
+    UIImageSymbolConfiguration *config =
+        [UIImageSymbolConfiguration configurationWithPointSize:15.0 weight:UIImageSymbolWeightSemibold];
+    [button setImage:[UIImage systemImageNamed:@"arrow.down.to.line" withConfiguration:config] forState:UIControlStateNormal];
+
+    [button addTarget:self action:@selector(sciDownloadStory:) forControlEvents:UIControlEventTouchUpInside];
+
+    [self.view addSubview:button];
+
+    // Bottom-trailing, mirroring the seen button.
+    [NSLayoutConstraint activateConstraints:@[
+        [button.trailingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.trailingAnchor constant:-14.0],
+        [button.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-72.0],
+        [button.widthAnchor constraintEqualToConstant:34.0],
+        [button.heightAnchor constraintEqualToConstant:34.0]
+    ]];
+}
+
 %new - (void)sciToggleStorySeen:(UIButton *)sender {
     storySeenOverrideEnabled = !storySeenOverrideEnabled;
 
@@ -74,6 +109,12 @@ static void SCIUpdateSeenButtonAppearance(UIButton *button) {
     [SCIUtils showToastForDuration:2.0
                              title:SCILocalized(storySeenOverrideEnabled ? @"story_seen_on_toast"
                                                                         : @"story_seen_off_toast")];
+}
+
+%new - (void)sciDownloadStory:(UIButton *)sender {
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+
+    [SCIMediaDownloader downloadVisibleStoryInView:self.view anchor:sender];
 }
 
 %end

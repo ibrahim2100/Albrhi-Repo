@@ -1,5 +1,20 @@
 # Albrhi Changelog
 
+## v3.0.12
+
+**New**
+- **Story download button.** A visible download button now sits in the story viewer
+  (bottom-trailing) so stories save without needing the long-press gesture. Toggle
+  under Stories & messages.
+
+**Changes**
+- Follow-back badge moved to sit below the avatar (near the stats), not on it.
+
+**Quality picker / diagnostics**
+- The DASH manifest is now located by reflection instead of guessed selector names,
+  and the "DASH manifest" diagnostics line reports the candidate selectors a build
+  actually exposes — so the real accessor can be pinned down on IG 410.
+
 ## v3.0.11
 
 **Fixes**

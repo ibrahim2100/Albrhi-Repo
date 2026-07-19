@@ -40,6 +40,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// accessor shapes Instagram has used, so the picker isn't limited to one build.
 + (NSArray<NSDictionary *> *)qualitiesForVideo:(IGVideo *)video;
 
+/// Finds the currently-visible story media inside a view hierarchy and downloads
+/// it. Powers the on-screen story download button.
++ (void)downloadVisibleStoryInView:(UIView *)root anchor:(nullable UIView *)anchor;
+
 @end
 
 NS_ASSUME_NONNULL_END

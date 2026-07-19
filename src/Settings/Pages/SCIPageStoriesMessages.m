@@ -28,6 +28,7 @@
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_screenshot_t") subtitle:SCILocalized(@"p_sm_screenshot_s") defaultsKey:@"remove_screenshot_alert"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_seen_t") subtitle:SCILocalized(@"p_sm_seen_s") defaultsKey:@"no_seen_receipt"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"story_seen_button_title") subtitle:SCILocalized(@"story_seen_button_sub") defaultsKey:@"story_seen_button"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_story_dl_title") subtitle:SCILocalized(@"p_story_dl_sub") defaultsKey:@"story_download_button"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_instants_t") subtitle:SCILocalized(@"p_sm_instants_s") defaultsKey:@"disable_instants_creation" requiresRestart:YES]
                 ]
             }

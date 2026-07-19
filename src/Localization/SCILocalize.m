@@ -393,6 +393,9 @@ static NSDictionary *_arTable = nil;
         @"p_not_follows_you": @"✗ Doesn't follow you",
         @"p_followstatus_t": @"Show follow-back status",
         @"p_followstatus_s": @"Long-press a profile picture to see whether that account follows you",
+        // Story download button
+        @"p_story_dl_title": @"Story download button",
+        @"p_story_dl_sub": @"Shows a download button in the story viewer to save the current story",
     };
 
     _arTable = @{
@@ -740,6 +743,9 @@ static NSDictionary *_arTable = nil;
         @"p_not_follows_you": @"✗ لا يتابعك",
         @"p_followstatus_t": @"إظهار حالة المتابعة المتبادلة",
         @"p_followstatus_s": @"اضغط مطوّلًا على صورة الملف الشخصي لمعرفة إن كان الحساب يتابعك",
+        // زر تحميل القصة
+        @"p_story_dl_title": @"زر تحميل القصة",
+        @"p_story_dl_sub": @"يظهر زر تحميل في عارض القصص لحفظ القصة الحالية",
     };
 }
 

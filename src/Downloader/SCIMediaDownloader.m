@@ -4,6 +4,7 @@
 #import "../Utils.h"
 #import "../Localization/SCILocalize.h"
 #import "../Settings/SCIDiagnosticsViewController.h"
+#import <objc/runtime.h>
 
 @implementation SCIMediaDownloader
 
@@ -150,6 +151,83 @@
     return out;
 }
 
+/// Normalises a manifest-ish value to an XML string — it may already be a string,
+/// or an object wrapping one.
++ (NSString *)manifestStringFromValue:(id)value {
+    if ([value isKindOfClass:[NSString class]]) return [value length] ? value : nil;
+
+    for (NSString *inner in @[@"xmlString", @"manifest", @"string", @"dashManifest", @"value"]) {
+        @try {
+            if ([value respondsToSelector:NSSelectorFromString(inner)]) {
+                id s = [value valueForKey:inner];
+                if ([s isKindOfClass:[NSString class]] && [s length]) return s;
+            }
+        } @catch (__unused id e) {}
+    }
+    return nil;
+}
+
+/// Finds the DASH manifest XML on a video without hard-coding the selector name.
+/// Known guesses are tried first; failing that, every zero-argument,
+/// object-returning selector whose name mentions "dash" or "manifest" is probed,
+/// and the names are collected so diagnostics can show what this build exposes.
++ (NSString *)dashXMLForVideo:(IGVideo *)video candidates:(NSMutableArray<NSString *> *)candidates {
+    if (!video) return nil;
+
+    for (NSString *sel in @[@"videoDashManifest", @"dashManifest", @"videoDashManifestXML", @"videoDashManifestXml", @"dashPlaybackManifest"]) {
+        @try {
+            if ([video respondsToSelector:NSSelectorFromString(sel)]) {
+                NSString *s = [self manifestStringFromValue:[video valueForKey:sel]];
+                if ([s length]) return s;
+            }
+        } @catch (__unused id e) {}
+    }
+
+    Class cls = object_getClass(video);
+    while (cls && cls != [NSObject class]) {
+        unsigned int count = 0;
+        Method *methods = class_copyMethodList(cls, &count);
+
+        for (unsigned int i = 0; i < count; i++) {
+            SEL sel = method_getName(methods[i]);
+            NSString *name = NSStringFromSelector(sel);
+
+            if ([name rangeOfString:@":"].location != NSNotFound) continue; // takes arguments
+
+            NSString *lower = name.lowercaseString;
+            if (![lower containsString:@"dash"] && ![lower containsString:@"manifest"]) continue;
+
+            [candidates addObject:name];
+
+            @try {
+                NSMethodSignature *sig = [video methodSignatureForSelector:sel];
+                if (!sig || sig.numberOfArguments != 2) continue;      // self, _cmd only
+                const char *ret = sig.methodReturnType;
+                if (ret == NULL || ret[0] != '@') continue;             // must return an object
+
+                NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+                inv.selector = sel;
+                inv.target = video;
+                [inv invoke];
+
+                __unsafe_unretained id result = nil;
+                [inv getReturnValue:&result];
+
+                NSString *s = [self manifestStringFromValue:result];
+                if ([s length] && ([s containsString:@"<MPD"] || [s containsString:@"<mpd"] || [s containsString:@"Representation"])) {
+                    free(methods);
+                    return s;
+                }
+            } @catch (__unused id e) {}
+        }
+
+        free(methods);
+        cls = class_getSuperclass(cls);
+    }
+
+    return nil;
+}
+
 /// Extracts the multi-resolution ladder from a video's DASH manifest.
 ///
 /// Instagram frequently ships a single progressive rendition in -videoVersions and
@@ -157,29 +235,15 @@
 /// DASH MPD. Each video Representation carries width/height/bandwidth attributes and
 /// a <BaseURL> that points at a directly-downloadable file.
 + (NSArray<NSDictionary *> *)qualitiesFromDashForVideo:(IGVideo *)video {
-    NSString *xml = nil;
-
-    @try {
-        for (NSString *sel in @[@"videoDashManifest", @"dashManifest", @"videoDashManifestXML"]) {
-            if ([video respondsToSelector:NSSelectorFromString(sel)]) {
-                id value = [video valueForKey:sel];
-                if ([value isKindOfClass:[NSString class]] && [value length]) { xml = value; break; }
-                // Some builds wrap the XML in an object.
-                for (NSString *inner in @[@"xmlString", @"manifest", @"string"]) {
-                    @try {
-                        if ([value respondsToSelector:NSSelectorFromString(inner)]) {
-                            id s = [value valueForKey:inner];
-                            if ([s isKindOfClass:[NSString class]] && [s length]) { xml = s; break; }
-                        }
-                    } @catch (__unused id e) {}
-                }
-                if ([xml length]) break;
-            }
-        }
-    } @catch (__unused id e) {}
+    // The DASH selector name varies between builds and isn't one of the obvious
+    // guesses on IG 410, so find it reflectively and report what we saw.
+    NSMutableArray<NSString *> *candidates = [NSMutableArray array];
+    NSString *xml = [self dashXMLForVideo:video candidates:candidates];
 
     if (![xml length]) {
-        [SCIDiagnostics recordDashResult:@"no manifest exposed by this build"];
+        [SCIDiagnostics recordDashResult:candidates.count
+            ? [NSString stringWithFormat:@"no usable manifest; candidates: %@", [candidates componentsJoinedByString:@", "]]
+            : @"no dash/manifest selector on this build"];
         return @[];
     }
     if ([xml rangeOfString:@"<Representation"].location == NSNotFound) {
@@ -491,6 +555,71 @@
     [SCIDiagnostics recordDownloadKind:@"neither — resolution failed"];
 
     [SCIUtils showErrorHUDWithDescription:SCILocalized(@"err_no_media")];
+}
+
+// MARK: - On-screen story download
+
++ (void)downloadVisibleStoryInView:(UIView *)root anchor:(UIView *)anchor {
+    id media = [self currentStoryMediaInView:root];
+    if (!media) {
+        [SCIUtils showErrorHUDWithDescription:SCILocalized(@"err_no_media")];
+        return;
+    }
+
+    [self downloadMedia:media sourceLabel:nil anchor:(anchor ?: root)];
+}
+
+/// Locates the media of the story currently on screen. Adjacent stories are kept
+/// mounted off-screen, so the candidate covering the viewer's centre wins.
++ (id)currentStoryMediaInView:(UIView *)root {
+    if (!root) return nil;
+
+    CGPoint centre = CGPointMake(CGRectGetMidX(root.bounds), CGRectGetMidY(root.bounds));
+    return [self storyMediaSearchIn:root root:root centre:centre];
+}
+
++ (id)storyMediaSearchIn:(UIView *)view root:(UIView *)root centre:(CGPoint)centre {
+    if (!view) return nil;
+
+    static NSArray<NSString *> *itemClasses = nil;
+    static NSArray<NSString *> *legacyClasses = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        itemClasses = @[@"IGStoryModernVideoView", @"IGStoryPhotoView"];
+        legacyClasses = @[@"IGStoryVideoView"];
+    });
+
+    if (!view.hidden && view.alpha > 0.05 && !CGRectIsEmpty(view.bounds)) {
+        BOOL coversCentre = CGRectContainsPoint([view convertRect:view.bounds toView:root], centre);
+        NSString *cls = NSStringFromClass([view class]);
+
+        if (coversCentre) {
+            for (NSString *name in itemClasses) {
+                Class c = NSClassFromString(name);
+                if (c && [view isKindOfClass:c]) {
+                    @try { id item = [view valueForKey:@"item"]; if (item) return item; } @catch (__unused id e) {}
+                }
+            }
+            for (NSString *name in legacyClasses) {
+                Class c = NSClassFromString(name);
+                if (c && [view isKindOfClass:c]) {
+                    @try {
+                        id caption = [view valueForKey:@"captionDelegate"];
+                        id item = caption ? [caption valueForKey:@"currentStoryItem"] : nil;
+                        if (item) return item;
+                    } @catch (__unused id e) {}
+                }
+            }
+            (void)cls;
+        }
+    }
+
+    for (UIView *sub in view.subviews) {
+        id media = [self storyMediaSearchIn:sub root:root centre:centre];
+        if (media) return media;
+    }
+
+    return nil;
 }
 
 @end

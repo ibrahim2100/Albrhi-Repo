@@ -180,6 +180,9 @@
 // access fails to compile.
 @interface IGStoryViewerViewController : UIViewController
 - (void)sciToggleStorySeen:(id)sender; // new
+- (void)sciEnsureStorySeenButton;      // new
+- (void)sciEnsureStoryDownloadButton;  // new
+- (void)sciDownloadStory:(id)sender;   // new
 @end
 
 // Post action row (like · comment · send · … · save). Hosts the inline download

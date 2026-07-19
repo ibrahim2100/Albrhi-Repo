@@ -68,10 +68,11 @@ static const CGFloat SCIFollowBadgeMinAvatarWidth = 70.0;
     CGFloat width = badge.intrinsicContentSize.width + 20.0;
     CGFloat height = 18.0;
 
-    // Sit centered just under the avatar, in the host's coordinate space.
+    // Sit centered fully below the avatar, in the host's coordinate space — this
+    // lands in the stats/name area, roughly under the followers count.
     CGRect avatarInHost = [self convertRect:self.bounds toView:host];
     CGRect frame = CGRectMake(CGRectGetMidX(avatarInHost) - width / 2.0,
-                              CGRectGetMaxY(avatarInHost) - height / 2.0,
+                              CGRectGetMaxY(avatarInHost) + 6.0,
                               width, height);
     badge.frame = frame;
 
