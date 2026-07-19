@@ -62,7 +62,14 @@ jobs:
             - name: Get Albrhi Version
               id: albrhi_version
               run: |
-                ALBRHI_VERSION=$(awk '/Version:/ {print $2}' main/control)
+                # Anchored to the start of the line: the Description block is multi-line
+                # and must never be mistaken for the version field.
+                ALBRHI_VERSION=$(awk -F': *' '/^Version:/ {print $2; exit}' main/control)
+
+                if [ -z "$ALBRHI_VERSION" ]; then
+                  echo "::error::Could not read Version from control"
+                  exit 1
+                fi
 
                 echo "ALBRHI_VERSION=${ALBRHI_VERSION}" >> "$GITHUB_ENV"
                 echo "version=${ALBRHI_VERSION}" >> "$GITHUB_OUTPUT"
@@ -82,12 +89,19 @@ jobs:
             - name: Rename deb to include version info
               run: |
                 cd main/packages
-                mv "$(ls -t | head -n1)" "com.albrhi.tweak_${ALBRHI_VERSION}+rootless.deb"
+
+                BUILT_DEB=$(ls -t *.deb | head -n1)
+                if [ -z "$BUILT_DEB" ]; then
+                  echo "::error::No .deb produced by build.sh"
+                  exit 1
+                fi
+
+                mv "$BUILT_DEB" "com.albrhi.tweak_${ALBRHI_VERSION}+rootless.deb"
 
             - name: Pass package name to upload action
               id: package_name
               run: |
-                echo "package=$(ls -t main/packages | head -n1)" >> "$GITHUB_OUTPUT"
+                echo "package=com.albrhi.tweak_${ALBRHI_VERSION}+rootless.deb" >> "$GITHUB_OUTPUT"
 
             - name: Upload Artifact
               uses: actions/upload-artifact@v4

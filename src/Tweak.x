@@ -15,7 +15,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v2.3.0";  // Albrhi
+NSString *SCIVersionString = @"v3.0.0";  // Albrhi
 
 // Variables that work across features
 BOOL dmVisualMsgsViewedButtonEnabled = false;
@@ -31,6 +31,9 @@ BOOL dmVisualMsgsViewedButtonEnabled = false;
         @"remove_screenshot_alert": @(YES),
         @"call_confirm": @(YES),
         @"keep_deleted_message": @(YES),
+        @"inline_download_button": @(YES),
+        @"dl_use_queue": @(YES),
+        @"dl_max_concurrent": @(3),
         @"dw_feed_posts": @(YES),
         @"dw_reels": @(YES),
         @"dw_story": @(YES),

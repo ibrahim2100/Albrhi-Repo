@@ -1,0 +1,134 @@
+#import "../SCISettingsRegistry.h"
+#import "../TweakSettings.h"
+
+///
+/// Root-level sections: the things that must be reachable without drilling in,
+/// plus the debug page and the credits footer.
+///
+
+@interface SCIPageRoot : NSObject
+@end
+
+@implementation SCIPageRoot
+
++ (void)load {
+    // --- Language (order 100) ---
+    [SCISettingsRegistry registerRootSectionWithOrder:100 builder:^NSArray *{
+        return @[@{
+            @"header": SCILocalized(@"section_language"),
+            @"rows": @[
+                [SCISetting menuCellWithTitle:SCILocalized(@"language_title")
+                                     subtitle:SCILocalized(@"language_sub")
+                                         menu:[SCITweakSettings menus][@"albrhi_language"]]
+            ]
+        }];
+    }];
+
+    // --- Accent colour (order 200) ---
+    [SCISettingsRegistry registerRootSectionWithOrder:200 builder:^NSArray *{
+        return @[@{
+            @"header": SCILocalized(@"accent_color_title"),
+            @"rows": @[
+                [SCISetting buttonCellWithTitle:SCILocalized(@"accent_color_title")
+                                       subtitle:SCILocalized(@"accent_color_sub")
+                                           icon:[SCISymbol symbolWithName:@"paintpalette.fill" color:[SCIUtils SCIColor_Primary] size:20.0]
+                                         action:^{ [SCIUtils showAccentColorPicker]; }],
+                [SCISetting buttonCellWithTitle:SCILocalized(@"accent_reset_title")
+                                       subtitle:@""
+                                           icon:[SCISymbol symbolWithName:@"arrow.counterclockwise"]
+                                         action:^{ [SCIUtils resetAccentColor]; }]
+            ]
+        }];
+    }];
+
+    // --- Feature pages are spliced in here, at order 300 ---
+
+    // --- Debug (order 400) ---
+    [SCISettingsRegistry registerRootSectionWithOrder:400 builder:^NSArray *{
+        return @[@{
+            @"header": @"",
+            @"rows": @[
+                [SCISetting navigationCellWithTitle:@"Debug"
+                                           subtitle:@""
+                                               icon:[SCISymbol symbolWithName:@"ladybug"]
+                                        navSections:@[
+                    @{
+                        @"header": @"FLEX",
+                        @"rows": @[
+                            [SCISetting switchCellWithTitle:@"Enable FLEX gesture" subtitle:@"Allows you to hold 5 fingers on the screen to open the FLEX explorer" defaultsKey:@"flex_instagram"],
+                            [SCISetting switchCellWithTitle:@"Open FLEX on app launch" subtitle:@"Automatically opens the FLEX explorer when the app launches" defaultsKey:@"flex_app_launch"],
+                            [SCISetting switchCellWithTitle:@"Open FLEX on app focus" subtitle:@"Automatically opens the FLEX explorer when the app is focused" defaultsKey:@"flex_app_start"]
+                        ]
+                    },
+                    @{
+                        @"header": SCILocalized(@"settings_header"),
+                        @"rows": @[
+                            [SCISetting switchCellWithTitle:SCILocalized(@"quick_access_title") subtitle:SCILocalized(@"quick_access_sub") defaultsKey:@"settings_shortcut" requiresRestart:YES],
+                            [SCISetting switchCellWithTitle:SCILocalized(@"open_on_launch_title") subtitle:@"" defaultsKey:@"tweak_settings_app_launch"],
+                            [SCISetting buttonCellWithTitle:SCILocalized(@"reset_first_run_title")
+                                                   subtitle:@""
+                                                       icon:nil
+                                                     action:^{
+                                [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"SCInstaFirstRun"];
+                                [SCIUtils showRestartConfirmation];
+                            }]
+                        ]
+                    },
+                    @{
+                        @"header": @"Instagram",
+                        @"rows": @[
+                            [SCISetting switchCellWithTitle:@"Disable safe mode" subtitle:@"Makes Instagram not reset settings after subsequent crashes (at your own risk)" defaultsKey:@"disable_safe_mode"]
+                        ]
+                    }
+                ]]
+            ]
+        }];
+    }];
+
+    // --- Developer contact (order 500) ---
+    [SCISettingsRegistry registerRootSectionWithOrder:500 builder:^NSArray *{
+        return @[@{
+            @"header": SCILocalized(@"section_connect"),
+            @"rows": @[
+                [SCISetting linkCellWithTitle:SCILocalized(@"social_instagram_title")
+                                     subtitle:@"@Ib.11p"
+                                         icon:[SCISymbol symbolWithName:@"camera.circle.fill" color:[UIColor systemPurpleColor] size:20.0]
+                                          url:@"https://instagram.com/Ib.11p"],
+                [SCISetting linkCellWithTitle:SCILocalized(@"social_snapchat_title")
+                                     subtitle:@"@Ib.1p"
+                                         icon:[SCISymbol symbolWithName:@"bolt.circle.fill" color:[UIColor systemYellowColor] size:20.0]
+                                          url:@"https://snapchat.com/add/Ib.1p"],
+                [SCISetting linkCellWithTitle:SCILocalized(@"social_telegram_title")
+                                     subtitle:@"@Ib11p"
+                                         icon:[SCISymbol symbolWithName:@"paperplane.circle.fill" color:[UIColor systemBlueColor] size:20.0]
+                                          url:@"https://t.me/Ib11p"]
+            ],
+            @"footer": SCILocalized(@"social_open_sub")
+        }];
+    }];
+
+    // --- Credits (order 600) ---
+    [SCISettingsRegistry registerRootSectionWithOrder:600 builder:^NSArray *{
+        return @[@{
+            @"header": SCILocalized(@"credits_title"),
+            @"rows": @[
+                [SCISetting linkCellWithTitle:SCILocalized(@"developer_title")
+                                     subtitle:@"Ibrahim Ismail AL-Rahn"
+                                         icon:[SCISymbol symbolWithName:@"person.crop.circle.fill" color:[SCIUtils SCIColor_Primary] size:20.0]
+                                          url:@"https://github.com/ibrahim2100/instv3"],
+                [SCISetting linkCellWithTitle:SCILocalized(@"credits_title")
+                                     subtitle:SCILocalized(@"credits_sub")
+                                         icon:[SCISymbol symbolWithName:@"heart.text.square.fill" color:[UIColor systemPinkColor] size:20.0]
+                                          url:@"https://github.com/SoCuul/SCInsta"],
+                [SCISetting linkCellWithTitle:SCILocalized(@"view_repo_title")
+                                     subtitle:SCILocalized(@"view_repo_sub")
+                                         icon:[SCISymbol symbolWithName:@"chevron.left.forwardslash.chevron.right" color:[SCIUtils SCIColor_Primary] size:20.0]
+                                          url:@"https://github.com/ibrahim2100/instv3"]
+            ],
+            @"footer": [NSString stringWithFormat:@"Albrhi %@  ·  by Ibrahim Ismail AL-Rahn\nBased on SCInsta by SoCuul — GPLv3\n\nInstagram v%@",
+                        SCIVersionString, [SCIUtils IGVersionString]]
+        }];
+    }];
+}
+
+@end

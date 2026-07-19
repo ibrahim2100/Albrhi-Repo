@@ -150,8 +150,12 @@
     }];
 }
 
-// Save the downloaded media directly to the user's photo library (into an "Albrhi" album).
 - (void)saveFileToPhotos:(NSURL *)fileURL {
+    [SCIDownloadDelegate saveLocalFileToPhotos:fileURL];
+}
+
+// Save the downloaded media directly to the user's photo library (into an "Albrhi" album).
++ (void)saveLocalFileToPhotos:(NSURL *)fileURL {
     NSString *ext = [[fileURL pathExtension] lowercaseString];
     BOOL isVideo = [ext isEqualToString:@"mp4"] || [ext isEqualToString:@"mov"] || [ext isEqualToString:@"m4v"];
 
@@ -175,7 +179,7 @@
 }
 
 // Save an asset and add it to a named album (creating the album if needed).
-- (void)saveAsset:(NSURL *)fileURL isVideo:(BOOL)isVideo toAlbum:(NSString *)albumName completion:(void (^)(BOOL, NSError *))completion {
++ (void)saveAsset:(NSURL *)fileURL isVideo:(BOOL)isVideo toAlbum:(NSString *)albumName completion:(void (^)(BOOL, NSError *))completion {
     // Find or create the album collection.
     PHFetchOptions *opts = [[PHFetchOptions alloc] init];
     opts.predicate = [NSPredicate predicateWithFormat:@"title = %@", albumName];

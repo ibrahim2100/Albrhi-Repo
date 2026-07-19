@@ -18,7 +18,7 @@ Go to https://github.com and sign up (free).
 Two options:
 
 **A) Web upload (easiest):**
-1. Unzip `Albrhi-v2.3.0-source.zip` on your PC — you'll get a `SCInsta-dev` folder.
+1. Unzip `Albrhi-v3.0.0-source.zip` on your PC — you'll get a `SCInsta-dev` folder.
 2. On your new repo page, click **uploading an existing file**.
 3. Drag the **contents** of `SCInsta-dev` (not the folder itself — open it first and select everything inside) into the browser.
 4. Wait for upload, then click **Commit changes**.
@@ -41,14 +41,14 @@ Two options:
 ### 5. Download the .deb
 - When the run finishes (green check), click into it.
 - Scroll to **Artifacts** at the bottom.
-- Download **`com.albrhi.tweak_2.3.0+rootless.deb`** (it comes zipped — unzip to get the `.deb`).
+- Download **`com.albrhi.tweak_3.0.0+rootless.deb`** (it comes zipped — unzip to get the `.deb`).
 
 ## Install on your device (Dopamine 2 / rootless)
 
 Transfer the `.deb` to your iPhone and install via **Sileo** or **Zebra** (open the file → install), or over SSH:
 ```
-scp com.albrhi.tweak_2.3.0+rootless.deb mobile@<iphone-ip>:/tmp/
-ssh mobile@<iphone-ip> "sudo dpkg -i /tmp/com.albrhi.tweak_2.3.0+rootless.deb && sudo sbreload"
+scp com.albrhi.tweak_3.0.0+rootless.deb mobile@<iphone-ip>:/tmp/
+ssh mobile@<iphone-ip> "sudo dpkg -i /tmp/com.albrhi.tweak_3.0.0+rootless.deb && sudo sbreload"
 ```
 Then re-open Instagram. Open settings by holding the ☰ on your profile.
 

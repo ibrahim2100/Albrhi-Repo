@@ -27,4 +27,9 @@ typedef NS_ENUM(NSUInteger, DownloadAction) {
 
 - (void)downloadFileWithURL:(NSURL *)url fileExtension:(NSString *)fileExtension hudLabel:(NSString *)hudLabel;
 
+/// Writes an already-downloaded local file to the photo library, honouring the
+/// `custom_album` preference. Used by the download queue, which fetches the file
+/// itself and only needs the final save step.
++ (void)saveLocalFileToPhotos:(NSURL *)fileURL;
+
 @end

@@ -170,6 +170,14 @@
 - (void)addLongPressGestureRecognizer; // new
 @end
 
+// Post action row (like · comment · send · … · save). Hosts the inline download button.
+@interface IGUFIButtonBarView : UIView
+- (UIView *)saveButton;
+
+- (void)sciLayoutInlineDownloadButton;      // new
+- (void)sciInlineDownloadPressed:(id)sender; // new
+@end
+
 @interface IGSundialViewerVideoCell : UIView
 @property(readonly, nonatomic) IGMedia *video;
 
