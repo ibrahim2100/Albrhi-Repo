@@ -154,11 +154,17 @@ shouldPersistLastBugReportId:(id)arg6
 %end
 
 %hook IGDirectVisualMessageReplayService
-- (id)visualMessageViewerController:(id)arg1 didDetectScreenshotForVisualMessage:(id)arg2 atIndex:(NSInteger)arg3 { SCREENSHOT_GUARD_NIL(); return %orig; }
+- (id)visualMessageViewerController:(id)arg1 didDetectScreenshotForVisualMessage:(id)arg2 atIndex:(NSInteger)arg3 {
+    SCREENSHOT_GUARD_NIL();
+    return %orig;
+}
 %end
 
 %hook IGDirectVisualMessageReportService
-- (id)visualMessageViewerController:(id)arg1 didDetectScreenshotForVisualMessage:(id)arg2 atIndex:(NSInteger)arg3 { SCREENSHOT_GUARD_NIL(); return %orig; }
+- (id)visualMessageViewerController:(id)arg1 didDetectScreenshotForVisualMessage:(id)arg2 atIndex:(NSInteger)arg3 {
+    SCREENSHOT_GUARD_NIL();
+    return %orig;
+}
 %end
 
 %hook IGDirectVisualMessageScreenshotSafetyLogger
@@ -173,32 +179,65 @@ shouldPersistLastBugReportId:(id)arg6
 %end
 
 %hook IGScreenshotObserver
-- (id)initForController:(id)arg1 { SCREENSHOT_GUARD_NIL(); return %orig; }
+- (id)initForController:(id)arg1 {
+    SCREENSHOT_GUARD_NIL();
+    return %orig;
+}
 %end
 
 %hook IGScreenshotObserverDelegate
-- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 { SCREENSHOT_GUARD_VOID(); %orig; }
-- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 { SCREENSHOT_GUARD_VOID(); %orig; }
+- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 {
+    SCREENSHOT_GUARD_VOID();
+    %orig;
+}
+- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 {
+    SCREENSHOT_GUARD_VOID();
+    %orig;
+}
 %end
 
 %hook IGDirectMediaViewerViewController
-- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 { SCREENSHOT_GUARD_VOID(); %orig; }
-- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 { SCREENSHOT_GUARD_VOID(); %orig; }
+- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 {
+    SCREENSHOT_GUARD_VOID();
+    %orig;
+}
+- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 {
+    SCREENSHOT_GUARD_VOID();
+    %orig;
+}
 %end
 
 %hook IGStoryViewerViewController
-- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 { SCREENSHOT_GUARD_VOID(); %orig; }
-- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 { SCREENSHOT_GUARD_VOID(); %orig; }
+- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 {
+    SCREENSHOT_GUARD_VOID();
+    %orig;
+}
+- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 {
+    SCREENSHOT_GUARD_VOID();
+    %orig;
+}
 %end
 
 %hook IGSundialFeedViewController
-- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 { SCREENSHOT_GUARD_VOID(); %orig; }
-- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 { SCREENSHOT_GUARD_VOID(); %orig; }
+- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 {
+    SCREENSHOT_GUARD_VOID();
+    %orig;
+}
+- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 {
+    SCREENSHOT_GUARD_VOID();
+    %orig;
+}
 %end
 
 %hook IGDirectVisualMessageViewerController
-- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 { SCREENSHOT_GUARD_VOID(); %orig; }
-- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 { SCREENSHOT_GUARD_VOID(); %orig; }
+- (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 {
+    SCREENSHOT_GUARD_VOID();
+    %orig;
+}
+- (void)screenshotObserverDidSeeActiveScreenCapture:(id)arg1 event:(NSInteger)arg2 {
+    SCREENSHOT_GUARD_VOID();
+    %orig;
+}
 %end
 
 /////////////////////////////////////////////////////////////////////////////
