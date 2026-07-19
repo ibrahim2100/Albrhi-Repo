@@ -5,7 +5,9 @@
     if ([SCIUtils getBoolPref:@"post_comment_confirm"]) {
         NSLog(@"[SCInsta] Confirm post comment triggered");
 
-        [SCIUtils showConfirmation:^(void) { %orig; }];
+        [SCIUtils showConfirmation:^(void) {
+            %orig;
+        }];
     } else {
         return %orig;
     }

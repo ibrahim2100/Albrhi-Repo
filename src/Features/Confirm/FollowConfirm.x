@@ -16,7 +16,9 @@
     if (UserFollowStatus == 2) {
         if ([SCIUtils getBoolPref:@"follow_confirm"]) {
         NSLog(@"[SCInsta] Confirm follow triggered");
-        [SCIUtils showConfirmation:^(void) { %orig; }];
+        [SCIUtils showConfirmation:^(void) {
+            %orig;
+        }];
     } else {
         return %orig;
     }
@@ -32,7 +34,9 @@
 - (void)_onFollowButtonTapped:(id)arg1 {
     if ([SCIUtils getBoolPref:@"follow_confirm"]) {
         NSLog(@"[SCInsta] Confirm follow triggered");
-        [SCIUtils showConfirmation:^(void) { %orig; }];
+        [SCIUtils showConfirmation:^(void) {
+            %orig;
+        }];
     } else {
         return %orig;
     }
@@ -40,7 +44,9 @@
 - (void)_onFollowingButtonTapped:(id)arg1 {
     if ([SCIUtils getBoolPref:@"follow_confirm"]) {
         NSLog(@"[SCInsta] Confirm follow triggered");
-        [SCIUtils showConfirmation:^(void) { %orig; }];
+        [SCIUtils showConfirmation:^(void) {
+            %orig;
+        }];
     } else {
         return %orig;
     }
@@ -52,7 +58,9 @@
 - (void)_didTapAYMFActionButton {
     if ([SCIUtils getBoolPref:@"follow_confirm"]) {
         NSLog(@"[SCInsta] Confirm follow triggered");
-        [SCIUtils showConfirmation:^(void) { %orig; }];
+        [SCIUtils showConfirmation:^(void) {
+            %orig;
+        }];
     } else {
         return %orig;
     }
@@ -62,7 +70,9 @@
 - (void)_didTapTextActionButton {
     if ([SCIUtils getBoolPref:@"follow_confirm"]) {
         NSLog(@"[SCInsta] Confirm follow triggered");
-        [SCIUtils showConfirmation:^(void) { %orig; }];
+        [SCIUtils showConfirmation:^(void) {
+            %orig;
+        }];
     } else {
         return %orig;
     }
@@ -74,7 +84,9 @@
 - (void)_hackilyHandleOurOwnButtonTaps:(id)arg1 event:(id)arg2 {
     if ([SCIUtils getBoolPref:@"follow_confirm"]) {
         NSLog(@"[SCInsta] Confirm follow triggered");
-        [SCIUtils showConfirmation:^(void) { %orig; }];
+        [SCIUtils showConfirmation:^(void) {
+            %orig;
+        }];
     } else {
         return %orig;
     }
@@ -86,7 +98,9 @@
 - (void)navigationItemsControllerDidTapHeaderFollowButton:(id)arg1 {
     if ([SCIUtils getBoolPref:@"follow_confirm"]) {
         NSLog(@"[SCInsta] Confirm follow triggered");
-        [SCIUtils showConfirmation:^(void) { %orig; }];
+        [SCIUtils showConfirmation:^(void) {
+            %orig;
+        }];
     } else {
         return %orig;
     }
@@ -98,7 +112,9 @@
 - (void)followButtonTapped:(id)arg1 cell:(id)arg2 {
     if ([SCIUtils getBoolPref:@"follow_confirm"]) {
         NSLog(@"[SCInsta] Confirm follow triggered");
-        [SCIUtils showConfirmation:^(void) { %orig; }];
+        [SCIUtils showConfirmation:^(void) {
+            %orig;
+        }];
     } else {
         return %orig;
     }

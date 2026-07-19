@@ -6,7 +6,9 @@
     if ([SCIUtils getBoolPref:@"call_confirm"]) {
         NSLog(@"[SCInsta] Call confirm triggered");
 
-        [SCIUtils showConfirmation:^(void) { %orig; }];
+        [SCIUtils showConfirmation:^(void) {
+            %orig;
+        }];
     } else {
         return %orig;
     }
@@ -17,7 +19,9 @@
     if ([SCIUtils getBoolPref:@"call_confirm"]) {
         NSLog(@"[SCInsta] Call confirm triggered");
         
-        [SCIUtils showConfirmation:^(void) { %orig; }];
+        [SCIUtils showConfirmation:^(void) {
+            %orig;
+        }];
     } else {
         return %orig;
     }
