@@ -166,6 +166,7 @@
     [coder encodeObject:self.localURL forKey:@"localURL"];
     [coder encodeObject:self.failureReason forKey:@"failureReason"];
     [coder encodeInteger:self.attemptCount forKey:@"attemptCount"];
+    [coder encodeBool:self.savedToPhotos forKey:@"savedToPhotos"];
 }
 
 - (instancetype)initWithCoder:(NSCoder *)coder {
@@ -186,6 +187,7 @@
     _localURL = [coder decodeObjectOfClass:[NSURL class] forKey:@"localURL"];
     _failureReason = [coder decodeObjectOfClass:[NSString class] forKey:@"failureReason"];
     _attemptCount = [coder decodeIntegerForKey:@"attemptCount"];
+    _savedToPhotos = [coder decodeBoolForKey:@"savedToPhotos"];
 
     // A job persisted mid-flight can't still be running after a relaunch.
     if (_state == SCIDownloadStateDownloading || _state == SCIDownloadStateQueued) {

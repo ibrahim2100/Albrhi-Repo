@@ -13,6 +13,8 @@ static NSInteger _lastRawVersionCount = -1;
 static NSString *_lastButtonMediaClass = nil;
 static BOOL _buttonEverPressed = NO;
 static NSString *_lastDownloadKind = nil;
+static NSString *_qualityBreakdown = nil;
+static NSString *_qualityLabels = nil;
 
 @implementation SCIDiagnostics
 
@@ -52,6 +54,15 @@ static NSString *_lastDownloadKind = nil;
 
 + (void)recordDownloadKind:(NSString *)kind {
     _lastDownloadKind = [kind copy];
+}
+
++ (void)recordQualityBreakdownRaw:(NSInteger)raw
+                           parsed:(NSInteger)parsed
+                          deduped:(NSInteger)deduped
+                           labels:(NSString *)labels {
+    _qualityBreakdown = [NSString stringWithFormat:@"%ld raw → %ld parsed → %ld deduped",
+                         (long)raw, (long)parsed, (long)deduped];
+    _qualityLabels = [labels copy];
 }
 
 + (void)recordStorySeenIntercept {
@@ -230,6 +241,12 @@ static NSString *_lastDownloadKind = nil;
             @{@"title": SCILocalized(@"dw_save_to_camera_title"),
               @"detail": [SCIUtils getBoolPref:@"dw_save_to_camera"] ? SCILocalized(@"diag_on") : SCILocalized(@"diag_off"),
               @"ok": @([SCIUtils getBoolPref:@"dw_save_to_camera"])},
+            @{@"title": SCILocalized(@"diag_quality_stages"),
+              @"detail": _qualityBreakdown ?: @"—",
+              @"ok": @(_qualityBreakdown != nil)},
+            @{@"title": SCILocalized(@"diag_quality_labels"),
+              @"detail": _qualityLabels ?: @"—",
+              @"ok": @(_qualityLabels != nil)},
             @{@"title": SCILocalized(@"diag_download_kind"),
               @"detail": _lastDownloadKind ?: @"—",
               @"ok": @(_lastDownloadKind != nil)},

@@ -34,7 +34,7 @@ make package
 ```
 Output:
 ```
-packages/com.albrhi.tweak_3.0.5_iphoneos-arm64.deb
+packages/com.albrhi.tweak_3.0.6_iphoneos-arm64.deb
 ```
 The bundled `build.sh` also works: `./build.sh rootless`.
 
@@ -42,9 +42,9 @@ The bundled `build.sh` also works: `./build.sh rootless`.
 
 Copy the `.deb` to the phone and install with your package manager (Sileo/Zebra) or over SSH:
 ```bash
-scp packages/com.albrhi.tweak_3.0.5_iphoneos-arm64.deb mobile@<device-ip>:/tmp/
+scp packages/com.albrhi.tweak_3.0.6_iphoneos-arm64.deb mobile@<device-ip>:/tmp/
 ssh mobile@<device-ip>
-sudo dpkg -i /tmp/com.albrhi.tweak_3.0.5_iphoneos-arm64.deb
+sudo dpkg -i /tmp/com.albrhi.tweak_3.0.6_iphoneos-arm64.deb
 sudo sbreload   # or fully re-open Instagram
 ```
 

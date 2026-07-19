@@ -42,6 +42,14 @@ NS_ASSUME_NONNULL_BEGIN
 /// video means the emptiness check is failing again.
 + (void)recordDownloadKind:(NSString *)kind;
 
+/// Stage-by-stage rendition accounting: how many the API gave, how many parsed to
+/// a usable link, how many survived deduplication, and what they were labelled.
+/// Counting only the endpoints hid which stage was discarding them.
++ (void)recordQualityBreakdownRaw:(NSInteger)raw
+                           parsed:(NSInteger)parsed
+                          deduped:(NSInteger)deduped
+                           labels:(nullable NSString *)labels;
+
 + (void)recordStorySeenIntercept;
 
 /// Walks the live view hierarchy behind the settings sheet looking for anything

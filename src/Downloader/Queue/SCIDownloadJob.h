@@ -55,6 +55,10 @@ typedef NS_ENUM(NSInteger, SCIDownloadMediaKind) {
 /// Incremented by `retry`, so a job that keeps failing can be spotted.
 @property (nonatomic) NSInteger attemptCount;
 
+/// Set once the file has been written to the photo library. Persisted, so a job
+/// that finished while the app was backgrounded is not saved twice — or missed.
+@property (nonatomic) BOOL savedToPhotos;
+
 + (instancetype)jobWithURL:(NSURL *)url
              fileExtension:(nullable NSString *)fileExtension
                displayName:(nullable NSString *)displayName

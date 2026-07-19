@@ -17,13 +17,11 @@
 @implementation SCIDownloadQueueBridge
 
 static SCIDownloadQueueBridge *_sharedBridge = nil;
-static NSMutableSet<NSString *> *_handledJobIdentifiers = nil;
 
 + (void)load {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         _sharedBridge = [[SCIDownloadQueueBridge alloc] init];
-        _handledJobIdentifiers = [NSMutableSet set];
 
         [[NSNotificationCenter defaultCenter] addObserver:_sharedBridge
                                                  selector:@selector(queueChanged:)
@@ -33,34 +31,38 @@ static NSMutableSet<NSString *> *_handledJobIdentifiers = nil;
 }
 
 - (void)queueChanged:(NSNotification *)note {
-    SCIDownloadJob *job = note.userInfo[@"job"];
+    [self sweepFinishedJobs];
+}
 
-    if (job.state != SCIDownloadStateCompleted || !job.localURL) return;
+/// Saves every completed download that hasn't reached Photos yet.
+///
+/// Acting only on the job carried by a single notification missed transfers that
+/// finished while the app was backgrounded, leaving them stranded in the Download
+/// Center. Sweeping the whole list makes the save idempotent and self-healing.
+- (void)sweepFinishedJobs {
+    if (![SCIUtils getBoolPref:@"dw_save_to_camera"]) return;
 
-    // The queue posts a change notification for every observer; only act once per job.
-    if ([_handledJobIdentifiers containsObject:job.identifier]) return;
-    [_handledJobIdentifiers addObject:job.identifier];
+    for (SCIDownloadJob *job in [SCIDownloadQueue shared].history) {
+        if (job.state != SCIDownloadStateCompleted) continue;
+        if (job.savedToPhotos || !job.localURL) continue;
 
-    if ([SCIUtils getBoolPref:@"dw_save_to_camera"]) {
+        // The file may have been cleared from the cache since.
+        if (![[NSFileManager defaultManager] fileExistsAtPath:job.localURL.path]) continue;
+
+        // Claim it before the async save so a second sweep can't double-save.
+        job.savedToPhotos = YES;
+
         [SCIDownloadDelegate saveLocalFileToPhotos:job.localURL];
 
-        // The file now lives in Photos; the cached copy is pure duplication. Give
-        // the save a moment to finish reading the file before removing it.
-        if ([SCIUtils getBoolPref:@"dl_clear_after_save"]) {
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.0 * NSEC_PER_SEC)),
-                           dispatch_get_main_queue(), ^{
-                [[SCIDownloadQueue shared] discardJobAndFile:job];
-            });
-        }
+        if (![SCIUtils getBoolPref:@"dl_clear_after_save"]) continue;
 
-        return;
+        // The cached copy is pure duplication once it is in Photos. Give the save
+        // time to finish reading the file before removing it.
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5.0 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            [[SCIDownloadQueue shared] discardJobAndFile:job];
+        });
     }
-
-    // Otherwise the file simply waits in the Download Center, where tapping the
-    // row opens it. A toast confirms it landed without stealing focus.
-    [SCIUtils showToastForDuration:1.6
-                             title:SCILocalized(@"download_saved")
-                          subtitle:job.displayName];
 }
 
 @end

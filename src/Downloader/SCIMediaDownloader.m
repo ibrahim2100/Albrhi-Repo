@@ -18,13 +18,15 @@
     // earlier version did, by labelling on resolution alone — left the picker
     // with a single entry and nothing to offer.
     NSMutableArray<NSDictionary *> *out = [NSMutableArray array];
+    NSInteger rawCount = 0;
 
     @try {
         if ([video respondsToSelector:@selector(videoVersions)]) {
             id versions = [video performSelector:@selector(videoVersions)];
 
             if ([versions respondsToSelector:@selector(count)]) {
-                [SCIDiagnostics recordRawVersionCount:(NSInteger)[versions count]];
+                rawCount = (NSInteger)[versions count];
+                [SCIDiagnostics recordRawVersionCount:rawCount];
             }
 
             for (id version in versions) {
@@ -57,7 +59,15 @@
         return [b[@"bandwidth"] compare:a[@"bandwidth"]];
     }];
 
+    NSInteger parsedCount = (NSInteger)out.count;
+
     out = [[self deduplicated:out] mutableCopy];
+
+    [SCIDiagnostics recordQualityBreakdownRaw:rawCount
+                                       parsed:parsedCount
+                                      deduped:(NSInteger)out.count
+                                       labels:[[out valueForKey:@"label"] componentsJoinedByString:@" | "]];
+
     if (out.count > 1) return out;
 
     // Fall back to the generic helper if the direct read found nothing usable.

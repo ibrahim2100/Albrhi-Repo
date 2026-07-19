@@ -3,6 +3,7 @@
 #import "Tweak.h"
 #import "Utils.h"
 #import "Onboarding/SCIWhatsNewViewController.h"
+#import "Downloader/Queue/SCIDownloadQueue.h"
 
 ///////////////////////////////////////////////////////////
 
@@ -16,7 +17,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.0.5";  // Albrhi
+NSString *SCIVersionString = @"v3.0.6";  // Albrhi
 
 // Variables that work across features
 BOOL dmVisualMsgsViewedButtonEnabled = false;
@@ -97,6 +98,12 @@ BOOL dmVisualMsgsViewedButtonEnabled = false;
 
 - (void)applicationDidBecomeActive:(id)arg1 {
     %orig;
+
+    // Background transfers finish without the app running; nudge the queue so any
+    // completed download gets written to Photos on return.
+    [[NSNotificationCenter defaultCenter] postNotificationName:SCIDownloadQueueDidChangeNotification
+                                                        object:nil
+                                                      userInfo:nil];
     
     if ([SCIUtils getBoolPref:@"flex_app_start"]) {
         [[objc_getClass("FLEXManager") sharedManager] showExplorer];
