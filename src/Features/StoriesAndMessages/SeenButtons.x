@@ -1,6 +1,7 @@
 #import "../../InstagramHeaders.h"
 #import "../../Tweak.h"
 #import "../../Utils.h"
+#import "../../Localization/SCILocalize.h"
 
 // Seen buttons (in DMs)
 // - Enables no seen for messages
@@ -44,7 +45,7 @@
     if ([nearestVC isKindOfClass:%c(IGDirectThreadViewController)]) {
         [(IGDirectThreadViewController *)nearestVC markLastMessageAsSeen];
 
-        [SCIUtils showToastForDuration:2.5 title:@"Marked messages as seen"];
+        [SCIUtils showToastForDuration:2.5 title:SCILocalized(@"p_toast_marked_seen")];
     }
 }
 // DM visual messages viewed button
@@ -53,13 +54,13 @@
         dmVisualMsgsViewedButtonEnabled = false;
         [sender setTintColor:UIColor.labelColor];
 
-        [SCIUtils showToastForDuration:4.5 title:@"Visual messages can be replayed without expiring"];
+        [SCIUtils showToastForDuration:4.5 title:SCILocalized(@"p_toast_replay_on")];
     }
     else {
         dmVisualMsgsViewedButtonEnabled = true;
         [sender setTintColor:SCIUtils.SCIColor_Primary];
 
-        [SCIUtils showToastForDuration:4.5 title:@"Visual messages will now expire after viewing"];
+        [SCIUtils showToastForDuration:4.5 title:SCILocalized(@"p_toast_replay_off")];
     }
 }
 %end

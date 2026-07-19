@@ -336,11 +336,17 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
     if (sender.state != UIGestureRecognizerStateBegan) return;
 
-    NSURL *videoUrl = [SCIUtils getVideoUrlForMedia:self.item];
-    
-    if (!videoUrl) {
-        [SCIUtils showErrorHUDWithDescription:@"Could not extract video url from story"];
+    // Route through downloadMedia so the quality picker applies here too — story
+    // videos previously bypassed it by resolving a single URL directly.
+    id item = self.item;
+    if (item) {
+        [SCIMediaDownloader downloadMedia:item sourceLabel:nil anchor:self];
+        return;
+    }
 
+    NSURL *videoUrl = [SCIUtils getVideoUrlForMedia:self.item];
+    if (!videoUrl) {
+        [SCIUtils showErrorHUDWithDescription:SCILocalized(@"err_no_video")];
         return;
     }
 
@@ -371,11 +377,14 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
     if (sender.state != UIGestureRecognizerStateBegan) return;
 
-    NSURL *videoUrl;
-
     IGStoryFullscreenSectionController *captionDelegate = self.captionDelegate;
     if (captionDelegate) {
-        videoUrl = [SCIUtils getVideoUrlForMedia:captionDelegate.currentStoryItem];
+        // Story item is an IGMedia — route through downloadMedia for the quality picker.
+        id item = captionDelegate.currentStoryItem;
+        if (item) {
+            [SCIMediaDownloader downloadMedia:item sourceLabel:nil anchor:self];
+            return;
+        }
     }
     else {
         // Direct messages video player
@@ -384,23 +393,19 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
 
         IGDirectVisualMessageViewerViewModeAwareDataSource *_dataSource = MSHookIvar<IGDirectVisualMessageViewerViewModeAwareDataSource *>(parentVC, "_dataSource");
         if (!_dataSource) return;
-        
-        IGDirectVisualMessage *_currentMessage = MSHookIvar<IGDirectVisualMessage *>(_dataSource, "_currentMessage"); 
+
+        IGDirectVisualMessage *_currentMessage = MSHookIvar<IGDirectVisualMessage *>(_dataSource, "_currentMessage");
         if (!_currentMessage) return;
-        
+
         IGVideo *rawVideo = _currentMessage.rawVideo;
         if (!rawVideo) return;
-        
-        videoUrl = [SCIUtils getVideoUrl:rawVideo];
-    }
-    
-    if (!videoUrl) {
-        [SCIUtils showErrorHUDWithDescription:@"Could not extract video url from story"];
 
+        // rawVideo is an IGVideo — downloadVideo applies the picker when several renditions exist.
+        [SCIMediaDownloader downloadVideo:rawVideo sourceLabel:nil anchor:self];
         return;
     }
 
-    [SCIMediaDownloader downloadURL:videoUrl sourceLabel:nil isVideo:YES];
+    [SCIUtils showErrorHUDWithDescription:SCILocalized(@"err_no_video")];
 }
 %end
 

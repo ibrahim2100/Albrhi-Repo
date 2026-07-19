@@ -1,5 +1,17 @@
 # Albrhi Changelog
 
+## v3.0.7
+
+**Localization**
+- Full Arabic pass: every settings page, section header, dropdown menu, stepper
+  label and DM seen/replay toast is now localized — no hard-coded English left in
+  the settings UI.
+
+**Fixes**
+- Quality picker now applies to **story videos** too. They previously resolved a
+  single URL directly and skipped the picker; they now route through the same
+  coordinator as feed and reels.
+
 ## v3.0.1
 
 **Fixes**

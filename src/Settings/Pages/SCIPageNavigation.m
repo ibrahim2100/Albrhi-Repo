@@ -15,17 +15,17 @@
             @{
                 @"header": @"",
                 @"rows": @[
-                    [SCISetting menuCellWithTitle:@"Icon order" subtitle:@"The order of the icons on the bottom navigation bar" menu:[SCITweakSettings menus][@"nav_icon_ordering"]],
-                    [SCISetting menuCellWithTitle:@"Swipe between tabs" subtitle:@"Lets you swipe to switch between navigation bar tabs" menu:[SCITweakSettings menus][@"swipe_nav_tabs"]]
+                    [SCISetting menuCellWithTitle:SCILocalized(@"p_nav_order_t") subtitle:SCILocalized(@"p_nav_order_s") menu:[SCITweakSettings menus][@"nav_icon_ordering"]],
+                    [SCISetting menuCellWithTitle:SCILocalized(@"p_nav_swipe_t") subtitle:SCILocalized(@"p_nav_swipe_s") menu:[SCITweakSettings menus][@"swipe_nav_tabs"]]
                 ]
             },
             @{
-                @"header": @"Hiding tabs",
+                @"header": SCILocalized(@"p_hdr_hidetabs"),
                 @"rows": @[
-                    [SCISetting switchCellWithTitle:@"Hide feed tab" subtitle:@"Hides the feed/home tab on the bottom navigation bar" defaultsKey:@"hide_feed_tab" requiresRestart:YES],
-                    [SCISetting switchCellWithTitle:@"Hide explore tab" subtitle:@"Hides the explore/search tab on the bottom navigation bar" defaultsKey:@"hide_explore_tab" requiresRestart:YES],
-                    [SCISetting switchCellWithTitle:@"Hide reels tab" subtitle:@"Hides the reels tab on the bottom navigation bar" defaultsKey:@"hide_reels_tab" requiresRestart:YES],
-                    [SCISetting switchCellWithTitle:@"Hide create tab" subtitle:@"Hides the create tab on the bottom navigation bar" defaultsKey:@"hide_create_tab" requiresRestart:YES]
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_nav_feedtab_t") subtitle:SCILocalized(@"p_nav_feedtab_s") defaultsKey:@"hide_feed_tab" requiresRestart:YES],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_nav_exploretab_t") subtitle:SCILocalized(@"p_nav_exploretab_s") defaultsKey:@"hide_explore_tab" requiresRestart:YES],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_nav_reelstab_t") subtitle:SCILocalized(@"p_nav_reelstab_s") defaultsKey:@"hide_reels_tab" requiresRestart:YES],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_nav_createtab_t") subtitle:SCILocalized(@"p_nav_createtab_s") defaultsKey:@"hide_create_tab" requiresRestart:YES]
                 ]
             }
         ];

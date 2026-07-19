@@ -15,13 +15,13 @@
             @{
                 @"header": @"",
                 @"rows": @[
-                    [SCISetting switchCellWithTitle:@"Hide stories tray" subtitle:@"Hides the story tray at the top and within your feed" defaultsKey:@"hide_stories_tray"],
-                    [SCISetting switchCellWithTitle:@"Hide entire feed" subtitle:@"Removes all content from your home feed, including posts" defaultsKey:@"hide_entire_feed"],
-                    [SCISetting switchCellWithTitle:@"No suggested posts" subtitle:@"Removes suggested posts from your feed" defaultsKey:@"no_suggested_post"],
-                    [SCISetting switchCellWithTitle:@"No suggested for you" subtitle:@"Hides suggested accounts for you to follow" defaultsKey:@"no_suggested_account"],
-                    [SCISetting switchCellWithTitle:@"No suggested reels" subtitle:@"Hides suggested reels to watch" defaultsKey:@"no_suggested_reels"],
-                    [SCISetting switchCellWithTitle:@"No suggested threads posts" subtitle:@"Hides suggested threads posts" defaultsKey:@"no_suggested_threads"],
-                    [SCISetting switchCellWithTitle:@"Disable video autoplay" subtitle:@"Prevents videos on your feed from playing automatically" defaultsKey:@"disable_feed_autoplay"]
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_feed_storytray_t") subtitle:SCILocalized(@"p_feed_storytray_s") defaultsKey:@"hide_stories_tray"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_feed_entirefeed_t") subtitle:SCILocalized(@"p_feed_entirefeed_s") defaultsKey:@"hide_entire_feed"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_feed_nosuggposts_t") subtitle:SCILocalized(@"p_feed_nosuggposts_s") defaultsKey:@"no_suggested_post"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_feed_nosuggacct_t") subtitle:SCILocalized(@"p_feed_nosuggacct_s") defaultsKey:@"no_suggested_account"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_feed_nosuggreels_t") subtitle:SCILocalized(@"p_feed_nosuggreels_s") defaultsKey:@"no_suggested_reels"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_feed_nosuggthreads_t") subtitle:SCILocalized(@"p_feed_nosuggthreads_s") defaultsKey:@"no_suggested_threads"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_feed_autoplay_t") subtitle:SCILocalized(@"p_feed_autoplay_s") defaultsKey:@"disable_feed_autoplay"]
                 ]
             }
         ];

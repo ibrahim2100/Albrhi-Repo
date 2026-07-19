@@ -15,22 +15,22 @@
             @{
                 @"header": @"",
                 @"rows": @[
-                    [SCISetting switchCellWithTitle:@"Confirm like: Posts/Stories" subtitle:@"Shows an alert when you click the like button on posts or stories to confirm the like" defaultsKey:@"like_confirm"],
-                    [SCISetting switchCellWithTitle:@"Confirm like: Reels" subtitle:@"Shows an alert when you click the like button on reels to confirm the like" defaultsKey:@"like_confirm_reels"]
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_cf_like_t") subtitle:SCILocalized(@"p_cf_like_s") defaultsKey:@"like_confirm"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_cf_likereels_t") subtitle:SCILocalized(@"p_cf_likereels_s") defaultsKey:@"like_confirm_reels"]
                 ]
             },
             @{
                 @"header": @"",
                 @"rows": @[
-                    [SCISetting switchCellWithTitle:@"Confirm follow" subtitle:@"Shows an alert when you click the follow button to confirm the follow" defaultsKey:@"follow_confirm"],
-                    [SCISetting switchCellWithTitle:@"Confirm repost" subtitle:@"Shows an alert when you click the repost button to confirm before resposting" defaultsKey:@"repost_confirm"],
-                    [SCISetting switchCellWithTitle:@"Confirm call" subtitle:@"Shows an alert when you click the audio/video call button to confirm before calling" defaultsKey:@"call_confirm"],
-                    [SCISetting switchCellWithTitle:@"Confirm voice messages" subtitle:@"Shows an alert to confirm before sending a voice message" defaultsKey:@"voice_message_confirm"],
-                    [SCISetting switchCellWithTitle:@"Confirm follow requests" subtitle:@"Shows an alert when you accept/decline a follow request" defaultsKey:@"follow_request_confirm"],
-                    [SCISetting switchCellWithTitle:@"Confirm shh mode" subtitle:@"Shows an alert to confirm before toggling disappearing messages" defaultsKey:@"shh_mode_confirm"],
-                    [SCISetting switchCellWithTitle:@"Confirm posting comment" subtitle:@"Shows an alert when you click the post comment button to confirm" defaultsKey:@"post_comment_confirm"],
-                    [SCISetting switchCellWithTitle:@"Confirm changing theme" subtitle:@"Shows an alert when you change a chat theme to confirm" defaultsKey:@"change_direct_theme_confirm"],
-                    [SCISetting switchCellWithTitle:@"Confirm sticker interaction" subtitle:@"Shows an alert when you click a sticker on someone's story to confirm the action" defaultsKey:@"sticker_interact_confirm"]
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_cf_follow_t") subtitle:SCILocalized(@"p_cf_follow_s") defaultsKey:@"follow_confirm"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_cf_repost_t") subtitle:SCILocalized(@"p_cf_repost_s") defaultsKey:@"repost_confirm"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_cf_call_t") subtitle:SCILocalized(@"p_cf_call_s") defaultsKey:@"call_confirm"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_cf_voice_t") subtitle:SCILocalized(@"p_cf_voice_s") defaultsKey:@"voice_message_confirm"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_cf_followreq_t") subtitle:SCILocalized(@"p_cf_followreq_s") defaultsKey:@"follow_request_confirm"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_cf_shh_t") subtitle:SCILocalized(@"p_cf_shh_s") defaultsKey:@"shh_mode_confirm"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_cf_comment_t") subtitle:SCILocalized(@"p_cf_comment_s") defaultsKey:@"post_comment_confirm"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_cf_theme_t") subtitle:SCILocalized(@"p_cf_theme_s") defaultsKey:@"change_direct_theme_confirm"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_cf_sticker_t") subtitle:SCILocalized(@"p_cf_sticker_s") defaultsKey:@"sticker_interact_confirm"]
                 ]
             }
         ];

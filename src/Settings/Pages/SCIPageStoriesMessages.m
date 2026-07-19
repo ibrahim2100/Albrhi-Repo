@@ -13,22 +13,22 @@
                                              sections:^NSArray *{
         return @[
             @{
-                @"header": @"Messages",
+                @"header": SCILocalized(@"p_hdr_messages"),
                 @"rows": @[
-                    [SCISetting switchCellWithTitle:@"Keep deleted messages" subtitle:@"Saves deleted messages in chat conversations" defaultsKey:@"keep_deleted_message"],
-                    [SCISetting switchCellWithTitle:@"Manually mark messages as seen" subtitle:@"Adds a button to DM threads, which will mark messages as seen" defaultsKey:@"remove_lastseen"],
-                    [SCISetting switchCellWithTitle:@"Disable typing status" subtitle:@"Prevents the typing indicator from being shown to others when you're typing in DMs" defaultsKey:@"disable_typing_status"]
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_keepdel_t") subtitle:SCILocalized(@"p_sm_keepdel_s") defaultsKey:@"keep_deleted_message"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_markseen_t") subtitle:SCILocalized(@"p_sm_markseen_s") defaultsKey:@"remove_lastseen"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_typing_t") subtitle:SCILocalized(@"p_sm_typing_s") defaultsKey:@"disable_typing_status"]
                 ]
             },
             @{
-                @"header": @"Visual messages & stories",
+                @"header": SCILocalized(@"p_hdr_visual"),
                 @"rows": @[
-                    [SCISetting switchCellWithTitle:@"Unlimited replay of visual messages" subtitle:@"Replays direct visual messages normal/once stories unlimited times (toggle with image check icon)" defaultsKey:@"unlimited_replay"],
-                    [SCISetting switchCellWithTitle:@"Disable view-once limitations" subtitle:@"Makes view-once messages behave like normal visual messages (loopable/pauseable)" defaultsKey:@"disable_view_once_limitations"],
-                    [SCISetting switchCellWithTitle:@"Disable screenshot detection" subtitle:@"Removes the screenshot-prevention features for visual messages in DMs" defaultsKey:@"remove_screenshot_alert"],
-                    [SCISetting switchCellWithTitle:@"Disable story seen receipt" subtitle:@"Hides the notification for others when you view their story" defaultsKey:@"no_seen_receipt"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_replay_t") subtitle:SCILocalized(@"p_sm_replay_s") defaultsKey:@"unlimited_replay"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_viewonce_t") subtitle:SCILocalized(@"p_sm_viewonce_s") defaultsKey:@"disable_view_once_limitations"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_screenshot_t") subtitle:SCILocalized(@"p_sm_screenshot_s") defaultsKey:@"remove_screenshot_alert"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_seen_t") subtitle:SCILocalized(@"p_sm_seen_s") defaultsKey:@"no_seen_receipt"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"story_seen_button_title") subtitle:SCILocalized(@"story_seen_button_sub") defaultsKey:@"story_seen_button"],
-                    [SCISetting switchCellWithTitle:@"Disable instants creation" subtitle:@"Hides the functionality to create/send instants" defaultsKey:@"disable_instants_creation" requiresRestart:YES]
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_instants_t") subtitle:SCILocalized(@"p_sm_instants_s") defaultsKey:@"disable_instants_creation" requiresRestart:YES]
                 ]
             }
         ];

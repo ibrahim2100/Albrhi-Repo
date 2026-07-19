@@ -27,7 +27,7 @@
                 @"rows": @[
                     [SCISetting switchCellWithTitle:SCILocalized(@"dl_use_queue_title") subtitle:SCILocalized(@"dl_use_queue_sub") defaultsKey:@"dl_use_queue"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"dl_clear_title") subtitle:SCILocalized(@"dl_clear_sub") defaultsKey:@"dl_clear_after_save"],
-                    [SCISetting stepperCellWithTitle:SCILocalized(@"dl_max_concurrent_title") subtitle:@"%@ %@" defaultsKey:@"dl_max_concurrent" min:1 max:6 step:1 label:@"downloads" singularLabel:@"download"],
+                    [SCISetting stepperCellWithTitle:SCILocalized(@"dl_max_concurrent_title") subtitle:@"%@ %@" defaultsKey:@"dl_max_concurrent" min:1 max:6 step:1 label:SCILocalized(@"p_lbl_downloads") singularLabel:SCILocalized(@"p_lbl_download")],
                     [SCISetting switchCellWithTitle:SCILocalized(@"inline_download_title") subtitle:SCILocalized(@"inline_download_sub") defaultsKey:@"inline_download_button"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"dw_feed_posts_title") subtitle:SCILocalized(@"dw_feed_posts_sub") defaultsKey:@"dw_feed_posts"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"dw_reels_title") subtitle:SCILocalized(@"dw_reels_sub") defaultsKey:@"dw_reels"],
@@ -50,8 +50,8 @@
             @{
                 @"header": @"",
                 @"rows": @[
-                    [SCISetting stepperCellWithTitle:SCILocalized(@"dw_finger_count_title") subtitle:@"%@ %@" defaultsKey:@"dw_finger_count" min:1 max:5 step:1 label:@"fingers" singularLabel:@"finger"],
-                    [SCISetting stepperCellWithTitle:SCILocalized(@"dw_finger_duration_title") subtitle:@"%@ %@" defaultsKey:@"dw_finger_duration" min:0 max:10 step:0.25 label:@"sec" singularLabel:@"sec"]
+                    [SCISetting stepperCellWithTitle:SCILocalized(@"dw_finger_count_title") subtitle:@"%@ %@" defaultsKey:@"dw_finger_count" min:1 max:5 step:1 label:SCILocalized(@"p_lbl_fingers") singularLabel:SCILocalized(@"p_lbl_finger")],
+                    [SCISetting stepperCellWithTitle:SCILocalized(@"dw_finger_duration_title") subtitle:@"%@ %@" defaultsKey:@"dw_finger_duration" min:0 max:10 step:0.25 label:SCILocalized(@"p_lbl_sec") singularLabel:SCILocalized(@"p_lbl_sec")]
                 ]
             }
         ];

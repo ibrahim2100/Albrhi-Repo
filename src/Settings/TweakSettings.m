@@ -80,7 +80,7 @@
         ]],
 
         @"reels_tap_control": [UIMenu menuWithChildren:@[
-            [UICommand commandWithTitle:@"Default"
+            [UICommand commandWithTitle:SCILocalized(@"p_menu_default")
                                   image:nil
                                  action:@selector(menuChanged:)
                            propertyList:@{
@@ -94,7 +94,7 @@
                        identifier:nil
                           options:UIMenuOptionsDisplayInline
                          children:@[
-                             [UICommand commandWithTitle:@"Pause/Play"
+                             [UICommand commandWithTitle:SCILocalized(@"p_menu_pauseplay")
                                                    image:nil
                                                   action:@selector(menuChanged:)
                                             propertyList:@{
@@ -103,7 +103,7 @@
                                                 @"requiresRestart": @YES
                                             }
                              ],
-                             [UICommand commandWithTitle:@"Mute/Unmute"
+                             [UICommand commandWithTitle:SCILocalized(@"p_menu_muteunmute")
                                                    image:nil
                                                   action:@selector(menuChanged:)
                                             propertyList:@{
@@ -117,7 +117,7 @@
         ]],
 
         @"nav_icon_ordering": [UIMenu menuWithChildren:@[
-            [UICommand commandWithTitle:@"Default"
+            [UICommand commandWithTitle:SCILocalized(@"p_menu_default")
                                   image:nil
                                  action:@selector(menuChanged:)
                            propertyList:@{
@@ -131,7 +131,7 @@
                        identifier:nil
                           options:UIMenuOptionsDisplayInline
                          children:@[
-                             [UICommand commandWithTitle:@"Classic"
+                             [UICommand commandWithTitle:SCILocalized(@"p_menu_classic")
                                                    image:nil
                                                   action:@selector(menuChanged:)
                                             propertyList:@{
@@ -140,7 +140,7 @@
                                                 @"requiresRestart": @YES
                                             }
                              ],
-                             [UICommand commandWithTitle:@"Standard"
+                             [UICommand commandWithTitle:SCILocalized(@"p_menu_standard")
                                                    image:nil
                                                   action:@selector(menuChanged:)
                                             propertyList:@{
@@ -149,7 +149,7 @@
                                                 @"requiresRestart": @YES
                                             }
                              ],
-                             [UICommand commandWithTitle:@"Alternate"
+                             [UICommand commandWithTitle:SCILocalized(@"p_menu_alternate")
                                                    image:nil
                                                   action:@selector(menuChanged:)
                                             propertyList:@{
@@ -163,7 +163,7 @@
         ]],
 
         @"swipe_nav_tabs": [UIMenu menuWithChildren:@[
-            [UICommand commandWithTitle:@"Default"
+            [UICommand commandWithTitle:SCILocalized(@"p_menu_default")
                                   image:nil
                                  action:@selector(menuChanged:)
                            propertyList:@{
@@ -177,7 +177,7 @@
                        identifier:nil
                           options:UIMenuOptionsDisplayInline
                          children:@[
-                             [UICommand commandWithTitle:@"Enabled"
+                             [UICommand commandWithTitle:SCILocalized(@"p_menu_enabled")
                                                    image:nil
                                                   action:@selector(menuChanged:)
                                             propertyList:@{
@@ -186,7 +186,7 @@
                                                 @"requiresRestart": @YES
                                             }
                              ],
-                             [UICommand commandWithTitle:@"Disabled"
+                             [UICommand commandWithTitle:SCILocalized(@"p_menu_disabled")
                                                    image:nil
                                                   action:@selector(menuChanged:)
                                             propertyList:@{

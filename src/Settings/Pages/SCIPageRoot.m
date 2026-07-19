@@ -50,7 +50,7 @@
         return @[@{
             @"header": @"",
             @"rows": @[
-                [SCISetting navigationCellWithTitle:@"Debug"
+                [SCISetting navigationCellWithTitle:SCILocalized(@"p_hdr_debug")
                                            subtitle:@""
                                                icon:[SCISymbol symbolWithName:@"ladybug"]
                                         navSections:@[
@@ -66,9 +66,9 @@
                     @{
                         @"header": @"FLEX",
                         @"rows": @[
-                            [SCISetting switchCellWithTitle:@"Enable FLEX gesture" subtitle:@"Allows you to hold 5 fingers on the screen to open the FLEX explorer" defaultsKey:@"flex_instagram"],
-                            [SCISetting switchCellWithTitle:@"Open FLEX on app launch" subtitle:@"Automatically opens the FLEX explorer when the app launches" defaultsKey:@"flex_app_launch"],
-                            [SCISetting switchCellWithTitle:@"Open FLEX on app focus" subtitle:@"Automatically opens the FLEX explorer when the app is focused" defaultsKey:@"flex_app_start"]
+                            [SCISetting switchCellWithTitle:SCILocalized(@"p_dbg_flexgesture_t") subtitle:SCILocalized(@"p_dbg_flexgesture_s") defaultsKey:@"flex_instagram"],
+                            [SCISetting switchCellWithTitle:SCILocalized(@"p_dbg_flexlaunch_t") subtitle:SCILocalized(@"p_dbg_flexlaunch_s") defaultsKey:@"flex_app_launch"],
+                            [SCISetting switchCellWithTitle:SCILocalized(@"p_dbg_flexfocus_t") subtitle:SCILocalized(@"p_dbg_flexfocus_s") defaultsKey:@"flex_app_start"]
                         ]
                     },
                     @{
@@ -95,7 +95,7 @@
                     @{
                         @"header": @"Instagram",
                         @"rows": @[
-                            [SCISetting switchCellWithTitle:@"Disable safe mode" subtitle:@"Makes Instagram not reset settings after subsequent crashes (at your own risk)" defaultsKey:@"disable_safe_mode"]
+                            [SCISetting switchCellWithTitle:SCILocalized(@"p_dbg_safemode_t") subtitle:SCILocalized(@"p_dbg_safemode_s") defaultsKey:@"disable_safe_mode"]
                         ]
                     }
                 ]]
