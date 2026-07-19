@@ -52,6 +52,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (void)recordStorySeenIntercept;
 
+/// Result of the DASH-manifest read: whether a manifest was found and how many
+/// video representations it yielded. Tells us if the higher-quality ladder is
+/// reachable on this build.
++ (void)recordDashResult:(nullable NSString *)info;
+
 /// Walks the live view hierarchy behind the settings sheet looking for anything
 /// shaped like a post action row — a view holding several buttons in a line.
 ///

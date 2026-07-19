@@ -266,6 +266,22 @@
     return nil;
 }
 
++ (NSString *)currentUsername {
+    @try {
+        for (UIWindow *window in [UIApplication sharedApplication].windows) {
+            if (![window respondsToSelector:@selector(userSession)]) continue;
+
+            id session = [window valueForKey:@"userSession"];
+            id user = session ? [session valueForKey:@"user"] : nil;
+            id username = user ? [user valueForKey:@"username"] : nil;
+
+            if ([username isKindOfClass:[NSString class]] && [username length]) return username;
+        }
+    } @catch (__unused id e) {}
+
+    return nil;
+}
+
 // Media
 + (NSURL *)getPhotoUrl:(IGPhoto *)photo {
     if (!photo) return nil;

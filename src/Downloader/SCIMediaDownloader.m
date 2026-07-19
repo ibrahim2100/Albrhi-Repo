@@ -70,6 +70,12 @@
 
     if (out.count > 1) return out;
 
+    // videoVersions gave a single progressive rendition (common on IG 410+). The
+    // real resolution ladder — 1080p and friends — lives in the DASH manifest.
+    NSArray<NSDictionary *> *dash = [self deduplicated:[self qualitiesFromDashForVideo:video]];
+    if (dash.count > out.count) out = [dash mutableCopy];
+    if (out.count > 1) return out;
+
     // Fall back to the generic helper if the direct read found nothing usable.
     NSArray<NSDictionary *> *helperVersions = [self deduplicated:[self normalised:[SCIUtils availableVideoQualitiesForVideo:video]]];
     if (helperVersions.count > out.count) out = [helperVersions mutableCopy];
@@ -142,6 +148,121 @@
     }
 
     return out;
+}
+
+/// Extracts the multi-resolution ladder from a video's DASH manifest.
+///
+/// Instagram frequently ships a single progressive rendition in -videoVersions and
+/// keeps the higher resolutions (1080p, etc.) as <Representation> entries inside a
+/// DASH MPD. Each video Representation carries width/height/bandwidth attributes and
+/// a <BaseURL> that points at a directly-downloadable file.
++ (NSArray<NSDictionary *> *)qualitiesFromDashForVideo:(IGVideo *)video {
+    NSString *xml = nil;
+
+    @try {
+        for (NSString *sel in @[@"videoDashManifest", @"dashManifest", @"videoDashManifestXML"]) {
+            if ([video respondsToSelector:NSSelectorFromString(sel)]) {
+                id value = [video valueForKey:sel];
+                if ([value isKindOfClass:[NSString class]] && [value length]) { xml = value; break; }
+                // Some builds wrap the XML in an object.
+                for (NSString *inner in @[@"xmlString", @"manifest", @"string"]) {
+                    @try {
+                        if ([value respondsToSelector:NSSelectorFromString(inner)]) {
+                            id s = [value valueForKey:inner];
+                            if ([s isKindOfClass:[NSString class]] && [s length]) { xml = s; break; }
+                        }
+                    } @catch (__unused id e) {}
+                }
+                if ([xml length]) break;
+            }
+        }
+    } @catch (__unused id e) {}
+
+    if (![xml length]) {
+        [SCIDiagnostics recordDashResult:@"no manifest exposed by this build"];
+        return @[];
+    }
+    if ([xml rangeOfString:@"<Representation"].location == NSNotFound) {
+        [SCIDiagnostics recordDashResult:@"manifest found, but no <Representation> tags"];
+        return @[];
+    }
+
+    NSMutableArray<NSDictionary *> *out = [NSMutableArray array];
+
+    NSRegularExpression *repRegex =
+        [NSRegularExpression regularExpressionWithPattern:@"<Representation\\b[^>]*>.*?</Representation>"
+                                                  options:NSRegularExpressionCaseInsensitive | NSRegularExpressionDotMatchesLineSeparators
+                                                    error:nil];
+
+    NSArray<NSTextCheckingResult *> *matches =
+        [repRegex matchesInString:xml options:0 range:NSMakeRange(0, xml.length)];
+
+    for (NSTextCheckingResult *match in matches) {
+        NSString *block = [xml substringWithRange:match.range];
+
+        long long w = [self dashAttribute:@"width" inBlock:block];
+        long long h = [self dashAttribute:@"height" inBlock:block];
+        long long bandwidth = [self dashAttribute:@"bandwidth" inBlock:block];
+
+        // A Representation without width/height is the audio track — skip it.
+        if (w <= 0 || h <= 0) continue;
+
+        NSString *baseURL = [self dashBaseURLInBlock:block];
+        if (![baseURL length]) continue;
+
+        [out addObject:@{
+            @"label": [self labelForWidth:w height:h bandwidth:bandwidth],
+            @"urlString": baseURL,
+            @"area": @(w * h),
+            @"bandwidth": @(bandwidth)
+        }];
+    }
+
+    [out sortUsingComparator:^NSComparisonResult(NSDictionary *a, NSDictionary *b) {
+        NSComparisonResult byArea = [b[@"area"] compare:a[@"area"]];
+        if (byArea != NSOrderedSame) return byArea;
+        return [b[@"bandwidth"] compare:a[@"bandwidth"]];
+    }];
+
+    [SCIDiagnostics recordDashResult:[NSString stringWithFormat:@"%ld video reps: %@",
+                                      (long)out.count,
+                                      [[out valueForKey:@"label"] componentsJoinedByString:@" | "]]];
+
+    return out;
+}
+
+/// Reads an integer attribute (width="1080") out of a Representation block.
++ (long long)dashAttribute:(NSString *)name inBlock:(NSString *)block {
+    NSRegularExpression *regex =
+        [NSRegularExpression regularExpressionWithPattern:[NSString stringWithFormat:@"%@=\"(\\d+)\"", name]
+                                                  options:NSRegularExpressionCaseInsensitive
+                                                    error:nil];
+    NSTextCheckingResult *m = [regex firstMatchInString:block options:0 range:NSMakeRange(0, block.length)];
+    if (!m || m.numberOfRanges < 2) return 0;
+    return [[block substringWithRange:[m rangeAtIndex:1]] longLongValue];
+}
+
+/// Reads and XML-unescapes the <BaseURL> of a Representation block.
++ (NSString *)dashBaseURLInBlock:(NSString *)block {
+    NSRegularExpression *regex =
+        [NSRegularExpression regularExpressionWithPattern:@"<BaseURL>(.*?)</BaseURL>"
+                                                  options:NSRegularExpressionCaseInsensitive | NSRegularExpressionDotMatchesLineSeparators
+                                                    error:nil];
+    NSTextCheckingResult *m = [regex firstMatchInString:block options:0 range:NSMakeRange(0, block.length)];
+    if (!m || m.numberOfRanges < 2) return nil;
+
+    NSString *url = [[block substringWithRange:[m rangeAtIndex:1]]
+                     stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+
+    url = [url stringByReplacingOccurrencesOfString:@"&amp;" withString:@"&"];
+    url = [url stringByReplacingOccurrencesOfString:@"&lt;" withString:@"<"];
+    url = [url stringByReplacingOccurrencesOfString:@"&gt;" withString:@">"];
+    url = [url stringByReplacingOccurrencesOfString:@"&quot;" withString:@"\""];
+
+    // Only accept absolute links — relative BaseURLs need an MPD base we don't track.
+    if (![url hasPrefix:@"http"]) return nil;
+
+    return url;
 }
 
 /// "1080×1920 · 4.2 Mbps", or just the resolution when no bitrate is reported.

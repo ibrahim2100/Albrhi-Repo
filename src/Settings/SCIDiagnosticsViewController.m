@@ -15,6 +15,7 @@ static BOOL _buttonEverPressed = NO;
 static NSString *_lastDownloadKind = nil;
 static NSString *_qualityBreakdown = nil;
 static NSString *_qualityLabels = nil;
+static NSString *_dashInfo = nil;
 
 @implementation SCIDiagnostics
 
@@ -67,6 +68,10 @@ static NSString *_qualityLabels = nil;
 
 + (void)recordStorySeenIntercept {
     _storySeenIntercepts += 1;
+}
+
++ (void)recordDashResult:(NSString *)info {
+    _dashInfo = [info copy];
 }
 
 // MARK: - Live hierarchy scan
@@ -247,6 +252,9 @@ static NSString *_qualityLabels = nil;
             @{@"title": SCILocalized(@"diag_quality_labels"),
               @"detail": _qualityLabels ?: @"—",
               @"ok": @(_qualityLabels != nil)},
+            @{@"title": SCILocalized(@"diag_dash"),
+              @"detail": _dashInfo ?: @"—",
+              @"ok": @(_dashInfo != nil)},
             @{@"title": SCILocalized(@"diag_download_kind"),
               @"detail": _lastDownloadKind ?: @"—",
               @"ok": @(_lastDownloadKind != nil)},

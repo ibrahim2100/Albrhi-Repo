@@ -88,6 +88,11 @@
 - (id)allVideoURLs; // After Instagram v398 — UNORDERED NSSet
 - (id)videoVersions; // Array of IGAPIVideoVersion (has width/height/bandwidth/urlString)
 - (long long)numberOfQualities;
+// DASH manifest XML — carries the real multi-resolution ladder (1080p etc.) that
+// videoVersions often omits. Selector name varies between builds, so read defensively.
+- (id)videoDashManifest;
+- (id)dashManifest;
+- (id)videoDashManifestXML;
 @end
 
 @interface IGPhoto : NSObject

@@ -53,6 +53,9 @@
 /// Localized "Follows you" / "Doesn't follow you" for a given IGUser, or nil when
 /// the relationship can't be determined (e.g. your own profile).
 + (NSString *)followStatusStringForUser:(id)user;
+/// Username of the currently logged-in account, or nil. Used to avoid showing a
+/// follow-back badge on your own profile.
++ (NSString *)currentUsername;
 
 // Media
 + (NSURL *)getPhotoUrl:(IGPhoto *)photo;

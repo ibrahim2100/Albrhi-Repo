@@ -1,5 +1,23 @@
 # Albrhi Changelog
 
+## v3.0.10
+
+**Diagnostics**
+- New "DASH manifest" line under Last video download: reports whether the manifest
+  is reachable on this build and how many video resolutions it yields.
+
+**New**
+- **Follow-back badge on profiles.** A colored pill now sits on the profile-header
+  avatar — green "Follows you" or red "Doesn't follow you" — visible directly on the
+  profile, no long-press needed, and suppressed on your own profile.
+
+**Fixes**
+- **Quality picker — the real fix.** On Instagram 410 `videoVersions` returns a
+  single progressive rendition (e.g. 720p), so the picker had nothing to offer. The
+  higher resolutions live in the **DASH manifest**; Albrhi now parses it and lists
+  every real quality (1080p, etc.). When a video genuinely has one quality, no
+  picker appears — by design.
+
 ## v3.0.8
 
 **Localization**
