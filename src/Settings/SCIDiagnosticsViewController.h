@@ -30,6 +30,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// Called by the downloader with how many distinct renditions a video offered.
 + (void)recordQualityCount:(NSInteger)count forVideoClass:(nullable NSString *)className;
 
+/// How many renditions the API returned before any filtering. If this is high and
+/// the final count is 1, the fault is ours, not Instagram's.
++ (void)recordRawVersionCount:(NSInteger)count;
+
 /// Called when the story seen-state uploader is intercepted.
 + (void)recordStorySeenIntercept;
 

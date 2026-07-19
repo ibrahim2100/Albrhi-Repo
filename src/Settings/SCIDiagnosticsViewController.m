@@ -9,6 +9,7 @@ static NSInteger _lastQualityCount = -1;
 static NSString *_lastVideoClass = nil;
 static NSInteger _storySeenIntercepts = 0;
 static NSArray<NSString *> *_scanResults = nil;
+static NSInteger _lastRawVersionCount = -1;
 
 @implementation SCIDiagnostics
 
@@ -35,6 +36,10 @@ static NSArray<NSString *> *_scanResults = nil;
 + (void)recordQualityCount:(NSInteger)count forVideoClass:(NSString *)className {
     _lastQualityCount = count;
     _lastVideoClass = [className copy];
+}
+
++ (void)recordRawVersionCount:(NSInteger)count {
+    _lastRawVersionCount = count;
 }
 
 + (void)recordStorySeenIntercept {
@@ -200,6 +205,12 @@ static NSArray<NSString *> *_scanResults = nil;
         @{@"header": SCILocalized(@"diag_section_attached"), @"rows": attached},
         @{@"header": SCILocalized(@"diag_section_quality"), @"rows": @[
             @{@"title": SCILocalized(@"diag_quality_last"), @"detail": qualityDetail, @"ok": @(qualityOK)},
+            @{@"title": SCILocalized(@"diag_quality_raw"),
+              @"detail": _lastRawVersionCount < 0 ? @"—" : [NSString stringWithFormat:@"%ld", (long)_lastRawVersionCount],
+              @"ok": @(_lastRawVersionCount > 1)},
+            @{@"title": SCILocalized(@"dw_save_to_camera_title"),
+              @"detail": [SCIUtils getBoolPref:@"dw_save_to_camera"] ? SCILocalized(@"diag_on") : SCILocalized(@"diag_off"),
+              @"ok": @([SCIUtils getBoolPref:@"dw_save_to_camera"])},
             @{@"title": SCILocalized(@"diag_quality_source"),
               @"detail": _lastVideoClass ?: @"—",
               @"ok": @(_lastVideoClass != nil)},

@@ -23,6 +23,10 @@
         if ([video respondsToSelector:@selector(videoVersions)]) {
             id versions = [video performSelector:@selector(videoVersions)];
 
+            if ([versions respondsToSelector:@selector(count)]) {
+                [SCIDiagnostics recordRawVersionCount:(NSInteger)[versions count]];
+            }
+
             for (id version in versions) {
                 NSString *urlString = [SCIUtils urlStringFromVersion:version];
                 if (![urlString length]) continue;

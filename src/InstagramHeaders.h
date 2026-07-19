@@ -185,6 +185,14 @@
 - (void)sciInlineDownloadPressed:(id)sender; // new
 @end
 
+// The action row Instagram 410 actually renders. Confirmed by a live hierarchy
+// scan: it holds `save-button` directly, while the like and comment buttons are
+// wrapped in IGUFIButtonWithCountsView containers that are not UIControls
+// themselves — which is why counting only direct UIControl children finds one.
+@interface IGUFIInteractionCountsView : UIView
+- (void)sciInlineDownloadPressed:(id)sender; // new
+@end
+
 @interface IGSundialViewerVideoCell : UIView
 @property(readonly, nonatomic) IGMedia *video;
 

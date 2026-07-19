@@ -106,7 +106,22 @@ static void SCIDownloadMedia(id media, UIView *anchorView) {
 /// whichever implementation is live.
 ///
 
-// The action row's real buttons, left to right. Our own button is excluded.
+// The action row's tappable elements, left to right.
+//
+// Counting only direct UIControl children finds one button: Instagram wraps like
+// and comment in IGUFIButtonWithCountsView containers, which are plain views. A
+// subview therefore counts as a control if it *is* one or *contains* one.
+static BOOL SCIContainsControl(UIView *view, NSInteger depth) {
+    if ([view isKindOfClass:[UIControl class]]) return YES;
+    if (depth > 3) return NO;
+
+    for (UIView *subview in view.subviews) {
+        if (SCIContainsControl(subview, depth + 1)) return YES;
+    }
+
+    return NO;
+}
+
 static NSArray<UIView *> *SCIRowControls(UIView *bar) {
     NSMutableArray<UIView *> *controls = [NSMutableArray array];
 
@@ -114,7 +129,7 @@ static NSArray<UIView *> *SCIRowControls(UIView *bar) {
         if (subview.tag == SCIInlineDownloadButtonTag) continue;
         if (subview.hidden || subview.alpha < 0.01) continue;
         if (CGRectIsEmpty(subview.frame)) continue;
-        if (![subview isKindOfClass:[UIControl class]]) continue;
+        if (!SCIContainsControl(subview, 0)) continue;
 
         [controls addObject:subview];
     }
@@ -133,6 +148,7 @@ static void SCILayoutInlineButton(UIView *bar, id target) {
     if (!button) {
         button = [UIButton buttonWithType:UIButtonTypeSystem];
         button.tag = SCIInlineDownloadButtonTag;
+        button.accessibilityIdentifier = @"albrhi-download-button";
         button.accessibilityLabel = SCILocalized(@"inline_download_title");
 
         UIImageSymbolConfiguration *config =
@@ -151,45 +167,40 @@ static void SCILayoutInlineButton(UIView *bar, id target) {
 
     NSArray<UIView *> *controls = SCIRowControls(bar);
 
-    // Nothing measurable yet — the row hasn't laid out. Stay hidden and wait for
-    // the next pass rather than drawing in the wrong place.
     if (!controls.count || CGRectIsEmpty(bar.bounds)) {
         button.hidden = YES;
         return;
     }
 
+    // The save button sits at the trailing edge; everything else is clustered at
+    // the leading edge. Slot in just inside whichever is rightmost.
     UIView *rightmost = controls.lastObject;
     CGRect reference = rightmost.frame;
-    CGFloat side = CGRectGetHeight(reference);
-    CGFloat gap = 16.0;
 
-    // Sit just inside the trailing-most control (the save button, when present).
+    CGFloat side = MAX(CGRectGetHeight(reference), 22.0);
+    CGFloat gap = 14.0;
     CGFloat x = CGRectGetMinX(reference) - side - gap;
 
-    // If that would overlap the control to its left, go outboard of the row's
-    // leading cluster instead — never on top of another button.
+    // Would collide with the control to its left — go outboard of the row instead.
     if (controls.count > 1) {
         UIView *neighbour = controls[controls.count - 2];
 
-        if (x < CGRectGetMaxX(neighbour.frame) + 8.0) {
-            x = CGRectGetMaxX(rightmost.frame) + gap;
+        if (x < CGRectGetMaxX(neighbour.frame) + 6.0) {
+            x = CGRectGetMaxX(reference) + gap;
         }
     }
 
-    // Last resort: pin inside the row's trailing edge.
     if (x < 0 || x + side > CGRectGetWidth(bar.bounds)) {
         x = CGRectGetWidth(bar.bounds) - side - gap;
     }
 
     button.hidden = (x < 0);
-    button.tintColor = rightmost.tintColor ?: [UIColor labelColor];
-    button.frame = CGRectMake(x, CGRectGetMinY(reference), side, side);
+    button.tintColor = [UIColor labelColor];
+    button.frame = CGRectMake(x, CGRectGetMidY(reference) - side / 2.0, side, side);
 
     [bar bringSubviewToFront:button];
 }
 
-// Logged once per action-row class so a build where the button fails to appear
-// can be diagnosed from the device console without guessing.
 static void SCILogRowOnce(UIView *bar) {
     static NSMutableSet<NSString *> *seen = nil;
     static dispatch_once_t onceToken;
@@ -218,8 +229,9 @@ static void SCIRefreshInlineButton(UIView *bar, id target) {
     SCILayoutInlineButton(bar, target);
 }
 
-// Older Objective-C action row
-%hook IGUFIButtonBarView
+// The row Instagram 410 renders, confirmed by scanning the live hierarchy rather
+// than by reading class names out of a dump.
+%hook IGUFIInteractionCountsView
 
 - (void)layoutSubviews {
     %orig;
@@ -235,8 +247,8 @@ static void SCIRefreshInlineButton(UIView *bar, id target) {
 
 %end
 
-// Current Swift action row
-%hook IGSocialUFIView.IGSocialUFIView
+// Older Objective-C action row, kept for builds that still use it.
+%hook IGUFIButtonBarView
 
 - (void)layoutSubviews {
     %orig;
