@@ -56,7 +56,7 @@
 + (NSURL *)getPhotoUrlForMedia:(IGMedia *)media;
 
 + (NSURL *)getVideoUrl:(IGVideo *)video;
-+ (NSURL *)getVideoUrlForMedia:(IGMedia *)media;
++ (NSURL *)getVideoUrlForMedia:(id)media;
 + (NSURL *)getAudioUrlForMedia:(id)mediaLike;
 + (NSArray<NSDictionary *> *)availableVideoQualitiesForVideo:(IGVideo *)video;
 

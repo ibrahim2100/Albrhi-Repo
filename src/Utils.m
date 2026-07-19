@@ -371,10 +371,11 @@
 
     return nil;
 }
-+ (NSURL *)getVideoUrlForMedia:(IGMedia *)media {
++ (NSURL *)getVideoUrlForMedia:(id)media {
     if (!media) return nil;
 
-    IGVideo *video = media.video;
+    IGVideo *video = nil;
+    @try { video = [media valueForKey:@"video"]; } @catch (__unused id e) {}
     if (!video) return nil;
 
     return [SCIUtils getVideoUrl:video];
