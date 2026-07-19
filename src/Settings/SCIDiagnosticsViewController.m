@@ -8,6 +8,7 @@ static NSMutableArray<NSString *> *_actionRowClasses = nil;
 static NSInteger _lastQualityCount = -1;
 static NSString *_lastVideoClass = nil;
 static NSInteger _storySeenIntercepts = 0;
+static NSArray<NSString *> *_scanResults = nil;
 
 @implementation SCIDiagnostics
 
@@ -40,6 +41,71 @@ static NSInteger _storySeenIntercepts = 0;
     _storySeenIntercepts += 1;
 }
 
+// MARK: - Live hierarchy scan
+
++ (void)collectCandidatesIn:(UIView *)view into:(NSMutableArray<NSString *> *)out depth:(NSInteger)depth {
+    if (!view || depth > 40) return;
+
+    NSInteger controlCount = 0;
+    NSMutableArray<NSString *> *identifiers = [NSMutableArray array];
+
+    for (UIView *subview in view.subviews) {
+        if (![subview isKindOfClass:[UIControl class]]) continue;
+        if (subview.hidden || CGRectIsEmpty(subview.frame)) continue;
+
+        controlCount++;
+
+        if ([subview.accessibilityIdentifier length]) {
+            [identifiers addObject:subview.accessibilityIdentifier];
+        }
+    }
+
+    // A post action row is a short, wide strip holding three or more buttons.
+    BOOL looksLikeRow = (controlCount >= 3)
+        && (CGRectGetHeight(view.bounds) < 120.0)
+        && (CGRectGetWidth(view.bounds) > 180.0);
+
+    // Or anything explicitly labelled with the buttons we care about.
+    BOOL hasTellingIdentifier = NO;
+    for (NSString *identifier in identifiers) {
+        NSString *lower = identifier.lowercaseString;
+
+        if ([lower containsString:@"like"] || [lower containsString:@"save"] || [lower containsString:@"comment"]) {
+            hasTellingIdentifier = YES;
+            break;
+        }
+    }
+
+    if (looksLikeRow || hasTellingIdentifier) {
+        NSString *entry = [NSString stringWithFormat:@"%@ — %ld controls%@",
+                           NSStringFromClass([view class]),
+                           (long)controlCount,
+                           identifiers.count ? [NSString stringWithFormat:@" [%@]", [identifiers componentsJoinedByString:@", "]] : @""];
+
+        if (![out containsObject:entry]) [out addObject:entry];
+    }
+
+    for (UIView *subview in view.subviews) {
+        [self collectCandidatesIn:subview into:out depth:depth + 1];
+    }
+}
+
++ (NSArray<NSString *> *)scanForActionRowCandidates {
+    NSMutableArray<NSString *> *out = [NSMutableArray array];
+
+    for (UIWindow *window in [UIApplication sharedApplication].windows) {
+        // Skip the settings sheet itself — it is full of controls and would drown
+        // the result in noise.
+        if (window.rootViewController.presentedViewController) {
+            [self collectCandidatesIn:window.rootViewController.view into:out depth:0];
+        } else {
+            [self collectCandidatesIn:window into:out depth:0];
+        }
+    }
+
+    return out;
+}
+
 @end
 
 @implementation SCIDiagnosticsViewController
@@ -54,11 +120,16 @@ static NSInteger _storySeenIntercepts = 0;
     self.title = SCILocalized(@"diag_title");
     self.view.tintColor = [SCIUtils SCIColor_Primary];
 
-    self.navigationItem.rightBarButtonItem =
+    self.navigationItem.rightBarButtonItems = @[
         [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"doc.on.doc"]
                                          style:UIBarButtonItemStylePlain
                                         target:self
-                                        action:@selector(copyReport)];
+                                        action:@selector(copyReport)],
+        [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"magnifyingglass"]
+                                         style:UIBarButtonItemStylePlain
+                                        target:self
+                                        action:@selector(runScan)]
+    ];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -118,6 +189,12 @@ static NSInteger _storySeenIntercepts = 0;
         qualityOK = YES;
     }
 
+    [rows addObject:@{
+        @"title": SCILocalized(@"inline_download_title"),
+        @"detail": [SCIUtils getBoolPref:@"inline_download_button"] ? SCILocalized(@"diag_on") : SCILocalized(@"diag_off"),
+        @"ok": @([SCIUtils getBoolPref:@"inline_download_button"])
+    }];
+
     return @[
         @{@"header": SCILocalized(@"diag_section_classes"), @"rows": rows},
         @{@"header": SCILocalized(@"diag_section_attached"), @"rows": attached},
@@ -130,6 +207,7 @@ static NSInteger _storySeenIntercepts = 0;
               @"detail": [SCIUtils getBoolPref:@"show_quality_picker"] ? SCILocalized(@"diag_on") : SCILocalized(@"diag_off"),
               @"ok": @([SCIUtils getBoolPref:@"show_quality_picker"])}
         ]},
+        @{@"header": SCILocalized(@"diag_section_scan"), @"rows": [self scanRows]},
         @{@"header": SCILocalized(@"diag_section_stories"), @"rows": @[
             @{@"title": SCILocalized(@"diag_story_intercepts"),
               @"detail": [NSString stringWithFormat:@"%ld", (long)_storySeenIntercepts],
@@ -141,6 +219,27 @@ static NSInteger _storySeenIntercepts = 0;
             @{@"title": @"iOS", @"detail": [[UIDevice currentDevice] systemVersion], @"ok": @YES}
         ]}
     ];
+}
+
+- (NSArray<NSDictionary *> *)scanRows {
+    if (!_scanResults) {
+        return @[@{@"title": SCILocalized(@"diag_scan_prompt"),
+                   @"detail": SCILocalized(@"diag_scan_hint"),
+                   @"ok": @NO}];
+    }
+
+    if (!_scanResults.count) {
+        return @[@{@"title": SCILocalized(@"diag_scan_empty"),
+                   @"detail": SCILocalized(@"diag_scan_hint"),
+                   @"ok": @NO}];
+    }
+
+    NSMutableArray<NSDictionary *> *rows = [NSMutableArray array];
+    for (NSString *entry in _scanResults) {
+        [rows addObject:@{@"title": entry, @"detail": @"", @"ok": @YES}];
+    }
+
+    return rows;
 }
 
 // MARK: - UITableViewDataSource
@@ -176,6 +275,13 @@ static NSInteger _storySeenIntercepts = 0;
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
 
     return cell;
+}
+
+- (void)runScan {
+    _scanResults = [SCIDiagnostics scanForActionRowCandidates];
+
+    [[[UINotificationFeedbackGenerator alloc] init] notificationOccurred:UINotificationFeedbackTypeSuccess];
+    [self.tableView reloadData];
 }
 
 // MARK: - Report

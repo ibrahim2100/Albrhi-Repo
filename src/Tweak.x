@@ -37,6 +37,9 @@ BOOL dmVisualMsgsViewedButtonEnabled = false;
         @"dl_max_concurrent": @(3),
         @"show_quality_picker": @(YES),
         @"story_seen_button": @(YES),
+        // Queue downloads land in Photos. Without this the queue fetches the file
+        // and leaves it sitting in the Download Center, which reads as a failure.
+        @"dw_save_to_camera": @(YES),
         @"dw_feed_posts": @(YES),
         @"dw_reels": @(YES),
         @"dw_story": @(YES),

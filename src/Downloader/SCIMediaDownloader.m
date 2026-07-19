@@ -12,10 +12,49 @@
 + (NSArray<NSDictionary *> *)qualitiesForVideo:(IGVideo *)video {
     if (!video) return @[];
 
-    // Primary shape on current builds: IGAPIVideoVersion objects.
-    NSArray<NSDictionary *> *versions = [SCIUtils availableVideoQualitiesForVideo:video];
+    // Read IGAPIVideoVersion directly rather than through SCIUtils, because the
+    // bitrate matters: Instagram commonly ships several renditions at the *same*
+    // resolution and different bandwidths. Collapsing those into one — which an
+    // earlier version did, by labelling on resolution alone — left the picker
+    // with a single entry and nothing to offer.
+    NSMutableArray<NSDictionary *> *out = [NSMutableArray array];
 
-    NSMutableArray<NSDictionary *> *out = [[self deduplicated:versions] mutableCopy];
+    @try {
+        if ([video respondsToSelector:@selector(videoVersions)]) {
+            id versions = [video performSelector:@selector(videoVersions)];
+
+            for (id version in versions) {
+                NSString *urlString = [SCIUtils urlStringFromVersion:version];
+                if (![urlString length]) continue;
+
+                long long w = [SCIUtils qualityValueFrom:version key:@"width"];
+                long long h = [SCIUtils qualityValueFrom:version key:@"height"];
+                long long bandwidth = [SCIUtils qualityValueFrom:version key:@"bandwidth"];
+
+                [out addObject:@{
+                    @"label": [self labelForWidth:w height:h bandwidth:bandwidth],
+                    @"url": [NSURL URLWithString:urlString],
+                    @"area": @(w * h),
+                    @"bandwidth": @(bandwidth)
+                }];
+            }
+        }
+    } @catch (__unused id e) {}
+
+    // Best first: resolution, then bitrate.
+    [out sortUsingComparator:^NSComparisonResult(NSDictionary *a, NSDictionary *b) {
+        NSComparisonResult byArea = [b[@"area"] compare:a[@"area"]];
+        if (byArea != NSOrderedSame) return byArea;
+
+        return [b[@"bandwidth"] compare:a[@"bandwidth"]];
+    }];
+
+    out = [[self deduplicated:out] mutableCopy];
+    if (out.count > 1) return out;
+
+    // Fall back to the generic helper if the direct read found nothing usable.
+    NSArray<NSDictionary *> *helperVersions = [self deduplicated:[SCIUtils availableVideoQualitiesForVideo:video]];
+    if (helperVersions.count > out.count) out = [helperVersions mutableCopy];
     if (out.count > 1) return out;
 
     // Older builds expose an ascending array of {url, width, height} dictionaries.
@@ -55,18 +94,30 @@
     return out;
 }
 
-/// Instagram often lists the same rendition twice under different CDN hosts;
-/// offering "1080×1920" three times makes the picker look broken.
+/// "1080×1920 · 4.2 Mbps", or just the resolution when no bitrate is reported.
++ (NSString *)labelForWidth:(long long)width height:(long long)height bandwidth:(long long)bandwidth {
+    if (width <= 0 || height <= 0) return SCILocalized(@"quality_unknown");
+
+    NSString *resolution = [NSString stringWithFormat:@"%lld×%lld", width, height];
+    if (bandwidth <= 0) return resolution;
+
+    return [NSString stringWithFormat:@"%@ · %.1f Mbps", resolution, bandwidth / 1000000.0];
+}
+
+/// Deduplicates on the URL, not the label. Two renditions can legitimately share a
+/// resolution while differing in bitrate, and both are real choices.
 + (NSArray<NSDictionary *> *)deduplicated:(NSArray<NSDictionary *> *)qualities {
     NSMutableArray<NSDictionary *> *out = [NSMutableArray array];
-    NSMutableSet<NSString *> *seenLabels = [NSMutableSet set];
+    NSMutableSet<NSString *> *seenURLs = [NSMutableSet set];
 
     for (NSDictionary *quality in qualities) {
-        NSString *label = quality[@"label"];
-        if (![label length] || !quality[@"url"]) continue;
-        if ([seenLabels containsObject:label]) continue;
+        NSURL *url = quality[@"url"];
+        if (![quality[@"label"] length] || !url) continue;
 
-        [seenLabels addObject:label];
+        NSString *key = url.absoluteString ?: @"";
+        if ([seenURLs containsObject:key]) continue;
+
+        [seenURLs addObject:key];
         [out addObject:quality];
     }
 

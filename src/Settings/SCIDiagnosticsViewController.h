@@ -33,6 +33,14 @@ NS_ASSUME_NONNULL_BEGIN
 /// Called when the story seen-state uploader is intercepted.
 + (void)recordStorySeenIntercept;
 
+/// Walks the live view hierarchy behind the settings sheet looking for anything
+/// shaped like a post action row — a view holding several buttons in a line.
+///
+/// Class-dump names tell you what *exists* in the binary, not what Instagram
+/// actually renders. This reports what is on screen right now, which is the only
+/// way to know where the download button belongs.
++ (NSArray<NSString *> *)scanForActionRowCandidates;
+
 @end
 
 NS_ASSUME_NONNULL_END

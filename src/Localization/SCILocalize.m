@@ -193,6 +193,10 @@ static NSDictionary *_arTable = nil;
         @"diag_off": @"Off",
         @"diag_story_intercepts": @"Seen receipts blocked",
         @"diag_copied": @"Report copied",
+        @"diag_section_scan": @"Live screen scan",
+        @"diag_scan_prompt": @"Not scanned yet",
+        @"diag_scan_hint": @"Open a feed post behind this sheet, then tap the magnifier above",
+        @"diag_scan_empty": @"Nothing button-row shaped on screen",
 
         // Story seen button
         @"story_seen_button_title": @"Mark-as-seen button",
@@ -431,6 +435,10 @@ static NSDictionary *_arTable = nil;
         @"diag_off": @"مطفأ",
         @"diag_story_intercepts": @"إشعارات مشاهدة مُوقَفة",
         @"diag_copied": @"تم نسخ التقرير",
+        @"diag_section_scan": @"مسح الشاشة الحيّة",
+        @"diag_scan_prompt": @"لم يُجرَ المسح بعد",
+        @"diag_scan_hint": @"افتح منشورًا خلف هذه الصفحة، ثم اضغط زر العدسة أعلاه",
+        @"diag_scan_empty": @"لا يوجد ما يشبه شريط أزرار على الشاشة",
 
         // زر مشاهدة القصة
         @"story_seen_button_title": @"زر تعليم كمشاهَد",
