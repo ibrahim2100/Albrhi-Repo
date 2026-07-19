@@ -1,58 +1,34 @@
 #import "../../Utils.h"
 
-#define QUICKSNAPENABLED() do { _Bool __o = %orig; return [SCIUtils getBoolPref:@"disable_instants_creation"] ? false : __o; } while (0)
+// Helper: returns false when the feature is enabled, otherwise the original value.
+static inline _Bool _quicksnapValue(_Bool orig) {
+    return [SCIUtils getBoolPref:@"disable_instants_creation"] ? false : orig;
+}
 
 // Demangled name: IGQuickSnapExperimentation.IGQuickSnapExperimentationHelper
 %hook _TtC26IGQuickSnapExperimentation32IGQuickSnapExperimentationHelper
 + (_Bool)isQuicksnapEnabled:(id)enabled {
-    QUICKSNAPENABLED();
+    return _quicksnapValue(%orig);
 }
 + (_Bool)isQuicksnapEnabledInFeed:(id)feed {
-    QUICKSNAPENABLED();
+    return _quicksnapValue(%orig);
 }
 + (_Bool)isQuicksnapEnabledInInbox:(id)inbox {
-    QUICKSNAPENABLED();
+    return _quicksnapValue(%orig);
 }
 + (_Bool)isQuicksnapEnabledInStories:(id)stories {
-    QUICKSNAPENABLED();
+    return _quicksnapValue(%orig);
 }
 + (_Bool)isQuicksnapEnabledInNotesTray:(id)tray {
-    QUICKSNAPENABLED();
+    return _quicksnapValue(%orig);
 }
 + (_Bool)isQuicksnapEnabledInNotesTrayWithPeek:(id)peek {
-    QUICKSNAPENABLED();
+    return _quicksnapValue(%orig);
 }
 + (_Bool)isQuicksnapEnabledInNotesTrayWithPog:(id)pog {
-    QUICKSNAPENABLED();
+    return _quicksnapValue(%orig);
 }
 + (_Bool)isQuicksnapNotesTrayEmptyPogEnabled:(id)enabled {
-    QUICKSNAPENABLED();
+    return _quicksnapValue(%orig);
 }
-// + (_Bool)isStoriesSpringEnabled:(id)enabled {
-//     return true;
-// }
-// + (_Bool)shouldEnableScreenshotBlocking:(id)blocking {
-//     return false;
-// }
-// + (_Bool)areFiltersEnabled:(id)enabled {
-//     return true;
-// }
-// + (_Bool)isBottomsheetCustomAudienceEnabled:(id)enabled {
-//     return true;
-// }
-// + (_Bool)isVideoCaptureEnabled:(id)enabled {
-//     return true;
-// }
 %end
-
-// %hook IGDirectNotesTrayRowCell
-// - (_Bool)isQuicksnapPeekVisible {
-//     return true;
-// }
-// %end
-
-// %hook IGDirectNotesTrayRowSectionController
-// - (_Bool)isQuicksnapPeekVisible {
-//     return true;
-// }
-// %end
