@@ -2,6 +2,7 @@
 #import "InstagramHeaders.h"
 #import "Tweak.h"
 #import "Utils.h"
+#import "Onboarding/SCIWhatsNewViewController.h"
 
 ///////////////////////////////////////////////////////////
 
@@ -15,7 +16,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.0.0";  // Albrhi
+NSString *SCIVersionString = @"v3.0.1";  // Albrhi
 
 // Variables that work across features
 BOOL dmVisualMsgsViewedButtonEnabled = false;
@@ -34,6 +35,8 @@ BOOL dmVisualMsgsViewedButtonEnabled = false;
         @"inline_download_button": @(YES),
         @"dl_use_queue": @(YES),
         @"dl_max_concurrent": @(3),
+        @"show_quality_picker": @(YES),
+        @"story_seen_button": @(YES),
         @"dw_feed_posts": @(YES),
         @"dw_reels": @(YES),
         @"dw_story": @(YES),
@@ -64,21 +67,19 @@ BOOL dmVisualMsgsViewedButtonEnabled = false;
 - (_Bool)application:(UIApplication *)application didFinishLaunchingWithOptions:(id)arg2 {
     %orig;
 
-    // Open settings for first-time users
-    double openDelay = [SCIUtils getBoolPref:@"tweak_settings_app_launch"] ? 0.0 : 5.0;
-
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(openDelay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        if (
-            ![[[NSUserDefaults standardUserDefaults] objectForKey:@"SCInstaFirstRun"] isEqualToString:SCIVersionString]
-            || [SCIUtils getBoolPref:@"tweak_settings_app_launch"]
-        ) {
-            NSLog(@"[SCInsta] First run, initializing");
-
-            // Display settings modal on screen
-            NSLog(@"[SCInsta] Displaying SCInsta first-time settings modal");
-            [SCIUtils showSettingsVC:[self window]];
-        }
+    // Welcome screen on first install and after every update. Delayed so Instagram
+    // has finished building its own UI — presenting into a half-built hierarchy
+    // silently fails.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [SCIWhatsNewViewController presentIfNeededFromWindow:[self window]];
     });
+
+    // Opt-in: jump straight into settings on every launch.
+    if ([SCIUtils getBoolPref:@"tweak_settings_app_launch"]) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [SCIUtils showSettingsVC:[self window]];
+        });
+    }
 
     NSLog(@"[SCInsta] Cleaning cache...");
     [SCIUtils cleanCache];

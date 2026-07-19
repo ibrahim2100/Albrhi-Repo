@@ -2,6 +2,7 @@
 #import "../../Utils.h"
 #import "../../Downloader/SCIMediaDownloader.h"
 #import "../../Localization/SCILocalize.h"
+#import "../../Settings/SCIDiagnosticsViewController.h"
 
 ///
 /// Inline download button
@@ -199,8 +200,12 @@ static void SCILogRowOnce(UIView *bar) {
 
     [seen addObject:className];
 
-    NSLog(@"[Albrhi] Inline download: attached to %@ (%lu controls, bounds %@)",
-          className, (unsigned long)SCIRowControls(bar).count, NSStringFromCGRect(bar.bounds));
+    NSInteger controlCount = (NSInteger)SCIRowControls(bar).count;
+
+    [SCIDiagnostics recordActionRowClass:className controlCount:controlCount];
+
+    NSLog(@"[Albrhi] Inline download: attached to %@ (%ld controls, bounds %@)",
+          className, (long)controlCount, NSStringFromCGRect(bar.bounds));
 }
 
 static void SCIRefreshInlineButton(UIView *bar, id target) {

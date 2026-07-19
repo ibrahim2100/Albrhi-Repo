@@ -3,6 +3,7 @@
 #import "Queue/SCIDownloadQueue.h"
 #import "../Utils.h"
 #import "../Localization/SCILocalize.h"
+#import "../Settings/SCIDiagnosticsViewController.h"
 
 @implementation SCIMediaDownloader
 
@@ -80,9 +81,14 @@
         return;
     }
 
-    NSArray<NSDictionary *> *qualities = [SCIUtils getBoolPref:@"show_quality_picker"]
-        ? [self qualitiesForVideo:video]
-        : nil;
+    NSArray<NSDictionary *> *qualities = [self qualitiesForVideo:video];
+
+    // Recorded even when the picker is off, so diagnostics can distinguish
+    // "no renditions found" from "feature disabled".
+    [SCIDiagnostics recordQualityCount:(NSInteger)qualities.count
+                         forVideoClass:NSStringFromClass([video class])];
+
+    if (![SCIUtils getBoolPref:@"show_quality_picker"]) qualities = nil;
 
     // Only worth asking when there's an actual choice.
     if (qualities.count > 1) {

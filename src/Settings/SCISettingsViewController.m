@@ -79,26 +79,9 @@ static char rowStaticRef[] = "row";
     [self.view addSubview:self.tableView];
 }
 
-- (void)viewWillDisappear:(BOOL)animated {
-    [super viewWillDisappear:animated];
-    
-    if (![[[NSUserDefaults standardUserDefaults] objectForKey:@"SCInstaFirstRun"] isEqualToString:SCIVersionString]) {
-        BOOL ar = [SCILocalize isRTL];
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:(ar ? @"إعدادات Albrhi" : @"Albrhi Settings")
-                                                                       message:(ar ? @"لفتح إعدادات Albrhi لاحقًا: اضغط مطوّلًا على الخطوط الثلاثة أعلى يمين صفحة ملفك الشخصي." : @"In the future: Hold down on the three lines at the top right of your profile page, to re-open Albrhi settings.")
-                                                                preferredStyle:UIAlertControllerStyleAlert];
-        
-        [alert addAction:[UIAlertAction actionWithTitle:(ar ? @"فهمت!" : @"I understand!")
-                                                  style:UIAlertActionStyleDefault
-                                                handler:nil]];
-        
-        UIViewController *presenter = self.presentingViewController;
-        [presenter presentViewController:alert animated:YES completion:nil];
-        
-        // Done with first-time setup for this version
-        [[NSUserDefaults standardUserDefaults] setValue:SCIVersionString forKey:@"SCInstaFirstRun"];
-    }
-}
+// The "hold ☰ to reopen settings" alert that used to fire here is now a row on the
+// welcome screen, which is a better place to say it and doesn't ambush the user on
+// the way out.
 
 // MARK: - UITableViewDataSource
 

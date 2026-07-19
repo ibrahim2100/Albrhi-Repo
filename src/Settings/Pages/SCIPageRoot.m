@@ -1,5 +1,7 @@
 #import "../SCISettingsRegistry.h"
 #import "../TweakSettings.h"
+#import "../../Onboarding/SCIWhatsNewViewController.h"
+#import "../SCIDiagnosticsViewController.h"
 
 ///
 /// Root-level sections: the things that must be reachable without drilling in,
@@ -53,6 +55,15 @@
                                                icon:[SCISymbol symbolWithName:@"ladybug"]
                                         navSections:@[
                     @{
+                        @"header": SCILocalized(@"diag_title"),
+                        @"rows": @[
+                            [SCISetting navigationCellWithTitle:SCILocalized(@"diag_title")
+                                                       subtitle:SCILocalized(@"diag_sub")
+                                                           icon:[SCISymbol symbolWithName:@"stethoscope" color:[UIColor systemTealColor] size:20.0]
+                                                 viewController:[[SCIDiagnosticsViewController alloc] init]]
+                        ]
+                    },
+                    @{
                         @"header": @"FLEX",
                         @"rows": @[
                             [SCISetting switchCellWithTitle:@"Enable FLEX gesture" subtitle:@"Allows you to hold 5 fingers on the screen to open the FLEX explorer" defaultsKey:@"flex_instagram"],
@@ -65,10 +76,17 @@
                         @"rows": @[
                             [SCISetting switchCellWithTitle:SCILocalized(@"quick_access_title") subtitle:SCILocalized(@"quick_access_sub") defaultsKey:@"settings_shortcut" requiresRestart:YES],
                             [SCISetting switchCellWithTitle:SCILocalized(@"open_on_launch_title") subtitle:@"" defaultsKey:@"tweak_settings_app_launch"],
+                            [SCISetting buttonCellWithTitle:SCILocalized(@"wn_show_again")
+                                                   subtitle:@""
+                                                       icon:[SCISymbol symbolWithName:@"sparkles"]
+                                                     action:^{
+                                [SCIWhatsNewViewController presentFromWindow:nil];
+                            }],
                             [SCISetting buttonCellWithTitle:SCILocalized(@"reset_first_run_title")
                                                    subtitle:@""
                                                        icon:nil
                                                      action:^{
+                                [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"albrhi_last_seen_version"];
                                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"SCInstaFirstRun"];
                                 [SCIUtils showRestartConfirmation];
                             }]

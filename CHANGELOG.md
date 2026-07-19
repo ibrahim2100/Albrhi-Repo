@@ -1,5 +1,27 @@
 # Albrhi Changelog
 
+## v3.0.1
+
+**Fixes**
+- **Quality picker now actually runs.** `show_quality_picker` was never registered as a
+  default, so it sat off for everyone regardless of the toggle. It now defaults on.
+- Every download path — feed, reels, stories and the inline button — routes through one
+  coordinator, so the picker applies everywhere instead of feed videos only.
+- Quality list falls back to `sortedVideoURLsBySize` on builds without `videoVersions`, and
+  duplicate renditions served from different CDNs are collapsed.
+
+**New**
+- **Welcome / What's New screen** on first install and after every update.
+- **Mark-as-seen button** — an eye toggle in the story viewer. Off means invisible viewing as
+  before; on means the story you're watching registers as seen.
+- **Diagnostics page** (Settings → Debug) reporting which action-row classes exist in your
+  Instagram build, where the download button attached, how many renditions the last video
+  offered, and how many seen receipts were blocked. Copyable as a report.
+
+**Known issues**
+- The inline download button still does not appear on some builds. The diagnostics page exists
+  to identify which class the action row uses on the affected device.
+
 ## v3.0.0 — Foundation rebuild
 
 **Download Center**
