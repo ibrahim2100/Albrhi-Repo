@@ -147,25 +147,40 @@ static void SCIDownloadMedia(id media, UIView *anchorView) {
     [delegate downloadFileWithURL:url fileExtension:extension hudLabel:nil];
 }
 
-%hook IGUFIButtonBarView
 
-- (void)layoutSubviews {
-    %orig;
+///
+/// Injection
+///
+/// Instagram ships two action-row implementations: the older Objective-C
+/// `IGUFIButtonBarView` and the Swift `IGSocialUFIView`, and which one renders a
+/// given post varies by build and surface. Both are hooked, and the layout below
+/// deliberately avoids per-class accessors (`saveButton` exists on one and not
+/// the other) — it measures the row's own controls instead, so it survives
+/// whichever implementation is live.
+///
 
-    if (![SCIUtils getBoolPref:@"inline_download_button"]) {
-        // Tear the button down if the user turned the feature off mid-session.
-        UIView *existing = [self viewWithTag:SCIInlineDownloadButtonTag];
-        if (existing) [existing removeFromSuperview];
+// The action row's real buttons, left to right. Our own button is excluded.
+static NSArray<UIView *> *SCIRowControls(UIView *bar) {
+    NSMutableArray<UIView *> *controls = [NSMutableArray array];
 
-        return;
+    for (UIView *subview in bar.subviews) {
+        if (subview.tag == SCIInlineDownloadButtonTag) continue;
+        if (subview.hidden || subview.alpha < 0.01) continue;
+        if (CGRectIsEmpty(subview.frame)) continue;
+        if (![subview isKindOfClass:[UIControl class]]) continue;
+
+        [controls addObject:subview];
     }
 
-    [self sciLayoutInlineDownloadButton];
+    [controls sortUsingComparator:^NSComparisonResult(UIView *a, UIView *b) {
+        if (CGRectGetMinX(a.frame) == CGRectGetMinX(b.frame)) return NSOrderedSame;
+        return (CGRectGetMinX(a.frame) < CGRectGetMinX(b.frame)) ? NSOrderedAscending : NSOrderedDescending;
+    }];
+
+    return controls;
 }
 
-%new - (void)sciLayoutInlineDownloadButton {
-    UIView *bar = (UIView *)self;
-
+static void SCILayoutInlineButton(UIView *bar, id target) {
     UIButton *button = (UIButton *)[bar viewWithTag:SCIInlineDownloadButtonTag];
 
     if (!button) {
@@ -173,52 +188,109 @@ static void SCIDownloadMedia(id media, UIView *anchorView) {
         button.tag = SCIInlineDownloadButtonTag;
         button.accessibilityLabel = SCILocalized(@"inline_download_title");
 
-        UIImageSymbolConfiguration *symbolConfig =
+        UIImageSymbolConfiguration *config =
             [UIImageSymbolConfiguration configurationWithPointSize:20.0
                                                             weight:UIImageSymbolWeightRegular];
 
-        [button setImage:[UIImage systemImageNamed:@"arrow.down.circle" withConfiguration:symbolConfig]
+        [button setImage:[UIImage systemImageNamed:@"arrow.down.circle" withConfiguration:config]
                 forState:UIControlStateNormal];
 
-        [button addTarget:self
+        [button addTarget:target
                    action:@selector(sciInlineDownloadPressed:)
          forControlEvents:UIControlEventTouchUpInside];
 
         [bar addSubview:button];
     }
 
-    // Mirror the save button so spacing, size and tint stay native.
-    UIView *saveButton = nil;
-    @try { saveButton = [self saveButton]; } @catch (__unused id e) {}
+    NSArray<UIView *> *controls = SCIRowControls(bar);
 
-    CGFloat size = 24.0;
-    CGFloat spacing = 16.0;
-    CGRect frame;
-
-    if (saveButton && !saveButton.hidden && !CGRectIsEmpty(saveButton.frame)) {
-        CGRect saveFrame = saveButton.frame;
-        size = CGRectGetHeight(saveFrame);
-
-        frame = CGRectMake(CGRectGetMinX(saveFrame) - CGRectGetWidth(saveFrame) - spacing,
-                           CGRectGetMinY(saveFrame),
-                           CGRectGetWidth(saveFrame),
-                           size);
-
-        button.tintColor = saveButton.tintColor;
-    }
-    else {
-        // No save button on this post — sit at the trailing edge instead.
-        frame = CGRectMake(CGRectGetWidth(bar.bounds) - size - spacing,
-                           (CGRectGetHeight(bar.bounds) - size) / 2.0,
-                           size,
-                           size);
+    // Nothing measurable yet — the row hasn't laid out. Stay hidden and wait for
+    // the next pass rather than drawing in the wrong place.
+    if (!controls.count || CGRectIsEmpty(bar.bounds)) {
+        button.hidden = YES;
+        return;
     }
 
-    // Never draw outside the bar; a negative origin means the layout isn't ready yet.
-    button.hidden = (CGRectGetMinX(frame) < 0.0 || CGRectIsEmpty(bar.bounds));
-    button.frame = frame;
+    UIView *rightmost = controls.lastObject;
+    CGRect reference = rightmost.frame;
+    CGFloat side = CGRectGetHeight(reference);
+    CGFloat gap = 16.0;
+
+    // Sit just inside the trailing-most control (the save button, when present).
+    CGFloat x = CGRectGetMinX(reference) - side - gap;
+
+    // If that would overlap the control to its left, go outboard of the row's
+    // leading cluster instead — never on top of another button.
+    if (controls.count > 1) {
+        UIView *neighbour = controls[controls.count - 2];
+
+        if (x < CGRectGetMaxX(neighbour.frame) + 8.0) {
+            x = CGRectGetMaxX(rightmost.frame) + gap;
+        }
+    }
+
+    // Last resort: pin inside the row's trailing edge.
+    if (x < 0 || x + side > CGRectGetWidth(bar.bounds)) {
+        x = CGRectGetWidth(bar.bounds) - side - gap;
+    }
+
+    button.hidden = (x < 0);
+    button.tintColor = rightmost.tintColor ?: [UIColor labelColor];
+    button.frame = CGRectMake(x, CGRectGetMinY(reference), side, side);
 
     [bar bringSubviewToFront:button];
+}
+
+// Logged once per action-row class so a build where the button fails to appear
+// can be diagnosed from the device console without guessing.
+static void SCILogRowOnce(UIView *bar) {
+    static NSMutableSet<NSString *> *seen = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{ seen = [NSMutableSet set]; });
+
+    NSString *className = NSStringFromClass([bar class]);
+    if ([seen containsObject:className]) return;
+
+    [seen addObject:className];
+
+    NSLog(@"[Albrhi] Inline download: attached to %@ (%lu controls, bounds %@)",
+          className, (unsigned long)SCIRowControls(bar).count, NSStringFromCGRect(bar.bounds));
+}
+
+static void SCIRefreshInlineButton(UIView *bar, id target) {
+    if (![SCIUtils getBoolPref:@"inline_download_button"]) {
+        [[bar viewWithTag:SCIInlineDownloadButtonTag] removeFromSuperview];
+        return;
+    }
+
+    SCILogRowOnce(bar);
+    SCILayoutInlineButton(bar, target);
+}
+
+// Older Objective-C action row
+%hook IGUFIButtonBarView
+
+- (void)layoutSubviews {
+    %orig;
+
+    SCIRefreshInlineButton((UIView *)self, self);
+}
+
+%new - (void)sciInlineDownloadPressed:(UIButton *)sender {
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+
+    SCIDownloadMedia(SCIMediaForButtonBar((UIView *)self), sender);
+}
+
+%end
+
+// Current Swift action row
+%hook IGSocialUFIView.IGSocialUFIView
+
+- (void)layoutSubviews {
+    %orig;
+
+    SCIRefreshInlineButton((UIView *)self, self);
 }
 
 %new - (void)sciInlineDownloadPressed:(UIButton *)sender {

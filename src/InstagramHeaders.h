@@ -170,11 +170,11 @@
 - (void)addLongPressGestureRecognizer; // new
 @end
 
-// Post action row (like · comment · send · … · save). Hosts the inline download button.
+// Post action row (like · comment · send · … · save). Hosts the inline download
+// button. Instagram also ships a Swift equivalent, IGSocialUFIView, which is
+// hooked by name in InlineDownloadButton.xm — it has no header here because a
+// dotted Swift class name isn't expressible as an @interface.
 @interface IGUFIButtonBarView : UIView
-- (UIView *)saveButton;
-
-- (void)sciLayoutInlineDownloadButton;      // new
 - (void)sciInlineDownloadPressed:(id)sender; // new
 @end
 
