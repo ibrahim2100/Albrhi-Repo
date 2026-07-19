@@ -156,7 +156,13 @@
 + (NSString *)manifestStringFromValue:(id)value {
     if ([value isKindOfClass:[NSString class]]) return [value length] ? value : nil;
 
-    for (NSString *inner in @[@"xmlString", @"manifest", @"string", @"dashManifest", @"value"]) {
+    // IG 410 exposes -dashManifestData, which hands back the raw XML as NSData.
+    if ([value isKindOfClass:[NSData class]]) {
+        NSString *s = [[NSString alloc] initWithData:value encoding:NSUTF8StringEncoding];
+        return [s length] ? s : nil;
+    }
+
+    for (NSString *inner in @[@"xmlString", @"manifest", @"string", @"dashManifest", @"data", @"value"]) {
         @try {
             if ([value respondsToSelector:NSSelectorFromString(inner)]) {
                 id s = [value valueForKey:inner];
@@ -174,7 +180,7 @@
 + (NSString *)dashXMLForVideo:(IGVideo *)video candidates:(NSMutableArray<NSString *> *)candidates {
     if (!video) return nil;
 
-    for (NSString *sel in @[@"videoDashManifest", @"dashManifest", @"videoDashManifestXML", @"videoDashManifestXml", @"dashPlaybackManifest"]) {
+    for (NSString *sel in @[@"dashManifestData", @"videoDashManifest", @"dashManifest", @"videoDashManifestXML", @"videoDashManifestXml", @"dashPlaybackManifest"]) {
         @try {
             if ([video respondsToSelector:NSSelectorFromString(sel)]) {
                 NSString *s = [self manifestStringFromValue:[video valueForKey:sel]];

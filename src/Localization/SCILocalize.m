@@ -396,6 +396,9 @@ static NSDictionary *_arTable = nil;
         // Story download button
         @"p_story_dl_title": @"Story download button",
         @"p_story_dl_sub": @"Shows a download button in the story viewer to save the current story",
+        // DM media save button
+        @"p_dm_save_t": @"Save DM photos & videos",
+        @"p_dm_save_s": @"Adds a save button when you open a photo or video in DMs, and always allows saving",
     };
 
     _arTable = @{
@@ -746,6 +749,9 @@ static NSDictionary *_arTable = nil;
         // زر تحميل القصة
         @"p_story_dl_title": @"زر تحميل القصة",
         @"p_story_dl_sub": @"يظهر زر تحميل في عارض القصص لحفظ القصة الحالية",
+        // زر حفظ وسائط الخاص
+        @"p_dm_save_t": @"حفظ صور وفيديوهات الخاص",
+        @"p_dm_save_s": @"يضيف زر حفظ عند فتح صورة أو فيديو في الرسائل، ويسمح بالحفظ دائمًا",
     };
 }
 

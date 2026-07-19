@@ -1,5 +1,25 @@
 # Albrhi Changelog
 
+## v3.0.14
+
+**New**
+- **Save DM photos & videos.** Opening a photo or video in DMs now shows a Save
+  button (and always allows saving, even when the sender disabled it). Saves route
+  through the normal downloader, so the quality picker applies. Toggle under
+  Stories & messages.
+
+## v3.0.13
+
+**Fixes**
+- **Quality picker actually works now.** IG 410 keeps the resolution ladder in
+  `-[IGVideo dashManifestData]`, which returns the manifest as **NSData**; Albrhi
+  now decodes it and lists every resolution (1080p, etc.). Confirmed against the
+  410 class dump.
+
+**Changes**
+- Follow-back badge moved to the right of the avatar, by the stats row (near the
+  followers count).
+
 ## v3.0.12
 
 **New**

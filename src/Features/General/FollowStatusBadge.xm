@@ -68,11 +68,12 @@ static const CGFloat SCIFollowBadgeMinAvatarWidth = 70.0;
     CGFloat width = badge.intrinsicContentSize.width + 20.0;
     CGFloat height = 18.0;
 
-    // Sit centered fully below the avatar, in the host's coordinate space — this
-    // lands in the stats/name area, roughly under the followers count.
+    // The profile header is Swift and hard to hook precisely, so anchor to the
+    // avatar (reliable ObjC) and sit to its right, just below the stats row — i.e.
+    // roughly under the followers count.
     CGRect avatarInHost = [self convertRect:self.bounds toView:host];
-    CGRect frame = CGRectMake(CGRectGetMidX(avatarInHost) - width / 2.0,
-                              CGRectGetMaxY(avatarInHost) + 6.0,
+    CGRect frame = CGRectMake(CGRectGetMaxX(avatarInHost) + 14.0,
+                              CGRectGetMidY(avatarInHost) + 12.0,
                               width, height);
     badge.frame = frame;
 

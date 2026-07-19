@@ -249,6 +249,13 @@
 @interface IGDirectVisualMessageViewerController : UIViewController
 @end
 
+// Full-screen viewer for regular photos/videos sent in DMs (IG 410). Its init hands
+// over the photo and video objects and an `allowSavingMedia` flag we can force on.
+@interface IGDirectMediaViewerViewController : UIViewController
+- (void)sciAddDMSaveButton;         // new
+- (void)sciSaveDMMedia:(id)sender;  // new
+@end
+
 @interface IGDirectVisualMessageViewerViewModeAwareDataSource : NSObject
 @end
 
