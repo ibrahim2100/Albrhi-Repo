@@ -10,6 +10,8 @@ static NSString *_lastVideoClass = nil;
 static NSInteger _storySeenIntercepts = 0;
 static NSArray<NSString *> *_scanResults = nil;
 static NSInteger _lastRawVersionCount = -1;
+static NSString *_lastButtonMediaClass = nil;
+static BOOL _buttonEverPressed = NO;
 
 @implementation SCIDiagnostics
 
@@ -40,6 +42,11 @@ static NSInteger _lastRawVersionCount = -1;
 
 + (void)recordRawVersionCount:(NSInteger)count {
     _lastRawVersionCount = count;
+}
+
++ (void)recordButtonMediaClass:(NSString *)className {
+    _buttonEverPressed = YES;
+    _lastButtonMediaClass = [className copy];
 }
 
 + (void)recordStorySeenIntercept {
@@ -172,7 +179,14 @@ static NSInteger _lastRawVersionCount = -1;
         }
     }
 
-    if (!attached.count) {
+    [attached addObject:@{
+        @"title": SCILocalized(@"diag_button_media"),
+        @"detail": !_buttonEverPressed ? SCILocalized(@"diag_button_unpressed")
+                                       : (_lastButtonMediaClass ?: SCILocalized(@"diag_button_nomedia")),
+        @"ok": @(_lastButtonMediaClass != nil)
+    }];
+
+    if (attached.count == 1) {
         [attached addObject:@{
             @"title": SCILocalized(@"diag_none_attached"),
             @"detail": SCILocalized(@"diag_none_attached_hint"),

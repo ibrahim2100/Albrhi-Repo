@@ -35,6 +35,9 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)recordRawVersionCount:(NSInteger)count;
 
 /// Called when the story seen-state uploader is intercepted.
+/// What the inline button resolved the post's media to, or nil if it found nothing.
++ (void)recordButtonMediaClass:(nullable NSString *)className;
+
 + (void)recordStorySeenIntercept;
 
 /// Walks the live view hierarchy behind the settings sheet looking for anything

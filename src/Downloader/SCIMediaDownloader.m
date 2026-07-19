@@ -61,7 +61,7 @@
     if (out.count > 1) return out;
 
     // Fall back to the generic helper if the direct read found nothing usable.
-    NSArray<NSDictionary *> *helperVersions = [self deduplicated:[SCIUtils availableVideoQualitiesForVideo:video]];
+    NSArray<NSDictionary *> *helperVersions = [self deduplicated:[self normalised:[SCIUtils availableVideoQualitiesForVideo:video]]];
     if (helperVersions.count > out.count) out = [helperVersions mutableCopy];
     if (out.count > 1) return out;
 
@@ -93,7 +93,7 @@
                     return [b[@"area"] compare:a[@"area"]];
                 }];
 
-                NSArray *deduped = [self deduplicated:legacy];
+                NSArray *deduped = [self deduplicated:[self normalised:legacy]];
                 if (deduped.count > out.count) return deduped;
             }
         }
@@ -110,6 +110,29 @@
     if (bandwidth <= 0) return resolution;
 
     return [NSString stringWithFormat:@"%@ · %.1f Mbps", resolution, bandwidth / 1000000.0];
+}
+
+/// Guarantees every entry carries a usable string key, whether it arrived with an
+/// NSURL, a string, or an NSURL that failed to parse.
++ (NSArray<NSDictionary *> *)normalised:(NSArray<NSDictionary *> *)qualities {
+    NSMutableArray<NSDictionary *> *out = [NSMutableArray array];
+
+    for (NSDictionary *quality in qualities) {
+        if (quality[@"urlString"]) {
+            [out addObject:quality];
+            continue;
+        }
+
+        NSString *string = [(NSURL *)quality[@"url"] absoluteString];
+        if (![string length]) continue;
+
+        NSMutableDictionary *copy = [quality mutableCopy];
+        copy[@"urlString"] = string;
+
+        [out addObject:copy];
+    }
+
+    return out;
 }
 
 /// Tolerant URL construction. Instagram CDN links occasionally contain characters
@@ -140,9 +163,11 @@
     for (NSDictionary *quality in qualities) {
         if (![quality[@"label"] length]) continue;
 
+        // Key on whatever identifies the rendition. A rendition is never dropped
+        // for failing to produce an NSURL — that is resolved later, tolerantly.
         NSString *key = quality[@"urlString"];
         if (![key length]) key = [(NSURL *)quality[@"url"] absoluteString];
-        if (![key length]) continue;
+        if (![key length]) key = quality[@"label"];
 
         if ([seen containsObject:key]) continue;
 

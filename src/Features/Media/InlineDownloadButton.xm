@@ -19,29 +19,50 @@
 
 static const NSInteger SCIInlineDownloadButtonTag = 0x5CD10;
 
-// Pulls an IGMedia-like object off an arbitrary owner using the accessor names
-// Instagram uses across its cell/delegate/view-model layers.
+// Does this object actually carry a downloadable payload?
+static BOOL SCIHasMediaPayload(id candidate) {
+    if (!candidate) return NO;
+
+    for (NSString *key in @[@"video", @"photo"]) {
+        @try {
+            if ([candidate valueForKey:key] != nil) return YES;
+        } @catch (__unused id e) {}
+    }
+
+    return NO;
+}
+
+// Pulls an IGMedia-like object off an arbitrary owner, trying every accessor name
+// Instagram uses across its cell, delegate, view-model and section-controller
+// layers. The owner itself counts — a cell may *be* the media holder.
 static id SCIMediaFromOwner(id owner) {
     if (!owner) return nil;
+
+    if (SCIHasMediaPayload(owner)) return owner;
 
     static NSArray *keys = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        keys = @[@"media", @"post", @"feedItem", @"_media", @"_post"];
+        keys = @[@"media", @"post", @"feedItem", @"mediaCellFeedItem", @"currentMediaItem",
+                 @"pagePhotoPost", @"item", @"viewModel", @"configuration",
+                 @"_media", @"_post", @"_configuration"];
     });
 
     for (NSString *key in keys) {
         id candidate = nil;
         @try { candidate = [owner valueForKey:key]; } @catch (__unused id e) {}
 
-        if (!candidate) continue;
+        if (SCIHasMediaPayload(candidate)) return candidate;
 
-        // Only accept objects that actually expose media payloads.
-        BOOL hasVideo = NO, hasPhoto = NO;
-        @try { hasVideo = ([candidate valueForKey:@"video"] != nil); } @catch (__unused id e) {}
-        @try { hasPhoto = ([candidate valueForKey:@"photo"] != nil); } @catch (__unused id e) {}
+        // One level deeper: configurations and view models wrap the media.
+        if (candidate) {
+            for (NSString *inner in @[@"media", @"post", @"feedItem"]) {
+                id nested = nil;
+                @try { nested = [candidate valueForKey:inner]; } @catch (__unused id e) {}
 
-        if (hasVideo || hasPhoto) return candidate;
+                if (SCIHasMediaPayload(nested)) return nested;
+            }
+        }
     }
 
     return nil;
@@ -50,24 +71,33 @@ static id SCIMediaFromOwner(id owner) {
 // Walks the delegate chain first, then the view hierarchy, looking for the media
 // backing this action row.
 static id SCIMediaForButtonBar(UIView *bar) {
-    id delegate = nil;
-    @try { delegate = [bar valueForKey:@"delegate"]; } @catch (__unused id e) {}
+    for (NSString *key in @[@"delegate", @"dataSource"]) {
+        id owner = nil;
+        @try { owner = [bar valueForKey:key]; } @catch (__unused id e) {}
 
-    id media = SCIMediaFromOwner(delegate);
-    if (media) return media;
+        id media = SCIMediaFromOwner(owner);
+        if (media) return media;
 
-    // IGFeedItemUFICell forwards to its own delegate, which is created with the media.
-    id nested = nil;
-    @try { nested = [delegate valueForKey:@"delegate"]; } @catch (__unused id e) {}
+        // Delegates commonly forward to another object holding the media.
+        id nested = nil;
+        @try { nested = [owner valueForKey:@"delegate"]; } @catch (__unused id e) {}
 
-    media = SCIMediaFromOwner(nested);
-    if (media) return media;
+        media = SCIMediaFromOwner(nested);
+        if (media) return media;
+    }
 
-    // Last resort: the enclosing cell.
+    // Then the enclosing cell, which is where the long-press path finds it.
     UIView *ancestor = bar.superview;
     while (ancestor) {
-        media = SCIMediaFromOwner(ancestor);
+        id media = SCIMediaFromOwner(ancestor);
         if (media) return media;
+
+        // The cell's own view controller can hold it instead.
+        id nextResponder = [ancestor nextResponder];
+        if ([nextResponder isKindOfClass:[UIViewController class]]) {
+            media = SCIMediaFromOwner(nextResponder);
+            if (media) return media;
+        }
 
         ancestor = ancestor.superview;
     }
@@ -88,6 +118,8 @@ static NSString *SCIUsernameForMedia(id media) {
 }
 
 static void SCIDownloadMedia(id media, UIView *anchorView) {
+    [SCIDiagnostics recordButtonMediaClass:media ? NSStringFromClass([media class]) : nil];
+
     // Everything — quality picker, queue routing, delegate choice — lives in the
     // coordinator, so the button behaves identically to a long press.
     [SCIMediaDownloader downloadMedia:media
@@ -162,6 +194,10 @@ static void SCILayoutInlineButton(UIView *bar, id target) {
                    action:@selector(sciInlineDownloadPressed:)
          forControlEvents:UIControlEventTouchUpInside];
 
+        // The reels UFI is sized exactly to its buttons, so anything appended below
+        // lands outside its bounds and gets clipped away — attached but invisible.
+        bar.clipsToBounds = NO;
+
         [bar addSubview:button];
     }
 
@@ -198,16 +234,13 @@ static void SCILayoutInlineButton(UIView *bar, id target) {
             return (CGRectGetMinY(a.frame) < CGRectGetMinY(b.frame)) ? NSOrderedAscending : NSOrderedDescending;
         }];
 
+        // Sits below the bottom-most control. Overflowing the bar's bounds is fine
+        // and expected — clipping is off — so the position is not second-guessed.
         UIView *bottom = byY.lastObject;
         CGFloat y = CGRectGetMaxY(bottom.frame) + gap;
 
-        // No room below — tuck in above the top-most control instead.
-        if (y + side > CGRectGetHeight(bar.bounds)) {
-            y = CGRectGetMinY(byY.firstObject.frame) - side - gap;
-        }
-
         frame = CGRectMake(CGRectGetMidX(bottom.frame) - side / 2.0, y, side, side);
-        button.hidden = (y < 0);
+        button.hidden = NO;
     }
     else {
         // The save button sits at the trailing edge; slot in just inside it.
