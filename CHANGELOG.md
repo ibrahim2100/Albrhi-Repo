@@ -1,5 +1,32 @@
 # Albrhi Changelog
 
+## v3.0.24
+
+**Fixes**
+- **Follow badge shows on the profile page itself** (under the followers count), no
+  longer only when the profile picture is opened. The profile owner is captured from
+  the header avatar's `-userGQL`, and the badge is placed on the Swift stats row.
+
+## v3.0.23
+
+**Fixes**
+- **View-once "seen" eye is now per-message.** Marking one view-once message as seen
+  no longer leaks to the next: each message opens unmarked, tapping the eye sends the
+  seen receipt for that message only (on close), then resets.
+
+## v3.0.22
+
+**Fixes**
+- **Picked-quality downloads no longer fail.** IG serves its high-res DASH ladder in
+  VP9/AV1, which iOS can't save (the file opened as an image). Albrhi now keeps only
+  H.264/HEVC renditions, so a picked quality actually downloads.
+- **Zoom now enlarges properly.** Long-press floats an enlarged preview of the media
+  over a dimmed backdrop (in-place scaling was clipped by the cell and looked wrong).
+- **Long-press "download" option fully removed** — any leftover value migrates to Zoom.
+- **Follow badge rebuilt for IG 410's Swift profile.** It hooks the Swift stats
+  container and finds the profile user via the responder chain, then places the pill
+  under the followers count (the old hook never fired on the new profile header).
+
 ## v3.0.21
 
 **Fixes**

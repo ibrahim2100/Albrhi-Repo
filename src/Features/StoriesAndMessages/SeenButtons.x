@@ -84,11 +84,20 @@
 // the feature was disabled).
 %hook IGDirectVisualMessageViewerEventHandler
 - (void)visualMessageViewerController:(id)arg1 didBeginPlaybackForVisualMessage:(id)arg2 atIndex:(NSInteger)arg3 {
-    if ([SCIUtils getBoolPref:@"unlimited_replay"] && !dmVisualMsgsViewedButtonEnabled) return;
+    // Each message starts unmarked, so marking never leaks to the next one.
+    if ([SCIUtils getBoolPref:@"unlimited_replay"]) {
+        dmVisualMsgsViewedButtonEnabled = NO;
+        return;   // don't register "seen" just for opening it
+    }
     %orig;
 }
 - (void)visualMessageViewerController:(id)arg1 didEndPlaybackForVisualMessage:(id)arg2 atIndex:(NSInteger)arg3 mediaCurrentTime:(CGFloat)arg4 forNavType:(NSInteger)arg5 {
-    if ([SCIUtils getBoolPref:@"unlimited_replay"] && !dmVisualMsgsViewedButtonEnabled) return;
+    if ([SCIUtils getBoolPref:@"unlimited_replay"]) {
+        if (!dmVisualMsgsViewedButtonEnabled) return;   // you didn't tap the eye — stay unseen
+        %orig;                                          // you did — send the seen receipt
+        dmVisualMsgsViewedButtonEnabled = NO;           // one-shot: this message only
+        return;
+    }
     %orig;
 }
 %end
@@ -99,6 +108,14 @@
 static const NSInteger SCIVisualSeenButtonTag = 0x5D5EE7;
 static const NSInteger SCIVisualSaveButtonTag = 0x5D5A4E;
 static const void *kSCIVisualMsgKey = &kSCIVisualMsgKey;
+
+static void SCIUpdateVisualSeenIcon(UIButton *button) {
+    if (!button) return;
+    NSString *glyph = dmVisualMsgsViewedButtonEnabled ? @"eye.fill" : @"eye.slash.fill";
+    UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:15.0 weight:UIImageSymbolWeightSemibold];
+    [button setImage:[UIImage systemImageNamed:glyph withConfiguration:config] forState:UIControlStateNormal];
+    button.tintColor = dmVisualMsgsViewedButtonEnabled ? [SCIUtils SCIColor_Primary] : [UIColor whiteColor];
+}
 
 %hook IGDirectVisualMessageViewerController
 
@@ -154,8 +171,8 @@ static const void *kSCIVisualMsgKey = &kSCIVisualMsgKey;
     if ([SCIUtils getBoolPref:@"unlimited_replay"]) [self sciAddVisualSeenButton];
     if ([SCIUtils getBoolPref:@"dm_media_save_button"]) [self sciAddVisualSaveButton];
 
-    UIView *eye = [self.view viewWithTag:SCIVisualSeenButtonTag];
-    if (eye) [self.view bringSubviewToFront:eye];
+    UIButton *eye = (UIButton *)[self.view viewWithTag:SCIVisualSeenButtonTag];
+    if (eye) { [self.view bringSubviewToFront:eye]; SCIUpdateVisualSeenIcon(eye); }
     UIView *save = [self.view viewWithTag:SCIVisualSaveButtonTag];
     if (save) [self.view bringSubviewToFront:save];
 }
@@ -169,10 +186,7 @@ static const void *kSCIVisualMsgKey = &kSCIVisualMsgKey;
     button.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.35];
     button.layer.cornerRadius = 17.0;
 
-    NSString *glyph = dmVisualMsgsViewedButtonEnabled ? @"eye.fill" : @"eye.slash.fill";
-    UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:15.0 weight:UIImageSymbolWeightSemibold];
-    [button setImage:[UIImage systemImageNamed:glyph withConfiguration:config] forState:UIControlStateNormal];
-    button.tintColor = dmVisualMsgsViewedButtonEnabled ? [SCIUtils SCIColor_Primary] : [UIColor whiteColor];
+    SCIUpdateVisualSeenIcon(button);
 
     [button addTarget:self action:@selector(sciToggleVisualSeen:) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:button];
@@ -186,16 +200,14 @@ static const void *kSCIVisualMsgKey = &kSCIVisualMsgKey;
 }
 
 %new - (void)sciToggleVisualSeen:(UIButton *)sender {
+    // Per-message: mark only the message you're viewing now. The flag is reset when
+    // the next message opens, so it never leaks to other view-once messages.
     dmVisualMsgsViewedButtonEnabled = !dmVisualMsgsViewedButtonEnabled;
 
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
 
-    NSString *glyph = dmVisualMsgsViewedButtonEnabled ? @"eye.fill" : @"eye.slash.fill";
-    UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:15.0 weight:UIImageSymbolWeightSemibold];
-    [sender setImage:[UIImage systemImageNamed:glyph withConfiguration:config] forState:UIControlStateNormal];
-    sender.tintColor = dmVisualMsgsViewedButtonEnabled ? [SCIUtils SCIColor_Primary] : [UIColor whiteColor];
+    SCIUpdateVisualSeenIcon(sender);
 
-    // Frame it as a per-message "seen" action, not a feature switch.
     [SCIUtils showToastForDuration:2.5
                              title:SCILocalized(dmVisualMsgsViewedButtonEnabled ? @"p_dm_seen_on" : @"p_dm_seen_off")];
 }

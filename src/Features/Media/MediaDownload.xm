@@ -65,37 +65,83 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
     [SCIMediaDownloader downloadVideo:video sourceLabel:nil anchor:anchorView];
 }
 
-// What a long-press on media does: "zoom" (default), "download", or "off".
-// Download-by-press was crash-prone, so it is no longer the default.
+// What a long-press on media does: "zoom" (default) or "off". "download" was
+// removed; any legacy value migrates to zoom.
 static NSString *SCIPressActionMode(void) {
     NSString *mode = [SCIUtils getStringPref:@"media_press_action"];
-    return mode.length ? mode : @"zoom";
+    if ([mode isEqualToString:@"off"]) return @"off";
+    return @"zoom";
 }
 
-// Peek-zoom: scale the pressed media while held, spring back on release.
+// Peek-zoom: on press, float an enlarged snapshot of the media over a dimmed
+// backdrop at the centre of the screen; spring it back and remove on release.
+// Scaling the view in place looked wrong because feed/reel cells clip their bounds.
+static UIView *sciZoomBackdrop = nil;
+static UIView *sciZoomSnapshot = nil;
+
 static void SCIPerformZoom(UIView *view, UILongPressGestureRecognizer *sender) {
     if (!view) return;
+    UIWindow *window = view.window;
+    if (!window) return;
 
     switch (sender.state) {
         case UIGestureRecognizerStateBegan: {
-            [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
-            [view.superview bringSubviewToFront:view];
-            [UIView animateWithDuration:0.22 delay:0
-                 usingSpringWithDamping:0.8 initialSpringVelocity:0.5
+            if (sciZoomSnapshot) return;
+
+            UIView *snapshot = [view snapshotViewAfterScreenUpdates:NO];
+            if (!snapshot) return;
+
+            CGRect start = [view convertRect:view.bounds toView:window];
+            if (CGRectIsEmpty(start)) return;
+
+            UIView *backdrop = [[UIView alloc] initWithFrame:window.bounds];
+            backdrop.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.65];
+            backdrop.alpha = 0.0;
+            [window addSubview:backdrop];
+
+            snapshot.frame = start;
+            [window addSubview:snapshot];
+
+            sciZoomBackdrop = backdrop;
+            sciZoomSnapshot = snapshot;
+
+            // Fill ~92% of the screen width, keeping the media's aspect ratio.
+            CGFloat scale = (CGRectGetWidth(window.bounds) * 0.92) / MAX(CGRectGetWidth(start), 1.0);
+
+            [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium] impactOccurred];
+            [UIView animateWithDuration:0.28 delay:0
+                 usingSpringWithDamping:0.82 initialSpringVelocity:0.4
                                 options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionAllowUserInteraction
-                             animations:^{ view.transform = CGAffineTransformMakeScale(1.6, 1.6); }
-                             completion:nil];
+                             animations:^{
+                backdrop.alpha = 1.0;
+                snapshot.center = CGPointMake(CGRectGetMidX(window.bounds), CGRectGetMidY(window.bounds));
+                snapshot.transform = CGAffineTransformMakeScale(scale, scale);
+            } completion:nil];
             break;
         }
 
         case UIGestureRecognizerStateEnded:
         case UIGestureRecognizerStateCancelled:
         case UIGestureRecognizerStateFailed: {
-            [UIView animateWithDuration:0.25 delay:0
-                 usingSpringWithDamping:0.75 initialSpringVelocity:0.3
-                                options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionAllowUserInteraction
-                             animations:^{ view.transform = CGAffineTransformIdentity; }
-                             completion:nil];
+            UIView *backdrop = sciZoomBackdrop;
+            UIView *snapshot = sciZoomSnapshot;
+            sciZoomBackdrop = nil;
+            sciZoomSnapshot = nil;
+            if (!snapshot) break;
+
+            CGRect end = [view convertRect:view.bounds toView:window];
+
+            [UIView animateWithDuration:0.22 delay:0
+                 usingSpringWithDamping:0.9 initialSpringVelocity:0.2
+                                options:UIViewAnimationOptionBeginFromCurrentState
+                             animations:^{
+                backdrop.alpha = 0.0;
+                snapshot.transform = CGAffineTransformIdentity;
+                if (!CGRectIsEmpty(end)) snapshot.frame = end;
+            } completion:^(BOOL finished) {
+                [backdrop removeFromSuperview];
+                [snapshot removeFromSuperview];
+            }];
             break;
         }
 

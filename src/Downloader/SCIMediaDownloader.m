@@ -277,6 +277,16 @@
         // A Representation without width/height is the audio track — skip it.
         if (w <= 0 || h <= 0) continue;
 
+        // Instagram serves its high-res DASH ladder in VP9/AV1, which iOS can't save
+        // to Photos (the download fails / the file opens as an image). Keep only
+        // H.264/HEVC renditions, which actually play and save on-device.
+        NSString *codecs = [[self dashStringAttribute:@"codecs" inBlock:block] lowercaseString];
+        if ([codecs length]) {
+            BOOL incompatible = [codecs containsString:@"vp9"] || [codecs containsString:@"vp09"]
+                             || [codecs containsString:@"av01"] || [codecs containsString:@"av1"];
+            if (incompatible) continue;
+        }
+
         NSString *baseURL = [self dashBaseURLInBlock:block];
         if (![baseURL length]) continue;
 
@@ -312,6 +322,17 @@
     NSTextCheckingResult *m = [regex firstMatchInString:block options:0 range:NSMakeRange(0, block.length)];
     if (!m || m.numberOfRanges < 2) return 0;
     return [[block substringWithRange:[m rangeAtIndex:1]] longLongValue];
+}
+
+/// Reads a string attribute (codecs="avc1.64…") out of a Representation block.
++ (NSString *)dashStringAttribute:(NSString *)name inBlock:(NSString *)block {
+    NSRegularExpression *regex =
+        [NSRegularExpression regularExpressionWithPattern:[NSString stringWithFormat:@"\\b%@=\"([^\"]+)\"", name]
+                                                  options:NSRegularExpressionCaseInsensitive
+                                                    error:nil];
+    NSTextCheckingResult *m = [regex firstMatchInString:block options:0 range:NSMakeRange(0, block.length)];
+    if (!m || m.numberOfRanges < 2) return nil;
+    return [block substringWithRange:[m rangeAtIndex:1]];
 }
 
 /// Reads and XML-unescapes the <BaseURL> of a Representation block.

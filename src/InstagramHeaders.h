@@ -438,8 +438,11 @@
 @property (nonatomic, readonly) IGUser *userGQL;
 
 - (void)addLongPressGestureRecognizer; // new
-- (void)sci_updateFollowBadge; // new
-- (void)sci_removeFollowBadge; // new
+@end
+
+// The IG 410 profile stats row (Swift). Its followers stat button carries the
+// accessibility id `user-detail-header-followers`. Hooked to host the follow badge.
+@interface IGProfileHeaderStatButtonContainerView : UIView
 @end
 
 @interface IGImageRequest : NSObject
