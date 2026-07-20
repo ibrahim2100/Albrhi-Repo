@@ -61,6 +61,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// inspected.
 + (void)recordPickedURL:(nullable NSString *)url;
 
+/// State of the follow-back badge: did the stats-container hook fire, was a user
+/// found, and what was decided.
++ (void)recordFollowBadge:(nullable NSString *)info;
+
 /// Walks the live view hierarchy behind the settings sheet looking for anything
 /// shaped like a post action row — a view holding several buttons in a line.
 ///

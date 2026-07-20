@@ -473,6 +473,8 @@
 - (void)_didTapRepostButton:(id)arg1;
 
 - (void)sciInlineDownloadPressed:(id)sender; // new
+- (void)sciAddAutoNextButton;    // new
+- (void)sciToggleAutoNext:(id)sender; // new
 @end
 
 @interface IGMainAppSurfaceIntent : NSObject
@@ -481,6 +483,8 @@
 
 @interface IGSundialFeedViewController : UIViewController
 - (void)refreshControlDidEndFinishLoadingAnimation:(id)arg1;
+- (BOOL)autoAdvanceToNextItem; // IG's own auto-advance-to-next-reel switch
+- (BOOL)autoScrollState;
 @end
 
 @interface IGRefreshControl : UIControl

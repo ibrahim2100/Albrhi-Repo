@@ -17,6 +17,7 @@ static NSString *_qualityBreakdown = nil;
 static NSString *_qualityLabels = nil;
 static NSString *_dashInfo = nil;
 static NSString *_lastPickedURL = nil;
+static NSString *_followBadgeInfo = nil;
 
 @implementation SCIDiagnostics
 
@@ -77,6 +78,10 @@ static NSString *_lastPickedURL = nil;
 
 + (void)recordPickedURL:(NSString *)url {
     _lastPickedURL = [url copy];
+}
+
++ (void)recordFollowBadge:(NSString *)info {
+    _followBadgeInfo = [info copy];
 }
 
 // MARK: - Live hierarchy scan

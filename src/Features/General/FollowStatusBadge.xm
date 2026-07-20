@@ -41,6 +41,44 @@ static BOOL SCILooksLikeUser(id obj) {
     return NO;
 }
 
+// Safe KVC search for the profile's IGUser — valueForKey respects accessors and any
+// missing key just throws (caught), so unlike raw ivar reads it can't crash.
+static id SCIUserViaKVC(id obj, int depth) {
+    if (!obj || depth > 2) return nil;
+    if (SCILooksLikeUser(obj)) return obj;
+
+    for (NSString *key in @[@"user", @"currentUser", @"displayedUser", @"profileUser", @"owner", @"account"]) {
+        id value = nil;
+        @try { value = [obj valueForKey:key]; } @catch (__unused id e) {}
+        if (SCILooksLikeUser(value)) return value;
+    }
+
+    if (depth < 2) {
+        for (NSString *key in @[@"viewModel", @"userDetailViewModel", @"model", @"headerViewModel", @"header", @"dataSource"]) {
+            id nested = nil;
+            @try { nested = [obj valueForKey:key]; } @catch (__unused id e) {}
+            if (nested && nested != obj) {
+                id user = SCIUserViaKVC(nested, depth + 1);
+                if (user) return user;
+            }
+        }
+    }
+    return nil;
+}
+
+static id SCIProfileUserFromResponder(UIView *view) {
+    UIResponder *responder = view;
+    int steps = 0;
+    while (responder && steps++ < 25) {
+        if ([responder isKindOfClass:[UIViewController class]]) {
+            id user = SCIUserViaKVC(responder, 0);
+            if (user) return user;
+        }
+        responder = responder.nextResponder;
+    }
+    return nil;
+}
+
 static void SCIRemoveBadge(UIView *container) {
     UIView *badge = [container viewWithTag:SCIFollowBadgeTag];
     if (!badge) badge = [container.window viewWithTag:SCIFollowBadgeTag];
@@ -51,8 +89,10 @@ static void SCIUpdateFollowBadge(UIView *container) {
     if (!container) return;
     if (![SCIUtils getBoolPref:@"show_follow_status"]) { SCIRemoveBadge(container); return; }
 
-    // The relationship comes from the avatar hook below — no risky reflection.
-    id user = sciProfileUser;
+    // Primary: read the profile VC's user via safe KVC. Fallback: the user captured
+    // from the header avatar's -userGQL.
+    id user = SCIProfileUserFromResponder(container);
+    if (!SCILooksLikeUser(user)) user = sciProfileUser;
     if (!SCILooksLikeUser(user)) { SCIRemoveBadge(container); return; }
 
     // Never on your own profile.

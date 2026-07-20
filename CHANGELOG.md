@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v3.0.27
+
+**New**
+- **Auto-advance to the next reel.** When on, a finished reel scrolls to the next by
+  itself (drives Instagram's own auto-scroll). Toggle in Reels settings, or with the
+  ∞ button on the reels action bar, above the download button.
+
 ## v3.0.26
 
 **Changes**
