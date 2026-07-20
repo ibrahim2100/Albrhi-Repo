@@ -5,20 +5,29 @@
 ///
 /// Follow-back badge.
 ///
-/// Overlays a small colored pill on the large profile-header avatar: green
-/// "Follows you" when the account follows you, red "Doesn't follow you" when it
-/// doesn't — visible directly on the profile, no long-press required.
+/// Shows a colored pill — green "Follows you" / red "Doesn't follow you" — directly
+/// under the Followers count on a profile. It resolves the relationship from the
+/// ObjC `IGProfilePictureImageView` (reliable) and anchors to the followers stat
+/// button, located by its accessibility identifier `user-detail-header-followers`
+/// (the profile header itself is Swift and hard to hook).
 ///
-/// It attaches to the avatar's superview (not the avatar itself, which is clipped
-/// to a circle) and only to profile-sized avatars, so feed/comment thumbnails stay
-/// untouched. It is suppressed on your own profile.
+/// The badge only appears when that stat button is on screen, so it never shows on
+/// feed/comment avatars, and it is suppressed on your own profile.
 ///
 
 static const NSInteger SCIFollowBadgeTag = 0x50110B;
+static const CGFloat SCIFollowBadgeMinAvatarWidth = 64.0;
+static NSString *const SCIFollowersIdentifier = @"user-detail-header-followers";
 
-// Below this width the view is a thumbnail (feed, comments, story ring), not the
-// profile header — don't badge those.
-static const CGFloat SCIFollowBadgeMinAvatarWidth = 70.0;
+static UIView *SCIFindViewWithIdentifier(UIView *root, NSString *identifier) {
+    if (!root) return nil;
+    if ([root.accessibilityIdentifier isEqualToString:identifier]) return root;
+    for (UIView *sub in root.subviews) {
+        UIView *found = SCIFindViewWithIdentifier(sub, identifier);
+        if (found) return found;
+    }
+    return nil;
+}
 
 %hook IGProfilePictureImageView
 
@@ -31,8 +40,12 @@ static const CGFloat SCIFollowBadgeMinAvatarWidth = 70.0;
     if (![SCIUtils getBoolPref:@"show_follow_status"]) { [self sci_removeFollowBadge]; return; }
     if (self.bounds.size.width < SCIFollowBadgeMinAvatarWidth) { [self sci_removeFollowBadge]; return; }
 
-    UIView *host = self.superview;
-    if (!host) return;
+    UIWindow *window = self.window;
+    if (!window) return;
+
+    // Only badge when the followers stat button is on screen — i.e. a profile page.
+    UIView *followersView = SCIFindViewWithIdentifier(window, SCIFollowersIdentifier);
+    if (!followersView) { [self sci_removeFollowBadge]; return; }
 
     IGUser *user = nil;
     @try { user = [self valueForKey:@"userGQL"]; } @catch (__unused id e) {}
@@ -49,8 +62,14 @@ static const CGFloat SCIFollowBadgeMinAvatarWidth = 70.0;
     BOOL follows = NO;
     @try { follows = [[user valueForKey:@"followsCurrentUser"] boolValue]; } @catch (__unused id e) {}
 
+    UIView *host = followersView.superview;
+    if (!host) return;
+
     UILabel *badge = (UILabel *)[host viewWithTag:SCIFollowBadgeTag];
     if (![badge isKindOfClass:[UILabel class]]) {
+        // A stale badge may live under a different host from a previous layout.
+        [self sci_removeFollowBadge];
+
         badge = [[UILabel alloc] init];
         badge.tag = SCIFollowBadgeTag;
         badge.font = [UIFont systemFontOfSize:11.0 weight:UIFontWeightSemibold];
@@ -65,24 +84,21 @@ static const CGFloat SCIFollowBadgeMinAvatarWidth = 70.0;
     badge.text = follows ? SCILocalized(@"p_follows_you") : SCILocalized(@"p_not_follows_you");
     badge.backgroundColor = follows ? [UIColor systemGreenColor] : [UIColor systemRedColor];
 
-    CGFloat width = badge.intrinsicContentSize.width + 20.0;
+    CGFloat width = badge.intrinsicContentSize.width + 18.0;
     CGFloat height = 18.0;
 
-    // The profile header is Swift and hard to hook precisely, so anchor to the
-    // avatar (reliable ObjC) and sit to its right, just below the stats row — i.e.
-    // roughly under the followers count.
-    CGRect avatarInHost = [self convertRect:self.bounds toView:host];
-    CGRect frame = CGRectMake(CGRectGetMaxX(avatarInHost) + 14.0,
-                              CGRectGetMidY(avatarInHost) + 12.0,
-                              width, height);
-    badge.frame = frame;
+    // Centered directly under the followers stat button.
+    CGRect followersInHost = [followersView convertRect:followersView.bounds toView:host];
+    badge.frame = CGRectMake(CGRectGetMidX(followersInHost) - width / 2.0,
+                             CGRectGetMaxY(followersInHost) + 3.0,
+                             width, height);
 
     [host bringSubviewToFront:badge];
 }
 
 %new - (void)sci_removeFollowBadge {
-    UIView *host = self.superview;
-    UIView *badge = [host viewWithTag:SCIFollowBadgeTag];
+    UIWindow *window = self.window;
+    UIView *badge = window ? [window viewWithTag:SCIFollowBadgeTag] : [self.superview viewWithTag:SCIFollowBadgeTag];
     if (badge) [badge removeFromSuperview];
 }
 

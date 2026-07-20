@@ -79,6 +79,31 @@
             ]
         ]],
 
+        @"media_press_action": [UIMenu menuWithChildren:@[
+            [UICommand commandWithTitle:SCILocalized(@"p_press_zoom")
+                                  image:nil
+                                 action:@selector(menuChanged:)
+                           propertyList:@{ @"defaultsKey": @"media_press_action", @"value": @"zoom" }
+            ],
+            [UIMenu menuWithTitle:@""
+                            image:nil
+                       identifier:nil
+                          options:UIMenuOptionsDisplayInline
+                         children:@[
+                             [UICommand commandWithTitle:SCILocalized(@"p_press_download")
+                                                   image:nil
+                                                  action:@selector(menuChanged:)
+                                            propertyList:@{ @"defaultsKey": @"media_press_action", @"value": @"download" }
+                             ],
+                             [UICommand commandWithTitle:SCILocalized(@"p_press_off")
+                                                   image:nil
+                                                  action:@selector(menuChanged:)
+                                            propertyList:@{ @"defaultsKey": @"media_press_action", @"value": @"off" }
+                             ]
+                         ]
+            ]
+        ]],
+
         @"reels_tap_control": [UIMenu menuWithChildren:@[
             [UICommand commandWithTitle:SCILocalized(@"p_menu_default")
                                   image:nil

@@ -1,5 +1,42 @@
 # Albrhi Changelog
 
+## v3.0.18
+
+**New**
+- **Save button for view-once DM media.** The one-time photo/video viewer now has a
+  save button (trailing) next to the mark-as-read eye — captures the media from the
+  opened message and downloads it through the normal pipeline.
+
+## v3.0.17
+
+**Changes**
+- **Follow-back badge now sits under the Followers count.** It anchors to the
+  `user-detail-header-followers` stat button (found by accessibility id) instead of
+  the avatar, and only appears on a real profile page — no more badge over the photo.
+
+## v3.0.16
+
+**New**
+- **Mark-as-read eye in the view-once viewer.** Opening a view-once photo/video in
+  DMs now shows an eye toggle: off = watch without registering as seen, on = mark it
+  read. "Unlimited replay of visual messages" now defaults on so this works out of
+  the box.
+
+**Fixes**
+- The visual-message hooks no longer swallow playback events when the feature is off.
+
+## v3.0.15
+
+**Changes**
+- **Long-press is now Zoom by default.** Holding a post/reel/story peeks (zooms) it
+  instead of downloading — download-by-press was crash-prone. New setting under
+  Downloads → Long-press action: Zoom / Download / Off.
+
+**Fixes**
+- Quality downloads that resolve an extension-less URL (DASH BaseURLs) now default to
+  `.mp4`/`.jpg`, fixing the save error after picking a resolution.
+- DM save button is re-asserted on layout so the viewer's media can't bury it.
+
 ## v3.0.14
 
 **New**

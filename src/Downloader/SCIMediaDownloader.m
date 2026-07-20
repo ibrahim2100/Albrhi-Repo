@@ -483,6 +483,13 @@
 
     NSString *extension = [[url lastPathComponent] pathExtension];
 
+    // DASH BaseURLs and other CDN links often carry no file extension (or a query
+    // string). Photos rejects an extension-less video, which surfaces as a failure —
+    // fall back to a sensible default for the media kind.
+    if (![extension length] || [extension length] > 4) {
+        extension = isVideo ? @"mp4" : @"jpg";
+    }
+
     // Queue mode: hand off and let the transfer run in the background.
     if ([SCIUtils getBoolPref:@"dl_use_queue"]) {
         SCIDownloadQueue *queue = [SCIDownloadQueue shared];

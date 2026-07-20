@@ -65,6 +65,55 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
     [SCIMediaDownloader downloadVideo:video sourceLabel:nil anchor:anchorView];
 }
 
+// What a long-press on media does: "zoom" (default), "download", or "off".
+// Download-by-press was crash-prone, so it is no longer the default.
+static NSString *SCIPressActionMode(void) {
+    NSString *mode = [SCIUtils getStringPref:@"media_press_action"];
+    return mode.length ? mode : @"zoom";
+}
+
+// Peek-zoom: scale the pressed media while held, spring back on release.
+static void SCIPerformZoom(UIView *view, UILongPressGestureRecognizer *sender) {
+    if (!view) return;
+
+    switch (sender.state) {
+        case UIGestureRecognizerStateBegan:
+            [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+            [view.superview bringSubviewToFront:view];
+            [UIView animateWithDuration:0.22 delay:0
+                 usingSpringWithDamping:0.8 initialSpringVelocity:0.5
+                                options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionAllowUserInteraction
+                             animations:^{ view.transform = CGAffineTransformMakeScale(1.6, 1.6); }
+                             completion:nil];
+            break;
+
+        case UIGestureRecognizerStateEnded:
+        case UIGestureRecognizerStateCancelled:
+        case UIGestureRecognizerStateFailed:
+            [UIView animateWithDuration:0.25 delay:0
+                 usingSpringWithDamping:0.75 initialSpringVelocity:0.3
+                                options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionAllowUserInteraction
+                             animations:^{ view.transform = CGAffineTransformIdentity; }
+                             completion:nil];
+            break;
+
+        default:
+            break;
+    }
+}
+
+// Central gate for every media long-press handler. Returns YES only when the
+// download branch should run; zoom/off are handled here as side effects.
+static BOOL SCIShouldProceedWithDownloadPress(UIView *view, UILongPressGestureRecognizer *sender) {
+    NSString *mode = SCIPressActionMode();
+
+    if ([mode isEqualToString:@"off"]) return NO;
+    if ([mode isEqualToString:@"zoom"]) { SCIPerformZoom(view, sender); return NO; }
+
+    // "download"
+    return sender.state == UIGestureRecognizerStateBegan;
+}
+
 /* * Feed * */
 
 // Download feed images
@@ -84,7 +133,7 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
     addDownloadLongPressGesture(self, self, @selector(handleLongPress:));
 }
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
-    if (sender.state != UIGestureRecognizerStateBegan) return;
+    if (!SCIShouldProceedWithDownloadPress(self, sender)) return;
 
     IGPhoto *photo = nil;
 
@@ -137,7 +186,7 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
     addDownloadLongPressGesture(self, self, @selector(handleLongPress:));
 }
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
-    if (sender.state != UIGestureRecognizerStateBegan) return;
+    if (!SCIShouldProceedWithDownloadPress(self, sender)) return;
 
     id feedItem = nil;
     @try { feedItem = [self mediaCellFeedItem]; } @catch (__unused id e) {}
@@ -186,7 +235,7 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
     [self addGestureRecognizer:longPress];
 }
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
-    if (sender.state != UIGestureRecognizerStateBegan) return;
+    if (!SCIShouldProceedWithDownloadPress(self, sender)) return;
 
     IGPhoto *_photo = MSHookIvar<IGPhoto *>(self, "_photo");
 
@@ -226,7 +275,7 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
     [self addGestureRecognizer:longPress];
 }
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
-    if (sender.state != UIGestureRecognizerStateBegan) return;
+    if (!SCIShouldProceedWithDownloadPress(self, sender)) return;
 
     BOOL audioEnabled = [SCIUtils getBoolPref:@"dw_reel_audio"];
     NSURL *videoUrl = [SCIUtils getVideoUrlForMedia:self.video];
@@ -296,7 +345,7 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
     [self addGestureRecognizer:longPress];
 }
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
-    if (sender.state != UIGestureRecognizerStateBegan) return;
+    if (!SCIShouldProceedWithDownloadPress(self, sender)) return;
 
     NSURL *photoUrl = [SCIUtils getPhotoUrlForMedia:[self item]];
     if (!photoUrl) {
@@ -334,7 +383,7 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
     [self addGestureRecognizer:longPress];
 }
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
-    if (sender.state != UIGestureRecognizerStateBegan) return;
+    if (!SCIShouldProceedWithDownloadPress(self, sender)) return;
 
     // Route through downloadMedia so the quality picker applies here too — story
     // videos previously bypassed it by resolving a single URL directly.
@@ -375,7 +424,7 @@ static void downloadVideoForIGVideo (IGVideo *video, UIView *anchorView) {
     [self addGestureRecognizer:longPress];
 }
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
-    if (sender.state != UIGestureRecognizerStateBegan) return;
+    if (!SCIShouldProceedWithDownloadPress(self, sender)) return;
 
     IGStoryFullscreenSectionController *captionDelegate = self.captionDelegate;
     if (captionDelegate) {

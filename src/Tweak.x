@@ -17,7 +17,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.0.14";  // Albrhi
+NSString *SCIVersionString = @"v3.0.18";  // Albrhi
 
 // Variables that work across features
 BOOL dmVisualMsgsViewedButtonEnabled = false;
@@ -40,6 +40,9 @@ BOOL dmVisualMsgsViewedButtonEnabled = false;
         @"story_seen_button": @(YES),
         @"story_download_button": @(YES),
         @"dm_media_save_button": @(YES),
+        // On: view-once photos/videos don't register as seen until you tap the eye
+        // toggle in the viewer.
+        @"unlimited_replay": @(YES),
         // Queue downloads land in Photos. Without this the queue fetches the file
         // and leaves it sitting in the Download Center, which reads as a failure.
         @"dw_save_to_camera": @(YES),
@@ -51,6 +54,7 @@ BOOL dmVisualMsgsViewedButtonEnabled = false;
         @"show_follow_status": @(YES),
         @"dw_finger_count": @(1),
         @"dw_finger_duration": @(0.5),
+        @"media_press_action": @"zoom",
         @"settings_shortcut": @(YES),
         @"reels_tap_control": @"default",
         @"nav_icon_ordering": @"default",

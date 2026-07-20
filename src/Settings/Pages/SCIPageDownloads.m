@@ -51,6 +51,7 @@
             @{
                 @"header": @"",
                 @"rows": @[
+                    [SCISetting menuCellWithTitle:SCILocalized(@"p_press_title") subtitle:SCILocalized(@"p_press_sub") menu:[SCITweakSettings menus][@"media_press_action"]],
                     [SCISetting stepperCellWithTitle:SCILocalized(@"dw_finger_count_title") subtitle:@"%@ %@" defaultsKey:@"dw_finger_count" min:1 max:5 step:1 label:SCILocalized(@"p_lbl_fingers") singularLabel:SCILocalized(@"p_lbl_finger")],
                     [SCISetting stepperCellWithTitle:SCILocalized(@"dw_finger_duration_title") subtitle:@"%@ %@" defaultsKey:@"dw_finger_duration" min:0 max:10 step:0.25 label:SCILocalized(@"p_lbl_sec") singularLabel:SCILocalized(@"p_lbl_sec")]
                 ]

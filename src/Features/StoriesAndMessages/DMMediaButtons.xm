@@ -57,6 +57,18 @@ threadSubscriptionService:(id)threadSubscriptionService {
     [self sciAddDMSaveButton];
 }
 
+- (void)viewDidLayoutSubviews {
+    %orig;
+
+    if (![SCIUtils getBoolPref:@"dm_media_save_button"]) return;
+
+    // The viewer mounts its media/overlay after appearing, which can bury our
+    // button — (re)add it and keep it on top on every layout pass.
+    [self sciAddDMSaveButton];
+    UIView *button = [self.view viewWithTag:kSCIDMSaveButtonTag];
+    if (button) [self.view bringSubviewToFront:button];
+}
+
 %new - (void)sciAddDMSaveButton {
     if ([self.view viewWithTag:kSCIDMSaveButtonTag]) return;
 

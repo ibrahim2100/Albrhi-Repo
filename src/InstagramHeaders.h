@@ -247,6 +247,10 @@
 @end
 
 @interface IGDirectVisualMessageViewerController : UIViewController
+- (void)sciAddVisualSeenButton;         // new
+- (void)sciToggleVisualSeen:(id)sender;   // new
+- (void)sciAddVisualSaveButton;         // new
+- (void)sciSaveVisualMessage:(id)sender;  // new
 @end
 
 // Full-screen viewer for regular photos/videos sent in DMs (IG 410). Its init hands
@@ -261,6 +265,8 @@
 
 @interface IGDirectVisualMessage : NSObject
 - (id)rawVideo;
+- (id)photo;   // IGPhoto for a view-once photo
+- (id)video;   // IGVideo for a view-once video
 @end
 
 @interface IGUser : NSObject

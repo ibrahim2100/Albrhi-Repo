@@ -399,6 +399,12 @@ static NSDictionary *_arTable = nil;
         // DM media save button
         @"p_dm_save_t": @"Save DM photos & videos",
         @"p_dm_save_s": @"Adds a save button when you open a photo or video in DMs, and always allows saving",
+        // Long-press action
+        @"p_press_title": @"Long-press action",
+        @"p_press_sub": @"What holding a post/reel/story does",
+        @"p_press_zoom": @"Zoom (peek)",
+        @"p_press_download": @"Download",
+        @"p_press_off": @"Off",
     };
 
     _arTable = @{
@@ -752,6 +758,12 @@ static NSDictionary *_arTable = nil;
         // زر حفظ وسائط الخاص
         @"p_dm_save_t": @"حفظ صور وفيديوهات الخاص",
         @"p_dm_save_s": @"يضيف زر حفظ عند فتح صورة أو فيديو في الرسائل، ويسمح بالحفظ دائمًا",
+        // إجراء الضغط المطوّل
+        @"p_press_title": @"إجراء الضغط المطوّل",
+        @"p_press_sub": @"ماذا يفعل الضغط المطوّل على منشور/ريل/قصة",
+        @"p_press_zoom": @"تكبير (معاينة)",
+        @"p_press_download": @"تنزيل",
+        @"p_press_off": @"إيقاف",
     };
 }
 
