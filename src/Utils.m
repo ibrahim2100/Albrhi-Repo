@@ -371,9 +371,8 @@
 + (NSURL *)getVideoUrl:(IGVideo *)video {
     if (!video) return nil;
 
-    BOOL preferMaxQuality = ([[NSUserDefaults standardUserDefaults] objectForKey:@"dw_max_quality"] == nil)
-        ? YES // default ON
-        : [[NSUserDefaults standardUserDefaults] boolForKey:@"dw_max_quality"];
+    // Always take the highest-quality rendition available (resolution, then bitrate).
+    BOOL preferMaxQuality = YES;
 
     // --- Strategy 1: videoVersions → array of IGAPIVideoVersion (width/height/bandwidth) ---
     // This is the correct shape on current Instagram builds.

@@ -1,34 +1,25 @@
 #import "../../InstagramHeaders.h"
 #import "../../Utils.h"
 #import "../../Localization/SCILocalize.h"
-#import <objc/runtime.h>
 
 ///
 /// Follow-back badge.
 ///
-/// The IG 410 profile header is entirely Swift (the avatar is
-/// IGProfileHeaderIdentityAvatarView, not IGProfilePictureImageView), so this hooks
-/// the Swift stats container — IGProfileHeaderIdentity.IGProfileHeaderStatButtonContainerView —
-/// and drops a colored pill under the followers stat button
-/// (accessibilityIdentifier `user-detail-header-followers`).
-///
-/// The follow relationship needs an IGUser (`followsCurrentUser`); it's found by
-/// walking the responder chain to the profile view controller and doing a bounded,
-/// guarded reflective search of its object ivars.
+/// The IG 410 profile header is Swift, so the relationship is captured from the ObjC
+/// avatar image view (`IGProfilePictureImageView`, which exposes -userGQL and renders
+/// on the profile page), and the colored pill is placed on the Swift stats container
+/// (IGProfileHeaderIdentity.IGProfileHeaderStatButtonContainerView) under the followers
+/// stat button (accessibilityIdentifier `user-detail-header-followers`).
 ///
 
 static const NSInteger SCIFollowBadgeTag = 0x50110B;
 static NSString *const SCIFollowersIdentifier = @"user-detail-header-followers";
-static const void *kSCIProfileUserKey = &kSCIProfileUserKey;
 
 // Minimum width for the profile-header avatar; smaller ones (bio, highlights, feed)
 // are ignored so we only capture the profile owner.
 static const CGFloat SCIProfileAvatarMinWidth = 70.0;
 
 // Last user seen on a large IGProfilePictureImageView — the profile header owner.
-// IGProfilePictureImageView reliably exposes -userGQL and does render on the profile
-// page (the Swift avatar wraps it), so it's the dependable source of the relationship
-// even though the badge itself is placed on the Swift stats container.
 static id sciProfileUser = nil;
 
 static UIView *SCIFindViewWithIdentifier(UIView *root, NSString *identifier) {
@@ -50,59 +41,6 @@ static BOOL SCILooksLikeUser(id obj) {
     return NO;
 }
 
-// Bounded, guarded reflective search for an IGUser inside an object's ivars.
-static id SCIUserInObject(id obj, int depth) {
-    if (!obj || depth > 2) return nil;
-    if (SCILooksLikeUser(obj)) return obj;
-
-    Class cls = object_getClass(obj);
-    int classGuard = 0;
-
-    while (cls && cls != [NSObject class] && classGuard++ < 6) {
-        unsigned int count = 0;
-        Ivar *ivars = class_copyIvarList(cls, &count);
-
-        for (unsigned int i = 0; i < count; i++) {
-            const char *type = ivar_getTypeEncoding(ivars[i]);
-            if (!type || type[0] != '@') continue;   // object ivars only
-
-            id value = nil;
-            @try { value = object_getIvar(obj, ivars[i]); } @catch (__unused id e) { continue; }
-            if (!value) continue;
-
-            // Don't descend into views/collections/leaves — keeps it fast and safe.
-            if ([value isKindOfClass:[UIView class]] || [value isKindOfClass:[UIViewController class]]
-             || [value isKindOfClass:[NSArray class]] || [value isKindOfClass:[NSDictionary class]]
-             || [value isKindOfClass:[NSSet class]] || [value isKindOfClass:[NSString class]]
-             || [value isKindOfClass:[NSNumber class]] || [value isKindOfClass:[NSData class]]) {
-                continue;
-            }
-
-            if (SCILooksLikeUser(value)) { free(ivars); return value; }
-
-            id nested = SCIUserInObject(value, depth + 1);
-            if (nested) { free(ivars); return nested; }
-        }
-
-        free(ivars);
-        cls = class_getSuperclass(cls);
-    }
-    return nil;
-}
-
-static id SCIProfileUserFromView(UIView *view) {
-    UIResponder *responder = view;
-    int steps = 0;
-    while (responder && steps++ < 25) {
-        if ([responder isKindOfClass:[UIViewController class]]) {
-            id user = SCIUserInObject(responder, 0);
-            if (user) return user;
-        }
-        responder = responder.nextResponder;
-    }
-    return nil;
-}
-
 static void SCIRemoveBadge(UIView *container) {
     UIView *badge = [container viewWithTag:SCIFollowBadgeTag];
     if (!badge) badge = [container.window viewWithTag:SCIFollowBadgeTag];
@@ -113,14 +51,8 @@ static void SCIUpdateFollowBadge(UIView *container) {
     if (!container) return;
     if (![SCIUtils getBoolPref:@"show_follow_status"]) { SCIRemoveBadge(container); return; }
 
-    // Prefer the user captured from the profile-header avatar; fall back to a cached
-    // reflective lookup, then a fresh one.
-    id user = SCILooksLikeUser(sciProfileUser) ? sciProfileUser : nil;
-    if (!user) user = objc_getAssociatedObject(container, kSCIProfileUserKey);
-    if (!SCILooksLikeUser(user)) {
-        user = SCIProfileUserFromView(container);
-        if (user) objc_setAssociatedObject(container, kSCIProfileUserKey, user, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    }
+    // The relationship comes from the avatar hook below — no risky reflection.
+    id user = sciProfileUser;
     if (!SCILooksLikeUser(user)) { SCIRemoveBadge(container); return; }
 
     // Never on your own profile.

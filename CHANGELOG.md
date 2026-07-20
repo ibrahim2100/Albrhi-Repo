@@ -1,5 +1,20 @@
 # Albrhi Changelog
 
+## v3.0.26
+
+**Changes**
+- **Quality picker removed; always downloads the highest quality automatically.** No
+  more picker or toggles — every video download takes the best ready-to-play (muxed
+  H.264 + audio) rendition Instagram offers. The higher DASH ladder is skipped for
+  downloads because it's video-only/VP9-AV1 and won't save on iOS.
+
+## v3.0.25
+
+**Fixes**
+- **Fixed a crash when opening a profile.** Removed the reflective ivar search that
+  read arbitrary Swift ivars via `object_getIvar`. The follow badge now relies solely
+  on the avatar's `-userGQL`, which is safe.
+
 ## v3.0.24
 
 **Fixes**

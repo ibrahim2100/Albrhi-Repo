@@ -442,20 +442,13 @@
         return;
     }
 
+    // Diagnostics only: record what the renditions look like. We always download the
+    // best *ready-to-play* rendition — the muxed H.264 progressive (video + audio).
+    // Instagram's higher-res DASH ladder is video-only (silent) / VP9-AV1, which iOS
+    // can't save, so it isn't used for the actual download.
     NSArray<NSDictionary *> *qualities = [self qualitiesForVideo:video];
-
-    // Recorded even when the picker is off, so diagnostics can distinguish
-    // "no renditions found" from "feature disabled".
     [SCIDiagnostics recordQualityCount:(NSInteger)qualities.count
                          forVideoClass:NSStringFromClass([video class])];
-
-    if (![SCIUtils getBoolPref:@"show_quality_picker"]) qualities = nil;
-
-    // Only worth asking when there's an actual choice.
-    if (qualities.count > 1) {
-        [self presentQualityPicker:qualities sourceLabel:sourceLabel anchor:anchor];
-        return;
-    }
 
     NSURL *url = [SCIUtils getVideoUrl:video];
     if (!url) {
