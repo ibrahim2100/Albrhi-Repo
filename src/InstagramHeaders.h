@@ -473,8 +473,6 @@
 - (void)_didTapRepostButton:(id)arg1;
 
 - (void)sciInlineDownloadPressed:(id)sender; // new
-- (void)sciAddAutoNextButton;    // new
-- (void)sciToggleAutoNext:(id)sender; // new
 @end
 
 @interface IGMainAppSurfaceIntent : NSObject

@@ -411,7 +411,7 @@ static NSDictionary *_arTable = nil;
         @"p_press_off": @"Off",
         // Auto-advance reels
         @"p_reels_autonext_t": @"Auto-advance to next reel",
-        @"p_reels_autonext_s": @"Automatically scrolls to the next reel when the current one ends (also toggleable with the ∞ button above the reels download button)",
+        @"p_reels_autonext_s": @"Automatically scrolls to the next reel when the current one ends",
         @"p_reels_autonext_on": @"Auto-advance to next reel: on",
         @"p_reels_autonext_off": @"Auto-advance to next reel: off",
     };
@@ -779,7 +779,7 @@ static NSDictionary *_arTable = nil;
         @"p_press_off": @"إيقاف",
         // التنقل التلقائي للريل
         @"p_reels_autonext_t": @"التنقل التلقائي للريل التالي",
-        @"p_reels_autonext_s": @"ينتقل تلقائيًا للريل التالي عند انتهاء الحالي (يمكن تبديله أيضًا بزر ∞ فوق زر تحميل الريلز)",
+        @"p_reels_autonext_s": @"ينتقل تلقائيًا للريل التالي عند انتهاء الحالي",
         @"p_reels_autonext_on": @"التنقل التلقائي للريل التالي: مفعّل",
         @"p_reels_autonext_off": @"التنقل التلقائي للريل التالي: مطفأ",
     };

@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v3.0.28
+
+**Changes**
+- **Removed the on-screen ∞ auto-next button** from the reels action bar — the reels
+  bar and its download button are back exactly as Instagram lays them out. Auto-advance
+  is still toggleable from Reels settings.
+- Follow-back badge now resolves the profile user via safe KVC (no crash), and shows
+  correctly on the profile.
+
 ## v3.0.27
 
 **New**
