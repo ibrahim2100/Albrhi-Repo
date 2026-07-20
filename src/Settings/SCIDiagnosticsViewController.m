@@ -16,6 +16,7 @@ static NSString *_lastDownloadKind = nil;
 static NSString *_qualityBreakdown = nil;
 static NSString *_qualityLabels = nil;
 static NSString *_dashInfo = nil;
+static NSString *_lastPickedURL = nil;
 
 @implementation SCIDiagnostics
 
@@ -72,6 +73,10 @@ static NSString *_dashInfo = nil;
 
 + (void)recordDashResult:(NSString *)info {
     _dashInfo = [info copy];
+}
+
++ (void)recordPickedURL:(NSString *)url {
+    _lastPickedURL = [url copy];
 }
 
 // MARK: - Live hierarchy scan
@@ -255,6 +260,9 @@ static NSString *_dashInfo = nil;
             @{@"title": SCILocalized(@"diag_dash"),
               @"detail": _dashInfo ?: @"—",
               @"ok": @(_dashInfo != nil)},
+            @{@"title": SCILocalized(@"diag_picked_url"),
+              @"detail": _lastPickedURL ?: @"—",
+              @"ok": @(_lastPickedURL != nil)},
             @{@"title": SCILocalized(@"diag_download_kind"),
               @"detail": _lastDownloadKind ?: @"—",
               @"ok": @(_lastDownloadKind != nil)},

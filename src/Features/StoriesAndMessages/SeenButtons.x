@@ -195,8 +195,9 @@ static const void *kSCIVisualMsgKey = &kSCIVisualMsgKey;
     [sender setImage:[UIImage systemImageNamed:glyph withConfiguration:config] forState:UIControlStateNormal];
     sender.tintColor = dmVisualMsgsViewedButtonEnabled ? [SCIUtils SCIColor_Primary] : [UIColor whiteColor];
 
+    // Frame it as a per-message "seen" action, not a feature switch.
     [SCIUtils showToastForDuration:2.5
-                             title:SCILocalized(dmVisualMsgsViewedButtonEnabled ? @"p_toast_replay_off" : @"p_toast_replay_on")];
+                             title:SCILocalized(dmVisualMsgsViewedButtonEnabled ? @"p_dm_seen_on" : @"p_dm_seen_off")];
 }
 
 %new - (void)sciAddVisualSaveButton {
@@ -233,25 +234,9 @@ static const void *kSCIVisualMsgKey = &kSCIVisualMsgKey;
         return;
     }
 
-    id video = nil;
-    id photo = nil;
-    @try { if ([message respondsToSelector:@selector(video)]) video = [message video]; } @catch (__unused id e) {}
-    @try { if (!video && [message respondsToSelector:@selector(rawVideo)]) video = [(IGDirectVisualMessage *)message rawVideo]; } @catch (__unused id e) {}
-    @try { if ([message respondsToSelector:@selector(photo)]) photo = [message photo]; } @catch (__unused id e) {}
-
-    if (video) {
-        [SCIMediaDownloader downloadVideo:video sourceLabel:nil anchor:sender];
-        return;
-    }
-    if (photo) {
-        NSURL *url = [SCIUtils getPhotoUrl:photo];
-        if (url) {
-            [SCIMediaDownloader downloadURL:url sourceLabel:nil isVideo:NO];
-            return;
-        }
-    }
-
-    [SCIUtils showErrorHUDWithDescription:SCILocalized(@"err_no_media")];
+    // The message exposes -video/-photo just like an IGMedia, so let the coordinator
+    // resolve and download it (video wins, else photo) — same path as everywhere else.
+    [SCIMediaDownloader downloadMedia:message sourceLabel:nil anchor:sender];
 }
 
 %end

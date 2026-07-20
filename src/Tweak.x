@@ -17,7 +17,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.0.19";  // Albrhi
+NSString *SCIVersionString = @"v3.0.21";  // Albrhi
 
 // Variables that work across features
 BOOL dmVisualMsgsViewedButtonEnabled = false;

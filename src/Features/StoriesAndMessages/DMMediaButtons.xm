@@ -102,6 +102,10 @@ threadSubscriptionService:(id)threadSubscriptionService {
     id video = objc_getAssociatedObject(self, kSCIDMVideoKey);
     id photo = objc_getAssociatedObject(self, kSCIDMPhotoKey);
 
+    // Fallback: read straight off the viewer if the init capture missed.
+    if (!video) { @try { video = [self valueForKey:@"video"]; } @catch (__unused id e) {} }
+    if (!photo) { @try { photo = [self valueForKey:@"photo"]; } @catch (__unused id e) {} }
+
     // Video wins — a video message may also carry a poster photo.
     if (video) {
         [SCIMediaDownloader downloadVideo:video sourceLabel:nil anchor:sender];

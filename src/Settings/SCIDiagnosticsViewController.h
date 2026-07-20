@@ -57,6 +57,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// reachable on this build.
 + (void)recordDashResult:(nullable NSString *)info;
 
+/// The exact URL a download was last attempted with, so a failing pick can be
+/// inspected.
++ (void)recordPickedURL:(nullable NSString *)url;
+
 /// Walks the live view hierarchy behind the settings sheet looking for anything
 /// shaped like a post action row — a view holding several buttons in a line.
 ///

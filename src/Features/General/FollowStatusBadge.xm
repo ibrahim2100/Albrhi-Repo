@@ -40,13 +40,6 @@ static UIView *SCIFindViewWithIdentifier(UIView *root, NSString *identifier) {
     if (![SCIUtils getBoolPref:@"show_follow_status"]) { [self sci_removeFollowBadge]; return; }
     if (self.bounds.size.width < SCIFollowBadgeMinAvatarWidth) { [self sci_removeFollowBadge]; return; }
 
-    UIWindow *window = self.window;
-    if (!window) return;
-
-    // Only badge when the followers stat button is on screen — i.e. a profile page.
-    UIView *followersView = SCIFindViewWithIdentifier(window, SCIFollowersIdentifier);
-    if (!followersView) { [self sci_removeFollowBadge]; return; }
-
     IGUser *user = nil;
     @try { user = [self valueForKey:@"userGQL"]; } @catch (__unused id e) {}
     if (!user) { @try { user = [self valueForKey:@"user"]; } @catch (__unused id e) {} }
@@ -62,14 +55,29 @@ static UIView *SCIFindViewWithIdentifier(UIView *root, NSString *identifier) {
     BOOL follows = NO;
     @try { follows = [[user valueForKey:@"followsCurrentUser"] boolValue]; } @catch (__unused id e) {}
 
-    UIView *host = followersView.superview;
-    if (!host) return;
+    // Prefer anchoring under the followers count; if it can't be found, fall back to
+    // sitting just below the avatar so the badge never simply vanishes.
+    UIView *followersView = self.window ? SCIFindViewWithIdentifier(self.window, SCIFollowersIdentifier) : nil;
 
-    UILabel *badge = (UILabel *)[host viewWithTag:SCIFollowBadgeTag];
+    UIView *host;
+    CGRect anchorInHost;
+    if (followersView && followersView.superview) {
+        host = followersView.superview;
+        anchorInHost = [followersView convertRect:followersView.bounds toView:host];
+    } else {
+        host = self.superview;
+        if (!host) return;
+        anchorInHost = self.frame;
+    }
+
+    // Keep the badge from being clipped by a tightly-sized stats container.
+    host.clipsToBounds = NO;
+
+    // Reuse an existing badge; if it lives under a different host now, move it.
+    UILabel *badge = (UILabel *)(self.window ? [self.window viewWithTag:SCIFollowBadgeTag] : [host viewWithTag:SCIFollowBadgeTag]);
+    if (badge && badge.superview != host) { [badge removeFromSuperview]; badge = nil; }
+
     if (![badge isKindOfClass:[UILabel class]]) {
-        // A stale badge may live under a different host from a previous layout.
-        [self sci_removeFollowBadge];
-
         badge = [[UILabel alloc] init];
         badge.tag = SCIFollowBadgeTag;
         badge.font = [UIFont systemFontOfSize:11.0 weight:UIFontWeightSemibold];
@@ -87,10 +95,8 @@ static UIView *SCIFindViewWithIdentifier(UIView *root, NSString *identifier) {
     CGFloat width = badge.intrinsicContentSize.width + 18.0;
     CGFloat height = 18.0;
 
-    // Centered directly under the followers stat button.
-    CGRect followersInHost = [followersView convertRect:followersView.bounds toView:host];
-    badge.frame = CGRectMake(CGRectGetMidX(followersInHost) - width / 2.0,
-                             CGRectGetMaxY(followersInHost) + 3.0,
+    badge.frame = CGRectMake(CGRectGetMidX(anchorInHost) - width / 2.0,
+                             CGRectGetMaxY(anchorInHost) + 4.0,
                              width, height);
 
     [host bringSubviewToFront:badge];

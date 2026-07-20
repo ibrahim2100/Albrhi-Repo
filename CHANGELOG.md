@@ -1,5 +1,30 @@
 # Albrhi Changelog
 
+## v3.0.21
+
+**Fixes**
+- **DASH quality labels were wrong** (e.g. "1421375×2560"): `width="…"` was matching
+  inside `bandwidth="…"`. Added a word boundary so width/height parse correctly.
+
+**Diagnostics**
+- New "Last download URL" line records the exact URL a pick was downloaded from, to
+  debug the "download failed" on picked qualities.
+
+## v3.0.20
+
+**Changes**
+- **Removed download-by-long-press from settings.** Long-press action is now Zoom or
+  Off only — downloads happen via the inline button (crash-prone press-save is gone).
+- **View-once eye is now a "seen" action, not a feature switch** — clearer toasts.
+
+**Fixes**
+- **Follow badge no longer vanishes.** It anchors under the followers count when found
+  and otherwise falls back to just below the avatar, and disables clipping so a tight
+  stats container can't hide it.
+- **DM save "could not find media"** — view-once save now routes through the shared
+  coordinator (`downloadMedia`), and the permanent-media viewer reads the media off
+  itself if the init capture missed.
+
 ## v3.0.19
 
 **Fixes**

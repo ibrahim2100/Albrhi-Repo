@@ -303,8 +303,10 @@
 
 /// Reads an integer attribute (width="1080") out of a Representation block.
 + (long long)dashAttribute:(NSString *)name inBlock:(NSString *)block {
+    // The \\b matters: without it, width="…" matches inside bandWIDTH="…", so the
+    // bitrate was being read as the width (e.g. "1421375×2560").
     NSRegularExpression *regex =
-        [NSRegularExpression regularExpressionWithPattern:[NSString stringWithFormat:@"%@=\"(\\d+)\"", name]
+        [NSRegularExpression regularExpressionWithPattern:[NSString stringWithFormat:@"\\b%@=\"(\\d+)\"", name]
                                                   options:NSRegularExpressionCaseInsensitive
                                                     error:nil];
     NSTextCheckingResult *m = [regex firstMatchInString:block options:0 range:NSMakeRange(0, block.length)];
@@ -480,6 +482,8 @@
         [SCIUtils showErrorHUDWithDescription:SCILocalized(@"err_no_media")];
         return;
     }
+
+    [SCIDiagnostics recordPickedURL:[url absoluteString]];
 
     NSString *extension = [[url lastPathComponent] pathExtension];
 

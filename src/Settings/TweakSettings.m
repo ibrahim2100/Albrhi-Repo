@@ -85,22 +85,10 @@
                                  action:@selector(menuChanged:)
                            propertyList:@{ @"defaultsKey": @"media_press_action", @"value": @"zoom" }
             ],
-            [UIMenu menuWithTitle:@""
-                            image:nil
-                       identifier:nil
-                          options:UIMenuOptionsDisplayInline
-                         children:@[
-                             [UICommand commandWithTitle:SCILocalized(@"p_press_download")
-                                                   image:nil
-                                                  action:@selector(menuChanged:)
-                                            propertyList:@{ @"defaultsKey": @"media_press_action", @"value": @"download" }
-                             ],
-                             [UICommand commandWithTitle:SCILocalized(@"p_press_off")
-                                                   image:nil
-                                                  action:@selector(menuChanged:)
-                                            propertyList:@{ @"defaultsKey": @"media_press_action", @"value": @"off" }
-                             ]
-                         ]
+            [UICommand commandWithTitle:SCILocalized(@"p_press_off")
+                                  image:nil
+                                 action:@selector(menuChanged:)
+                           propertyList:@{ @"defaultsKey": @"media_press_action", @"value": @"off" }
             ]
         ]],
 

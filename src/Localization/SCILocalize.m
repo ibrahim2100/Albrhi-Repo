@@ -197,6 +197,7 @@ static NSDictionary *_arTable = nil;
         @"diag_quality_labels": @"Rendition labels",
         @"diag_quality_raw": @"Renditions from API (before filtering)",
         @"diag_dash": @"DASH manifest",
+        @"diag_picked_url": @"Last download URL",
         @"diag_on": @"On",
         @"diag_off": @"Off",
         @"diag_story_intercepts": @"Seen receipts blocked",
@@ -399,6 +400,9 @@ static NSDictionary *_arTable = nil;
         // DM media save button
         @"p_dm_save_t": @"Save DM photos & videos",
         @"p_dm_save_s": @"Adds a save button when you open a photo or video in DMs, and always allows saving",
+        // View-once seen toasts
+        @"p_dm_seen_on": @"Marked as seen",
+        @"p_dm_seen_off": @"Watching without marking as seen",
         // Long-press action
         @"p_press_title": @"Long-press action",
         @"p_press_sub": @"What holding a post/reel/story does",
@@ -556,6 +560,7 @@ static NSDictionary *_arTable = nil;
         @"diag_quality_labels": @"تسميات النسخ",
         @"diag_quality_raw": @"النسخ من الـ API (قبل الترشيح)",
         @"diag_dash": @"بيان DASH",
+        @"diag_picked_url": @"آخر رابط تنزيل",
         @"diag_on": @"مفعّل",
         @"diag_off": @"مطفأ",
         @"diag_story_intercepts": @"إشعارات مشاهدة مُوقَفة",
@@ -758,6 +763,9 @@ static NSDictionary *_arTable = nil;
         // زر حفظ وسائط الخاص
         @"p_dm_save_t": @"حفظ صور وفيديوهات الخاص",
         @"p_dm_save_s": @"يضيف زر حفظ عند فتح صورة أو فيديو في الرسائل، ويسمح بالحفظ دائمًا",
+        // تنبيهات مشاهدة العرض لمرة واحدة
+        @"p_dm_seen_on": @"تم تعليمها كمشاهَدة",
+        @"p_dm_seen_off": @"مشاهدة دون تسجيل المشاهدة",
         // إجراء الضغط المطوّل
         @"p_press_title": @"إجراء الضغط المطوّل",
         @"p_press_sub": @"ماذا يفعل الضغط المطوّل على منشور/ريل/قصة",
