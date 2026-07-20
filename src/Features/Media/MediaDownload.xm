@@ -77,7 +77,7 @@ static void SCIPerformZoom(UIView *view, UILongPressGestureRecognizer *sender) {
     if (!view) return;
 
     switch (sender.state) {
-        case UIGestureRecognizerStateBegan:
+        case UIGestureRecognizerStateBegan: {
             [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
             [view.superview bringSubviewToFront:view];
             [UIView animateWithDuration:0.22 delay:0
@@ -86,16 +86,18 @@ static void SCIPerformZoom(UIView *view, UILongPressGestureRecognizer *sender) {
                              animations:^{ view.transform = CGAffineTransformMakeScale(1.6, 1.6); }
                              completion:nil];
             break;
+        }
 
         case UIGestureRecognizerStateEnded:
         case UIGestureRecognizerStateCancelled:
-        case UIGestureRecognizerStateFailed:
+        case UIGestureRecognizerStateFailed: {
             [UIView animateWithDuration:0.25 delay:0
                  usingSpringWithDamping:0.75 initialSpringVelocity:0.3
                                 options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionAllowUserInteraction
                              animations:^{ view.transform = CGAffineTransformIdentity; }
                              completion:nil];
             break;
+        }
 
         default:
             break;

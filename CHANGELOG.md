@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v3.0.19
+
+**Fixes**
+- Build fix: braced the zoom `switch` cases (blocks in a case need their own scope),
+  which broke the v3.0.18 build.
+
 ## v3.0.18
 
 **New**
