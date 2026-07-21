@@ -171,10 +171,10 @@ Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak.roothide
 Replaces: com.albrhi.tweak.roothide
 Filename: debs/com.albrhi.tweak_3.1.6+rootless.deb
-Size: 144602
-MD5sum: 676a898844f1a30e9ff49963d79887fd
-SHA1: c33f86a37d99a756c5688f947d3bc84e1eefded5
-SHA256: b911ae5081e9fed9e1e80dcd3425b1e4f4864b7d7a14eb1b341cd63b5b4f1af5
+Size: 145756
+MD5sum: 019c904f5f97576e5483f26f62a2ed36
+SHA1: 1367380c3a9c2f7cd180cab91f397b355869c8e4
+SHA256: 94818ac0664e1fa6483ad925ab2761797e21086b543aa4fb459c9326e0f6f95a
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
@@ -419,10 +419,10 @@ Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak
 Replaces: com.albrhi.tweak
 Filename: debs/com.albrhi.tweak.roothide_3.1.6.deb
-Size: 144522
-MD5sum: e26bd970fdbfe698913d930072dc5d69
-SHA1: cf2225270cb693ea0573fc67f55a424f3007bce7
-SHA256: 76c6a48d47721639c85c69bc811195baa232c09fdb17ca89321cc5616c7ffe64
+Size: 145580
+MD5sum: 6d4285bc827e42da6b9c5cee00c64d2d
+SHA1: 6d745f6f0a9e99a11a8abd8e8c684e749fefeac2
+SHA256: df212a186923076c81bf5e063723618596513c1c066af055630e173ee8c4dc0e
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
