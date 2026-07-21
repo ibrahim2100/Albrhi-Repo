@@ -171,10 +171,10 @@ Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak.roothide
 Replaces: com.albrhi.tweak.roothide
 Filename: debs/com.albrhi.tweak_3.1.6+rootless.deb
-Size: 145714
-MD5sum: f4fe59917f845b48ec9913d9a6da39ed
-SHA1: 34068796961ac86b00c56e72acf4871e87b66ad7
-SHA256: e5362eea3ff382e0d8afdcf1205e3dea9bbb0b09e22a9a73eee832f399f87a90
+Size: 144602
+MD5sum: 676a898844f1a30e9ff49963d79887fd
+SHA1: c33f86a37d99a756c5688f947d3bc84e1eefded5
+SHA256: b911ae5081e9fed9e1e80dcd3425b1e4f4864b7d7a14eb1b341cd63b5b4f1af5
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
@@ -242,6 +242,7 @@ Description: Download anything, hide the noise, browse invisibly — in Arabic o
 Tag: role::enduser
 Author: Ibrahim Ismail AL-Rahn (based on SCInsta by SoCuul, GPLv3)
 Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
 Name: Albrhi for Instagram (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
@@ -418,10 +419,10 @@ Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak
 Replaces: com.albrhi.tweak
 Filename: debs/com.albrhi.tweak.roothide_3.1.6.deb
-Size: 145648
-MD5sum: 67846c59742096a87f6426ccf7be5229
-SHA1: b2acbc83024a6e8c03375a4b884e723a20dd8b1f
-SHA256: abc4d81d6816ea531ac4ed8d722a82990bc7d4d4900fba609cda59fee86fbbf9
+Size: 144522
+MD5sum: e26bd970fdbfe698913d930072dc5d69
+SHA1: cf2225270cb693ea0573fc67f55a424f3007bce7
+SHA256: 76c6a48d47721639c85c69bc811195baa232c09fdb17ca89321cc5616c7ffe64
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
@@ -489,6 +490,7 @@ Description: Download anything, hide the noise, browse invisibly — in Arabic o
 Tag: role::enduser
 Author: Ibrahim Ismail AL-Rahn (based on SCInsta by SoCuul, GPLv3)
 Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
 Name: Albrhi for Instagram (roothide)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 

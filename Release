@@ -6,3 +6,4 @@ Codename: ios
 Architectures: iphoneos-arm64 iphoneos-arm64e
 Components: main
 Description: Tweaks by Ibrahim Ismail AL-Rahn.
+Icon: CydiaIcon.png
