@@ -95,9 +95,14 @@ jobs:
                   echo "needed=true" >> "$GITHUB_OUTPUT"
                 fi
 
-            - name: Install Dependencies
+            - name: Install dpkg
+              # Always needed: the repo index is built with dpkg-scanpackages and
+              # dpkg-deb even on runs that skip the tweak build entirely.
+              run: brew install dpkg
+
+            - name: Install build dependencies
               if: steps.release_check.outputs.needed == 'true'
-              run: brew install ldid dpkg make
+              run: brew install ldid make
 
             - name: Set PATH environment variable
               if: steps.release_check.outputs.needed == 'true'

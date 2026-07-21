@@ -158,6 +158,10 @@ checks → version → decide → [build ×2 + dylib] → release → repo index
   over, which meant deleted packages lingered in Sileo forever.
 - URLs in `control` are rewritten from the repository the build runs in, so renaming
   the repo needs no edit there.
+- **dpkg is installed on every run, not only on build runs.** The repo index needs
+  `dpkg-deb` and `dpkg-scanpackages` even when the tweak build is skipped; gating
+  the whole dependency step behind the build broke exactly that. `ldid` and `make`
+  stay gated — only compiling needs them.
 
 ### tools/
 
