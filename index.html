@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Albrhi — Instagram tweak repo</title>
+<title>Albrhi Repo</title>
 <style>
   :root {
     --accent: #E8590C;
-    --bg: #ffffff;
+    --bg: #fff;
     --fg: #1c1c1e;
     --muted: #6e6e73;
     --card: #f5f5f7;
@@ -15,7 +15,7 @@
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #000000;
+      --bg: #000;
       --fg: #f5f5f7;
       --muted: #98989d;
       --card: #1c1c1e;
@@ -31,36 +31,27 @@
     font: 17px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  main { max-width: 640px; margin: 0 auto; }
+  main { max-width: 660px; margin: 0 auto; }
+
   h1 { font-size: 40px; letter-spacing: -0.02em; margin: 0 0 6px; }
-  .tag {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 14%, transparent);
-    padding: 3px 9px;
-    border-radius: 9px;
-    vertical-align: 6px;
-    margin-left: 8px;
-  }
-  .lede { color: var(--muted); font-size: 19px; margin: 0 0 34px; }
+  .lede { color: var(--muted); font-size: 19px; margin: 0 0 32px; }
+
   .card {
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: 16px;
     padding: 22px;
-    margin: 0 0 20px;
+    margin: 0 0 18px;
   }
-  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin: 0 0 12px; }
-  code, .url {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 15px;
-    word-break: break-all;
+  h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--muted); margin: 0 0 12px;
   }
   .url {
     display: block;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 15px;
+    word-break: break-all;
     background: var(--bg);
     border: 1px solid var(--line);
     border-radius: 10px;
@@ -76,12 +67,31 @@
     font-size: 16px;
     padding: 12px 20px;
     border-radius: 12px;
-    margin-right: 8px;
+    margin: 0 8px 8px 0;
+    border: 0;
+    cursor: pointer;
   }
-  table { width: 100%; border-collapse: collapse; font-size: 15px; }
-  td { padding: 9px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
-  tr:last-child td { border-bottom: 0; }
-  td:first-child { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; padding-right: 18px; white-space: nowrap; }
+  .btn.secondary { background: var(--muted); }
+
+  /* Package list, built from the repo's own Packages file. */
+  .pkg { display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+  .pkg:last-child { border-bottom: 0; padding-bottom: 0; }
+  .pkg:first-child { padding-top: 0; }
+  .glyph {
+    flex: 0 0 40px; height: 40px; border-radius: 10px;
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 17px;
+  }
+  .pkg-body { min-width: 0; }
+  .pkg-name { font-weight: 600; }
+  .pkg-meta {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px; color: var(--muted); margin-top: 1px;
+  }
+  .pkg-desc { color: var(--muted); font-size: 15px; margin-top: 5px; }
+
   footer { color: var(--muted); font-size: 14px; margin-top: 40px; }
   a { color: var(--accent); }
 </style>
@@ -89,61 +99,133 @@
 <body>
 <main>
 
-  <h1>Albrhi<span class="tag">BETA</span></h1>
-  <p class="lede">Download anything, hide the noise, browse invisibly — in Arabic or English.</p>
+  <h1>Albrhi Repo</h1>
+  <p class="lede">Tweaks by Ibrahim Ismail AL-Rahn.</p>
 
   <div class="card">
     <h2>Add this source</h2>
     <span class="url" id="repo-url">…</span>
     <a class="btn" id="sileo" href="#">Add to Sileo</a>
-    <a class="btn" id="zebra" href="#" style="background:var(--muted)">Zebra</a>
+    <a class="btn secondary" id="zebra" href="#">Zebra</a>
+    <button class="btn secondary" id="copy" type="button">Copy URL</button>
   </div>
 
   <div class="card">
-    <h2>Which build do I need?</h2>
-    <table>
-      <tr><td>Albrhi (rootless)</td><td>Dopamine, palera1n — the usual modern jailbreaks</td></tr>
-      <tr><td>Albrhi (roothide)</td><td>roothide installations</td></tr>
-      <tr><td>.dylib</td><td>Sideloading, via LiveContainer, Sideloadly or cyan</td></tr>
-    </table>
-    <p style="color:var(--muted);font-size:14px;margin:14px 0 0">
-      Both appear in the source; pick the one matching your jailbreak. Installing one
-      removes the other, so you cannot end up with both. The dylib is on the
-      <a id="releases" href="#">releases page</a>.
-    </p>
+    <h2>Packages <span id="count" style="text-transform:none;letter-spacing:0"></span></h2>
+    <div id="packages">Loading…</div>
   </div>
 
-  <div class="card">
-    <h2>Tested on Instagram 410.1.0</h2>
-    <p style="margin:0;color:var(--muted);font-size:15px">
-      Not a compatibility ceiling — it is simply the newest build the developer's
-      phone will still accept. Nothing here is pinned to a version number, so newer
-      Instagram releases should work. If one doesn't, Settings → Diagnostics writes
-      the bug report for you.
-    </p>
-  </div>
-
-  <footer>
-    Free and open source under the GPLv3 · by Ibrahim Ismail AL-Rahn ·
-    based on <a href="https://github.com/SoCuul/SCInsta">SCInsta</a> by SoCuul.<br>
-    Not affiliated with Instagram or Meta.
-  </footer>
+  <footer id="footer"></footer>
 
 </main>
 
 <script>
-  // The page is served from the repo root, so the source URL is wherever this
-  // document lives — no hard-coded owner or project name to drift.
-  const base = location.origin + location.pathname.replace(/index\.html$/, '');
+(function () {
+  // The source URL is wherever this page is served from — nothing hard-coded, so
+  // renaming the repo or moving it to a custom domain needs no edit here.
+  var base = location.origin + location.pathname.replace(/index\.html$/, '');
+
   document.getElementById('repo-url').textContent = base;
   document.getElementById('sileo').href = 'sileo://source/' + base;
   document.getElementById('zebra').href = 'zbra://sources/add/' + base;
 
-  const parts = location.pathname.split('/').filter(Boolean);
-  const project = parts.length ? parts[0] : '';
-  const owner = location.hostname.split('.')[0];
-  document.getElementById('releases').href =
-    'https://github.com/' + owner + '/' + project + '/releases';
+  document.getElementById('copy').addEventListener('click', function (e) {
+    navigator.clipboard.writeText(base).then(function () {
+      e.target.textContent = 'Copied';
+      setTimeout(function () { e.target.textContent = 'Copy URL'; }, 1600);
+    });
+  });
+
+  var owner = location.hostname.split('.')[0];
+  var project = location.pathname.split('/').filter(Boolean)[0] || '';
+  document.getElementById('footer').innerHTML =
+    'Free and open source · <a href="https://github.com/' + owner + '/' + project + '">source on GitHub</a>' +
+    '<br>Not affiliated with any of the apps these tweaks modify.';
+
+  /**
+   * Parses a Debian Packages file into stanzas.
+   *
+   * Reading the real index means the page never needs editing: whatever ends up
+   * in the repo shows up here, with whatever description its author wrote.
+   */
+  function parsePackages(text) {
+    return text.split(/\n\n+/).filter(function (block) {
+      return block.trim();
+    }).map(function (block) {
+      var fields = {};
+      var current = null;
+
+      block.split('\n').forEach(function (line) {
+        if (/^[ \t]/.test(line)) {
+          // Continuation of the previous field. " ." is a paragraph break.
+          if (current) {
+            var body = line.trim();
+            fields[current] += body === '.' ? '\n' : ' ' + body;
+          }
+          return;
+        }
+        var at = line.indexOf(':');
+        if (at < 0) return;
+        current = line.slice(0, at);
+        fields[current] = line.slice(at + 1).trim();
+      });
+
+      return fields;
+    }).filter(function (f) { return f.Package; });
+  }
+
+  fetch('Packages', { cache: 'no-store' })
+    .then(function (r) {
+      if (!r.ok) throw new Error(r.status);
+      return r.text();
+    })
+    .then(function (text) {
+      var pkgs = parsePackages(text);
+
+      // Newest first by name is meaningless; sort by display name instead.
+      pkgs.sort(function (a, b) {
+        return (a.Name || a.Package).localeCompare(b.Name || b.Package);
+      });
+
+      var host = document.getElementById('packages');
+
+      if (!pkgs.length) {
+        host.textContent = 'No packages yet.';
+        return;
+      }
+
+      document.getElementById('count').textContent = '(' + pkgs.length + ')';
+      host.innerHTML = '';
+
+      pkgs.forEach(function (p) {
+        var name = p.Name || p.Package;
+        // First paragraph only: the synopsis, not the whole description.
+        var desc = (p.Description || '').split('\n')[0].trim();
+
+        var row = document.createElement('div');
+        row.className = 'pkg';
+        row.innerHTML =
+          '<div class="glyph"></div>' +
+          '<div class="pkg-body">' +
+            '<div class="pkg-name"></div>' +
+            '<div class="pkg-meta"></div>' +
+            '<div class="pkg-desc"></div>' +
+          '</div>';
+
+        row.querySelector('.glyph').textContent = name.charAt(0).toUpperCase();
+        row.querySelector('.pkg-name').textContent = name;
+        row.querySelector('.pkg-meta').textContent =
+          p.Package + ' · ' + (p.Version || '?') + ' · ' + (p.Architecture || '?');
+        row.querySelector('.pkg-desc').textContent = desc;
+
+        host.appendChild(row);
+      });
+    })
+    .catch(function () {
+      document.getElementById('packages').textContent =
+        'Could not read the package index.';
+    });
+})();
 </script>
 </body>
 </html>

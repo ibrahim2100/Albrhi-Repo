@@ -1,0 +1,195 @@
+{
+  "minVersion": "0.1",
+  "class": "DepictionTabView",
+  "tintColor": "#E8590C",
+  "tabs": [
+    {
+      "class": "DepictionStackView",
+      "tabname": "Details",
+      "views": [
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "**Download anything, hide the noise, browse invisibly** — in Arabic or English.\n\nAlbrhi puts a download button where Instagram should have put one, strips the feed back to the people you actually follow, and stops the app reporting what you watch.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 12
+        },
+        {
+          "class": "DepictionHeaderView",
+          "title": "Beta"
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "Tested on Instagram **410.1.0** — the newest build the developer's phone will still accept. Nothing here is pinned to a version number, so newer builds should work. If one misbehaves, Settings › Diagnostics writes the bug report for you.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSeparatorView"
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "Downloads",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "A native download button in the action row of every post and reel, beside the save icon. One tap takes the highest quality available straight to Photos. Stories and view-once DMs have their own button, and reels can be saved as video or as the original audio.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 8
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "Download Center",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "A real queue: pause, resume, retry, several transfers at once, and downloads that keep running after you leave the app. Duplicates are detected, finished files are cleared once they reach Photos, and a searchable history records everything you saved.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 8
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "A quieter feed",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "Remove ads, sponsored and suggested posts, suggested accounts and reels, Threads posts, Meta AI, the friends map, trending searches and the explore grid. Hide the stories tray, or the entire feed.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 8
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "Privacy",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "Watch stories without sending a seen receipt, and choose per story when to send one. View-once photos and videos stay unseen until you tap the eye button on that exact message. Hide the typing indicator and disable screenshot detection.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 8
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "Confirmations",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "An optional prompt before liking, following, reposting, calling, commenting or sending a voice message — so a mis-tap never turns into a notification.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 8
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "Built to fit in",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "Full Arabic and English with automatic right-to-left layout, SF Symbols, a customisable accent colour and dark mode. Hold the menu button on your profile to open it.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 8
+        }
+      ]
+    },
+    {
+      "class": "DepictionStackView",
+      "tabname": "What's New",
+      "views": [
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "## v3.1.5\n\n**Fixed**\n- **Release builds are no longer debug builds.** Every package published until now\n  carried debug symbols and a `-1+debug` version suffix, because `FINALPACKAGE` was\n  never set. Builds are now smaller, optimised, and versioned cleanly.\n\n**Repo**\n- The Albrhi source is live at\n  [ibrahim2100.github.io/instv3](https://ibrahim2100.github.io/instv3/) — add it in\n  Sileo or Zebra and updates arrive automatically.\n- The landing page now builds its package list from the repo's own index, so it\n  stays accurate as more tweaks are added.\n\n## v3.1.4 — First public beta\n\n**Fixed**\n- **Mark-as-seen in DMs now actually sends the receipt.** One press marks the message\n  you are looking at, and only that one — five view-once messages in a row stay\n  unseen until you press each. It previously showed a green tick and sent nothing.\n- Photo posts no longer fail with \"could not extract URL\": a photo still hands back\n  an empty video object, and the download button was taking the video path.\n- The inline download button appears on reels, above the like button.\n\n**Removed**\nThirteen settings that were broken or pointless, rather than left to disappoint:\nliquid glass buttons and surfaces, teen app icons, disable scrolling reels, doom\nscrolling limits, the per-surface download toggles (the inline button replaces\nthem), long-press tuning, keep deleted messages, and the quality picker. Videos now\nalways download at the highest quality available.\n\n**New**\n- **Diagnostics page**, at the top level of settings. Reports which Instagram\n  classes the tweak actually attached to on your build, and files a pre-filled\n  GitHub issue in one tap.\n- **Releases publish automatically** with both a `.deb` for jailbroken devices and a\n  `.dylib` for sideloading, from a single build.\n- Redesigned welcome screen, shown on first install and after each update.\n- Verbose logging is now off by default and toggleable in Debug.\n\n**Housekeeping**\n- 92 orphaned translation keys removed; Arabic and English are at full parity.\n- `tools/check.py` runs before every build: brace balance, duplicate interfaces,\n  fragile `%orig` placement, multi-line string literals, missing imports,\n  translation drift and version mismatch. Every rule exists because that exact\n  mistake broke a build.\n\n**Tested on Instagram 410.1.0** — the newest build the developer's phone will still\naccept. Newer versions should work; reports from them are especially welcome.\n\n## v3.0.28\n\n**Changes**\n- **Removed the on-screen ∞ auto-next button** from the reels action bar — the reels\n  bar and its download button are back exactly as Instagram lays them out. Auto-advance\n  is still toggleable from Reels settings.\n- Follow-back badge now resolves the profile user via safe KVC (no crash), and shows\n  correctly on the profile.",
+          "useSpacing": true
+        }
+      ]
+    },
+    {
+      "class": "DepictionStackView",
+      "tabname": "Info",
+      "views": [
+        {
+          "class": "DepictionTableTextView",
+          "title": "Version",
+          "text": "3.1.5"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Developer",
+          "text": "Ibrahim Ismail AL-Rahn"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Based on",
+          "text": "SCInsta by SoCuul"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Licence",
+          "text": "GNU GPL v3"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Tested on",
+          "text": "Instagram 410.1.0"
+        },
+        {
+          "class": "DepictionSeparatorView"
+        },
+        {
+          "class": "DepictionTableButtonView",
+          "title": "Source code",
+          "action": "https://github.com/ibrahim2100/instv3",
+          "openExternal": true
+        },
+        {
+          "class": "DepictionTableButtonView",
+          "title": "Report an issue",
+          "action": "https://github.com/ibrahim2100/instv3/issues/new",
+          "openExternal": true
+        },
+        {
+          "class": "DepictionTableButtonView",
+          "title": "Instagram — @Ib.11p",
+          "action": "https://instagram.com/Ib.11p",
+          "openExternal": true
+        },
+        {
+          "class": "DepictionTableButtonView",
+          "title": "Telegram — @Ib11p",
+          "action": "https://t.me/Ib11p",
+          "openExternal": true
+        },
+        {
+          "class": "DepictionSeparatorView"
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "_Free and open source. Not affiliated with, endorsed by or sponsored by Instagram or Meta Platforms._",
+          "useSpacing": true
+        }
+      ]
+    }
+  ]
+}
