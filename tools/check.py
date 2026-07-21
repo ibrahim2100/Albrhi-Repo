@@ -5,6 +5,7 @@ Every rule here exists because that exact mistake reached CI at least once.
 import re
 import glob
 import collections
+import os
 
 SRC = (glob.glob('src/**/*.x', recursive=True)
        + glob.glob('src/**/*.xm', recursive=True)
@@ -110,6 +111,61 @@ for path in SRC + HDR:
             continue
         if re.sub(r'\.', '', code).count('"') % 2:
             report('unterminated string literal at %s:%d' % (path, n))
+
+# 8. Project symbols used without the header that declares them.
+#    A bulk rename introduced SCILogV across 36 files without checking imports;
+#    the compiler only complained in the four that could not already see it.
+SYMBOL_HEADERS = {
+    'SCILogV': ('SCILog.h', 'Utils.h'),
+    'SCIDiagnostics': ('SCIDiagnosticsViewController.h',),
+    'SCIMediaDownloader': ('SCIMediaDownloader.h',),
+    'SCILocalized': ('SCILocalize.h', 'Utils.h'),
+}
+
+HEADER_BY_NAME = {}
+for path in HDR:
+    HEADER_BY_NAME.setdefault(os.path.basename(path), path)
+
+
+def reachable_headers(path, seen=None):
+    """Every header a file can see, following imports transitively.
+
+    Checking only direct imports produced nine false positives: the settings pages
+    reach SCILocalize.h through TweakSettings.h -> Utils.h. A check that cries wolf
+    gets ignored, so it has to resolve the whole chain.
+    """
+    if seen is None:
+        seen = set()
+    if path in seen:
+        return set()
+    seen.add(path)
+
+    try:
+        text = open(path, encoding='utf-8').read()
+    except OSError:
+        return set()
+
+    names = set()
+    for imp in re.findall(r'#import "([^"]+)"', text):
+        base = os.path.basename(imp)
+        names.add(base)
+        target = HEADER_BY_NAME.get(base)
+        if target:
+            names |= reachable_headers(target, seen)
+
+    return names
+
+
+for path in SRC:
+    text = open(path, encoding='utf-8').read()
+    visible = reachable_headers(path)
+
+    for symbol, headers in SYMBOL_HEADERS.items():
+        if symbol not in text:
+            continue
+        if visible & set(headers):
+            continue
+        report('%s used in %s without importing %s' % (symbol, path, ' or '.join(headers)))
 
 # 6. Localization parity and completeness.
 loc = open('src/Localization/SCILocalize.m', encoding='utf-8').read()

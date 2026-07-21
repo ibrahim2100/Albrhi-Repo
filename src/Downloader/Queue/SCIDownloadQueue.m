@@ -1,4 +1,5 @@
 #import "SCIDownloadQueue.h"
+#import "../../SCILog.h"
 
 NSNotificationName const SCIDownloadQueueDidChangeNotification = @"SCIDownloadQueueDidChangeNotification";
 

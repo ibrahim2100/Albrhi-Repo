@@ -1,4 +1,5 @@
 #import "SCISettingsViewController.h"
+#import "../SCILog.h"
 
 static char rowStaticRef[] = "row";
 

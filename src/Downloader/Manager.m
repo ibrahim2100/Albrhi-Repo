@@ -1,4 +1,5 @@
 #import "Manager.h"
+#import "../SCILog.h"
 
 @implementation SCIDownloadManager
 

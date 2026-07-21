@@ -6,15 +6,12 @@
 
 #import "../modules/JGProgressHUD/JGProgressHUD.h"
 
+#import "SCILog.h"
 #import "InstagramHeaders.h"
 #import "QuickLook.h"
 
 #import "Localization/SCILocalize.h"
 #import "Settings/SCISettingsViewController.h"
-
-/// Gated logging. Silent unless the user turns on verbose logging in Debug, so a
-/// release build doesn't narrate itself into the system log.
-#define SCILogV(fmt, ...)     do {         if ([[NSUserDefaults standardUserDefaults] boolForKey:@"verbose_logging"]) {             NSLog((fmt), ##__VA_ARGS__);         }     } while (0)
 
 #define SCILog(fmt, ...) \
     do { \

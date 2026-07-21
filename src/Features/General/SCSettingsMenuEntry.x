@@ -1,5 +1,6 @@
 #import "../../InstagramHeaders.h"
 #import "../../Settings/SCISettingsViewController.h"
+#import "../../SCILog.h"
 
 static NSString *const SCISettingsGestureName = @"com.albrhi.settings.longpress";
 

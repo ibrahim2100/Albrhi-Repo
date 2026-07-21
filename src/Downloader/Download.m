@@ -1,4 +1,5 @@
 #import "Download.h"
+#import "../SCILog.h"
 
 @implementation SCIDownloadDelegate
 
