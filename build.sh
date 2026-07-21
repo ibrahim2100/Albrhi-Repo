@@ -103,16 +103,36 @@ then
     make clean
     rm -rf .theos
 
-    echo -e '[1m[32mBuilding Albrhi tweak for roothide[0m'
+    echo -e '\033[1m\033[32mBuilding Albrhi tweak for roothide\033[0m'
+
+    # The rootless and roothide packages would otherwise be identical to APT --
+    # same name, version and architecture -- so a single repo could not serve both
+    # and Sileo would offer the wrong build. The roothide package therefore gets
+    # its own identity, and each declares Conflicts/Replaces on the other so they
+    # can never be installed side by side.
+    #
+    # control is edited in place and restored on exit, including on failure, so a
+    # broken build never leaves the roothide identity behind.
+    cp control control.orig
+    trap 'mv -f control.orig control 2>/dev/null || true' EXIT
+
+    sed -i.bak \
+        -e 's/^Package: com\.albrhi\.tweak$/Package: com.albrhi.tweak.roothide/' \
+        -e 's/^Name: Albrhi for Instagram (rootless)$/Name: Albrhi for Instagram (roothide)/' \
+        -e 's/^Conflicts: com\.albrhi\.tweak\.roothide$/Conflicts: com.albrhi.tweak/' \
+        -e 's/^Replaces: com\.albrhi\.tweak\.roothide$/Replaces: com.albrhi.tweak/' \
+        control
+    rm -f control.bak
+
+    echo "roothide package identity:"
+    grep -E '^(Package|Name|Conflicts|Replaces):' control
 
     # No jbroot() calls needed: the tweak writes only inside Instagram's own
     # container, so the rootless sources build unchanged under the roothide scheme.
     export THEOS_PACKAGE_SCHEME=roothide
     make package
 
-    echo -e "[1m[32mDone![0m
-
-You can find the deb file at: $(pwd)/packages"
+    echo -e "\033[1m\033[32mDone!\033[0m\n\nYou can find the deb file at: $(pwd)/packages"
 
 elif [ "$1" == "rootful" ];
 then

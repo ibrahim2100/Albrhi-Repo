@@ -1,4 +1,4 @@
-name: Build Albrhi tweak for Rootless
+name: Build, release and publish repo
 
 on:
     push:
@@ -14,7 +14,7 @@ concurrency:
     cancel-in-progress: true
 jobs:
     build:
-        name: Build Albrhi Rootless
+        name: Build rootless + roothide + dylib
         runs-on: macos-latest
         permissions:
             contents: write
@@ -154,17 +154,20 @@ jobs:
               run: |
                 cd main/packages
 
-                # Exclude the rootless deb by its exact name rather than by a
-                # substring match, so a future naming change cannot silently pick
-                # the wrong file and publish it as roothide.
-                ROOTLESS="com.albrhi.tweak_${ALBRHI_VERSION}+rootless.deb"
-                BUILT_DEB=$(ls -t *.deb | grep -v "^${ROOTLESS}$" | head -n1)
+                # The roothide build packages under its own identity, so match on
+                # that rather than on "whatever is newest" -- an exact name cannot
+                # pick up the wrong file.
+                BUILT_DEB=$(ls -t com.albrhi.tweak.roothide_*.deb 2>/dev/null | head -n1)
                 if [ -z "$BUILT_DEB" ]; then
                   echo "::error::No roothide .deb produced"
                   exit 1
                 fi
 
-                mv "$BUILT_DEB" "com.albrhi.tweak_${ALBRHI_VERSION}+roothide.deb"
+                TARGET="com.albrhi.tweak.roothide_${ALBRHI_VERSION}.deb"
+                if [ "$BUILT_DEB" != "$TARGET" ]; then
+                  mv "$BUILT_DEB" "$TARGET"
+                fi
+
                 ls -la
 
             - name: Pass package name to upload action
@@ -172,7 +175,7 @@ jobs:
               run: |
                 echo "package=com.albrhi.tweak_${ALBRHI_VERSION}+rootless.deb" >> "$GITHUB_OUTPUT"
                 echo "dylib=Albrhi_${ALBRHI_VERSION}.dylib" >> "$GITHUB_OUTPUT"
-                echo "roothide=com.albrhi.tweak_${ALBRHI_VERSION}+roothide.deb" >> "$GITHUB_OUTPUT"
+                echo "roothide=com.albrhi.tweak.roothide_${ALBRHI_VERSION}.deb" >> "$GITHUB_OUTPUT"
 
             - name: Upload Artifact
               uses: actions/upload-artifact@v4
@@ -242,3 +245,38 @@ jobs:
                   ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.dylib }}
                   ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.roothide }}
                 fail_on_unmatched_files: true
+
+            - name: Publish APT repo to GitHub Pages
+              if: steps.release_check.outputs.needed == 'true'
+              env:
+                GH_TOKEN: ${{ github.token }}
+              run: |
+                REPO_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+
+                # The repo index lives on its own branch so the source history stays
+                # clean and Pages can serve it directly.
+                git clone --depth 1 --branch gh-pages \
+                  "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" pages 2>/dev/null \
+                  || {
+                    echo "gh-pages branch does not exist yet — creating it."
+                    git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" pages
+                    cd pages
+                    git checkout --orphan gh-pages
+                    git rm -rf . >/dev/null 2>&1 || true
+                    cd ..
+                  }
+
+                chmod +x main/tools/make-repo.sh
+                ./main/tools/make-repo.sh main/packages pages "$REPO_URL"
+
+                cp main/tools/repo-index.html pages/index.html
+
+                cd pages
+                git config user.name "github-actions[bot]"
+                git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                git add -A
+                git commit -m "Repo: Albrhi ${ALBRHI_VERSION}" || {
+                  echo "Nothing changed in the repo index."
+                  exit 0
+                }
+                git push origin gh-pages

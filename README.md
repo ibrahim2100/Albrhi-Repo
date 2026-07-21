@@ -120,11 +120,14 @@ Omit that variable for a rootful `.deb`.
 
 Each release ships three builds — take the one matching your setup:
 
-| File | For |
-|---|---|
-| `...+rootless.deb` | Rootless jailbreaks (Dopamine, palera1n) |
-| `...+roothide.deb` | roothide |
-| `Albrhi_*.dylib` | Sideloading — inject into a decrypted IPA with LiveContainer, Sideloadly or cyan |
+| File | Package | For |
+|---|---|---|
+| `com.albrhi.tweak_*+rootless.deb` | `com.albrhi.tweak` | Rootless jailbreaks (Dopamine, palera1n) |
+| `com.albrhi.tweak.roothide_*.deb` | `com.albrhi.tweak.roothide` | roothide |
+| `Albrhi_*.dylib` | — | Sideloading — inject into a decrypted IPA with LiveContainer, Sideloadly or cyan |
+
+The two packages declare `Conflicts` and `Replaces` on each other, so installing one
+removes the other and they can never both be active.
 
 1. Download the file for your setup from the Releases page.
 2. Open it in Sileo, Zebra or your package manager of choice.

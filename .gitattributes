@@ -1,2 +1,14 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Shell scripts must keep LF endings: CI runs them on macOS, and a CR would
+# make bash fail with ": command not found".
+*.sh text eol=lf
+
+# The tweak toolchain and CI are Unix-only.
+*.x   text eol=lf
+*.xm  text eol=lf
+*.m   text eol=lf
+*.h   text eol=lf
+Makefile text eol=lf
+control  text eol=lf
