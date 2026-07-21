@@ -1,5 +1,15 @@
 # Albrhi Changelog
 
+## v3.1.6
+
+**Repo**
+- The source moved to
+  [ibrahim2100.github.io/Albrhi-Repo](https://ibrahim2100.github.io/Albrhi-Repo/).
+  If you added the old address, add this one instead.
+- **Package pages in Sileo.** Albrhi now ships a native depiction — tabs for the
+  feature list, what changed, and version details — generated at build time so it
+  can never show a version that was not actually released.
+
 ## v3.1.5
 
 **Fixed**
@@ -9,7 +19,7 @@
 
 **Repo**
 - The Albrhi source is live at
-  [ibrahim2100.github.io/instv3](https://ibrahim2100.github.io/instv3/) — add it in
+  [ibrahim2100.github.io/Albrhi-Repo](https://ibrahim2100.github.io/Albrhi-Repo/) — add it in
   Sileo or Zebra and updates arrive automatically.
 - The landing page now builds its package list from the repo's own index, so it
   stays accurate as more tweaks are added.

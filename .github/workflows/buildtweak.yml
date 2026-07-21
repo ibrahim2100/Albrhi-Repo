@@ -71,6 +71,20 @@ jobs:
               env:
                 THEOS: ${{ github.workspace }}/theos
 
+            - name: Point control at this repository
+              run: |
+                cd main
+
+                # Homepage and depiction URLs are rewritten from the repository this
+                # build is running in, so renaming the repo needs no edit in control.
+                OWNER="${{ github.repository_owner }}"
+                PROJECT="${{ github.event.repository.name }}"
+
+                sed -i.bak                   -e "s|^Homepage: .*|Homepage: https://github.com/${OWNER}/${PROJECT}|"                   -e "s|^Depiction: .*|Depiction: https://${OWNER}.github.io/${PROJECT}/depictions/albrhi.html|"                   -e "s|^SileoDepiction: .*|SileoDepiction: https://${OWNER}.github.io/${PROJECT}/depictions/albrhi.json|"                   control
+                rm -f control.bak
+
+                grep -E '^(Homepage|Depiction|SileoDepiction):' control
+
             - name: Get Albrhi Version
               id: albrhi_version
               run: |

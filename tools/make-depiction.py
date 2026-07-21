@@ -16,6 +16,14 @@ import sys
 
 out_dir, version, base_url = sys.argv[1], sys.argv[2], sys.argv[3].rstrip('/')
 
+# Derived from the Pages URL (https://<owner>.github.io/<project>) so renaming the
+# repository needs no edit here.
+_parts = base_url.split('/')
+_owner = _parts[2].split('.')[0]
+_project = _parts[3] if len(_parts) > 3 else ''
+REPO = 'https://github.com/%s/%s' % (_owner, _project)
+ISSUES = REPO + '/issues/new'
+
 ACCENT = '#E8590C'
 
 FEATURES = [
@@ -115,8 +123,8 @@ info = [
     row('Licence', 'GNU GPL v3'),
     row('Tested on', 'Instagram 410.1.0'),
     separator(),
-    link('Source code', 'https://github.com/ibrahim2100/instv3'),
-    link('Report an issue', 'https://github.com/ibrahim2100/instv3/issues/new'),
+    link('Source code', REPO),
+    link('Report an issue', ISSUES),
     link('Instagram — @Ib.11p', 'https://instagram.com/Ib.11p'),
     link('Telegram — @Ib11p', 'https://t.me/Ib11p'),
     separator(),
@@ -176,12 +184,13 @@ a{color:var(--accent)}
 <p class="v">Tested on Instagram 410.1.0. Newer builds should work — if one misbehaves,
 Settings &rsaquo; Diagnostics writes the bug report for you.</p>
 <footer>
-<a href="https://github.com/ibrahim2100/instv3">Source</a> ·
-<a href="https://github.com/ibrahim2100/instv3/issues/new">Report an issue</a><br>
+<a href="%(repo)s">Source</a> ·
+<a href="%(issues)s">Report an issue</a><br>
 GPLv3 · based on SCInsta by SoCuul · not affiliated with Instagram or Meta.
 </footer>
 </main></body></html>
-""" % {'version': version, 'accent': ACCENT, 'features': html_features}
+""" % {'version': version, 'accent': ACCENT, 'features': html_features,
+     'repo': REPO, 'issues': ISSUES}
 
 with open(os.path.join(out_dir, 'depictions', 'albrhi.html'), 'w', encoding='utf-8') as f:
     f.write(html)

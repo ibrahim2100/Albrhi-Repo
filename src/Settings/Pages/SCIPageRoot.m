@@ -2,6 +2,7 @@
 #import "../TweakSettings.h"
 #import "../../Onboarding/SCIWhatsNewViewController.h"
 #import "../SCIDiagnosticsViewController.h"
+#import "../../SCIProject.h"
 
 ///
 /// Root-level sections: the things that must be reachable without drilling in,
@@ -146,7 +147,7 @@
                 [SCISetting linkCellWithTitle:SCILocalized(@"developer_title")
                                      subtitle:@"Ibrahim Ismail AL-Rahn"
                                          icon:[SCISymbol symbolWithName:@"person.crop.circle.fill" color:[SCIUtils SCIColor_Primary] size:20.0]
-                                          url:@"https://github.com/ibrahim2100/instv3"],
+                                          url:SCIRepoURL],
                 [SCISetting linkCellWithTitle:SCILocalized(@"credits_title")
                                      subtitle:SCILocalized(@"credits_sub")
                                          icon:[SCISymbol symbolWithName:@"heart.text.square.fill" color:[UIColor systemPinkColor] size:20.0]
@@ -154,7 +155,7 @@
                 [SCISetting linkCellWithTitle:SCILocalized(@"view_repo_title")
                                      subtitle:SCILocalized(@"view_repo_sub")
                                          icon:[SCISymbol symbolWithName:@"chevron.left.forwardslash.chevron.right" color:[SCIUtils SCIColor_Primary] size:20.0]
-                                          url:@"https://github.com/ibrahim2100/instv3"]
+                                          url:SCIRepoURL]
             ],
             @"footer": [NSString stringWithFormat:@"Albrhi %@ · BETA  ·  by Ibrahim Ismail AL-Rahn\nBased on SCInsta by SoCuul — GPLv3\n\nInstagram v%@",
                         SCIVersionString, [SCIUtils IGVersionString]]

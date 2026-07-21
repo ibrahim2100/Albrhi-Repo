@@ -2,6 +2,7 @@
 #import "../Utils.h"
 #import "../Localization/SCILocalize.h"
 #import "../Tweak.h"
+#import "../SCIProject.h"
 
 // Recorded facts. Written from feature code, read on the main thread by the page.
 static NSMutableArray<NSString *> *_actionRowClasses = nil;
@@ -362,9 +363,8 @@ static NSString *_lastDownloadKind = nil;
     NSString *encodedTitle = [[NSString stringWithFormat:@"[%@] ", SCIVersionString]
                               stringByAddingPercentEncodingWithAllowedCharacters:allowed];
 
-    NSString *urlString = [NSString stringWithFormat:
-                           @"https://github.com/ibrahim2100/instv3/issues/new?title=%@&body=%@",
-                           encodedTitle, encodedBody];
+    NSString *urlString = [NSString stringWithFormat:@"%@?title=%@&body=%@",
+                           SCIIssuesURL, encodedTitle, encodedBody];
 
     NSURL *url = [NSURL URLWithString:urlString];
     if (!url) return;

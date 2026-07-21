@@ -9,7 +9,7 @@
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%2015.0%2B-lightgrey.svg)]()
 [![Rootless](https://img.shields.io/badge/rootless-supported-success.svg)](#rootless-support)
-[![Version](https://img.shields.io/badge/version-3.1.5-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.1.6-orange.svg)](CHANGELOG.md)
 [![Based on](https://img.shields.io/badge/based%20on-SCInsta-lightblue.svg)](https://github.com/SoCuul/SCInsta)
 
 </div>
@@ -140,13 +140,13 @@ removes the other and they can never both be active.
 Requires [Theos](https://theos.dev) with an iOS SDK and toolchain.
 
 ```bash
-git clone https://github.com/ibrahim2100/instv3.git
-cd instv3
+git clone https://github.com/ibrahim2100/Albrhi-Repo.git
+cd Albrhi-Repo
 git submodule update --init --recursive
 
 export THEOS_PACKAGE_SCHEME=rootless   # omit for rootful
 make package
-# → packages/com.albrhi.tweak_3.1.5_iphoneos-arm64.deb
+# → packages/com.albrhi.tweak_3.1.6_iphoneos-arm64.deb
 ```
 
 Install straight to a connected device:
