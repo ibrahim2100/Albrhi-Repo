@@ -8,6 +8,7 @@ static NSMutableArray<NSString *> *_actionRowClasses = nil;
 static NSInteger _lastQualityCount = -1;
 static NSString *_lastVideoClass = nil;
 static NSInteger _storySeenIntercepts = 0;
+static NSString *_seenReplay = nil;
 static NSArray<NSString *> *_scanResults = nil;
 static NSString *_lastButtonMediaClass = nil;
 static BOOL _buttonEverPressed = NO;
@@ -47,6 +48,11 @@ static NSString *_lastDownloadKind = nil;
 
 + (void)recordDownloadKind:(NSString *)kind {
     _lastDownloadKind = [kind copy];
+}
+
++ (void)recordSeenReplayBegan:(BOOL)began ended:(BOOL)ended {
+    _seenReplay = [NSString stringWithFormat:@"begin=%@  end=%@",
+                   began ? @"sent" : @"failed", ended ? @"sent" : @"failed"];
 }
 
 + (void)recordStorySeenIntercept {
@@ -231,6 +237,9 @@ static NSString *_lastDownloadKind = nil;
         ]},
         @{@"header": SCILocalized(@"diag_section_scan"), @"rows": [self scanRows]},
         @{@"header": SCILocalized(@"diag_section_stories"), @"rows": @[
+            @{@"title": SCILocalized(@"diag_seen_replay"),
+              @"detail": _seenReplay ?: @"—",
+              @"ok": @(_seenReplay != nil)},
             @{@"title": SCILocalized(@"diag_story_intercepts"),
               @"detail": [NSString stringWithFormat:@"%ld", (long)_storySeenIntercepts],
               @"ok": @(_storySeenIntercepts > 0)}

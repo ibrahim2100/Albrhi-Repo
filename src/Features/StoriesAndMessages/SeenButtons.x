@@ -3,6 +3,7 @@
 #import "../../Utils.h"
 #import "../../Localization/SCILocalize.h"
 #import "../../Downloader/SCIMediaDownloader.h"
+#import "../../Settings/SCIDiagnosticsViewController.h"
 #import <objc/runtime.h>
 
 // Seen buttons (in DMs)
@@ -83,6 +84,12 @@ static BOOL sciSeenMarkedCurrent = NO;
         return;
     }
 
+    // Deliberate replay from the button — let Instagram consume the message.
+    if (sciSeenPassthrough) {
+        %orig;
+        return;
+    }
+
     // A new message is on screen: capture what marking it would need, and clear the
     // previous message's state so marking never carries over.
     sciSeenHandler = self;
@@ -108,17 +115,13 @@ static BOOL sciSeenMarkedCurrent = NO;
 
 %end
 
-/// Marks the message currently on screen as seen. Returns NO when there is nothing
-/// captured to mark.
-static BOOL SCIMarkCurrentVisualMessageSeen(void) {
+/// Replays one suppressed delegate call with the captured context.
+static BOOL SCIInvokeSeenSelector(SEL sel, BOOL withPlaybackArgs) {
     id handler = sciSeenHandler;
     id controller = sciSeenController;
     id message = sciSeenMessage;
 
-    if (!handler || !message) return NO;
-
-    SEL sel = @selector(visualMessageViewerController:didEndPlaybackForVisualMessage:atIndex:mediaCurrentTime:forNavType:);
-    if (![handler respondsToSelector:sel]) return NO;
+    if (!handler || !message || ![handler respondsToSelector:sel]) return NO;
 
     NSMethodSignature *signature = [handler methodSignatureForSelector:sel];
     if (!signature) return NO;
@@ -127,22 +130,48 @@ static BOOL SCIMarkCurrentVisualMessageSeen(void) {
     invocation.selector = sel;
     invocation.target = handler;
 
-    CGFloat time = 0.0;
-    NSInteger index = sciSeenIndex, navType = 0;
+    NSInteger index = sciSeenIndex;
     [invocation setArgument:&controller atIndex:2];
     [invocation setArgument:&message atIndex:3];
     [invocation setArgument:&index atIndex:4];
-    [invocation setArgument:&time atIndex:5];
-    [invocation setArgument:&navType atIndex:6];
 
-    sciSeenPassthrough = YES;
+    if (withPlaybackArgs) {
+        CGFloat time = 0.0;
+        NSInteger navType = 0;
+        [invocation setArgument:&time atIndex:5];
+        [invocation setArgument:&navType atIndex:6];
+    }
+
     @try {
         [invocation invoke];
     } @catch (__unused id e) {
-        sciSeenPassthrough = NO;
         return NO;
     }
+
+    return YES;
+}
+
+/// Marks the message currently on screen as seen.
+///
+/// Replays the *whole* suppressed sequence — begin, then end — rather than just the
+/// end. A view-once message is consumed when playback begins, so replaying only the
+/// end call reported success while never sending the receipt: the green tick
+/// appeared and the photo stayed replayable.
+static BOOL SCIMarkCurrentVisualMessageSeen(void) {
+    if (!sciSeenHandler || !sciSeenMessage) return NO;
+
+    sciSeenPassthrough = YES;
+
+    BOOL began = SCIInvokeSeenSelector(@selector(visualMessageViewerController:didBeginPlaybackForVisualMessage:atIndex:), NO);
+    BOOL ended = SCIInvokeSeenSelector(@selector(visualMessageViewerController:didEndPlaybackForVisualMessage:atIndex:mediaCurrentTime:forNavType:), YES);
+
     sciSeenPassthrough = NO;
+
+    [SCIDiagnostics recordSeenReplayBegan:began ended:ended];
+
+    NSLog(@"[Albrhi] Mark-as-seen replay: begin=%d end=%d", began, ended);
+
+    if (!began && !ended) return NO;
 
     sciSeenMarkedCurrent = YES;
 

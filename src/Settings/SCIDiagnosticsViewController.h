@@ -40,6 +40,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (void)recordStorySeenIntercept;
 
+/// Which suppressed delegate calls the mark-as-seen button managed to replay.
+/// A green tick with nothing replayed means the receipt never left the device.
++ (void)recordSeenReplayBegan:(BOOL)began ended:(BOOL)ended;
+
 /// Walks the live view hierarchy behind the settings sheet looking for anything
 /// shaped like a post action row — a view holding several buttons in a line.
 ///
