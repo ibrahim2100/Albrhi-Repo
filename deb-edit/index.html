@@ -676,12 +676,35 @@
       if (controlIndex < 0) throw new Error('No control.tar inside this .deb.');
 
       var member = members[controlIndex];
+
+      // An xz control archive needs an LZMA decoder this page does not carry. That
+      // is no reason to refuse the file: it can still be published untouched, and
+      // the build converts it to gzip so it becomes editable next time.
       if (!/\.gz$/.test(member.name) && !/\.tar$/.test(member.name)) {
-        throw new Error('This package stores its metadata as ' + member.name +
-          ', which needs an LZMA decoder this page does not carry. Publish it to ' +
-          'extra-debs/ as it is — the next build converts it to gzip automatically, ' +
-          'and it becomes editable here afterwards.');
+        state = { raw: bytes, filename: file.name, controlName: member.name };
+
+        fieldHost.innerHTML = '';
+        var notice = document.createElement('p');
+        notice.className = 'note';
+        notice.style.margin = '0';
+        notice.textContent =
+          'Metadata is stored as ' + member.name + ', which this page cannot read. ' +
+          'You can still publish the package as it is — the next build converts it ' +
+          'to gzip, and it becomes editable here afterwards.';
+        fieldHost.appendChild(notice);
+
+        document.getElementById('add').classList.add('hidden');
+        document.getElementById('save').classList.add('hidden');
+        document.getElementById('filename').value = file.name;
+
+        editor.classList.remove('hidden');
+        drop.classList.add('hidden');
+        say('Loaded ' + file.name + ' — publish only', 'ok');
+        return;
       }
+
+      document.getElementById('add').classList.remove('hidden');
+      document.getElementById('save').classList.remove('hidden');
 
       var tarBytes = /\.gz$/.test(member.name) ? await gunzip(member.data) : member.data;
       var entries = readTar(tarBytes);
@@ -710,6 +733,26 @@
     } catch (error) {
       say(error.message);
     }
+  }
+
+  /** The finished .deb bytes: edited when we could read it, original when not. */
+  async function packageBytes() {
+    if (state.raw) return state.raw;
+
+    var text = renderControl(state.fields);
+
+    var entries = state.entries.map(function (e) {
+      if (e.name.replace(/^\.\//, '') !== 'control') return e;
+      return { header: e.header, name: e.name, data: new TextEncoder().encode(text) };
+    });
+
+    var tarBytes = writeTar(entries);
+    var packed = /\.gz$/.test(state.controlName) ? await gzip(tarBytes) : tarBytes;
+
+    var members = state.members.slice();
+    members[state.controlIndex] = { name: state.controlName, data: packed };
+
+    return writeAr(members);
   }
 
   async function save() {
@@ -790,17 +833,6 @@
   var storedToken = localStorage.getItem('debedit.token');
   if (storedToken) { tokenInput.value = storedToken; rememberBox.checked = true; }
 
-  function buildEditedBlob() {
-    // Same pipeline the download button uses.
-    var text = renderControl(state.fields);
-
-    var entries = state.entries.map(function (e) {
-      if (e.name.replace(/^\.\//, '') !== 'control') return e;
-      return { header: e.header, name: e.name, data: new TextEncoder().encode(text) };
-    });
-
-    return { entries: entries };
-  }
 
   function toBase64(bytes) {
     var binary = '';
@@ -832,12 +864,7 @@
     button.textContent = 'Publishing…';
 
     try {
-      var built = buildEditedBlob();
-      var tarBytes = writeTar(built.entries);
-      var packed = /\.gz$/.test(state.controlName) ? await gzip(tarBytes) : tarBytes;
-
-      var members = state.members.slice();
-      members[state.controlIndex] = { name: state.controlName, data: packed };
+      var finished = await packageBytes();
 
       var path = 'extra-debs/' + filename;
       var api = 'https://api.github.com/repos/' + repo + '/contents/' + encodeURIComponent(path).replace(/%2F/g, '/');
@@ -860,7 +887,7 @@
 
       var body = {
         message: (sha ? 'Update ' : 'Add ') + filename,
-        content: toBase64(writeAr(members))
+        content: toBase64(finished)
       };
       if (sha) body.sha = sha;
 
@@ -1056,6 +1083,8 @@
     state = null;
     editor.classList.add('hidden');
     drop.classList.remove('hidden');
+    document.getElementById('add').classList.remove('hidden');
+    document.getElementById('save').classList.remove('hidden');
     filePicker.value = '';
     say('');
   });
