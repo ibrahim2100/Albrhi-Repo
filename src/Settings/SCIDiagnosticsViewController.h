@@ -30,10 +30,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// Called by the downloader with how many distinct renditions a video offered.
 + (void)recordQualityCount:(NSInteger)count forVideoClass:(nullable NSString *)className;
 
-/// How many renditions the API returned before any filtering. If this is high and
-/// the final count is 1, the fault is ours, not Instagram's.
-+ (void)recordRawVersionCount:(NSInteger)count;
-
 /// Called when the story seen-state uploader is intercepted.
 /// What the inline button resolved the post's media to, or nil if it found nothing.
 + (void)recordButtonMediaClass:(nullable NSString *)className;
@@ -42,28 +38,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// video means the emptiness check is failing again.
 + (void)recordDownloadKind:(NSString *)kind;
 
-/// Stage-by-stage rendition accounting: how many the API gave, how many parsed to
-/// a usable link, how many survived deduplication, and what they were labelled.
-/// Counting only the endpoints hid which stage was discarding them.
-+ (void)recordQualityBreakdownRaw:(NSInteger)raw
-                           parsed:(NSInteger)parsed
-                          deduped:(NSInteger)deduped
-                           labels:(nullable NSString *)labels;
-
 + (void)recordStorySeenIntercept;
-
-/// Result of the DASH-manifest read: whether a manifest was found and how many
-/// video representations it yielded. Tells us if the higher-quality ladder is
-/// reachable on this build.
-+ (void)recordDashResult:(nullable NSString *)info;
-
-/// The exact URL a download was last attempted with, so a failing pick can be
-/// inspected.
-+ (void)recordPickedURL:(nullable NSString *)url;
-
-/// State of the follow-back badge: did the stats-container hook fire, was a user
-/// found, and what was decided.
-+ (void)recordFollowBadge:(nullable NSString *)info;
 
 /// Walks the live view hierarchy behind the settings sheet looking for anything
 /// shaped like a post action row — a view holding several buttons in a line.

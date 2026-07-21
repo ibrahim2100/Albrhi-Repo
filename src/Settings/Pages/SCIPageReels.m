@@ -32,9 +32,6 @@
             @{
                 @"header": SCILocalized(@"p_hdr_limits"),
                 @"rows": @[
-                    [SCISetting switchCellWithTitle:SCILocalized(@"p_reels_noscroll_t") subtitle:SCILocalized(@"p_reels_noscroll_s") defaultsKey:@"disable_scrolling_reels" requiresRestart:YES],
-                    [SCISetting switchCellWithTitle:SCILocalized(@"p_reels_doom_t") subtitle:SCILocalized(@"p_reels_doom_s") defaultsKey:@"prevent_doom_scrolling"],
-                    [SCISetting stepperCellWithTitle:SCILocalized(@"p_reels_doomcount_t") subtitle:SCILocalized(@"p_reels_doomcount_s") defaultsKey:@"doom_scrolling_reel_count" min:1 max:100 step:1 label:SCILocalized(@"p_lbl_reels") singularLabel:SCILocalized(@"p_lbl_reel")]
                 ]
             }
         ];

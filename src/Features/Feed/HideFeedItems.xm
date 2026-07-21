@@ -136,14 +136,7 @@ static NSArray *removeItemsInList(NSArray *list, BOOL isFeed) {
 %hook IGSundialFeedDataSource
 - (NSArray *)objectsForListAdapter:(id)arg1 {
     NSArray *originalObjs = %orig(arg1);
-    NSArray *filteredList = removeItemsInList(originalObjs, NO);
-
-    if ([SCIUtils getBoolPref:@"prevent_doom_scrolling"]) {
-        double reelCount = [SCIUtils getDoublePref:@"doom_scrolling_reel_count"];
-        return [filteredList subarrayWithRange:NSMakeRange(0, MIN((NSUInteger)reelCount, filteredList.count))];
-    }
-
-    return filteredList;
+    return removeItemsInList(originalObjs, NO);
 }
 %end
 %hook IGContextualFeedViewController

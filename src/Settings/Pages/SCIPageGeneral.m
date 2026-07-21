@@ -20,9 +20,6 @@
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_general_copydesc_t") subtitle:SCILocalized(@"p_general_copydesc_s") defaultsKey:@"copy_description"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_general_norecent_t") subtitle:SCILocalized(@"p_general_norecent_s") defaultsKey:@"no_recent_searches"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_general_colorpicker_t") subtitle:SCILocalized(@"p_general_colorpicker_s") defaultsKey:@"detailed_color_picker"],
-                    [SCISetting switchCellWithTitle:SCILocalized(@"p_general_lqbuttons_t") subtitle:SCILocalized(@"p_general_lqbuttons_s") defaultsKey:@"liquid_glass_buttons" requiresRestart:YES],
-                    [SCISetting switchCellWithTitle:SCILocalized(@"p_general_lqsurfaces_t") subtitle:SCILocalized(@"p_general_lqsurfaces_s") defaultsKey:@"liquid_glass_surfaces" requiresRestart:YES],
-                    [SCISetting switchCellWithTitle:SCILocalized(@"p_general_teen_t") subtitle:SCILocalized(@"p_general_teen_s") defaultsKey:@"teen_app_icons" requiresRestart:YES]
                 ]
             },
             @{

@@ -36,9 +36,6 @@ NS_ASSUME_NONNULL_BEGIN
           sourceLabel:(nullable NSString *)sourceLabel
                anchor:(nullable UIView *)anchor;
 
-/// Every distinct rendition for a video, best first. Falls back across the
-/// accessor shapes Instagram has used, so the picker isn't limited to one build.
-+ (NSArray<NSDictionary *> *)qualitiesForVideo:(IGVideo *)video;
 
 /// Finds the currently-visible story media inside a view hierarchy and downloads
 /// it. Powers the on-screen story download button.

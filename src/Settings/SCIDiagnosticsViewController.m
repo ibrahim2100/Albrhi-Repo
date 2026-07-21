@@ -9,15 +9,9 @@ static NSInteger _lastQualityCount = -1;
 static NSString *_lastVideoClass = nil;
 static NSInteger _storySeenIntercepts = 0;
 static NSArray<NSString *> *_scanResults = nil;
-static NSInteger _lastRawVersionCount = -1;
 static NSString *_lastButtonMediaClass = nil;
 static BOOL _buttonEverPressed = NO;
 static NSString *_lastDownloadKind = nil;
-static NSString *_qualityBreakdown = nil;
-static NSString *_qualityLabels = nil;
-static NSString *_dashInfo = nil;
-static NSString *_lastPickedURL = nil;
-static NSString *_followBadgeInfo = nil;
 
 @implementation SCIDiagnostics
 
@@ -46,10 +40,6 @@ static NSString *_followBadgeInfo = nil;
     _lastVideoClass = [className copy];
 }
 
-+ (void)recordRawVersionCount:(NSInteger)count {
-    _lastRawVersionCount = count;
-}
-
 + (void)recordButtonMediaClass:(NSString *)className {
     _buttonEverPressed = YES;
     _lastButtonMediaClass = [className copy];
@@ -59,29 +49,8 @@ static NSString *_followBadgeInfo = nil;
     _lastDownloadKind = [kind copy];
 }
 
-+ (void)recordQualityBreakdownRaw:(NSInteger)raw
-                           parsed:(NSInteger)parsed
-                          deduped:(NSInteger)deduped
-                           labels:(NSString *)labels {
-    _qualityBreakdown = [NSString stringWithFormat:@"%ld raw → %ld parsed → %ld deduped",
-                         (long)raw, (long)parsed, (long)deduped];
-    _qualityLabels = [labels copy];
-}
-
 + (void)recordStorySeenIntercept {
     _storySeenIntercepts += 1;
-}
-
-+ (void)recordDashResult:(NSString *)info {
-    _dashInfo = [info copy];
-}
-
-+ (void)recordPickedURL:(NSString *)url {
-    _lastPickedURL = [url copy];
-}
-
-+ (void)recordFollowBadge:(NSString *)info {
-    _followBadgeInfo = [info copy];
 }
 
 // MARK: - Live hierarchy scan
@@ -250,33 +219,15 @@ static NSString *_followBadgeInfo = nil;
         @{@"header": SCILocalized(@"diag_section_attached"), @"rows": attached},
         @{@"header": SCILocalized(@"diag_section_quality"), @"rows": @[
             @{@"title": SCILocalized(@"diag_quality_last"), @"detail": qualityDetail, @"ok": @(qualityOK)},
-            @{@"title": SCILocalized(@"diag_quality_raw"),
-              @"detail": _lastRawVersionCount < 0 ? @"—" : [NSString stringWithFormat:@"%ld", (long)_lastRawVersionCount],
-              @"ok": @(_lastRawVersionCount > 1)},
             @{@"title": SCILocalized(@"dw_save_to_camera_title"),
               @"detail": [SCIUtils getBoolPref:@"dw_save_to_camera"] ? SCILocalized(@"diag_on") : SCILocalized(@"diag_off"),
               @"ok": @([SCIUtils getBoolPref:@"dw_save_to_camera"])},
-            @{@"title": SCILocalized(@"diag_quality_stages"),
-              @"detail": _qualityBreakdown ?: @"—",
-              @"ok": @(_qualityBreakdown != nil)},
-            @{@"title": SCILocalized(@"diag_quality_labels"),
-              @"detail": _qualityLabels ?: @"—",
-              @"ok": @(_qualityLabels != nil)},
-            @{@"title": SCILocalized(@"diag_dash"),
-              @"detail": _dashInfo ?: @"—",
-              @"ok": @(_dashInfo != nil)},
-            @{@"title": SCILocalized(@"diag_picked_url"),
-              @"detail": _lastPickedURL ?: @"—",
-              @"ok": @(_lastPickedURL != nil)},
             @{@"title": SCILocalized(@"diag_download_kind"),
               @"detail": _lastDownloadKind ?: @"—",
               @"ok": @(_lastDownloadKind != nil)},
             @{@"title": SCILocalized(@"diag_quality_source"),
               @"detail": _lastVideoClass ?: @"—",
-              @"ok": @(_lastVideoClass != nil)},
-            @{@"title": SCILocalized(@"show_quality_picker_title"),
-              @"detail": [SCIUtils getBoolPref:@"show_quality_picker"] ? SCILocalized(@"diag_on") : SCILocalized(@"diag_off"),
-              @"ok": @([SCIUtils getBoolPref:@"show_quality_picker"])}
+              @"ok": @(_lastVideoClass != nil)}
         ]},
         @{@"header": SCILocalized(@"diag_section_scan"), @"rows": [self scanRows]},
         @{@"header": SCILocalized(@"diag_section_stories"), @"rows": @[

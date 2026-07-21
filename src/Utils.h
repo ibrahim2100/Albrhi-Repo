@@ -26,8 +26,6 @@
 + (double)getDoublePref:(NSString *)key;
 + (NSString *)getStringPref:(NSString *)key;
 
-+ (_Bool)liquidGlassEnabledBool:(_Bool)fallback;
-
 + (void)cleanCache;
 
 // Displaying View Controllers

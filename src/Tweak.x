@@ -17,7 +17,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.0.28";  // Albrhi
+NSString *SCIVersionString = @"v3.1.0";  // Albrhi
 
 // Variables that work across features
 BOOL dmVisualMsgsViewedButtonEnabled = false;
@@ -32,11 +32,9 @@ BOOL dmVisualMsgsViewedButtonEnabled = false;
         @"detailed_color_picker": @(YES),
         @"remove_screenshot_alert": @(YES),
         @"call_confirm": @(YES),
-        @"keep_deleted_message": @(YES),
         @"inline_download_button": @(YES),
         @"dl_use_queue": @(YES),
         @"dl_max_concurrent": @(3),
-        @"show_quality_picker": @(YES),
         @"story_seen_button": @(YES),
         @"story_download_button": @(YES),
         @"dm_media_save_button": @(YES),
@@ -47,13 +45,8 @@ BOOL dmVisualMsgsViewedButtonEnabled = false;
         // and leaves it sitting in the Download Center, which reads as a failure.
         @"dw_save_to_camera": @(YES),
         @"dl_clear_after_save": @(YES),
-        @"dw_feed_posts": @(YES),
-        @"dw_reels": @(YES),
-        @"dw_story": @(YES),
         @"save_profile": @(YES),
         @"show_follow_status": @(YES),
-        @"dw_finger_count": @(1),
-        @"dw_finger_duration": @(0.5),
         @"media_press_action": @"zoom",
         @"settings_shortcut": @(YES),
         @"reels_tap_control": @"default",
@@ -62,18 +55,9 @@ BOOL dmVisualMsgsViewedButtonEnabled = false;
         @"enable_notes_customization": @(YES),
         @"custom_note_themes": @(YES),
         @"disable_auto_unmuting_reels": @(YES),
-        @"doom_scrolling_reel_count": @(1),
         @"reels_auto_next": @(NO)
     };
     [[NSUserDefaults standardUserDefaults] registerDefaults:sciDefaults];
-    
-    // Override instagram defaults
-    if ([SCIUtils getBoolPref:@"liquid_glass_buttons"]) {
-        [[NSUserDefaults standardUserDefaults] setValue:@(YES) forKey:@"instagram.override.project.lucent.navigation"];
-    }
-    else {
-        [[NSUserDefaults standardUserDefaults] setValue:@(NO) forKey:@"instagram.override.project.lucent.navigation"];
-    }
 
     return %orig;
 }
@@ -116,29 +100,6 @@ BOOL dmVisualMsgsViewedButtonEnabled = false;
     if ([SCIUtils getBoolPref:@"flex_app_start"]) {
         [[objc_getClass("FLEXManager") sharedManager] showExplorer];
     }
-}
-%end
-
-%hook IGDSLauncherConfig
-- (_Bool)isLiquidGlassInAppNotificationEnabled {
-    _Bool orig = %orig;
-    return [SCIUtils liquidGlassEnabledBool:orig];
-}
-- (_Bool)isLiquidGlassContextMenuEnabled{
-    _Bool orig = %orig;
-    return [SCIUtils liquidGlassEnabledBool:orig];
-}
-- (_Bool)isLiquidGlassToastEnabled {
-    _Bool orig = %orig;
-    return [SCIUtils liquidGlassEnabledBool:orig];
-}
-- (_Bool)isLiquidGlassToastPeekEnabled {
-    _Bool orig = %orig;
-    return [SCIUtils liquidGlassEnabledBool:orig];
-}
-- (_Bool)isLiquidGlassAlertDialogEnabled {
-    _Bool orig = %orig;
-    return [SCIUtils liquidGlassEnabledBool:orig];
 }
 %end
 
