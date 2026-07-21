@@ -21,15 +21,25 @@ BASE_URL="${3:?base url required}"
 mkdir -p "$OUT_DIR/debs"
 
 # Newly built debs win over whatever the branch already had at the same filename.
-cp -f "$DEB_DIR"/*.deb "$OUT_DIR/debs/" 2>/dev/null || true
+built=$(find "$DEB_DIR" -maxdepth 1 -name '*.deb' -type f | wc -l | tr -d ' ')
+echo "Built packages found: ${built}"
+
+if [ "$built" -gt 0 ]; then
+    find "$DEB_DIR" -maxdepth 1 -name '*.deb' -type f -exec cp -f {} "$OUT_DIR/debs/" \;
+fi
 
 # Hand-added packages. Copied after the built ones so a file placed here can
 # deliberately override a build of the same name.
 EXTRA_DIR="$(dirname "$0")/../extra-debs"
 if [ -d "$EXTRA_DIR" ]; then
-    count=$(ls -1 "$EXTRA_DIR"/*.deb 2>/dev/null | wc -l | tr -d ' ')
+    # find, not ls: a glob that matches nothing makes ls exit non-zero, and under
+    # `set -o pipefail` that killed the whole script before it printed anything.
+    count=$(find "$EXTRA_DIR" -maxdepth 1 -name '*.deb' -type f | wc -l | tr -d ' ')
     echo "Extra packages found: ${count}"
-    cp -f "$EXTRA_DIR"/*.deb "$OUT_DIR/debs/" 2>/dev/null || true
+
+    if [ "$count" -gt 0 ]; then
+        find "$EXTRA_DIR" -maxdepth 1 -name '*.deb' -type f -exec cp -f {} "$OUT_DIR/debs/" \;
+    fi
 fi
 
 if ! ls "$OUT_DIR"/debs/*.deb >/dev/null 2>&1; then
