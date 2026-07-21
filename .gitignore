@@ -58,3 +58,7 @@ src/**/wip.xm
 # Build output stays ignored, but packages published through the source are
 # deliberately committed — that is how a tweak gets added to the repo.
 !extra-debs/*.deb
+
+# Python bytecode from the tools scripts
+__pycache__/
+*.pyc
