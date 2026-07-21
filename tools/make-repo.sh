@@ -6,6 +6,10 @@
 # Packages (plus compressed variants) and Release. Output is a self-contained
 # folder ready to be served by GitHub Pages.
 #
+# Packages come from two places: the debs just built, and anything dropped into
+# extra-debs/ in the source tree. Adding another tweak to the source is therefore
+# a matter of copying its .deb into that folder and pushing.
+#
 # Usage: tools/make-repo.sh <deb-dir> <output-dir> <base-url>
 
 set -euo pipefail
@@ -18,6 +22,15 @@ mkdir -p "$OUT_DIR/debs"
 
 # Newly built debs win over whatever the branch already had at the same filename.
 cp -f "$DEB_DIR"/*.deb "$OUT_DIR/debs/" 2>/dev/null || true
+
+# Hand-added packages. Copied after the built ones so a file placed here can
+# deliberately override a build of the same name.
+EXTRA_DIR="$(dirname "$0")/../extra-debs"
+if [ -d "$EXTRA_DIR" ]; then
+    count=$(ls -1 "$EXTRA_DIR"/*.deb 2>/dev/null | wc -l | tr -d ' ')
+    echo "Extra packages found: ${count}"
+    cp -f "$EXTRA_DIR"/*.deb "$OUT_DIR/debs/" 2>/dev/null || true
+fi
 
 if ! ls "$OUT_DIR"/debs/*.deb >/dev/null 2>&1; then
     echo "::error::No .deb files to index"
@@ -69,5 +82,7 @@ Components: main
 Description: Albrhi for Instagram — download anything, hide the noise, browse invisibly.
 EOF
 
+# Already inside $OUT_DIR after the cd above, so list the current directory --
+# listing "$OUT_DIR" again looks for pages/pages and fails under set -e.
 echo "Repo written to $OUT_DIR (base: $BASE_URL)"
-ls -la "$OUT_DIR"
+ls -la

@@ -92,7 +92,8 @@ then
     echo -e '\033[1m\033[32mBuilding SCInsta tweak for rootless\033[0m'
 
     export THEOS_PACKAGE_SCHEME=rootless
-    make package
+    # FINALPACKAGE strips debug symbols and drops the -1+debug version suffix.
+    make package FINALPACKAGE=1
 
     echo -e "\033[1m\033[32mDone, we hope you enjoy SCInsta!\033[0m\n\nYou can find the deb file at: $(pwd)/packages"
 
@@ -130,7 +131,8 @@ then
     # No jbroot() calls needed: the tweak writes only inside Instagram's own
     # container, so the rootless sources build unchanged under the roothide scheme.
     export THEOS_PACKAGE_SCHEME=roothide
-    make package
+    # FINALPACKAGE strips debug symbols and drops the -1+debug version suffix.
+    make package FINALPACKAGE=1
 
     echo -e "\033[1m\033[32mDone!\033[0m\n\nYou can find the deb file at: $(pwd)/packages"
 
@@ -144,7 +146,8 @@ then
     echo -e '\033[1m\033[32mBuilding SCInsta tweak for rootful\033[0m'
 
     unset THEOS_PACKAGE_SCHEME
-    make package
+    # FINALPACKAGE strips debug symbols and drops the -1+debug version suffix.
+    make package FINALPACKAGE=1
 
     echo -e "\033[1m\033[32mDone, we hope you enjoy SCInsta!\033[0m\n\nYou can find the deb file at: $(pwd)/packages"
 
