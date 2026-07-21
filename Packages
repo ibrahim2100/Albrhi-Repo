@@ -186,6 +186,21 @@ Depiction: https://apt.fouadraheb.com/package/com.fouadraheb.watusi3
 Icon: https://i.ibb.co/ksjS4dDF/Clean-Shot-2026-01-18-at-01-43-562x.png
 Name: Watusi 3 for WhatsApp
 
+Package: com.nowesr1.dltiktok
+Version: 2.1.4
+Architecture: iphoneos-arm64
+Maintainer: ZeroDeadBeef
+Depends: mobilesubstrate
+Filename: debs/DLTikTok_V2.1.4_Rootless.deb
+Size: 289850
+MD5sum: 6987b06425c296e23ea86c1f22c319e7
+SHA1: 6828c0d2d3cde6c201023efcf7b03755538bd126
+SHA256: 07d5ab46dcc8943debb979852aa0eab3e5794f06b6cdf8e5ad03426820cd44d4
+Section: Tweaks
+Description: free DLTikTok no license required best compatible with TikTok V42.2.0
+Author: ZeroDeadBeef
+Name: DLTikTok Free (rootless)
+
 Package: com.nowesr1.dltube
 Version: 2.16.3
 Architecture: iphoneos-arm64e
