@@ -1,3 +1,19 @@
+Package: Test
+Version: 33.33.1
+Architecture: iphoneos-arm64
+Maintainer: SezoAA
+Installed-Size: 34980
+Depends: mobilesubstrate (>= 0.9.5000)
+Filename: debs/sezo.nyx_1.7.2-beta_iphoneos-arm64.deb
+Size: 17206518
+MD5sum: 5150f08e67b1809718de399f5d47cbfe
+SHA1: f34f8b622e5ddf1f6c0ee7f121c69e9f4cfac190
+SHA256: 6fc187c78c95819fa2b912b0051d9ab4d2b46c6fb231ba8483c9ecd9a9cbf266
+Section: Tweaks
+Description: Supercharge your experience on Instagram!
+Author: Sezo
+Name: TTest
+
 Package: com.albrhi.tweak
 Version: 3.1.4
 Architecture: iphoneos-arm64
@@ -171,10 +187,10 @@ Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak.roothide
 Replaces: com.albrhi.tweak.roothide
 Filename: debs/com.albrhi.tweak_3.1.6+rootless.deb
-Size: 145542
-MD5sum: f4bafce5dfffdef4228a0aa2a3762868
-SHA1: de9ecd6d5ff271064ca9df70a36c9a8e0723f35c
-SHA256: c3562044c54da21b54dada8d14b96e08ae12a292a3caa7f32b5d884ee9999cca
+Size: 144614
+MD5sum: 2ba2662ff8967f1796410aeb235adedd
+SHA1: 4ec8caac51d657a46976843b90dea1bd3061db9b
+SHA256: 960b25b2f483bece10eed993540c46a5ad56f81de00822ef783e64f0a17df22a
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
@@ -419,10 +435,10 @@ Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak
 Replaces: com.albrhi.tweak
 Filename: debs/com.albrhi.tweak.roothide_3.1.6.deb
-Size: 144562
-MD5sum: e17fb075f276bb55cd5daed8c0228cbb
-SHA1: 3a662513deedb1c5a65bbde1c29253d8f6d3e396
-SHA256: c2764f414689173213ca8f2eacf6dbe68c3ad34e9e2f13d8e9e36737eadf3f5e
+Size: 144566
+MD5sum: 5fd048e2402fc7050bd0246393ca1087
+SHA1: 14e330d719f39b3d175d62a6cb1d37b9782259e0
+SHA256: 322b4788ff53842e72389c84df48a39366ec52f88f544174f4e1c7d527c90157
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
