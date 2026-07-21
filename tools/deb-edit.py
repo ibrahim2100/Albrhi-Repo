@@ -212,5 +212,91 @@ def main(argv):
         print('  %s = %s' % (key, changes[key]))
 
 
+def interactive():
+    """Runs when the script is opened with no arguments.
+
+    On Windows, launching a script from the file manager passes no arguments and
+    closes the console the moment it returns — so an argv-only tool looks like it
+    crashed on startup whether it worked or not. This gives it something to do.
+    """
+    print('deb-edit \u2014 read and change the metadata inside a .deb')
+    print()
+
+    path = input('Path to the .deb (or drag the file onto this window): ').strip()
+    path = path.strip('"').strip("'")
+
+    if not path:
+        return
+
+    if not os.path.exists(path):
+        print()
+        print('No file at: %s' % path)
+        return
+
+    members, index, tar_bytes, recompress = load(path)
+    fields = parse(read_fields(tar_bytes))
+
+    print()
+    print('Current values:')
+    for key, value in fields:
+        print('  %-16s %s' % (key + ':', value.split(chr(10))[0]))
+
+    print()
+    print('Type  Field=value  to change one. Blank line when finished.')
+    print('For example:  Name=My Tweak')
+    print()
+
+    changes = {}
+    while True:
+        line = input('> ').strip()
+        if not line:
+            break
+        if '=' not in line:
+            print('  Expected Field=value')
+            continue
+        key, _, value = line.partition('=')
+        changes[key.strip()] = value.strip()
+        print('  %s -> %s' % (key.strip(), value.strip()))
+
+    if not changes:
+        print()
+        print('Nothing changed.')
+        return
+
+    fields = apply_changes(fields, changes)
+    members[index] = (members[index][0],
+                      recompress(replace_control(tar_bytes, render(fields))))
+
+    ar_write(path, members)
+
+    print()
+    print('Saved: %s' % path)
+
+
 if __name__ == '__main__':
-    main(sys.argv)
+    launched_by_double_click = not sys.argv[1:]
+
+    try:
+        if launched_by_double_click:
+            interactive()
+        else:
+            main(sys.argv)
+    except SystemExit as signal:
+        # Our own errors travel as SystemExit with a message; show them plainly
+        # rather than letting Python print a traceback over them.
+        if signal.code and not isinstance(signal.code, int):
+            print(signal.code)
+    except KeyboardInterrupt:
+        print()
+        print('Cancelled.')
+    except Exception as error:
+        print()
+        print('Could not read that file: %s: %s' % (type(error).__name__, error))
+        print('If other tools open it fine, please report it.')
+
+    # Without this the console vanishes before anything can be read.
+    if launched_by_double_click:
+        try:
+            input('\nPress Enter to close.')
+        except EOFError:
+            pass

@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>deb-edit</title>
+<style>
+  :root {
+    --accent: #E8590C;
+    --bg: #fff; --fg: #1c1c1e; --muted: #6e6e73;
+    --card: #f5f5f7; --line: #e3e3e6; --field: #fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000; --fg: #f5f5f7; --muted: #98989d;
+      --card: #1c1c1e; --line: #2c2c2e; --field: #0d0d0f;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px 20px 80px;
+    background: var(--bg); color: var(--fg);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 680px; margin: 0 auto; }
+
+  h1 { font-size: 32px; letter-spacing: -0.02em; margin: 0 0 4px; }
+  .lede { color: var(--muted); margin: 0 0 28px; }
+
+  /* Drop zone */
+  #drop {
+    border: 2px dashed var(--line);
+    border-radius: 16px;
+    padding: 44px 20px;
+    text-align: center;
+    color: var(--muted);
+    transition: border-color .15s, background .15s;
+    cursor: pointer;
+  }
+  #drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, transparent); }
+  #drop strong { color: var(--fg); display: block; font-size: 17px; margin-bottom: 4px; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 16px; padding: 20px; margin-top: 20px;
+  }
+  h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--muted); margin: 0 0 14px;
+  }
+
+  .field { display: grid; grid-template-columns: 150px 1fr auto; gap: 10px; align-items: start; margin-bottom: 10px; }
+  .field label {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 13px; color: var(--muted); padding-top: 10px;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  input, textarea {
+    width: 100%; font: inherit; font-size: 15px;
+    background: var(--field); color: var(--fg);
+    border: 1px solid var(--line); border-radius: 9px;
+    padding: 8px 11px;
+  }
+  textarea { resize: vertical; min-height: 76px; font-size: 14px; line-height: 1.45; }
+  input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+
+  .del {
+    background: none; border: 0; color: var(--muted);
+    font-size: 18px; cursor: pointer; padding: 6px 4px; line-height: 1;
+  }
+  .del:hover { color: #ff453a; }
+
+  .btn {
+    display: inline-block; background: var(--accent); color: #fff;
+    border: 0; border-radius: 11px; padding: 11px 18px;
+    font: inherit; font-weight: 600; font-size: 15px; cursor: pointer;
+    margin: 0 8px 8px 0;
+  }
+  .btn.secondary { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+  .btn:disabled { opacity: .45; cursor: default; }
+
+  .note { font-size: 13px; color: var(--muted); margin-top: 12px; }
+  .err {
+    background: color-mix(in srgb, #ff453a 12%, transparent);
+    border: 1px solid color-mix(in srgb, #ff453a 35%, transparent);
+    color: #ff453a; border-radius: 11px; padding: 12px 14px; margin-top: 18px; font-size: 15px;
+  }
+  .ok {
+    background: color-mix(in srgb, #30d158 12%, transparent);
+    border: 1px solid color-mix(in srgb, #30d158 35%, transparent);
+    color: #30d158; border-radius: 11px; padding: 12px 14px; margin-top: 18px; font-size: 15px;
+  }
+  .hidden { display: none; }
+  footer { color: var(--muted); font-size: 13px; margin-top: 32px; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+
+  <h1>deb-edit</h1>
+  <p class="lede">Edit the name, version and description inside a <code>.deb</code> — in your browser.</p>
+
+  <div id="drop">
+    <strong>Drop a .deb here</strong>
+    or click to choose one
+    <input type="file" id="file" accept=".deb" hidden>
+  </div>
+
+  <div id="message"></div>
+
+  <section id="editor" class="hidden">
+    <div class="card">
+      <h2>Package fields</h2>
+      <div id="fields"></div>
+      <button class="btn secondary" id="add" type="button">Add field</button>
+    </div>
+
+    <div style="margin-top:18px">
+      <button class="btn" id="save" type="button">Download .deb</button>
+      <button class="btn secondary" id="reset" type="button">Start over</button>
+    </div>
+
+    <div class="card" id="publish-card">
+      <h2>Publish to the source</h2>
+      <p class="note" style="margin:0 0 14px">
+        Commits the edited package straight into <code>extra-debs/</code>. The build
+        then indexes it and it appears in Sileo — no computer needed.
+      </p>
+
+      <div class="field">
+        <label for="repo">Repository</label>
+        <input id="repo" placeholder="owner/name" spellcheck="false">
+        <span></span>
+      </div>
+
+      <div class="field">
+        <label for="token">Token</label>
+        <input id="token" type="password" placeholder="GitHub token with Contents: write"
+               autocomplete="off" spellcheck="false">
+        <span></span>
+      </div>
+
+      <div class="field">
+        <label for="filename">Save as</label>
+        <input id="filename" placeholder="something.deb" spellcheck="false">
+        <span></span>
+      </div>
+
+      <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted);margin:4px 0 14px">
+        <input type="checkbox" id="remember" style="width:auto">
+        Remember the token on this device
+      </label>
+
+      <button class="btn" id="publish" type="button">Publish</button>
+
+      <p class="note" style="margin-top:14px">
+        <strong>About the token.</strong> It grants write access to that repository, so
+        use a fine-grained token limited to this one repo with only
+        <em>Contents: read and write</em>, and nothing else. Remembering it stores it in
+        this browser — leave that off on a shared device. Revoke it any time from
+        GitHub settings.
+      </p>
+    </div>
+
+    <p class="note">
+      Only the control metadata is rewritten. The package payload is copied through
+      untouched, so nothing you edit here can break the tweak itself.
+    </p>
+  </section>
+
+  <footer>
+    Reading and editing happen entirely on this device. Nothing leaves it unless you
+    press Publish, which sends the package to your own repository and nowhere else.
+  </footer>
+
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  var AR_MAGIC = '!<arch>\n';
+  var state = null;   // { members, controlIndex, controlName, fields }
+
+  var drop = document.getElementById('drop');
+  var filePicker = document.getElementById('file');
+  var editor = document.getElementById('editor');
+  var fieldHost = document.getElementById('fields');
+  var message = document.getElementById('message');
+
+  // ---------------------------------------------------------------- helpers
+
+  function say(text, kind) {
+    message.innerHTML = '';
+    if (!text) return;
+    var box = document.createElement('div');
+    box.className = kind || 'err';
+    box.textContent = text;
+    message.appendChild(box);
+  }
+
+  function ascii(bytes, from, length) {
+    var out = '';
+    for (var i = from; i < from + length; i++) {
+      if (bytes[i] === 0) break;
+      out += String.fromCharCode(bytes[i]);
+    }
+    return out.trim();
+  }
+
+  function writeAscii(target, offset, text, width) {
+    for (var i = 0; i < width; i++) {
+      target[offset + i] = i < text.length ? text.charCodeAt(i) : 0;
+    }
+  }
+
+  // ------------------------------------------------------------ ar archive
+
+  function readAr(bytes) {
+    if (ascii(bytes, 0, 8) !== '!<arch>') throw new Error('Not a .deb — no ar archive header.');
+
+    var members = [];
+    var pos = 8;
+
+    while (pos + 60 <= bytes.length) {
+      var name = ascii(bytes, pos, 16).replace(/\/$/, '');
+      var size = parseInt(ascii(bytes, pos + 48, 10), 10) || 0;
+      pos += 60;
+
+      members.push({ name: name, data: bytes.slice(pos, pos + size) });
+      pos += size + (size % 2);   // members are padded to even offsets
+    }
+
+    return members;
+  }
+
+  function writeAr(members) {
+    var total = 8;
+    members.forEach(function (m) { total += 60 + m.data.length + (m.data.length % 2); });
+
+    var out = new Uint8Array(total);
+    writeAscii(out, 0, AR_MAGIC, 8);
+
+    var pos = 8;
+    var now = String(Math.floor(Date.now() / 1000));
+
+    members.forEach(function (m) {
+      var header = new Uint8Array(60).fill(32);   // spaces
+      writeAscii(header, 0, m.name, Math.min(16, m.name.length));
+      writeAscii(header, 16, now, now.length);
+      writeAscii(header, 28, '0', 1);
+      writeAscii(header, 34, '0', 1);
+      writeAscii(header, 40, '100644', 6);
+      writeAscii(header, 48, String(m.data.length), String(m.data.length).length);
+      header[58] = 0x60; header[59] = 0x0a;       // trailing "`\n"
+
+      // writeAscii NUL-pads; ar wants spaces, so restore them.
+      for (var i = 0; i < 58; i++) if (header[i] === 0) header[i] = 32;
+
+      out.set(header, pos); pos += 60;
+      out.set(m.data, pos); pos += m.data.length;
+      if (m.data.length % 2) { out[pos] = 0x0a; pos += 1; }
+    });
+
+    return out;
+  }
+
+  // ------------------------------------------------------------------- tar
+
+  function readTar(bytes) {
+    var entries = [];
+    var pos = 0;
+
+    while (pos + 512 <= bytes.length) {
+      var name = ascii(bytes, pos, 100);
+      if (!name) break;                                  // end-of-archive blocks
+
+      var size = parseInt(ascii(bytes, pos + 124, 12), 8) || 0;
+      entries.push({
+        header: bytes.slice(pos, pos + 512),
+        name: name,
+        data: bytes.slice(pos + 512, pos + 512 + size)
+      });
+
+      pos += 512 + Math.ceil(size / 512) * 512;
+    }
+
+    return entries;
+  }
+
+  function writeTar(entries) {
+    var total = 1024;   // two trailing zero blocks
+    entries.forEach(function (e) { total += 512 + Math.ceil(e.data.length / 512) * 512; });
+
+    var out = new Uint8Array(total);
+    var pos = 0;
+
+    entries.forEach(function (e) {
+      var header = new Uint8Array(e.header);
+
+      // Size changed, so rewrite it and recompute the checksum.
+      var octal = e.data.length.toString(8);
+      writeAscii(header, 124, ('           ' + octal).slice(-11) + '\0', 12);
+
+      for (var i = 148; i < 156; i++) header[i] = 32;     // checksum field = spaces
+      var sum = 0;
+      for (var j = 0; j < 512; j++) sum += header[j];
+
+      var checksum = ('000000' + sum.toString(8)).slice(-6);
+      writeAscii(header, 148, checksum, 6);
+      header[154] = 0; header[155] = 32;
+
+      out.set(header, pos); pos += 512;
+      out.set(e.data, pos); pos += Math.ceil(e.data.length / 512) * 512;
+    });
+
+    return out;
+  }
+
+  // ------------------------------------------------------------ compression
+
+  async function gunzip(bytes) {
+    var stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+
+  async function gzip(bytes) {
+    var stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+
+  // --------------------------------------------------------- control fields
+
+  function parseControl(text) {
+    var fields = [];
+    text.split('\n').forEach(function (line) {
+      if (/^[ \t]/.test(line) && fields.length) {
+        fields[fields.length - 1].value += '\n' + line;
+      } else if (line.indexOf(':') > -1) {
+        var at = line.indexOf(':');
+        fields.push({ key: line.slice(0, at).trim(), value: line.slice(at + 1).trim() });
+      }
+    });
+    return fields;
+  }
+
+  function renderControl(fields) {
+    return fields.map(function (f) { return f.key + ': ' + f.value; }).join('\n') + '\n';
+  }
+
+  // ----------------------------------------------------------------- the UI
+
+  function drawFields() {
+    fieldHost.innerHTML = '';
+
+    state.fields.forEach(function (field, index) {
+      var row = document.createElement('div');
+      row.className = 'field';
+
+      var label = document.createElement('label');
+      label.textContent = field.key;
+      label.title = field.key;
+
+      // Description and anything else with continuation lines needs room.
+      var multiline = field.value.indexOf('\n') > -1 || field.key.toLowerCase() === 'description';
+      var input = document.createElement(multiline ? 'textarea' : 'input');
+      input.value = field.value;
+      input.addEventListener('input', function () { field.value = input.value; });
+
+      var remove = document.createElement('button');
+      remove.className = 'del';
+      remove.type = 'button';
+      remove.textContent = '×';
+      remove.title = 'Remove ' + field.key;
+      remove.addEventListener('click', function () {
+        state.fields.splice(index, 1);
+        drawFields();
+      });
+
+      row.appendChild(label);
+      row.appendChild(input);
+      row.appendChild(remove);
+      fieldHost.appendChild(row);
+    });
+  }
+
+  async function loadFile(file) {
+    say('');
+
+    try {
+      var bytes = new Uint8Array(await file.arrayBuffer());
+      var members = readAr(bytes);
+
+      var controlIndex = -1;
+      members.forEach(function (m, i) {
+        if (m.name.indexOf('control.tar') === 0) controlIndex = i;
+      });
+
+      if (controlIndex < 0) throw new Error('No control.tar inside this .deb.');
+
+      var member = members[controlIndex];
+      if (!/\.gz$/.test(member.name) && !/\.tar$/.test(member.name)) {
+        throw new Error('This package uses ' + member.name +
+          '. The browser tool handles gzip only — use tools/deb-edit.py for this one.');
+      }
+
+      var tarBytes = /\.gz$/.test(member.name) ? await gunzip(member.data) : member.data;
+      var entries = readTar(tarBytes);
+
+      var control = entries.filter(function (e) {
+        return e.name.replace(/^\.\//, '') === 'control';
+      })[0];
+
+      if (!control) throw new Error('No control file inside control.tar.');
+
+      state = {
+        members: members,
+        controlIndex: controlIndex,
+        controlName: member.name,
+        entries: entries,
+        fields: parseControl(new TextDecoder().decode(control.data)),
+        filename: file.name
+      };
+
+      drawFields();
+      document.getElementById('filename').value = file.name;
+      editor.classList.remove('hidden');
+      drop.classList.add('hidden');
+      say('Loaded ' + file.name, 'ok');
+
+    } catch (error) {
+      say(error.message);
+    }
+  }
+
+  async function save() {
+    try {
+      var text = renderControl(state.fields);
+
+      var entries = state.entries.map(function (e) {
+        if (e.name.replace(/^\.\//, '') !== 'control') return e;
+        return { header: e.header, name: e.name, data: new TextEncoder().encode(text) };
+      });
+
+      var tarBytes = writeTar(entries);
+      var packed = /\.gz$/.test(state.controlName) ? await gzip(tarBytes) : tarBytes;
+
+      var members = state.members.slice();
+      members[state.controlIndex] = { name: state.controlName, data: packed };
+
+      var blob = new Blob([writeAr(members)], { type: 'application/x-debian-package' });
+      var name = state.filename.replace(/\.deb$/, '') + '-edited.deb';
+
+      var link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = name;
+      link.click();
+      setTimeout(function () { URL.revokeObjectURL(link.href); }, 5000);
+
+      say('Saved ' + name, 'ok');
+
+    } catch (error) {
+      say('Could not save: ' + error.message);
+    }
+  }
+
+  // ------------------------------------------------------------------ wiring
+
+  drop.addEventListener('click', function () { filePicker.click(); });
+  filePicker.addEventListener('change', function () {
+    if (filePicker.files[0]) loadFile(filePicker.files[0]);
+  });
+
+  ['dragenter', 'dragover'].forEach(function (type) {
+    drop.addEventListener(type, function (e) { e.preventDefault(); drop.classList.add('over'); });
+  });
+  ['dragleave', 'drop'].forEach(function (type) {
+    drop.addEventListener(type, function (e) { e.preventDefault(); drop.classList.remove('over'); });
+  });
+  drop.addEventListener('drop', function (e) {
+    if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+  });
+
+  document.getElementById('add').addEventListener('click', function () {
+    var key = prompt('Field name (for example: Depiction, Icon, Author)');
+    if (!key || !key.trim()) return;
+    state.fields.push({ key: key.trim(), value: '' });
+    drawFields();
+  });
+
+  document.getElementById('save').addEventListener('click', save);
+
+  // ------------------------------------------------------ publish to GitHub
+
+  var repoInput = document.getElementById('repo');
+  var tokenInput = document.getElementById('token');
+  var filenameInput = document.getElementById('filename');
+  var rememberBox = document.getElementById('remember');
+
+  // Served from GitHub Pages the repository is knowable; opened as a local file it
+  // is not, so the field stays editable either way.
+  (function guessRepo() {
+    var saved = localStorage.getItem('debedit.repo');
+    if (saved) { repoInput.value = saved; return; }
+
+    var host = location.hostname.match(/^([^.]+)\.github\.io$/);
+    var project = location.pathname.split('/').filter(Boolean)[0];
+    if (host && project) repoInput.value = host[1] + '/' + project;
+  })();
+
+  var storedToken = localStorage.getItem('debedit.token');
+  if (storedToken) { tokenInput.value = storedToken; rememberBox.checked = true; }
+
+  function buildEditedBlob() {
+    // Same pipeline the download button uses.
+    var text = renderControl(state.fields);
+
+    var entries = state.entries.map(function (e) {
+      if (e.name.replace(/^\.\//, '') !== 'control') return e;
+      return { header: e.header, name: e.name, data: new TextEncoder().encode(text) };
+    });
+
+    return { entries: entries };
+  }
+
+  function toBase64(bytes) {
+    var binary = '';
+    var chunk = 0x8000;
+    for (var i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  }
+
+  async function publish() {
+    var repo = repoInput.value.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '');
+    var token = tokenInput.value.trim();
+    var filename = filenameInput.value.trim() || state.filename;
+
+    if (!/^[^\/]+\/[^\/]+$/.test(repo)) return say('Repository should look like owner/name.');
+    if (!token) return say('A token is needed to write to the repository.');
+    if (!/\.deb$/.test(filename)) filename += '.deb';
+
+    localStorage.setItem('debedit.repo', repo);
+    if (rememberBox.checked) {
+      localStorage.setItem('debedit.token', token);
+    } else {
+      localStorage.removeItem('debedit.token');
+    }
+
+    var button = document.getElementById('publish');
+    button.disabled = true;
+    button.textContent = 'Publishing…';
+
+    try {
+      var built = buildEditedBlob();
+      var tarBytes = writeTar(built.entries);
+      var packed = /\.gz$/.test(state.controlName) ? await gzip(tarBytes) : tarBytes;
+
+      var members = state.members.slice();
+      members[state.controlIndex] = { name: state.controlName, data: packed };
+
+      var path = 'extra-debs/' + filename;
+      var api = 'https://api.github.com/repos/' + repo + '/contents/' + encodeURIComponent(path).replace(/%2F/g, '/');
+      var headers = {
+        'Authorization': 'Bearer ' + token,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      };
+
+      // Updating an existing file needs its blob sha; creating one must not send it.
+      var sha = null;
+      var probe = await fetch(api, { headers: headers });
+      if (probe.status === 200) {
+        sha = (await probe.json()).sha;
+      } else if (probe.status === 401 || probe.status === 403) {
+        throw new Error('The token was rejected. Check it has Contents: write on ' + repo + '.');
+      } else if (probe.status === 404 && !probe.headers.get('x-ratelimit-remaining')) {
+        throw new Error('Repository not found: ' + repo);
+      }
+
+      var body = {
+        message: (sha ? 'Update ' : 'Add ') + filename,
+        content: toBase64(writeAr(members))
+      };
+      if (sha) body.sha = sha;
+
+      var response = await fetch(api, { method: 'PUT', headers: headers, body: JSON.stringify(body) });
+
+      if (!response.ok) {
+        var detail = await response.json().catch(function () { return {}; });
+        throw new Error(detail.message || ('GitHub returned ' + response.status));
+      }
+
+      say((sha ? 'Updated ' : 'Published ') + path +
+          ' — the build will pick it up in a few minutes.', 'ok');
+
+    } catch (error) {
+      say(error.message);
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Publish';
+    }
+  }
+
+  document.getElementById('publish').addEventListener('click', publish);
+
+  document.getElementById('reset').addEventListener('click', function () {
+    state = null;
+    editor.classList.add('hidden');
+    drop.classList.remove('hidden');
+    filePicker.value = '';
+    say('');
+  });
+
+  if (!window.DecompressionStream) {
+    say('This browser cannot decompress gzip. Use a recent Safari, Chrome or Firefox, ' +
+        'or the command-line tools/deb-edit.py instead.');
+  }
+})();
+</script>
+</body>
+</html>
