@@ -175,6 +175,11 @@ checks → version → decide → [build ×2 + dylib] → release → repo index
 | `deb-edit.html` | browser control panel: list/remove packages, edit metadata, publish |
 | `repo-index.html` | the source landing page; builds its package list from the live index |
 
+**Packages are published under `package_version_architecture.deb`,** not under the
+name of the file that was uploaded. A converted package keeps its original filename,
+so two flavours of one tweak collided on the same path and the second replaced the
+first without a word. The Debian convention encodes exactly what distinguishes them.
+
 **Added packages are prepared by CI, not by hand.** A workflow step runs over
 `extra-debs/` on every main push and commits the result with `[skip ci]`:
 

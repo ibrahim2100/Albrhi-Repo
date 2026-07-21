@@ -5,6 +5,11 @@ reaches the package a user installs — that history lives in `CHANGELOG.md`, wh
 also feeds the release notes and the Sileo package page.
 
 ## Unreleased
+- **Publishing keys the filename on the package identity**
+  (`package_version_architecture.deb`) instead of reusing the uploaded file's name.
+  A rootless package and its roothide conversion keep the same source filename, so
+  the second silently replaced the first in the source.
+- Replacing an existing package now asks first rather than overwriting quietly.
 - Packages added to the source are now labelled by jailbreak automatically —
   `(rootless)`, `(roothide)` or `(rootful)`, read from the package's own
   architecture. Several flavours of one tweak no longer appear under identical
