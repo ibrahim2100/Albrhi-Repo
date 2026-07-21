@@ -406,6 +406,47 @@
 
     return nil;
 }
++ (NSString *)dashManifestXMLForVideo:(id)video media:(id)media {
+    // The selector name has moved between Instagram builds, and the manifest is
+    // reachable from either the video or the media object depending on how the
+    // post was constructed. Try every combination rather than assume one.
+    static NSArray *selectorNames = nil;
+    static dispatch_once_t onceToken;
+
+    dispatch_once(&onceToken, ^{
+        selectorNames = @[@"videoDashManifest", @"dashManifest", @"videoDashManifestXML",
+                          @"video_dash_manifest"];
+    });
+
+    for (id host in @[video ?: [NSNull null], media ?: [NSNull null]]) {
+        if (host == [NSNull null]) continue;
+
+        for (NSString *name in selectorNames) {
+            SEL selector = NSSelectorFromString(name);
+            if (![host respondsToSelector:selector]) continue;
+
+            id value = nil;
+            @try { value = [host performSelector:selector]; } @catch (__unused id e) { continue; }
+
+            if ([value isKindOfClass:[NSString class]] && [value length]) return value;
+
+            if ([value isKindOfClass:[NSData class]]) {
+                NSString *text = [[NSString alloc] initWithData:value encoding:NSUTF8StringEncoding];
+                if ([text length]) return text;
+            }
+        }
+
+        // Some builds expose the field only through the API dictionary rather
+        // than as a property, so KVC reaches it where respondsToSelector: does not.
+        @try {
+            id value = [host valueForKey:@"video_dash_manifest"];
+            if ([value isKindOfClass:[NSString class]] && [value length]) return value;
+        } @catch (__unused id e) {}
+    }
+
+    return nil;
+}
+
 + (NSURL *)getVideoUrlForMedia:(id)media {
     if (!media) return nil;
 

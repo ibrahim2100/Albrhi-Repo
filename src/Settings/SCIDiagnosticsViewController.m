@@ -14,6 +14,8 @@ static NSArray<NSString *> *_scanResults = nil;
 static NSString *_lastButtonMediaClass = nil;
 static BOOL _buttonEverPressed = NO;
 static NSString *_lastDownloadKind = nil;
+static NSString *_lastDashXML = nil;
+static NSInteger _lastDashRepresentations = 0;
 
 @implementation SCIDiagnostics
 
@@ -40,6 +42,27 @@ static NSString *_lastDownloadKind = nil;
 + (void)recordQualityCount:(NSInteger)count forVideoClass:(NSString *)className {
     _lastQualityCount = count;
     _lastVideoClass = [className copy];
+}
+
++ (void)recordDashManifest:(NSString *)xml {
+    _lastDashXML = [xml copy];
+
+    // Counting <Representation> elements is the number that decides whether this
+    // is worth building on: more of them than -videoVersions returned means the
+    // renditions the quality picker has been missing are here.
+    _lastDashRepresentations = 0;
+
+    if (![xml length]) return;
+
+    NSRange search = NSMakeRange(0, xml.length);
+    while (search.length) {
+        NSRange hit = [xml rangeOfString:@"<Representation" options:0 range:search];
+        if (hit.location == NSNotFound) break;
+
+        _lastDashRepresentations++;
+        NSUInteger next = hit.location + hit.length;
+        search = NSMakeRange(next, xml.length - next);
+    }
 }
 
 + (void)recordButtonMediaClass:(NSString *)className {
@@ -240,6 +263,7 @@ static NSString *_lastDownloadKind = nil;
               @"detail": _lastVideoClass ?: @"—",
               @"ok": @(_lastVideoClass != nil)}
         ]},
+        @{@"header": SCILocalized(@"diag_section_dash"), @"rows": [self dashRows]},
         @{@"header": SCILocalized(@"diag_section_scan"), @"rows": [self scanRows]},
         @{@"header": SCILocalized(@"diag_section_stories"), @"rows": @[
             @{@"title": SCILocalized(@"diag_seen_replay"),
@@ -255,6 +279,38 @@ static NSString *_lastDownloadKind = nil;
             @{@"title": @"iOS", @"detail": [[UIDevice currentDevice] systemVersion], @"ok": @YES}
         ]}
     ];
+}
+
+- (NSArray<NSDictionary *> *)dashRows {
+    if (!_lastDashXML) {
+        return @[@{@"title": SCILocalized(@"diag_dash_none"),
+                   @"detail": SCILocalized(@"diag_dash_hint"),
+                   @"ok": @NO}];
+    }
+
+    NSMutableArray<NSDictionary *> *rows = [NSMutableArray array];
+
+    [rows addObject:@{@"title": SCILocalized(@"diag_dash_found"),
+                      @"detail": [NSString stringWithFormat:@"%lu B", (unsigned long)_lastDashXML.length],
+                      @"ok": @YES}];
+
+    // Set against the quality count above, this is the whole question: a larger
+    // number here is the ladder -videoVersions has been hiding.
+    [rows addObject:@{@"title": SCILocalized(@"diag_dash_reps"),
+                      @"detail": [NSString stringWithFormat:@"%ld", (long)_lastDashRepresentations],
+                      @"ok": @(_lastDashRepresentations > 0)}];
+
+    // Enough of the XML to confirm on screen that it is a real manifest. The
+    // full text goes into the copied report instead: these cells self-size, and
+    // a manifest pasted whole would push everything below it off the page.
+    NSUInteger excerptLength = MIN((NSUInteger)180, _lastDashXML.length);
+    NSString *excerpt = [_lastDashXML substringToIndex:excerptLength];
+
+    [rows addObject:@{@"title": SCILocalized(@"diag_dash_excerpt"),
+                      @"detail": excerpt,
+                      @"ok": @YES}];
+
+    return rows;
 }
 
 - (NSArray<NSDictionary *> *)scanRows {
@@ -333,6 +389,14 @@ static NSString *_lastDownloadKind = nil;
         for (NSDictionary *row in section[@"rows"]) {
             [report appendFormat:@"  %@: %@\n", row[@"title"], row[@"detail"]];
         }
+    }
+
+    // Verbatim, and last so it never buries the rest. The point of capturing a
+    // manifest is to read its real attribute names; an excerpt cannot show the
+    // full rendition ladder, which is the number that decides whether parsing
+    // DASH gains anything over -videoVersions.
+    if (_lastDashXML.length) {
+        [report appendFormat:@"\n[DASH manifest — verbatim]\n%@\n", _lastDashXML];
     }
 
     return [report copy];

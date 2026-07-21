@@ -65,6 +65,14 @@
 + (NSURL *)getAudioUrlForMedia:(id)mediaLike;
 + (NSArray<NSDictionary *> *)availableVideoQualitiesForVideo:(IGVideo *)video;
 
+/// The raw DASH manifest XML for a video, or nil when this build exposes none.
+///
+/// Instagram serves video over DASH, and the manifest lists renditions that
+/// -videoVersions does not carry. Nothing parses this yet: the point is to read
+/// what Instagram actually sends on a real device before writing a parser
+/// against a guessed schema.
++ (nullable NSString *)dashManifestXMLForVideo:(nullable id)video media:(nullable id)media;
+
 // Quality-selection helpers (IGAPIVideoVersion objects or dictionaries)
 + (long long)qualityValueFrom:(id)version key:(NSString *)key;
 + (NSString *)urlStringFromVersion:(id)version;

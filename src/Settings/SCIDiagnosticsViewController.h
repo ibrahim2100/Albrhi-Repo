@@ -30,6 +30,14 @@ NS_ASSUME_NONNULL_BEGIN
 /// Called by the downloader with how many distinct renditions a video offered.
 + (void)recordQualityCount:(NSInteger)count forVideoClass:(nullable NSString *)className;
 
+/// Called by the downloader with the raw DASH manifest a video carried, if any.
+///
+/// Instagram serves video over DASH and the manifest lists renditions that
+/// -videoVersions omits, which is the most likely reason the quality picker has
+/// come up short. Nothing parses it yet — this records what the device actually
+/// receives so a parser can be written against real data rather than a guess.
++ (void)recordDashManifest:(nullable NSString *)xml;
+
 /// Called when the story seen-state uploader is intercepted.
 /// What the inline button resolved the post's media to, or nil if it found nothing.
 + (void)recordButtonMediaClass:(nullable NSString *)className;

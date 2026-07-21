@@ -30,6 +30,10 @@
 
     [SCIDiagnostics recordQualityCount:1 forVideoClass:NSStringFromClass([video class])];
 
+    // Read-only probe: records what Instagram actually serves so a DASH parser
+    // can be written against real data. Nothing downstream uses it yet.
+    [SCIDiagnostics recordDashManifest:[SCIUtils dashManifestXMLForVideo:video media:nil]];
+
     [self downloadURL:url sourceLabel:sourceLabel isVideo:YES];
 }
 
