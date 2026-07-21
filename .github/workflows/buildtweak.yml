@@ -8,6 +8,11 @@ on:
         tags:
             - 'v*'
     workflow_dispatch:
+        inputs:
+            force_rebuild:
+                description: 'Rebuild even if this version was already released'
+                type: boolean
+                default: false
   
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -36,41 +41,21 @@ jobs:
                 # seconds instead of minutes.
                 python3 tools/check.py
 
-            - name: Install Dependencies
-              run: brew install ldid dpkg make
-
-            - name: Set PATH environment variable
-              run: echo "$(brew --prefix make)/libexec/gnubin" >> $GITHUB_PATH 
-
-            - name: Setup Theos
-              uses: actions/checkout@v4
-              with:
-                repository: theos/theos
-                ref: master
-                path: ${{ github.workspace }}/theos
-                submodules: recursive
-        
-            - name: SDK Caching
-              id: SDK
-              uses: actions/cache@v4
-              env:
-                cache-name: iPhoneOS16.2.sdk
-              with:
-                path: ${{ github.workspace }}/theos/sdks/
-                key: ${{ env.cache-name }}
-                restore-keys: ${{ env.cache-name }}
-
-            - name: Download iOS SDK
-              if: steps.SDK.outputs.cache-hit != 'true'
+            - name: Get Albrhi Version
+              id: albrhi_version
               run: |
-                git clone --quiet -n --depth=1 --filter=tree:0 https://github.com/xybp888/iOS-SDKs/
-                cd iOS-SDKs
-                git sparse-checkout set --no-cone iPhoneOS16.2.sdk
-                git checkout
-                mv *.sdk $THEOS/sdks
-              env:
-                THEOS: ${{ github.workspace }}/theos
+                # Anchored to the start of the line: the Description block is multi-line
+                # and must never be mistaken for the version field.
+                ALBRHI_VERSION=$(awk -F': *' '/^Version:/ {print $2; exit}' main/control)
 
+                if [ -z "$ALBRHI_VERSION" ]; then
+                  echo "::error::Could not read Version from control"
+                  exit 1
+                fi
+
+                echo "ALBRHI_VERSION=${ALBRHI_VERSION}" >> "$GITHUB_ENV"
+                echo "version=${ALBRHI_VERSION}" >> "$GITHUB_OUTPUT"
+            
             - name: Point control at this repository
               run: |
                 cd main
@@ -90,22 +75,67 @@ jobs:
 
                 grep -E '^(Homepage|Icon|Depiction|SileoDepiction):' control
 
-            - name: Get Albrhi Version
-              id: albrhi_version
+            - name: Decide whether a build is needed
+              id: release_check
+              env:
+                GH_TOKEN: ${{ github.token }}
               run: |
-                # Anchored to the start of the line: the Description block is multi-line
-                # and must never be mistaken for the version field.
-                ALBRHI_VERSION=$(awk -F': *' '/^Version:/ {print $2; exit}' main/control)
-
-                if [ -z "$ALBRHI_VERSION" ]; then
-                  echo "::error::Could not read Version from control"
-                  exit 1
+                # Building takes minutes; reading a tag takes a second. If this
+                # version was already released, its packages are already published
+                # and identical -- reuse them instead of compiling them again.
+                if [ "${{ github.event.inputs.force_rebuild }}" = "true" ]; then
+                  echo "Forced rebuild requested."
+                  echo "needed=true" >> "$GITHUB_OUTPUT"
+                elif gh release view "v${ALBRHI_VERSION}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+                  echo "::notice::v${ALBRHI_VERSION} is already released - skipping the build."
+                  echo "::notice::Bump Version in control to build again, or run the workflow manually with force_rebuild."
+                  echo "needed=false" >> "$GITHUB_OUTPUT"
+                else
+                  echo "v${ALBRHI_VERSION} is new - building."
+                  echo "needed=true" >> "$GITHUB_OUTPUT"
                 fi
 
-                echo "ALBRHI_VERSION=${ALBRHI_VERSION}" >> "$GITHUB_ENV"
-                echo "version=${ALBRHI_VERSION}" >> "$GITHUB_OUTPUT"
-            
+            - name: Install Dependencies
+              if: steps.release_check.outputs.needed == 'true'
+              run: brew install ldid dpkg make
+
+            - name: Set PATH environment variable
+              if: steps.release_check.outputs.needed == 'true'
+              run: echo "$(brew --prefix make)/libexec/gnubin" >> $GITHUB_PATH 
+
+            - name: Setup Theos
+              if: steps.release_check.outputs.needed == 'true'
+              uses: actions/checkout@v4
+              with:
+                repository: theos/theos
+                ref: master
+                path: ${{ github.workspace }}/theos
+                submodules: recursive
+        
+            - name: SDK Caching
+              if: steps.release_check.outputs.needed == 'true'
+              id: SDK
+              uses: actions/cache@v4
+              env:
+                cache-name: iPhoneOS16.2.sdk
+              with:
+                path: ${{ github.workspace }}/theos/sdks/
+                key: ${{ env.cache-name }}
+                restore-keys: ${{ env.cache-name }}
+
+            - name: Download iOS SDK
+              if: steps.release_check.outputs.needed == 'true' && steps.SDK.outputs.cache-hit != 'true'
+              run: |
+                git clone --quiet -n --depth=1 --filter=tree:0 https://github.com/xybp888/iOS-SDKs/
+                cd iOS-SDKs
+                git sparse-checkout set --no-cone iPhoneOS16.2.sdk
+                git checkout
+                mv *.sdk $THEOS/sdks
+              env:
+                THEOS: ${{ github.workspace }}/theos
+
             - name: Build Albrhi tweak for Rootless
+              if: steps.release_check.outputs.needed == 'true'
               run: |                
                 cd main
                 ls -la
@@ -118,6 +148,7 @@ jobs:
                 THEOS: ${{ github.workspace }}/theos
 
             - name: Rename deb to include version info
+              if: steps.release_check.outputs.needed == 'true'
               run: |
                 cd main/packages
 
@@ -130,6 +161,7 @@ jobs:
                 mv "$BUILT_DEB" "com.albrhi.tweak_${ALBRHI_VERSION}+rootless.deb"
 
             - name: Collect the dylib alongside the deb
+              if: steps.release_check.outputs.needed == 'true'
               run: |
                 cd main
 
@@ -148,6 +180,7 @@ jobs:
                 ls -la packages
 
             - name: Setup roothide Theos
+              if: steps.release_check.outputs.needed == 'true'
               uses: actions/checkout@v4
               with:
                 repository: roothide/theos
@@ -156,12 +189,14 @@ jobs:
                 submodules: recursive
 
             - name: Share the SDK with roothide Theos
+              if: steps.release_check.outputs.needed == 'true'
               run: |
                 mkdir -p "${{ github.workspace }}/theos-roothide/sdks"
                 cp -R "${{ github.workspace }}/theos/sdks/." "${{ github.workspace }}/theos-roothide/sdks/"
                 ls "${{ github.workspace }}/theos-roothide/sdks"
 
             - name: Build Albrhi tweak for roothide
+              if: steps.release_check.outputs.needed == 'true'
               run: |
                 cd main
                 ./build.sh roothide
@@ -170,6 +205,7 @@ jobs:
                 THEOS: ${{ github.workspace }}/theos-roothide
 
             - name: Rename roothide deb
+              if: steps.release_check.outputs.needed == 'true'
               run: |
                 cd main/packages
 
@@ -189,6 +225,22 @@ jobs:
 
                 ls -la
 
+            - name: Reuse packages from the existing release
+              if: steps.release_check.outputs.needed != 'true'
+              env:
+                GH_TOKEN: ${{ github.token }}
+              run: |
+                mkdir -p main/packages
+
+                # The published assets for this version are byte-identical to what a
+                # rebuild would produce, so the repo can be refreshed without one.
+                gh release download "v${ALBRHI_VERSION}" \
+                  --repo "${{ github.repository }}" \
+                  --dir main/packages \
+                  --clobber
+
+                ls -la main/packages
+
             - name: Pass package name to upload action
               id: package_name
               run: |
@@ -197,6 +249,7 @@ jobs:
                 echo "roothide=com.albrhi.tweak.roothide_${ALBRHI_VERSION}.deb" >> "$GITHUB_OUTPUT"
 
             - name: Upload Artifact
+              if: steps.release_check.outputs.needed == 'true'
               uses: actions/upload-artifact@v4
               with:
                 name: Albrhi-${{ env.ALBRHI_VERSION }}
@@ -205,18 +258,6 @@ jobs:
                   ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.dylib }}
                   ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.roothide }}
                 if-no-files-found: error
-
-            - name: Has this version been released?
-              id: release_check
-              env:
-                GH_TOKEN: ${{ github.token }}
-              run: |
-                if gh release view "v${ALBRHI_VERSION}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
-                  echo "Release v${ALBRHI_VERSION} already exists — skipping publish."
-                  echo "needed=false" >> "$GITHUB_OUTPUT"
-                else
-                  echo "needed=true" >> "$GITHUB_OUTPUT"
-                fi
 
             - name: Extract changelog for this version
               if: steps.release_check.outputs.needed == 'true'

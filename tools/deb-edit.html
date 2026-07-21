@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>deb-edit</title>
+<title>Albrhi Repo — control panel</title>
 <style>
   :root {
     --accent: #E8590C;
@@ -92,6 +92,30 @@
     color: #30d158; border-radius: 11px; padding: 12px 14px; margin-top: 18px; font-size: 15px;
   }
   .hidden { display: none; }
+
+  .tabs { display: flex; gap: 6px; margin-bottom: 22px; flex-wrap: wrap; }
+  .tab {
+    background: transparent; border: 1px solid var(--line); color: var(--muted);
+    border-radius: 10px; padding: 8px 14px; font: inherit; font-size: 14px;
+    font-weight: 600; cursor: pointer;
+  }
+  .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .pkg { display: flex; gap: 12px; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--line); }
+  .pkg:last-child { border-bottom: 0; padding-bottom: 0; }
+  .pkg:first-child { padding-top: 0; }
+  .pkg-body { flex: 1; min-width: 0; }
+  .pkg-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pkg-sub {
+    font-family: ui-monospace, Menlo, monospace; font-size: 12px;
+    color: var(--muted); margin-top: 2px;
+  }
+  .danger {
+    background: transparent; border: 1px solid color-mix(in srgb, #ff453a 45%, transparent);
+    color: #ff453a; border-radius: 9px; padding: 7px 12px;
+    font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .danger:disabled { opacity: .5; cursor: default; }
   footer { color: var(--muted); font-size: 13px; margin-top: 32px; }
   code { font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
 </style>
@@ -99,8 +123,14 @@
 <body>
 <main>
 
-  <h1>deb-edit</h1>
-  <p class="lede">Edit the name, version and description inside a <code>.deb</code> — in your browser.</p>
+  <h1>Repo control panel</h1>
+  <p class="lede">Manage the packages in your source — from any device.</p>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="packages" type="button">Packages</button>
+    <button class="tab" data-tab="editor" type="button">Add or edit</button>
+    <button class="tab" data-tab="settings" type="button">Connection</button>
+  </div>
 
   <div id="drop">
     <strong>Drop a .deb here</strong>
@@ -110,6 +140,7 @@
 
   <div id="message"></div>
 
+  <section id="panel-editor" class="panel hidden">
   <section id="editor" class="hidden">
     <div class="card">
       <h2>Package fields</h2>
@@ -122,12 +153,42 @@
       <button class="btn secondary" id="reset" type="button">Start over</button>
     </div>
 
-    <div class="card" id="publish-card">
+    <div class="card">
       <h2>Publish to the source</h2>
-      <p class="note" style="margin:0 0 14px">
-        Commits the edited package straight into <code>extra-debs/</code>. The build
-        then indexes it and it appears in Sileo — no computer needed.
+      <div class="field">
+        <label for="filename">Save as</label>
+        <input id="filename" placeholder="something.deb" spellcheck="false">
+        <span></span>
+      </div>
+      <button class="btn" id="publish" type="button">Publish to source</button>
+      <p class="note">
+        Commits into <code>extra-debs/</code>. The build indexes it and it appears in
+        Sileo a few minutes later.
       </p>
+    </div>
+
+    <p class="note">
+      Only the control metadata is rewritten. The package payload is copied through
+      untouched, so nothing you edit here can break the tweak itself.
+    </p>
+  </section>
+  </section>
+
+  <section id="panel-packages" class="panel">
+    <div class="card">
+      <h2>In the source <span id="pkg-count" style="text-transform:none;letter-spacing:0"></span></h2>
+      <div id="pkg-list">Connect in the Connection tab to list packages.</div>
+      <button class="btn secondary" id="refresh" type="button" style="margin-top:14px">Refresh</button>
+    </div>
+    <p class="note">
+      Albrhi's own builds are produced by CI and are not listed here — only packages
+      you added to <code>extra-debs/</code> can be removed.
+    </p>
+  </section>
+
+  <section id="panel-settings" class="panel hidden">
+    <div class="card">
+      <h2>Connection</h2>
 
       <div class="field">
         <label for="repo">Repository</label>
@@ -142,18 +203,12 @@
         <span></span>
       </div>
 
-      <div class="field">
-        <label for="filename">Save as</label>
-        <input id="filename" placeholder="something.deb" spellcheck="false">
-        <span></span>
-      </div>
-
       <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted);margin:4px 0 14px">
         <input type="checkbox" id="remember" style="width:auto">
         Remember the token on this device
       </label>
 
-      <button class="btn" id="publish" type="button">Publish</button>
+      <button class="btn" id="connect" type="button">Save and connect</button>
 
       <p class="note" style="margin-top:14px">
         <strong>About the token.</strong> It grants write access to that repository, so
@@ -163,11 +218,6 @@
         GitHub settings.
       </p>
     </div>
-
-    <p class="note">
-      Only the control metadata is rewritten. The package payload is copied through
-      untouched, so nothing you edit here can break the tweak itself.
-    </p>
   </section>
 
   <footer>
@@ -320,15 +370,240 @@
   }
 
   // ------------------------------------------------------------ compression
+  //
+  // DecompressionStream only arrived in iOS 16.4, and every browser on iOS uses
+  // WebKit — so on an older phone no browser has it. These fall back to a DEFLATE
+  // decoder written out longhand, which keeps the tool working everywhere.
 
+  var CRC_TABLE = (function () {
+    var table = new Uint32Array(256);
+    for (var n = 0; n < 256; n++) {
+      var c = n;
+      for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      table[n] = c >>> 0;
+    }
+    return table;
+  })();
+
+  function crc32(bytes) {
+    var crc = 0xFFFFFFFF;
+    for (var i = 0; i < bytes.length; i++) {
+      crc = CRC_TABLE[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+    }
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  /** Builds the code -> symbol lookup for a canonical Huffman table. */
+  function buildHuffman(lengths) {
+    var maxBits = Math.max.apply(null, Array.prototype.slice.call(lengths));
+    var blCount = new Array(maxBits + 1).fill(0);
+
+    for (var i = 0; i < lengths.length; i++) if (lengths[i]) blCount[lengths[i]]++;
+
+    var code = 0;
+    var nextCode = new Array(maxBits + 1).fill(0);
+    for (var bits = 1; bits <= maxBits; bits++) {
+      code = (code + blCount[bits - 1]) << 1;
+      nextCode[bits] = code;
+    }
+
+    var map = {};
+    for (var sym = 0; sym < lengths.length; sym++) {
+      var len = lengths[sym];
+      if (!len) continue;
+      map[len + ':' + nextCode[len]] = sym;
+      nextCode[len]++;
+    }
+
+    return { map: map, maxBits: maxBits };
+  }
+
+  var LENGTH_BASE = [3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258];
+  var LENGTH_EXTRA = [0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0];
+  var DIST_BASE = [1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577];
+  var DIST_EXTRA = [0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13];
+  var CLEN_ORDER = [16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15];
+
+  function inflateRaw(bytes) {
+    var pos = 0, bitBuffer = 0, bitCount = 0;
+    var out = [];
+
+    function bit() {
+      if (!bitCount) { bitBuffer = bytes[pos++]; bitCount = 8; }
+      var b = bitBuffer & 1;
+      bitBuffer >>= 1; bitCount--;
+      return b;
+    }
+
+    function bitsOf(n) {
+      var value = 0;
+      for (var i = 0; i < n; i++) value |= bit() << i;
+      return value;
+    }
+
+    function decode(table) {
+      var code = 0;
+      for (var len = 1; len <= table.maxBits; len++) {
+        code = (code << 1) | bit();
+        var sym = table.map[len + ':' + code];
+        if (sym !== undefined) return sym;
+      }
+      throw new Error('Corrupt compressed data.');
+    }
+
+    for (;;) {
+      var last = bit();
+      var type = bitsOf(2);
+
+      if (type === 0) {
+        bitCount = 0;                       // stored blocks are byte aligned
+        var len = bytes[pos] | (bytes[pos + 1] << 8);
+        pos += 4;                           // skip LEN and its complement
+        for (var i = 0; i < len; i++) out.push(bytes[pos++]);
+
+      } else {
+        var literals, distances;
+
+        if (type === 1) {
+          var litLengths = new Array(288);
+          for (var s = 0; s < 288; s++) {
+            litLengths[s] = s < 144 ? 8 : s < 256 ? 9 : s < 280 ? 7 : 8;
+          }
+          literals = buildHuffman(litLengths);
+          distances = buildHuffman(new Array(30).fill(5));
+
+        } else if (type === 2) {
+          var hlit = bitsOf(5) + 257;
+          var hdist = bitsOf(5) + 1;
+          var hclen = bitsOf(4) + 4;
+
+          var clenLengths = new Array(19).fill(0);
+          for (var c = 0; c < hclen; c++) clenLengths[CLEN_ORDER[c]] = bitsOf(3);
+          var clenTable = buildHuffman(clenLengths);
+
+          var lengths = [];
+          while (lengths.length < hlit + hdist) {
+            var sym = decode(clenTable);
+            if (sym < 16) { lengths.push(sym); }
+            else if (sym === 16) {
+              var prev = lengths[lengths.length - 1];
+              var repeat = 3 + bitsOf(2);
+              while (repeat--) lengths.push(prev);
+            }
+            else if (sym === 17) { var z = 3 + bitsOf(3); while (z--) lengths.push(0); }
+            else { var z2 = 11 + bitsOf(7); while (z2--) lengths.push(0); }
+          }
+
+          literals = buildHuffman(lengths.slice(0, hlit));
+          distances = buildHuffman(lengths.slice(hlit));
+
+        } else {
+          throw new Error('Unsupported compression in this file.');
+        }
+
+        for (;;) {
+          var symbol = decode(literals);
+          if (symbol === 256) break;
+
+          if (symbol < 256) {
+            out.push(symbol);
+          } else {
+            var li = symbol - 257;
+            var length = LENGTH_BASE[li] + bitsOf(LENGTH_EXTRA[li]);
+            var di = decode(distances);
+            var distance = DIST_BASE[di] + bitsOf(DIST_EXTRA[di]);
+            var from = out.length - distance;
+            for (var k = 0; k < length; k++) out.push(out[from + k]);
+          }
+        }
+      }
+
+      if (last) break;
+    }
+
+    return new Uint8Array(out);
+  }
+
+  function gunzipJS(bytes) {
+    if (bytes[0] !== 0x1f || bytes[1] !== 0x8b) throw new Error('Not gzip data.');
+
+    var flags = bytes[3];
+    var at = 10;
+
+    if (flags & 4) { at += 2 + (bytes[at] | (bytes[at + 1] << 8)); }   // extra
+    if (flags & 8) { while (bytes[at++]); }                            // name
+    if (flags & 16) { while (bytes[at++]); }                           // comment
+    if (flags & 2) { at += 2; }                                        // header crc
+
+    return inflateRaw(bytes.subarray(at));
+  }
+
+  /**
+   * Writes a gzip stream using stored (uncompressed) DEFLATE blocks.
+   *
+   * Stored blocks are valid DEFLATE, so the result is a normal .gz that any tool
+   * reads. Writing a real compressor by hand would add a lot of surface area for
+   * a control archive that is a couple of kilobytes.
+   */
+  function gzipJS(bytes) {
+    var blocks = [];
+    var MAX = 65535;
+
+    for (var off = 0; off < bytes.length || off === 0; off += MAX) {
+      var chunk = bytes.subarray(off, Math.min(off + MAX, bytes.length));
+      var isLast = off + MAX >= bytes.length;
+
+      var header = new Uint8Array(5);
+      header[0] = isLast ? 1 : 0;
+      header[1] = chunk.length & 0xFF;
+      header[2] = (chunk.length >>> 8) & 0xFF;
+      header[3] = (~chunk.length) & 0xFF;
+      header[4] = ((~chunk.length) >>> 8) & 0xFF;
+
+      blocks.push(header, chunk);
+      if (isLast) break;
+    }
+
+    var bodyLength = blocks.reduce(function (n, b) { return n + b.length; }, 0);
+    var out = new Uint8Array(10 + bodyLength + 8);
+
+    out.set([0x1f, 0x8b, 8, 0, 0, 0, 0, 0, 0, 0xFF], 0);
+
+    var at = 10;
+    blocks.forEach(function (b) { out.set(b, at); at += b.length; });
+
+    var crc = crc32(bytes);
+    var size = bytes.length >>> 0;
+    out[at++] = crc & 0xFF; out[at++] = (crc >>> 8) & 0xFF;
+    out[at++] = (crc >>> 16) & 0xFF; out[at++] = (crc >>> 24) & 0xFF;
+    out[at++] = size & 0xFF; out[at++] = (size >>> 8) & 0xFF;
+    out[at++] = (size >>> 16) & 0xFF; out[at++] = (size >>> 24) & 0xFF;
+
+    return out;
+  }
+
+  // Checked at call time, not load time: a browser that has the API but fails on
+  // it still ends up on the working path.
   async function gunzip(bytes) {
-    var stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-    return new Uint8Array(await new Response(stream).arrayBuffer());
+    if (typeof DecompressionStream === 'undefined') return gunzipJS(bytes);
+
+    try {
+      var stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+      return new Uint8Array(await new Response(stream).arrayBuffer());
+    } catch (e) {
+      return gunzipJS(bytes);
+    }
   }
 
   async function gzip(bytes) {
-    var stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'));
-    return new Uint8Array(await new Response(stream).arrayBuffer());
+    if (typeof CompressionStream === 'undefined') return gzipJS(bytes);
+
+    try {
+      var stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'));
+      return new Uint8Array(await new Response(stream).arrayBuffer());
+    } catch (e) {
+      return gzipJS(bytes);
+    }
   }
 
   // --------------------------------------------------------- control fields
@@ -607,6 +882,174 @@
 
   document.getElementById('publish').addEventListener('click', publish);
 
+  // ------------------------------------------------------------------- tabs
+
+  function showTab(name) {
+    ['packages', 'editor', 'settings'].forEach(function (id) {
+      document.getElementById('panel-' + id).classList.toggle('hidden', id !== name);
+    });
+    [].forEach.call(document.querySelectorAll('.tab'), function (tab) {
+      tab.classList.toggle('active', tab.dataset.tab === name);
+    });
+    say('');
+  }
+
+  [].forEach.call(document.querySelectorAll('.tab'), function (tab) {
+    tab.addEventListener('click', function () { showTab(tab.dataset.tab); });
+  });
+
+  // -------------------------------------------------------- package listing
+
+  function credentials() {
+    var repo = repoInput.value.trim()
+      .replace(/^https?:\/\/github\.com\//, '')
+      .replace(/\.git$/, '');
+    return { repo: repo, token: tokenInput.value.trim() };
+  }
+
+  function api(repo, path) {
+    return 'https://api.github.com/repos/' + repo + '/contents/' +
+      encodeURIComponent(path).replace(/%2F/g, '/');
+  }
+
+  function authHeaders(token) {
+    return {
+      'Authorization': 'Bearer ' + token,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json'
+    };
+  }
+
+  function humanSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+  }
+
+  async function listPackages() {
+    var host = document.getElementById('pkg-list');
+    var creds = credentials();
+
+    if (!creds.repo || !creds.token) {
+      host.textContent = 'Connect in the Connection tab to list packages.';
+      document.getElementById('pkg-count').textContent = '';
+      return;
+    }
+
+    host.textContent = 'Loading…';
+
+    try {
+      var response = await fetch(api(creds.repo, 'extra-debs'), { headers: authHeaders(creds.token) });
+
+      if (response.status === 404) {
+        host.textContent = 'No extra-debs folder in this repository yet.';
+        document.getElementById('pkg-count').textContent = '';
+        return;
+      }
+      if (!response.ok) throw new Error('GitHub returned ' + response.status);
+
+      var entries = (await response.json()).filter(function (e) {
+        return e.type === 'file' && /\.deb$/i.test(e.name);
+      });
+
+      document.getElementById('pkg-count').textContent = '(' + entries.length + ')';
+
+      if (!entries.length) {
+        host.textContent = 'No packages added yet. Use the "Add or edit" tab.';
+        return;
+      }
+
+      host.innerHTML = '';
+
+      entries.forEach(function (entry) {
+        var row = document.createElement('div');
+        row.className = 'pkg';
+
+        var body = document.createElement('div');
+        body.className = 'pkg-body';
+
+        var name = document.createElement('div');
+        name.className = 'pkg-name';
+        name.textContent = entry.name;
+
+        var sub = document.createElement('div');
+        sub.className = 'pkg-sub';
+        sub.textContent = humanSize(entry.size);
+
+        body.appendChild(name);
+        body.appendChild(sub);
+
+        var remove = document.createElement('button');
+        remove.className = 'danger';
+        remove.type = 'button';
+        remove.textContent = 'Remove';
+        remove.addEventListener('click', function () { removePackage(entry, remove); });
+
+        row.appendChild(body);
+        row.appendChild(remove);
+        host.appendChild(row);
+      });
+
+    } catch (error) {
+      host.textContent = '';
+      say(error.message);
+    }
+  }
+
+  async function removePackage(entry, button) {
+    // Deleting from the source is not undoable from here, so make it deliberate.
+    if (!confirm('Remove ' + entry.name + ' from the source?\n\n' +
+                 'It will disappear from Sileo after the next build.')) return;
+
+    var creds = credentials();
+    button.disabled = true;
+    button.textContent = 'Removing…';
+
+    try {
+      var response = await fetch(api(creds.repo, 'extra-debs/' + entry.name), {
+        method: 'DELETE',
+        headers: authHeaders(creds.token),
+        body: JSON.stringify({ message: 'Remove ' + entry.name, sha: entry.sha })
+      });
+
+      if (!response.ok) {
+        var detail = await response.json().catch(function () { return {}; });
+        throw new Error(detail.message || ('GitHub returned ' + response.status));
+      }
+
+      say(entry.name + ' removed — it leaves the source after the next build.', 'ok');
+      listPackages();
+
+    } catch (error) {
+      say(error.message);
+      button.disabled = false;
+      button.textContent = 'Remove';
+    }
+  }
+
+  document.getElementById('refresh').addEventListener('click', listPackages);
+
+  document.getElementById('connect').addEventListener('click', function () {
+    var creds = credentials();
+
+    if (!/^[^\/]+\/[^\/]+$/.test(creds.repo)) return say('Repository should look like owner/name.');
+    if (!creds.token) return say('A token is needed to read and write the repository.');
+
+    localStorage.setItem('debedit.repo', creds.repo);
+    if (rememberBox.checked) {
+      localStorage.setItem('debedit.token', creds.token);
+    } else {
+      localStorage.removeItem('debedit.token');
+    }
+
+    say('Connected to ' + creds.repo, 'ok');
+    showTab('packages');
+    listPackages();
+  });
+
+  // A remembered token means the list can be populated straight away.
+  if (repoInput.value && tokenInput.value) listPackages();
+
   document.getElementById('reset').addEventListener('click', function () {
     state = null;
     editor.classList.add('hidden');
@@ -615,10 +1058,7 @@
     say('');
   });
 
-  if (!window.DecompressionStream) {
-    say('This browser cannot decompress gzip. Use a recent Safari, Chrome or Firefox, ' +
-        'or the command-line tools/deb-edit.py instead.');
-  }
+
 })();
 </script>
 </body>

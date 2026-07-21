@@ -1,5 +1,30 @@
 # Albrhi Changelog
 
+## v3.1.8
+
+**Build**
+- CI no longer rebuilds a version it has already released. It reads the version from
+  `control`, and if that release exists it reuses the published packages instead of
+  spending minutes compiling identical output. Bump the version to build, or run the
+  workflow manually with *force rebuild* to override.
+
+**Repo tooling**
+- The deb editor is now a control panel: a Packages tab listing what is in the
+  source with a Remove button for each, an Add-or-edit tab, and a Connection tab.
+- gzip support is detected when it is used rather than at page load, so a browser
+  that has the API but fails on it still falls back cleanly.
+
+## v3.1.7
+
+**Repo tooling**
+- The deb editor works on iOS 16.1 and older. It relied on `DecompressionStream`,
+  which Safari only gained in 16.4 — and since every browser on iOS is WebKit, no
+  browser on an older phone had it. It now falls back to a DEFLATE decoder written
+  out longhand, verified against gzip files produced elsewhere.
+- Removing a package from `extra-debs/` now removes it from the source. The repo
+  index was copied over rather than rebuilt, so deleted packages lingered on the
+  published branch and kept being listed in Sileo.
+
 ## v3.1.6
 
 **Repo**
