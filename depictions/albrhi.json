@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.1.8\n\nNo changes to the tweak. Published during work on the source repository.\n\n## v3.1.7\n\nNo changes to the tweak. Published during work on the source repository.\n\n## v3.1.6\n\n- **The source address changed** to\n  [ibrahim2100.github.io/Albrhi-Repo](https://ibrahim2100.github.io/Albrhi-Repo/).\n  If you added the old one, add this instead.\n- Albrhi now has a proper package page in Sileo, with the feature list, what\n  changed, and version details.",
+          "markdown": "## v3.1.8.1\n\n- Diagnostics now reports the DASH manifest Instagram serves for a video, and\n  how many renditions it lists. Groundwork for improving download quality —\n  nothing else changes.\n\n## v3.1.8\n\nNo changes to the tweak. Published during work on the source repository.\n\n## v3.1.7\n\nNo changes to the tweak. Published during work on the source repository.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.1.8"
+          "text": "3.1.8.1"
         },
         {
           "class": "DepictionTableTextView",
