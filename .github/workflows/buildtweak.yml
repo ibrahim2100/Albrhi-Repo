@@ -80,10 +80,15 @@ jobs:
                 OWNER="${{ github.repository_owner }}"
                 PROJECT="${{ github.event.repository.name }}"
 
-                sed -i.bak                   -e "s|^Homepage: .*|Homepage: https://github.com/${OWNER}/${PROJECT}|"                   -e "s|^Depiction: .*|Depiction: https://${OWNER}.github.io/${PROJECT}/depictions/albrhi.html|"                   -e "s|^SileoDepiction: .*|SileoDepiction: https://${OWNER}.github.io/${PROJECT}/depictions/albrhi.json|"                   control
+                sed -i.bak \
+                  -e "s|^Homepage: .*|Homepage: https://github.com/${OWNER}/${PROJECT}|" \
+                  -e "s|^Icon: .*|Icon: https://${OWNER}.github.io/${PROJECT}/CydiaIcon.png|" \
+                  -e "s|^Depiction: .*|Depiction: https://${OWNER}.github.io/${PROJECT}/depictions/albrhi.html|" \
+                  -e "s|^SileoDepiction: .*|SileoDepiction: https://${OWNER}.github.io/${PROJECT}/depictions/albrhi.json|" \
+                  control
                 rm -f control.bak
 
-                grep -E '^(Homepage|Depiction|SileoDepiction):' control
+                grep -E '^(Homepage|Icon|Depiction|SileoDepiction):' control
 
             - name: Get Albrhi Version
               id: albrhi_version
@@ -302,6 +307,10 @@ jobs:
                 ( cd main && python3 tools/make-depiction.py "$PAGES_DIR" "$ALBRHI_VERSION" "$REPO_URL" )
 
                 ls -la pages/depictions
+
+                # Source icon, shown beside the repo name in Sileo and Zebra.
+                # Regenerated each run; drop tools/logo.png in to override it.
+                python3 main/tools/make-logo.py pages/CydiaIcon.png 512
 
                 # GitHub Pages skips files and folders beginning with an underscore
                 # unless this marker is present. Harmless here, and prevents a class

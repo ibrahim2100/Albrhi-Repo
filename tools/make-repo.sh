@@ -60,7 +60,17 @@ for deb in "$OUT_DIR"/debs/*.deb; do
     version=$(dpkg-deb -f "$deb" Version)
     arch=$(dpkg-deb -f "$deb" Architecture)
 
-    echo "  $(basename "$deb")  ->  ${name} ${version} ${arch}"
+    # Label the jailbreak each package targets. Old sourceless tweaks are usually
+    # rootful, which no modern jailbreak can install -- better to see that here
+    # than to field "it will not install" reports later.
+    case "$arch" in
+        iphoneos-arm)     note="  [rootful - will NOT install on rootless or roothide]" ;;
+        iphoneos-arm64)   note="  [rootless]" ;;
+        iphoneos-arm64e)  note="  [roothide]" ;;
+        *)                note="  [unknown architecture]" ;;
+    esac
+
+    echo "  $(basename "$deb")  ->  ${name} ${version} ${arch}${note}"
     IDENTITIES="${IDENTITIES}${name}_${version}_${arch}"$'\n'
 done
 
@@ -90,6 +100,7 @@ Codename: ios
 Architectures: iphoneos-arm64 iphoneos-arm64e
 Components: main
 Description: Tweaks by Ibrahim Ismail AL-Rahn.
+Icon: CydiaIcon.png
 EOF
 
 # Already inside $OUT_DIR after the cd above, so list the current directory --
