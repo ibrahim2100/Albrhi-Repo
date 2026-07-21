@@ -608,6 +608,32 @@
 
   // --------------------------------------------------------- control fields
 
+  /**
+   * A filename that cannot collide with another flavour of the same tweak.
+   *
+   * Publishing under the uploaded file's own name meant a rootless package and the
+   * roothide conversion of it — which keeps that name — landed on the same path,
+   * and the second silently replaced the first. Debian's own convention keys the
+   * name on package, version and architecture, which is exactly what distinguishes
+   * the two.
+   */
+  function suggestedName(fields, fallback) {
+    function field(name) {
+      for (var i = 0; i < fields.length; i++) {
+        if (fields[i].key.toLowerCase() === name) return fields[i].value.trim();
+      }
+      return '';
+    }
+
+    var pkg = field('package');
+    var version = field('version');
+    var arch = field('architecture');
+
+    if (!pkg || !version || !arch) return fallback;
+
+    return (pkg + '_' + version + '_' + arch + '.deb').replace(/[^A-Za-z0-9._+-]/g, '-');
+  }
+
   function parseControl(text) {
     var fields = [];
     text.split('\n').forEach(function (line) {
@@ -725,7 +751,7 @@
       };
 
       drawFields();
-      document.getElementById('filename').value = file.name;
+      document.getElementById('filename').value = suggestedName(state.fields, file.name);
       editor.classList.remove('hidden');
       drop.classList.add('hidden');
       say('Loaded ' + file.name, 'ok');
@@ -879,6 +905,15 @@
       var probe = await fetch(api, { headers: headers });
       if (probe.status === 200) {
         sha = (await probe.json()).sha;
+
+        // Replacing is legitimate — updating a package in place — but it should
+        // never happen by surprise, which is how one flavour overwrote another.
+        if (!confirm(filename + ' already exists in the source.\n\nReplace it?')) {
+          say('Cancelled — nothing was changed.');
+          button.disabled = false;
+          button.textContent = 'Publish';
+          return;
+        }
       } else if (probe.status === 401 || probe.status === 403) {
         throw new Error('The token was rejected. Check it has Contents: write on ' + repo + '.');
       } else if (probe.status === 404 && !probe.headers.get('x-ratelimit-remaining')) {
