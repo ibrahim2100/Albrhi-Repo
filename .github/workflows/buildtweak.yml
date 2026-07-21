@@ -26,6 +26,16 @@ jobs:
                 path: main
                 submodules: recursive
 
+            - name: Source checks
+              run: |
+                cd main
+                # Cheap structural checks that catch the mistakes that have actually
+                # broken this build before: unbalanced braces, duplicate @interface,
+                # fragile %orig placement, multi-line string literals, localization
+                # drift and version mismatch. Runs before Theos so a typo fails in
+                # seconds instead of minutes.
+                python3 tools/check.py
+
             - name: Install Dependencies
               run: brew install ldid dpkg make
 

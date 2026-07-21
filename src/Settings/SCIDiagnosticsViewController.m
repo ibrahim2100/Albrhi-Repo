@@ -350,17 +350,12 @@ static NSString *_lastDownloadKind = nil;
 /// costs a round trip to turn into something actionable. This makes the useful
 /// version of the report the path of least resistance.
 - (void)reportIssue {
-    NSString *body = [NSString stringWithFormat:@"%@
-
-%@
-
-```
-%@
-```
-",
-                      SCILocalized(@"diag_issue_what"),
-                      SCILocalized(@"diag_issue_steps"),
-                      [self reportText]];
+    // Built line by line rather than as one format string: the report is fenced as a
+    // code block so GitHub renders it verbatim.
+    NSMutableString *body = [NSMutableString string];
+    [body appendFormat:@"%@\n\n", SCILocalized(@"diag_issue_what")];
+    [body appendFormat:@"%@\n\n", SCILocalized(@"diag_issue_steps")];
+    [body appendFormat:@"```\n%@\n```\n", [self reportText]];
 
     NSCharacterSet *allowed = [NSCharacterSet URLQueryAllowedCharacterSet];
     NSString *encodedBody = [body stringByAddingPercentEncodingWithAllowedCharacters:allowed];

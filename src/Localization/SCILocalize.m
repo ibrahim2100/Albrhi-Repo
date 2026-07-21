@@ -128,11 +128,8 @@ static NSDictionary *_arTable = nil;
         @"diag_title": @"Diagnostics",
         @"diag_sub": @"What Albrhi actually sees at runtime",
         @"diag_beta_footer": @"Something not working? Open Diagnostics and tap the speech bubble — it files a report with everything needed to fix it.",
-        @"diag_issue_what": @"**What happened**
-<describe what you expected and what you got>",
-        @"diag_issue_steps": @"**Steps to reproduce**
-1. 
-2. ",
+        @"diag_issue_what": @"**What happened**\n<describe what you expected and what you got>",
+        @"diag_issue_steps": @"**Steps to reproduce**\n1. \n2. ",
         @"p_hdr_logging": @"Logging",
         @"p_verbose_t": @"Verbose logging",
         @"p_verbose_s": @"Writes detailed activity to the system log. Off by default — turn it on only while reproducing a bug.",
@@ -431,11 +428,8 @@ static NSDictionary *_arTable = nil;
         @"diag_title": @"التشخيص",
         @"diag_sub": @"ما تراه Albrhi فعليًا أثناء التشغيل",
         @"diag_beta_footer": @"شيء لا يعمل؟ افتح التشخيص واضغط أيقونة الفقاعة — تُنشئ بلاغًا يحمل كل ما يلزم لإصلاحه.",
-        @"diag_issue_what": @"**ماذا حدث**
-<صف ما توقّعته وما حصل>",
-        @"diag_issue_steps": @"**خطوات إعادة الإنتاج**
-1. 
-2. ",
+        @"diag_issue_what": @"**ماذا حدث**\n<صف ما توقّعته وما حصل>",
+        @"diag_issue_steps": @"**خطوات إعادة الإنتاج**\n1. \n2. ",
         @"p_hdr_logging": @"السجل",
         @"p_verbose_t": @"سجل مفصّل",
         @"p_verbose_s": @"يكتب نشاطًا تفصيليًا في سجل النظام. مطفأ افتراضيًا — فعّله فقط أثناء إعادة إنتاج مشكلة.",
