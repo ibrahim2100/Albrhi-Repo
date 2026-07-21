@@ -86,3 +86,23 @@ Controlled by the `dw_save_to_camera` toggle (Downloads section). When on, media
 **Quality picker** reads `-[IGVideo videoVersions]` (array of `IGAPIVideoVersion`). If empty, Albrhi falls back to automatic best-quality selection.
 
 **Custom accent color** requires iOS 14+ (system `UIColorPickerViewController`). Stored as a hex string in `albrhi_accent_hex`; the reset button clears it back to the Albrhi orange.
+
+## Building for roothide
+
+roothide uses its own Theos fork, so install it separately:
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/roothide/theos/master/bin/install-theos)"
+```
+
+Then, with `THEOS` pointing at that installation:
+
+```bash
+./build.sh roothide
+```
+
+Albrhi needs no `jbroot()` calls: it writes only inside Instagram's own container
+(`NSSearchPathForDirectoriesInDomains` with `NSUserDomainMask`, and
+`NSTemporaryDirectory`), never to jailbreak paths. The rootless sources therefore
+build unchanged under the roothide scheme, and `DISABLE_ROOTLESS_COMPAT_WARNING` is
+defined in the Makefile to silence the compatibility notice.

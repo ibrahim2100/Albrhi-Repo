@@ -96,6 +96,24 @@ then
 
     echo -e "\033[1m\033[32mDone, we hope you enjoy SCInsta!\033[0m\n\nYou can find the deb file at: $(pwd)/packages"
 
+elif [ "$1" == "roothide" ];
+then
+
+    # Clean build artifacts
+    make clean
+    rm -rf .theos
+
+    echo -e '[1m[32mBuilding Albrhi tweak for roothide[0m'
+
+    # No jbroot() calls needed: the tweak writes only inside Instagram's own
+    # container, so the rootless sources build unchanged under the roothide scheme.
+    export THEOS_PACKAGE_SCHEME=roothide
+    make package
+
+    echo -e "[1m[32mDone![0m
+
+You can find the deb file at: $(pwd)/packages"
+
 elif [ "$1" == "rootful" ];
 then
 

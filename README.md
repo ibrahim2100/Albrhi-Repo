@@ -88,7 +88,7 @@ Arabic/English with RTL · navigation bar tab ordering, hiding and swipe-between
 | iOS | 15.0 and later |
 | Architecture | `arm64` |
 | Instagram | Built and tested on **410.1.0** — see the note below |
-| Jailbreaks | Rootful and rootless (Dopamine, palera1n, XinaA15, unc0ver, checkra1n) |
+| Jailbreaks | Rootless (Dopamine, palera1n) · roothide · rootful (unc0ver, checkra1n) |
 | Sideloading | Supported via the bundled FLEXing sub-project |
 
 ### About that Instagram version
@@ -118,7 +118,15 @@ Omit that variable for a rootful `.deb`.
 
 **From a release**
 
-1. Download the `.deb` for your scheme (rootful or rootless) from the Releases page.
+Each release ships three builds — take the one matching your setup:
+
+| File | For |
+|---|---|
+| `...+rootless.deb` | Rootless jailbreaks (Dopamine, palera1n) |
+| `...+roothide.deb` | roothide |
+| `Albrhi_*.dylib` | Sideloading — inject into a decrypted IPA with LiveContainer, Sideloadly or cyan |
+
+1. Download the file for your setup from the Releases page.
 2. Open it in Sileo, Zebra or your package manager of choice.
 3. Install, then respring.
 

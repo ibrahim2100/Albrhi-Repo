@@ -1,5 +1,41 @@
 # Albrhi Changelog
 
+## v3.1.4 — First public beta
+
+**Fixed**
+- **Mark-as-seen in DMs now actually sends the receipt.** One press marks the message
+  you are looking at, and only that one — five view-once messages in a row stay
+  unseen until you press each. It previously showed a green tick and sent nothing.
+- Photo posts no longer fail with "could not extract URL": a photo still hands back
+  an empty video object, and the download button was taking the video path.
+- The inline download button appears on reels, above the like button.
+
+**Removed**
+Thirteen settings that were broken or pointless, rather than left to disappoint:
+liquid glass buttons and surfaces, teen app icons, disable scrolling reels, doom
+scrolling limits, the per-surface download toggles (the inline button replaces
+them), long-press tuning, keep deleted messages, and the quality picker. Videos now
+always download at the highest quality available.
+
+**New**
+- **Diagnostics page**, at the top level of settings. Reports which Instagram
+  classes the tweak actually attached to on your build, and files a pre-filled
+  GitHub issue in one tap.
+- **Releases publish automatically** with both a `.deb` for jailbroken devices and a
+  `.dylib` for sideloading, from a single build.
+- Redesigned welcome screen, shown on first install and after each update.
+- Verbose logging is now off by default and toggleable in Debug.
+
+**Housekeeping**
+- 92 orphaned translation keys removed; Arabic and English are at full parity.
+- `tools/check.py` runs before every build: brace balance, duplicate interfaces,
+  fragile `%orig` placement, multi-line string literals, missing imports,
+  translation drift and version mismatch. Every rule exists because that exact
+  mistake broke a build.
+
+**Tested on Instagram 410.1.0** — the newest build the developer's phone will still
+accept. Newer versions should work; reports from them are especially welcome.
+
 ## v3.0.28
 
 **Changes**

@@ -116,7 +116,8 @@ jobs:
 
                 # The tweak binary is produced on the way to the .deb but never
                 # copied out. Sideloaders (LiveContainer, Sideloadly, cyan) want the
-                # dylib on its own, so ship both from one build.
+                # dylib on its own, so ship both from one build. Collected before the
+                # roothide build, which wipes .theos.
                 DYLIB=$(find .theos/obj -name 'Albrhi.dylib' -type f | head -n1)
 
                 if [ -z "$DYLIB" ]; then
@@ -127,11 +128,51 @@ jobs:
                 cp "$DYLIB" "packages/Albrhi_${ALBRHI_VERSION}.dylib"
                 ls -la packages
 
+            - name: Setup roothide Theos
+              uses: actions/checkout@v4
+              with:
+                repository: roothide/theos
+                ref: master
+                path: ${{ github.workspace }}/theos-roothide
+                submodules: recursive
+
+            - name: Share the SDK with roothide Theos
+              run: |
+                mkdir -p "${{ github.workspace }}/theos-roothide/sdks"
+                cp -R "${{ github.workspace }}/theos/sdks/." "${{ github.workspace }}/theos-roothide/sdks/"
+                ls "${{ github.workspace }}/theos-roothide/sdks"
+
+            - name: Build Albrhi tweak for roothide
+              run: |
+                cd main
+                ./build.sh roothide
+                ls -la packages
+              env:
+                THEOS: ${{ github.workspace }}/theos-roothide
+
+            - name: Rename roothide deb
+              run: |
+                cd main/packages
+
+                # Exclude the rootless deb by its exact name rather than by a
+                # substring match, so a future naming change cannot silently pick
+                # the wrong file and publish it as roothide.
+                ROOTLESS="com.albrhi.tweak_${ALBRHI_VERSION}+rootless.deb"
+                BUILT_DEB=$(ls -t *.deb | grep -v "^${ROOTLESS}$" | head -n1)
+                if [ -z "$BUILT_DEB" ]; then
+                  echo "::error::No roothide .deb produced"
+                  exit 1
+                fi
+
+                mv "$BUILT_DEB" "com.albrhi.tweak_${ALBRHI_VERSION}+roothide.deb"
+                ls -la
+
             - name: Pass package name to upload action
               id: package_name
               run: |
                 echo "package=com.albrhi.tweak_${ALBRHI_VERSION}+rootless.deb" >> "$GITHUB_OUTPUT"
                 echo "dylib=Albrhi_${ALBRHI_VERSION}.dylib" >> "$GITHUB_OUTPUT"
+                echo "roothide=com.albrhi.tweak_${ALBRHI_VERSION}+roothide.deb" >> "$GITHUB_OUTPUT"
 
             - name: Upload Artifact
               uses: actions/upload-artifact@v4
@@ -140,10 +181,23 @@ jobs:
                 path: |
                   ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.package }}
                   ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.dylib }}
+                  ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.roothide }}
                 if-no-files-found: error
 
+            - name: Has this version been released?
+              id: release_check
+              env:
+                GH_TOKEN: ${{ github.token }}
+              run: |
+                if gh release view "v${ALBRHI_VERSION}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+                  echo "Release v${ALBRHI_VERSION} already exists — skipping publish."
+                  echo "needed=false" >> "$GITHUB_OUTPUT"
+                else
+                  echo "needed=true" >> "$GITHUB_OUTPUT"
+                fi
+
             - name: Extract changelog for this version
-              if: startsWith(github.ref, 'refs/tags/v')
+              if: steps.release_check.outputs.needed == 'true'
               run: |
                 # Pull the section for this version out of CHANGELOG.md: everything
                 # from its heading up to the next "## " heading.
@@ -161,7 +215,8 @@ jobs:
                   echo ""
                   echo "---"
                   echo ""
-                  echo "**Jailbroken** — download the \`.deb\` and open it in Sileo or Zebra, then respring."
+                  echo "**Jailbroken** — download the \`.deb\` matching your jailbreak (rootless or roothide)"
+                  echo "and open it in Sileo or Zebra, then respring."
                   echo ""
                   echo "**Sideloading** — use the \`.dylib\` with LiveContainer, Sideloadly or cyan to inject it into a decrypted Instagram IPA."
                   echo ""
@@ -174,13 +229,16 @@ jobs:
                 } >> release-notes.md
 
             - name: Publish release
-              if: startsWith(github.ref, 'refs/tags/v')
+              if: steps.release_check.outputs.needed == 'true'
               uses: softprops/action-gh-release@v2
               with:
                 name: Albrhi ${{ env.ALBRHI_VERSION }}
+                tag_name: v${{ env.ALBRHI_VERSION }}
+                target_commitish: ${{ github.sha }}
                 body_path: release-notes.md
                 prerelease: true
                 files: |
                   ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.package }}
                   ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.dylib }}
+                  ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.roothide }}
                 fail_on_unmatched_files: true
