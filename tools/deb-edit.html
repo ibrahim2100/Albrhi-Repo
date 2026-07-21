@@ -677,8 +677,10 @@
 
       var member = members[controlIndex];
       if (!/\.gz$/.test(member.name) && !/\.tar$/.test(member.name)) {
-        throw new Error('This package uses ' + member.name +
-          '. The browser tool handles gzip only — use tools/deb-edit.py for this one.');
+        throw new Error('This package stores its metadata as ' + member.name +
+          ', which needs an LZMA decoder this page does not carry. Publish it to ' +
+          'extra-debs/ as it is — the next build converts it to gzip automatically, ' +
+          'and it becomes editable here afterwards.');
       }
 
       var tarBytes = /\.gz$/.test(member.name) ? await gunzip(member.data) : member.data;

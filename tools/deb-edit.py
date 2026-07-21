@@ -9,9 +9,11 @@ byte for byte, so the package contents cannot be altered by accident.
 
 Pure standard library, because dpkg-deb does not exist on Windows.
 
-    python tools/deb-edit.py show    thing.deb
-    python tools/deb-edit.py set     thing.deb Name="Nice Name" Version=1.2.3
-    python tools/deb-edit.py set     thing.deb Description="One line" -o out.deb
+    python tools/deb-edit.py show      thing.deb
+    python tools/deb-edit.py set       thing.deb Name="Nice Name" Version=1.2.3
+    python tools/deb-edit.py set       thing.deb Description="One line" -o out.deb
+    python tools/deb-edit.py normalize thing.deb
+    python tools/deb-edit.py label     thing.deb
 """
 import gzip
 import io
@@ -179,8 +181,23 @@ def main(argv):
             print('%-16s %s%s' % (key + ':', first, more))
         return
 
+    if command == 'normalize':
+        if normalize(path):
+            print('Converted %s to control.tar.gz' % path)
+        else:
+            print('%s already uses gzip — unchanged' % path)
+        return
+
+    if command == 'label':
+        renamed = label(path)
+        if renamed:
+            print('Labelled: %s' % renamed)
+        else:
+            print('%s needs no label' % path)
+        return
+
     if command != 'set':
-        raise SystemExit('Unknown command: %s (use show or set)' % command)
+        raise SystemExit('Unknown command: %s (use show, set, normalize or label)' % command)
 
     changes = {}
     out_path = path
@@ -210,6 +227,94 @@ def main(argv):
     print('Wrote %s' % out_path)
     for key in changes:
         print('  %s = %s' % (key, changes[key]))
+
+
+def normalize(path):
+    """Rewrites a control.tar.xz package to use gzip instead.
+
+    The browser editor cannot read xz — decoding it needs an LZMA implementation,
+    which is a lot of exacting code for a rare case, and a subtle bug there would
+    silently corrupt packages. Converting the container instead costs nothing: the
+    control archive is a few kilobytes and the payload is untouched either way.
+
+    Returns True if the file was changed.
+    """
+    members = ar_read(path)
+
+    for index, (name, data) in enumerate(members):
+        if not name.startswith('control.tar'):
+            continue
+
+        if name.endswith('.gz'):
+            return False        # already readable everywhere
+
+        tar_bytes, _ = open_control(name, data)
+        members[index] = ('control.tar.gz', gzip.compress(tar_bytes, 9))
+
+        ar_write(path, members)
+        return True
+
+    raise SystemExit('No control.tar member found in %s' % path)
+
+
+# Architecture is the only reliable statement a package makes about which
+# jailbreak it targets, and it is set at build time by the packaging scheme.
+FLAVOURS = {
+    'iphoneos-arm64': 'rootless',
+    'iphoneos-arm64e': 'roothide',
+    'iphoneos-arm': 'rootful',
+}
+
+
+def flavour_of(fields):
+    """Which jailbreak this package is for, or None if the architecture is unknown."""
+    for key, value in fields:
+        if key.lower() == 'architecture':
+            return FLAVOURS.get(value.strip())
+    return None
+
+
+def label(path):
+    """Appends "(rootless)" or "(roothide)" to the package's display name.
+
+    With several flavours of the same tweak in one source, the list in Sileo is
+    otherwise a row of identical names and the wrong one gets installed. Reading
+    the architecture is exact — no inspection or guessing involved.
+
+    Returns the new name, or None when nothing needed doing.
+    """
+    members, index, tar_bytes, recompress = load(path)
+    fields = parse(read_fields(tar_bytes))
+
+    flavour = flavour_of(fields)
+    if not flavour:
+        return None
+
+    name_index = None
+    for i, (key, _) in enumerate(fields):
+        if key.lower() == 'name':
+            name_index = i
+            break
+
+    if name_index is None:
+        # No display name to label. Inventing one from the package id would be a
+        # guess, and a wrong display name is worse than none.
+        return None
+
+    current = fields[name_index][1]
+
+    # Already carries a flavour, whichever one — leave it alone.
+    for known in FLAVOURS.values():
+        if '(' + known + ')' in current.lower():
+            return None
+
+    updated = '%s (%s)' % (current.strip(), flavour)
+    fields[name_index] = (fields[name_index][0], updated)
+
+    members[index] = (members[index][0], recompress(replace_control(tar_bytes, render(fields))))
+    ar_write(path, members)
+
+    return updated
 
 
 def interactive():

@@ -175,6 +175,27 @@ checks → version → decide → [build ×2 + dylib] → release → repo index
 | `deb-edit.html` | browser control panel: list/remove packages, edit metadata, publish |
 | `repo-index.html` | the source landing page; builds its package list from the live index |
 
+**Added packages are prepared by CI, not by hand.** A workflow step runs over
+`extra-debs/` on every main push and commits the result with `[skip ci]`:
+
+- `deb-edit.py label` appends `(rootless)` / `(roothide)` / `(rootful)` to the
+  display name, read from the package's own `Architecture`. Several flavours of one
+  tweak otherwise appear in Sileo under identical names and the wrong one gets
+  installed. Idempotent, and a package already carrying a flavour is left alone.
+- `deb-edit.py normalize` converts an xz control archive to gzip.
+
+Converting a rootless package *into* a roothide one was considered and rejected:
+metadata and paths can be rewritten mechanically, but whether the binary hardcodes
+jailbreak paths cannot be determined from outside, so the result would install
+cleanly and then fail on the user's device. Build both flavours from source, or use
+the jailbreak's own converter.
+
+**Packages with `control.tar.xz` are normalised to gzip by CI**, not decoded in the
+browser. An LZMA decoder is a large amount of exacting code whose failure mode is
+silent corruption; converting the container costs nothing and the payload is copied
+byte for byte. `tools/deb-edit.py normalize` does the work, and a workflow step runs
+it over `extra-debs/` and commits the result with `[skip ci]`.
+
 The browser tools carry a **hand-written DEFLATE decoder**. `DecompressionStream`
 only arrived in iOS 16.4 and every iOS browser is WebKit, so on the developer's
 16.1 phone no browser had it. Writing gzip uses stored blocks — valid DEFLATE, and
