@@ -168,6 +168,22 @@ Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
 Package: com.nowesr1.dltube
 Version: 2.16.3
+Architecture: iphoneos-arm64e
+Maintainer: ZeroDeadBeef
+Pre-Depends: rootless-compat(>= 0.9)
+Depends: mobilesubstrate
+Filename: debs/com.nowesr1.dltube_2.16.3_iphoneos-arm64e.deb
+Size: 455048
+MD5sum: 82fb3d045792c1d7b283db4cd7e5bd11
+SHA1: b422eded6ac18feebee60b4241f7da49087ddcef
+SHA256: e17dc1078fe85decd356e0676573a72a46ebabaa4fc29343eef664c63aff8992
+Section: Tweaks
+Description: free DLTube no license required best compatible with YouTube V20.42.3
+Author: ZeroDeadBeef
+Name: DLTube Free (rootless)
+
+Package: com.nowesr1.dltube
+Version: 2.16.3
 Architecture: iphoneos-arm64
 Maintainer: ZeroDeadBeef
 Depends: mobilesubstrate
