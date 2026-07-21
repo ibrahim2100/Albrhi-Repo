@@ -78,7 +78,10 @@ static BOOL sciSeenMarkedCurrent = NO;
 %hook IGDirectVisualMessageViewerEventHandler
 
 - (void)visualMessageViewerController:(id)arg1 didBeginPlaybackForVisualMessage:(id)arg2 atIndex:(NSInteger)arg3 {
-    if (![SCIUtils getBoolPref:@"unlimited_replay"]) { %orig; return; }
+    if (![SCIUtils getBoolPref:@"unlimited_replay"]) {
+        %orig;
+        return;
+    }
 
     // A new message is on screen: capture what marking it would need, and clear the
     // previous message's state so marking never carries over.
@@ -92,10 +95,15 @@ static BOOL sciSeenMarkedCurrent = NO;
 }
 
 - (void)visualMessageViewerController:(id)arg1 didEndPlaybackForVisualMessage:(id)arg2 atIndex:(NSInteger)arg3 mediaCurrentTime:(CGFloat)arg4 forNavType:(NSInteger)arg5 {
-    if (![SCIUtils getBoolPref:@"unlimited_replay"]) { %orig; return; }
+    if (![SCIUtils getBoolPref:@"unlimited_replay"]) {
+        %orig;
+        return;
+    }
 
     // Only the deliberate re-entry from the button gets through.
-    if (sciSeenPassthrough) %orig;
+    if (sciSeenPassthrough) {
+        %orig;
+    }
 }
 
 %end
