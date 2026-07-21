@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v3.1.8.1
+
+- Diagnostics now reports the DASH manifest Instagram serves for a video, and
+  how many renditions it lists. Groundwork for improving download quality —
+  nothing else changes.
+
 ## v3.1.8
 
 No changes to the tweak. Published during work on the source repository.
