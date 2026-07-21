@@ -186,6 +186,25 @@ Depiction: https://apt.fouadraheb.com/package/com.fouadraheb.watusi3
 Icon: https://i.ibb.co/ksjS4dDF/Clean-Shot-2026-01-18-at-01-43-562x.png
 Name: Watusi 3 for WhatsApp
 
+Package: com.junesiphone.designer
+Version: 1.5.5
+Architecture: iphoneos-arm64e
+Maintainer: June <junesgraphics@gmail.com>
+Installed-Size: 20612
+Pre-Depends: rootless-compat(>= 0.9)
+Depends: mobilesubstrate, preferenceloader
+Filename: debs/com.junesiphone.designer_1.5.5_iphoneos-arm64e-1.deb
+Size: 29301698
+MD5sum: 6f21cd8d39a4e81fcfd657af67827693
+SHA1: d0d64e4d66a7befb6f5eecb456d5f2b730474a70
+SHA256: 4aff1c9874db7cc8a77f57e7c58337f5e7f9845324b45ac4a0f0b9f1cd8e1c6e
+Section: Addons (Tweaks)
+Description: Design layouts for lockscreen and homescreen
+Author: JunesiPhone <junesgraphics@gmail.com>
+Depiction: https://www.junesiphone.com/supersecret/depiction.php?iframe=depiction/designer
+Name: Designer
+Sileodepiction: https://www.junesiphone.com/supersecret/depiction-s/designer.json
+
 Package: com.nowesr1.dltiktok
 Version: 2.1.4
 Architecture: iphoneos-arm64
