@@ -186,6 +186,26 @@ Depiction: https://apt.fouadraheb.com/package/com.fouadraheb.watusi3
 Icon: https://i.ibb.co/ksjS4dDF/Clean-Shot-2026-01-18-at-01-43-562x.png
 Name: Watusi 3 for WhatsApp
 
+Package: com.julioverne.goodwifi
+Version: 0.0~beta6
+Architecture: iphoneos-arm64e
+Maintainer: Julio
+Installed-Size: 412
+Pre-Depends: rootless-compat(>= 0.9)
+Depends: mobilesubstrate, preferenceloader
+Filename: debs/goodwifi.deb
+Size: 52418
+MD5sum: ae9504df00b0be9cf1ac7ee1753ee1c4
+SHA1: e25253e5b19e7ea7970266cfac11518a0bc409b5
+SHA256: 86f0d4d642b6853a5cd14a079b34963ef327b988984fb55a2fbd24f5d68c9248
+Section: Tweaks
+Homepage: https://twitter.com/ijulioverne
+Description: Better WiFi Preferences
+Author: julioverne
+Depiction: https://julioverne.github.io/description.html?id=com.julioverne.goodwifi
+Icon: file:///var/jb/Library/PreferenceBundles/GoodWiFiSettings.bundle/icon@2x.png
+Name: GoodWiFi
+
 Package: com.junesiphone.designer
 Version: 1.5.5
 Architecture: iphoneos-arm64e
