@@ -18,9 +18,14 @@ DEB_DIR="${1:?deb directory required}"
 OUT_DIR="${2:?output directory required}"
 BASE_URL="${3:?base url required}"
 
+# Rebuilt from scratch every run, so the published repo is an exact mirror of what
+# is in the tree right now. Copying without clearing left deleted packages behind:
+# the file stayed on the gh-pages branch and kept being re-indexed, so removing a
+# tweak from extra-debs never removed it from Sileo.
+rm -rf "$OUT_DIR/debs"
 mkdir -p "$OUT_DIR/debs"
 
-# Newly built debs win over whatever the branch already had at the same filename.
+# Everything below is therefore a fresh copy, not a merge.
 built=$(find "$DEB_DIR" -maxdepth 1 -name '*.deb' -type f | wc -l | tr -d ' ')
 echo "Built packages found: ${built}"
 
