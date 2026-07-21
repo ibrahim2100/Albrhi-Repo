@@ -166,3 +166,18 @@ Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
 Name: Albrhi for Instagram (roothide)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
+Package: com.nowesr1.dltube
+Version: 2.16.3
+Architecture: iphoneos-arm64
+Maintainer: ZeroDeadBeef
+Depends: mobilesubstrate
+Filename: debs/DLTube_V2.16.3_Rootless.deb
+Size: 350742
+MD5sum: 11029d11695b2752bc7a272928a462f8
+SHA1: bc21cd8d15738140f138bba896a5a2541f5f13f8
+SHA256: 3df5c646151e1fb0dae166f2de88ed4402230ba33a50895f723e6fe919d102c2
+Section: Tweaks
+Description: free DLTube no license required best compatible with YouTube V20.42.3
+Author: ZeroDeadBeef
+Name: DLTube Free (rootless)
+
