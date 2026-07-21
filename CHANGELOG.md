@@ -2,52 +2,30 @@
 
 ## v3.1.8
 
-**Build**
-- CI no longer rebuilds a version it has already released. It reads the version from
-  `control`, and if that release exists it reuses the published packages instead of
-  spending minutes compiling identical output. Bump the version to build, or run the
-  workflow manually with *force rebuild* to override.
-
-**Repo tooling**
-- The deb editor is now a control panel: a Packages tab listing what is in the
-  source with a Remove button for each, an Add-or-edit tab, and a Connection tab.
-- gzip support is detected when it is used rather than at page load, so a browser
-  that has the API but fails on it still falls back cleanly.
+No changes to the tweak. Published during work on the source repository.
 
 ## v3.1.7
 
-**Repo tooling**
-- The deb editor works on iOS 16.1 and older. It relied on `DecompressionStream`,
-  which Safari only gained in 16.4 — and since every browser on iOS is WebKit, no
-  browser on an older phone had it. It now falls back to a DEFLATE decoder written
-  out longhand, verified against gzip files produced elsewhere.
-- Removing a package from `extra-debs/` now removes it from the source. The repo
-  index was copied over rather than rebuilt, so deleted packages lingered on the
-  published branch and kept being listed in Sileo.
+No changes to the tweak. Published during work on the source repository.
 
 ## v3.1.6
 
-**Repo**
-- The source moved to
+- **The source address changed** to
   [ibrahim2100.github.io/Albrhi-Repo](https://ibrahim2100.github.io/Albrhi-Repo/).
-  If you added the old address, add this one instead.
-- **Package pages in Sileo.** Albrhi now ships a native depiction — tabs for the
-  feature list, what changed, and version details — generated at build time so it
-  can never show a version that was not actually released.
+  If you added the old one, add this instead.
+- Albrhi now has a proper package page in Sileo, with the feature list, what
+  changed, and version details.
 
 ## v3.1.5
 
 **Fixed**
-- **Release builds are no longer debug builds.** Every package published until now
-  carried debug symbols and a `-1+debug` version suffix, because `FINALPACKAGE` was
-  never set. Builds are now smaller, optimised, and versioned cleanly.
+- **Smaller, faster builds.** Every release until now shipped as a debug build,
+  carrying debug symbols and a `-1+debug` version suffix.
 
-**Repo**
-- The Albrhi source is live at
-  [ibrahim2100.github.io/Albrhi-Repo](https://ibrahim2100.github.io/Albrhi-Repo/) — add it in
-  Sileo or Zebra and updates arrive automatically.
-- The landing page now builds its package list from the repo's own index, so it
-  stays accurate as more tweaks are added.
+**New**
+- Albrhi has its own source: add
+  [ibrahim2100.github.io/Albrhi-Repo](https://ibrahim2100.github.io/Albrhi-Repo/)
+  in Sileo or Zebra and updates arrive on their own.
 
 ## v3.1.4 — First public beta
 
