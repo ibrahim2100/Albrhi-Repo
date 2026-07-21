@@ -401,8 +401,10 @@ static NSDictionary *_arTable = nil;
         @"p_dm_save_t": @"Save DM photos & videos",
         @"p_dm_save_s": @"Adds a save button when you open a photo or video in DMs, and always allows saving",
         // View-once seen toasts
-        @"p_dm_seen_on": @"This message will be marked as seen",
-        @"p_dm_seen_off": @"This message stays unseen",
+        @"p_dm_seen_mark": @"Mark as seen",
+        @"p_dm_seen_done": @"Marked as seen",
+        @"p_dm_seen_already": @"Already marked as seen",
+        @"p_dm_seen_failed": @"Could not mark this message",
         // Long-press action
         @"p_press_title": @"Long-press action",
         @"p_press_sub": @"What holding a post/reel/story does",
@@ -769,8 +771,10 @@ static NSDictionary *_arTable = nil;
         @"p_dm_save_t": @"حفظ صور وفيديوهات الخاص",
         @"p_dm_save_s": @"يضيف زر حفظ عند فتح صورة أو فيديو في الرسائل، ويسمح بالحفظ دائمًا",
         // تنبيهات مشاهدة العرض لمرة واحدة
-        @"p_dm_seen_on": @"ستُرسَل «تمت المشاهدة» لهذه الرسالة",
-        @"p_dm_seen_off": @"ستبقى هذه الرسالة دون تسجيل مشاهدة",
+        @"p_dm_seen_mark": @"تعليم كمشاهَد",
+        @"p_dm_seen_done": @"تم التعليم كمشاهَد",
+        @"p_dm_seen_already": @"معلَّم كمشاهَد مسبقًا",
+        @"p_dm_seen_failed": @"تعذّر تعليم هذه الرسالة",
         // إجراء الضغط المطوّل
         @"p_press_title": @"إجراء الضغط المطوّل",
         @"p_press_sub": @"ماذا يفعل الضغط المطوّل على منشور/ريل/قصة",

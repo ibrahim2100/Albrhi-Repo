@@ -26,18 +26,6 @@
         [new_items addObject:seenButton];
     }
 
-    // DM visual messages viewed
-    if ([SCIUtils getBoolPref:@"unlimited_replay"]) {
-        UIBarButtonItem *dmVisualMsgsViewedButton = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"photo.badge.checkmark"] style:UIBarButtonItemStylePlain target:self action:@selector(dmVisualMsgsViewedButtonHandler:)];
-        [new_items addObject:dmVisualMsgsViewedButton];
-
-        if (dmVisualMsgsViewedButtonEnabled) {
-            [dmVisualMsgsViewedButton setTintColor:SCIUtils.SCIColor_Primary];
-        } else {
-            [dmVisualMsgsViewedButton setTintColor:UIColor.labelColor];
-        }
-    }
-
     %orig([new_items copy]);
 }
 
@@ -48,21 +36,6 @@
         [(IGDirectThreadViewController *)nearestVC markLastMessageAsSeen];
 
         [SCIUtils showToastForDuration:2.5 title:SCILocalized(@"p_toast_marked_seen")];
-    }
-}
-// DM visual messages viewed button
-%new - (void)dmVisualMsgsViewedButtonHandler:(UIBarButtonItem *)sender {
-    if (dmVisualMsgsViewedButtonEnabled) {
-        dmVisualMsgsViewedButtonEnabled = false;
-        [sender setTintColor:UIColor.labelColor];
-
-        [SCIUtils showToastForDuration:4.5 title:SCILocalized(@"p_toast_replay_on")];
-    }
-    else {
-        dmVisualMsgsViewedButtonEnabled = true;
-        [sender setTintColor:SCIUtils.SCIColor_Primary];
-
-        [SCIUtils showToastForDuration:4.5 title:SCILocalized(@"p_toast_replay_off")];
     }
 }
 %end
@@ -78,29 +51,95 @@
 }
 %end
 
-// DM visual-message (view-once) "mark as viewed" logic.
-// Only suppress the mark-as-viewed when the feature is on AND the eye toggle is off;
-// otherwise let Instagram behave normally (the old code swallowed %orig even when
-// the feature was disabled).
+///
+/// View-once "mark as seen", per message.
+///
+/// Instagram registers a view-once message as seen when playback ends. The tweak
+/// suppresses that, so nothing is ever marked automatically — and the button below
+/// re-triggers it for exactly one message, on demand.
+///
+/// The previous design was a toggle: arm it, then close the message and hope the
+/// receipt went out. It gave no confirmation, and the armed state could carry into
+/// the next message. This replays the original end-of-playback call directly, so a
+/// single press marks the message you are looking at and nothing else.
+///
+
+// Context captured when a message starts playing, needed to replay the call.
+static __weak id sciSeenHandler = nil;
+static __weak id sciSeenController = nil;
+static id sciSeenMessage = nil;
+static NSInteger sciSeenIndex = 0;
+
+// YES only for the instant we re-enter the hook deliberately.
+static BOOL sciSeenPassthrough = NO;
+// Whether the message on screen right now has already been marked.
+static BOOL sciSeenMarkedCurrent = NO;
+
 %hook IGDirectVisualMessageViewerEventHandler
+
 - (void)visualMessageViewerController:(id)arg1 didBeginPlaybackForVisualMessage:(id)arg2 atIndex:(NSInteger)arg3 {
-    // Each message starts unmarked, so marking never leaks to the next one.
-    if ([SCIUtils getBoolPref:@"unlimited_replay"]) {
-        dmVisualMsgsViewedButtonEnabled = NO;
-        return;   // don't register "seen" just for opening it
-    }
-    %orig;
+    if (![SCIUtils getBoolPref:@"unlimited_replay"]) { %orig; return; }
+
+    // A new message is on screen: capture what marking it would need, and clear the
+    // previous message's state so marking never carries over.
+    sciSeenHandler = self;
+    sciSeenController = arg1;
+    sciSeenMessage = arg2;
+    sciSeenIndex = arg3;
+    sciSeenMarkedCurrent = NO;
+
+    // Opening a message must not register it as seen.
 }
+
 - (void)visualMessageViewerController:(id)arg1 didEndPlaybackForVisualMessage:(id)arg2 atIndex:(NSInteger)arg3 mediaCurrentTime:(CGFloat)arg4 forNavType:(NSInteger)arg5 {
-    if ([SCIUtils getBoolPref:@"unlimited_replay"]) {
-        if (!dmVisualMsgsViewedButtonEnabled) return;   // you didn't tap the eye — stay unseen
-        %orig;                                          // you did — send the seen receipt
-        dmVisualMsgsViewedButtonEnabled = NO;           // one-shot: this message only
-        return;
-    }
-    %orig;
+    if (![SCIUtils getBoolPref:@"unlimited_replay"]) { %orig; return; }
+
+    // Only the deliberate re-entry from the button gets through.
+    if (sciSeenPassthrough) %orig;
 }
+
 %end
+
+/// Marks the message currently on screen as seen. Returns NO when there is nothing
+/// captured to mark.
+static BOOL SCIMarkCurrentVisualMessageSeen(void) {
+    id handler = sciSeenHandler;
+    id controller = sciSeenController;
+    id message = sciSeenMessage;
+
+    if (!handler || !message) return NO;
+
+    SEL sel = @selector(visualMessageViewerController:didEndPlaybackForVisualMessage:atIndex:mediaCurrentTime:forNavType:);
+    if (![handler respondsToSelector:sel]) return NO;
+
+    NSMethodSignature *signature = [handler methodSignatureForSelector:sel];
+    if (!signature) return NO;
+
+    NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:signature];
+    invocation.selector = sel;
+    invocation.target = handler;
+
+    CGFloat time = 0.0;
+    NSInteger index = sciSeenIndex, navType = 0;
+    [invocation setArgument:&controller atIndex:2];
+    [invocation setArgument:&message atIndex:3];
+    [invocation setArgument:&index atIndex:4];
+    [invocation setArgument:&time atIndex:5];
+    [invocation setArgument:&navType atIndex:6];
+
+    sciSeenPassthrough = YES;
+    @try {
+        [invocation invoke];
+    } @catch (__unused id e) {
+        sciSeenPassthrough = NO;
+        return NO;
+    }
+    sciSeenPassthrough = NO;
+
+    sciSeenMarkedCurrent = YES;
+
+    return YES;
+}
 
 // Floating controls inside the view-once photo/video viewer:
 //  - eye toggle (leading): off = watch without registering as seen, on = mark read.
@@ -111,10 +150,17 @@ static const void *kSCIVisualMsgKey = &kSCIVisualMsgKey;
 
 static void SCIUpdateVisualSeenIcon(UIButton *button) {
     if (!button) return;
-    NSString *glyph = dmVisualMsgsViewedButtonEnabled ? @"eye.fill" : @"eye.slash.fill";
-    UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:15.0 weight:UIImageSymbolWeightSemibold];
+
+    // Two states only: not yet marked, and marked. Pressing is one-way for the
+    // message on screen — a seen receipt cannot be recalled.
+    NSString *glyph = sciSeenMarkedCurrent ? @"checkmark.circle.fill" : @"eye.slash.fill";
+
+    UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:15.0
+                                                                                         weight:UIImageSymbolWeightSemibold];
     [button setImage:[UIImage systemImageNamed:glyph withConfiguration:config] forState:UIControlStateNormal];
-    button.tintColor = dmVisualMsgsViewedButtonEnabled ? [SCIUtils SCIColor_Primary] : [UIColor whiteColor];
+
+    button.tintColor = sciSeenMarkedCurrent ? [UIColor systemGreenColor] : [UIColor whiteColor];
+    button.accessibilityLabel = SCILocalized(sciSeenMarkedCurrent ? @"p_dm_seen_done" : @"p_dm_seen_mark");
 }
 
 %hook IGDirectVisualMessageViewerController
@@ -200,16 +246,20 @@ static void SCIUpdateVisualSeenIcon(UIButton *button) {
 }
 
 %new - (void)sciToggleVisualSeen:(UIButton *)sender {
-    // Per-message: mark only the message you're viewing now. The flag is reset when
-    // the next message opens, so it never leaks to other view-once messages.
-    dmVisualMsgsViewedButtonEnabled = !dmVisualMsgsViewedButtonEnabled;
+    if (sciSeenMarkedCurrent) {
+        [SCIUtils showToastForDuration:2.0 title:SCILocalized(@"p_dm_seen_already")];
+        return;
+    }
 
-    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    BOOL marked = SCIMarkCurrentVisualMessageSeen();
+
+    UINotificationFeedbackGenerator *haptics = [[UINotificationFeedbackGenerator alloc] init];
+    [haptics notificationOccurred:marked ? UINotificationFeedbackTypeSuccess : UINotificationFeedbackTypeError];
 
     SCIUpdateVisualSeenIcon(sender);
 
     [SCIUtils showToastForDuration:2.5
-                             title:SCILocalized(dmVisualMsgsViewedButtonEnabled ? @"p_dm_seen_on" : @"p_dm_seen_off")];
+                             title:SCILocalized(marked ? @"p_dm_seen_done" : @"p_dm_seen_failed")];
 }
 
 %new - (void)sciAddVisualSaveButton {

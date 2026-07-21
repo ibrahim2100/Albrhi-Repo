@@ -17,10 +17,9 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.1.0";  // Albrhi
+NSString *SCIVersionString = @"v3.1.1";  // Albrhi
 
 // Variables that work across features
-BOOL dmVisualMsgsViewedButtonEnabled = false;
 
 // Tweak first-time setup
 %hook IGInstagramAppDelegate
