@@ -280,6 +280,15 @@ jobs:
 
                 cp main/tools/repo-index.html pages/index.html
 
+                # Regenerated every run so the version and changelog shown on the
+                # package page always match what was actually built. The generator
+                # reads CHANGELOG.md relative to its own working directory, hence
+                # the cd; the output path is absolute so the cd cannot redirect it.
+                PAGES_DIR="$(pwd)/pages"
+                ( cd main && python3 tools/make-depiction.py "$PAGES_DIR" "$ALBRHI_VERSION" "$REPO_URL" )
+
+                ls -la pages/depictions
+
                 # GitHub Pages skips files and folders beginning with an underscore
                 # unless this marker is present. Harmless here, and prevents a class
                 # of silent 404s.

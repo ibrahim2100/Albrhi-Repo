@@ -1,6 +1,6 @@
 Package: com.albrhi.tweak
 Name: Albrhi for Instagram (rootless)
-Version: 3.1.4
+Version: 3.1.5
 Architecture: iphoneos-arm64
 Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
  .
@@ -68,6 +68,8 @@ Homepage: https://github.com/ibrahim2100/instv3
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Author: Ibrahim Ismail AL-Rahn (based on SCInsta by SoCuul, GPLv3)
 Section: Tweaks
+Depiction: https://ibrahim2100.github.io/instv3/depictions/albrhi.html
+SileoDepiction: https://ibrahim2100.github.io/instv3/depictions/albrhi.json
 Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak.roothide
 Replaces: com.albrhi.tweak.roothide

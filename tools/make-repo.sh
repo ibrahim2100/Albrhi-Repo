@@ -89,7 +89,7 @@ Version: 1.0
 Codename: ios
 Architectures: iphoneos-arm64 iphoneos-arm64e
 Components: main
-Description: Albrhi for Instagram — download anything, hide the noise, browse invisibly.
+Description: Tweaks by Ibrahim Ismail AL-Rahn.
 EOF
 
 # Already inside $OUT_DIR after the cd above, so list the current directory --

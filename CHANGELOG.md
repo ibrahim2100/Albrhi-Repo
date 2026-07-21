@@ -1,5 +1,19 @@
 # Albrhi Changelog
 
+## v3.1.5
+
+**Fixed**
+- **Release builds are no longer debug builds.** Every package published until now
+  carried debug symbols and a `-1+debug` version suffix, because `FINALPACKAGE` was
+  never set. Builds are now smaller, optimised, and versioned cleanly.
+
+**Repo**
+- The Albrhi source is live at
+  [ibrahim2100.github.io/instv3](https://ibrahim2100.github.io/instv3/) — add it in
+  Sileo or Zebra and updates arrive automatically.
+- The landing page now builds its package list from the repo's own index, so it
+  stays accurate as more tweaks are added.
+
 ## v3.1.4 — First public beta
 
 **Fixed**
