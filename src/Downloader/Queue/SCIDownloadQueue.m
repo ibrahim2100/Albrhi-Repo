@@ -315,7 +315,7 @@ static NSInteger const SCIHistoryLimit = 250;
         NSError *error = nil;
         [[NSFileManager defaultManager] removeItemAtURL:job.localURL error:&error];
 
-        if (error) NSLog(@"[Albrhi] Could not delete cached download: %@", error);
+        if (error) SCILogV(@"[Albrhi] Could not delete cached download: %@", error);
     }
 
     dispatch_async(self.stateQueue, ^{
@@ -372,7 +372,7 @@ static NSInteger const SCIHistoryLimit = 250;
                                                         error:&error];
 
     if (!data || error) {
-        NSLog(@"[Albrhi] Could not archive download history: %@", error);
+        SCILogV(@"[Albrhi] Could not archive download history: %@", error);
         return;
     }
 
@@ -388,7 +388,7 @@ static NSInteger const SCIHistoryLimit = 250;
     NSArray *jobs = [NSKeyedUnarchiver unarchivedObjectOfClasses:classes fromData:data error:&error];
 
     if (![jobs isKindOfClass:[NSArray class]]) {
-        NSLog(@"[Albrhi] Could not read download history: %@", error);
+        SCILogV(@"[Albrhi] Could not read download history: %@", error);
         return;
     }
 
@@ -474,7 +474,7 @@ didFinishDownloadingToURL:(NSURL *)location {
     [[NSFileManager defaultManager] moveItemAtURL:location toURL:destination error:&moveError];
 
     if (moveError) {
-        NSLog(@"[Albrhi] Could not move finished download: %@", moveError);
+        SCILogV(@"[Albrhi] Could not move finished download: %@", moveError);
         job.failureReason = moveError.localizedDescription;
         return;
     }

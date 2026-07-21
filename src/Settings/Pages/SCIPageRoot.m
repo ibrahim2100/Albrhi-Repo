@@ -45,6 +45,20 @@
 
     // --- Feature pages are spliced in here, at order 300 ---
 
+    // --- Diagnostics (order 350) — top level during beta, where testers can find it ---
+    [SCISettingsRegistry registerRootSectionWithOrder:350 builder:^NSArray *{
+        return @[@{
+            @"header": @"",
+            @"rows": @[
+                [SCISetting navigationCellWithTitle:SCILocalized(@"diag_title")
+                                           subtitle:SCILocalized(@"diag_sub")
+                                               icon:[SCISymbol symbolWithName:@"stethoscope" color:[UIColor systemTealColor] size:20.0]
+                                     viewController:[[SCIDiagnosticsViewController alloc] init]]
+            ],
+            @"footer": SCILocalized(@"diag_beta_footer")
+        }];
+    }];
+
     // --- Debug (order 400) ---
     [SCISettingsRegistry registerRootSectionWithOrder:400 builder:^NSArray *{
         return @[@{
@@ -55,12 +69,11 @@
                                                icon:[SCISymbol symbolWithName:@"ladybug"]
                                         navSections:@[
                     @{
-                        @"header": SCILocalized(@"diag_title"),
+                        @"header": SCILocalized(@"p_hdr_logging"),
                         @"rows": @[
-                            [SCISetting navigationCellWithTitle:SCILocalized(@"diag_title")
-                                                       subtitle:SCILocalized(@"diag_sub")
-                                                           icon:[SCISymbol symbolWithName:@"stethoscope" color:[UIColor systemTealColor] size:20.0]
-                                                 viewController:[[SCIDiagnosticsViewController alloc] init]]
+                            [SCISetting switchCellWithTitle:SCILocalized(@"p_verbose_t")
+                                                   subtitle:SCILocalized(@"p_verbose_s")
+                                                defaultsKey:@"verbose_logging"]
                         ]
                     },
                     @{
@@ -143,7 +156,7 @@
                                          icon:[SCISymbol symbolWithName:@"chevron.left.forwardslash.chevron.right" color:[SCIUtils SCIColor_Primary] size:20.0]
                                           url:@"https://github.com/ibrahim2100/instv3"]
             ],
-            @"footer": [NSString stringWithFormat:@"Albrhi %@  ·  by Ibrahim Ismail AL-Rahn\nBased on SCInsta by SoCuul — GPLv3\n\nInstagram v%@",
+            @"footer": [NSString stringWithFormat:@"Albrhi %@ · BETA  ·  by Ibrahim Ismail AL-Rahn\nBased on SCInsta by SoCuul — GPLv3\n\nInstagram v%@",
                         SCIVersionString, [SCIUtils IGVersionString]]
         }];
     }];

@@ -25,7 +25,7 @@ static BOOL SCIHasGestureNamed(UIView *view, NSString *name) {
 %new - (void)addLongPressGestureRecognizer {
     if (SCIHasGestureNamed(self, SCISettingsGestureName)) return;
 
-    NSLog(@"[SCInsta] Adding tweak settings long press gesture recognizer");
+    SCILogV(@"[SCInsta] Adding tweak settings long press gesture recognizer");
 
     UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
     longPress.name = SCISettingsGestureName;
@@ -40,7 +40,7 @@ static BOOL SCIHasGestureNamed(UIView *view, NSString *name) {
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
     if (sender.state != UIGestureRecognizerStateBegan) return;
     
-    NSLog(@"[SCInsta] Tweak settings gesture activated");
+    SCILogV(@"[SCInsta] Tweak settings gesture activated");
 
     [SCIUtils showSettingsVC:[self window]];
 }

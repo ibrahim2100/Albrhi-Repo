@@ -17,7 +17,7 @@ static BOOL SCIShouldBlockSeenReceipt(void) {
 - (id)initWithUserSessionPK:(id)arg1 networker:(id)arg2 {
     if (SCIShouldBlockSeenReceipt()) {
         [SCIDiagnostics recordStorySeenIntercept];
-        NSLog(@"[Albrhi] Prevented story seen receipt from being sent");
+        SCILogV(@"[Albrhi] Prevented story seen receipt from being sent");
 
         return nil;
     }
@@ -28,7 +28,7 @@ static BOOL SCIShouldBlockSeenReceipt(void) {
 - (id)networker {
     if (SCIShouldBlockSeenReceipt()) {
         [SCIDiagnostics recordStorySeenIntercept];
-        NSLog(@"[Albrhi] Prevented story seen receipt from being sent");
+        SCILogV(@"[Albrhi] Prevented story seen receipt from being sent");
 
         return nil;
     }

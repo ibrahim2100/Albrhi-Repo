@@ -5,7 +5,7 @@
 %hook IGSearchEntityRouter
 - (id)initWithUserSession:(id)arg1 analyticsModule:(id)arg2 shouldAddToRecents:(BOOL)shouldAddToRecents {
     if ([SCIUtils getBoolPref:@"no_recent_searches"]) {
-        NSLog(@"[SCInsta] Disabling recent searches");
+        SCILogV(@"[SCInsta] Disabling recent searches");
 
         shouldAddToRecents = false;
     }
@@ -18,7 +18,7 @@
 %hook IGRecentSearchStore
 - (id)initWithDiskManager:(id)arg1 recentSearchStoreConfiguration:(id)arg2 {
     if ([SCIUtils getBoolPref:@"no_recent_searches"]) {
-        NSLog(@"[SCInsta] Disabling recent searches");
+        SCILogV(@"[SCInsta] Disabling recent searches");
 
         return nil;
     }
@@ -27,7 +27,7 @@
 }
 - (BOOL)addItem:(id)arg1 {
     if ([SCIUtils getBoolPref:@"no_recent_searches"]) {
-        NSLog(@"[SCInsta] Disabling recent searches");
+        SCILogV(@"[SCInsta] Disabling recent searches");
 
         return nil;
     }
@@ -40,7 +40,7 @@
 %hook IGDirectRecipientRecentSearchStorage
 - (id)initWithDiskManager:(id)arg1 directCache:(id)arg2 userStore:(id)arg3 currentUser:(id)arg4 featureSets:(id)arg5 {
     if ([SCIUtils getBoolPref:@"no_recent_searches"]) {
-        NSLog(@"[SCInsta] Disabling recent searches");
+        SCILogV(@"[SCInsta] Disabling recent searches");
 
         return nil;
     }

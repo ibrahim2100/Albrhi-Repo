@@ -9,7 +9,7 @@
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%2015.0%2B-lightgrey.svg)]()
 [![Rootless](https://img.shields.io/badge/rootless-supported-success.svg)](#rootless-support)
-[![Version](https://img.shields.io/badge/version-3.1.2-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.1.4-orange.svg)](CHANGELOG.md)
 [![Based on](https://img.shields.io/badge/based%20on-SCInsta-lightblue.svg)](https://github.com/SoCuul/SCInsta)
 
 </div>
@@ -87,9 +87,22 @@ Arabic/English with RTL · navigation bar tab ordering, hiding and swipe-between
 |---|---|
 | iOS | 15.0 and later |
 | Architecture | `arm64` |
-| Instagram | Tested against v409 class dumps; older builds degrade gracefully |
+| Instagram | Built and tested on **410.1.0** — see the note below |
 | Jailbreaks | Rootful and rootless (Dopamine, palera1n, XinaA15, unc0ver, checkra1n) |
 | Sideloading | Supported via the bundled FLEXing sub-project |
+
+### About that Instagram version
+
+Albrhi is built and tested against **Instagram 410.1.0**. This was not a considered
+engineering decision. It is the newest build the developer's phone will still accept,
+and the phone is not taking questions.
+
+Nothing in the tweak is pinned to a version number — every Instagram class it touches
+is resolved at runtime, and anything it cannot find is skipped rather than crashed
+into. So newer builds should be fine. "Should" is carrying weight there, which is
+exactly why there is a Diagnostics page: it reports your Instagram version and what
+the tweak actually managed to attach to, and files the whole thing as an issue in one
+tap. Reports from newer builds are genuinely useful.
 
 ### Rootless support
 
@@ -122,7 +135,7 @@ git submodule update --init --recursive
 
 export THEOS_PACKAGE_SCHEME=rootless   # omit for rootful
 make package
-# → packages/com.albrhi.tweak_3.1.2_iphoneos-arm64.deb
+# → packages/com.albrhi.tweak_3.1.4_iphoneos-arm64.deb
 ```
 
 Install straight to a connected device:

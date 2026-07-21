@@ -17,7 +17,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.1.2";  // Albrhi
+NSString *SCIVersionString = @"v3.1.4";  // Albrhi
 
 // Variables that work across features
 
@@ -77,7 +77,7 @@ NSString *SCIVersionString = @"v3.1.2";  // Albrhi
         });
     }
 
-    NSLog(@"[SCInsta] Cleaning cache...");
+    SCILogV(@"[SCInsta] Cleaning cache...");
     [SCIUtils cleanCache];
 
     if ([SCIUtils getBoolPref:@"flex_app_launch"]) {
@@ -154,7 +154,7 @@ shouldPersistLastBugReportId:(id)arg6
 %hook IGDirectVisualMessageScreenshotSafetyLogger
 - (id)initWithUserSession:(id)arg1 entryPoint:(NSInteger)arg2 {
     if ([SCIUtils getBoolPref:@"remove_screenshot_alert"]) {
-        NSLog(@"[SCInsta] Disable visual message screenshot safety logger");
+        SCILogV(@"[SCInsta] Disable visual message screenshot safety logger");
         return nil;
     }
 
@@ -243,7 +243,7 @@ shouldPersistLastBugReportId:(id)arg6
             // Broadcast channels
             if ([[obj valueForKey:@"uniqueIdentifier"] isEqualToString:@"channels"]) {
                 if ([SCIUtils getBoolPref:@"no_suggested_chats"]) {
-                    NSLog(@"[SCInsta] Hiding suggested chats (header)");
+                    SCILogV(@"[SCInsta] Hiding suggested chats (header)");
 
                     shouldHide = YES;
                 }
@@ -252,7 +252,7 @@ shouldPersistLastBugReportId:(id)arg6
             // Ask Meta AI
             else if ([[obj valueForKey:@"labelTitle"] isEqualToString:@"Ask Meta AI"]) {
                 if ([SCIUtils getBoolPref:@"hide_meta_ai"]) {
-                    NSLog(@"[SCInsta] Hiding meta ai suggested chats (header)");
+                    SCILogV(@"[SCInsta] Hiding meta ai suggested chats (header)");
 
                     shouldHide = YES;
                 }
@@ -261,7 +261,7 @@ shouldPersistLastBugReportId:(id)arg6
             // AI
             else if ([[obj valueForKey:@"labelTitle"] isEqualToString:@"AI"]) {
                 if ([SCIUtils getBoolPref:@"hide_meta_ai"]) {
-                    NSLog(@"[SCInsta] Hiding ai suggested chats (header)");
+                    SCILogV(@"[SCInsta] Hiding ai suggested chats (header)");
 
                     shouldHide = YES;
                 }
@@ -277,7 +277,7 @@ shouldPersistLastBugReportId:(id)arg6
         ) {
 
             if ([SCIUtils getBoolPref:@"hide_meta_ai"]) {
-                NSLog(@"[SCInsta] Hiding suggested chats (ai agents)");
+                SCILogV(@"[SCInsta] Hiding suggested chats (ai agents)");
 
                 shouldHide = YES;
             }
@@ -290,7 +290,7 @@ shouldPersistLastBugReportId:(id)arg6
             // Broadcast channels
             if ([[obj recipient] isBroadcastChannel]) {
                 if ([SCIUtils getBoolPref:@"no_suggested_chats"]) {
-                    NSLog(@"[SCInsta] Hiding suggested chats (broadcast channels recipient)");
+                    SCILogV(@"[SCInsta] Hiding suggested chats (broadcast channels recipient)");
 
                     shouldHide = YES;
                 }
@@ -299,7 +299,7 @@ shouldPersistLastBugReportId:(id)arg6
             // Meta AI (special section types)
             else if (([obj sectionType] == 20) || [obj sectionType] == 18) {
                 if ([SCIUtils getBoolPref:@"hide_meta_ai"]) {
-                    NSLog(@"[SCInsta] Hiding meta ai suggested chats (meta ai recipient)");
+                    SCILogV(@"[SCInsta] Hiding meta ai suggested chats (meta ai recipient)");
 
                     shouldHide = YES;
                 }
@@ -308,7 +308,7 @@ shouldPersistLastBugReportId:(id)arg6
             // Meta AI (catch-all)
             else if ([[[obj recipient] threadName] isEqualToString:@"Meta AI"]) {
                 if ([SCIUtils getBoolPref:@"hide_meta_ai"]) {
-                    NSLog(@"[SCInsta] Hiding meta ai suggested chats (meta ai recipient)");
+                    SCILogV(@"[SCInsta] Hiding meta ai suggested chats (meta ai recipient)");
 
                     shouldHide = YES;
                 }
@@ -342,7 +342,7 @@ shouldPersistLastBugReportId:(id)arg6
 
                 // "AI Chats"
                 if ([[obj valueForKey:@"title"] isEqualToString:@"AI chats"]) {
-                    NSLog(@"[SCInsta] Hiding meta ai: direct thread creation ai chats section");
+                    SCILogV(@"[SCInsta] Hiding meta ai: direct thread creation ai chats section");
 
                     shouldHide = YES;
                 }
@@ -353,7 +353,7 @@ shouldPersistLastBugReportId:(id)arg6
 
                 // Meta AI suggested user
                 if ([[[obj recipient] threadName] isEqualToString:@"Meta AI"]) {
-                    NSLog(@"[SCInsta] Hiding meta ai: direct thread creation ai suggestion");
+                    SCILogV(@"[SCInsta] Hiding meta ai: direct thread creation ai suggestion");
 
                     shouldHide = YES;
                 }
@@ -365,7 +365,7 @@ shouldPersistLastBugReportId:(id)arg6
         // Invite friends to insta contacts upsell
         if ([SCIUtils getBoolPref:@"no_suggested_users"]) {
             if ([obj isKindOfClass:%c(IGContactInvitesSearchUpsellViewModel)]) {
-                NSLog(@"[SCInsta] Hiding suggested users: invite contacts upsell");
+                SCILogV(@"[SCInsta] Hiding suggested users: invite contacts upsell");
 
                 shouldHide = YES;
             }
@@ -396,7 +396,7 @@ shouldPersistLastBugReportId:(id)arg6
             // "Suggestions" header
             if ([[obj title] isEqualToString:@"Suggestions"]) {
                 if ([SCIUtils getBoolPref:@"no_suggested_users"]) {
-                    NSLog(@"[SCInsta] Hiding suggested chats (header: messages tab)");
+                    SCILogV(@"[SCInsta] Hiding suggested chats (header: messages tab)");
 
                     shouldHide = YES;
                 }
@@ -405,7 +405,7 @@ shouldPersistLastBugReportId:(id)arg6
             // "Accounts to follow/message" header
             else if ([[obj title] hasPrefix:@"Accounts to"]) {
                 if ([SCIUtils getBoolPref:@"no_suggested_users"]) {
-                    NSLog(@"[SCInsta] Hiding suggested users: (header: inbox view)");
+                    SCILogV(@"[SCInsta] Hiding suggested users: (header: inbox view)");
 
                     shouldHide = YES;
                 }
@@ -416,7 +416,7 @@ shouldPersistLastBugReportId:(id)arg6
         // Suggested recipients
         else if ([obj isKindOfClass:%c(IGDirectInboxSuggestedThreadCellViewModel)]) {
             if ([SCIUtils getBoolPref:@"no_suggested_users"]) {
-                NSLog(@"[SCInsta] Hiding suggested chats (recipients: channels tab)");
+                SCILogV(@"[SCInsta] Hiding suggested chats (recipients: channels tab)");
 
                 shouldHide = YES;
             }
@@ -425,7 +425,7 @@ shouldPersistLastBugReportId:(id)arg6
         // "Accounts to follow" recipients
         else if ([obj isKindOfClass:%c(IGDiscoverPeopleItemConfiguration)] || [obj isKindOfClass:%c(IGDiscoverPeopleConnectionItemConfiguration)]) {
             if ([SCIUtils getBoolPref:@"no_suggested_users"]) {
-                NSLog(@"[SCInsta] Hiding suggested chats: (recipients: inbox view)");
+                SCILogV(@"[SCInsta] Hiding suggested chats: (recipients: inbox view)");
 
                 shouldHide = YES;
             }
@@ -434,7 +434,7 @@ shouldPersistLastBugReportId:(id)arg6
         // Hide notes tray
         else if ([obj isKindOfClass:%c(IGDirectNotesTrayRowViewModel)]) {
             if ([SCIUtils getBoolPref:@"hide_notes_tray"]) {
-                NSLog(@"[SCInsta] Hiding notes tray");
+                SCILogV(@"[SCInsta] Hiding notes tray");
 
                 shouldHide = YES;
             }
@@ -556,7 +556,7 @@ shouldPersistLastBugReportId:(id)arg6
                 
                 // 8/9 looks to be the types for recommended stories
                 if ([type isEqual:@(8)] || [type isEqual:@(9)]) {
-                    NSLog(@"[SCInsta] Hiding suggested users: story tray");
+                    SCILogV(@"[SCInsta] Hiding suggested users: story tray");
 
                     shouldHide = YES;
 
@@ -567,7 +567,7 @@ shouldPersistLastBugReportId:(id)arg6
         if ([SCIUtils getBoolPref:@"hide_ads"]) {
             // "New!" account id is 3538572169
             if ([obj isKindOfClass:%c(IGStoryTrayViewModel)] && (obj.isUnseenNux == YES || [obj.pk isEqualToString:@"3538572169"])) {
-                NSLog(@"[SCInsta] Removing ads: story tray");
+                SCILogV(@"[SCInsta] Removing ads: story tray");
 
                 shouldHide = YES;
             }
@@ -607,7 +607,7 @@ shouldPersistLastBugReportId:(id)arg6
         ) {
             
             if ([SCIUtils getBoolPref:@"hide_meta_ai"]) {
-                NSLog(@"[SCInsta] Hiding meta ai from IGDS menu");
+                SCILogV(@"[SCInsta] Hiding meta ai from IGDS menu");
 
                 shouldHide = YES;
             }
@@ -632,7 +632,7 @@ shouldPersistLastBugReportId:(id)arg6
 %hook IGFeedItemUFICell
 - (void)UFIButtonBarDidTapOnLike:(id)arg1 {
     if ([SCIUtils getBoolPref:@"like_confirm"]) {
-        NSLog(@"[SCInsta] Confirm post like triggered");
+        SCILogV(@"[SCInsta] Confirm post like triggered");
 
         [SCIUtils showConfirmation:^(void) {
             %orig(arg1);
@@ -645,7 +645,7 @@ shouldPersistLastBugReportId:(id)arg6
 
 - (void)UFIButtonBarDidTapOnRepost:(id)arg1 {
     if ([SCIUtils getBoolPref:@"repost_confirm"]) {
-        NSLog(@"[SCInsta] Confirm repost triggered");
+        SCILogV(@"[SCInsta] Confirm repost triggered");
 
         [SCIUtils showConfirmation:^(void) {
             %orig(arg1);
@@ -658,7 +658,7 @@ shouldPersistLastBugReportId:(id)arg6
 
 - (void)UFIButtonBarDidLongPressOnRepost:(id)arg1 {
     if ([SCIUtils getBoolPref:@"repost_confirm"]) {
-        NSLog(@"[SCInsta] Confirm repost triggered (long press ignored)");
+        SCILogV(@"[SCInsta] Confirm repost triggered (long press ignored)");
     }
     else {
         return %orig;
@@ -666,7 +666,7 @@ shouldPersistLastBugReportId:(id)arg6
 }
 - (void)UFIButtonBarDidLongPressOnRepost:(id)arg1 withGestureRecognizer:(id)arg2 {
     if ([SCIUtils getBoolPref:@"repost_confirm"]) {
-        NSLog(@"[SCInsta] Confirm repost triggered (long press ignored)");
+        SCILogV(@"[SCInsta] Confirm repost triggered (long press ignored)");
     }
     else {
         return %orig;
@@ -677,7 +677,7 @@ shouldPersistLastBugReportId:(id)arg6
 %hook IGSundialViewerVerticalUFI
 - (void)_didTapLikeButton:(id)arg1 {
     if ([SCIUtils getBoolPref:@"like_confirm_reels"]) {
-        NSLog(@"[SCInsta] Confirm reels like triggered");
+        SCILogV(@"[SCInsta] Confirm reels like triggered");
 
         [SCIUtils showConfirmation:^(void) {
             %orig(arg1);
@@ -690,7 +690,7 @@ shouldPersistLastBugReportId:(id)arg6
 
 - (void)_didLongPressLikeButton:(id)arg1 {
     if ([SCIUtils getBoolPref:@"like_confirm_reels"]) {
-        NSLog(@"[SCInsta] Confirm repost triggered (long press ignored)");
+        SCILogV(@"[SCInsta] Confirm repost triggered (long press ignored)");
     }
     else {
         return %orig;
@@ -699,7 +699,7 @@ shouldPersistLastBugReportId:(id)arg6
 
 - (void)_didTapRepostButton:(id)arg1 {
     if ([SCIUtils getBoolPref:@"repost_confirm"]) {
-        NSLog(@"[SCInsta] Confirm repost triggered");
+        SCILogV(@"[SCInsta] Confirm repost triggered");
 
         [SCIUtils showConfirmation:^(void) {
             %orig(arg1);
@@ -712,7 +712,7 @@ shouldPersistLastBugReportId:(id)arg6
 
 - (void)_didLongPressRepostButton:(id)arg1 {
     if ([SCIUtils getBoolPref:@"repost_confirm"]) {
-        NSLog(@"[SCInsta] Confirm repost triggered (long press ignored)");
+        SCILogV(@"[SCInsta] Confirm repost triggered (long press ignored)");
     }
     else {
         return %orig;

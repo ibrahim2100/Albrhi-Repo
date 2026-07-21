@@ -146,7 +146,11 @@ static NSString *_lastDownloadKind = nil;
         [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"magnifyingglass"]
                                          style:UIBarButtonItemStylePlain
                                         target:self
-                                        action:@selector(runScan)]
+                                        action:@selector(runScan)],
+        [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"exclamationmark.bubble"]
+                                         style:UIBarButtonItemStylePlain
+                                        target:self
+                                        action:@selector(reportIssue)]
     ];
 }
 
@@ -317,7 +321,9 @@ static NSString *_lastDownloadKind = nil;
 
 // MARK: - Report
 
-- (void)copyReport {
+/// The diagnostics report as plain text. Shared by the copy button and the issue
+/// reporter, so a filed bug always carries exactly what the page shows.
+- (NSString *)reportText {
     NSMutableString *report = [NSMutableString stringWithFormat:@"Albrhi %@ diagnostics\n", SCIVersionString];
 
     for (NSDictionary *section in [self sections]) {
@@ -328,10 +334,50 @@ static NSString *_lastDownloadKind = nil;
         }
     }
 
-    [UIPasteboard generalPasteboard].string = report;
+    return [report copy];
+}
+
+- (void)copyReport {
+    [UIPasteboard generalPasteboard].string = [self reportText];
 
     [[[UINotificationFeedbackGenerator alloc] init] notificationOccurred:UINotificationFeedbackTypeSuccess];
     [SCIUtils showToastForDuration:1.6 title:SCILocalized(@"diag_copied")];
+}
+
+/// Opens a new GitHub issue with the report already filled in.
+///
+/// A tester who hits a problem otherwise has nowhere to go, and "it doesn't work"
+/// costs a round trip to turn into something actionable. This makes the useful
+/// version of the report the path of least resistance.
+- (void)reportIssue {
+    NSString *body = [NSString stringWithFormat:@"%@
+
+%@
+
+```
+%@
+```
+",
+                      SCILocalized(@"diag_issue_what"),
+                      SCILocalized(@"diag_issue_steps"),
+                      [self reportText]];
+
+    NSCharacterSet *allowed = [NSCharacterSet URLQueryAllowedCharacterSet];
+    NSString *encodedBody = [body stringByAddingPercentEncodingWithAllowedCharacters:allowed];
+    NSString *encodedTitle = [[NSString stringWithFormat:@"[%@] ", SCIVersionString]
+                              stringByAddingPercentEncodingWithAllowedCharacters:allowed];
+
+    NSString *urlString = [NSString stringWithFormat:
+                           @"https://github.com/ibrahim2100/instv3/issues/new?title=%@&body=%@",
+                           encodedTitle, encodedBody];
+
+    NSURL *url = [NSURL URLWithString:urlString];
+    if (!url) return;
+
+    // The report is also on the clipboard, in case the browser truncates the URL.
+    [UIPasteboard generalPasteboard].string = [self reportText];
+
+    [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
 }
 
 @end

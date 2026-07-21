@@ -38,7 +38,7 @@ static void initDownloaders (void) {
     return;
 }
 %new - (void)addLongPressGestureRecognizer {
-    NSLog(@"[SCInsta] Adding profile picture long press gesture recognizer");
+    SCILogV(@"[SCInsta] Adding profile picture long press gesture recognizer");
 
     UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
     [self addGestureRecognizer:longPress];

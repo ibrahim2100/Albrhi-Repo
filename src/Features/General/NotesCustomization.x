@@ -18,7 +18,7 @@ static char targetStaticRef[] = "target";
             [support setValue:@(YES) forKey:@"enableAnimatedEmojisInCreation"];
         }
         @catch (NSException *exception) {
-            NSLog(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, support);
+            SCILogV(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, support);
         }
 
         // enableBubbleCustomization
@@ -26,7 +26,7 @@ static char targetStaticRef[] = "target";
             [support setValue:@(YES) forKey:@"enableBubbleCustomization"];
         }
         @catch (NSException *exception) {
-            NSLog(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, support);
+            SCILogV(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, support);
         }
 
         // enableRandomThemeGenerator
@@ -34,7 +34,7 @@ static char targetStaticRef[] = "target";
             [support setValue:@(YES) forKey:@"enableRandomThemeGenerator"];
         }
         @catch (NSException *exception) {
-            NSLog(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, support);
+            SCILogV(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, support);
         }
         
     }

@@ -31,7 +31,7 @@
 %hook IGSundialFeedViewController
 - (void)_refreshReelsWithParamsForNetworkRequest:(NSInteger)arg1 userDidPullToRefresh:(BOOL)arg2 {
     if ([SCIUtils getBoolPref:@"refresh_reel_confirm"]) {
-        NSLog(@"[SCInsta] Reel refresh triggered");
+        SCILogV(@"[SCInsta] Reel refresh triggered");
 
         [SCIUtils showConfirmation:^(void) {
             %orig(arg1, arg2);

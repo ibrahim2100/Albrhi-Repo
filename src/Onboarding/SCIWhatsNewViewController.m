@@ -86,17 +86,39 @@
     subheadline.textAlignment = NSTextAlignmentCenter;
     subheadline.numberOfLines = 0;
 
-    UIStackView *heroStack = [[UIStackView alloc] initWithArrangedSubviews:@[hero, headline, subheadline]];
+    // Beta pill: sets expectations up front, quietly. A tester who knows a build is
+    // provisional reports problems instead of assuming the tweak is junk.
+    UILabel *betaLabel = [[UILabel alloc] init];
+    betaLabel.text = [NSString stringWithFormat:@"  %@  ", SCILocalized(@"wn_beta_badge")];
+    betaLabel.font = [UIFont systemFontOfSize:11.0 weight:UIFontWeightBold];
+    betaLabel.textColor = accent;
+    betaLabel.backgroundColor = [accent colorWithAlphaComponent:0.14];
+    betaLabel.layer.cornerRadius = 9.0;
+    betaLabel.layer.cornerCurve = kCACornerCurveContinuous;
+    betaLabel.layer.masksToBounds = YES;
+    betaLabel.textAlignment = NSTextAlignmentCenter;
+    [betaLabel.heightAnchor constraintEqualToConstant:18.0].active = YES;
+
+    UIStackView *heroStack = [[UIStackView alloc] initWithArrangedSubviews:@[hero, headline, betaLabel, subheadline]];
     heroStack.axis = UILayoutConstraintAxisVertical;
     heroStack.alignment = UIStackViewAlignmentCenter;
     heroStack.spacing = 10.0;
     [heroStack setCustomSpacing:16.0 afterView:hero];
+    [heroStack setCustomSpacing:8.0 afterView:headline];
+    [heroStack setCustomSpacing:12.0 afterView:betaLabel];
 
     // --- Feature rows ---
     NSMutableArray<UIView *> *rows = [NSMutableArray array];
     UIStackView *rowStack = [[UIStackView alloc] init];
     rowStack.axis = UILayoutConstraintAxisVertical;
-    rowStack.spacing = 22.0;
+    rowStack.spacing = 20.0;
+    rowStack.layoutMarginsRelativeArrangement = YES;
+    rowStack.layoutMargins = UIEdgeInsetsMake(20, 18, 20, 18);
+
+    UIView *card = [[UIView alloc] init];
+    card.backgroundColor = [UIColor secondarySystemBackgroundColor];
+    card.layer.cornerRadius = 18.0;
+    card.layer.cornerCurve = kCACornerCurveContinuous;
 
     for (SCIWhatsNewItem *item in [SCIWhatsNew itemsForFirstInstall:self.firstInstall]) {
         UIView *row = [self rowForItem:item];
@@ -127,13 +149,29 @@
 
     [continueButton addTarget:self action:@selector(continueTapped) forControlEvents:UIControlEventTouchUpInside];
 
-    UIStackView *footer = [[UIStackView alloc] initWithArrangedSubviews:@[footnote, continueButton]];
+    UILabel *betaNote = [[UILabel alloc] init];
+    betaNote.text = SCILocalized(@"wn_beta_note");
+    betaNote.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightMedium];
+    betaNote.textColor = accent;
+    betaNote.textAlignment = NSTextAlignmentCenter;
+    betaNote.numberOfLines = 0;
+
+    UIStackView *footer = [[UIStackView alloc] initWithArrangedSubviews:@[betaNote, footnote, continueButton]];
     footer.axis = UILayoutConstraintAxisVertical;
     footer.spacing = 14.0;
     footer.translatesAutoresizingMaskIntoConstraints = NO;
 
     // --- Scrolling body, pinned footer ---
-    UIStackView *body = [[UIStackView alloc] initWithArrangedSubviews:@[heroStack, rowStack]];
+    rowStack.translatesAutoresizingMaskIntoConstraints = NO;
+    [card addSubview:rowStack];
+    [NSLayoutConstraint activateConstraints:@[
+        [rowStack.topAnchor constraintEqualToAnchor:card.topAnchor],
+        [rowStack.bottomAnchor constraintEqualToAnchor:card.bottomAnchor],
+        [rowStack.leadingAnchor constraintEqualToAnchor:card.leadingAnchor],
+        [rowStack.trailingAnchor constraintEqualToAnchor:card.trailingAnchor]
+    ]];
+
+    UIStackView *body = [[UIStackView alloc] initWithArrangedSubviews:@[heroStack, card]];
     body.axis = UILayoutConstraintAxisVertical;
     body.spacing = 34.0;
     body.translatesAutoresizingMaskIntoConstraints = NO;

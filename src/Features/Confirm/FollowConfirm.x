@@ -15,7 +15,7 @@
     // Only show confirm dialog if user is not following
     if (UserFollowStatus == 2) {
         if ([SCIUtils getBoolPref:@"follow_confirm"]) {
-        NSLog(@"[SCInsta] Confirm follow triggered");
+        SCILogV(@"[SCInsta] Confirm follow triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -33,7 +33,7 @@
 %hook IGDiscoverPeopleButtonGroupView
 - (void)_onFollowButtonTapped:(id)arg1 {
     if ([SCIUtils getBoolPref:@"follow_confirm"]) {
-        NSLog(@"[SCInsta] Confirm follow triggered");
+        SCILogV(@"[SCInsta] Confirm follow triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -43,7 +43,7 @@
 }
 - (void)_onFollowingButtonTapped:(id)arg1 {
     if ([SCIUtils getBoolPref:@"follow_confirm"]) {
-        NSLog(@"[SCInsta] Confirm follow triggered");
+        SCILogV(@"[SCInsta] Confirm follow triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -57,7 +57,7 @@
 %hook IGHScrollAYMFCell
 - (void)_didTapAYMFActionButton {
     if ([SCIUtils getBoolPref:@"follow_confirm"]) {
-        NSLog(@"[SCInsta] Confirm follow triggered");
+        SCILogV(@"[SCInsta] Confirm follow triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -69,7 +69,7 @@
 %hook IGHScrollAYMFActionButton
 - (void)_didTapTextActionButton {
     if ([SCIUtils getBoolPref:@"follow_confirm"]) {
-        NSLog(@"[SCInsta] Confirm follow triggered");
+        SCILogV(@"[SCInsta] Confirm follow triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -83,7 +83,7 @@
 %hook IGUnifiedVideoFollowButton
 - (void)_hackilyHandleOurOwnButtonTaps:(id)arg1 event:(id)arg2 {
     if ([SCIUtils getBoolPref:@"follow_confirm"]) {
-        NSLog(@"[SCInsta] Confirm follow triggered");
+        SCILogV(@"[SCInsta] Confirm follow triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -97,7 +97,7 @@
 %hook IGProfileViewController
 - (void)navigationItemsControllerDidTapHeaderFollowButton:(id)arg1 {
     if ([SCIUtils getBoolPref:@"follow_confirm"]) {
-        NSLog(@"[SCInsta] Confirm follow triggered");
+        SCILogV(@"[SCInsta] Confirm follow triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -111,7 +111,7 @@
 %hook IGStorySectionController
 - (void)followButtonTapped:(id)arg1 cell:(id)arg2 {
     if ([SCIUtils getBoolPref:@"follow_confirm"]) {
-        NSLog(@"[SCInsta] Confirm follow triggered");
+        SCILogV(@"[SCInsta] Confirm follow triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];

@@ -255,7 +255,7 @@ static char rowStaticRef[] = "row";
     SCISetting *row = objc_getAssociatedObject(sender, rowStaticRef);
     [[NSUserDefaults standardUserDefaults] setBool:sender.isOn forKey:row.defaultsKey];
     
-    NSLog(@"Switch changed: %@", sender.isOn ? @"ON" : @"OFF");
+    SCILogV(@"Switch changed: %@", sender.isOn ? @"ON" : @"OFF");
     
     if (row.requiresRestart) {
         [SCIUtils showRestartConfirmation];
@@ -266,7 +266,7 @@ static char rowStaticRef[] = "row";
     SCISetting *row = objc_getAssociatedObject(sender, rowStaticRef);
     [[NSUserDefaults standardUserDefaults] setDouble:sender.value forKey:row.defaultsKey];
     
-    NSLog(@"Stepper changed: %f", sender.value);
+    SCILogV(@"Stepper changed: %f", sender.value);
     
     [self reloadCellForView:sender];
 }
@@ -276,7 +276,7 @@ static char rowStaticRef[] = "row";
     
     [[NSUserDefaults standardUserDefaults] setValue:properties[@"value"] forKey:properties[@"defaultsKey"]];
     
-    NSLog(@"Menu changed: %@", command.propertyList[@"value"]);
+    SCILogV(@"Menu changed: %@", command.propertyList[@"value"]);
     
     [self reloadCellForView:command.sender animated:YES];
     

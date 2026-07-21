@@ -8,7 +8,7 @@
 - (void)searchBarMetaAIButtonTappedOnSearchBar:(id)arg1 {
     if ([SCIUtils getBoolPref:@"hide_meta_ai"])
 {
-        NSLog(@"[SCInsta] Hiding meta ai: direct search bar functionality");
+        SCILogV(@"[SCInsta] Hiding meta ai: direct search bar functionality");
 
         return;
     }
@@ -22,7 +22,7 @@
 - (id)initWithGenAIBots:(id)arg1 lastFetchedTimestamp:(id)arg2 {
     if ([SCIUtils getBoolPref:@"hide_meta_ai"])
 {
-        NSLog(@"[SCInsta] Hiding meta ai: direct recipient ai agents");
+        SCILogV(@"[SCInsta] Hiding meta ai: direct recipient ai agents");
 
         return nil;
     }
@@ -52,14 +52,14 @@
                     
                     // Meta AI
                     if ([[_commandResult_command title] isEqualToString:@"Meta AI"]) {
-                        NSLog(@"[SCInsta] Hiding meta ai: direct message composer suggestion");
+                        SCILogV(@"[SCInsta] Hiding meta ai: direct message composer suggestion");
 
                         shouldHide = YES;
                     }
 
                     // Meta AI (Imagine)
                     else if ([[_commandResult_command commandString] hasPrefix:@"/imagine"]) {
-                        NSLog(@"[SCInsta] Hiding meta ai: direct message composer /imagine suggestion");
+                        SCILogV(@"[SCInsta] Hiding meta ai: direct message composer /imagine suggestion");
 
                         shouldHide = YES;
                     }
@@ -89,13 +89,13 @@
     loggingDelegate:(id)arg6
 {
     if ([SCIUtils getBoolPref:@"hide_meta_ai"]) {
-        NSLog(@"[SCInsta] Hiding meta ai: suggested ai chats in direct inbox header");
+        SCILogV(@"[SCInsta] Hiding meta ai: suggested ai chats in direct inbox header");
 
         @try {
             [config setValue:0 forKey:@"shouldShowAIChatsEntrypointButton"];
         }
         @catch (NSException *exception) {
-            NSLog(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, config);
+            SCILogV(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, config);
         }
     }
 
@@ -116,7 +116,7 @@
    sendAttributionFactory:(id)arg9 
 {
     if ([SCIUtils getBoolPref:@"hide_meta_ai"]) {
-        NSLog(@"[SCInsta] Hiding meta ai: imagine tile in media picker");
+        SCILogV(@"[SCInsta] Hiding meta ai: imagine tile in media picker");
 
         @try {
             IGDirectMediaPickerGalleryConfig *galleryConfig = [config valueForKey:@"galleryConfig"];
@@ -124,7 +124,7 @@
             [galleryConfig setValue:0 forKey:@"isImagineEntryPointEnabled"];
         }
         @catch (NSException *exception) {
-            NSLog(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, config);
+            SCILogV(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, config);
         }
     }
 
@@ -162,14 +162,14 @@
 %new - (IGDirectComposerConfig *)patchConfig:(IGDirectComposerConfig *)config {
     if ([SCIUtils getBoolPref:@"hide_meta_ai"]) {
 
-        NSLog(@"[SCInsta] Hiding meta ai: reconfiguring direct composer");
+        SCILogV(@"[SCInsta] Hiding meta ai: reconfiguring direct composer");
 
         // writeWithAIEnabled
         @try {
             [config setValue:0 forKey:@"writeWithAIEnabled"];
         }
         @catch (NSException *exception) {
-            NSLog(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, config);
+            SCILogV(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, config);
         }
 
     }
@@ -190,7 +190,7 @@
         if ([SCIUtils getBoolPref:@"hide_meta_ai"]) {
 
             if ([obj isKindOfClass:%c(IGDirectUnifiedComposerAIStickerModel)]) {
-                NSLog(@"[SCInsta] Hiding meta ai: AI stickers option in sticker view");
+                SCILogV(@"[SCInsta] Hiding meta ai: AI stickers option in sticker view");
                 
                 shouldHide = YES;
             }
@@ -271,7 +271,7 @@
                 [obj isKindOfClass:%c(IGDirectThreadThemePickerOption)]
                 && [[obj valueForKey:@"themeId"] isEqualToString:@"direct_ai_theme_creation"]
             ) {
-                NSLog(@"[SCInsta] Hiding meta ai: AI generated DM channel themes");
+                SCILogV(@"[SCInsta] Hiding meta ai: AI generated DM channel themes");
                 
                 shouldHide = YES;
             }
@@ -312,7 +312,7 @@
         if ([obj isKindOfClass:%c(IGSearchMetaAIHCMModel)]) {
             
             if ([SCIUtils getBoolPref:@"hide_meta_ai"]) {
-                NSLog(@"[SCInsta] Hiding explore meta ai search summary");
+                SCILogV(@"[SCInsta] Hiding explore meta ai search summary");
 
                 shouldHide = YES;
             }
@@ -349,7 +349,7 @@
 %hook IGCommentThreadAICarousel
 - (id)initWithLauncherSet:(id)arg1 hasSearchPrefix:(BOOL)arg2 {
     if ([SCIUtils getBoolPref:@"hide_meta_ai"]) {
-        NSLog(@"[SCInsta] Hiding meta ai: suggested ai searches comment carousel");
+        SCILogV(@"[SCInsta] Hiding meta ai: suggested ai searches comment carousel");
 
         return nil;
     }
@@ -361,7 +361,7 @@
 %hook _TtC34IGCommentThreadAICarouselPillSwift30IGCommentThreadAICarouselSwift
 - (id)initWithLauncherSet:(id)arg1 hasSearchPrefix:(BOOL)arg2 {
     if ([SCIUtils getBoolPref:@"hide_meta_ai"]) {
-        NSLog(@"[SCInsta] Hiding meta ai: suggested ai searches comment carousel");
+        SCILogV(@"[SCInsta] Hiding meta ai: suggested ai searches comment carousel");
 
         return nil;
     }
@@ -380,7 +380,7 @@
 - (void)setTools:(id)tools {
     NSArray *newTools = [tools copy];
 
-    NSLog(@"[SCInsta] Hiding meta ai: ai images add to story suggestion");
+    SCILogV(@"[SCInsta] Hiding meta ai: ai images add to story suggestion");
 
     if ([SCIUtils getBoolPref:@"hide_meta_ai"]) {
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"NOT (SELF IN %@)", @[ @(10), @(11) ]];
@@ -461,7 +461,7 @@
 %new - (IGSearchBarConfig *)sanitizePlaceholderForConfig:(IGSearchBarConfig *)config {
     if ([SCIUtils getBoolPref:@"hide_meta_ai"]) {
 
-        NSLog(@"[SCInsta] Hiding meta ai: reconfiguring search bar");
+        SCILogV(@"[SCInsta] Hiding meta ai: reconfiguring search bar");
 
         NSString *placeholder = [config valueForKey:@"placeholder"];
 
@@ -472,7 +472,7 @@
                 [config setValue:@"Search" forKey:@"placeholder"];
             }
             @catch (NSException *exception) {
-                NSLog(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, config);
+                SCILogV(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, config);
             }
 
             // shouldAnimatePlaceholder
@@ -480,17 +480,17 @@
                 [config setValue:0 forKey:@"shouldAnimatePlaceholder"];
             }
             @catch (NSException *exception) {
-                NSLog(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, config);
+                SCILogV(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, config);
             }
 
-            NSLog(@"[SCInsta] Changed search bar placeholder from: \"%@\" to \"%@\"", placeholder, [config valueForKey:@"placeholder"]);
+            SCILogV(@"[SCInsta] Changed search bar placeholder from: \"%@\" to \"%@\"", placeholder, [config valueForKey:@"placeholder"]);
 
             // leftIconStyle
             @try {
                 [config setValue:0 forKey:@"leftIconStyle"];
             }
             @catch (NSException *exception) {
-                NSLog(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, config);
+                SCILogV(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, config);
             }
 
             // rightButtonStyle
@@ -498,7 +498,7 @@
                 [config setValue:0 forKey:@"rightButtonStyle"];
             }
             @catch (NSException *exception) {
-                NSLog(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, config);
+                SCILogV(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, config);
             }
 
         }
@@ -518,7 +518,7 @@
 
         // Hide buttons that are associated with meta ai
         if ([self.accessibilityIdentifier containsString:@"meta_ai"]) {
-            NSLog(@"[SCInsta] Hiding meta ai: meta ai associated button");
+            SCILogV(@"[SCInsta] Hiding meta ai: meta ai associated button");
 
             [self removeFromSuperview];
         }
@@ -533,7 +533,7 @@
     %orig;
     if ([SCIUtils getBoolPref:@"hide_meta_ai"]) {
         [self removeFromSuperview];
-        NSLog(@"[SCInsta] Hiding meta ai: home feed meta ai button"); 
+        SCILogV(@"[SCInsta] Hiding meta ai: home feed meta ai button"); 
     }
 }
 %end
@@ -552,7 +552,7 @@
 
                 // Meta AI (catch-all)
                 if ([[[obj recipient] threadName] isEqualToString:@"Meta AI"]) {
-                    NSLog(@"[SCInsta] Hiding meta ai suggested as recipient (share menu)");
+                    SCILogV(@"[SCInsta] Hiding meta ai suggested as recipient (share menu)");
 
                     shouldHide = YES;
                 }

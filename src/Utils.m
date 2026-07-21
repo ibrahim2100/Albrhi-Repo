@@ -78,7 +78,7 @@
     if (deletionErrors.count > 1) {
 
         for (NSError *error in deletionErrors) {
-            NSLog(@"[SCInsta] File Deletion Error: %@", error);
+            SCILogV(@"[SCInsta] File Deletion Error: %@", error);
         }
 
     }

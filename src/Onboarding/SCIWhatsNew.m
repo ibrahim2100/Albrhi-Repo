@@ -67,6 +67,8 @@ static NSString *const SCILastSeenVersionKey = @"albrhi_last_seen_version";
 + (NSArray<SCIWhatsNewItem *> *)itemsForFirstInstall:(BOOL)firstInstall {
     UIColor *accent = [SCIUtils SCIColor_Primary];
 
+    // First install answers "what is this and where do I start".
+    // An update answers "what changed since you last looked".
     if (firstInstall) {
         return @[
             [SCIWhatsNewItem itemWithSymbol:@"arrow.down.circle.fill"
@@ -77,31 +79,35 @@ static NSString *const SCILastSeenVersionKey = @"albrhi_last_seen_version";
                                       title:SCILocalized(@"wn_w2_title")
                                      detail:SCILocalized(@"wn_w2_detail")
                                        tint:[UIColor systemIndigoColor]],
-            [SCIWhatsNewItem itemWithSymbol:@"hand.raised.fill"
+            [SCIWhatsNewItem itemWithSymbol:@"sparkles"
                                       title:SCILocalized(@"wn_w3_title")
                                      detail:SCILocalized(@"wn_w3_detail")
                                        tint:[UIColor systemTealColor]],
-            [SCIWhatsNewItem itemWithSymbol:@"gearshape.fill"
+            [SCIWhatsNewItem itemWithSymbol:@"hand.tap.fill"
                                       title:SCILocalized(@"wn_w4_title")
                                      detail:SCILocalized(@"wn_w4_detail")
-                                       tint:[UIColor systemGrayColor]]
+                                       tint:[UIColor systemPinkColor]],
+            [SCIWhatsNewItem itemWithSymbol:@"stethoscope"
+                                      title:SCILocalized(@"wn_w5_title")
+                                     detail:SCILocalized(@"wn_w5_detail")
+                                       tint:[UIColor systemOrangeColor]]
         ];
     }
 
     return @[
-        [SCIWhatsNewItem itemWithSymbol:@"arrow.down.circle.fill"
+        [SCIWhatsNewItem itemWithSymbol:@"eye.circle.fill"
                                   title:SCILocalized(@"wn_u1_title")
                                  detail:SCILocalized(@"wn_u1_detail")
                                    tint:accent],
-        [SCIWhatsNewItem itemWithSymbol:@"tray.full.fill"
+        [SCIWhatsNewItem itemWithSymbol:@"scissors"
                                   title:SCILocalized(@"wn_u2_title")
                                  detail:SCILocalized(@"wn_u2_detail")
-                                   tint:[UIColor systemBlueColor]],
-        [SCIWhatsNewItem itemWithSymbol:@"slider.horizontal.3"
+                                   tint:[UIColor systemPurpleColor]],
+        [SCIWhatsNewItem itemWithSymbol:@"stethoscope"
                                   title:SCILocalized(@"wn_u3_title")
                                  detail:SCILocalized(@"wn_u3_detail")
-                                   tint:[UIColor systemPurpleColor]],
-        [SCIWhatsNewItem itemWithSymbol:@"wrench.and.screwdriver.fill"
+                                   tint:[UIColor systemTealColor]],
+        [SCIWhatsNewItem itemWithSymbol:@"shippingbox.fill"
                                   title:SCILocalized(@"wn_u4_title")
                                  detail:SCILocalized(@"wn_u4_detail")
                                    tint:[UIColor systemGreenColor]]

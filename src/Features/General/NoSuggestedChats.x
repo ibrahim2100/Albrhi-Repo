@@ -8,7 +8,7 @@
     if ([[vm title] isEqualToString:@"Suggested"]) {
 
         if ([SCIUtils getBoolPref:@"no_suggested_chats"]) {
-            NSLog(@"[SCInsta] Hiding suggested chats (header: channels tab)");
+            SCILogV(@"[SCInsta] Hiding suggested chats (header: channels tab)");
 
             return nil;
         }

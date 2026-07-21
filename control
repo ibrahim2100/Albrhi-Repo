@@ -1,22 +1,69 @@
 Package: com.albrhi.tweak
 Name: Albrhi for Instagram
-Version: 3.1.2
+Version: 3.1.4
 Architecture: iphoneos-arm64
-Description: The most complete Instagram experience for iOS — bilingual (العربية / English) with automatic RTL.
+Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
  .
- Downloads — save posts, reels, stories, carousels, DM media and HD profile pictures in their maximum available quality. Pick the resolution before saving, grab reel audio only, or strip audio from video. Media can be filed automatically into a dedicated Photos album.
+ Albrhi puts a download button where Instagram should have put one, strips the feed
+ back to the people you actually follow, and stops the app reporting what you watch.
+ Everything lives in a settings panel that looks like it shipped with the app.
  .
- Cleaner feed — remove ads, sponsored and suggested posts, suggested users and reels, Threads posts, Meta AI, the friends map, trending searches and the explore grid.
+ ▍DOWNLOADS
+ A native download button sits in the action row of every post and reel, beside the
+ save icon. One tap grabs the highest quality available and writes it straight to
+ Photos — optionally into its own album.
  .
- Privacy — view stories without a seen receipt, hide the typing indicator, keep deleted messages, disable screenshot detection and replay visual messages without limits.
+ Stories and view-once DMs get their own button. Reels can be saved as video or as
+ the original audio track. Profile pictures download in full HD on a long press.
  .
- Reels and feed control — tap-to-pause or tap-to-mute, always-on scrubber, no auto-unmute, anti doom-scrolling limits and disabled video autoplay.
+ ▍DOWNLOAD CENTER
+ A real queue behind it all: pause, resume, retry and cancel, several transfers at
+ once, and downloads that keep running after you leave the app. Duplicate links are
+ detected, finished files are cleared once they reach Photos, and a searchable
+ history records everything you have saved.
  .
- Confirmations — an optional prompt before liking, following, calling, reposting, commenting or sending a voice message, so a mis-tap never becomes a notification.
+ ▍A QUIETER FEED
+ Remove ads, sponsored posts, suggested posts, suggested accounts, suggested reels,
+ Threads posts, Meta AI, the friends map, trending searches and the explore grid.
+ Hide the stories tray — or the entire feed.
  .
- Native design — settings built with UIKit inset-grouped lists, SF Symbols, a customizable accent color and full dark-mode support. Open the panel by holding the menu button on your profile, or the home tab.
+ ▍PRIVACY
+ Watch stories without sending a seen receipt, and decide per story when to send one.
+ View-once photos and videos stay unseen until you tap the eye button on that exact
+ message. Hide the typing indicator and disable screenshot detection.
  .
- Developed by Ibrahim Ismail AL-Rahn. Albrhi is an educational and corrective derivative of SCInsta by SoCuul, rebuilt with AI assistance to improve code quality, design, performance and user experience. Free and open source under the GNU GPL v3 — original authorship fully credited and preserved.
+ ▍REELS
+ Tap to pause or mute instead of liking. Keep the progress scrubber visible. Stop
+ reels unmuting themselves. Hide the header and the blend button.
+ .
+ ▍CONFIRMATIONS
+ An optional prompt before liking, following, reposting, calling, commenting or
+ sending a voice message — so a mis-tap never turns into a notification.
+ .
+ ▍BUILT TO FIT IN
+ Full Arabic and English with automatic right-to-left layout. SF Symbols, a
+ customisable accent colour, dark mode, and a settings panel opened by holding the
+ menu button on your profile. Includes a diagnostics page that reports what the
+ tweak actually sees on your build and files a bug report in one tap.
+ .
+ ▍TESTED ON
+ Instagram 410.1.0. Not chosen for any principled reason — that is simply the newest
+ build the developer's phone will still accept. The phone has served with honour and
+ is now retired to a life of testing tweaks.
+ .
+ Newer Instagram versions will most likely work: nothing here depends on a version
+ number, and the tweak looks up what it needs at runtime. But "most likely" is doing
+ real work in that sentence, and honesty costs nothing.
+ .
+ ▍BETA
+ This is a pre-release. Features are tested but your Instagram build may differ from
+ ours — if something misbehaves, Settings › Diagnostics writes the report for you,
+ Instagram version included, so we stop guessing and start fixing.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. An educational and corrective derivative of
+ SCInsta by SoCuul, rebuilt with AI assistance to improve code quality, design,
+ performance and user experience. Free and open source under the GNU GPL v3, with
+ original authorship fully credited and preserved.
 Homepage: https://github.com/ibrahim2100/instv3
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Author: Ibrahim Ismail AL-Rahn (based on SCInsta by SoCuul, GPLv3)

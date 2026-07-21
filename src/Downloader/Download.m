@@ -39,7 +39,7 @@
 
     [self.hud showInView:topMostController().view];
 
-    NSLog(@"[SCInsta] Download: Will start download for url \"%@\" with file extension: \".%@\"", url, fileExtension);
+    SCILogV(@"[SCInsta] Download: Will start download for url \"%@\" with file extension: \".%@\"", url, fileExtension);
 
     // Start download using manager
     [self.downloadManager downloadFileWithURL:url fileExtension:fileExtension];
@@ -47,17 +47,17 @@
 
 // Delegate methods
 - (void)downloadDidStart {
-    NSLog(@"[SCInsta] Download: Download started");
+    SCILogV(@"[SCInsta] Download: Download started");
 }
 - (void)downloadDidCancel {
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.hud dismiss];
     });
 
-    NSLog(@"[SCInsta] Download: Download cancelled");
+    SCILogV(@"[SCInsta] Download: Download cancelled");
 }
 - (void)downloadDidProgress:(float)progress {
-    NSLog(@"[SCInsta] Download: Download progress: %f", progress);
+    SCILogV(@"[SCInsta] Download: Download progress: %f", progress);
     
     if (self.showProgress) {
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -70,7 +70,7 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         // Check if it actually errored (not cancelled)
         if (error && error.code != NSURLErrorCancelled) {
-            NSLog(@"[SCInsta] Download: Download failed with error: \"%@\"", error);
+            SCILogV(@"[SCInsta] Download: Download failed with error: \"%@\"", error);
             [SCIUtils showErrorHUDWithDescription:@"Error, try again later"];
         }
     });
@@ -95,7 +95,7 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.hud dismiss];
 
-        NSLog(@"[Albrhi] Download finished: \"%@\" action %d", [fileURL absoluteString], (int)self.action);
+        SCILogV(@"[Albrhi] Download finished: \"%@\" action %d", [fileURL absoluteString], (int)self.action);
 
         switch (self.action) {
             case share:
@@ -144,7 +144,7 @@
         if (export.status == AVAssetExportSessionStatusCompleted) {
             completion(outURL);
         } else {
-            NSLog(@"[Albrhi] Silent export failed: %@", export.error);
+            SCILogV(@"[Albrhi] Silent export failed: %@", export.error);
             completion(nil);
         }
     }];
@@ -168,7 +168,7 @@
                 [doneHud showInView:topMostController().view];
                 [doneHud dismissAfterDelay:1.4];
             } else {
-                NSLog(@"[Albrhi] Save to Photos failed: %@", error);
+                SCILogV(@"[Albrhi] Save to Photos failed: %@", error);
                 [SCIUtils showErrorHUDWithDescription:[SCILocalize stringForKey:@"download_failed"]];
             }
         });

@@ -5,6 +5,8 @@ on:
         branches:
             - 'main'
             - 'dev'
+        tags:
+            - 'v*'
     workflow_dispatch:
   
 concurrency:
@@ -98,14 +100,77 @@ jobs:
 
                 mv "$BUILT_DEB" "com.albrhi.tweak_${ALBRHI_VERSION}+rootless.deb"
 
+            - name: Collect the dylib alongside the deb
+              run: |
+                cd main
+
+                # The tweak binary is produced on the way to the .deb but never
+                # copied out. Sideloaders (LiveContainer, Sideloadly, cyan) want the
+                # dylib on its own, so ship both from one build.
+                DYLIB=$(find .theos/obj -name 'Albrhi.dylib' -type f | head -n1)
+
+                if [ -z "$DYLIB" ]; then
+                  echo "::error::Albrhi.dylib not found under .theos/obj"
+                  exit 1
+                fi
+
+                cp "$DYLIB" "packages/Albrhi_${ALBRHI_VERSION}.dylib"
+                ls -la packages
+
             - name: Pass package name to upload action
               id: package_name
               run: |
                 echo "package=com.albrhi.tweak_${ALBRHI_VERSION}+rootless.deb" >> "$GITHUB_OUTPUT"
+                echo "dylib=Albrhi_${ALBRHI_VERSION}.dylib" >> "$GITHUB_OUTPUT"
 
             - name: Upload Artifact
               uses: actions/upload-artifact@v4
               with:
-                name: ${{ steps.package_name.outputs.package }}
-                path: ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.package }}
+                name: Albrhi-${{ env.ALBRHI_VERSION }}
+                path: |
+                  ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.package }}
+                  ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.dylib }}
                 if-no-files-found: error
+
+            - name: Extract changelog for this version
+              if: startsWith(github.ref, 'refs/tags/v')
+              run: |
+                # Pull the section for this version out of CHANGELOG.md: everything
+                # from its heading up to the next "## " heading.
+                awk -v ver="$ALBRHI_VERSION" '
+                  $0 ~ "^## v?" ver { found=1; next }
+                  found && /^## / { exit }
+                  found { print }
+                ' main/CHANGELOG.md > release-notes.md
+
+                if [ ! -s release-notes.md ]; then
+                  echo "Release ${ALBRHI_VERSION}." > release-notes.md
+                fi
+
+                {
+                  echo ""
+                  echo "---"
+                  echo ""
+                  echo "**Jailbroken** — download the \`.deb\` and open it in Sileo or Zebra, then respring."
+                  echo ""
+                  echo "**Sideloading** — use the \`.dylib\` with LiveContainer, Sideloadly or cyan to inject it into a decrypted Instagram IPA."
+                  echo ""
+                  echo "**Tested on Instagram 410.1.0** — the newest build the developer's phone will still accept."
+                  echo "It is not a compatibility ceiling, it is a hardware confession. Nothing here is pinned to a"
+                  echo "version number, so newer builds should be fine; reports from them are especially welcome."
+                  echo ""
+                  echo "This is a beta. If something misbehaves, open Settings -> Diagnostics -> Report an issue —"
+                  echo "it fills in a bug report with your Instagram build and what the tweak actually attached to."
+                } >> release-notes.md
+
+            - name: Publish release
+              if: startsWith(github.ref, 'refs/tags/v')
+              uses: softprops/action-gh-release@v2
+              with:
+                name: Albrhi ${{ env.ALBRHI_VERSION }}
+                body_path: release-notes.md
+                prerelease: true
+                files: |
+                  ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.package }}
+                  ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.dylib }}
+                fail_on_unmatched_files: true

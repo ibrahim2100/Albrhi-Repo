@@ -284,7 +284,7 @@ static void SCILogRowOnce(UIView *bar) {
 
     [SCIDiagnostics recordActionRowClass:className controlCount:controlCount];
 
-    NSLog(@"[Albrhi] Inline download: attached to %@ (%ld controls, bounds %@)",
+    SCILogV(@"[Albrhi] Inline download: attached to %@ (%ld controls, bounds %@)",
           className, (long)controlCount, NSStringFromCGRect(bar.bounds));
 }
 

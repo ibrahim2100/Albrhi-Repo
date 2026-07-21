@@ -169,7 +169,7 @@ static BOOL SCIMarkCurrentVisualMessageSeen(void) {
 
     [SCIDiagnostics recordSeenReplayBegan:began ended:ended];
 
-    NSLog(@"[Albrhi] Mark-as-seen replay: begin=%d end=%d", began, ended);
+    SCILogV(@"[Albrhi] Mark-as-seen replay: begin=%d end=%d", began, ended);
 
     if (!began && !ended) return NO;
 

@@ -13,7 +13,7 @@
 %hook IGUFIButtonBarView
 - (void)_onLikeButtonPressed:(id)arg1 {
     if ([SCIUtils getBoolPref:@"like_confirm"]) {
-        NSLog(@"[SCInsta] Confirm post like triggered");
+        SCILogV(@"[SCInsta] Confirm post like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -25,7 +25,7 @@
 %hook IGFeedPhotoView
 - (void)_onDoubleTap:(id)arg1 {
     if ([SCIUtils getBoolPref:@"like_confirm"]) {
-        NSLog(@"[SCInsta] Confirm post like triggered");
+        SCILogV(@"[SCInsta] Confirm post like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -37,7 +37,7 @@
 %hook IGVideoPlayerOverlayContainerView
 - (void)_handleDoubleTapGesture:(id)arg1 {
     if ([SCIUtils getBoolPref:@"like_confirm"]) {
-        NSLog(@"[SCInsta] Confirm post like triggered");
+        SCILogV(@"[SCInsta] Confirm post like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -51,7 +51,7 @@
 %hook IGSundialViewerVideoCell
 - (void)controlsOverlayControllerDidTapLikeButton:(id)arg1 {
     if ([SCIUtils getBoolPref:@"like_confirm_reels"]) {
-        NSLog(@"[SCInsta] Confirm reels like triggered");
+        SCILogV(@"[SCInsta] Confirm reels like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -61,7 +61,7 @@
 }
 - (void)controlsOverlayControllerDidLongPressLikeButton:(id)arg1 gestureRecognizer:(id)arg2 {
     if ([SCIUtils getBoolPref:@"like_confirm_reels"]) {
-        NSLog(@"[SCInsta] Confirm reels like triggered");
+        SCILogV(@"[SCInsta] Confirm reels like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -71,7 +71,7 @@
 }
 - (void)gestureController:(id)arg1 didObserveDoubleTap:(id)arg2 {
     if ([SCIUtils getBoolPref:@"like_confirm_reels"]) {
-        NSLog(@"[SCInsta] Confirm reels like triggered");
+        SCILogV(@"[SCInsta] Confirm reels like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -83,7 +83,7 @@
 %hook IGSundialViewerPhotoCell
 - (void)controlsOverlayControllerDidTapLikeButton:(id)arg1 {
     if ([SCIUtils getBoolPref:@"like_confirm_reels"]) {
-        NSLog(@"[SCInsta] Confirm reels like triggered");
+        SCILogV(@"[SCInsta] Confirm reels like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -93,7 +93,7 @@
 }
 - (void)gestureController:(id)arg1 didObserveDoubleTap:(id)arg2 {
     if ([SCIUtils getBoolPref:@"like_confirm_reels"]) {
-        NSLog(@"[SCInsta] Confirm reels like triggered");
+        SCILogV(@"[SCInsta] Confirm reels like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -105,7 +105,7 @@
 %hook IGSundialViewerCarouselCell
 - (void)controlsOverlayControllerDidTapLikeButton:(id)arg1 {
     if ([SCIUtils getBoolPref:@"like_confirm_reels"]) {
-        NSLog(@"[SCInsta] Confirm reels like triggered");
+        SCILogV(@"[SCInsta] Confirm reels like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -115,7 +115,7 @@
 }
 - (void)gestureController:(id)arg1 didObserveDoubleTap:(id)arg2 {
     if ([SCIUtils getBoolPref:@"like_confirm_reels"]) {
-        NSLog(@"[SCInsta] Confirm reels like triggered");
+        SCILogV(@"[SCInsta] Confirm reels like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -129,7 +129,7 @@
 %hook IGCommentCellController
 - (void)commentCell:(id)arg1 didTapLikeButton:(id)arg2 {
     if ([SCIUtils getBoolPref:@"like_confirm"]) {
-        NSLog(@"[SCInsta] Confirm post like triggered");
+        SCILogV(@"[SCInsta] Confirm post like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -139,7 +139,7 @@
 }
 - (void)commentCell:(id)arg1 didTapLikedByButtonForUser:(id)arg2 {
     if ([SCIUtils getBoolPref:@"like_confirm"]) {
-        NSLog(@"[SCInsta] Confirm post like triggered");
+        SCILogV(@"[SCInsta] Confirm post like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -149,7 +149,7 @@
 }
 - (void)commentCellDidLongPressOnLikeButton:(id)arg1 {
     if ([SCIUtils getBoolPref:@"like_confirm"]) {
-        NSLog(@"[SCInsta] Confirm post like triggered");
+        SCILogV(@"[SCInsta] Confirm post like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -159,7 +159,7 @@
 }
 - (void)commentCellDidEndLongPressOnLikeButton:(id)arg1 {
     if ([SCIUtils getBoolPref:@"like_confirm"]) {
-        NSLog(@"[SCInsta] Confirm post like triggered");
+        SCILogV(@"[SCInsta] Confirm post like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -169,7 +169,7 @@
 }
 - (void)commentCellDidDoubleTap:(id)arg1 {
     if ([SCIUtils getBoolPref:@"like_confirm"]) {
-        NSLog(@"[SCInsta] Confirm post like triggered");
+        SCILogV(@"[SCInsta] Confirm post like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -181,7 +181,7 @@
 %hook IGFeedItemPreviewCommentCell
 - (void)_didTapLikeButton {
     if ([SCIUtils getBoolPref:@"like_confirm"]) {
-        NSLog(@"[SCInsta] Confirm post like triggered");
+        SCILogV(@"[SCInsta] Confirm post like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -195,7 +195,7 @@
 %hook IGStoryFullscreenDefaultFooterView
 - (void)_handleLikeTapped {
     if ([SCIUtils getBoolPref:@"like_confirm"]) {
-        NSLog(@"[SCInsta] Confirm post like triggered");
+        SCILogV(@"[SCInsta] Confirm post like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -205,7 +205,7 @@
 }
 - (void)_likeTapped {
     if ([SCIUtils getBoolPref:@"like_confirm"]) {
-        NSLog(@"[SCInsta] Confirm post like triggered");
+        SCILogV(@"[SCInsta] Confirm post like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -215,7 +215,7 @@
 }
 - (void)inputView:(id)arg1 didTapLikeButton:(id)arg2 {
     if ([SCIUtils getBoolPref:@"like_confirm"]) {
-        NSLog(@"[SCInsta] Confirm post like triggered");
+        SCILogV(@"[SCInsta] Confirm post like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];
@@ -262,7 +262,7 @@
 %hook IGDirectThreadViewController
 - (void)_didTapLikeButton {
     if ([SCIUtils getBoolPref:@"like_confirm"]) {
-        NSLog(@"[SCInsta] Confirm post like triggered");
+        SCILogV(@"[SCInsta] Confirm post like triggered");
         [SCIUtils showConfirmation:^(void) {
             %orig;
         }];

@@ -49,64 +49,30 @@ static NSDictionary *_arTable = nil;
 
 + (void)buildTables {
     _enTable = @{
+        @"wn_beta_badge": @"BETA",
+        @"wn_w5_title": @"If something breaks",
+        @"wn_w5_detail": @"Settings → Diagnostics → the speech bubble. It writes the bug report for you, with everything needed to fix it.",
+        @"wn_beta_note": @"Beta · tested on Instagram 410.1.0, the newest build our ageing test phone will accept. Newer should work. Tell us if it doesn't.",
+
         // General section
-        @"section_general": @"General",
         @"hide_ads_title": @"Hide ads",
-        @"hide_ads_sub": @"Removes all ads from the Instagram app",
-        @"hide_meta_ai_title": @"Hide Meta AI",
-        @"hide_meta_ai_sub": @"Hides the Meta AI buttons and functionality",
-        @"copy_description_title": @"Copy description",
-        @"copy_description_sub": @"Copy caption text by long-pressing on it",
-        @"no_recent_searches_title": @"Do not save recent searches",
-        @"no_recent_searches_sub": @"Search bars will no longer store your recent searches",
-        @"detailed_color_picker_title": @"Detailed color picker",
-        @"detailed_color_picker_sub": @"Long-press the eyedropper in stories for precise colors",
-        @"teen_icons_title": @"Enable teen app icons",
-        @"teen_icons_sub": @"Hold the Instagram logo to change the app icon",
 
         // Focus
-        @"section_focus": @"Focus & Distraction",
-        @"no_suggested_users_title": @"No suggested users",
-        @"no_suggested_chats_title": @"No suggested chats",
-        @"hide_trending_title": @"Hide trending searches",
-        @"hide_explore_grid_title": @"Hide explore posts grid",
 
         // Feed
-        @"section_feed": @"Feed",
-        @"hide_story_tray_title": @"Hide stories tray",
-        @"hide_feed_title": @"Hide entire feed",
-        @"no_suggested_posts_title": @"No suggested posts",
-        @"disable_autoplay_title": @"Disable video autoplay",
 
         // Reels
-        @"section_reels": @"Reels",
-        @"always_scrubber_title": @"Always show progress scrubber",
-        @"no_autounmute_title": @"Disable auto-unmuting reels",
-        @"confirm_refresh_title": @"Confirm reel refresh",
-        @"hide_reels_header_title": @"Hide reels header",
-        @"disable_scrolling_reels_title": @"Disable scrolling reels",
-        @"limit_reels_title": @"Prevent doom scrolling",
 
         // Media / Downloads
         @"section_downloads": @"Downloads",
-        @"dw_feed_posts_title": @"Download feed posts",
-        @"dw_feed_posts_sub": @"Long-press a feed photo or video to download it",
-        @"dw_reels_title": @"Download reels",
-        @"dw_reels_sub": @"Long-press a reel to download it",
-        @"dw_story_title": @"Download stories",
-        @"dw_story_sub": @"Long-press a story to download it",
         @"save_profile_title": @"Save profile pictures",
         @"save_profile_sub": @"Long-press a profile picture to view/save it in HD",
-        @"dw_max_quality_title": @"Always max quality",
-        @"dw_max_quality_sub": @"Always pick the highest resolution/bitrate available",
         @"dw_save_to_camera_title": @"Save directly to Photos",
         @"dw_save_to_camera_sub": @"Save straight to your library instead of the share sheet",
         @"dw_reel_audio_title": @"Enable reel audio download",
         @"dw_reel_audio_sub": @"When downloading a reel, choose between the video or its audio",
         @"dw_choice_video": @"Download video",
         @"dw_choice_audio": @"Download audio only",
-        @"show_quality_picker_title": @"Choose quality before download",
-        @"show_quality_picker_sub": @"Show a list of available resolutions when downloading video",
         @"copy_account_info_title": @"Copy account info",
         @"copy_account_info_sub": @"Long-press a profile picture to copy the account's username and name",
         @"custom_album_title": @"Save to \"Albrhi\" album",
@@ -120,18 +86,10 @@ static NSDictionary *_arTable = nil;
         @"info_unavailable": @"Account info unavailable",
         @"info_verified": @"✓ Verified",
         @"quality_unknown": @"Unknown quality",
-        @"quality_pick_title": @"Choose quality",
         @"dw_silent_video_title": @"Download videos without audio",
         @"dw_silent_video_sub": @"Strips the audio track from downloaded videos",
-        @"dw_finger_duration_title": @"Long-press duration",
-        @"dw_finger_count_title": @"Fingers required",
 
         // Privacy
-        @"section_privacy": @"Privacy",
-        @"disable_story_seen_title": @"Disable story seen receipts",
-        @"disable_typing_title": @"Disable typing status",
-        @"keep_deleted_msgs_title": @"Keep deleted messages",
-        @"no_screenshot_alert_title": @"No screenshot alerts",
 
         // Language
         @"section_language": @"Language",
@@ -160,11 +118,6 @@ static NSDictionary *_arTable = nil;
         @"social_open_sub": @"Opens the profile directly",
 
         // Runtime messages
-        @"restart_required": @"Restart required",
-        @"restart_message": @"Instagram must be restarted for this change to take effect.",
-        @"restart_now": @"Restart now",
-        @"later": @"Later",
-        @"download_started": @"Downloading…",
         @"download_saved": @"Saved to Photos",
         @"download_failed": @"Download failed",
         @"err_no_photo": @"Could not extract photo URL",
@@ -174,6 +127,15 @@ static NSDictionary *_arTable = nil;
         // Diagnostics
         @"diag_title": @"Diagnostics",
         @"diag_sub": @"What Albrhi actually sees at runtime",
+        @"diag_beta_footer": @"Something not working? Open Diagnostics and tap the speech bubble — it files a report with everything needed to fix it.",
+        @"diag_issue_what": @"**What happened**
+<describe what you expected and what you got>",
+        @"diag_issue_steps": @"**Steps to reproduce**
+1. 
+2. ",
+        @"p_hdr_logging": @"Logging",
+        @"p_verbose_t": @"Verbose logging",
+        @"p_verbose_s": @"Writes detailed activity to the system log. Off by default — turn it on only while reproducing a bug.",
         @"diag_section_classes": @"Action row classes in this build",
         @"diag_section_attached": @"Download button attachments",
         @"diag_section_quality": @"Last video download",
@@ -193,11 +155,6 @@ static NSDictionary *_arTable = nil;
         @"diag_quality_last": @"Renditions",
         @"diag_quality_source": @"Video class",
         @"diag_download_kind": @"Last download treated as",
-        @"diag_quality_stages": @"Rendition pipeline",
-        @"diag_quality_labels": @"Rendition labels",
-        @"diag_quality_raw": @"Renditions from API (before filtering)",
-        @"diag_dash": @"DASH manifest",
-        @"diag_picked_url": @"Last download URL",
         @"diag_on": @"On",
         @"diag_off": @"Off",
         @"diag_story_intercepts": @"Seen receipts blocked",
@@ -211,10 +168,6 @@ static NSDictionary *_arTable = nil;
         // Story seen button
         @"story_seen_button_title": @"Mark-as-seen button",
         @"story_seen_button_sub": @"Adds an eye toggle in the story viewer to register a story as seen",
-        @"story_seen_on": @"Seen receipts on",
-        @"story_seen_off": @"Seen receipts off",
-        @"story_seen_on_toast": @"Stories you watch now will be marked as seen",
-        @"story_seen_off_toast": @"Watching invisibly again",
 
         // Welcome / What's New
         @"wn_welcome_title": @"Welcome to Albrhi",
@@ -224,25 +177,25 @@ static NSDictionary *_arTable = nil;
         @"wn_continue": @"Let's go",
 
         @"wn_w1_title": @"Download anything",
-        @"wn_w1_detail": @"Posts, reels, stories, carousels — always at the highest quality available.",
-        @"wn_w2_title": @"A quieter feed",
-        @"wn_w2_detail": @"Ads, suggested posts and Meta AI, politely shown the door.",
-        @"wn_w3_title": @"Watch without a trace",
-        @"wn_w3_detail": @"View stories with no seen receipt, and hide the typing indicator.",
-        @"wn_w4_title": @"Find the settings",
-        @"wn_w4_detail": @"Hold the ☰ button on your profile. Yes, that's the whole trick.",
+        @"wn_w1_detail": @"A download button sits right in the action row of posts and reels. One tap, highest quality, straight to Photos.",
+        @"wn_w2_title": @"Watch without a trace",
+        @"wn_w2_detail": @"Stories and view-once messages leave no seen receipt — until you decide otherwise with the eye button.",
+        @"wn_w3_title": @"A quieter feed",
+        @"wn_w3_detail": @"Ads, suggested posts, suggested accounts and Meta AI, all politely shown the door.",
+        @"wn_w4_title": @"Where the settings live",
+        @"wn_w4_detail": @"Hold the ☰ button on your profile. That is the entire trick — no hidden gestures to memorise.",
 
-        @"wn_u1_title": @"One-tap downloads",
-        @"wn_u1_detail": @"A download button now sits in the post action row, next to save.",
-        @"wn_u2_title": @"Download Center",
-        @"wn_u2_detail": @"A real queue — pause, resume, retry, and a history of everything you saved.",
-        @"wn_u3_title": @"Quality picker, everywhere",
-        @"wn_u3_detail": @"It used to work on feed videos only. Reels and stories were quietly ignoring you.",
-        @"wn_u4_title": @"Rebuilt underneath",
-        @"wn_u4_detail": @"Settings are modular now, so features stop stepping on each other.",
+        @"wn_u1_title": @"Mark-as-seen actually works",
+        @"wn_u1_detail": @"One press marks the message you are looking at, and only that one. It used to show a green tick and quietly send nothing.",
+        @"wn_u2_title": @"Thirteen settings, gone",
+        @"wn_u2_detail": @"Broken and pointless options removed rather than left to disappoint you. Fewer switches, all of them real.",
+        @"wn_u3_title": @"Diagnostics, out in the open",
+        @"wn_u3_detail": @"No longer buried under Debug. It reports what Albrhi actually sees on your build, and files an issue in one tap.",
+        @"wn_u4_title": @"Proper releases",
+        @"wn_u4_detail": @"Tagged builds now publish a real download instead of a zip hidden behind a login.",
 
         @"wn_show_again": @"Show the welcome screen again",
-        @"wn_footnote_welcome": @"Free, open source, and not affiliated with Instagram — they have no idea we're here.",
+        @"wn_footnote_welcome": @"Free, open source, and not affiliated with Instagram — they have no idea we are here.",
         @"wn_footnote_update": @"No new ads were added in the making of this update.",
 
         // Download Center
@@ -308,9 +261,6 @@ static NSDictionary *_arTable = nil;
         @"p_general_copydesc_t": @"Copy description", @"p_general_copydesc_s": @"Copy caption text by long-pressing on it",
         @"p_general_norecent_t": @"Don't save recent searches", @"p_general_norecent_s": @"Search bars will no longer store your recent searches",
         @"p_general_colorpicker_t": @"Detailed color picker", @"p_general_colorpicker_s": @"Long-press the eyedropper in stories for precise text colors",
-        @"p_general_lqbuttons_t": @"Liquid glass buttons", @"p_general_lqbuttons_s": @"Enables the experimental liquid glass buttons in the app",
-        @"p_general_lqsurfaces_t": @"Liquid glass surfaces", @"p_general_lqsurfaces_s": @"Enables liquid glass for other elements, such as menus",
-        @"p_general_teen_t": @"Teen app icons", @"p_general_teen_s": @"Hold the Instagram logo to change the app icon",
         @"p_hdr_notes": @"Notes",
         @"p_general_hidenotes_t": @"Hide notes tray", @"p_general_hidenotes_s": @"Hides the notes tray in the DM inbox",
         @"p_general_friendsmap_t": @"Hide friends map", @"p_general_friendsmap_s": @"Hides the friends map icon in the notes tray",
@@ -338,13 +288,8 @@ static NSDictionary *_arTable = nil;
         @"p_reels_header_t": @"Hide reels header", @"p_reels_header_s": @"Hides the top navigation bar while watching reels",
         @"p_reels_blend_t": @"Hide reels blend button", @"p_reels_blend_s": @"Hides the button in DMs that opens a reels blend",
         @"p_hdr_limits": @"Limits",
-        @"p_reels_noscroll_t": @"Disable scrolling reels", @"p_reels_noscroll_s": @"Prevents scrolling to the next reel",
-        @"p_reels_doom_t": @"Prevent doom scrolling", @"p_reels_doom_s": @"Limits how many reels can be scrolled, and prevents refreshing",
-        @"p_reels_doomcount_t": @"Doom scrolling limit", @"p_reels_doomcount_s": @"Only loads %@ %@",
-        @"p_lbl_reels": @"reels", @"p_lbl_reel": @"reel",
         // Stories & messages
         @"p_hdr_messages": @"Messages",
-        @"p_sm_keepdel_t": @"Keep deleted messages", @"p_sm_keepdel_s": @"Keeps messages others delete visible in the conversation",
         @"p_sm_markseen_t": @"Manual mark-as-seen", @"p_sm_markseen_s": @"Adds a button to DM threads to mark messages as seen",
         @"p_sm_typing_t": @"Disable typing status", @"p_sm_typing_s": @"Stops the typing indicator from showing to others in DMs",
         @"p_hdr_visual": @"Visual messages & stories",
@@ -381,15 +326,12 @@ static NSDictionary *_arTable = nil;
         @"p_dbg_safemode_t": @"Disable safe mode", @"p_dbg_safemode_s": @"Stops Instagram from resetting settings after repeated crashes (at your own risk)",
         // Stepper labels
         @"p_lbl_downloads": @"downloads", @"p_lbl_download": @"download",
-        @"p_lbl_fingers": @"fingers", @"p_lbl_finger": @"finger", @"p_lbl_sec": @"sec",
         // Menus
         @"p_menu_default": @"Default", @"p_menu_pauseplay": @"Pause / Play", @"p_menu_muteunmute": @"Mute / Unmute",
         @"p_menu_classic": @"Classic", @"p_menu_standard": @"Standard", @"p_menu_alternate": @"Alternate",
         @"p_menu_enabled": @"Enabled", @"p_menu_disabled": @"Disabled",
         // DM seen/replay toasts
         @"p_toast_marked_seen": @"Marked messages as seen",
-        @"p_toast_replay_on": @"Visual messages can now be replayed without expiring",
-        @"p_toast_replay_off": @"Visual messages will now expire after viewing",
         // Follow status
         @"p_follows_you": @"✓ Follows you",
         @"p_not_follows_you": @"✗ Doesn't follow you",
@@ -402,82 +344,38 @@ static NSDictionary *_arTable = nil;
         @"p_dm_save_t": @"Save DM photos & videos",
         @"p_dm_save_s": @"Adds a save button when you open a photo or video in DMs, and always allows saving",
         // View-once seen toasts
-        @"p_dm_seen_mark": @"Mark as seen",
-        @"p_dm_seen_done": @"Marked as seen",
         @"p_dm_seen_already": @"Already marked as seen",
-        @"p_dm_seen_failed": @"Could not mark this message",
         // Long-press action
-        @"p_press_title": @"Long-press action",
-        @"p_press_sub": @"What holding a post/reel/story does",
         @"p_press_zoom": @"Zoom (peek)",
-        @"p_press_download": @"Download",
         @"p_press_off": @"Off",
         // Auto-advance reels
-        @"p_reels_autonext_t": @"Auto-advance to next reel",
-        @"p_reels_autonext_s": @"Automatically scrolls to the next reel when the current one ends",
-        @"p_reels_autonext_on": @"Auto-advance to next reel: on",
-        @"p_reels_autonext_off": @"Auto-advance to next reel: off",
     };
 
     _arTable = @{
+        @"wn_beta_badge": @"نسخة تجريبية",
+        @"wn_w5_title": @"لو تعطّل شيء",
+        @"wn_w5_detail": @"الإعدادات ← التشخيص ← أيقونة الفقاعة. تكتب لك البلاغ كاملًا بكل ما يلزم لإصلاحه.",
+        @"wn_beta_note": @"نسخة تجريبية · جُرّبت على انستقرام 410.1.0، وهو أحدث إصدار يقبله هاتف التجارب المتقاعد لدينا. الأحدث يُفترض أن يعمل. أخبرنا إن لم يفعل.",
+
         // عام
-        @"section_general": @"عام",
         @"hide_ads_title": @"إخفاء الإعلانات",
-        @"hide_ads_sub": @"يزيل جميع الإعلانات من تطبيق انستقرام",
-        @"hide_meta_ai_title": @"إخفاء Meta AI",
-        @"hide_meta_ai_sub": @"يخفي أزرار ووظائف الذكاء الاصطناعي من ميتا",
-        @"copy_description_title": @"نسخ الوصف",
-        @"copy_description_sub": @"انسخ نص الوصف بالضغط المطوّل عليه",
-        @"no_recent_searches_title": @"عدم حفظ عمليات البحث الأخيرة",
-        @"no_recent_searches_sub": @"لن يحفظ شريط البحث عمليات بحثك الأخيرة",
-        @"detailed_color_picker_title": @"منتقي ألوان مفصّل",
-        @"detailed_color_picker_sub": @"اضغط مطوّلًا على أداة القطارة في القصص لألوان أدق",
-        @"teen_icons_title": @"تفعيل أيقونات التطبيق",
-        @"teen_icons_sub": @"اضغط مطوّلًا على شعار انستقرام لتغيير أيقونة التطبيق",
 
         // التركيز
-        @"section_focus": @"التركيز وتقليل التشتّت",
-        @"no_suggested_users_title": @"إخفاء الحسابات المقترحة",
-        @"no_suggested_chats_title": @"إخفاء المحادثات المقترحة",
-        @"hide_trending_title": @"إخفاء عمليات البحث الرائجة",
-        @"hide_explore_grid_title": @"إخفاء شبكة منشورات الاستكشاف",
 
         // الصفحة الرئيسية
-        @"section_feed": @"الصفحة الرئيسية",
-        @"hide_story_tray_title": @"إخفاء شريط القصص",
-        @"hide_feed_title": @"إخفاء الصفحة الرئيسية بالكامل",
-        @"no_suggested_posts_title": @"إخفاء المنشورات المقترحة",
-        @"disable_autoplay_title": @"تعطيل التشغيل التلقائي للفيديو",
 
         // الريلز
-        @"section_reels": @"الريلز",
-        @"always_scrubber_title": @"إظهار شريط التقدّم دائمًا",
-        @"no_autounmute_title": @"تعطيل إلغاء الكتم التلقائي",
-        @"confirm_refresh_title": @"تأكيد تحديث الريلز",
-        @"hide_reels_header_title": @"إخفاء رأس الريلز",
-        @"disable_scrolling_reels_title": @"تعطيل التمرير في الريلز",
-        @"limit_reels_title": @"منع التمرير المفرط",
 
         // التنزيلات
         @"section_downloads": @"التنزيلات",
-        @"dw_feed_posts_title": @"تنزيل منشورات الصفحة",
-        @"dw_feed_posts_sub": @"اضغط مطوّلًا على صورة أو فيديو لتنزيله",
-        @"dw_reels_title": @"تنزيل الريلز",
-        @"dw_reels_sub": @"اضغط مطوّلًا على الريل لتنزيله",
-        @"dw_story_title": @"تنزيل القصص",
-        @"dw_story_sub": @"اضغط مطوّلًا على القصة لتنزيلها",
         @"save_profile_title": @"حفظ صور الملف الشخصي",
         @"save_profile_sub": @"اضغط مطوّلًا على صورة الملف الشخصي لعرضها/حفظها بجودة عالية",
-        @"dw_max_quality_title": @"أعلى جودة دائمًا",
-        @"dw_max_quality_sub": @"اختيار أعلى دقة/معدل بت متاح دائمًا",
         @"dw_save_to_camera_title": @"الحفظ مباشرة في الصور",
         @"dw_save_to_camera_sub": @"احفظ مباشرة في مكتبة الصور بدل قائمة المشاركة",
         @"dw_reel_audio_title": @"تفعيل تنزيل صوت الريلز",
         @"dw_reel_audio_sub": @"عند تنزيل ريل، اختر بين الفيديو أو الصوت فقط",
         @"dw_choice_video": @"تنزيل الفيديو",
         @"dw_choice_audio": @"تنزيل الصوت فقط",
-        @"show_quality_picker_title": @"اختيار الجودة قبل التنزيل",
-        @"show_quality_picker_sub": @"عرض قائمة بالدقّات المتاحة عند تنزيل الفيديو",
         @"copy_account_info_title": @"نسخ معلومات الحساب",
         @"copy_account_info_sub": @"اضغط مطوّلًا على صورة الملف الشخصي لنسخ اسم المستخدم والاسم",
         @"custom_album_title": @"الحفظ في ألبوم \"Albrhi\"",
@@ -491,18 +389,10 @@ static NSDictionary *_arTable = nil;
         @"info_unavailable": @"معلومات الحساب غير متاحة",
         @"info_verified": @"✓ موثّق",
         @"quality_unknown": @"جودة غير معروفة",
-        @"quality_pick_title": @"اختر الجودة",
         @"dw_silent_video_title": @"تنزيل الفيديو بدون صوت",
         @"dw_silent_video_sub": @"إزالة مسار الصوت من الفيديوهات المنزّلة",
-        @"dw_finger_duration_title": @"مدة الضغط المطوّل",
-        @"dw_finger_count_title": @"عدد الأصابع المطلوبة",
 
         // الخصوصية
-        @"section_privacy": @"الخصوصية",
-        @"disable_story_seen_title": @"تعطيل إشعار مشاهدة القصة",
-        @"disable_typing_title": @"تعطيل حالة الكتابة",
-        @"keep_deleted_msgs_title": @"إبقاء الرسائل المحذوفة",
-        @"no_screenshot_alert_title": @"إلغاء تنبيه لقطة الشاشة",
 
         // اللغة
         @"section_language": @"اللغة",
@@ -531,11 +421,6 @@ static NSDictionary *_arTable = nil;
         @"social_open_sub": @"يفتح الحساب مباشرة",
 
         // رسائل التشغيل
-        @"restart_required": @"إعادة التشغيل مطلوبة",
-        @"restart_message": @"يجب إعادة تشغيل انستقرام لتطبيق هذا التغيير.",
-        @"restart_now": @"إعادة التشغيل الآن",
-        @"later": @"لاحقًا",
-        @"download_started": @"جارٍ التنزيل…",
         @"download_saved": @"تم الحفظ في الصور",
         @"download_failed": @"فشل التنزيل",
         @"err_no_photo": @"تعذّر استخراج رابط الصورة",
@@ -545,6 +430,15 @@ static NSDictionary *_arTable = nil;
         // التشخيص
         @"diag_title": @"التشخيص",
         @"diag_sub": @"ما تراه Albrhi فعليًا أثناء التشغيل",
+        @"diag_beta_footer": @"شيء لا يعمل؟ افتح التشخيص واضغط أيقونة الفقاعة — تُنشئ بلاغًا يحمل كل ما يلزم لإصلاحه.",
+        @"diag_issue_what": @"**ماذا حدث**
+<صف ما توقّعته وما حصل>",
+        @"diag_issue_steps": @"**خطوات إعادة الإنتاج**
+1. 
+2. ",
+        @"p_hdr_logging": @"السجل",
+        @"p_verbose_t": @"سجل مفصّل",
+        @"p_verbose_s": @"يكتب نشاطًا تفصيليًا في سجل النظام. مطفأ افتراضيًا — فعّله فقط أثناء إعادة إنتاج مشكلة.",
         @"diag_section_classes": @"أصناف شريط الأزرار في هذا الإصدار",
         @"diag_section_attached": @"ارتباطات زر التنزيل",
         @"diag_section_quality": @"آخر تنزيل فيديو",
@@ -564,11 +458,6 @@ static NSDictionary *_arTable = nil;
         @"diag_quality_last": @"النسخ المتاحة",
         @"diag_quality_source": @"صنف الفيديو",
         @"diag_download_kind": @"آخر تنزيل عومل كـ",
-        @"diag_quality_stages": @"مراحل معالجة النسخ",
-        @"diag_quality_labels": @"تسميات النسخ",
-        @"diag_quality_raw": @"النسخ من الـ API (قبل الترشيح)",
-        @"diag_dash": @"بيان DASH",
-        @"diag_picked_url": @"آخر رابط تنزيل",
         @"diag_on": @"مفعّل",
         @"diag_off": @"مطفأ",
         @"diag_story_intercepts": @"إشعارات مشاهدة مُوقَفة",
@@ -582,10 +471,6 @@ static NSDictionary *_arTable = nil;
         // زر مشاهدة القصة
         @"story_seen_button_title": @"زر تعليم كمشاهَد",
         @"story_seen_button_sub": @"يضيف زر عين في عارض القصص لتسجيل القصة كمشاهَدة",
-        @"story_seen_on": @"إشعار المشاهدة مفعّل",
-        @"story_seen_off": @"إشعار المشاهدة مطفأ",
-        @"story_seen_on_toast": @"القصص التي تشاهدها الآن ستُسجَّل كمشاهَدة",
-        @"story_seen_off_toast": @"عدت للمشاهدة المتخفية",
 
         // الترحيب وما الجديد
         @"wn_welcome_title": @"أهلًا بك في Albrhi",
@@ -595,22 +480,22 @@ static NSDictionary *_arTable = nil;
         @"wn_continue": @"يلا نبدأ",
 
         @"wn_w1_title": @"نزّل أي شيء",
-        @"wn_w1_detail": @"منشورات، ريلز، قصص، ألبومات — دائمًا بأعلى جودة متاحة.",
-        @"wn_w2_title": @"صفحة رئيسية أهدأ",
-        @"wn_w2_detail": @"الإعلانات والمنشورات المقترحة وMeta AI… ودّعناهم بأدب.",
-        @"wn_w3_title": @"شاهد بلا أثر",
-        @"wn_w3_detail": @"افتح القصص بدون أن يظهر اسمك، وأخفِ مؤشّر «يكتب الآن».",
+        @"wn_w1_detail": @"زر التنزيل موجود في شريط أزرار المنشورات والريلز. ضغطة واحدة، أعلى جودة، مباشرة إلى الاستوديو.",
+        @"wn_w2_title": @"شاهد بلا أثر",
+        @"wn_w2_detail": @"القصص والرسائل التي تُفتح مرة واحدة لا تُسجّل مشاهدتك — حتى تقرّر أنت غير ذلك من زر العين.",
+        @"wn_w3_title": @"صفحة رئيسية أهدأ",
+        @"wn_w3_detail": @"الإعلانات والمنشورات المقترحة والحسابات المقترحة وMeta AI… ودّعناهم جميعًا بأدب.",
         @"wn_w4_title": @"وين الإعدادات؟",
-        @"wn_w4_detail": @"اضغط مطوّلًا على ☰ في ملفك الشخصي. نعم، هذه كل الحيلة.",
+        @"wn_w4_detail": @"اضغط مطوّلًا على ☰ في ملفك الشخصي. هذه كل الحيلة — لا إيماءات خفية تحفظها.",
 
-        @"wn_u1_title": @"تحميل بضغطة واحدة",
-        @"wn_u1_detail": @"زر تنزيل صار في شريط أزرار المنشور، بجانب زر الحفظ.",
-        @"wn_u2_title": @"مركز التنزيلات",
-        @"wn_u2_detail": @"طابور حقيقي — إيقاف واستئناف وإعادة محاولة، وسجل بكل ما حفظته.",
-        @"wn_u3_title": @"اختيار الجودة، في كل مكان",
-        @"wn_u3_detail": @"كان يعمل على فيديو الصفحة الرئيسية فقط. الريلز والقصص كانت تتجاهلك بهدوء.",
-        @"wn_u4_title": @"إعادة بناء من الداخل",
-        @"wn_u4_detail": @"الإعدادات صارت وحدات مستقلة، فتوقّفت المزايا عن الدوس على بعضها.",
+        @"wn_u1_title": @"زر «تمت المشاهدة» يعمل فعلًا",
+        @"wn_u1_detail": @"ضغطة واحدة تُعلّم الرسالة التي أمامك وحدها. كان يعرض صحًا أخضر ولا يرسل شيئًا.",
+        @"wn_u2_title": @"ثلاثة عشر خيارًا… ذهبت",
+        @"wn_u2_detail": @"حذفنا المعطّل وعديم الفائدة بدل تركه ليخيّب ظنك. مفاتيح أقل، وكلها حقيقية.",
+        @"wn_u3_title": @"التشخيص في العلن",
+        @"wn_u3_detail": @"لم يعد مدفونًا تحت التصحيح. يخبرك بما تراه الأداة فعلًا على جهازك، ويرفع بلاغًا بضغطة.",
+        @"wn_u4_title": @"إصدارات حقيقية",
+        @"wn_u4_detail": @"صار كل وسم يُنشئ تنزيلًا مباشرًا بدل ملف مضغوط خلف تسجيل دخول.",
 
         @"wn_show_again": @"عرض صفحة الترحيب مرة أخرى",
         @"wn_footnote_welcome": @"مجاني ومفتوح المصدر، وغير تابع لانستقرام — هم أصلًا لا يعلمون بوجودنا.",
@@ -679,9 +564,6 @@ static NSDictionary *_arTable = nil;
         @"p_general_copydesc_t": @"نسخ الوصف", @"p_general_copydesc_s": @"انسخ نص الوصف بالضغط المطوّل عليه",
         @"p_general_norecent_t": @"عدم حفظ عمليات البحث الأخيرة", @"p_general_norecent_s": @"لن تحفظ أشرطة البحث عمليات بحثك الأخيرة",
         @"p_general_colorpicker_t": @"منتقي ألوان مفصّل", @"p_general_colorpicker_s": @"اضغط مطوّلًا على أداة القطارة في القصص لاختيار لون النص بدقة",
-        @"p_general_lqbuttons_t": @"أزرار الزجاج السائل", @"p_general_lqbuttons_s": @"يفعّل أزرار الزجاج السائل التجريبية في التطبيق",
-        @"p_general_lqsurfaces_t": @"أسطح الزجاج السائل", @"p_general_lqsurfaces_s": @"يفعّل الزجاج السائل لعناصر أخرى مثل القوائم",
-        @"p_general_teen_t": @"أيقونات التطبيق البديلة", @"p_general_teen_s": @"اضغط مطوّلًا على شعار انستقرام لتغيير أيقونة التطبيق",
         @"p_hdr_notes": @"الملاحظات",
         @"p_general_hidenotes_t": @"إخفاء شريط الملاحظات", @"p_general_hidenotes_s": @"يخفي شريط الملاحظات في صندوق الرسائل",
         @"p_general_friendsmap_t": @"إخفاء خريطة الأصدقاء", @"p_general_friendsmap_s": @"يخفي أيقونة خريطة الأصدقاء في شريط الملاحظات",
@@ -709,13 +591,8 @@ static NSDictionary *_arTable = nil;
         @"p_reels_header_t": @"إخفاء رأس الريلز", @"p_reels_header_s": @"يخفي شريط التنقل العلوي أثناء مشاهدة الريلز",
         @"p_reels_blend_t": @"إخفاء زر المزج", @"p_reels_blend_s": @"يخفي زر فتح مزج الريلز في الرسائل",
         @"p_hdr_limits": @"الحدود",
-        @"p_reels_noscroll_t": @"تعطيل التمرير في الريلز", @"p_reels_noscroll_s": @"يمنع التمرير إلى الريل التالي",
-        @"p_reels_doom_t": @"منع التمرير المفرط", @"p_reels_doom_s": @"يحدّ من عدد الريلز القابلة للتمرير ويمنع التحديث",
-        @"p_reels_doomcount_t": @"حدّ التمرير المفرط", @"p_reels_doomcount_s": @"يحمّل %@ %@ فقط",
-        @"p_lbl_reels": @"ريلز", @"p_lbl_reel": @"ريل",
         // القصص والرسائل
         @"p_hdr_messages": @"الرسائل",
-        @"p_sm_keepdel_t": @"إبقاء الرسائل المحذوفة", @"p_sm_keepdel_s": @"يُبقي الرسائل التي يحذفها الآخرون ظاهرة في المحادثة",
         @"p_sm_markseen_t": @"تعليم الرسائل كمقروءة يدويًا", @"p_sm_markseen_s": @"يضيف زرًا في المحادثات لتعليم الرسائل كمقروءة",
         @"p_sm_typing_t": @"تعطيل حالة الكتابة", @"p_sm_typing_s": @"يمنع ظهور مؤشّر الكتابة للآخرين في الرسائل",
         @"p_hdr_visual": @"الرسائل المرئية والقصص",
@@ -752,15 +629,12 @@ static NSDictionary *_arTable = nil;
         @"p_dbg_safemode_t": @"تعطيل الوضع الآمن", @"p_dbg_safemode_s": @"يمنع انستقرام من إعادة تعيين الإعدادات بعد الأعطال المتكررة (على مسؤوليتك)",
         // تسميات العدّادات
         @"p_lbl_downloads": @"تنزيلات", @"p_lbl_download": @"تنزيل",
-        @"p_lbl_fingers": @"أصابع", @"p_lbl_finger": @"إصبع", @"p_lbl_sec": @"ثانية",
         // القوائم
         @"p_menu_default": @"افتراضي", @"p_menu_pauseplay": @"إيقاف / تشغيل", @"p_menu_muteunmute": @"كتم / إلغاء الكتم",
         @"p_menu_classic": @"كلاسيكي", @"p_menu_standard": @"قياسي", @"p_menu_alternate": @"بديل",
         @"p_menu_enabled": @"مفعّل", @"p_menu_disabled": @"معطّل",
         // تنبيهات مشاهدة/إعادة تشغيل الرسائل المرئية
         @"p_toast_marked_seen": @"تم تعليم الرسائل كمقروءة",
-        @"p_toast_replay_on": @"يمكن الآن إعادة تشغيل الرسائل المرئية دون انتهاء صلاحيتها",
-        @"p_toast_replay_off": @"ستنتهي صلاحية الرسائل المرئية بعد مشاهدتها",
         // حالة المتابعة
         @"p_follows_you": @"✓ يتابعك",
         @"p_not_follows_you": @"✗ لا يتابعك",
@@ -773,21 +647,11 @@ static NSDictionary *_arTable = nil;
         @"p_dm_save_t": @"حفظ صور وفيديوهات الخاص",
         @"p_dm_save_s": @"يضيف زر حفظ عند فتح صورة أو فيديو في الرسائل، ويسمح بالحفظ دائمًا",
         // تنبيهات مشاهدة العرض لمرة واحدة
-        @"p_dm_seen_mark": @"تعليم كمشاهَد",
-        @"p_dm_seen_done": @"تم التعليم كمشاهَد",
         @"p_dm_seen_already": @"معلَّم كمشاهَد مسبقًا",
-        @"p_dm_seen_failed": @"تعذّر تعليم هذه الرسالة",
         // إجراء الضغط المطوّل
-        @"p_press_title": @"إجراء الضغط المطوّل",
-        @"p_press_sub": @"ماذا يفعل الضغط المطوّل على منشور/ريل/قصة",
         @"p_press_zoom": @"تكبير (معاينة)",
-        @"p_press_download": @"تنزيل",
         @"p_press_off": @"إيقاف",
         // التنقل التلقائي للريل
-        @"p_reels_autonext_t": @"التنقل التلقائي للريل التالي",
-        @"p_reels_autonext_s": @"ينتقل تلقائيًا للريل التالي عند انتهاء الحالي",
-        @"p_reels_autonext_on": @"التنقل التلقائي للريل التالي: مفعّل",
-        @"p_reels_autonext_off": @"التنقل التلقائي للريل التالي: مطفأ",
     };
 }
 
