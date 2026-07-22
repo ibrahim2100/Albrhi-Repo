@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.1.9.2\n\n**New**\n- **Custom date and time formats.** A real time instead of \"2h\" — presets, your\n  own pattern, a time-only option, and a 12 or 24 hour clock. Under Appearance.\n- **OLED black theme.** Turns Instagram's dark grey into true black.\n\n## v3.1.8.8\n\n- When Instagram offers the same resolution at both 30 and 60 fps, the transcode\n  now picks 60 — it followed the source before but kept whichever the manifest\n  listed first, so a 60 fps version could be missed. Output frame rate still\n  matches the video; most clips are simply 30 fps at the source.\n\n## v3.1.8.7\n\n- The AV1 transcode now shows a modern floating banner at the top of the screen\n  with a live progress bar, instead of a blocking centre spinner — you can keep\n  scrolling reels while a clip transcodes behind it.",
+          "markdown": "## v3.1.9.3\n\n**New**\n- **Custom date and time formats.** A real time instead of \"2h\" — presets, your\n  own pattern, a time-only option, and a 12 or 24 hour clock. Under Appearance.\n- **OLED black theme.** Turns Instagram's dark grey into true black.\n\n## v3.1.8.8\n\n- When Instagram offers the same resolution at both 30 and 60 fps, the transcode\n  now picks 60 — it followed the source before but kept whichever the manifest\n  listed first, so a 60 fps version could be missed. Output frame rate still\n  matches the video; most clips are simply 30 fps at the source.\n\n## v3.1.8.7\n\n- The AV1 transcode now shows a modern floating banner at the top of the screen\n  with a live progress bar, instead of a blocking centre spinner — you can keep\n  scrolling reels while a clip transcodes behind it.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.1.9.2"
+          "text": "3.1.9.3"
         },
         {
           "class": "DepictionTableTextView",
