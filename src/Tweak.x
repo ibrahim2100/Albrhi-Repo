@@ -17,7 +17,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.2.1";  // Albrhi
+NSString *SCIVersionString = @"v3.2.2";  // Albrhi
 
 // Variables that work across features
 
@@ -32,6 +32,7 @@ NSString *SCIVersionString = @"v3.2.1";  // Albrhi
         @"remove_screenshot_alert": @(YES),
         @"call_confirm": @(YES),
         @"inline_download_button": @(YES),
+        @"carousel_download_choice": @(YES),
         @"dl_use_queue": @(YES),
         @"dl_max_concurrent": @(3),
         @"story_seen_button": @(YES),

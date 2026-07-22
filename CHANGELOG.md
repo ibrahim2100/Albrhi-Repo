@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v3.2.2
+
+- Album download choice can be turned off under Downloads.
+- Transcode banner shows the full resolution and frame rate it's saving, e.g. "1440 × 2560 @ 60".
+
 ## v3.2.1 — a real leap
 
 - **1080p downloads on device** — AV1 decoded with dav1d, re-encoded to H.264 with a live progress banner. Optional.

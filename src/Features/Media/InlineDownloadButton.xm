@@ -194,7 +194,7 @@ static NSArray *SCICarouselChildrenForBar(UIView *bar) {
 // download the single media directly.
 static void SCIHandleDownloadForBar(UIView *bar, UIView *anchor) {
     id current = SCIMediaForButtonBar(bar);
-    NSArray *children = SCICarouselChildrenForBar(bar);
+    NSArray *children = [SCIUtils getBoolPref:@"carousel_download_choice"] ? SCICarouselChildrenForBar(bar) : nil;
 
     if (children.count > 1) {
         // If the resolved media is a child (not the carousel itself), it *is* the

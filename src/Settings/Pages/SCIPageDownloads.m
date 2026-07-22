@@ -26,6 +26,7 @@
                 @"header": SCILocalized(@"p_hdr_dl_behavior"),
                 @"rows": @[
                     [SCISetting switchCellWithTitle:SCILocalized(@"inline_download_title") subtitle:SCILocalized(@"inline_download_sub") defaultsKey:@"inline_download_button"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_carousel_choice_t") subtitle:SCILocalized(@"p_carousel_choice_s") defaultsKey:@"carousel_download_choice"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"dl_use_queue_title") subtitle:SCILocalized(@"dl_use_queue_sub") defaultsKey:@"dl_use_queue"],
                     [SCISetting stepperCellWithTitle:SCILocalized(@"dl_max_concurrent_title") subtitle:@"%@ %@" defaultsKey:@"dl_max_concurrent" min:1 max:6 step:1 label:SCILocalized(@"p_lbl_downloads") singularLabel:SCILocalized(@"p_lbl_download")],
                     [SCISetting switchCellWithTitle:SCILocalized(@"dl_clear_title") subtitle:SCILocalized(@"dl_clear_sub") defaultsKey:@"dl_clear_after_save"]

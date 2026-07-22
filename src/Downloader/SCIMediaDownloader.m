@@ -214,7 +214,12 @@
     if (!plan) return NO;
 
     NSString *title = [NSString stringWithFormat:SCILocalized(@"transcode_progress"),
-                       [plan[@"height"] intValue]];
+                       [plan[@"width"] intValue], [plan[@"height"] intValue]];
+
+    // Append the frame rate when known, e.g. "1440 × 2560 @ 60".
+    int planFps = (int)round([plan[@"fps"] doubleValue]);
+    if (planFps > 0) title = [title stringByAppendingFormat:@" @ %d", planFps];
+
     SCITranscodeBanner *banner = [SCITranscodeBanner shared];
     [banner showWithTitle:title];
 

@@ -16,7 +16,7 @@ static SCIBackup *sciBackupDelegate = nil;
 /// defaults (which may include tokens or personal data) are never touched.
 + (NSArray<NSString *> *)keys {
     return @[
-        @"albrhi_accent_hex", @"albrhi_language", @"call_confirm", @"change_direct_theme_confirm",
+        @"albrhi_accent_hex", @"albrhi_language", @"call_confirm", @"carousel_download_choice", @"change_direct_theme_confirm",
         @"copy_account_info", @"copy_description", @"custom_album", @"custom_note_themes",
         @"date_24_hour", @"date_combine", @"date_compact_relative", @"date_format_enabled",
         @"date_format_pattern", @"date_format_preset", @"date_relative_hours", @"detailed_color_picker",
