@@ -9,7 +9,7 @@
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B-lightgrey.svg)]()
 [![Rootless](https://img.shields.io/badge/rootless-supported-success.svg)](#-compatibility)
-[![Version](https://img.shields.io/badge/version-3.2.2-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.2.3-orange.svg)](CHANGELOG.md)
 [![Based on](https://img.shields.io/badge/based%20on-SCInsta-lightblue.svg)](https://github.com/SoCuul/SCInsta)
 
 <br/>
@@ -169,7 +169,7 @@ git submodule update --init --recursive
 
 export THEOS_PACKAGE_SCHEME=rootless   # omit for a rootful .deb
 make package
-# → packages/com.albrhi.tweak_3.2.2_iphoneos-arm64.deb
+# → packages/com.albrhi.tweak_3.2.3_iphoneos-arm64.deb
 ```
 
 Install straight to a connected device with `make package install`. GitHub Actions builds are also

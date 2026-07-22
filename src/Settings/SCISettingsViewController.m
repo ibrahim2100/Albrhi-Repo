@@ -1,5 +1,6 @@
 #import "SCISettingsViewController.h"
 #import "../SCILog.h"
+#import "../Tweak.h"   // SCIVersionString
 
 static char rowStaticRef[] = "row";
 
@@ -85,6 +86,11 @@ static char rowStaticRef[] = "row";
 
     [self.view addSubview:self.tableView];
 
+    // Brand header on the root page — a small identity card above the list.
+    if (self.reduceMargin) {
+        self.tableView.tableHeaderView = [self brandHeaderView];
+    }
+
     // Search only on the root page — sub-pages are already short lists.
     if (self.reduceMargin) {
         self.searchController = [[UISearchController alloc] initWithSearchResultsController:nil];
@@ -97,6 +103,50 @@ static char rowStaticRef[] = "row";
         self.navigationItem.hidesSearchBarWhenScrolling = NO;
         self.definesPresentationContext = YES;
     }
+}
+
+// MARK: - Brand header
+
+- (UIView *)brandHeaderView {
+    UIColor *accent = [SCIUtils SCIColor_Primary];
+
+    UIView *header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.view.bounds), 92)];
+    header.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+
+    UIImageView *glyph = [[UIImageView alloc] initWithImage:
+        [UIImage systemImageNamed:@"sparkles"
+                withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:28.0 weight:UIImageSymbolWeightSemibold]]];
+    glyph.tintColor = accent;
+    glyph.contentMode = UIViewContentModeScaleAspectFit;
+
+    UILabel *name = [[UILabel alloc] init];
+    name.text = @"Albrhi";
+    name.font = [UIFont systemFontOfSize:28.0 weight:UIFontWeightBold];
+    name.textColor = [UIColor labelColor];
+
+    UILabel *version = [[UILabel alloc] init];
+    version.text = [NSString stringWithFormat:@"%@  ·  Instagram %@", SCIVersionString, [SCIUtils IGVersionString]];
+    version.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightMedium];
+    version.textColor = [UIColor secondaryLabelColor];
+
+    UIStackView *text = [[UIStackView alloc] initWithArrangedSubviews:@[name, version]];
+    text.axis = UILayoutConstraintAxisVertical;
+    text.alignment = UIStackViewAlignmentLeading;
+    text.spacing = 1.0;
+
+    UIStackView *row = [[UIStackView alloc] initWithArrangedSubviews:@[glyph, text]];
+    row.axis = UILayoutConstraintAxisHorizontal;
+    row.alignment = UIStackViewAlignmentCenter;
+    row.spacing = 12.0;
+    row.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [header addSubview:row];
+    [NSLayoutConstraint activateConstraints:@[
+        [row.centerXAnchor constraintEqualToAnchor:header.centerXAnchor],
+        [row.centerYAnchor constraintEqualToAnchor:header.centerYAnchor]
+    ]];
+
+    return header;
 }
 
 // MARK: - Search

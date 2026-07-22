@@ -7,6 +7,7 @@
 @interface SCIWhatsNewViewController ()
 
 @property (nonatomic) BOOL firstInstall;
+@property (nonatomic) BOOL isIntro;   // the "how to open settings" welcome page
 @property (nonatomic, strong) NSArray<UIView *> *animatedRows;
 
 @end
@@ -16,10 +17,17 @@
 + (void)presentIfNeededFromWindow:(UIWindow *)window {
     if (![SCIWhatsNew shouldPresent]) return;
 
-    [self presentFromWindow:window];
+    // First install: the intro ("how to open the settings") leads into what's new.
+    // An update: straight to what's new.
+    [self presentIntro:[SCIWhatsNew isFirstInstall] fromWindow:window];
 }
 
 + (void)presentFromWindow:(UIWindow *)window {
+    // The "show welcome screen again" button starts from the intro.
+    [self presentIntro:YES fromWindow:window];
+}
+
++ (void)presentIntro:(BOOL)intro fromWindow:(UIWindow *)window {
     UIViewController *presenter = [window rootViewController] ?: topMostController();
     while (presenter.presentedViewController) {
         presenter = presenter.presentedViewController;
@@ -30,6 +38,7 @@
     if (!presenter) return;
 
     SCIWhatsNewViewController *sheet = [[SCIWhatsNewViewController alloc] init];
+    sheet.isIntro = intro;
     sheet.modalPresentationStyle = UIModalPresentationPageSheet;
 
     // Not dismissible by swipe: the button marks the version as seen, and a
@@ -72,7 +81,8 @@
     hero.contentMode = UIViewContentModeScaleAspectFit;
 
     UILabel *headline = [[UILabel alloc] init];
-    headline.text = [SCIWhatsNew headlineForFirstInstall:self.firstInstall];
+    headline.text = self.isIntro ? [SCIWhatsNew introHeadline]
+                                  : [SCIWhatsNew headlineForFirstInstall:self.firstInstall];
     headline.font = [UIFont systemFontOfSize:30.0 weight:UIFontWeightBold];
     headline.textAlignment = NSTextAlignmentCenter;
     headline.numberOfLines = 0;
@@ -80,7 +90,8 @@
     headline.minimumScaleFactor = 0.7;
 
     UILabel *subheadline = [[UILabel alloc] init];
-    subheadline.text = [SCIWhatsNew subheadlineForFirstInstall:self.firstInstall];
+    subheadline.text = self.isIntro ? [SCIWhatsNew introSubheadline]
+                                     : [SCIWhatsNew subheadlineForFirstInstall:self.firstInstall];
     subheadline.font = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
     subheadline.textColor = [UIColor secondaryLabelColor];
     subheadline.textAlignment = NSTextAlignmentCenter;
@@ -120,7 +131,9 @@
     card.layer.cornerRadius = 18.0;
     card.layer.cornerCurve = kCACornerCurveContinuous;
 
-    for (SCIWhatsNewItem *item in [SCIWhatsNew itemsForFirstInstall:self.firstInstall]) {
+    NSArray<SCIWhatsNewItem *> *items = self.isIntro ? [SCIWhatsNew introItems]
+                                                     : [SCIWhatsNew itemsForFirstInstall:self.firstInstall];
+    for (SCIWhatsNewItem *item in items) {
         UIView *row = [self rowForItem:item];
 
         [rows addObject:row];
@@ -131,7 +144,7 @@
 
     // --- Footnote + button ---
     UILabel *footnote = [[UILabel alloc] init];
-    footnote.text = [SCIWhatsNew footnoteForFirstInstall:self.firstInstall];
+    footnote.text = self.isIntro ? @"" : [SCIWhatsNew footnoteForFirstInstall:self.firstInstall];
     footnote.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
     footnote.textColor = [UIColor tertiaryLabelColor];
     footnote.textAlignment = NSTextAlignmentCenter;
@@ -140,7 +153,7 @@
     UIButton *continueButton = [UIButton buttonWithType:UIButtonTypeSystem];
 
     UIButtonConfiguration *config = [UIButtonConfiguration filledButtonConfiguration];
-    config.title = SCILocalized(@"wn_continue");
+    config.title = self.isIntro ? SCILocalized(@"wn_intro_next") : SCILocalized(@"wn_continue");
     config.baseBackgroundColor = accent;
     config.baseForegroundColor = [UIColor whiteColor];
     config.cornerStyle = UIButtonConfigurationCornerStyleLarge;
@@ -264,8 +277,15 @@
 - (void)continueTapped {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium] impactOccurred];
 
-    [SCIWhatsNew markCurrentVersionSeen];
+    // Intro → hand off to the what's-new page (which is what marks the version seen).
+    if (self.isIntro) {
+        [self dismissViewControllerAnimated:YES completion:^{
+            [SCIWhatsNewViewController presentIntro:NO fromWindow:nil];
+        }];
+        return;
+    }
 
+    [SCIWhatsNew markCurrentVersionSeen];
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 

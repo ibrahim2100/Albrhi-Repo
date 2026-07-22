@@ -41,6 +41,12 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString *)subheadlineForFirstInstall:(BOOL)firstInstall;
 + (NSArray<SCIWhatsNewItem *> *)itemsForFirstInstall:(BOOL)firstInstall;
 
+/// Intro screen — shown once, on first install, *before* the what's-new page. It
+/// answers "what is this and how do I open the settings" rather than "what changed".
++ (NSString *)introHeadline;
++ (NSString *)introSubheadline;
++ (NSArray<SCIWhatsNewItem *> *)introItems;
+
 /// The small print under the button. Where the joke lives.
 + (NSString *)footnoteForFirstInstall:(BOOL)firstInstall;
 

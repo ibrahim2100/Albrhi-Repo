@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v3.2.3
+
+- **New Privacy page** — seen receipts, typing, screenshots and searches gathered in one place.
+- **First-launch intro** — a quick "how to open the settings" welcome before the what's-new page.
+- **Brand header** at the top of the settings.
+
 ## v3.2.2
 
 - Album download choice can be turned off under Downloads.

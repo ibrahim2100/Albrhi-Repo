@@ -64,6 +64,35 @@ static NSString *const SCILastSeenVersionKey = @"albrhi_last_seen_version";
     return firstInstall ? SCILocalized(@"wn_footnote_welcome") : SCILocalized(@"wn_footnote_update");
 }
 
+// MARK: - Intro (first launch, before what's-new)
+
++ (NSString *)introHeadline {
+    return SCILocalized(@"wn_intro_title");
+}
+
++ (NSString *)introSubheadline {
+    return SCILocalized(@"wn_intro_sub");
+}
+
++ (NSArray<SCIWhatsNewItem *> *)introItems {
+    UIColor *accent = [SCIUtils SCIColor_Primary];
+
+    return @[
+        [SCIWhatsNewItem itemWithSymbol:@"line.3.horizontal"
+                                  title:SCILocalized(@"wn_i1_title")
+                                 detail:SCILocalized(@"wn_i1_detail")
+                                   tint:accent],
+        [SCIWhatsNewItem itemWithSymbol:@"magnifyingglass"
+                                  title:SCILocalized(@"wn_i2_title")
+                                 detail:SCILocalized(@"wn_i2_detail")
+                                   tint:[UIColor systemBlueColor]],
+        [SCIWhatsNewItem itemWithSymbol:@"arrow.down.circle.fill"
+                                  title:SCILocalized(@"wn_i3_title")
+                                 detail:SCILocalized(@"wn_i3_detail")
+                                   tint:[UIColor systemGreenColor]]
+    ];
+}
+
 + (NSArray<SCIWhatsNewItem *> *)itemsForFirstInstall:(BOOL)firstInstall {
     UIColor *accent = [SCIUtils SCIColor_Primary];
 

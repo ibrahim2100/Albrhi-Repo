@@ -11,19 +11,18 @@
                                                  icon:@"rectangle.portrait.on.rectangle.portrait.angled"
                                                 order:50
                                              sections:^NSArray *{
+        // Seen receipts, typing, screenshots and searches now live on the Privacy page.
         return @[
             @{
                 @"header": SCILocalized(@"p_hdr_messages"),
                 @"rows": @[
-                    [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_markseen_t") subtitle:SCILocalized(@"p_sm_markseen_s") defaultsKey:@"remove_lastseen"],
-                    [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_typing_t") subtitle:SCILocalized(@"p_sm_typing_s") defaultsKey:@"disable_typing_status"],
-                    [SCISetting switchCellWithTitle:SCILocalized(@"p_dm_save_t") subtitle:SCILocalized(@"p_dm_save_s") defaultsKey:@"dm_media_save_button"]
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_dm_save_t") subtitle:SCILocalized(@"p_dm_save_s") defaultsKey:@"dm_media_save_button"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_dm_lastactive_t") subtitle:SCILocalized(@"p_dm_lastactive_s") defaultsKey:@"dm_full_last_active"]
                 ]
             },
             @{
                 @"header": SCILocalized(@"p_hdr_dm_calls"),
                 @"rows": @[
-                    [SCISetting switchCellWithTitle:SCILocalized(@"p_dm_lastactive_t") subtitle:SCILocalized(@"p_dm_lastactive_s") defaultsKey:@"dm_full_last_active"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_dm_voicecall_t") subtitle:SCILocalized(@"p_dm_voicecall_s") defaultsKey:@"hide_voice_call_button" requiresRestart:YES],
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_dm_videocall_t") subtitle:SCILocalized(@"p_dm_videocall_s") defaultsKey:@"hide_video_call_button" requiresRestart:YES]
                 ]
@@ -33,9 +32,6 @@
                 @"rows": @[
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_replay_t") subtitle:SCILocalized(@"p_sm_replay_s") defaultsKey:@"unlimited_replay"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_viewonce_t") subtitle:SCILocalized(@"p_sm_viewonce_s") defaultsKey:@"disable_view_once_limitations"],
-                    [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_screenshot_t") subtitle:SCILocalized(@"p_sm_screenshot_s") defaultsKey:@"remove_screenshot_alert"],
-                    [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_seen_t") subtitle:SCILocalized(@"p_sm_seen_s") defaultsKey:@"no_seen_receipt"],
-                    [SCISetting switchCellWithTitle:SCILocalized(@"story_seen_button_title") subtitle:SCILocalized(@"story_seen_button_sub") defaultsKey:@"story_seen_button"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_story_dl_title") subtitle:SCILocalized(@"p_story_dl_sub") defaultsKey:@"story_download_button"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_instants_t") subtitle:SCILocalized(@"p_sm_instants_s") defaultsKey:@"disable_instants_creation" requiresRestart:YES]
                 ]

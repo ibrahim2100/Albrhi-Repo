@@ -18,7 +18,6 @@
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_general_ads_t") subtitle:SCILocalized(@"p_general_ads_s") defaultsKey:@"hide_ads"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_general_metaai_t") subtitle:SCILocalized(@"p_general_metaai_s") defaultsKey:@"hide_meta_ai"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_general_copydesc_t") subtitle:SCILocalized(@"p_general_copydesc_s") defaultsKey:@"copy_description"],
-                    [SCISetting switchCellWithTitle:SCILocalized(@"p_general_norecent_t") subtitle:SCILocalized(@"p_general_norecent_s") defaultsKey:@"no_recent_searches"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_general_colorpicker_t") subtitle:SCILocalized(@"p_general_colorpicker_s") defaultsKey:@"detailed_color_picker"],
                 ]
             },
