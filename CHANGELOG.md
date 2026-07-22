@@ -1,5 +1,9 @@
 # Albrhi Changelog
 
+## v3.1.9.1
+
+Same as 3.1.9, rebuilt so the corrected timestamp scan can be tried on device.
+
 ## v3.1.9
 
 **New**
