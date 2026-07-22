@@ -652,6 +652,19 @@
     return [NSURL URLWithString:encoded];
 }
 
+// Ranks one video representation above another: resolution first (a bigger frame
+// is the headline win), then frame rate (so 1080p60 is taken over 1080p30 when
+// both exist — the source's real smoothness, not a forced 30), then bitrate.
++ (BOOL)dashRep:(NSDictionary *)a beats:(NSDictionary *)b {
+    long long areaA = [a[@"area"] longLongValue], areaB = [b[@"area"] longLongValue];
+    if (areaA != areaB) return areaA > areaB;
+
+    double fpsA = [a[@"fps"] doubleValue], fpsB = [b[@"fps"] doubleValue];
+    if (fpsA != fpsB) return fpsA > fpsB;
+
+    return [a[@"bandwidth"] longLongValue] > [b[@"bandwidth"] longLongValue];
+}
+
 + (NSDictionary *)transcodePlanForVideo:(id)video media:(id)media {
     @try {
         NSArray<NSDictionary *> *reps = [self dashRepresentationsForVideo:video media:media];
@@ -677,7 +690,7 @@
             }
 
             if ([family isEqualToString:@"av1"]) {
-                if (!bestAV1 || [rep[@"area"] longLongValue] > [bestAV1[@"area"] longLongValue]) {
+                if (!bestAV1 || [self dashRep:rep beats:bestAV1]) {
                     bestAV1 = rep;
                 }
             }

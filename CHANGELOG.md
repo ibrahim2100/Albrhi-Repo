@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v3.1.8.8
+
+- When Instagram offers the same resolution at both 30 and 60 fps, the transcode
+  now picks 60 — it followed the source before but kept whichever the manifest
+  listed first, so a 60 fps version could be missed. Output frame rate still
+  matches the video; most clips are simply 30 fps at the source.
+
 ## v3.1.8.7
 
 - The AV1 transcode now shows a modern floating banner at the top of the screen
