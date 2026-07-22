@@ -285,6 +285,23 @@
 @property IGUser *user;
 @end
 
+// DM thread header: the call buttons and the title/presence view.
+@interface IGDirectCallButton : UIView
+@end
+
+@interface IGDirectThreadCallButtonsCoordinator : NSObject
+@end
+
+@interface IGDirectLeftAlignedTitleView : UIView
+@end
+
+// Both removal paths for an unsent message.
+@interface IGDirectRealtimeIrisThreadDelta : NSObject
+@end
+
+@interface IGDirectMessageUpdate : NSObject
+@end
+
 @interface IGCoreTextView : UIView
 @property(nonatomic, strong) NSString *text;
 - (void)addHandleLongPress; // new

@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v3.1.9.6
+
+**New — Messages**
+- **Keep deleted messages.** Preserves what others unsend. Pull-to-refresh in the
+  inbox clears them.
+- **Full last-active time.** A real date instead of "Active 2h ago", in whichever
+  format you chose under Appearance.
+- **Hide the voice and video call buttons** in a chat header, separately.
+
 ## v3.1.9.5
 
 **New**
