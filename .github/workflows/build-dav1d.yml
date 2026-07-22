@@ -1,0 +1,41 @@
+# Builds the dav1d static libraries for iOS and uploads them as an artifact.
+#
+# Deliberately isolated from the tweak build: it runs only on manual dispatch,
+# produces nothing that the release pipeline consumes, and touches no file the
+# tweak links against. The point is to get dav1d cross-compiling cleanly in its
+# own corner — the first runs are expected to fail and be iterated on — without
+# ever putting the working build at risk. Once the artifact is proven, a later
+# change vendors it and wires in the transcoder.
+name: Build dav1d for iOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      dav1d_version:
+        description: dav1d tag to build
+        default: "1.4.3"
+        required: false
+
+jobs:
+  dav1d:
+    name: Cross-compile dav1d (arm64 + arm64e)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install meson and ninja
+        run: brew install meson ninja
+
+      - name: Build dav1d
+        run: |
+          chmod +x tools/build-dav1d.sh
+          DAV1D_VERSION="${{ github.event.inputs.dav1d_version }}" tools/build-dav1d.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dav1d-ios
+          path: dist/dav1d
+          if-no-files-found: error
