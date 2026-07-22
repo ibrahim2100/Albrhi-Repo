@@ -129,12 +129,10 @@ static SCIBackup *sciBackupDelegate = nil;
     // Apply only recognised keys — anything else in the file is ignored.
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSSet *allowed = [NSSet setWithArray:[SCIBackup keys]];
-    NSInteger applied = 0;
 
     for (NSString *key in settings) {
         if (![allowed containsObject:key]) continue;
         [defaults setObject:settings[key] forKey:key];
-        applied++;
     }
 
     [defaults synchronize];
