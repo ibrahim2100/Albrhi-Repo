@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.1.9\n\n**New**\n- **Time-only and date-and-time formats**, plus a 12/24-hour switch that every\n  preset showing a clock obeys. Relative times are now off by default when the\n  feature is on — turning it on means you wanted a real time, not \"an hour ago\".\n- **Custom date formats.** Replace Instagram's \"2h\" with a real date, or show both.\n  Presets, your own pattern (`{DD}/{MM}/{YYYY} {HH}:{mm}` and friends), a compact\n  or worded relative style, and a threshold for how long relative times last.\n  Under Settings → Appearance.\n- **OLED theme.** Turns Instagram's dark grey into true black. Written from\n  scratch, not adapted — the published OLED tweaks carry no licence, so their code\n  cannot go into a GPLv3 project.\n\n**Changed**\n- The welcome screen shown after an update was still describing 3.1.4; it now\n  reflects what actually shipped since.\n- README features and roadmap brought up to date.\n\n## v3.1.8.8\n\n- When Instagram offers the same resolution at both 30 and 60 fps, the transcode\n  now picks 60 — it followed the source before but kept whichever the manifest\n  listed first, so a 60 fps version could be missed. Output frame rate still\n  matches the video; most clips are simply 30 fps at the source.\n\n## v3.1.8.7\n\n- The AV1 transcode now shows a modern floating banner at the top of the screen\n  with a live progress bar, instead of a blocking centre spinner — you can keep\n  scrolling reels while a clip transcodes behind it.",
+          "markdown": "## v3.1.9.1\n\nSame as 3.1.9, rebuilt so the corrected timestamp scan can be tried on device.\n\n## v3.1.9\n\n**New**\n- **Time-only and date-and-time formats**, plus a 12/24-hour switch that every\n  preset showing a clock obeys. Relative times are now off by default when the\n  feature is on — turning it on means you wanted a real time, not \"an hour ago\".\n- **Custom date formats.** Replace Instagram's \"2h\" with a real date, or show both.\n  Presets, your own pattern (`{DD}/{MM}/{YYYY} {HH}:{mm}` and friends), a compact\n  or worded relative style, and a threshold for how long relative times last.\n  Under Settings → Appearance.\n- **OLED theme.** Turns Instagram's dark grey into true black. Written from\n  scratch, not adapted — the published OLED tweaks carry no licence, so their code\n  cannot go into a GPLv3 project.\n\n**Changed**\n- The welcome screen shown after an update was still describing 3.1.4; it now\n  reflects what actually shipped since.\n- README features and roadmap brought up to date.\n\n## v3.1.8.8\n\n- When Instagram offers the same resolution at both 30 and 60 fps, the transcode\n  now picks 60 — it followed the source before but kept whichever the manifest\n  listed first, so a 60 fps version could be missed. Output frame rate still\n  matches the video; most clips are simply 30 fps at the source.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.1.9"
+          "text": "3.1.9.1"
         },
         {
           "class": "DepictionTableTextView",
