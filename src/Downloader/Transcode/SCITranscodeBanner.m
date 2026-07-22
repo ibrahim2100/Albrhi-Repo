@@ -110,10 +110,10 @@
     self.titleLabel.textAlignment = NSTextAlignmentCenter;
     self.detailLabel.textAlignment = NSTextAlignmentCenter;
     self.titleLabel.adjustsFontSizeToFitWidth = YES;
-    self.titleLabel.minimumScaleFactor = 0.75;
+    self.titleLabel.minimumScaleFactor = 0.5;
     self.titleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
     self.detailLabel.adjustsFontSizeToFitWidth = YES;
-    self.detailLabel.minimumScaleFactor = 0.8;
+    self.detailLabel.minimumScaleFactor = 0.5;
     self.detailLabel.lineBreakMode = NSLineBreakByTruncatingTail;
 
     self.percentLabel = [self labelWithSize:15 weight:UIFontWeightBold];
@@ -162,12 +162,13 @@
         [self.resultIcon.widthAnchor constraintEqualToConstant:22],
         [self.resultIcon.heightAnchor constraintEqualToConstant:22],
 
-        // Centered in the card, clear of the spinner (leading) and percent (trailing).
-        [text.centerXAnchor constraintEqualToAnchor:self.card.centerXAnchor],
-        [text.leadingAnchor constraintGreaterThanOrEqualToAnchor:self.spinner.trailingAnchor constant:12],
+        // The text fills the whole span between the spinner and the percent, and its
+        // labels are centre-aligned within it — so it reads centred but never loses
+        // width to a centreX tug-of-war (which was truncating the resolution).
+        [text.leadingAnchor constraintEqualToAnchor:self.spinner.trailingAnchor constant:12],
+        [text.trailingAnchor constraintEqualToAnchor:self.percentLabel.leadingAnchor constant:-8],
         [text.topAnchor constraintEqualToAnchor:self.card.topAnchor constant:12],
 
-        [self.percentLabel.leadingAnchor constraintGreaterThanOrEqualToAnchor:text.trailingAnchor constant:8],
         [self.percentLabel.trailingAnchor constraintEqualToAnchor:self.card.trailingAnchor constant:-16],
         [self.percentLabel.centerYAnchor constraintEqualToAnchor:text.centerYAnchor],
 

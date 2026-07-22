@@ -1,6 +1,6 @@
 # Albrhi Changelog
 
-## v3.2 — a real leap
+## v3.2.1 — a real leap
 
 - **1080p downloads on device** — AV1 decoded with dav1d, re-encoded to H.264 with a live progress banner. Optional.
 - **Full DASH quality ladder** — best saveable H.264/HEVC taken automatically.

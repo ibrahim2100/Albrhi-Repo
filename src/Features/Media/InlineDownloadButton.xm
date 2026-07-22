@@ -129,47 +129,77 @@ static void SCIDownloadMedia(id media, UIView *anchorView) {
 
 // MARK: - Carousels
 
-// Finds the IGPageMediaView (a multi-item carousel) inside a view subtree.
-static IGPageMediaView *SCIFindPageMediaView(UIView *view, NSInteger depth) {
-    if (!view || depth > 6) return nil;
-    if ([view isKindOfClass:%c(IGPageMediaView)]) return (IGPageMediaView *)view;
+// IGMedia answers whether it is a multi-item post and hands back the child media —
+// far more reliable than hunting the view hierarchy for the (Swift, non-view)
+// IGPageMediaView, whose accessors also changed on IG 410.
+static BOOL SCIMediaIsCarousel(id media) {
+    if (!media) return NO;
+    @try {
+        if ([media respondsToSelector:@selector(isCarousel)]) return [[media valueForKey:@"isCarousel"] boolValue];
+    } @catch (__unused id e) {}
+    return NO;
+}
 
-    for (UIView *sub in view.subviews) {
-        IGPageMediaView *found = SCIFindPageMediaView(sub, depth + 1);
-        if (found) return found;
+static NSArray *SCICarouselChildren(id media) {
+    if (!SCIMediaIsCarousel(media)) return nil;
+
+    for (NSString *key in @[@"carouselMedia", @"items"]) {
+        id children = nil;
+        @try { children = [media valueForKey:key]; } @catch (__unused id e) {}
+        if ([children isKindOfClass:[NSArray class]] && [(NSArray *)children count] > 1) return children;
     }
     return nil;
 }
 
-// The carousel backing this action row, if the post is a multi-item one. Walks up to
-// the enclosing cell, then down for the page view.
-static IGPageMediaView *SCICarouselForButtonBar(UIView *bar) {
-    UIView *cell = bar;
-    NSInteger up = 0;
-    while (cell && up++ < 10 && ![cell isKindOfClass:[UICollectionViewCell class]]) {
-        cell = cell.superview;
+// The child media of the carousel backing this action row. The resolved media may be
+// the current slide (not itself a carousel), so the owner chain is walked for the
+// parent post that is.
+static NSArray *SCICarouselChildrenForBar(UIView *bar) {
+    NSArray *children = SCICarouselChildren(SCIMediaForButtonBar(bar));
+    if (children) return children;
+
+    UIView *ancestor = bar;
+    NSInteger depth = 0;
+    while (ancestor && depth++ < 14) {
+        for (NSString *key in @[@"media", @"post", @"feedItem", @"mediaCellFeedItem"]) {
+            id media = nil;
+            @try { media = [ancestor valueForKey:key]; } @catch (__unused id e) {}
+
+            children = SCICarouselChildren(media);
+            if (children) return children;
+
+            @try {
+                id nested = media ? [media valueForKey:@"media"] : nil;
+                children = SCICarouselChildren(nested);
+                if (children) return children;
+            } @catch (__unused id e) {}
+        }
+
+        id responder = [ancestor nextResponder];
+        if ([responder isKindOfClass:[UIViewController class]]) {
+            for (NSString *key in @[@"media", @"post", @"feedItem"]) {
+                id media = nil;
+                @try { media = [responder valueForKey:key]; } @catch (__unused id e) {}
+                children = SCICarouselChildren(media);
+                if (children) return children;
+            }
+        }
+
+        ancestor = ancestor.superview;
     }
-    if (!cell) cell = bar.superview;
-
-    IGPageMediaView *page = SCIFindPageMediaView(cell, 0);
-    return (page.items.count > 1) ? page : nil;
-}
-
-// Resolves and downloads one carousel slide (photo or video).
-static void SCIDownloadCarouselItem(IGPostItem *item, UIView *anchor) {
-    if (!item) return;
-    [SCIMediaDownloader downloadMedia:item sourceLabel:nil anchor:anchor];
+    return nil;
 }
 
 // The button's action: on a multi-item post, offer "this one" or "all N"; otherwise
 // download the single media directly.
 static void SCIHandleDownloadForBar(UIView *bar, UIView *anchor) {
-    IGPageMediaView *carousel = SCICarouselForButtonBar(bar);
+    id current = SCIMediaForButtonBar(bar);
+    NSArray *children = SCICarouselChildrenForBar(bar);
 
-    if (carousel) {
-        NSArray<IGPostItem *> *items = [carousel.items copy];
-        IGPostItem *current = nil;
-        @try { current = [carousel currentMediaItem]; } @catch (__unused id e) {}
+    if (children.count > 1) {
+        // If the resolved media is a child (not the carousel itself), it *is* the
+        // current slide; otherwise fall back to the first.
+        id currentSlide = SCIMediaIsCarousel(current) ? children.firstObject : (current ?: children.firstObject);
 
         UIAlertController *sheet = [UIAlertController alertControllerWithTitle:nil
                                                                        message:nil
@@ -178,13 +208,13 @@ static void SCIHandleDownloadForBar(UIView *bar, UIView *anchor) {
         [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"p_carousel_current")
                                                   style:UIAlertActionStyleDefault
                                                 handler:^(UIAlertAction *a) {
-            SCIDownloadCarouselItem(current ?: items.firstObject, anchor);
+            [SCIMediaDownloader downloadMedia:currentSlide sourceLabel:nil anchor:anchor];
         }]];
 
-        [sheet addAction:[UIAlertAction actionWithTitle:[NSString stringWithFormat:SCILocalized(@"p_carousel_all"), (long)items.count]
+        [sheet addAction:[UIAlertAction actionWithTitle:[NSString stringWithFormat:SCILocalized(@"p_carousel_all"), (long)children.count]
                                                   style:UIAlertActionStyleDefault
                                                 handler:^(UIAlertAction *a) {
-            for (IGPostItem *item in items) SCIDownloadCarouselItem(item, anchor);
+            for (id child in children) [SCIMediaDownloader downloadMedia:child sourceLabel:nil anchor:anchor];
         }]];
 
         [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel") style:UIAlertActionStyleCancel handler:nil]];
@@ -195,7 +225,7 @@ static void SCIHandleDownloadForBar(UIView *bar, UIView *anchor) {
         return;
     }
 
-    SCIDownloadMedia(SCIMediaForButtonBar(bar), anchor);
+    SCIDownloadMedia(current, anchor);
 }
 
 ///
