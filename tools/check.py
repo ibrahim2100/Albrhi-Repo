@@ -187,6 +187,29 @@ for path in SRC + HDR:
 for key in sorted(used - en_keys):
     report('localized key used but never defined: %s' % key)
 
+# 6b. A stray quote inside a localized value.
+#
+# Rule 5 only catches an *odd* number of quotes. Writing
+#     @"wn_u2_detail": @"Swap "2h" for a real date",
+# leaves the count even, so it slipped through and broke the build at the point
+# where Objective-C stopped reading the string.
+#
+# Counting quotes per line was the first attempt and cried wolf immediately —
+# several entries legitimately put two pairs on one line. So instead: consume
+# every well-formed @"..." literal, and require that what is left between them is
+# only punctuation. A stray quote leaves prose behind, which nothing else does.
+literal_re = re.compile(r'@"(?:[^"\\]|\\.)*"')
+
+for number, line in enumerate(loc.splitlines(), 1):
+    stripped = line.strip()
+    if not stripped.startswith('@"') or '": @"' not in stripped:
+        continue
+
+    leftover = literal_re.sub('', stripped)
+    if not re.fullmatch(r'[\s:,]*', leftover):
+        report('unescaped quote inside a localized value at SCILocalize.m:%d — %s'
+               % (number, stripped[:70]))
+
 # 7. Version consistency across the files a release depends on.
 control = open('control', encoding='utf-8').read()
 control_version = re.search(r'^Version:\s*(\S+)', control, re.M).group(1)

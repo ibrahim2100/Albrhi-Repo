@@ -251,7 +251,7 @@ static NSDictionary *_arTable = nil;
         @"wn_u1_title": @"1080p downloads, on your phone",
         @"wn_u1_detail": @"Instagram keeps its best video in a format iOS refuses to save. Albrhi now converts it on the device — nothing is uploaded anywhere. Turn it on in Downloads.",
         @"wn_u2_title": @"Dates, your way",
-        @"wn_u2_detail": @"Swap "2h" for a real date, or show both. Presets, your own pattern, and a threshold for how long relative times stick around.",
+        @"wn_u2_detail": @"Swap “2h” for a real date, or show both. Presets, your own pattern, and a threshold for how long relative times stick around.",
         @"wn_u3_title": @"True black",
         @"wn_u3_detail": @"An OLED theme that turns Instagram’s dark grey into real black. Easier on the eyes and on the battery.",
         @"wn_u4_title": @"A source you can manage",
