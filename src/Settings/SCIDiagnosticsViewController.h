@@ -94,6 +94,11 @@ NS_ASSUME_NONNULL_BEGIN
 /// difference between showing the true minute and showing an approximation.
 + (void)recordDateRewrite:(NSString *)original exact:(BOOL)exact;
 
+/// How many of Instagram's NSDate formatting selectors were found and hooked.
+/// Zero means this build names them differently and the feature cannot work,
+/// which is worth knowing before hunting anywhere else.
++ (void)recordDateHooksInstalled:(NSInteger)count;
+
 @end
 
 NS_ASSUME_NONNULL_END

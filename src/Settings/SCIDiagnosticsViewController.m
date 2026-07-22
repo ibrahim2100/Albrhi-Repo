@@ -22,6 +22,7 @@ static BOOL _dashProbeRan = NO;
 static NSMutableArray<NSString *> *_transcodeStages = nil;
 static NSMutableDictionary<NSString *, NSNumber *> *_dateFormatterCounts = nil;
 static NSMutableArray<NSString *> *_dateFormatterSamples = nil;
+static NSInteger _dateHooksInstalled = -1;
 static NSInteger _dateRewrites = 0;
 static NSInteger _dateRewritesExact = 0;
 static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
@@ -115,6 +116,10 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
             }
         }
     }
+}
+
++ (void)recordDateHooksInstalled:(NSInteger)count {
+    _dateHooksInstalled = count;
 }
 
 + (void)recordDateRewrite:(NSString *)original exact:(BOOL)exact {
@@ -606,13 +611,22 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
 
 - (NSArray<NSDictionary *> *)dateRewriteRows {
     @synchronized ([SCIDiagnostics class]) {
+        NSMutableArray<NSDictionary *> *rows = [NSMutableArray array];
+
+        // The attach count answers "is this even possible on this build" before
+        // any question about whether the format looks right.
+        [rows addObject:@{@"title": SCILocalized(@"diag_dr_hooks"),
+                          @"detail": _dateHooksInstalled < 0 ? @"—"
+                                     : [NSString stringWithFormat:@"%ld", (long)_dateHooksInstalled],
+                          @"ok": @(_dateHooksInstalled > 0)}];
+
         if (_dateRewrites == 0) {
-            return @[@{@"title": SCILocalized(@"diag_dr_none"),
-                       @"detail": SCILocalized(@"diag_dr_hint"),
-                       @"ok": @NO}];
+            [rows addObject:@{@"title": SCILocalized(@"diag_dr_none"),
+                              @"detail": SCILocalized(@"diag_dr_hint"),
+                              @"ok": @NO}];
+            return rows;
         }
 
-        NSMutableArray<NSDictionary *> *rows = [NSMutableArray array];
         [rows addObject:@{@"title": SCILocalized(@"diag_dr_count"),
                           @"detail": [NSString stringWithFormat:@"%ld (%ld exact)",
                                       (long)_dateRewrites, (long)_dateRewritesExact],

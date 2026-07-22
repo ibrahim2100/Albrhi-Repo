@@ -206,6 +206,9 @@ Issues and pull requests are welcome.
 ## Credits
 
 - **[SoCuul](https://github.com/SoCuul)** — author of [SCInsta](https://github.com/SoCuul/SCInsta), the project Albrhi is derived from.
+- **[RyukGram](https://github.com/faroukbmiled/RyukGram)** by faroukbmiled (GPLv3) — a fellow
+  SCInsta fork, which identified the NSDate category methods Instagram formats its timestamps
+  through. Albrhi's date feature attaches to the same methods.
 - **[JGProgressHUD](https://github.com/JonasGessner/JGProgressHUD)** by Jonas Gessner — MIT.
 - **[FLEXing](https://github.com/SoCuul/FLEXing)** — runtime debugging support.
 - **Ibrahim Ismail AL-Rahn** — Albrhi rebuild, bilingual layer, download engine fixes and design.
