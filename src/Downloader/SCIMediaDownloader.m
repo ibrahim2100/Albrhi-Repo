@@ -18,10 +18,10 @@
         return;
     }
 
-    // Always the best rendition available. The pre-download quality picker was
-    // removed — Instagram's rendition list proved unreliable to present, and
-    // "highest quality" is what the setting existed to reach anyway.
-    NSURL *url = [SCIUtils getVideoUrl:video];
+    // Best saveable rendition: the DASH ladder often carries a higher H.264/HEVC
+    // than -videoVersions exposes. -getBestVideoUrl: falls back to the proven
+    // -videoVersions path whenever DASH offers nothing iOS can save.
+    NSURL *url = [SCIUtils getBestVideoUrl:video];
 
     if (!url) {
         [SCIUtils showErrorHUDWithDescription:SCILocalized(@"err_no_video")];

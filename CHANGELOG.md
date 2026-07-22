@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v3.1.8.3
+
+- Video downloads now read Instagram's full DASH quality ladder, not just the
+  single ready-made rendition. When a higher H.264/HEVC version is available it
+  is taken automatically; otherwise nothing changes. Groundwork for saving the
+  AV1-only qualities is in place but not yet switched on.
+
 ## v3.1.8.2
 
 - The DASH diagnostic from 3.1.8.1 came back empty because it questioned only

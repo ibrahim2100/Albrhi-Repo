@@ -320,6 +320,32 @@ static BOOL _dashProbeRan = NO;
                       @"detail": [NSString stringWithFormat:@"%ld", (long)_lastDashRepresentations],
                       @"ok": @(_lastDashRepresentations > 0)}];
 
+    // The ladder tagged by codec is what decides which phase applies: an H.264 or
+    // HEVC video rep higher than 720p is a free win phase one already takes; an
+    // AV1-only ladder is what phase two's transcoder exists for.
+    NSInteger saveable = 0;
+    for (NSDictionary *rep in [SCIUtils dashRepresentationsFromXML:_lastDashXML]) {
+        if (![rep[@"type"] isEqualToString:@"video"]) continue;
+
+        NSString *family = rep[@"family"];
+        BOOL ok = [family isEqualToString:@"h264"] || [family isEqualToString:@"hevc"];
+        if (ok) saveable++;
+
+        [rows addObject:@{
+            @"title": [NSString stringWithFormat:@"%@×%@",
+                       rep[@"width"], rep[@"height"]],
+            @"detail": [NSString stringWithFormat:@"%@ · %.1f Mbps%@",
+                        [family length] ? family : rep[@"codecs"],
+                        [rep[@"bandwidth"] doubleValue] / 1000000.0,
+                        ok ? @"" : SCILocalized(@"diag_dash_needs_transcode")],
+            @"ok": @(ok)
+        }];
+    }
+
+    [rows addObject:@{@"title": SCILocalized(@"diag_dash_saveable"),
+                      @"detail": [NSString stringWithFormat:@"%ld", (long)saveable],
+                      @"ok": @(saveable > 0)}];
+
     // Enough of the XML to confirm on screen that it is a real manifest. The
     // full text goes into the copied report instead: these cells self-size, and
     // a manifest pasted whole would push everything below it off the page.

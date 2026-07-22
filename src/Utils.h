@@ -73,6 +73,21 @@
 /// against a guessed schema.
 + (nullable NSString *)dashManifestXMLForVideo:(nullable id)video media:(nullable id)media;
 
+/// Every DASH representation on a video, video and audio alike, each tagged with
+/// its codec family, dimensions and direct URL. Empty when the build exposes no
+/// manifest. Phase two reads the audio and AV1 entries; phase one uses only the
+/// saveable video ones.
++ (NSArray<NSDictionary *> *)dashRepresentationsForVideo:(nullable id)video media:(nullable id)media;
+
+/// The same, parsed from a manifest string already in hand (the diagnostics page
+/// keeps the last one), so the ladder can be shown without another live fetch.
++ (NSArray<NSDictionary *> *)dashRepresentationsFromXML:(nullable NSString *)xml;
+
+/// The highest-resolution rendition iOS can save as-is, drawn from the DASH ladder
+/// and -videoVersions together. Never returns less than -getVideoUrl: would: that
+/// remains the floor, so an AV1-only clip still downloads at its progressive best.
++ (nullable NSURL *)getBestVideoUrl:(nullable IGVideo *)video;
+
 /// Every zero-argument selector on an object's class hierarchy whose name
 /// contains @c needle, case-insensitively.
 ///

@@ -479,6 +479,151 @@
     return nil;
 }
 
+// MARK: - DASH ladder
+
+// Reads a numeric attribute (width="1080") from a single Representation block.
+// The \b guards against width="…" matching inside bandWIDTH="…" — a bug that once
+// reported the bitrate as the width.
++ (long long)dashInt:(NSString *)name inBlock:(NSString *)block {
+    NSRegularExpression *regex =
+        [NSRegularExpression regularExpressionWithPattern:[NSString stringWithFormat:@"\\b%@=\"(\\d+)\"", name]
+                                                  options:NSRegularExpressionCaseInsensitive
+                                                    error:nil];
+    NSTextCheckingResult *m = [regex firstMatchInString:block options:0 range:NSMakeRange(0, block.length)];
+    if (!m || m.numberOfRanges < 2) return 0;
+    return [[block substringWithRange:[m rangeAtIndex:1]] longLongValue];
+}
+
+// Reads a string attribute (codecs="avc1.64…") from a Representation block.
++ (NSString *)dashString:(NSString *)name inBlock:(NSString *)block {
+    NSRegularExpression *regex =
+        [NSRegularExpression regularExpressionWithPattern:[NSString stringWithFormat:@"\\b%@=\"([^\"]+)\"", name]
+                                                  options:NSRegularExpressionCaseInsensitive
+                                                    error:nil];
+    NSTextCheckingResult *m = [regex firstMatchInString:block options:0 range:NSMakeRange(0, block.length)];
+    if (!m || m.numberOfRanges < 2) return nil;
+    return [block substringWithRange:[m rangeAtIndex:1]];
+}
+
+// Reads and XML-unescapes the <BaseURL> of a Representation block, absolute only.
++ (NSString *)dashBaseURLInBlock:(NSString *)block {
+    NSRegularExpression *regex =
+        [NSRegularExpression regularExpressionWithPattern:@"<BaseURL>(.*?)</BaseURL>"
+                                                  options:NSRegularExpressionCaseInsensitive | NSRegularExpressionDotMatchesLineSeparators
+                                                    error:nil];
+    NSTextCheckingResult *m = [regex firstMatchInString:block options:0 range:NSMakeRange(0, block.length)];
+    if (!m || m.numberOfRanges < 2) return nil;
+
+    NSString *url = [[block substringWithRange:[m rangeAtIndex:1]]
+                     stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+
+    url = [url stringByReplacingOccurrencesOfString:@"&amp;" withString:@"&"];
+    url = [url stringByReplacingOccurrencesOfString:@"&lt;" withString:@"<"];
+    url = [url stringByReplacingOccurrencesOfString:@"&gt;" withString:@">"];
+    url = [url stringByReplacingOccurrencesOfString:@"&quot;" withString:@"\""];
+
+    // Relative BaseURLs would need an MPD base we do not track.
+    return [url hasPrefix:@"http"] ? url : nil;
+}
+
+// Which family a DASH codecs string belongs to, in terms of what iOS can save:
+//   "h264" (avc1/avc3), "hevc" (hvc1/hev1), "av1" (av01), "vp9" (vp09/vp9), or nil.
+// H.264/HEVC save straight to Photos; AV1/VP9 need transcoding first (phase two).
++ (NSString *)dashCodecFamily:(NSString *)codecs {
+    NSString *c = [codecs lowercaseString];
+    if (![c length]) return nil;
+    if ([c hasPrefix:@"avc1"] || [c hasPrefix:@"avc3"]) return @"h264";
+    if ([c hasPrefix:@"hvc1"] || [c hasPrefix:@"hev1"]) return @"hevc";
+    if ([c hasPrefix:@"av01"]) return @"av1";
+    if ([c hasPrefix:@"vp09"] || [c hasPrefix:@"vp9"]) return @"vp9";
+    return nil;
+}
+
++ (NSArray<NSDictionary *> *)dashRepresentationsForVideo:(id)video media:(id)media {
+    return [self dashRepresentationsFromXML:[self dashManifestXMLForVideo:video media:media]];
+}
+
++ (NSArray<NSDictionary *> *)dashRepresentationsFromXML:(NSString *)xml {
+    if (![xml length] || [xml rangeOfString:@"<Representation"].location == NSNotFound) return @[];
+
+    NSRegularExpression *repRegex =
+        [NSRegularExpression regularExpressionWithPattern:@"<Representation\\b[^>]*>.*?</Representation>"
+                                                  options:NSRegularExpressionCaseInsensitive | NSRegularExpressionDotMatchesLineSeparators
+                                                    error:nil];
+
+    NSMutableArray<NSDictionary *> *out = [NSMutableArray array];
+
+    for (NSTextCheckingResult *match in [repRegex matchesInString:xml options:0 range:NSMakeRange(0, xml.length)]) {
+        NSString *block = [xml substringWithRange:match.range];
+
+        NSString *baseURL = [self dashBaseURLInBlock:block];
+        if (![baseURL length]) continue;
+
+        NSString *codecs = [self dashString:@"codecs" inBlock:block];
+        long long w = [self dashInt:@"width" inBlock:block];
+        long long h = [self dashInt:@"height" inBlock:block];
+        long long bandwidth = [self dashInt:@"bandwidth" inBlock:block];
+
+        // A Representation with no dimensions is the audio track; keep it tagged so
+        // phase two can pair it with a transcoded video stream.
+        NSString *type = (w > 0 && h > 0) ? @"video" : @"audio";
+
+        [out addObject:@{
+            @"type": type,
+            @"url": baseURL,
+            @"codecs": codecs ?: @"",
+            @"family": [self dashCodecFamily:codecs] ?: @"",
+            @"width": @(w),
+            @"height": @(h),
+            @"area": @(w * h),
+            @"bandwidth": @(bandwidth)
+        }];
+    }
+
+    return out;
+}
+
+// The best video URL that iOS can save as-is: the highest-resolution H.264/HEVC
+// rendition across the DASH ladder AND -videoVersions.
+//
+// -videoVersions stays the floor and the safety net: if DASH exposes nothing
+// saveable (an AV1-only reel, an exception, an unparsable manifest), this returns
+// exactly what the proven path returned. AV1/VP9 renditions are ignored here —
+// saving those is phase two's job, behind its own switch.
++ (NSURL *)getBestVideoUrl:(IGVideo *)video {
+    NSURL *fallback = [self getVideoUrl:video];
+
+    @try {
+        long long fallbackArea = 0;
+        NSURL *best = fallback;
+
+        for (NSDictionary *rep in [self dashRepresentationsForVideo:video media:nil]) {
+            if (![rep[@"type"] isEqualToString:@"video"]) continue;
+
+            NSString *family = rep[@"family"];
+            if (![family isEqualToString:@"h264"] && ![family isEqualToString:@"hevc"]) continue;
+
+            long long area = [rep[@"area"] longLongValue];
+            if (area <= fallbackArea) continue;
+
+            NSURL *url = [NSURL URLWithString:rep[@"url"]];
+            if (!url) {
+                NSString *encoded = [rep[@"url"] stringByAddingPercentEncodingWithAllowedCharacters:
+                                     [NSCharacterSet URLQueryAllowedCharacterSet]];
+                url = [NSURL URLWithString:encoded];
+            }
+            if (!url) continue;
+
+            best = url;
+            fallbackArea = area;
+        }
+
+        return best;
+    } @catch (__unused id e) {
+        return fallback;
+    }
+}
+
 + (NSURL *)getVideoUrlForMedia:(id)media {
     if (!media) return nil;
 

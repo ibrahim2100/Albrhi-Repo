@@ -109,7 +109,10 @@ for path in SRC + HDR:
         code, _ = strip_comment(l)
         if '"' not in code:
             continue
-        if re.sub(r'\.', '', code).count('"') % 2:
+        # Drop escape sequences (\" \\ …) before counting quotes: an escaped quote
+        # inside a regex pattern — @"\\b%@=\"([^\"]+)\"" — is not a string boundary,
+        # and counting it as one flagged perfectly valid lines.
+        if re.sub(r'\\.', '', code).count('"') % 2:
             report('unterminated string literal at %s:%d' % (path, n))
 
 # 8. Project symbols used without the header that declares them.
