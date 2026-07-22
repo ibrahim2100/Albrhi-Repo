@@ -20,6 +20,8 @@ static NSInteger _lastDashRepresentations = 0;
 static NSArray<NSString *> *_lastDashCandidates = nil;
 static BOOL _dashProbeRan = NO;
 static NSMutableArray<NSString *> *_transcodeStages = nil;
+static NSMutableDictionary<NSString *, NSNumber *> *_dateFormatterCounts = nil;
+static NSMutableArray<NSString *> *_dateFormatterSamples = nil;
 
 @implementation SCIDiagnostics
 
@@ -86,6 +88,29 @@ static NSMutableArray<NSString *> *_transcodeStages = nil;
                           ok ? @"✓" : @"✗", name,
                           detail.length ? [@" — " stringByAppendingString:detail] : @""];
         [_transcodeStages addObject:line];
+    }
+}
+
++ (void)recordDateFormatter:(NSString *)formatter sample:(NSString *)sample {
+    if (!formatter.length) return;
+
+    // These hooks fire constantly while scrolling, so the work here stays to a
+    // counter bump and, for the first few calls only, keeping the text.
+    @synchronized (self) {
+        if (!_dateFormatterCounts) {
+            _dateFormatterCounts = [NSMutableDictionary dictionary];
+            _dateFormatterSamples = [NSMutableArray array];
+        }
+
+        NSNumber *count = _dateFormatterCounts[formatter];
+        _dateFormatterCounts[formatter] = @(count.integerValue + 1);
+
+        if (sample.length && sample.length <= 40 && _dateFormatterSamples.count < 10) {
+            NSString *entry = [NSString stringWithFormat:@"%@ → \"%@\"", formatter, sample];
+            if (![_dateFormatterSamples containsObject:entry]) {
+                [_dateFormatterSamples addObject:entry];
+            }
+        }
     }
 }
 
@@ -387,6 +412,7 @@ static NSMutableArray<NSString *> *_transcodeStages = nil;
         @{@"header": SCILocalized(@"diag_section_dash"), @"rows": [self dashRows]},
         @{@"header": SCILocalized(@"diag_section_transcode"), @"rows": [self transcodeRows]},
         @{@"header": SCILocalized(@"diag_section_scan"), @"rows": [self scanRows]},
+        @{@"header": SCILocalized(@"diag_section_dateformat"), @"rows": [self dateFormatterRows]},
         @{@"header": SCILocalized(@"diag_section_timestamps"), @"rows": [self timestampRows]},
         @{@"header": SCILocalized(@"diag_section_stories"), @"rows": @[
             @{@"title": SCILocalized(@"diag_seen_replay"),
@@ -558,6 +584,30 @@ static NSMutableArray<NSString *> *_transcodeStages = nil;
 
     [[[UINotificationFeedbackGenerator alloc] init] notificationOccurred:UINotificationFeedbackTypeSuccess];
     [self.tableView reloadData];
+}
+
+- (NSArray<NSDictionary *> *)dateFormatterRows {
+    @synchronized ([SCIDiagnostics class]) {
+        if (!_dateFormatterCounts.count) {
+            return @[@{@"title": SCILocalized(@"diag_df_none"),
+                       @"detail": SCILocalized(@"diag_df_hint"),
+                       @"ok": @NO}];
+        }
+
+        NSMutableArray<NSDictionary *> *rows = [NSMutableArray array];
+
+        // The count is the answer: a formatter Instagram never calls cannot carry
+        // the custom format, however plausible it looked.
+        for (NSString *name in [_dateFormatterCounts.allKeys sortedArrayUsingSelector:@selector(compare:)]) {
+            [rows addObject:@{@"title": name,
+                              @"detail": [NSString stringWithFormat:@"%@ calls", _dateFormatterCounts[name]],
+                              @"ok": @YES}];
+        }
+        for (NSString *sample in _dateFormatterSamples) {
+            [rows addObject:@{@"title": sample, @"detail": @"", @"ok": @YES}];
+        }
+        return rows;
+    }
 }
 
 - (NSArray<NSDictionary *> *)timestampRows {

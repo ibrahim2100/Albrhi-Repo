@@ -82,6 +82,13 @@ NS_ASSUME_NONNULL_BEGIN
 /// the hook can be written against a verified class.
 + (NSArray<NSString *> *)scanForTimestampLabels;
 
+/// Called from the date hooks with the formatter that ran and what it produced.
+///
+/// Which Foundation formatter Instagram uses decides whether custom dates can
+/// reach every surface at once. Counting the calls and keeping a few samples
+/// answers that from the device instead of from assumption.
++ (void)recordDateFormatter:(NSString *)formatter sample:(nullable NSString *)sample;
+
 @end
 
 NS_ASSUME_NONNULL_END
