@@ -135,7 +135,7 @@ actually attached at runtime, with one-tap issue reporting.
 | | |
 |---|---|
 | **iOS** | 15.0 and later |
-| **Architecture** | `arm64` |
+| **Architecture** | `arm64` — runs on arm64 and arm64e devices |
 | **Instagram** | Built and tested on **410.1.0** *(not a ceiling — see below)* |
 | **Jailbreaks** | Rootless (Dopamine, palera1n) · roothide · rootful (unc0ver, checkra1n) |
 | **Sideloading** | Supported via the bundled FLEXing sub-project |
