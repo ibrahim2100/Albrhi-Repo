@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.1.8.3\n\n- Video downloads now read Instagram's full DASH quality ladder, not just the\n  single ready-made rendition. When a higher H.264/HEVC version is available it\n  is taken automatically; otherwise nothing changes. Groundwork for saving the\n  AV1-only qualities is in place but not yet switched on.\n\n## v3.1.8.2\n\n- The DASH diagnostic from 3.1.8.1 came back empty because it questioned only\n  the video object, and because the names it looked for were guesses. It now\n  asks the media object too, and asks the runtime which names exist instead of\n  assuming. Diagnostics only — nothing else changes.\n\n## v3.1.8.1\n\n- Diagnostics now reports the DASH manifest Instagram serves for a video, and\n  how many renditions it lists. Groundwork for improving download quality —\n  nothing else changes.",
+          "markdown": "## v3.1.8.4\n\n- **Experimental: 1080p downloads via on-device transcoding.** Instagram serves\n  its high-quality video as AV1, which iOS cannot save. Turn on \"Transcode AV1 to\n  1080p\" in Downloads and Albrhi re-encodes it to H.264 on the device — no server,\n  nothing sent anywhere. It is heavier on battery and slower, so it is off by\n  default; when off, or if a transcode fails, downloads behave exactly as before.\n\n## v3.1.8.3\n\n- Video downloads now read Instagram's full DASH quality ladder, not just the\n  single ready-made rendition. When a higher H.264/HEVC version is available it\n  is taken automatically; otherwise nothing changes. Groundwork for saving the\n  AV1-only qualities is in place but not yet switched on.\n\n## v3.1.8.2\n\n- The DASH diagnostic from 3.1.8.1 came back empty because it questioned only\n  the video object, and because the names it looked for were guesses. It now\n  asks the media object too, and asks the runtime which names exist instead of\n  assuming. Diagnostics only — nothing else changes.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.1.8.3"
+          "text": "3.1.8.4"
         },
         {
           "class": "DepictionTableTextView",
