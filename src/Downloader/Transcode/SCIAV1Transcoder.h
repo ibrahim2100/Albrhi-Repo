@@ -23,10 +23,14 @@ NS_ASSUME_NONNULL_BEGIN
 /// caller should then fall back to the progressive rendition.
 ///
 /// `audioURL` may be nil, in which case the output is video-only.
+/// `progress` is called on an arbitrary thread with a short status string
+/// (a frame count, "muxing", …) so the caller can show it and the user can tell
+/// a slow transcode from a stuck one. May be nil.
 + (BOOL)transcodeVideoURL:(NSURL *)videoURL
                  audioURL:(nullable NSURL *)audioURL
                       fps:(double)fps
-             toOutputPath:(NSString *)outputPath;
+             toOutputPath:(NSString *)outputPath
+                 progress:(nullable void (^)(NSString *status))progress;
 
 @end
 

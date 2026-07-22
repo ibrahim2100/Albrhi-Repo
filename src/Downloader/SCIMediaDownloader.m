@@ -216,6 +216,16 @@
                        [plan[@"height"] intValue]];
     JGProgressHUD *hud = [SCIUtils showProgressHUDWithText:label];
 
+    // The transcode reports frame counts and "mux" as it runs; reflecting them in
+    // the HUD lets the user see progress rather than an indefinite spinner.
+    void (^onProgress)(NSString *) = ^(NSString *status) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *suffix = [status isEqualToString:@"mux"] ? SCILocalized(@"transcode_muxing")
+                                                               : [status stringByAppendingString:@"f"];
+            hud.detailTextLabel.text = suffix;
+        });
+    };
+
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
         NSString *out = [NSTemporaryDirectory() stringByAppendingPathComponent:
                          [[NSUUID UUID].UUIDString stringByAppendingPathExtension:@"mp4"]];
@@ -223,7 +233,8 @@
         BOOL ok = [SCIAV1Transcoder transcodeVideoURL:plan[@"videoURL"]
                                              audioURL:plan[@"audioURL"]
                                                   fps:[plan[@"fps"] doubleValue]
-                                         toOutputPath:out];
+                                         toOutputPath:out
+                                             progress:onProgress];
 
         dispatch_async(dispatch_get_main_queue(), ^{
             [hud dismissAnimated:YES];

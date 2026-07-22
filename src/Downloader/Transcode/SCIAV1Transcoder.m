@@ -25,7 +25,8 @@ static void sciNoFreeCallback(const uint8_t *buf, void *cookie) {}
 + (NSString *)downloadToTempFile:(NSURL *)url extension:(NSString *)ext;
 + (CVPixelBufferRef)pixelBufferFromPicture:(Dav1dPicture *)pic CF_RETURNS_RETAINED;
 + (NSArray *)encodeH264FromBitstream:(NSData *)bitstream fps:(double)fps
-                            outWidth:(int *)outW outHeight:(int *)outH;
+                            outWidth:(int *)outW outHeight:(int *)outH
+                            progress:(void (^)(NSString *))progress;
 + (BOOL)muxVideoSamples:(NSArray *)samples audioPath:(NSString *)audioPath outputPath:(NSString *)outputPath;
 + (void)cleanup:(NSArray<NSString *> *)paths;
 @end
@@ -59,7 +60,12 @@ static void sciNoFreeCallback(const uint8_t *buf, void *cookie) {}
         }];
 
     [task resume];
-    dispatch_semaphore_wait(done, DISPATCH_TIME_FOREVER);
+
+    // Bounded: a stalled CDN connection must not hang the whole transcode forever.
+    if (dispatch_semaphore_wait(done, dispatch_time(DISPATCH_TIME_NOW, 90 * NSEC_PER_SEC)) != 0) {
+        [task cancel];
+        return nil;
+    }
     return path;
 }
 
@@ -141,7 +147,8 @@ static void encodeOutput(void *outputCallbackRefCon,
 + (NSArray *)encodeH264FromBitstream:(NSData *)bitstream
                                  fps:(double)fps
                           outWidth:(int *)outW
-                         outHeight:(int *)outH {
+                         outHeight:(int *)outH
+                            progress:(void (^)(NSString *))progress {
     Dav1dSettings settings;
     dav1d_default_settings(&settings);
 
@@ -199,22 +206,40 @@ static void encodeOutput(void *outputCallbackRefCon,
         VTCompressionSessionEncodeFrame(session, pb, pts, dur, NULL, NULL, NULL);
         frameIndex++;
 
+        // Live count so a slow transcode is visibly distinct from a stuck one.
+        if (progress && frameIndex % 15 == 0) {
+            progress([NSString stringWithFormat:@"%d", frameIndex]);
+        }
+
         CVPixelBufferRelease(pb);
     };
 
     // Send, draining decoded frames after each push; EAGAIN just means "more data
     // needed" or "call get_picture again", not an error.
+    size_t lastSize = data.sz + 1;
+    int stalls = 0;
     while (data.sz > 0 && !failed) {
         int r = dav1d_send_data(ctx, &data);
         if (r < 0 && r != DAV1D_ERR(EAGAIN)) { failed = YES; break; }
 
+        BOOL gotPicture = NO;
         Dav1dPicture pic;
         memset(&pic, 0, sizeof(pic));
         while (dav1d_get_picture(ctx, &pic) == 0) {
             handle(&pic);
             dav1d_picture_unref(&pic);
+            gotPicture = YES;
             if (failed) break;
         }
+
+        // Guard against a malformed stream that neither advances nor errors:
+        // if a pass consumes no bytes and yields no frame, give up rather than spin.
+        if (data.sz == lastSize && !gotPicture) {
+            if (++stalls > 32) { failed = YES; break; }
+        } else {
+            stalls = 0;
+        }
+        lastSize = data.sz;
     }
 
     // Drain whatever is still buffered.
@@ -312,9 +337,14 @@ static void encodeOutput(void *outputCallbackRefCon,
     }
     [writer startSessionAtSourceTime:kCMTimeZero];
 
-    // Video: append every compressed sample in order.
+    // Video: append every compressed sample in order. The readiness spin bails the
+    // moment the writer leaves the writing state, so a silent failure ends the
+    // append instead of spinning forever.
     for (id s in samples) {
-        while (!videoInput.isReadyForMoreMediaData) [NSThread sleepForTimeInterval:0.005];
+        while (!videoInput.isReadyForMoreMediaData && writer.status == AVAssetWriterStatusWriting) {
+            [NSThread sleepForTimeInterval:0.005];
+        }
+        if (writer.status != AVAssetWriterStatusWriting) break;
         [videoInput appendSampleBuffer:(__bridge CMSampleBufferRef)s];
     }
     [videoInput markAsFinished];
@@ -323,18 +353,27 @@ static void encodeOutput(void *outputCallbackRefCon,
     if (audioReader && audioInput && [audioReader startReading]) {
         CMSampleBufferRef buf;
         while ((buf = [audioOutput copyNextSampleBuffer])) {
-            while (!audioInput.isReadyForMoreMediaData) [NSThread sleepForTimeInterval:0.005];
-            [audioInput appendSampleBuffer:buf];
+            while (!audioInput.isReadyForMoreMediaData && writer.status == AVAssetWriterStatusWriting) {
+                [NSThread sleepForTimeInterval:0.005];
+            }
+            if (writer.status == AVAssetWriterStatusWriting) {
+                [audioInput appendSampleBuffer:buf];
+            }
             CFRelease(buf);
+            if (writer.status != AVAssetWriterStatusWriting) break;
         }
         [audioInput markAsFinished];
     } else if (audioInput) {
         [audioInput markAsFinished];
     }
 
+    // Bounded so a writer that never calls back cannot hang the pipeline.
     dispatch_semaphore_t done = dispatch_semaphore_create(0);
     [writer finishWritingWithCompletionHandler:^{ dispatch_semaphore_signal(done); }];
-    dispatch_semaphore_wait(done, DISPATCH_TIME_FOREVER);
+    if (dispatch_semaphore_wait(done, dispatch_time(DISPATCH_TIME_NOW, 120 * NSEC_PER_SEC)) != 0) {
+        stage(@"mux", NO, @"finishWriting timed out");
+        return NO;
+    }
 
     BOOL ok = writer.status == AVAssetWriterStatusCompleted;
     stage(@"mux", ok, ok ? @"completed"
@@ -347,11 +386,12 @@ static void encodeOutput(void *outputCallbackRefCon,
 + (BOOL)transcodeVideoURL:(NSURL *)videoURL
                  audioURL:(NSURL *)audioURL
                       fps:(double)fps
-             toOutputPath:(NSString *)outputPath {
+             toOutputPath:(NSString *)outputPath
+                 progress:(void (^)(NSString *))progress {
     if (fps < 1.0) fps = 30.0;
 
     NSString *videoPath = [self downloadToTempFile:videoURL extension:@"mp4"];
-    if (!videoPath) { stage(@"download-video", NO, @"failed"); return NO; }
+    if (!videoPath) { stage(@"download-video", NO, @"failed/timeout"); return NO; }
     stage(@"download-video", YES, nil);
 
     NSString *audioPath = [self downloadToTempFile:audioURL extension:@"mp4"];
@@ -367,12 +407,14 @@ static void encodeOutput(void *outputCallbackRefCon,
     stage(@"demux", YES, [NSString stringWithFormat:@"%lu bytes", (unsigned long)bitstream.length]);
 
     int w = 0, h = 0;
-    NSArray *samples = [self encodeH264FromBitstream:bitstream fps:fps outWidth:&w outHeight:&h];
+    NSArray *samples = [self encodeH264FromBitstream:bitstream fps:fps
+                                           outWidth:&w outHeight:&h progress:progress];
     if (!samples) {
         [self cleanup:@[videoPath, audioPath ?: @""]];
         return NO;
     }
 
+    if (progress) progress(@"mux");
     BOOL ok = [self muxVideoSamples:samples audioPath:audioPath outputPath:outputPath];
 
     [self cleanup:@[videoPath, audioPath ?: @""]];

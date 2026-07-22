@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v3.1.8.5
+
+- The AV1 transcode from 3.1.8.4 could sit on "processing" indefinitely. It now
+  shows a live frame count so progress is visible, cannot hang (every wait is
+  bounded and the muxer bails the moment its writer fails), and reports the
+  failing stage on the Diagnostics page. Still experimental and off by default.
+
 ## v3.1.8.4
 
 - **Experimental: 1080p downloads via on-device transcoding.** Instagram serves
