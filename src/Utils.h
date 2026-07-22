@@ -73,6 +73,15 @@
 /// against a guessed schema.
 + (nullable NSString *)dashManifestXMLForVideo:(nullable id)video media:(nullable id)media;
 
+/// Every zero-argument selector on an object's class hierarchy whose name
+/// contains @c needle, case-insensitively.
+///
+/// The first version of the DASH probe guessed four selector names and found
+/// none of them, which is the mistake this project keeps paying for: a name
+/// that exists in a class dump is not a name the object answers to. Asking the
+/// runtime what the object actually responds to replaces the guess with a fact.
++ (NSArray<NSString *> *)selectorsMatching:(NSString *)needle onObject:(nullable id)object;
+
 // Quality-selection helpers (IGAPIVideoVersion objects or dictionaries)
 + (long long)qualityValueFrom:(id)version key:(NSString *)key;
 + (NSString *)urlStringFromVersion:(id)version;

@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v3.1.8.2
+
+- The DASH diagnostic from 3.1.8.1 came back empty because it questioned only
+  the video object, and because the names it looked for were guesses. It now
+  asks the media object too, and asks the runtime which names exist instead of
+  assuming. Diagnostics only — nothing else changes.
+
 ## v3.1.8.1
 
 - Diagnostics now reports the DASH manifest Instagram serves for a video, and

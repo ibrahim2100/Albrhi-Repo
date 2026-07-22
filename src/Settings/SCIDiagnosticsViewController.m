@@ -16,6 +16,8 @@ static BOOL _buttonEverPressed = NO;
 static NSString *_lastDownloadKind = nil;
 static NSString *_lastDashXML = nil;
 static NSInteger _lastDashRepresentations = 0;
+static NSArray<NSString *> *_lastDashCandidates = nil;
+static BOOL _dashProbeRan = NO;
 
 @implementation SCIDiagnostics
 
@@ -44,8 +46,10 @@ static NSInteger _lastDashRepresentations = 0;
     _lastVideoClass = [className copy];
 }
 
-+ (void)recordDashManifest:(NSString *)xml {
++ (void)recordDashManifest:(NSString *)xml candidates:(NSArray<NSString *> *)names {
+    _dashProbeRan = YES;
     _lastDashXML = [xml copy];
+    _lastDashCandidates = [names copy];
 
     // Counting <Representation> elements is the number that decides whether this
     // is worth building on: more of them than -videoVersions returned means the
@@ -282,13 +286,29 @@ static NSInteger _lastDashRepresentations = 0;
 }
 
 - (NSArray<NSDictionary *> *)dashRows {
-    if (!_lastDashXML) {
+    if (!_dashProbeRan) {
         return @[@{@"title": SCILocalized(@"diag_dash_none"),
                    @"detail": SCILocalized(@"diag_dash_hint"),
                    @"ok": @NO}];
     }
 
     NSMutableArray<NSDictionary *> *rows = [NSMutableArray array];
+
+    // Distinct from "never ran": the probe reached these objects and they had
+    // nothing. Which candidates the runtime offered decides what happens next.
+    if (!_lastDashXML) {
+        [rows addObject:@{@"title": SCILocalized(@"diag_dash_empty"),
+                          @"detail": SCILocalized(@"diag_dash_empty_hint"),
+                          @"ok": @NO}];
+    }
+
+    [rows addObject:@{@"title": SCILocalized(@"diag_dash_candidates"),
+                      @"detail": _lastDashCandidates.count
+                          ? [_lastDashCandidates componentsJoinedByString:@", "]
+                          : SCILocalized(@"diag_dash_no_candidates"),
+                      @"ok": @(_lastDashCandidates.count > 0)}];
+
+    if (!_lastDashXML) return rows;
 
     [rows addObject:@{@"title": SCILocalized(@"diag_dash_found"),
                       @"detail": [NSString stringWithFormat:@"%lu B", (unsigned long)_lastDashXML.length],

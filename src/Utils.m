@@ -406,20 +406,52 @@
 
     return nil;
 }
++ (NSArray<NSString *> *)selectorsMatching:(NSString *)needle onObject:(id)object {
+    if (!object || !needle.length) return @[];
+
+    NSMutableArray<NSString *> *found = [NSMutableArray array];
+
+    // Walk up to NSObject: the property may be declared on a superclass, and
+    // stopping at the leaf would miss it.
+    for (Class cls = [object class]; cls && cls != [NSObject class]; cls = class_getSuperclass(cls)) {
+        unsigned int count = 0;
+        Method *methods = class_copyMethodList(cls, &count);
+        if (!methods) continue;
+
+        for (unsigned int i = 0; i < count; i++) {
+            SEL selector = method_getName(methods[i]);
+            NSString *name = NSStringFromSelector(selector);
+
+            // Getters only: anything taking an argument cannot be probed blindly.
+            if ([name containsString:@":"]) continue;
+
+            if ([name rangeOfString:needle options:NSCaseInsensitiveSearch].location == NSNotFound) continue;
+            if ([found containsObject:name]) continue;
+
+            [found addObject:name];
+        }
+
+        free(methods);
+    }
+
+    return [found copy];
+}
+
 + (NSString *)dashManifestXMLForVideo:(id)video media:(id)media {
-    // The selector name has moved between Instagram builds, and the manifest is
-    // reachable from either the video or the media object depending on how the
-    // post was constructed. Try every combination rather than assume one.
-    static NSArray *selectorNames = nil;
-    static dispatch_once_t onceToken;
-
-    dispatch_once(&onceToken, ^{
-        selectorNames = @[@"videoDashManifest", @"dashManifest", @"videoDashManifestXML",
-                          @"video_dash_manifest"];
-    });
-
+    // Names guessed from another tweak's symbol table found nothing on a real
+    // device, so the candidate list is now built from what these objects
+    // actually respond to. The manifest is reachable from either the video or
+    // the media object depending on how the post was constructed, so both are
+    // asked.
     for (id host in @[video ?: [NSNull null], media ?: [NSNull null]]) {
         if (host == [NSNull null]) continue;
+
+        NSMutableArray<NSString *> *selectorNames =
+            [[self selectorsMatching:@"dash" onObject:host] mutableCopy];
+
+        for (NSString *name in [self selectorsMatching:@"manifest" onObject:host]) {
+            if (![selectorNames containsObject:name]) [selectorNames addObject:name];
+        }
 
         for (NSString *name in selectorNames) {
             SEL selector = NSSelectorFromString(name);

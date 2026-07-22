@@ -36,7 +36,14 @@ NS_ASSUME_NONNULL_BEGIN
 /// -videoVersions omits, which is the most likely reason the quality picker has
 /// come up short. Nothing parses it yet — this records what the device actually
 /// receives so a parser can be written against real data rather than a guess.
-+ (void)recordDashManifest:(nullable NSString *)xml;
+/// @param xml    the manifest text, or nil when the objects carried none.
+/// @param names  every selector on the video and media objects whose name
+///               mentions dash or manifest, as reported by the runtime.
+///
+/// @c names is the useful half when @c xml is nil: an empty list means the
+/// field is not exposed on these classes at all and parsing DASH is a dead end,
+/// while a populated list names what to read next.
++ (void)recordDashManifest:(nullable NSString *)xml candidates:(nullable NSArray<NSString *> *)names;
 
 /// Called when the story seen-state uploader is intercepted.
 /// What the inline button resolved the post's media to, or nil if it found nothing.

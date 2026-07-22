@@ -30,10 +30,6 @@
 
     [SCIDiagnostics recordQualityCount:1 forVideoClass:NSStringFromClass([video class])];
 
-    // Read-only probe: records what Instagram actually serves so a DASH parser
-    // can be written against real data. Nothing downstream uses it yet.
-    [SCIDiagnostics recordDashManifest:[SCIUtils dashManifestXMLForVideo:video media:nil]];
-
     [self downloadURL:url sourceLabel:sourceLabel isVideo:YES];
 }
 
@@ -149,6 +145,22 @@
 
     if ([self hasPlayableVideo:video]) {
         [SCIDiagnostics recordDownloadKind:@"video"];
+
+        // Probed here rather than in -downloadVideo:, which never receives the
+        // media object: the first attempt passed nil for it and so only ever
+        // questioned IGVideo. Read-only — nothing downstream uses the result yet.
+        NSMutableArray<NSString *> *candidates = [NSMutableArray array];
+        for (id host in @[video, media]) {
+            for (NSString *name in [SCIUtils selectorsMatching:@"dash" onObject:host]) {
+                if (![candidates containsObject:name]) [candidates addObject:name];
+            }
+            for (NSString *name in [SCIUtils selectorsMatching:@"manifest" onObject:host]) {
+                if (![candidates containsObject:name]) [candidates addObject:name];
+            }
+        }
+
+        [SCIDiagnostics recordDashManifest:[SCIUtils dashManifestXMLForVideo:video media:media]
+                                candidates:candidates];
 
         // Reel audio used to be offered by the long-press handler, which no longer
         // exists. The choice lives here now so the setting keeps working.
