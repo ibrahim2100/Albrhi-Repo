@@ -698,6 +698,15 @@
         plan[@"fps"] = bestAV1[@"fps"] ?: @30;
         plan[@"width"] = bestAV1[@"width"];
         plan[@"height"] = bestAV1[@"height"];
+
+        // Clip duration (mediaPresentationDuration="PT10.517188S") lets the banner
+        // show a real percentage: total frames ≈ duration × fps.
+        NSString *xml = [self dashManifestXMLForVideo:video media:media];
+        NSString *dur = [self dashString:@"mediaPresentationDuration" inBlock:xml ?: @""];
+        if ([dur hasPrefix:@"PT"] && [dur hasSuffix:@"S"]) {
+            double seconds = [[dur substringWithRange:NSMakeRange(2, dur.length - 3)] doubleValue];
+            if (seconds > 0) plan[@"duration"] = @(seconds);
+        }
         if (bestAudio) {
             NSURL *audioURL = [self urlFromDashRep:bestAudio];
             if (audioURL) plan[@"audioURL"] = audioURL;

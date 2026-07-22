@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v3.1.8.7
+
+- The AV1 transcode now shows a modern floating banner at the top of the screen
+  with a live progress bar, instead of a blocking centre spinner — you can keep
+  scrolling reels while a clip transcodes behind it.
+
 ## v3.1.8.6
 
 - Fixed the AV1 transcode hanging at "finishing". Video and audio are now written

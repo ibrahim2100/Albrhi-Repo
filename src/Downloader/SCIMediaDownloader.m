@@ -2,6 +2,7 @@
 #import "Download.h"
 #import "Queue/SCIDownloadQueue.h"
 #import "Transcode/SCIAV1Transcoder.h"
+#import "Transcode/SCITranscodeBanner.h"
 #import "../Utils.h"
 #import "../Localization/SCILocalize.h"
 #import "../Settings/SCIDiagnosticsViewController.h"
@@ -212,18 +213,27 @@
     NSDictionary *plan = [SCIUtils transcodePlanForVideo:video media:media];
     if (!plan) return NO;
 
-    NSString *label = [NSString stringWithFormat:SCILocalized(@"transcode_progress"),
+    NSString *title = [NSString stringWithFormat:SCILocalized(@"transcode_progress"),
                        [plan[@"height"] intValue]];
-    JGProgressHUD *hud = [SCIUtils showProgressHUDWithText:label];
+    SCITranscodeBanner *banner = [SCITranscodeBanner shared];
+    [banner showWithTitle:title];
 
-    // The transcode reports frame counts and "mux" as it runs; reflecting them in
-    // the HUD lets the user see progress rather than an indefinite spinner.
+    // Total frames from clip duration lets the banner show a real percentage.
+    double duration = [plan[@"duration"] doubleValue];
+    double fps = [plan[@"fps"] doubleValue];
+    NSInteger totalFrames = (duration > 0 && fps > 0) ? (NSInteger)(duration * fps) : 0;
+
+    // The transcode reports frame counts and "mux"; the banner turns them into a
+    // bar the user can watch while scrolling, since it never blocks the app.
     void (^onProgress)(NSString *) = ^(NSString *status) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSString *suffix = [status isEqualToString:@"mux"] ? SCILocalized(@"transcode_muxing")
-                                                               : [status stringByAppendingString:@"f"];
-            hud.detailTextLabel.text = suffix;
-        });
+        if ([status isEqualToString:@"mux"]) {
+            [banner setDetail:SCILocalized(@"transcode_muxing") fraction:-1];
+            return;
+        }
+        NSInteger frame = status.integerValue;
+        NSString *detail = [NSString stringWithFormat:SCILocalized(@"transcode_frames"), (long)frame];
+        float fraction = totalFrames > 0 ? (float)frame / (float)totalFrames : -1;
+        [banner setDetail:detail fraction:fraction];
     };
 
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
@@ -237,14 +247,12 @@
                                              progress:onProgress];
 
         dispatch_async(dispatch_get_main_queue(), ^{
-            [hud dismissAnimated:YES];
-
             if (ok) {
-                [self saveTranscodedFile:out];
+                [self saveTranscodedFileWithBanner:out banner:banner];
             } else {
                 // The transcode named its failing stage in diagnostics; the user
                 // still gets the progressive rendition.
-                [SCIUtils showToastForDuration:1.4 title:SCILocalized(@"transcode_fell_back")];
+                [banner finishWithSuccess:NO message:SCILocalized(@"transcode_fell_back")];
                 [self downloadVideo:video sourceLabel:sourceLabel anchor:nil];
             }
         });
@@ -253,17 +261,17 @@
     return YES;
 }
 
-+ (void)saveTranscodedFile:(NSString *)path {
++ (void)saveTranscodedFileWithBanner:(NSString *)path banner:(SCITranscodeBanner *)banner {
+    [banner setDetail:SCILocalized(@"transcode_saving") fraction:-1];
+
     [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
         [PHAssetChangeRequest creationRequestForAssetFromVideoAtFileURL:[NSURL fileURLWithPath:path]];
     } completionHandler:^(BOOL success, NSError *error) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
-            if (success) {
-                [SCIUtils showSuccessHUDWithDescription:SCILocalized(@"transcode_saved")];
-            } else {
-                [SCIUtils showErrorHUDWithDescription:(error.localizedDescription ?: SCILocalized(@"err_save_failed"))];
-            }
+            [banner finishWithSuccess:success
+                              message:success ? SCILocalized(@"transcode_saved")
+                                              : (error.localizedDescription ?: SCILocalized(@"err_save_failed"))];
         });
     }];
 }
