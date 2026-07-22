@@ -1,6 +1,10 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 
+# Vendored static libraries are binary — never apply text/EOL normalization, which
+# would silently corrupt them.
+*.a binary
+
 # Shell scripts must keep LF endings: CI runs them on macOS, and a CR would
 # make bash fail with ": command not found".
 *.sh text eol=lf

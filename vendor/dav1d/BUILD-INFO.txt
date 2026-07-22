@@ -1,0 +1,6 @@
+dav1d 1.4.3
+built 2026-07-22T05:54:58Z
+iOS deployment target 15.0
+architectures: arm64 (rootless), arm64e (roothide)
+source: https://code.videolan.org/videolan/dav1d.git @ 1.4.3
+license: BSD-2-Clause (compatible with the tweak's GPLv3)
