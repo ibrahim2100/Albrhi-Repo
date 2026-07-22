@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.1.8.1\n\n- Diagnostics now reports the DASH manifest Instagram serves for a video, and\n  how many renditions it lists. Groundwork for improving download quality —\n  nothing else changes.\n\n## v3.1.8\n\nNo changes to the tweak. Published during work on the source repository.\n\n## v3.1.7\n\nNo changes to the tweak. Published during work on the source repository.",
+          "markdown": "## v3.1.8.2\n\n- The DASH diagnostic from 3.1.8.1 came back empty because it questioned only\n  the video object, and because the names it looked for were guesses. It now\n  asks the media object too, and asks the runtime which names exist instead of\n  assuming. Diagnostics only — nothing else changes.\n\n## v3.1.8.1\n\n- Diagnostics now reports the DASH manifest Instagram serves for a video, and\n  how many renditions it lists. Groundwork for improving download quality —\n  nothing else changes.\n\n## v3.1.8\n\nNo changes to the tweak. Published during work on the source repository.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.1.8.1"
+          "text": "3.1.8.2"
         },
         {
           "class": "DepictionTableTextView",
