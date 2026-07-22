@@ -18,26 +18,90 @@
 /// a fellow SCInsta fork.
 ///
 
+/// Calls a zero-argument getter and returns its value as a date.
+///
+/// The return type is read from the method signature first. -performSelector:
+/// assumes an object comes back, so calling it on a method returning a double —
+/// which is exactly how a Unix timestamp is often exposed — would hand a
+/// non-pointer to isKindOfClass: and crash.
+static NSDate *SCIDateByInvoking(id target, NSString *name) {
+    SEL selector = NSSelectorFromString(name);
+    if (![target respondsToSelector:selector]) return nil;
+
+    NSMethodSignature *signature = [target methodSignatureForSelector:selector];
+    if (!signature || signature.numberOfArguments != 2) return nil;   // self, _cmd only
+
+    const char *type = signature.methodReturnType;
+    if (!type) return nil;
+
+    NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:signature];
+    invocation.selector = selector;
+    invocation.target = target;
+
+    @try { [invocation invoke]; } @catch (__unused id e) { return nil; }
+
+    double seconds = 0;
+
+    switch (type[0]) {
+        case '@': {
+            __unsafe_unretained id object = nil;
+            [invocation getReturnValue:&object];
+
+            if ([object isKindOfClass:[NSDate class]]) return object;
+            if ([object isKindOfClass:[NSNumber class]]) { seconds = [object doubleValue]; break; }
+            return nil;
+        }
+        case 'd': { [invocation getReturnValue:&seconds]; break; }
+        case 'f': { float value = 0; [invocation getReturnValue:&value]; seconds = value; break; }
+        case 'q': { long long value = 0; [invocation getReturnValue:&value]; seconds = (double)value; break; }
+        case 'l': case 'i': { int value = 0; [invocation getReturnValue:&value]; seconds = (double)value; break; }
+        default: return nil;
+    }
+
+    // A plausible Unix time, not a count or an identifier that happens to be big.
+    if (seconds > 1000000000.0 && seconds < 4000000000.0) {
+        return [NSDate dateWithTimeIntervalSince1970:seconds];
+    }
+    return nil;
+}
+
+/// Turns whatever a getter returned into a date, if it can be one.
+static NSDate *SCIDateFromValue(id value) {
+    if ([value isKindOfClass:[NSDate class]]) return value;
+
+    // Stored as Unix seconds in some builds. The range check keeps a count or an
+    // identifier from being mistaken for a timestamp.
+    if ([value isKindOfClass:[NSNumber class]]) {
+        double seconds = [value doubleValue];
+        if (seconds > 1000000000.0 && seconds < 4000000000.0) {
+            return [NSDate dateWithTimeIntervalSince1970:seconds];
+        }
+    }
+    return nil;
+}
+
 static NSDate *SCILastActiveDate(id viewModel, NSString *currentText) {
     if (viewModel) {
+        // Named guesses first — cheap, and right when they are right.
         for (NSString *key in @[@"lastActiveDate", @"lastActive", @"activeDate"]) {
             @try {
-                id value = [viewModel valueForKey:key];
-                if ([value isKindOfClass:[NSDate class]]) return value;
-
-                // Stored as Unix seconds in some builds.
-                if ([value isKindOfClass:[NSNumber class]]) {
-                    double seconds = [value doubleValue];
-                    if (seconds > 1000000000.0 && seconds < 4000000000.0) {
-                        return [NSDate dateWithTimeIntervalSince1970:seconds];
-                    }
-                }
+                NSDate *date = SCIDateFromValue([viewModel valueForKey:key]);
+                if (date) return date;
             } @catch (__unused id e) {}
+        }
+
+        // Then ask the runtime what this object actually offers, rather than
+        // adding more guesses. A build that renames the property still works.
+        for (NSString *needle in @[@"active", @"seen", @"timestamp"]) {
+            for (NSString *name in [SCIUtils selectorsMatching:needle onObject:viewModel]) {
+                NSDate *date = SCIDateByInvoking(viewModel, name);
+                if (date) return date;
+            }
         }
     }
 
-    // Nothing on the model: recover what the wording implies. "Active 8m ago"
-    // pins the minute only roughly, which is why the model is asked first.
+    // Nothing on the model: recover what the wording implies. "Active yesterday"
+    // fixes the day but not the hour, which is why the model is asked first.
     return [SCIDateFormat dateFromRelativeText:currentText];
 }
 
@@ -52,9 +116,18 @@ static void SCIUpdateLastActive(UIView *titleView, id viewModel) {
         if (![label isKindOfClass:[UILabel class]] || !label.text.length) continue;
 
         // Only a presence line is ours to rewrite; a username or typing indicator
-        // is left exactly as Instagram wrote it.
-        if (![SCIDateFormat isRelativeTimestamp:label.text] &&
-            [label.text rangeOfString:@"ctive" options:NSCaseInsensitiveSearch].location == NSNotFound) {
+        // is left exactly as Instagram wrote it. "Active" covers the worded forms
+        // such as "Active yesterday", which carry no number for the pattern below
+        // to match — the case this originally missed.
+        BOOL presence = [label.text rangeOfString:@"ctive" options:NSCaseInsensitiveSearch].location != NSNotFound
+                     || [label.text rangeOfString:@"نشط"].location != NSNotFound;
+
+        if (!presence && ![SCIDateFormat isRelativeTimestamp:label.text]) continue;
+
+        // "Active now" is a state, not a time; turning it into a date would read
+        // as though the person left.
+        if ([label.text rangeOfString:@"now" options:NSCaseInsensitiveSearch].location != NSNotFound
+            || [label.text rangeOfString:@"الآن"].location != NSNotFound) {
             continue;
         }
 

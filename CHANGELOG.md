@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v3.1.9.7
+
+- "Active yesterday" now becomes a real date too. Worded times carry no number,
+  so the parser passed over them.
+
 ## v3.1.9.6
 
 **New — Messages**

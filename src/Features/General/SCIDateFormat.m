@@ -128,13 +128,42 @@ static NSString *const kCombine   = @"date_combine";           // off|absolute_f
                                                    range:NSMakeRange(0, text.length)] != nil;
 }
 
+/// The worded forms that carry no number at all. "Active yesterday" is the one
+/// that mattered: it passed the filter as a presence line, then produced nothing,
+/// because every other form here is a digit followed by a unit.
+///
+/// Each maps to a representative instant rather than a precise one — the model's
+/// own date is always preferred, and this only runs when there isn't one.
++ (NSDate *)dateFromWordedText:(NSString *)text {
+    NSString *lower = text.lowercaseString;
+
+    struct { NSString *word; NSTimeInterval ago; } forms[] = {
+        { @"just now",     30 },
+        { @"now",          30 },
+        { @"today",        3600 * 3 },
+        { @"yesterday",    86400 },
+        { @"last week",    604800 },
+        { @"الآن",          30 },
+        { @"اليوم",         3600 * 3 },
+        { @"أمس",           86400 },
+        { @"امس",           86400 },
+    };
+
+    for (size_t i = 0; i < sizeof(forms) / sizeof(forms[0]); i++) {
+        if ([lower rangeOfString:forms[i].word].location != NSNotFound) {
+            return [NSDate dateWithTimeIntervalSinceNow:-forms[i].ago];
+        }
+    }
+    return nil;
+}
+
 + (NSDate *)dateFromRelativeText:(NSString *)text {
     if (text.length == 0 || text.length > 24) return nil;
 
     NSTextCheckingResult *match = [[self relativeExpression] firstMatchInString:text
                                                                        options:0
                                                                          range:NSMakeRange(0, text.length)];
-    if (!match || match.numberOfRanges < 3) return nil;
+    if (!match || match.numberOfRanges < 3) return [self dateFromWordedText:text];
 
     double value = [[text substringWithRange:[match rangeAtIndex:1]] doubleValue];
     NSString *unit = [[text substringWithRange:[match rangeAtIndex:2]] lowercaseString];
