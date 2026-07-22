@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.1.8.5\n\n- The AV1 transcode from 3.1.8.4 could sit on \"processing\" indefinitely. It now\n  shows a live frame count so progress is visible, cannot hang (every wait is\n  bounded and the muxer bails the moment its writer fails), and reports the\n  failing stage on the Diagnostics page. Still experimental and off by default.\n\n## v3.1.8.4\n\n- **Experimental: 1080p downloads via on-device transcoding.** Instagram serves\n  its high-quality video as AV1, which iOS cannot save. Turn on \"Transcode AV1 to\n  1080p\" in Downloads and Albrhi re-encodes it to H.264 on the device — no server,\n  nothing sent anywhere. It is heavier on battery and slower, so it is off by\n  default; when off, or if a transcode fails, downloads behave exactly as before.\n\n## v3.1.8.3\n\n- Video downloads now read Instagram's full DASH quality ladder, not just the\n  single ready-made rendition. When a higher H.264/HEVC version is available it\n  is taken automatically; otherwise nothing changes. Groundwork for saving the\n  AV1-only qualities is in place but not yet switched on.",
+          "markdown": "## v3.1.8.6\n\n- Fixed the AV1 transcode hanging at \"finishing\". Video and audio are now written\n  in parallel; feeding all the video first deadlocked the muxer, which will not\n  drain video until audio covers the same span. Still experimental, off by default.\n\n## v3.1.8.5\n\n- The AV1 transcode from 3.1.8.4 could sit on \"processing\" indefinitely. It now\n  shows a live frame count so progress is visible, cannot hang (every wait is\n  bounded and the muxer bails the moment its writer fails), and reports the\n  failing stage on the Diagnostics page. Still experimental and off by default.\n\n## v3.1.8.4\n\n- **Experimental: 1080p downloads via on-device transcoding.** Instagram serves\n  its high-quality video as AV1, which iOS cannot save. Turn on \"Transcode AV1 to\n  1080p\" in Downloads and Albrhi re-encodes it to H.264 on the device — no server,\n  nothing sent anywhere. It is heavier on battery and slower, so it is off by\n  default; when off, or if a transcode fails, downloads behave exactly as before.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.1.8.5"
+          "text": "3.1.8.6"
         },
         {
           "class": "DepictionTableTextView",
