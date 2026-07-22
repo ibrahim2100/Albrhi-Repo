@@ -221,11 +221,12 @@
             return;
         }
 
-        fraction = MAX(0.0f, MIN(1.0f, fraction));
-        self.percentLabel.text = [NSString stringWithFormat:@"%.0f%%", fraction * 100];
+        // A captured block parameter is const; clamp into a local instead.
+        float f = MAX(0.0f, MIN(1.0f, fraction));
+        self.percentLabel.text = [NSString stringWithFormat:@"%.0f%%", f * 100];
 
         CGFloat full = self.track.bounds.size.width;
-        self.barWidth.constant = full * fraction;
+        self.barWidth.constant = full * f;
         [UIView animateWithDuration:0.25 animations:^{ [self.card layoutIfNeeded]; }];
     });
 }
