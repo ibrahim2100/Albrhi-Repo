@@ -210,6 +210,24 @@
                              ]
                          ]
             ]
+        ]],
+
+        @"date_format_preset": [UIMenu menuWithChildren:@[
+            [UICommand commandWithTitle:SCILocalized(@"date_preset_absolute") image:nil action:@selector(menuChanged:)
+                           propertyList:@{@"defaultsKey": @"date_format_preset", @"value": @"absolute"}],
+            [UICommand commandWithTitle:SCILocalized(@"date_preset_compact") image:nil action:@selector(menuChanged:)
+                           propertyList:@{@"defaultsKey": @"date_format_preset", @"value": @"compact"}],
+            [UICommand commandWithTitle:SCILocalized(@"date_preset_custom") image:nil action:@selector(menuChanged:)
+                           propertyList:@{@"defaultsKey": @"date_format_preset", @"value": @"custom"}]
+        ]],
+
+        @"date_combine": [UIMenu menuWithChildren:@[
+            [UICommand commandWithTitle:SCILocalized(@"date_combine_off") image:nil action:@selector(menuChanged:)
+                           propertyList:@{@"defaultsKey": @"date_combine", @"value": @"off"}],
+            [UICommand commandWithTitle:SCILocalized(@"date_combine_absolute_first") image:nil action:@selector(menuChanged:)
+                           propertyList:@{@"defaultsKey": @"date_combine", @"value": @"absolute_first"}],
+            [UICommand commandWithTitle:SCILocalized(@"date_combine_relative_first") image:nil action:@selector(menuChanged:)
+                           propertyList:@{@"defaultsKey": @"date_combine", @"value": @"relative_first"}]
         ]]
     };
 }

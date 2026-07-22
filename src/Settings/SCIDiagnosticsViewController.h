@@ -73,6 +73,15 @@ NS_ASSUME_NONNULL_BEGIN
 /// way to know where the download button belongs.
 + (NSArray<NSString *> *)scanForActionRowCandidates;
 
+/// Walks the live hierarchy for labels whose text reads like a timestamp ("2h",
+/// "5 d", "January 5") and reports each one's class and its owning superview.
+///
+/// The custom date format needs somewhere to attach, and Instagram's timestamp
+/// classes are not in any header we have. Rather than guess a name — the mistake
+/// this project keeps paying for — this reports what is actually on screen, so
+/// the hook can be written against a verified class.
++ (NSArray<NSString *> *)scanForTimestampLabels;
+
 @end
 
 NS_ASSUME_NONNULL_END

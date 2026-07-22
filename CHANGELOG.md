@@ -1,5 +1,21 @@
 # Albrhi Changelog
 
+## v3.1.9
+
+**New**
+- **Custom date formats.** Replace Instagram's "2h" with a real date, or show both.
+  Presets, your own pattern (`{DD}/{MM}/{YYYY} {HH}:{mm}` and friends), a compact
+  or worded relative style, and a threshold for how long relative times last.
+  Under Settings → Appearance.
+- **OLED theme.** Turns Instagram's dark grey into true black. Written from
+  scratch, not adapted — the published OLED tweaks carry no licence, so their code
+  cannot go into a GPLv3 project.
+
+**Changed**
+- The welcome screen shown after an update was still describing 3.1.4; it now
+  reflects what actually shipped since.
+- README features and roadmap brought up to date.
+
 ## v3.1.8.8
 
 - When Instagram offers the same resolution at both 30 and 60 fps, the transcode

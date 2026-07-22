@@ -95,15 +95,15 @@ static NSString *const SCILastSeenVersionKey = @"albrhi_last_seen_version";
     }
 
     return @[
-        [SCIWhatsNewItem itemWithSymbol:@"eye.circle.fill"
+        [SCIWhatsNewItem itemWithSymbol:@"4k.tv.fill"
                                   title:SCILocalized(@"wn_u1_title")
                                  detail:SCILocalized(@"wn_u1_detail")
                                    tint:accent],
-        [SCIWhatsNewItem itemWithSymbol:@"scissors"
+        [SCIWhatsNewItem itemWithSymbol:@"calendar"
                                   title:SCILocalized(@"wn_u2_title")
                                  detail:SCILocalized(@"wn_u2_detail")
                                    tint:[UIColor systemPurpleColor]],
-        [SCIWhatsNewItem itemWithSymbol:@"stethoscope"
+        [SCIWhatsNewItem itemWithSymbol:@"circle.lefthalf.filled"
                                   title:SCILocalized(@"wn_u3_title")
                                  detail:SCILocalized(@"wn_u3_detail")
                                    tint:[UIColor systemTealColor]],

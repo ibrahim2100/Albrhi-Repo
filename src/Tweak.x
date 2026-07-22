@@ -17,7 +17,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.1.8.8";  // Albrhi
+NSString *SCIVersionString = @"v3.1.9";  // Albrhi
 
 // Variables that work across features
 
@@ -58,7 +58,18 @@ NSString *SCIVersionString = @"v3.1.8.8";  // Albrhi
         // Off by default: on-device AV1→H.264 transcoding is heavy (battery, heat,
         // time) and experimental. When off, videos download at their best saveable
         // progressive quality exactly as before.
-        @"dw_transcode_av1": @(NO)
+        @"dw_transcode_av1": @(NO),
+
+        // Presentation-only, all off so Instagram looks exactly as it did until
+        // the user asks otherwise.
+        @"date_format_enabled": @(NO),
+        @"date_format_preset": @"absolute",
+        @"date_format_pattern": @"{DD}/{MM}/{YYYY} {HH}:{mm}",
+        // Hours below which the relative form is kept; 0 shows the date always.
+        @"date_relative_hours": @(24),
+        @"date_compact_relative": @(YES),
+        @"date_combine": @"off",
+        @"oled_theme": @(NO)
     };
     [[NSUserDefaults standardUserDefaults] registerDefaults:sciDefaults];
 

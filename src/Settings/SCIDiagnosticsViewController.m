@@ -11,6 +11,7 @@ static NSString *_lastVideoClass = nil;
 static NSInteger _storySeenIntercepts = 0;
 static NSString *_seenReplay = nil;
 static NSArray<NSString *> *_scanResults = nil;
+static NSArray<NSString *> *_timestampResults = nil;
 static NSString *_lastButtonMediaClass = nil;
 static BOOL _buttonEverPressed = NO;
 static NSString *_lastDownloadKind = nil;
@@ -150,6 +151,63 @@ static NSMutableArray<NSString *> *_transcodeStages = nil;
     }
 }
 
+/// Does this text read like a timestamp Instagram would render?
+/// Matches the compact relative forms ("2h", "5 d", "3w"), the worded ones, and
+/// month-name dates. Deliberately loose — a false positive costs one noisy line
+/// in a report, a false negative costs a whole round of guessing.
++ (BOOL)looksLikeTimestamp:(NSString *)text {
+    if (text.length == 0 || text.length > 40) return NO;
+
+    static NSRegularExpression *pattern = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        pattern = [NSRegularExpression regularExpressionWithPattern:
+                   @"^\\s*\\d+\\s*(s|m|h|d|w|y|mo)\\s*$"
+                   @"|ago|منذ|قبل"
+                   @"|^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)"
+                                                            options:NSRegularExpressionCaseInsensitive
+                                                              error:nil];
+    });
+
+    return [pattern firstMatchInString:text options:0 range:NSMakeRange(0, text.length)] != nil;
+}
+
++ (void)collectTimestampsIn:(UIView *)view into:(NSMutableArray<NSString *> *)out depth:(NSInteger)depth {
+    if (!view || depth > 14 || out.count >= 12) return;
+
+    if ([view isKindOfClass:[UILabel class]]) {
+        NSString *text = [(UILabel *)view text];
+        if ([self looksLikeTimestamp:text]) {
+            // The label's own class is rarely the hook target; the view that owns
+            // it usually is, so both are reported.
+            NSString *entry = [NSString stringWithFormat:@"\"%@\" — %@ in %@",
+                               text,
+                               NSStringFromClass([view class]),
+                               view.superview ? NSStringFromClass([view.superview class]) : @"—"];
+            if (![out containsObject:entry]) [out addObject:entry];
+        }
+    }
+
+    for (UIView *child in view.subviews) {
+        [self collectTimestampsIn:child into:out depth:depth + 1];
+    }
+}
+
++ (NSArray<NSString *> *)scanForTimestampLabels {
+    NSMutableArray<NSString *> *out = [NSMutableArray array];
+
+    for (UIWindow *window in [UIApplication sharedApplication].windows) {
+        // Behind the settings sheet is the feed, which is what we want to read.
+        if (window.rootViewController.presentedViewController) {
+            [self collectTimestampsIn:window.rootViewController.view into:out depth:0];
+        } else {
+            [self collectTimestampsIn:window into:out depth:0];
+        }
+    }
+
+    return out;
+}
+
 + (NSArray<NSString *> *)scanForActionRowCandidates {
     NSMutableArray<NSString *> *out = [NSMutableArray array];
 
@@ -284,6 +342,7 @@ static NSMutableArray<NSString *> *_transcodeStages = nil;
         @{@"header": SCILocalized(@"diag_section_dash"), @"rows": [self dashRows]},
         @{@"header": SCILocalized(@"diag_section_transcode"), @"rows": [self transcodeRows]},
         @{@"header": SCILocalized(@"diag_section_scan"), @"rows": [self scanRows]},
+        @{@"header": SCILocalized(@"diag_section_timestamps"), @"rows": [self timestampRows]},
         @{@"header": SCILocalized(@"diag_section_stories"), @"rows": @[
             @{@"title": SCILocalized(@"diag_seen_replay"),
               @"detail": _seenReplay ?: @"—",
@@ -450,9 +509,29 @@ static NSMutableArray<NSString *> *_transcodeStages = nil;
 
 - (void)runScan {
     _scanResults = [SCIDiagnostics scanForActionRowCandidates];
+    _timestampResults = [SCIDiagnostics scanForTimestampLabels];
 
     [[[UINotificationFeedbackGenerator alloc] init] notificationOccurred:UINotificationFeedbackTypeSuccess];
     [self.tableView reloadData];
+}
+
+- (NSArray<NSDictionary *> *)timestampRows {
+    if (!_timestampResults) {
+        return @[@{@"title": SCILocalized(@"diag_ts_prompt"),
+                   @"detail": SCILocalized(@"diag_scan_hint"),
+                   @"ok": @NO}];
+    }
+    if (!_timestampResults.count) {
+        return @[@{@"title": SCILocalized(@"diag_ts_empty"),
+                   @"detail": SCILocalized(@"diag_ts_hint"),
+                   @"ok": @NO}];
+    }
+
+    NSMutableArray<NSDictionary *> *rows = [NSMutableArray array];
+    for (NSString *entry in _timestampResults) {
+        [rows addObject:@{@"title": entry, @"detail": @"", @"ok": @YES}];
+    }
+    return rows;
 }
 
 // MARK: - Report

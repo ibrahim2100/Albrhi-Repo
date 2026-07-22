@@ -55,9 +55,11 @@ metadata and in the source headers. Nothing has been removed.
 ## Features
 
 **Media**
-Download feed posts, reels, stories, carousels, DM media and profile pictures · maximum available
-quality · quality picker · reel audio extraction · silent-video export · custom Photos album ·
-copy account info from a profile picture long-press.
+Download feed posts, reels, stories, carousels, DM media and profile pictures · always the best
+quality iOS can save · **on-device AV1 transcoding for 1080p and above**, so the renditions
+Instagram hides behind a format iOS refuses are still yours — converted on the phone, uploaded
+nowhere · download queue with pause, resume and history · reel audio extraction · silent-video
+export · custom Photos album · copy account info from a profile picture long-press.
 
 **Feed & Explore**
 Hide ads · hide sponsored and suggested posts · hide suggested users, reels and Threads posts ·
@@ -77,9 +79,15 @@ screenshot detection · disable instants creation.
 Optional prompts before like, follow, repost, call, voice message, follow-request response, shh
 mode, comment posting, chat-theme change and story-sticker interaction.
 
+**Appearance**
+Custom date formats — presets, your own `{DD}/{MM}/{YYYY} {HH}:{mm}` pattern, a threshold for how
+long relative times last, compact `2h` style, or both at once · OLED theme that turns Instagram's
+dark grey into true black.
+
 **Interface**
 Native inset-grouped settings · SF Symbols · customizable accent colour · full dark mode ·
-Arabic/English with RTL · navigation bar tab ordering, hiding and swipe-between-tabs.
+Arabic/English with RTL · navigation bar tab ordering, hiding and swipe-between-tabs ·
+Diagnostics page reporting what actually attached at runtime, with one-tap issue reporting.
 
 ## Compatibility
 
@@ -147,7 +155,7 @@ git submodule update --init --recursive
 
 export THEOS_PACKAGE_SCHEME=rootless   # omit for rootful
 make package
-# → packages/com.albrhi.tweak_3.1.8_iphoneos-arm64.deb
+# → packages/com.albrhi.tweak_3.1.9_iphoneos-arm64.deb
 ```
 
 Install straight to a connected device:
@@ -168,15 +176,16 @@ configured under Settings → Downloads.
 
 ## Roadmap
 
-- [ ] Inline download button rendered natively in the post, story, reel and carousel action rows
-- [ ] Full download manager — queue, pause, resume, retry, background transfers, history
+- [x] Inline download button rendered natively in the post and reel action rows
+- [x] Download manager — queue, pause, resume, retry, background transfers, history
+- [x] What's New screen after each update
+- [x] Diagnostics — runtime info, attached hooks, live view-hierarchy scan, issue reporting
+- [x] Self-publishing APT source with a browser control panel
+- [x] On-device AV1 transcoding for the full quality ladder
 - [ ] Searchable settings with favourites, recently used and quick actions
+- [ ] Settings profiles — several configurations, switched per account
 - [ ] Settings backup, restore, export and import
-- [ ] Feature flags and a plugin-style registry so features load independently
 - [ ] Crash protection that isolates and disables a faulting feature rather than the whole tweak
-- [ ] Usage statistics centre
-- [ ] What's New screen after each update
-- [ ] Developer mode — runtime info, loaded hooks, logs, diagnostics, safe mode
 
 ## Changelog
 
