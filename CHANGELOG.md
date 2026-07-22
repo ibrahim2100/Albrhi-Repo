@@ -3,6 +3,9 @@
 ## v3.1.9
 
 **New**
+- **Time-only and date-and-time formats**, plus a 12/24-hour switch that every
+  preset showing a clock obeys. Relative times are now off by default when the
+  feature is on — turning it on means you wanted a real time, not "an hour ago".
 - **Custom date formats.** Replace Instagram's "2h" with a real date, or show both.
   Presets, your own pattern (`{DD}/{MM}/{YYYY} {HH}:{mm}` and friends), a compact
   or worded relative style, and a threshold for how long relative times last.

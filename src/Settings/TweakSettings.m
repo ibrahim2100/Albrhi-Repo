@@ -217,6 +217,10 @@
                            propertyList:@{@"defaultsKey": @"date_format_preset", @"value": @"absolute"}],
             [UICommand commandWithTitle:SCILocalized(@"date_preset_compact") image:nil action:@selector(menuChanged:)
                            propertyList:@{@"defaultsKey": @"date_format_preset", @"value": @"compact"}],
+            [UICommand commandWithTitle:SCILocalized(@"date_preset_datetime") image:nil action:@selector(menuChanged:)
+                           propertyList:@{@"defaultsKey": @"date_format_preset", @"value": @"datetime"}],
+            [UICommand commandWithTitle:SCILocalized(@"date_preset_time") image:nil action:@selector(menuChanged:)
+                           propertyList:@{@"defaultsKey": @"date_format_preset", @"value": @"time"}],
             [UICommand commandWithTitle:SCILocalized(@"date_preset_custom") image:nil action:@selector(menuChanged:)
                            propertyList:@{@"defaultsKey": @"date_format_preset", @"value": @"custom"}]
         ]],

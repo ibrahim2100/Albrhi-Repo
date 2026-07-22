@@ -65,8 +65,10 @@ NSString *SCIVersionString = @"v3.1.9";  // Albrhi
         @"date_format_enabled": @(NO),
         @"date_format_preset": @"absolute",
         @"date_format_pattern": @"{DD}/{MM}/{YYYY} {HH}:{mm}",
-        // Hours below which the relative form is kept; 0 shows the date always.
-        @"date_relative_hours": @(24),
+        // Hours below which the relative form is kept. Zero by default: someone who
+        // turns this on wants a real date, not Instagram's wording back again.
+        @"date_relative_hours": @(0),
+        @"date_24_hour": @(YES),
         @"date_compact_relative": @(YES),
         @"date_combine": @"off",
         @"oled_theme": @(NO)

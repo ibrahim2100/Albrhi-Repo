@@ -172,40 +172,74 @@ static NSMutableArray<NSString *> *_transcodeStages = nil;
     return [pattern firstMatchInString:text options:0 range:NSMakeRange(0, text.length)] != nil;
 }
 
-+ (void)collectTimestampsIn:(UIView *)view into:(NSMutableArray<NSString *> *)out depth:(NSInteger)depth {
-    if (!view || depth > 14 || out.count >= 12) return;
+/// The chain of classes above a view, which is where the model-bearing cell lives.
+/// The label itself only holds text; something further up holds the post.
++ (NSString *)ancestryOf:(UIView *)view levels:(NSInteger)levels {
+    NSMutableArray<NSString *> *chain = [NSMutableArray array];
+    UIView *cursor = view.superview;
+
+    while (cursor && chain.count < (NSUInteger)levels) {
+        [chain addObject:NSStringFromClass([cursor class])];
+        cursor = cursor.superview;
+    }
+    return chain.count ? [chain componentsJoinedByString:@" ← "] : @"—";
+}
+
++ (void)collectTimestampsIn:(UIView *)view
+                       into:(NSMutableArray<NSString *> *)out
+                     sample:(NSMutableArray<NSString *> *)sample
+                      depth:(NSInteger)depth {
+    // 40, matching the action-row scanner. The first version stopped at 14 and so
+    // never reached the feed's labels at all — the scan came back empty not because
+    // there was nothing to find but because it never looked deep enough.
+    if (!view || depth > 40) return;
 
     if ([view isKindOfClass:[UILabel class]]) {
         NSString *text = [(UILabel *)view text];
-        if ([self looksLikeTimestamp:text]) {
-            // The label's own class is rarely the hook target; the view that owns
-            // it usually is, so both are reported.
-            NSString *entry = [NSString stringWithFormat:@"\"%@\" — %@ in %@",
+
+        if ([self looksLikeTimestamp:text] && out.count < 10) {
+            NSString *entry = [NSString stringWithFormat:@"\"%@\" — %@ ← %@",
                                text,
                                NSStringFromClass([view class]),
-                               view.superview ? NSStringFromClass([view.superview class]) : @"—"];
+                               [self ancestryOf:view levels:3]];
             if (![out containsObject:entry]) [out addObject:entry];
+        }
+        // Short labels are collected regardless, so a report can still show what
+        // the timestamp actually reads as when the pattern fails to recognise it.
+        else if (text.length > 0 && text.length <= 24 && sample.count < 14) {
+            NSString *entry = [NSString stringWithFormat:@"\"%@\" — %@",
+                               text, NSStringFromClass([view class])];
+            if (![sample containsObject:entry]) [sample addObject:entry];
         }
     }
 
     for (UIView *child in view.subviews) {
-        [self collectTimestampsIn:child into:out depth:depth + 1];
+        [self collectTimestampsIn:child into:out sample:sample depth:depth + 1];
     }
 }
 
 + (NSArray<NSString *> *)scanForTimestampLabels {
     NSMutableArray<NSString *> *out = [NSMutableArray array];
+    NSMutableArray<NSString *> *sample = [NSMutableArray array];
 
     for (UIWindow *window in [UIApplication sharedApplication].windows) {
         // Behind the settings sheet is the feed, which is what we want to read.
         if (window.rootViewController.presentedViewController) {
-            [self collectTimestampsIn:window.rootViewController.view into:out depth:0];
+            [self collectTimestampsIn:window.rootViewController.view into:out sample:sample depth:0];
         } else {
-            [self collectTimestampsIn:window into:out depth:0];
+            [self collectTimestampsIn:window into:out sample:sample depth:0];
         }
     }
 
-    return out;
+    if (out.count) return out;
+
+    // Nothing matched the pattern. Rather than report "none found" — which says
+    // only that the guess was wrong — hand back what the labels actually say, so
+    // the next attempt is aimed at real text instead of another guess.
+    NSMutableArray<NSString *> *fallback = [NSMutableArray array];
+    [fallback addObject:SCILocalized(@"diag_ts_sample_header")];
+    [fallback addObjectsFromArray:sample];
+    return fallback;
 }
 
 + (NSArray<NSString *> *)scanForActionRowCandidates {

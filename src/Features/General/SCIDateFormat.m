@@ -104,11 +104,30 @@ static NSString *const kCombine   = @"date_combine";           // off|absolute_f
 
 // MARK: - Composition
 
+/// The clock half of a pattern, honouring the 12/24-hour switch. Kept in one
+/// place so every preset that shows a time obeys the setting — a toggle that
+/// only worked on some of them would be worse than none.
++ (NSString *)clockPatternWithSeconds:(BOOL)seconds {
+    if ([SCIUtils getBoolPref:@"date_24_hour"]) {
+        return seconds ? @"{HH}:{mm}:{ss}" : @"{HH}:{mm}";
+    }
+    return seconds ? @"{hh}:{mm}:{ss} {A}" : @"{hh}:{mm} {A}";
+}
+
 + (NSString *)absoluteStringForDate:(NSDate *)date {
     NSString *preset = [self preset];
 
     if ([preset isEqualToString:@"custom"]) {
         return [self renderPattern:[self pattern] forDate:date];
+    }
+    if ([preset isEqualToString:@"time"]) {
+        // Clock only: no date at all, which is the point of this preset.
+        return [self renderPattern:[self clockPatternWithSeconds:YES] forDate:date];
+    }
+    if ([preset isEqualToString:@"datetime"]) {
+        return [self renderPattern:[@"{DD}/{MM}/{YYYY} " stringByAppendingString:
+                                    [self clockPatternWithSeconds:NO]]
+                           forDate:date];
     }
     if ([preset isEqualToString:@"compact"]) {
         return [self renderPattern:@"{DD}/{MM}/{YY}" forDate:date];

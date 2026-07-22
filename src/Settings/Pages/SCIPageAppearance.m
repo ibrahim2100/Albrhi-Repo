@@ -74,6 +74,9 @@
                     [SCISetting menuCellWithTitle:SCILocalized(@"date_preset_t")
                                          subtitle:SCILocalized(@"date_preset_s")
                                              menu:[SCITweakSettings menus][@"date_format_preset"]],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"date_24h_t")
+                                           subtitle:SCILocalized(@"date_24h_s")
+                                        defaultsKey:@"date_24_hour"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"date_compact_t")
                                            subtitle:SCILocalized(@"date_compact_s")
                                         defaultsKey:@"date_compact_relative"],
