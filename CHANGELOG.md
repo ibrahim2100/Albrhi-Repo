@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v3.1.8.6
+
+- Fixed the AV1 transcode hanging at "finishing". Video and audio are now written
+  in parallel; feeding all the video first deadlocked the muxer, which will not
+  drain video until audio covers the same span. Still experimental, off by default.
+
 ## v3.1.8.5
 
 - The AV1 transcode from 3.1.8.4 could sit on "processing" indefinitely. It now

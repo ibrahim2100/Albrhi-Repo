@@ -337,37 +337,60 @@ static void encodeOutput(void *outputCallbackRefCon,
     }
     [writer startSessionAtSourceTime:kCMTimeZero];
 
-    // Video: append every compressed sample in order. The readiness spin bails the
-    // moment the writer leaves the writing state, so a silent failure ends the
-    // append instead of spinning forever.
-    for (id s in samples) {
-        while (!videoInput.isReadyForMoreMediaData && writer.status == AVAssetWriterStatusWriting) {
-            [NSThread sleepForTimeInterval:0.005];
-        }
-        if (writer.status != AVAssetWriterStatusWriting) break;
-        [videoInput appendSampleBuffer:(__bridge CMSampleBufferRef)s];
-    }
-    [videoInput markAsFinished];
+    // Both inputs are pumped in parallel via requestMediaDataWhenReady. Feeding all
+    // of one input and then the other deadlocks a non-realtime writer: it will not
+    // drain video past a point until audio covers the same time range, so the video
+    // input never becomes ready and the audio is never reached.
+    BOOL hasAudio = audioReader && audioInput && [audioReader startReading];
 
-    // Audio: pull PCM from the reader, let the writer re-encode to AAC.
-    if (audioReader && audioInput && [audioReader startReading]) {
-        CMSampleBufferRef buf;
-        while ((buf = [audioOutput copyNextSampleBuffer])) {
-            while (!audioInput.isReadyForMoreMediaData && writer.status == AVAssetWriterStatusWriting) {
-                [NSThread sleepForTimeInterval:0.005];
+    dispatch_group_t group = dispatch_group_create();
+
+    dispatch_group_enter(group);
+    __block NSUInteger vi = 0;
+    __block BOOL vDone = NO;
+    dispatch_queue_t vq = dispatch_queue_create("com.albrhi.mux.video", DISPATCH_QUEUE_SERIAL);
+    [videoInput requestMediaDataWhenReadyOnQueue:vq usingBlock:^{
+        if (vDone) return;
+        while (videoInput.isReadyForMoreMediaData) {
+            if (writer.status != AVAssetWriterStatusWriting || vi >= samples.count) {
+                vDone = YES;
+                [videoInput markAsFinished];
+                dispatch_group_leave(group);
+                return;
             }
-            if (writer.status == AVAssetWriterStatusWriting) {
-                [audioInput appendSampleBuffer:buf];
-            }
-            CFRelease(buf);
-            if (writer.status != AVAssetWriterStatusWriting) break;
+            [videoInput appendSampleBuffer:(__bridge CMSampleBufferRef)samples[vi++]];
         }
-        [audioInput markAsFinished];
+    }];
+
+    if (hasAudio) {
+        dispatch_group_enter(group);
+        __block BOOL aDone = NO;
+        dispatch_queue_t aq = dispatch_queue_create("com.albrhi.mux.audio", DISPATCH_QUEUE_SERIAL);
+        [audioInput requestMediaDataWhenReadyOnQueue:aq usingBlock:^{
+            if (aDone) return;
+            while (audioInput.isReadyForMoreMediaData) {
+                CMSampleBufferRef buf = (writer.status == AVAssetWriterStatusWriting)
+                    ? [audioOutput copyNextSampleBuffer] : NULL;
+                if (!buf) {
+                    aDone = YES;
+                    [audioInput markAsFinished];
+                    dispatch_group_leave(group);
+                    return;
+                }
+                [audioInput appendSampleBuffer:buf];
+                CFRelease(buf);
+            }
+        }];
     } else if (audioInput) {
         [audioInput markAsFinished];
     }
 
-    // Bounded so a writer that never calls back cannot hang the pipeline.
+    // Bounded: neither the pumps nor the writer callback can hang the pipeline.
+    if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 180 * NSEC_PER_SEC)) != 0) {
+        stage(@"mux", NO, @"input pumps timed out");
+        return NO;
+    }
+
     dispatch_semaphore_t done = dispatch_semaphore_create(0);
     [writer finishWritingWithCompletionHandler:^{ dispatch_semaphore_signal(done); }];
     if (dispatch_semaphore_wait(done, dispatch_time(DISPATCH_TIME_NOW, 120 * NSEC_PER_SEC)) != 0) {
