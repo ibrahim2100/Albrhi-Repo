@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.1.9.7\n\n- \"Active yesterday\" now becomes a real date too. Worded times carry no number,\n  so the parser passed over them.\n\n## v3.1.9.6\n\n**New — Messages**\n- **Keep deleted messages.** Preserves what others unsend. Pull-to-refresh in the\n  inbox clears them.\n- **Full last-active time.** A real date instead of \"Active 2h ago\", in whichever\n  format you chose under Appearance.\n- **Hide the voice and video call buttons** in a chat header, separately.\n\n## v3.1.9.5\n\n**New**\n- **Custom date and time formats.** A real time instead of \"2h\" — presets, your\n  own pattern, a time-only option, and a 12 or 24 hour clock. Under Appearance.\n- **OLED black theme.** Turns Instagram's dark grey into true black.",
+          "markdown": "## v3.1.9.8\n\n- **Full last-active now reads numeric relative times too.** \"Active an hour ago\"\n  (and the Arabic \"نشط منذ ساعة/ساعتين/٣ ساعات\") used to be left untouched — only\n  worded forms like \"Yesterday\" converted. It now parses Arabic units, dual forms and\n  Arabic-Indic digits, and searches within the label instead of requiring an exact match.\n- **Tidier settings.** Downloads and Stories & messages are grouped under clear\n  headers (Downloading / Where files are saved / Video quality / Profile pictures;\n  Messages / Last active & calls / Visual messages), and a dead empty section is gone.\n\n## v3.1.9.7\n\n- \"Active yesterday\" now becomes a real date too. Worded times carry no number,\n  so the parser passed over them.\n\n## v3.1.9.6\n\n**New — Messages**\n- **Keep deleted messages.** Preserves what others unsend. Pull-to-refresh in the\n  inbox clears them.\n- **Full last-active time.** A real date instead of \"Active 2h ago\", in whichever\n  format you chose under Appearance.\n- **Hide the voice and video call buttons** in a chat header, separately.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.1.9.7"
+          "text": "3.1.9.8"
         },
         {
           "class": "DepictionTableTextView",
