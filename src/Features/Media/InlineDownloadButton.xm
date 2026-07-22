@@ -127,6 +127,77 @@ static void SCIDownloadMedia(id media, UIView *anchorView) {
                                anchor:anchorView];
 }
 
+// MARK: - Carousels
+
+// Finds the IGPageMediaView (a multi-item carousel) inside a view subtree.
+static IGPageMediaView *SCIFindPageMediaView(UIView *view, NSInteger depth) {
+    if (!view || depth > 6) return nil;
+    if ([view isKindOfClass:%c(IGPageMediaView)]) return (IGPageMediaView *)view;
+
+    for (UIView *sub in view.subviews) {
+        IGPageMediaView *found = SCIFindPageMediaView(sub, depth + 1);
+        if (found) return found;
+    }
+    return nil;
+}
+
+// The carousel backing this action row, if the post is a multi-item one. Walks up to
+// the enclosing cell, then down for the page view.
+static IGPageMediaView *SCICarouselForButtonBar(UIView *bar) {
+    UIView *cell = bar;
+    NSInteger up = 0;
+    while (cell && up++ < 10 && ![cell isKindOfClass:[UICollectionViewCell class]]) {
+        cell = cell.superview;
+    }
+    if (!cell) cell = bar.superview;
+
+    IGPageMediaView *page = SCIFindPageMediaView(cell, 0);
+    return (page.items.count > 1) ? page : nil;
+}
+
+// Resolves and downloads one carousel slide (photo or video).
+static void SCIDownloadCarouselItem(IGPostItem *item, UIView *anchor) {
+    if (!item) return;
+    [SCIMediaDownloader downloadMedia:item sourceLabel:nil anchor:anchor];
+}
+
+// The button's action: on a multi-item post, offer "this one" or "all N"; otherwise
+// download the single media directly.
+static void SCIHandleDownloadForBar(UIView *bar, UIView *anchor) {
+    IGPageMediaView *carousel = SCICarouselForButtonBar(bar);
+
+    if (carousel) {
+        NSArray<IGPostItem *> *items = [carousel.items copy];
+        IGPostItem *current = nil;
+        @try { current = [carousel currentMediaItem]; } @catch (__unused id e) {}
+
+        UIAlertController *sheet = [UIAlertController alertControllerWithTitle:nil
+                                                                       message:nil
+                                                                preferredStyle:UIAlertControllerStyleActionSheet];
+
+        [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"p_carousel_current")
+                                                  style:UIAlertActionStyleDefault
+                                                handler:^(UIAlertAction *a) {
+            SCIDownloadCarouselItem(current ?: items.firstObject, anchor);
+        }]];
+
+        [sheet addAction:[UIAlertAction actionWithTitle:[NSString stringWithFormat:SCILocalized(@"p_carousel_all"), (long)items.count]
+                                                  style:UIAlertActionStyleDefault
+                                                handler:^(UIAlertAction *a) {
+            for (IGPostItem *item in items) SCIDownloadCarouselItem(item, anchor);
+        }]];
+
+        [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel") style:UIAlertActionStyleCancel handler:nil]];
+
+        sheet.popoverPresentationController.sourceView = anchor;
+        sheet.popoverPresentationController.sourceRect = anchor.bounds;
+        [topMostController() presentViewController:sheet animated:YES completion:nil];
+        return;
+    }
+
+    SCIDownloadMedia(SCIMediaForButtonBar(bar), anchor);
+}
+
 ///
 /// Injection
 ///
@@ -311,7 +382,7 @@ static void SCIRefreshInlineButton(UIView *bar, id target) {
 %new - (void)sciInlineDownloadPressed:(UIButton *)sender {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
 
-    SCIDownloadMedia(SCIMediaForButtonBar((UIView *)self), sender);
+    SCIHandleDownloadForBar((UIView *)self, sender);
 }
 
 %end
@@ -328,7 +399,7 @@ static void SCIRefreshInlineButton(UIView *bar, id target) {
 %new - (void)sciInlineDownloadPressed:(UIButton *)sender {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
 
-    SCIDownloadMedia(SCIMediaForButtonBar((UIView *)self), sender);
+    SCIHandleDownloadForBar((UIView *)self, sender);
 }
 
 %end
@@ -345,7 +416,7 @@ static void SCIRefreshInlineButton(UIView *bar, id target) {
 %new - (void)sciInlineDownloadPressed:(UIButton *)sender {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
 
-    SCIDownloadMedia(SCIMediaForButtonBar((UIView *)self), sender);
+    SCIHandleDownloadForBar((UIView *)self, sender);
 }
 
 %end

@@ -3,11 +3,17 @@
 
 static char rowStaticRef[] = "row";
 
-@interface SCISettingsViewController () <UITableViewDataSource, UITableViewDelegate>
+@interface SCISettingsViewController () <UITableViewDataSource, UITableViewDelegate, UISearchResultsUpdating>
 
 @property (nonatomic, strong) UITableView *tableView;
 @property (nonatomic, copy) NSArray *sections;
 @property (nonatomic) BOOL reduceMargin;
+
+// Search: a flat index of every leaf setting across the whole tree, and the
+// filtered sections shown while a query is active.
+@property (nonatomic, strong) UISearchController *searchController;
+@property (nonatomic, copy) NSArray<SCISetting *> *searchIndex;
+@property (nonatomic, copy) NSArray *filteredSections;
 
 @end
 
@@ -78,6 +84,70 @@ static char rowStaticRef[] = "row";
     self.tableView.tintColor = accent;
 
     [self.view addSubview:self.tableView];
+
+    // Search only on the root page — sub-pages are already short lists.
+    if (self.reduceMargin) {
+        self.searchController = [[UISearchController alloc] initWithSearchResultsController:nil];
+        self.searchController.searchResultsUpdater = self;
+        self.searchController.obscuresBackgroundDuringPresentation = NO;
+        self.searchController.searchBar.placeholder = SCILocalized(@"p_search_placeholder");
+        self.searchController.searchBar.tintColor = accent;
+        self.searchController.searchBar.semanticContentAttribute = semantic;
+        self.navigationItem.searchController = self.searchController;
+        self.navigationItem.hidesSearchBarWhenScrolling = NO;
+        self.definesPresentationContext = YES;
+    }
+}
+
+// MARK: - Search
+
+// Which sections the table shows right now: the filtered results while searching,
+// otherwise the full tree.
+- (NSArray *)activeSections {
+    if (self.searchController.isActive && self.searchController.searchBar.text.length) {
+        return self.filteredSections ?: @[];
+    }
+    return self.sections;
+}
+
+// Every searchable leaf across the whole tree, flattened once. Navigation rows are
+// kept (so a page name is findable) and also recursed into.
+- (NSArray<SCISetting *> *)flattenSections:(NSArray *)sections {
+    NSMutableArray<SCISetting *> *out = [NSMutableArray array];
+    for (NSDictionary *section in sections) {
+        for (SCISetting *row in section[@"rows"]) {
+            if (row.type == SCITableCellNavigation && row.navSections.count > 0) {
+                [out addObject:row];
+                [out addObjectsFromArray:[self flattenSections:row.navSections]];
+            } else {
+                [out addObject:row];
+            }
+        }
+    }
+    return out;
+}
+
+- (void)updateSearchResultsForSearchController:(UISearchController *)searchController {
+    NSString *query = [searchController.searchBar.text stringByTrimmingCharactersInSet:
+                       [NSCharacterSet whitespaceCharacterSet]];
+
+    if (!query.length) {
+        self.filteredSections = nil;
+        [self.tableView reloadData];
+        return;
+    }
+
+    if (!self.searchIndex) self.searchIndex = [self flattenSections:self.sections];
+
+    NSMutableArray<SCISetting *> *matches = [NSMutableArray array];
+    for (SCISetting *row in self.searchIndex) {
+        BOOL hit = (row.title.length && [row.title rangeOfString:query options:NSCaseInsensitiveSearch].location != NSNotFound)
+                || (row.subtitle.length && [row.subtitle rangeOfString:query options:NSCaseInsensitiveSearch].location != NSNotFound);
+        if (hit) [matches addObject:row];
+    }
+
+    self.filteredSections = matches.count ? @[@{@"header": @"", @"rows": matches}] : @[];
+    [self.tableView reloadData];
 }
 
 // The "hold ☰ to reopen settings" alert that used to fire here is now a row on the
@@ -87,7 +157,7 @@ static char rowStaticRef[] = "row";
 // MARK: - UITableViewDataSource
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    SCISetting *row = self.sections[indexPath.section][@"rows"][indexPath.row];
+    SCISetting *row = [self activeSections][indexPath.section][@"rows"][indexPath.row];
     if (!row) return nil;
     
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
@@ -207,26 +277,32 @@ static char rowStaticRef[] = "row";
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return [self.sections[section][@"rows"] count];
+    return [[self activeSections][section][@"rows"] count];
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    return self.sections[section][@"header"];
+    return [self activeSections][section][@"header"];
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
-    return self.sections[section][@"footer"];
+    return [self activeSections][section][@"footer"];
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return self.sections.count;
+    return [self activeSections].count;
 }
 
 // MARK: - UITableViewDelegate
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    SCISetting *row = self.sections[indexPath.section][@"rows"][indexPath.row];
+    SCISetting *row = [self activeSections][indexPath.section][@"rows"][indexPath.row];
     if (!row) return;
+
+    // Navigating away from a search result: dismiss the search so the pushed page
+    // and the back stack behave normally.
+    if (row.type == SCITableCellNavigation && self.searchController.isActive) {
+        self.searchController.active = NO;
+    }
 
     if (row.type == SCITableCellLink) {
         [[UIApplication sharedApplication] openURL:row.url options:@{} completionHandler:nil];

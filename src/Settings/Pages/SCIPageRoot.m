@@ -2,6 +2,8 @@
 #import "../TweakSettings.h"
 #import "../../Onboarding/SCIWhatsNewViewController.h"
 #import "../SCIDiagnosticsViewController.h"
+#import "../SCIBackup.h"
+#import "../../InstagramHeaders.h"   // topMostController()
 #import "../../SCIProject.h"
 
 ///
@@ -15,34 +17,8 @@
 @implementation SCIPageRoot
 
 + (void)load {
-    // --- Language (order 100) ---
-    [SCISettingsRegistry registerRootSectionWithOrder:100 builder:^NSArray *{
-        return @[@{
-            @"header": SCILocalized(@"section_language"),
-            @"rows": @[
-                [SCISetting menuCellWithTitle:SCILocalized(@"language_title")
-                                     subtitle:SCILocalized(@"language_sub")
-                                         menu:[SCITweakSettings menus][@"albrhi_language"]]
-            ]
-        }];
-    }];
-
-    // --- Accent colour (order 200) ---
-    [SCISettingsRegistry registerRootSectionWithOrder:200 builder:^NSArray *{
-        return @[@{
-            @"header": SCILocalized(@"accent_color_title"),
-            @"rows": @[
-                [SCISetting buttonCellWithTitle:SCILocalized(@"accent_color_title")
-                                       subtitle:SCILocalized(@"accent_color_sub")
-                                           icon:[SCISymbol symbolWithName:@"paintpalette.fill" color:[SCIUtils SCIColor_Primary] size:20.0]
-                                         action:^{ [SCIUtils showAccentColorPicker]; }],
-                [SCISetting buttonCellWithTitle:SCILocalized(@"accent_reset_title")
-                                       subtitle:@""
-                                           icon:[SCISymbol symbolWithName:@"arrow.counterclockwise"]
-                                         action:^{ [SCIUtils resetAccentColor]; }]
-            ]
-        }];
-    }];
+    // Accent colour now lives inside the Appearance page; language sits just above
+    // the developer-contact section (order 450), not at the very top.
 
     // --- Feature pages are spliced in here, at order 300 ---
 
@@ -113,6 +89,35 @@
                         ]
                     }
                 ]]
+            ]
+        }];
+    }];
+
+    // --- Language (order 450) — just above the developer contact ---
+    [SCISettingsRegistry registerRootSectionWithOrder:450 builder:^NSArray *{
+        return @[@{
+            @"header": SCILocalized(@"section_language"),
+            @"rows": @[
+                [SCISetting menuCellWithTitle:SCILocalized(@"language_title")
+                                     subtitle:SCILocalized(@"language_sub")
+                                         menu:[SCITweakSettings menus][@"albrhi_language"]]
+            ]
+        }];
+    }];
+
+    // --- Backup & restore (order 460) ---
+    [SCISettingsRegistry registerRootSectionWithOrder:460 builder:^NSArray *{
+        return @[@{
+            @"header": SCILocalized(@"p_backup_hdr"),
+            @"rows": @[
+                [SCISetting buttonCellWithTitle:SCILocalized(@"p_backup_export_t")
+                                       subtitle:SCILocalized(@"p_backup_export_s")
+                                           icon:[SCISymbol symbolWithName:@"square.and.arrow.up" color:[SCIUtils SCIColor_Primary] size:20.0]
+                                         action:^{ [SCIBackup exportFrom:topMostController()]; }],
+                [SCISetting buttonCellWithTitle:SCILocalized(@"p_backup_import_t")
+                                       subtitle:SCILocalized(@"p_backup_import_s")
+                                           icon:[SCISymbol symbolWithName:@"square.and.arrow.down" color:[SCIUtils SCIColor_Primary] size:20.0]
+                                         action:^{ [SCIBackup importFrom:topMostController()]; }]
             ]
         }];
     }];

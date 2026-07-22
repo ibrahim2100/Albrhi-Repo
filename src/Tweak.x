@@ -17,7 +17,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.1.9.8";  // Albrhi
+NSString *SCIVersionString = @"v3.2";  // Albrhi
 
 // Variables that work across features
 
@@ -75,7 +75,6 @@ NSString *SCIVersionString = @"v3.1.9.8";  // Albrhi
 
         // DM additions, all off: each changes what Instagram shows or sends, so
         // none of them turns itself on.
-        @"keep_deleted_message": @(NO),
         @"dm_full_last_active": @(NO),
         @"hide_voice_call_button": @(NO),
         @"hide_video_call_button": @(NO)

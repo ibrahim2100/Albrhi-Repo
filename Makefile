@@ -7,7 +7,7 @@ include $(THEOS)/makefiles/common.mk
 TWEAK_NAME = Albrhi
 
 $(TWEAK_NAME)_FILES = $(shell find src -type f \( -iname \*.x -o -iname \*.xm -o -iname \*.m \)) $(wildcard modules/JGProgressHUD/*.m)
-$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation CoreGraphics Photos CoreServices SystemConfiguration SafariServices Security QuartzCore AVFoundation VideoToolbox CoreMedia CoreVideo
+$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation CoreGraphics Photos CoreServices SystemConfiguration SafariServices Security QuartzCore AVFoundation UniformTypeIdentifiers VideoToolbox CoreMedia CoreVideo
 $(TWEAK_NAME)_CFLAGS = -DDISABLE_ROOTLESS_COMPAT_WARNING -fobjc-arc -Ivendor/dav1d/include -Wno-unsupported-availability-guard -Wno-unused-value -Wno-deprecated-declarations -Wno-nullability-completeness -Wno-unused-function -Wno-incompatible-pointer-types -Wno-arc-performSelector-leaks
 
 # dav1d decodes the AV1 ladder that iOS cannot, feeding the on-device transcoder.

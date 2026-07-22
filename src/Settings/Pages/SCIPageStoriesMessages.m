@@ -17,8 +17,7 @@
                 @"rows": @[
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_markseen_t") subtitle:SCILocalized(@"p_sm_markseen_s") defaultsKey:@"remove_lastseen"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_sm_typing_t") subtitle:SCILocalized(@"p_sm_typing_s") defaultsKey:@"disable_typing_status"],
-                    [SCISetting switchCellWithTitle:SCILocalized(@"p_dm_save_t") subtitle:SCILocalized(@"p_dm_save_s") defaultsKey:@"dm_media_save_button"],
-                    [SCISetting switchCellWithTitle:SCILocalized(@"p_dm_keepdel_t") subtitle:SCILocalized(@"p_dm_keepdel_s") defaultsKey:@"keep_deleted_message" requiresRestart:YES]
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_dm_save_t") subtitle:SCILocalized(@"p_dm_save_s") defaultsKey:@"dm_media_save_button"]
                 ]
             },
             @{

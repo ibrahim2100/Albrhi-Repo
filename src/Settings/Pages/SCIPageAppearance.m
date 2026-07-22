@@ -103,6 +103,19 @@
                                         defaultsKey:@"oled_theme"
                                     requiresRestart:YES]
                 ]
+            },
+            @{
+                @"header": SCILocalized(@"accent_color_title"),
+                @"rows": @[
+                    [SCISetting buttonCellWithTitle:SCILocalized(@"accent_color_title")
+                                           subtitle:SCILocalized(@"accent_color_sub")
+                                               icon:[SCISymbol symbolWithName:@"paintpalette.fill" color:[SCIUtils SCIColor_Primary] size:20.0]
+                                             action:^{ [SCIUtils showAccentColorPicker]; }],
+                    [SCISetting buttonCellWithTitle:SCILocalized(@"accent_reset_title")
+                                           subtitle:@""
+                                               icon:[SCISymbol symbolWithName:@"arrow.counterclockwise"]
+                                             action:^{ [SCIUtils resetAccentColor]; }]
+                ]
             }
         ];
     }];

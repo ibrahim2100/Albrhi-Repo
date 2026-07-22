@@ -107,10 +107,18 @@ static NSString *const SCILastSeenVersionKey = @"albrhi_last_seen_version";
                                   title:SCILocalized(@"wn_u3_title")
                                  detail:SCILocalized(@"wn_u3_detail")
                                    tint:[UIColor systemTealColor]],
-        [SCIWhatsNewItem itemWithSymbol:@"square.and.arrow.down.on.square.fill"
+        [SCIWhatsNewItem itemWithSymbol:@"square.and.arrow.up.on.square.fill"
                                   title:SCILocalized(@"wn_u4_title")
                                  detail:SCILocalized(@"wn_u4_detail")
-                                   tint:[UIColor systemGreenColor]]
+                                   tint:[UIColor systemGreenColor]],
+        [SCIWhatsNewItem itemWithSymbol:@"magnifyingglass"
+                                  title:SCILocalized(@"wn_u5_title")
+                                 detail:SCILocalized(@"wn_u5_detail")
+                                   tint:[UIColor systemBlueColor]],
+        [SCIWhatsNewItem itemWithSymbol:@"square.stack.3d.down.right.fill"
+                                  title:SCILocalized(@"wn_u6_title")
+                                 detail:SCILocalized(@"wn_u6_detail")
+                                   tint:[UIColor systemPinkColor]]
     ];
 }
 

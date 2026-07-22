@@ -105,6 +105,17 @@
     self.detailLabel = [self labelWithSize:12 weight:UIFontWeightRegular];
     self.detailLabel.textColor = UIColor.secondaryLabelColor;
 
+    // Centered, and shrink-to-fit rather than truncating to a leading "…" ellipsis
+    // (which read as stray dots at the start, especially in RTL).
+    self.titleLabel.textAlignment = NSTextAlignmentCenter;
+    self.detailLabel.textAlignment = NSTextAlignmentCenter;
+    self.titleLabel.adjustsFontSizeToFitWidth = YES;
+    self.titleLabel.minimumScaleFactor = 0.75;
+    self.titleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
+    self.detailLabel.adjustsFontSizeToFitWidth = YES;
+    self.detailLabel.minimumScaleFactor = 0.8;
+    self.detailLabel.lineBreakMode = NSLineBreakByTruncatingTail;
+
     self.percentLabel = [self labelWithSize:15 weight:UIFontWeightBold];
     self.percentLabel.textColor = [SCIUtils SCIColor_Primary];
     self.percentLabel.textAlignment = NSTextAlignmentRight;
@@ -151,7 +162,9 @@
         [self.resultIcon.widthAnchor constraintEqualToConstant:22],
         [self.resultIcon.heightAnchor constraintEqualToConstant:22],
 
-        [text.leadingAnchor constraintEqualToAnchor:self.spinner.trailingAnchor constant:12],
+        // Centered in the card, clear of the spinner (leading) and percent (trailing).
+        [text.centerXAnchor constraintEqualToAnchor:self.card.centerXAnchor],
+        [text.leadingAnchor constraintGreaterThanOrEqualToAnchor:self.spinner.trailingAnchor constant:12],
         [text.topAnchor constraintEqualToAnchor:self.card.topAnchor constant:12],
 
         [self.percentLabel.leadingAnchor constraintGreaterThanOrEqualToAnchor:text.trailingAnchor constant:8],

@@ -1,5 +1,19 @@
 # Albrhi Changelog
 
+## v3.2 — a real leap
+
+- **1080p downloads on device** — AV1 decoded with dav1d, re-encoded to H.264 with a live progress banner. Optional.
+- **Full DASH quality ladder** — best saveable H.264/HEVC taken automatically.
+- **Custom date & time formats** everywhere, incl. numeric relative times ("Active 4h ago").
+- **OLED black theme.**
+- **Full last-active time**, and **hide the voice / video call buttons** independently.
+- **Backup & restore** all Albrhi settings to a file.
+- **Search the settings** — find any toggle instantly.
+- **Download whole albums** — pick this slide or all of them; **copy any text** (caption, comment, bio) by long-press.
+- **Tidier settings** — grouped headers, search bar, language above the developer links, accent under Appearance.
+
+_DM & date hook points from RyukGram (github.com/faroukbmiled/RyukGram, GPLv3)._
+
 ## v3.1.9.8
 
 - **Full last-active now reads numeric relative times too.** "Active an hour ago"

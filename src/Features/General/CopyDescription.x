@@ -1,6 +1,13 @@
 #import "../../Utils.h"
 #import "../../InstagramHeaders.h"
+#import "../../Localization/SCILocalize.h"
 #import "../../../modules/JGProgressHUD/JGProgressHUD.h"
+
+///
+/// Copy any text. IGCoreTextView is Instagram's shared rich-text view — captions,
+/// comments and bios all render through it — so one hook covers them all. Long-press
+/// copies the full text as written.
+///
 
 %hook IGCoreTextView
 - (void)didMoveToSuperview {
@@ -21,29 +28,15 @@
 %new - (void)handleLongPress:(UILongPressGestureRecognizer *)sender {
     if (sender.state != UIGestureRecognizerStateBegan) return;
 
-    // Remove hashtags at end of string
-    NSRegularExpression *regex =
-    [NSRegularExpression regularExpressionWithPattern:@"\\s*(?:#[^\\s]+\\s*)+$"
-                                              options:0
-                                                error:nil];
+    NSString *result = [self.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (!result.length) return;
 
-    NSString *result = [[regex stringByReplacingMatchesInString:self.text
-                                                        options:0
-                                                          range:NSMakeRange(0, self.text.length)
-                                                   withTemplate:@""]
-          stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    [UIPasteboard generalPasteboard].string = result;
 
-    SCILogV(@"[SCInsta] Copying description");
-
-    // Copy text to system clipboard
-    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-    pasteboard.string = result;
-
-    // Notify user
     JGProgressHUD *HUD = [[JGProgressHUD alloc] init];
-    HUD.textLabel.text = @"Copied text to clipboard";
+    HUD.textLabel.text = SCILocalized(@"p_copied_text");
     HUD.indicatorView = [[JGProgressHUDSuccessIndicatorView alloc] init];
-    
+
     [HUD showInView:topMostController().view];
     [HUD dismissAfterDelay:2.0];
 }
