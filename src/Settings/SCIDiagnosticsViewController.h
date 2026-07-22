@@ -89,6 +89,11 @@ NS_ASSUME_NONNULL_BEGIN
 /// answers that from the device instead of from assumption.
 + (void)recordDateFormatter:(NSString *)formatter sample:(nullable NSString *)sample;
 
+/// Called when a timestamp was rewritten. @c exact says whether the real date was
+/// found on the model or inferred from Instagram's wording, which is the
+/// difference between showing the true minute and showing an approximation.
++ (void)recordDateRewrite:(NSString *)original exact:(BOOL)exact;
+
 @end
 
 NS_ASSUME_NONNULL_END

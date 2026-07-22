@@ -33,6 +33,17 @@ NS_ASSUME_NONNULL_BEGIN
 /// preview of what the user is typing.
 + (NSString *)renderPattern:(NSString *)pattern forDate:(NSDate *)date;
 
+/// Whether a string is one of Instagram's own timestamps ("2h", "1 hour ago").
++ (BOOL)isRelativeTimestamp:(nullable NSString *)text;
+
+/// The instant a relative string refers to, or nil if it is not one.
+///
+/// Instagram writes these itself rather than going through Foundation, so this is
+/// the only date available at the point the text is set. It is as precise as the
+/// wording: "1 hour ago" pins the hour but not the minute, which the caller
+/// should prefer a real model date over whenever it can reach one.
++ (nullable NSDate *)dateFromRelativeText:(nullable NSString *)text;
+
 /// A one-line sample of the current settings, for the settings row subtitle.
 + (NSString *)previewString;
 

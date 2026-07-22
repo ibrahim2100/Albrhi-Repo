@@ -102,6 +102,57 @@ static NSString *const kCombine   = @"date_combine";           // off|absolute_f
     return @"";
 }
 
+// MARK: - Reading Instagram's own wording
+
+/// Number + unit, in either the compact form ("2h", "5 d") or the worded one
+/// ("1 hour ago", "5 days ago"). Anchored so a caption mentioning "3 minutes of
+/// footage" is not mistaken for a timestamp.
++ (NSRegularExpression *)relativeExpression {
+    static NSRegularExpression *expression = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        expression = [NSRegularExpression regularExpressionWithPattern:
+                      @"^\\s*(\\d+)\\s*"
+                      @"(seconds?|minutes?|hours?|days?|weeks?|months?|years?|s|m|h|d|w|mo|y)"
+                      @"\\s*(ago)?\\s*$"
+                                                               options:NSRegularExpressionCaseInsensitive
+                                                                 error:nil];
+    });
+    return expression;
+}
+
++ (BOOL)isRelativeTimestamp:(NSString *)text {
+    if (text.length == 0 || text.length > 24) return NO;
+    return [[self relativeExpression] firstMatchInString:text
+                                                 options:0
+                                                   range:NSMakeRange(0, text.length)] != nil;
+}
+
++ (NSDate *)dateFromRelativeText:(NSString *)text {
+    if (text.length == 0 || text.length > 24) return nil;
+
+    NSTextCheckingResult *match = [[self relativeExpression] firstMatchInString:text
+                                                                       options:0
+                                                                         range:NSMakeRange(0, text.length)];
+    if (!match || match.numberOfRanges < 3) return nil;
+
+    double value = [[text substringWithRange:[match rangeAtIndex:1]] doubleValue];
+    NSString *unit = [[text substringWithRange:[match rangeAtIndex:2]] lowercaseString];
+
+    // Checked longest-first: "mo" must not be read as "m", nor "months" as "minutes".
+    double seconds;
+    if ([unit hasPrefix:@"mo"])      seconds = 2629800;
+    else if ([unit hasPrefix:@"se"] || [unit isEqualToString:@"s"]) seconds = 1;
+    else if ([unit hasPrefix:@"mi"] || [unit isEqualToString:@"m"]) seconds = 60;
+    else if ([unit hasPrefix:@"h"])  seconds = 3600;
+    else if ([unit hasPrefix:@"d"])  seconds = 86400;
+    else if ([unit hasPrefix:@"w"])  seconds = 604800;
+    else if ([unit hasPrefix:@"y"])  seconds = 31557600;
+    else return nil;
+
+    return [NSDate dateWithTimeIntervalSinceNow:-(value * seconds)];
+}
+
 // MARK: - Composition
 
 /// The clock half of a pattern, honouring the 12/24-hour switch. Kept in one

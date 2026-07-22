@@ -22,6 +22,9 @@ static BOOL _dashProbeRan = NO;
 static NSMutableArray<NSString *> *_transcodeStages = nil;
 static NSMutableDictionary<NSString *, NSNumber *> *_dateFormatterCounts = nil;
 static NSMutableArray<NSString *> *_dateFormatterSamples = nil;
+static NSInteger _dateRewrites = 0;
+static NSInteger _dateRewritesExact = 0;
+static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
 
 @implementation SCIDiagnostics
 
@@ -110,6 +113,20 @@ static NSMutableArray<NSString *> *_dateFormatterSamples = nil;
             if (![_dateFormatterSamples containsObject:entry]) {
                 [_dateFormatterSamples addObject:entry];
             }
+        }
+    }
+}
+
++ (void)recordDateRewrite:(NSString *)original exact:(BOOL)exact {
+    @synchronized (self) {
+        _dateRewrites++;
+        if (exact) _dateRewritesExact++;
+
+        if (!_dateRewriteSamples) _dateRewriteSamples = [NSMutableArray array];
+        if (original.length && _dateRewriteSamples.count < 6) {
+            NSString *entry = [NSString stringWithFormat:@"\"%@\" — %@",
+                               original, exact ? @"exact date" : @"inferred from wording"];
+            if (![_dateRewriteSamples containsObject:entry]) [_dateRewriteSamples addObject:entry];
         }
     }
 }
@@ -412,6 +429,7 @@ static NSMutableArray<NSString *> *_dateFormatterSamples = nil;
         @{@"header": SCILocalized(@"diag_section_dash"), @"rows": [self dashRows]},
         @{@"header": SCILocalized(@"diag_section_transcode"), @"rows": [self transcodeRows]},
         @{@"header": SCILocalized(@"diag_section_scan"), @"rows": [self scanRows]},
+        @{@"header": SCILocalized(@"diag_section_daterewrite"), @"rows": [self dateRewriteRows]},
         @{@"header": SCILocalized(@"diag_section_dateformat"), @"rows": [self dateFormatterRows]},
         @{@"header": SCILocalized(@"diag_section_timestamps"), @"rows": [self timestampRows]},
         @{@"header": SCILocalized(@"diag_section_stories"), @"rows": @[
@@ -584,6 +602,26 @@ static NSMutableArray<NSString *> *_dateFormatterSamples = nil;
 
     [[[UINotificationFeedbackGenerator alloc] init] notificationOccurred:UINotificationFeedbackTypeSuccess];
     [self.tableView reloadData];
+}
+
+- (NSArray<NSDictionary *> *)dateRewriteRows {
+    @synchronized ([SCIDiagnostics class]) {
+        if (_dateRewrites == 0) {
+            return @[@{@"title": SCILocalized(@"diag_dr_none"),
+                       @"detail": SCILocalized(@"diag_dr_hint"),
+                       @"ok": @NO}];
+        }
+
+        NSMutableArray<NSDictionary *> *rows = [NSMutableArray array];
+        [rows addObject:@{@"title": SCILocalized(@"diag_dr_count"),
+                          @"detail": [NSString stringWithFormat:@"%ld (%ld exact)",
+                                      (long)_dateRewrites, (long)_dateRewritesExact],
+                          @"ok": @YES}];
+        for (NSString *sample in _dateRewriteSamples) {
+            [rows addObject:@{@"title": sample, @"detail": @"", @"ok": @YES}];
+        }
+        return rows;
+    }
 }
 
 - (NSArray<NSDictionary *> *)dateFormatterRows {
