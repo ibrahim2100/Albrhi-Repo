@@ -21,11 +21,25 @@ def report(msg):
 
 
 # 1. Duplicate @interface definitions.
-for path in HDR:
+#
+# Across every file, not just within each header. Checking headers alone let a
+# feature redeclare IGCoreTextView in its own .xm while InstagramHeaders.h already
+# had it, which is the same "duplicate interface" build failure the rule exists to
+# prevent — it was simply looking in half the places.
+#
+# The colon in the pattern keeps class extensions @interface Foo () and categories
+# @interface Foo (Bar) out of it; only real declarations count.
+declared = collections.defaultdict(list)
+
+for path in HDR + SRC:
     text = open(path, encoding='utf-8').read()
-    for name, count in collections.Counter(re.findall(r'^@interface\s+(\w+)\s*:', text, re.M)).items():
-        if count > 1:
-            report('duplicate @interface %s x%d in %s' % (name, count, path))
+    for name in re.findall(r'^@interface\s+(\w+)\s*:', text, re.M):
+        declared[name].append(path)
+
+for name in sorted(declared):
+    places = declared[name]
+    if len(places) > 1:
+        report('duplicate @interface %s in %s' % (name, ', '.join(sorted(set(places)))))
 
 # 2. Brace balance and %hook/%end pairing.
 for path in SRC:

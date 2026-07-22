@@ -17,9 +17,8 @@
 /// it, the owning cell is asked for the real date it was rendered from.
 ///
 
-@interface IGCoreTextView : UIView
-@property (nonatomic, copy) NSString *text;
-@end
+// IGCoreTextView is already declared in InstagramHeaders.h — redeclaring it here
+// is what broke the build, and the header is the one place it belongs.
 
 /// Walks up from the text view looking for the object the post came from, and
 /// asks it for its date. Names are resolved through the runtime rather than
