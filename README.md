@@ -132,7 +132,8 @@ removes the other and they can never both be active.
 1. Download the file for your setup from the Releases page.
 2. Open it in Sileo, Zebra or your package manager of choice.
 3. Install, then respring.
-
+4. You can see them in my repo = https://ibrahim2100.github.io/Albrhi-Repo/
+   
 **From source** — see [BUILD.md](BUILD.md).
 
 ## Building
