@@ -129,6 +129,7 @@
   <div class="tabs">
     <button class="tab active" data-tab="packages" type="button">Packages</button>
     <button class="tab" data-tab="editor" type="button">Add or edit</button>
+    <button class="tab" data-tab="batch" type="button">Batch upload</button>
     <button class="tab" data-tab="settings" type="button">Connection</button>
   </div>
 
@@ -175,6 +176,11 @@
   </section>
 
   <section id="panel-packages" class="panel">
+    <div class="card" id="stats-card" style="display:none">
+      <h2>Albrhi installs</h2>
+      <div id="stats" style="font-size:34px;font-weight:800;letter-spacing:-0.02em;color:var(--accent)">—</div>
+      <p class="note" style="margin:2px 0 0">Total downloads of every Albrhi build across all releases.</p>
+    </div>
     <div class="card">
       <h2>In the source <span id="pkg-count" style="text-transform:none;letter-spacing:0"></span></h2>
       <div id="pkg-list">Connect in the Connection tab to list packages.</div>
@@ -183,6 +189,24 @@
     <p class="note">
       Albrhi's own builds are produced by CI and are not listed here — only packages
       you added to <code>extra-debs/</code> can be removed.
+    </p>
+  </section>
+
+  <section id="panel-batch" class="panel hidden">
+    <div id="batch-drop" style="border:2px dashed var(--line);border-radius:16px;padding:44px 20px;text-align:center;cursor:pointer;color:var(--muted);transition:border-color .15s">
+      <strong style="display:block;color:var(--text)">Drop several .deb files here</strong>
+      or click to choose them — they upload together, each under its own name
+      <input type="file" id="batch-file" accept=".deb" multiple hidden>
+    </div>
+
+    <div id="batch-list" style="margin-top:16px"></div>
+
+    <button class="btn hidden" id="batch-publish" type="button" style="margin-top:6px">Publish all</button>
+
+    <p class="note">
+      Each file is committed to <code>extra-debs/</code> under its own
+      package_version_architecture name, so uploading several at once cannot make one
+      overwrite another. The build indexes them a few minutes later.
     </p>
   </section>
 
@@ -869,6 +893,40 @@
     return btoa(binary);
   }
 
+  // Commits one .deb to extra-debs/. Shared by the single-file publish and the
+  // batch upload. Returns 'added', 'updated' or 'skipped'; throws on a real error.
+  // `confirmReplace` gates the overwrite prompt — the batch path passes false, as
+  // its identity-derived names make a collision the same package, not a surprise.
+  async function publishFile(repo, token, filename, bytes, confirmReplace) {
+    var path = 'extra-debs/' + filename;
+    var url = 'https://api.github.com/repos/' + repo + '/contents/' + encodeURIComponent(path).replace(/%2F/g, '/');
+    var headers = authHeaders(token);
+
+    // Updating an existing file needs its blob sha; creating one must not send it.
+    var sha = null;
+    var probe = await fetch(url, { headers: headers });
+    if (probe.status === 200) {
+      sha = (await probe.json()).sha;
+      if (confirmReplace && !confirm(filename + ' already exists in the source.\n\nReplace it?')) {
+        return 'skipped';
+      }
+    } else if (probe.status === 401 || probe.status === 403) {
+      throw new Error('The token was rejected. Check it has Contents: write on ' + repo + '.');
+    } else if (probe.status === 404 && !probe.headers.get('x-ratelimit-remaining')) {
+      throw new Error('Repository not found: ' + repo);
+    }
+
+    var body = { message: (sha ? 'Update ' : 'Add ') + filename, content: toBase64(bytes) };
+    if (sha) body.sha = sha;
+
+    var response = await fetch(url, { method: 'PUT', headers: headers, body: JSON.stringify(body) });
+    if (!response.ok) {
+      var detail = await response.json().catch(function () { return {}; });
+      throw new Error(detail.message || ('GitHub returned ' + response.status));
+    }
+    return sha ? 'updated' : 'added';
+  }
+
   async function publish() {
     var repo = repoInput.value.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '');
     var token = tokenInput.value.trim();
@@ -891,51 +949,14 @@
 
     try {
       var finished = await packageBytes();
+      var result = await publishFile(repo, token, filename, finished, true);
 
-      var path = 'extra-debs/' + filename;
-      var api = 'https://api.github.com/repos/' + repo + '/contents/' + encodeURIComponent(path).replace(/%2F/g, '/');
-      var headers = {
-        'Authorization': 'Bearer ' + token,
-        'Accept': 'application/vnd.github+json',
-        'Content-Type': 'application/json'
-      };
-
-      // Updating an existing file needs its blob sha; creating one must not send it.
-      var sha = null;
-      var probe = await fetch(api, { headers: headers });
-      if (probe.status === 200) {
-        sha = (await probe.json()).sha;
-
-        // Replacing is legitimate — updating a package in place — but it should
-        // never happen by surprise, which is how one flavour overwrote another.
-        if (!confirm(filename + ' already exists in the source.\n\nReplace it?')) {
-          say('Cancelled — nothing was changed.');
-          button.disabled = false;
-          button.textContent = 'Publish';
-          return;
-        }
-      } else if (probe.status === 401 || probe.status === 403) {
-        throw new Error('The token was rejected. Check it has Contents: write on ' + repo + '.');
-      } else if (probe.status === 404 && !probe.headers.get('x-ratelimit-remaining')) {
-        throw new Error('Repository not found: ' + repo);
+      if (result === 'skipped') {
+        say('Cancelled — nothing was changed.');
+      } else {
+        say((result === 'updated' ? 'Updated ' : 'Published ') + 'extra-debs/' + filename +
+            ' — the build will pick it up in a few minutes.', 'ok');
       }
-
-      var body = {
-        message: (sha ? 'Update ' : 'Add ') + filename,
-        content: toBase64(finished)
-      };
-      if (sha) body.sha = sha;
-
-      var response = await fetch(api, { method: 'PUT', headers: headers, body: JSON.stringify(body) });
-
-      if (!response.ok) {
-        var detail = await response.json().catch(function () { return {}; });
-        throw new Error(detail.message || ('GitHub returned ' + response.status));
-      }
-
-      say((sha ? 'Updated ' : 'Published ') + path +
-          ' — the build will pick it up in a few minutes.', 'ok');
-
     } catch (error) {
       say(error.message);
     } finally {
@@ -946,12 +967,143 @@
 
   document.getElementById('publish').addEventListener('click', publish);
 
+  // ------------------------------------------------------ batch upload
+
+  var batchItems = [];  // { file, name, bytes, status }
+
+  // Reads a file's identity-derived name without touching the editor state. Falls
+  // back to the original filename for an xz control archive this page can't parse.
+  async function analyzeForBatch(file) {
+    var bytes = new Uint8Array(await file.arrayBuffer());
+    var members = readAr(bytes);
+
+    var controlIndex = -1;
+    members.forEach(function (m, i) { if (m.name.indexOf('control.tar') === 0) controlIndex = i; });
+    if (controlIndex < 0) throw new Error('No control.tar');
+
+    var member = members[controlIndex];
+    var name = file.name;
+
+    if (/\.gz$/.test(member.name) || /\.tar$/.test(member.name)) {
+      var tarBytes = /\.gz$/.test(member.name) ? await gunzip(member.data) : member.data;
+      var control = readTar(tarBytes).filter(function (e) {
+        return e.name.replace(/^\.\//, '') === 'control';
+      })[0];
+      if (control) name = suggestedName(parseControl(new TextDecoder().decode(control.data)), file.name);
+    }
+    return { bytes: bytes, name: name };
+  }
+
+  function renderBatch() {
+    var host = document.getElementById('batch-list');
+    host.innerHTML = '';
+    batchItems.forEach(function (item) {
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;justify-content:space-between;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;font-size:14px';
+      var left = document.createElement('div');
+      left.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+      left.innerHTML = '<code style="font-size:13px">' + item.name + '</code>';
+      var right = document.createElement('span');
+      right.style.cssText = 'flex:none;color:var(--muted)';
+      right.textContent = item.status;
+      row.appendChild(left); row.appendChild(right);
+      host.appendChild(row);
+    });
+    document.getElementById('batch-publish').classList.toggle('hidden', batchItems.length === 0);
+  }
+
+  async function addBatchFiles(files) {
+    for (var i = 0; i < files.length; i++) {
+      var file = files[i];
+      if (!/\.deb$/i.test(file.name)) continue;
+      var item = { file: file, name: file.name, bytes: null, status: 'reading…' };
+      batchItems.push(item);
+      renderBatch();
+      try {
+        var info = await analyzeForBatch(file);
+        item.name = info.name;
+        item.bytes = info.bytes;
+        item.status = 'ready';
+      } catch (e) {
+        item.status = 'unreadable — skipped';
+      }
+      renderBatch();
+    }
+  }
+
+  async function publishBatch() {
+    var creds = credentials();
+    if (!/^[^\/]+\/[^\/]+$/.test(creds.repo) || !creds.token) {
+      return say('Connect in the Connection tab first.');
+    }
+
+    var button = document.getElementById('batch-publish');
+    button.disabled = true;
+    var ready = batchItems.filter(function (it) { return it.bytes; });
+
+    for (var i = 0; i < ready.length; i++) {
+      var item = ready[i];
+      item.status = 'publishing…';
+      renderBatch();
+      try {
+        var result = await publishFile(creds.repo, creds.token, item.name, item.bytes, false);
+        item.status = result === 'updated' ? 'replaced ✓' : 'published ✓';
+      } catch (e) {
+        item.status = 'failed: ' + e.message;
+      }
+      renderBatch();
+    }
+
+    button.disabled = false;
+    say('Batch done — the build will index everything in a few minutes.', 'ok');
+  }
+
+  (function wireBatch() {
+    var drop = document.getElementById('batch-drop');
+    var picker = document.getElementById('batch-file');
+    drop.addEventListener('click', function () { picker.click(); });
+    picker.addEventListener('change', function () { addBatchFiles(picker.files); });
+    ['dragenter', 'dragover'].forEach(function (t) {
+      drop.addEventListener(t, function (e) { e.preventDefault(); drop.style.borderColor = 'var(--accent)'; });
+    });
+    ['dragleave', 'drop'].forEach(function (t) {
+      drop.addEventListener(t, function (e) { e.preventDefault(); drop.style.borderColor = 'var(--line)'; });
+    });
+    drop.addEventListener('drop', function (e) {
+      if (e.dataTransfer.files.length) addBatchFiles(e.dataTransfer.files);
+    });
+    document.getElementById('batch-publish').addEventListener('click', publishBatch);
+  })();
+
+  // ------------------------------------------------------ install counter
+
+  async function loadStats() {
+    var creds = credentials();
+    if (!creds.repo || !creds.token) return;
+    try {
+      var response = await fetch('https://api.github.com/repos/' + creds.repo + '/releases?per_page=100',
+                                 { headers: authHeaders(creds.token) });
+      if (!response.ok) return;
+
+      var total = 0;
+      (await response.json()).forEach(function (rel) {
+        (rel.assets || []).forEach(function (a) { total += a.download_count || 0; });
+      });
+
+      document.getElementById('stats').textContent = total.toLocaleString();
+      document.getElementById('stats-card').style.display = '';
+    } catch (e) { /* stats are a nicety; never block the panel on them */ }
+  }
+
   // ------------------------------------------------------------------- tabs
 
   function showTab(name) {
-    ['packages', 'editor', 'settings'].forEach(function (id) {
+    ['packages', 'editor', 'batch', 'settings'].forEach(function (id) {
       document.getElementById('panel-' + id).classList.toggle('hidden', id !== name);
     });
+    // The global single-file drop zone belongs to the editor flow; hide it on the
+    // batch tab so it does not compete with the multi-file drop there.
+    document.getElementById('drop').style.display = (name === 'batch') ? 'none' : '';
     [].forEach.call(document.querySelectorAll('.tab'), function (tab) {
       tab.classList.toggle('active', tab.dataset.tab === name);
     });
@@ -1091,7 +1243,7 @@
     }
   }
 
-  document.getElementById('refresh').addEventListener('click', listPackages);
+  document.getElementById('refresh').addEventListener('click', function () { listPackages(); loadStats(); });
 
   document.getElementById('connect').addEventListener('click', function () {
     var creds = credentials();
@@ -1109,10 +1261,11 @@
     say('Connected to ' + creds.repo, 'ok');
     showTab('packages');
     listPackages();
+    loadStats();
   });
 
   // A remembered token means the list can be populated straight away.
-  if (repoInput.value && tokenInput.value) listPackages();
+  if (repoInput.value && tokenInput.value) { listPackages(); loadStats(); }
 
   document.getElementById('reset').addEventListener('click', function () {
     state = null;
