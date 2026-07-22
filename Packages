@@ -1,16 +1,16 @@
 Package: com.albrhi.tweak
-Version: 3.1.8.7
+Version: 3.1.8.8
 Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 1340
 Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak.roothide
 Replaces: com.albrhi.tweak.roothide
-Filename: debs/com.albrhi.tweak_3.1.8.7+rootless.deb
-Size: 407348
-MD5sum: 4ca038011766ec6364153b9080467175
-SHA1: a6c18d531da0c0c576b6afd5a17649ab495132ec
-SHA256: 33771a7f529f9ba3bd2f33860679271852257045ddeaa6623356f70c7c87bbef
+Filename: debs/com.albrhi.tweak_3.1.8.8+rootless.deb
+Size: 407004
+MD5sum: 79444fa3e75cfa375686a998bc1a7cde
+SHA1: 5e0dbff8973ee61ffd7aee199547b296ee116712
+SHA256: bfd65a9d4e96e6aab1abd53416f7a1dcdd4b954af0e10c284fe120d0cbc8bfd3
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
@@ -83,18 +83,18 @@ Name: Albrhi for Instagram (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
 Package: com.albrhi.tweak.roothide
-Version: 3.1.8.7
+Version: 3.1.8.8
 Architecture: iphoneos-arm64e
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 1340
 Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak
 Replaces: com.albrhi.tweak
-Filename: debs/com.albrhi.tweak.roothide_3.1.8.7.deb
-Size: 407614
-MD5sum: f44b03391a6d35dc19a964b26df18a46
-SHA1: 065940415a655a3f62ff801e9c731fe18099f2a1
-SHA256: 3836cf6d72f73bfae0307c413d8899b478b1f54191e17d891a1efe0ef8c9e6eb
+Filename: debs/com.albrhi.tweak.roothide_3.1.8.8.deb
+Size: 407380
+MD5sum: cf2ac621602a225835b871744eecb871
+SHA1: beb44438e46c077aaec7afbcd89524b5c4f887b6
+SHA256: 414d4a5098f52e53faa76f454f979027165937aaec894032b57863dbf31a8429
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download anything, hide the noise, browse invisibly — in Arabic or English.

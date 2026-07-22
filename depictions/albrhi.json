@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.1.8.7\n\n- The AV1 transcode now shows a modern floating banner at the top of the screen\n  with a live progress bar, instead of a blocking centre spinner — you can keep\n  scrolling reels while a clip transcodes behind it.\n\n## v3.1.8.6\n\n- Fixed the AV1 transcode hanging at \"finishing\". Video and audio are now written\n  in parallel; feeding all the video first deadlocked the muxer, which will not\n  drain video until audio covers the same span. Still experimental, off by default.\n\n## v3.1.8.5\n\n- The AV1 transcode from 3.1.8.4 could sit on \"processing\" indefinitely. It now\n  shows a live frame count so progress is visible, cannot hang (every wait is\n  bounded and the muxer bails the moment its writer fails), and reports the\n  failing stage on the Diagnostics page. Still experimental and off by default.",
+          "markdown": "## v3.1.8.8\n\n- When Instagram offers the same resolution at both 30 and 60 fps, the transcode\n  now picks 60 — it followed the source before but kept whichever the manifest\n  listed first, so a 60 fps version could be missed. Output frame rate still\n  matches the video; most clips are simply 30 fps at the source.\n\n## v3.1.8.7\n\n- The AV1 transcode now shows a modern floating banner at the top of the screen\n  with a live progress bar, instead of a blocking centre spinner — you can keep\n  scrolling reels while a clip transcodes behind it.\n\n## v3.1.8.6\n\n- Fixed the AV1 transcode hanging at \"finishing\". Video and audio are now written\n  in parallel; feeding all the video first deadlocked the muxer, which will not\n  drain video until audio covers the same span. Still experimental, off by default.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.1.8.7"
+          "text": "3.1.8.8"
         },
         {
           "class": "DepictionTableTextView",
