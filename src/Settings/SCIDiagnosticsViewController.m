@@ -194,9 +194,18 @@ static NSMutableArray<NSString *> *_transcodeStages = nil;
     // there was nothing to find but because it never looked deep enough.
     if (!view || depth > 40) return;
 
-    if ([view isKindOfClass:[UILabel class]]) {
-        NSString *text = [(UILabel *)view text];
+    // Not only UILabel: Instagram draws some text in its own classes, and asking
+    // whether a view answers -text catches those too.
+    NSString *text = nil;
+    if ([view respondsToSelector:@selector(text)]) {
+        @try {
+            id value = [view performSelector:@selector(text)];
+            if ([value isKindOfClass:[NSString class]]) text = value;
+        } @catch (__unused id e) {}
+    }
+    if (!text.length) text = view.accessibilityLabel;
 
+    if (text.length) {
         if ([self looksLikeTimestamp:text] && out.count < 10) {
             NSString *entry = [NSString stringWithFormat:@"\"%@\" — %@ ← %@",
                                text,
@@ -204,9 +213,11 @@ static NSMutableArray<NSString *> *_transcodeStages = nil;
                                [self ancestryOf:view levels:3]];
             if (![out containsObject:entry]) [out addObject:entry];
         }
-        // Short labels are collected regardless, so a report can still show what
-        // the timestamp actually reads as when the pattern fails to recognise it.
-        else if (text.length > 0 && text.length <= 24 && sample.count < 14) {
+        // Short text is collected regardless so the report can still show what a
+        // timestamp reads as when the pattern misses it. The cap was 14 and filled
+        // with the stories tray and like counts before the scan ever reached a post
+        // header, which is exactly where the timestamp lives.
+        else if (text.length <= 24 && sample.count < 60) {
             NSString *entry = [NSString stringWithFormat:@"\"%@\" — %@",
                                text, NSStringFromClass([view class])];
             if (![sample containsObject:entry]) [sample addObject:entry];

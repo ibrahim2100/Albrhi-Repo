@@ -107,7 +107,7 @@ static NSString *const SCILastSeenVersionKey = @"albrhi_last_seen_version";
                                   title:SCILocalized(@"wn_u3_title")
                                  detail:SCILocalized(@"wn_u3_detail")
                                    tint:[UIColor systemTealColor]],
-        [SCIWhatsNewItem itemWithSymbol:@"shippingbox.fill"
+        [SCIWhatsNewItem itemWithSymbol:@"square.and.arrow.down.on.square.fill"
                                   title:SCILocalized(@"wn_u4_title")
                                  detail:SCILocalized(@"wn_u4_detail")
                                    tint:[UIColor systemGreenColor]]

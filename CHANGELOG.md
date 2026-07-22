@@ -1,27 +1,11 @@
 # Albrhi Changelog
 
-## v3.1.9.1
-
-Same as 3.1.9, rebuilt so the corrected timestamp scan can be tried on device.
-
-## v3.1.9
+## v3.1.9.2
 
 **New**
-- **Time-only and date-and-time formats**, plus a 12/24-hour switch that every
-  preset showing a clock obeys. Relative times are now off by default when the
-  feature is on — turning it on means you wanted a real time, not "an hour ago".
-- **Custom date formats.** Replace Instagram's "2h" with a real date, or show both.
-  Presets, your own pattern (`{DD}/{MM}/{YYYY} {HH}:{mm}` and friends), a compact
-  or worded relative style, and a threshold for how long relative times last.
-  Under Settings → Appearance.
-- **OLED theme.** Turns Instagram's dark grey into true black. Written from
-  scratch, not adapted — the published OLED tweaks carry no licence, so their code
-  cannot go into a GPLv3 project.
-
-**Changed**
-- The welcome screen shown after an update was still describing 3.1.4; it now
-  reflects what actually shipped since.
-- README features and roadmap brought up to date.
+- **Custom date and time formats.** A real time instead of "2h" — presets, your
+  own pattern, a time-only option, and a 12 or 24 hour clock. Under Appearance.
+- **OLED black theme.** Turns Instagram's dark grey into true black.
 
 ## v3.1.8.8
 
