@@ -1,5 +1,15 @@
 # Albrhi Changelog
 
+## v3.1.9.8
+
+- **Full last-active now reads numeric relative times too.** "Active an hour ago"
+  (and the Arabic "نشط منذ ساعة/ساعتين/٣ ساعات") used to be left untouched — only
+  worded forms like "Yesterday" converted. It now parses Arabic units, dual forms and
+  Arabic-Indic digits, and searches within the label instead of requiring an exact match.
+- **Tidier settings.** Downloads and Stories & messages are grouped under clear
+  headers (Downloading / Where files are saved / Video quality / Profile pictures;
+  Messages / Last active & calls / Visual messages), and a dead empty section is gone.
+
 ## v3.1.9.7
 
 - "Active yesterday" now becomes a real date too. Worded times carry no number,

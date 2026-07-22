@@ -374,9 +374,14 @@ static NSDictionary *_arTable = nil;
         @"p_hdr_limits": @"Limits",
         // Stories & messages
         @"p_hdr_messages": @"Messages",
-        @"p_sm_markseen_t": @"Manual mark-as-seen", @"p_sm_markseen_s": @"Adds a button to DM threads to mark messages as seen",
+        @"p_sm_markseen_t": @"Manual mark-as-seen", @"p_sm_markseen_s": @"Messages stop being marked as read automatically — tap the ✓ button in a chat to mark them. Until then they stay unread and refresh as new",
         @"p_sm_typing_t": @"Disable typing status", @"p_sm_typing_s": @"Stops the typing indicator from showing to others in DMs",
         @"p_hdr_visual": @"Visual messages & stories",
+        @"p_hdr_dl_behavior": @"Downloading",
+        @"p_hdr_dl_saving": @"Where files are saved",
+        @"p_hdr_dl_profile": @"Profile pictures",
+        @"p_hdr_dl_video": @"Video quality",
+        @"p_hdr_dm_calls": @"Last active & calls",
         @"p_sm_replay_t": @"Unlimited replay of visual messages", @"p_sm_replay_s": @"Replay view-once/normal visual messages unlimited times (toggle with the image-check icon in the chat)",
         @"p_sm_viewonce_t": @"Disable view-once limitations", @"p_sm_viewonce_s": @"Makes view-once messages behave like normal ones (loopable/pausable)",
         @"p_sm_screenshot_t": @"Disable screenshot detection", @"p_sm_screenshot_s": @"Removes screenshot alerts for visual messages in DMs",
@@ -429,6 +434,9 @@ static NSDictionary *_arTable = nil;
         @"p_dm_save_s": @"Adds a save button when you open a photo or video in DMs, and always allows saving",
         // View-once seen toasts
         @"p_dm_seen_already": @"Already marked as seen",
+        @"p_dm_seen_mark": @"Mark as seen",
+        @"p_dm_seen_done": @"Marked as seen",
+        @"p_dm_seen_failed": @"Couldn't mark as seen",
         // Long-press action
         @"p_press_zoom": @"Zoom (peek)",
         @"p_press_off": @"Off",
@@ -761,9 +769,14 @@ static NSDictionary *_arTable = nil;
         @"p_hdr_limits": @"الحدود",
         // القصص والرسائل
         @"p_hdr_messages": @"الرسائل",
-        @"p_sm_markseen_t": @"تعليم الرسائل كمقروءة يدويًا", @"p_sm_markseen_s": @"يضيف زرًا في المحادثات لتعليم الرسائل كمقروءة",
+        @"p_sm_markseen_t": @"تعليم الرسائل كمقروءة يدويًا", @"p_sm_markseen_s": @"تتوقّف الرسائل عن التعليم كمقروءة تلقائيًا — اضغط زر ✓ في المحادثة لتعليمها. حتى ذلك تبقى غير مقروءة وتظهر جديدة بعد التحديث",
         @"p_sm_typing_t": @"تعطيل حالة الكتابة", @"p_sm_typing_s": @"يمنع ظهور مؤشّر الكتابة للآخرين في الرسائل",
         @"p_hdr_visual": @"الرسائل المرئية والقصص",
+        @"p_hdr_dl_behavior": @"التنزيل",
+        @"p_hdr_dl_saving": @"مكان حفظ الملفات",
+        @"p_hdr_dl_profile": @"صور الملف الشخصي",
+        @"p_hdr_dl_video": @"جودة الفيديو",
+        @"p_hdr_dm_calls": @"آخر ظهور والاتصال",
         @"p_sm_replay_t": @"إعادة تشغيل غير محدودة للرسائل المرئية", @"p_sm_replay_s": @"أعد تشغيل الرسائل المرئية (لمرة واحدة/عادية) بلا حدود (بدّلها من أيقونة الصورة ذات علامة الصح في المحادثة)",
         @"p_sm_viewonce_t": @"تعطيل قيود العرض لمرة واحدة", @"p_sm_viewonce_s": @"يجعل رسائل العرض لمرة واحدة تتصرّف كالعادية (قابلة للتكرار والإيقاف)",
         @"p_sm_screenshot_t": @"تعطيل كشف لقطة الشاشة", @"p_sm_screenshot_s": @"يزيل تنبيهات لقطة الشاشة للرسائل المرئية في الرسائل",
@@ -816,6 +829,9 @@ static NSDictionary *_arTable = nil;
         @"p_dm_save_s": @"يضيف زر حفظ عند فتح صورة أو فيديو في الرسائل، ويسمح بالحفظ دائمًا",
         // تنبيهات مشاهدة العرض لمرة واحدة
         @"p_dm_seen_already": @"معلَّم كمشاهَد مسبقًا",
+        @"p_dm_seen_mark": @"تعليم كمشاهَد",
+        @"p_dm_seen_done": @"تم تعليمها كمشاهَدة",
+        @"p_dm_seen_failed": @"تعذّر التعليم كمشاهَد",
         // إجراء الضغط المطوّل
         @"p_press_zoom": @"تكبير (معاينة)",
         @"p_press_off": @"إيقاف",
