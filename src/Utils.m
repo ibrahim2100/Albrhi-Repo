@@ -183,6 +183,13 @@
     return hud;
 }
 
++ (JGProgressHUD *)showProgressHUDWithText:(NSString *)text {
+    JGProgressHUD *hud = [[JGProgressHUD alloc] init];
+    hud.textLabel.text = text;
+    [hud showInView:topMostController().view];
+    return hud;
+}
+
 // Present the system color picker to choose a custom accent color.
 + (void)showAccentColorPicker {
     if (@available(iOS 14.0, *)) {
@@ -565,8 +572,19 @@
         long long bandwidth = [self dashInt:@"bandwidth" inBlock:block];
 
         // A Representation with no dimensions is the audio track; keep it tagged so
-        // phase two can pair it with a transcoded video stream.
+        // the transcoder can pair it with the decoded video stream.
         NSString *type = (w > 0 && h > 0) ? @"video" : @"audio";
+
+        // frameRate is "num/den" (e.g. 15360/512 ≈ 30). The transcoder needs it to
+        // stamp presentation times; default to 30 when absent or malformed.
+        double fps = 30.0;
+        NSString *fr = [self dashString:@"frameRate" inBlock:block];
+        NSArray<NSString *> *parts = [fr componentsSeparatedByString:@"/"];
+        if (parts.count == 2 && [parts[1] doubleValue] > 0) {
+            fps = [parts[0] doubleValue] / [parts[1] doubleValue];
+        } else if (parts.count == 1 && [fr doubleValue] > 0) {
+            fps = [fr doubleValue];
+        }
 
         [out addObject:@{
             @"type": type,
@@ -576,7 +594,8 @@
             @"width": @(w),
             @"height": @(h),
             @"area": @(w * h),
-            @"bandwidth": @(bandwidth)
+            @"bandwidth": @(bandwidth),
+            @"fps": @(fps)
         }];
     }
 
@@ -621,6 +640,71 @@
         return best;
     } @catch (__unused id e) {
         return fallback;
+    }
+}
+
++ (NSURL *)urlFromDashRep:(NSDictionary *)rep {
+    if (!rep) return nil;
+    NSURL *url = [NSURL URLWithString:rep[@"url"]];
+    if (url) return url;
+    NSString *encoded = [rep[@"url"] stringByAddingPercentEncodingWithAllowedCharacters:
+                         [NSCharacterSet URLQueryAllowedCharacterSet]];
+    return [NSURL URLWithString:encoded];
+}
+
++ (NSDictionary *)transcodePlanForVideo:(id)video media:(id)media {
+    @try {
+        NSArray<NSDictionary *> *reps = [self dashRepresentationsForVideo:video media:media];
+        if (reps.count == 0) return nil;
+
+        NSDictionary *bestAV1 = nil, *bestAudio = nil;
+        long long bestSaveableHeight = 0;
+
+        for (NSDictionary *rep in reps) {
+            long long h = [rep[@"height"] longLongValue];
+            NSString *family = rep[@"family"];
+
+            if ([rep[@"type"] isEqualToString:@"audio"]) {
+                if (!bestAudio || [rep[@"bandwidth"] longLongValue] > [bestAudio[@"bandwidth"] longLongValue]) {
+                    bestAudio = rep;
+                }
+                continue;
+            }
+
+            // The tallest rendition iOS can already save without transcoding.
+            if (([family isEqualToString:@"h264"] || [family isEqualToString:@"hevc"]) && h > bestSaveableHeight) {
+                bestSaveableHeight = h;
+            }
+
+            if ([family isEqualToString:@"av1"]) {
+                if (!bestAV1 || [rep[@"area"] longLongValue] > [bestAV1[@"area"] longLongValue]) {
+                    bestAV1 = rep;
+                }
+            }
+        }
+
+        if (!bestAV1) return nil;
+
+        // Only worth the transcode when AV1 clears both the DASH H.264 ladder and
+        // the ~720p progressive rendition -videoVersions typically tops out at.
+        long long av1Height = [bestAV1[@"height"] longLongValue];
+        if (av1Height <= bestSaveableHeight || av1Height <= 720) return nil;
+
+        NSURL *videoURL = [self urlFromDashRep:bestAV1];
+        if (!videoURL) return nil;
+
+        NSMutableDictionary *plan = [NSMutableDictionary dictionary];
+        plan[@"videoURL"] = videoURL;
+        plan[@"fps"] = bestAV1[@"fps"] ?: @30;
+        plan[@"width"] = bestAV1[@"width"];
+        plan[@"height"] = bestAV1[@"height"];
+        if (bestAudio) {
+            NSURL *audioURL = [self urlFromDashRep:bestAudio];
+            if (audioURL) plan[@"audioURL"] = audioURL;
+        }
+        return plan;
+    } @catch (__unused id e) {
+        return nil;
     }
 }
 

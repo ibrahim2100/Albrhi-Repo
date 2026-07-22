@@ -40,7 +40,8 @@
                     [SCISetting switchCellWithTitle:SCILocalized(@"dw_save_to_camera_title") subtitle:SCILocalized(@"dw_save_to_camera_sub") defaultsKey:@"dw_save_to_camera"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"custom_album_title") subtitle:SCILocalized(@"custom_album_sub") defaultsKey:@"custom_album"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"dw_reel_audio_title") subtitle:SCILocalized(@"dw_reel_audio_sub") defaultsKey:@"dw_reel_audio"],
-                    [SCISetting switchCellWithTitle:SCILocalized(@"dw_silent_video_title") subtitle:SCILocalized(@"dw_silent_video_sub") defaultsKey:@"dw_silent_video"]
+                    [SCISetting switchCellWithTitle:SCILocalized(@"dw_silent_video_title") subtitle:SCILocalized(@"dw_silent_video_sub") defaultsKey:@"dw_silent_video"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"dw_transcode_av1_title") subtitle:SCILocalized(@"dw_transcode_av1_sub") defaultsKey:@"dw_transcode_av1"]
                 ]
             },
             @{

@@ -18,6 +18,7 @@ static NSString *_lastDashXML = nil;
 static NSInteger _lastDashRepresentations = 0;
 static NSArray<NSString *> *_lastDashCandidates = nil;
 static BOOL _dashProbeRan = NO;
+static NSMutableArray<NSString *> *_transcodeStages = nil;
 
 @implementation SCIDiagnostics
 
@@ -72,6 +73,19 @@ static BOOL _dashProbeRan = NO;
 + (void)recordButtonMediaClass:(NSString *)className {
     _buttonEverPressed = YES;
     _lastButtonMediaClass = [className copy];
+}
+
++ (void)recordTranscodeStage:(NSString *)name ok:(BOOL)ok detail:(NSString *)detail {
+    @synchronized (self) {
+        // The first stage of a run starts a clean list.
+        if (!_transcodeStages || [name isEqualToString:@"download-video"]) {
+            _transcodeStages = [NSMutableArray array];
+        }
+        NSString *line = [NSString stringWithFormat:@"%@ %@%@",
+                          ok ? @"✓" : @"✗", name,
+                          detail.length ? [@" — " stringByAppendingString:detail] : @""];
+        [_transcodeStages addObject:line];
+    }
 }
 
 + (void)recordDownloadKind:(NSString *)kind {
@@ -268,6 +282,7 @@ static BOOL _dashProbeRan = NO;
               @"ok": @(_lastVideoClass != nil)}
         ]},
         @{@"header": SCILocalized(@"diag_section_dash"), @"rows": [self dashRows]},
+        @{@"header": SCILocalized(@"diag_section_transcode"), @"rows": [self transcodeRows]},
         @{@"header": SCILocalized(@"diag_section_scan"), @"rows": [self scanRows]},
         @{@"header": SCILocalized(@"diag_section_stories"), @"rows": @[
             @{@"title": SCILocalized(@"diag_seen_replay"),
@@ -357,6 +372,24 @@ static BOOL _dashProbeRan = NO;
                       @"ok": @YES}];
 
     return rows;
+}
+
+- (NSArray<NSDictionary *> *)transcodeRows {
+    @synchronized ([SCIDiagnostics class]) {
+        if (!_transcodeStages.count) {
+            return @[@{@"title": SCILocalized(@"diag_transcode_none"),
+                       @"detail": SCILocalized(@"diag_transcode_hint"),
+                       @"ok": @NO}];
+        }
+
+        NSMutableArray<NSDictionary *> *rows = [NSMutableArray array];
+        for (NSString *line in _transcodeStages) {
+            [rows addObject:@{@"title": line,
+                              @"detail": @"",
+                              @"ok": @([line hasPrefix:@"✓"])}];
+        }
+        return rows;
+    }
 }
 
 - (NSArray<NSDictionary *> *)scanRows {

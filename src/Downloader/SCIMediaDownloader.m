@@ -1,10 +1,12 @@
 #import "SCIMediaDownloader.h"
 #import "Download.h"
 #import "Queue/SCIDownloadQueue.h"
+#import "Transcode/SCIAV1Transcoder.h"
 #import "../Utils.h"
 #import "../Localization/SCILocalize.h"
 #import "../Settings/SCIDiagnosticsViewController.h"
 #import <objc/runtime.h>
+#import <Photos/Photos.h>
 
 @implementation SCIMediaDownloader
 
@@ -176,6 +178,13 @@
             return;
         }
 
+        // Opt-in: when the only higher quality is AV1 (which iOS cannot save),
+        // transcode it to H.264 on device. Falls back to the progressive
+        // download on any failure, so this can never leave the user empty-handed.
+        if ([self tryTranscodeForVideo:video media:media sourceLabel:sourceLabel]) {
+            return;
+        }
+
         [self downloadVideo:video sourceLabel:sourceLabel anchor:anchor];
         return;
     }
@@ -190,6 +199,62 @@
     [SCIDiagnostics recordDownloadKind:@"neither — resolution failed"];
 
     [SCIUtils showErrorHUDWithDescription:SCILocalized(@"err_no_media")];
+}
+
+// MARK: - AV1 transcode
+
+/// Attempts the on-device AV1→H.264 transcode when it would raise the quality and
+/// the user has opted in. Returns YES if it took over the download (running in the
+/// background), NO to let the normal progressive path proceed.
++ (BOOL)tryTranscodeForVideo:(IGVideo *)video media:(id)media sourceLabel:(NSString *)sourceLabel {
+    if (![SCIUtils getBoolPref:@"dw_transcode_av1"]) return NO;
+
+    NSDictionary *plan = [SCIUtils transcodePlanForVideo:video media:media];
+    if (!plan) return NO;
+
+    NSString *label = [NSString stringWithFormat:SCILocalized(@"transcode_progress"),
+                       [plan[@"height"] intValue]];
+    JGProgressHUD *hud = [SCIUtils showProgressHUDWithText:label];
+
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        NSString *out = [NSTemporaryDirectory() stringByAppendingPathComponent:
+                         [[NSUUID UUID].UUIDString stringByAppendingPathExtension:@"mp4"]];
+
+        BOOL ok = [SCIAV1Transcoder transcodeVideoURL:plan[@"videoURL"]
+                                             audioURL:plan[@"audioURL"]
+                                                  fps:[plan[@"fps"] doubleValue]
+                                         toOutputPath:out];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [hud dismissAnimated:YES];
+
+            if (ok) {
+                [self saveTranscodedFile:out];
+            } else {
+                // The transcode named its failing stage in diagnostics; the user
+                // still gets the progressive rendition.
+                [SCIUtils showToastForDuration:1.4 title:SCILocalized(@"transcode_fell_back")];
+                [self downloadVideo:video sourceLabel:sourceLabel anchor:nil];
+            }
+        });
+    });
+
+    return YES;
+}
+
++ (void)saveTranscodedFile:(NSString *)path {
+    [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
+        [PHAssetChangeRequest creationRequestForAssetFromVideoAtFileURL:[NSURL fileURLWithPath:path]];
+    } completionHandler:^(BOOL success, NSError *error) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+            if (success) {
+                [SCIUtils showSuccessHUDWithDescription:SCILocalized(@"transcode_saved")];
+            } else {
+                [SCIUtils showErrorHUDWithDescription:(error.localizedDescription ?: SCILocalized(@"err_save_failed"))];
+            }
+        });
+    }];
 }
 
 // MARK: - On-screen story download

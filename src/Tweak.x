@@ -17,7 +17,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.1.8.3";  // Albrhi
+NSString *SCIVersionString = @"v3.1.8.4";  // Albrhi
 
 // Variables that work across features
 
@@ -54,7 +54,11 @@ NSString *SCIVersionString = @"v3.1.8.3";  // Albrhi
         @"enable_notes_customization": @(YES),
         @"custom_note_themes": @(YES),
         @"disable_auto_unmuting_reels": @(YES),
-        @"reels_auto_next": @(NO)
+        @"reels_auto_next": @(NO),
+        // Off by default: on-device AV1→H.264 transcoding is heavy (battery, heat,
+        // time) and experimental. When off, videos download at their best saveable
+        // progressive quality exactly as before.
+        @"dw_transcode_av1": @(NO)
     };
     [[NSUserDefaults standardUserDefaults] registerDefaults:sciDefaults];
 

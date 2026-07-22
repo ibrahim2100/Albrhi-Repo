@@ -53,6 +53,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// video means the emptiness check is failing again.
 + (void)recordDownloadKind:(NSString *)kind;
 
+/// Records one stage of an AV1 transcode (download, demux, decode+encode, mux).
+/// The pipeline cannot be tested off-device, so a failure has to name its stage
+/// here rather than surface as a blank video. A stage named "download-video"
+/// begins a fresh run and clears the previous one.
++ (void)recordTranscodeStage:(NSString *)name ok:(BOOL)ok detail:(nullable NSString *)detail;
+
 + (void)recordStorySeenIntercept;
 
 /// Which suppressed delegate calls the mark-as-seen button managed to replay.

@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v3.1.8.4
+
+- **Experimental: 1080p downloads via on-device transcoding.** Instagram serves
+  its high-quality video as AV1, which iOS cannot save. Turn on "Transcode AV1 to
+  1080p" in Downloads and Albrhi re-encodes it to H.264 on the device — no server,
+  nothing sent anywhere. It is heavier on battery and slower, so it is off by
+  default; when off, or if a transcode fails, downloads behave exactly as before.
+
 ## v3.1.8.3
 
 - Video downloads now read Instagram's full DASH quality ladder, not just the

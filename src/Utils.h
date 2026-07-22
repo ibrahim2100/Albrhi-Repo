@@ -48,6 +48,10 @@
 + (JGProgressHUD *)showErrorHUDWithDescription:(NSString *)errorDesc;
 + (JGProgressHUD *)showErrorHUDWithDescription:(NSString *)errorDesc dismissAfterDelay:(CGFloat)dismissDelay;
 + (JGProgressHUD *)showSuccessHUDWithDescription:(NSString *)desc;
+
+/// An indeterminate progress HUD that stays until the caller dismisses it. Used
+/// for work with no byte-count to report, such as the on-device AV1 transcode.
++ (JGProgressHUD *)showProgressHUDWithText:(NSString *)text;
 + (void)copyAccountInfoForUser:(id)user;
 /// Localized "Follows you" / "Doesn't follow you" for a given IGUser, or nil when
 /// the relationship can't be determined (e.g. your own profile).
@@ -87,6 +91,13 @@
 /// and -videoVersions together. Never returns less than -getVideoUrl: would: that
 /// remains the floor, so an AV1-only clip still downloads at its progressive best.
 + (nullable NSURL *)getBestVideoUrl:(nullable IGVideo *)video;
+
+/// A plan for transcoding, or nil when transcoding would not raise the quality.
+///
+/// Returned only when the AV1 ladder offers a resolution higher than anything iOS
+/// can save directly — the case the transcoder exists for. Keys: @c videoURL
+/// (AV1), optional @c audioURL (xHE-AAC), @c fps, @c width, @c height.
++ (nullable NSDictionary *)transcodePlanForVideo:(nullable id)video media:(nullable id)media;
 
 /// Every zero-argument selector on an object's class hierarchy whose name
 /// contains @c needle, case-insensitively.
