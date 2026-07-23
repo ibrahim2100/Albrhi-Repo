@@ -561,6 +561,18 @@
 @end
 
 @interface IGDSMenuItem : NSObject
+- (instancetype)initWithTitle:(NSString *)title image:(UIImage *)image handler:(void (^)(void))handler;
+@end
+
+// The sheet behind the composer's plus button.
+@interface IGDSMenu : NSObject
+@end
+
+// A voice message: the wrapper, and the audio it actually holds.
+@interface IGAudio : NSObject
+@end
+
+@interface IGDirectAudio : NSObject
 @end
 
 @interface IGDirectThreadViewController : UIViewController

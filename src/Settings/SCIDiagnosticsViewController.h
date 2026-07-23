@@ -99,6 +99,13 @@ NS_ASSUME_NONNULL_BEGIN
 /// which is worth knowing before hunting anywhere else.
 + (void)recordDateHooksInstalled:(NSInteger)count;
 
+/// What the voice-message probe could resolve when a message menu opened.
+/// Whether the URL is reachable decides if saving voice notes is worth wiring a
+/// button for, or whether the chain has to be found another way.
++ (void)recordAudioMessageProbe:(BOOL)foundMessage
+                       audioURL:(nullable NSString *)url
+                   messageClass:(nullable NSString *)className;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -18,7 +18,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.2.6";  // Albrhi
+NSString *SCIVersionString = @"v3.2.7";  // Albrhi
 
 // Variables that work across features
 
@@ -84,7 +84,11 @@ NSString *SCIVersionString = @"v3.2.6";  // Albrhi
         // none of them turns itself on.
         @"dm_full_last_active": @(NO),
         @"hide_voice_call_button": @(NO),
-        @"hide_video_call_button": @(NO)
+        @"hide_video_call_button": @(NO),
+        // Beta: adds an entry to the composer sheet that sends any file through
+        // Instagram's own sender. Off until asked for.
+        @"send_file": @(NO),
+        @"download_audio_message": @(NO)
     };
     [[NSUserDefaults standardUserDefaults] registerDefaults:sciDefaults];
 

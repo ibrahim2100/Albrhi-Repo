@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v3.2.7
+
+- **Send any file in a DM (beta).** Adds "Send file" to the composer's plus
+  button, so a PDF or a zip goes through like any other message. Off by default,
+  under Stories & messages.
+
 ## v3.2.6
 
 - **The sideload dylib now stands on its own.** It no longer needs CydiaSubstrate

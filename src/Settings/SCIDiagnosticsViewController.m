@@ -23,6 +23,7 @@ static NSMutableArray<NSString *> *_transcodeStages = nil;
 static NSMutableDictionary<NSString *, NSNumber *> *_dateFormatterCounts = nil;
 static NSMutableArray<NSString *> *_dateFormatterSamples = nil;
 static NSInteger _dateHooksInstalled = -1;
+static NSString *_audioProbe = nil;
 static NSInteger _dateRewrites = 0;
 static NSInteger _dateRewritesExact = 0;
 static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
@@ -115,6 +116,20 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
                 [_dateFormatterSamples addObject:entry];
             }
         }
+    }
+}
+
++ (void)recordAudioMessageProbe:(BOOL)foundMessage
+                       audioURL:(NSString *)url
+                   messageClass:(NSString *)className {
+    if (url.length) {
+        // Only the tail: these URLs are long, signed, and the useful part is
+        // simply that one exists.
+        NSString *tail = url.length > 60 ? [url substringToIndex:60] : url;
+        _audioProbe = [NSString stringWithFormat:@"%@ — audio: %@…", className ?: @"?", tail];
+    } else {
+        _audioProbe = [NSString stringWithFormat:@"%@ — no audio on this message",
+                       foundMessage ? (className ?: @"message") : @"no message found"];
     }
 }
 
@@ -435,6 +450,7 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
         @{@"header": SCILocalized(@"diag_section_transcode"), @"rows": [self transcodeRows]},
         @{@"header": SCILocalized(@"diag_section_scan"), @"rows": [self scanRows]},
         @{@"header": SCILocalized(@"diag_section_daterewrite"), @"rows": [self dateRewriteRows]},
+        @{@"header": SCILocalized(@"diag_section_audio"), @"rows": [self audioRows]},
         @{@"header": SCILocalized(@"diag_section_dateformat"), @"rows": [self dateFormatterRows]},
         @{@"header": SCILocalized(@"diag_section_timestamps"), @"rows": [self timestampRows]},
         @{@"header": SCILocalized(@"diag_section_stories"), @"rows": @[
@@ -607,6 +623,17 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
 
     [[[UINotificationFeedbackGenerator alloc] init] notificationOccurred:UINotificationFeedbackTypeSuccess];
     [self.tableView reloadData];
+}
+
+- (NSArray<NSDictionary *> *)audioRows {
+    @synchronized ([SCIDiagnostics class]) {
+        if (!_audioProbe.length) {
+            return @[@{@"title": SCILocalized(@"diag_audio_none"),
+                       @"detail": SCILocalized(@"diag_audio_hint"),
+                       @"ok": @NO}];
+        }
+        return @[@{@"title": _audioProbe, @"detail": @"", @"ok": @YES}];
+    }
 }
 
 - (NSArray<NSDictionary *> *)dateRewriteRows {
