@@ -1,5 +1,9 @@
 # Albrhi Changelog
 
+## v3.2.5
+
+- Fixed "couldn't check right now" when looking for updates.
+
 ## v3.2.4
 
 - **Update notifications.** Albrhi now tells you when a newer version is out, and

@@ -66,7 +66,11 @@ static void SCIAddressAnchor(void) {}
 // MARK: - Fetch
 
 + (void)fetchLatest:(void (^)(NSString *version, NSString *notes, NSError *error))completion {
-    NSString *api = [NSString stringWithFormat:@"https://api.github.com/repos/%@/%@/releases/latest",
+    // The releases list, not /releases/latest: that endpoint skips prereleases
+    // entirely, and every Albrhi build is published as one — so it answered 404
+    // and the check could never succeed. The list is newest first, so the first
+    // entry that is not a draft is the release to compare against.
+    NSString *api = [NSString stringWithFormat:@"https://api.github.com/repos/%@/%@/releases?per_page=10",
                      SCIRepoOwner, SCIRepoName];
 
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:api]];
@@ -82,19 +86,26 @@ static void SCIAddressAnchor(void) {}
         }
 
         id json = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-        if (![json isKindOfClass:[NSDictionary class]]) {
+        if (![json isKindOfClass:[NSArray class]]) {
             completion(nil, nil, [NSError errorWithDomain:@"albrhi" code:-2 userInfo:nil]);
             return;
         }
 
-        NSString *tag = json[@"tag_name"];
-        if (![tag isKindOfClass:[NSString class]] || !tag.length) {
-            completion(nil, nil, [NSError errorWithDomain:@"albrhi" code:-3 userInfo:nil]);
+        for (id entry in (NSArray *)json) {
+            if (![entry isKindOfClass:[NSDictionary class]]) continue;
+
+            // A draft is not out yet; a prerelease is, and is what we publish.
+            if ([entry[@"draft"] boolValue]) continue;
+
+            NSString *tag = entry[@"tag_name"];
+            if (![tag isKindOfClass:[NSString class]] || !tag.length) continue;
+
+            NSString *notes = [entry[@"body"] isKindOfClass:[NSString class]] ? entry[@"body"] : @"";
+            completion(tag, notes, nil);
             return;
         }
 
-        NSString *notes = [json[@"body"] isKindOfClass:[NSString class]] ? json[@"body"] : @"";
-        completion(tag, notes, nil);
+        completion(nil, nil, [NSError errorWithDomain:@"albrhi" code:-3 userInfo:nil]);
     }];
 
     [task resume];
@@ -107,7 +118,9 @@ static void SCIAddressAnchor(void) {}
 + (NSString *)destinationURL {
     if ([self isJailbrokenInstall]) return SCISourceURL;
 
-    return [NSString stringWithFormat:@"https://github.com/%@/%@/releases/latest",
+    // The releases list, not /latest — that page has the same blind spot as the
+    // API and shows nothing while every release is a prerelease.
+    return [NSString stringWithFormat:@"https://github.com/%@/%@/releases",
             SCIRepoOwner, SCIRepoName];
 }
 
