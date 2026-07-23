@@ -1,0 +1,541 @@
+<title>Albrhi — IPA injector</title>
+
+<style>
+  :root {
+    --bg: #0b0b0c; --fg: #f5f5f7; --muted: #98989f;
+    --line: #2a2a2e; --card: #141416; --accent: #ff5c1a;
+    --ok: #30d158; --bad: #ff453a;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#fff; --fg:#111; --muted:#666; --line:#e3e3e6; --card:#f7f7f8; }
+  }
+  :root[data-theme="dark"] { --bg:#0b0b0c; --fg:#f5f5f7; --muted:#98989f; --line:#2a2a2e; --card:#141416; }
+  :root[data-theme="light"] { --bg:#fff; --fg:#111; --muted:#666; --line:#e3e3e6; --card:#f7f7f8; }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px 20px 80px;
+    background: var(--bg); color: var(--fg);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  main { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 30px; letter-spacing: -0.02em; margin: 0 0 6px; }
+  .lede { color: var(--muted); margin: 0 0 28px; }
+
+  #drop {
+    border: 2px dashed var(--line); border-radius: 16px;
+    padding: 46px 20px; text-align: center; color: var(--muted);
+    cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  #drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, transparent); }
+  #drop strong { display: block; color: var(--fg); font-size: 17px; margin-bottom: 4px; }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin-top: 18px; }
+  .card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 12px; }
+
+  .row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 14px; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: 0; }
+  .row span:last-child { color: var(--muted); text-align: right; }
+
+  .btn {
+    appearance: none; border: 0; border-radius: 11px; padding: 12px 20px;
+    background: var(--accent); color: #fff; font-size: 15px; font-weight: 600;
+    cursor: pointer; margin-top: 16px;
+  }
+  .btn[disabled] { opacity: .5; cursor: default; }
+  .btn.secondary { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+
+  #log { margin-top: 16px; font-size: 14px; }
+  #log div { padding: 3px 0; }
+  .ok { color: var(--ok); }
+  .bad { color: var(--bad); }
+  .note { color: var(--muted); font-size: 13px; margin-top: 14px; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+  input[type=file] { display: none; }
+</style>
+
+<main>
+  <h1>IPA injector</h1>
+  <p class="lede">Puts Albrhi inside an Instagram IPA. Everything happens in this page — nothing is uploaded.</p>
+
+  <div id="drop">
+    <strong>Drop a decrypted Instagram IPA here</strong>
+    or click to choose one
+    <input type="file" id="ipa" accept=".ipa">
+  </div>
+
+  <div class="card hidden" id="info" style="display:none">
+    <h2>The app</h2>
+    <div id="details"></div>
+  </div>
+
+  <div class="card" id="dylibCard" style="display:none">
+    <h2>The tweak</h2>
+    <div id="dylibDrop" style="border:2px dashed var(--line);border-radius:12px;padding:24px;text-align:center;color:var(--muted);cursor:pointer">
+      <strong style="display:block;color:var(--fg)">Drop Albrhi_*.dylib here</strong>
+      from the Releases page
+      <input type="file" id="dylib" accept=".dylib">
+    </div>
+    <button class="btn" id="go" disabled>Inject</button>
+  </div>
+
+  <div id="log"></div>
+
+  <p class="note">
+    The result is <strong>unsigned</strong>, which is what you want: TrollStore installs it as-is,
+    and Sideloadly, ESign, AltStore or SideStore will sign it with your certificate. One file
+    serves both.
+  </p>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------------------------------------------------------------- logging
+
+  var logHost = document.getElementById('log');
+
+  function say(text, cls) {
+    var line = document.createElement('div');
+    if (cls) line.className = cls;
+    line.textContent = text;
+    logHost.appendChild(line);
+  }
+
+  function clearLog() { logHost.innerHTML = ''; }
+
+  // ------------------------------------------------------------------ zip
+  //
+  // A minimal reader and writer. Only stored and deflated entries appear in an
+  // IPA, and DecompressionStream handles the latter — this page is for desktop
+  // browsers, where it has existed for years.
+
+  function u16(view, off) { return view.getUint16(off, true); }
+  function u32(view, off) { return view.getUint32(off, true); }
+
+  async function readZip(buffer) {
+    var view = new DataView(buffer);
+    var bytes = new Uint8Array(buffer);
+
+    // Find the end-of-central-directory record, scanning back over the comment.
+    var eocd = -1;
+    for (var i = bytes.length - 22; i >= 0 && i > bytes.length - 66000; i--) {
+      if (u32(view, i) === 0x06054b50) { eocd = i; break; }
+    }
+    if (eocd < 0) throw new Error('Not a zip file — is this really an IPA?');
+
+    var count = u16(view, eocd + 10);
+    var start = u32(view, eocd + 16);
+
+    var entries = [];
+    var p = start;
+
+    for (var n = 0; n < count; n++) {
+      if (u32(view, p) !== 0x02014b50) throw new Error('Damaged central directory');
+
+      var method = u16(view, p + 10);
+      var crc = u32(view, p + 16);
+      var compSize = u32(view, p + 20);
+      var rawSize = u32(view, p + 24);
+      var nameLen = u16(view, p + 28);
+      var extraLen = u16(view, p + 30);
+      var commentLen = u16(view, p + 32);
+      var localOff = u32(view, p + 42);
+
+      var name = new TextDecoder().decode(bytes.subarray(p + 46, p + 46 + nameLen));
+
+      entries.push({
+        name: name, method: method, crc: crc,
+        compSize: compSize, rawSize: rawSize, localOff: localOff
+      });
+
+      p += 46 + nameLen + extraLen + commentLen;
+    }
+
+    // Resolve each entry's payload from its local header, whose extra field
+    // length can differ from the central directory's.
+    for (var e = 0; e < entries.length; e++) {
+      var entry = entries[e];
+      var lo = entry.localOff;
+      if (u32(view, lo) !== 0x04034b50) throw new Error('Damaged entry: ' + entry.name);
+
+      var lNameLen = u16(view, lo + 26);
+      var lExtraLen = u16(view, lo + 28);
+      var dataAt = lo + 30 + lNameLen + lExtraLen;
+
+      entry.data = bytes.subarray(dataAt, dataAt + entry.compSize);
+    }
+
+    return entries;
+  }
+
+  async function inflate(entry) {
+    if (entry.method === 0) return entry.data;
+
+    var stream = new Blob([entry.data]).stream()
+      .pipeThrough(new DecompressionStream('deflate-raw'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+
+  async function deflate(bytes) {
+    var stream = new Blob([bytes]).stream()
+      .pipeThrough(new CompressionStream('deflate-raw'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+
+  var CRC_TABLE = (function () {
+    var table = new Uint32Array(256);
+    for (var n = 0; n < 256; n++) {
+      var c = n;
+      for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      table[n] = c >>> 0;
+    }
+    return table;
+  })();
+
+  function crc32(bytes) {
+    var c = 0xFFFFFFFF;
+    for (var i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  async function writeZip(files) {
+    var chunks = [];
+    var central = [];
+    var offset = 0;
+    var encoder = new TextEncoder();
+
+    for (var i = 0; i < files.length; i++) {
+      var file = files[i];
+      var nameBytes = encoder.encode(file.name);
+      var body = file.stored ? file.data : await deflate(file.data);
+      var method = file.stored ? 0 : 8;
+
+      var local = new Uint8Array(30 + nameBytes.length);
+      var lv = new DataView(local.buffer);
+      lv.setUint32(0, 0x04034b50, true);
+      lv.setUint16(4, 20, true);
+      lv.setUint16(6, 0, true);
+      lv.setUint16(8, method, true);
+      lv.setUint32(14, file.crc, true);
+      lv.setUint32(18, body.length, true);
+      lv.setUint32(22, file.size, true);
+      lv.setUint16(26, nameBytes.length, true);
+      local.set(nameBytes, 30);
+
+      chunks.push(local, body);
+
+      var dir = new Uint8Array(46 + nameBytes.length);
+      var dv = new DataView(dir.buffer);
+      dv.setUint32(0, 0x02014b50, true);
+      dv.setUint16(4, 20, true);
+      dv.setUint16(6, 20, true);
+      dv.setUint16(10, method, true);
+      dv.setUint32(16, file.crc, true);
+      dv.setUint32(20, body.length, true);
+      dv.setUint32(24, file.size, true);
+      dv.setUint16(28, nameBytes.length, true);
+      // Directories keep the external attribute bit; everything else is a file.
+      dv.setUint32(38, /\/$/.test(file.name) ? 0x41ED0010 : 0x81A40000, true);
+      dv.setUint32(42, offset, true);
+      dir.set(nameBytes, 46);
+      central.push(dir);
+
+      offset += local.length + body.length;
+    }
+
+    var centralStart = offset;
+    var centralSize = 0;
+    for (var c = 0; c < central.length; c++) centralSize += central[c].length;
+
+    var end = new Uint8Array(22);
+    var ev = new DataView(end.buffer);
+    ev.setUint32(0, 0x06054b50, true);
+    ev.setUint16(8, files.length, true);
+    ev.setUint16(10, files.length, true);
+    ev.setUint32(12, centralSize, true);
+    ev.setUint32(16, centralStart, true);
+
+    return new Blob(chunks.concat(central, [end]), { type: 'application/octet-stream' });
+  }
+
+  // --------------------------------------------------------------- mach-o
+  //
+  // Adding a load command is a matter of writing one LC_LOAD_DYLIB into the free
+  // space between the header and the first section's data, then widening the
+  // header's command count and size. There is almost always room: linkers leave
+  // padding there for exactly this.
+
+  var LC_LOAD_DYLIB = 0x0c;
+  var MH_MAGIC_64 = 0xfeedfacf;
+  var FAT_MAGIC = 0xcafebabe;
+
+  function machoSlices(bytes) {
+    var view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    var magic = view.getUint32(0, false);
+
+    if (magic === FAT_MAGIC || magic === 0xbebafeca) {
+      var count = view.getUint32(4, false);
+      var slices = [];
+      for (var i = 0; i < count; i++) {
+        slices.push(view.getUint32(8 + i * 20 + 8, false));   // offset
+      }
+      return slices;
+    }
+    return [0];
+  }
+
+  function addLoadDylib(bytes, path) {
+    var slices = machoSlices(bytes);
+    var added = 0;
+
+    for (var s = 0; s < slices.length; s++) {
+      var base = slices[s];
+      var view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+
+      if (view.getUint32(base, true) !== MH_MAGIC_64) {
+        throw new Error('Only 64-bit Mach-O is supported');
+      }
+
+      var ncmds = view.getUint32(base + 16, true);
+      var sizeofcmds = view.getUint32(base + 20, true);
+
+      // Walk the commands to find where they end, and to notice an existing entry.
+      var p = base + 32;
+      var already = false;
+
+      for (var n = 0; n < ncmds; n++) {
+        var cmd = view.getUint32(p, true);
+        var size = view.getUint32(p + 4, true);
+
+        if (cmd === LC_LOAD_DYLIB) {
+          var nameOff = view.getUint32(p + 8, true);
+          var raw = bytes.subarray(p + nameOff, p + size);
+          var existing = new TextDecoder().decode(raw).replace(/\0+$/, '');
+          if (existing === path) already = true;
+        }
+        p += size;
+      }
+
+      if (already) continue;
+
+      var pathBytes = new TextEncoder().encode(path);
+      // 24 bytes of dylib_command, then the path, padded to 8.
+      var cmdSize = Math.ceil((24 + pathBytes.length + 1) / 8) * 8;
+
+      // The command area must not grow into the first section's contents.
+      var firstData = Infinity;
+      var q = base + 32;
+      for (var m = 0; m < ncmds; m++) {
+        var c = view.getUint32(q, true);
+        var sz = view.getUint32(q + 4, true);
+        if (c === 0x19) {   // LC_SEGMENT_64
+          var nsects = view.getUint32(q + 64, true);
+          for (var k = 0; k < nsects; k++) {
+            var off = view.getUint32(q + 72 + k * 80 + 48, true);
+            if (off > 0 && off < firstData) firstData = off;
+          }
+        }
+        q += sz;
+      }
+
+      var end = base + 32 + sizeofcmds;
+      if (end + cmdSize > base + firstData) {
+        throw new Error('No room in the header for another load command');
+      }
+
+      // Everything after the last command up to the free space is zero padding,
+      // so writing here overwrites nothing.
+      var w = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+      w.setUint32(end, LC_LOAD_DYLIB, true);
+      w.setUint32(end + 4, cmdSize, true);
+      w.setUint32(end + 8, 24, true);          // name offset
+      w.setUint32(end + 12, 0, true);          // timestamp
+      w.setUint32(end + 16, 0x10000, true);    // current version 1.0.0
+      w.setUint32(end + 20, 0x10000, true);    // compatibility version
+      bytes.set(pathBytes, end + 24);
+
+      w.setUint32(base + 16, ncmds + 1, true);
+      w.setUint32(base + 20, sizeofcmds + cmdSize, true);
+      added++;
+    }
+
+    return added;
+  }
+
+  // ----------------------------------------------------------------- state
+
+  var state = { ipa: null, entries: null, appDir: null, executable: null, dylib: null };
+
+  var drop = document.getElementById('drop');
+  var ipaPicker = document.getElementById('ipa');
+  var dylibDrop = document.getElementById('dylibDrop');
+  var dylibPicker = document.getElementById('dylib');
+  var goButton = document.getElementById('go');
+
+  function detail(label, value, cls) {
+    var row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = '<span></span><span class="' + (cls || '') + '"></span>';
+    row.children[0].textContent = label;
+    row.children[1].textContent = value;
+    return row;
+  }
+
+  async function loadIPA(file) {
+    clearLog();
+    say('Reading ' + file.name + '…');
+
+    try {
+      var buffer = await file.arrayBuffer();
+      var entries = await readZip(buffer);
+
+      // Payload/<Something>.app/ — the bundle we are injecting into.
+      var appDir = null;
+      for (var i = 0; i < entries.length; i++) {
+        var m = entries[i].name.match(/^(Payload\/[^\/]+\.app)\//);
+        if (m) { appDir = m[1]; break; }
+      }
+      if (!appDir) throw new Error('No Payload/*.app inside — is this an IPA?');
+
+      // Info.plist names the executable; guessing from the folder name is wrong
+      // often enough to matter.
+      var plistEntry = entries.filter(function (e) { return e.name === appDir + '/Info.plist'; })[0];
+      if (!plistEntry) throw new Error('No Info.plist in the app bundle');
+
+      var plist = new TextDecoder().decode(await inflate(plistEntry));
+      var exeMatch = plist.match(/<key>CFBundleExecutable<\/key>\s*<string>([^<]+)<\/string>/);
+      var verMatch = plist.match(/<key>CFBundleShortVersionString<\/key>\s*<string>([^<]+)<\/string>/);
+
+      if (!exeMatch) throw new Error('Info.plist is binary — this IPA needs an XML plist');
+
+      state.ipa = file;
+      state.entries = entries;
+      state.appDir = appDir;
+      state.executable = appDir + '/' + exeMatch[1];
+
+      var host = document.getElementById('details');
+      host.innerHTML = '';
+      host.appendChild(detail('App', appDir.replace('Payload/', '')));
+      host.appendChild(detail('Version', verMatch ? verMatch[1] : 'unknown'));
+      host.appendChild(detail('Executable', exeMatch[1]));
+      host.appendChild(detail('Files', String(entries.length)));
+
+      document.getElementById('info').style.display = '';
+      document.getElementById('dylibCard').style.display = '';
+      drop.style.display = 'none';
+
+      say('Loaded.', 'ok');
+      refreshButton();
+
+    } catch (error) {
+      say(error.message, 'bad');
+    }
+  }
+
+  function refreshButton() {
+    goButton.disabled = !(state.entries && state.dylib);
+  }
+
+  async function inject() {
+    goButton.disabled = true;
+    clearLog();
+
+    try {
+      say('Injecting…');
+
+      var dylibName = state.dylib.name;
+      var dylibBytes = new Uint8Array(await state.dylib.arrayBuffer());
+      var frameworkPath = state.appDir + '/Frameworks/' + dylibName;
+
+      var files = [];
+      var patched = false;
+
+      for (var i = 0; i < state.entries.length; i++) {
+        var entry = state.entries[i];
+
+        // Replacing an earlier injection of the same name rather than adding a
+        // second copy, so re-running this is safe.
+        if (entry.name === frameworkPath) continue;
+
+        var data = await inflate(entry);
+
+        if (entry.name === state.executable) {
+          // @rpath, not @executable_path: injectors put the dylib in Frameworks/,
+          // and an iOS app already carries an LC_RPATH pointing there.
+          var added = addLoadDylib(data, '@rpath/' + dylibName);
+          say(added ? 'Patched the executable (' + added + ' slice' + (added > 1 ? 's' : '') + ')'
+                    : 'Executable already references it — left alone', 'ok');
+          patched = true;
+        }
+
+        files.push({
+          name: entry.name,
+          data: data,
+          size: data.length,
+          crc: crc32(data),
+          stored: entry.method === 0 && data.length === 0
+        });
+      }
+
+      if (!patched) throw new Error('Never found the executable at ' + state.executable);
+
+      files.push({
+        name: frameworkPath,
+        data: dylibBytes,
+        size: dylibBytes.length,
+        crc: crc32(dylibBytes),
+        stored: false
+      });
+      say('Added ' + frameworkPath, 'ok');
+
+      say('Repacking…');
+      var blob = await writeZip(files);
+
+      var name = state.ipa.name.replace(/\.ipa$/i, '') + '-Albrhi.ipa';
+      var link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = name;
+      link.click();
+      setTimeout(function () { URL.revokeObjectURL(link.href); }, 20000);
+
+      say('Done — ' + name + ' (' + (blob.size / 1048576).toFixed(1) + ' MB)', 'ok');
+      say('Unsigned: install with TrollStore, or sign it with Sideloadly / ESign / AltStore.');
+
+    } catch (error) {
+      say(error.message, 'bad');
+    } finally {
+      goButton.disabled = false;
+    }
+  }
+
+  // ---------------------------------------------------------------- wiring
+
+  function wireDrop(zone, picker, handler) {
+    zone.addEventListener('click', function () { picker.click(); });
+    picker.addEventListener('change', function () {
+      if (picker.files[0]) handler(picker.files[0]);
+    });
+    ['dragenter', 'dragover'].forEach(function (type) {
+      zone.addEventListener(type, function (e) { e.preventDefault(); zone.classList.add('over'); });
+    });
+    ['dragleave', 'drop'].forEach(function (type) {
+      zone.addEventListener(type, function (e) { e.preventDefault(); zone.classList.remove('over'); });
+    });
+    zone.addEventListener('drop', function (e) {
+      if (e.dataTransfer.files[0]) handler(e.dataTransfer.files[0]);
+    });
+  }
+
+  wireDrop(drop, ipaPicker, loadIPA);
+  wireDrop(dylibDrop, dylibPicker, function (file) {
+    state.dylib = file;
+    dylibDrop.querySelector('strong').textContent = file.name;
+    say('Tweak: ' + file.name + ' (' + (file.size / 1048576).toFixed(1) + ' MB)', 'ok');
+    refreshButton();
+  });
+
+  goButton.addEventListener('click', inject);
+})();
+</script>

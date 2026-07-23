@@ -453,6 +453,12 @@ jobs:
                 mkdir -p pages/deb-edit
                 cp main/tools/deb-edit.html pages/deb-edit/index.html
 
+                # Puts the tweak inside an Instagram IPA, entirely in the visitor's
+                # browser. Nothing is uploaded, so hosting the page carries none of
+                # the risk that hosting an IPA would.
+                mkdir -p pages/inject
+                cp main/tools/ipa-inject.html pages/inject/index.html
+
                 # Regenerated every run so the version and changelog shown on the
                 # package page always match what was actually built. The generator
                 # reads CHANGELOG.md relative to its own working directory, hence
