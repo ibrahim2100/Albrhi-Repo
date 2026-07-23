@@ -21,9 +21,16 @@ NS_ASSUME_NONNULL_BEGIN
 /// wait stops being worth the result.
 + (NSTimeInterval)maximumDuration;
 
-/// Asks how long the clip should be, then renders and saves it. Call on the main
-/// thread; the work happens off it, behind the transcode banner.
-+ (void)offerForPhoto:(NSURL *)photo audio:(NSURL *)audio;
+/// Offers the two outcomes — the picture on its own, or a clip with the sound —
+/// and carries out whichever is chosen. Call on the main thread; the rendering
+/// happens off it, behind the transcode banner.
+///
+/// @param savePhoto  run when the picture alone is what the user wants, so the
+///                   ordinary download stays the caller's business and this class
+///                   never grows a second path into the photo library.
++ (void)offerForPhoto:(NSURL *)photo
+                audio:(NSURL *)audio
+            savePhoto:(void (^)(void))savePhoto;
 
 @end
 

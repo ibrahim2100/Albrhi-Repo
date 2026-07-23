@@ -201,7 +201,11 @@
         if ([SCIUtils getBoolPref:@"photo_as_video"]) {
             NSURL *audioUrl = [SCIUtils getAudioUrlForMedia:media];
             if (audioUrl) {
-                [SCIPhotoVideo offerForPhoto:photoUrl audio:audioUrl];
+                // The choice is always offered — the setting decides whether the
+                // clip is on the table, never that it is taken for granted.
+                [SCIPhotoVideo offerForPhoto:photoUrl audio:audioUrl savePhoto:^{
+                    [self downloadURL:photoUrl sourceLabel:sourceLabel isVideo:NO];
+                }];
                 return;
             }
         }

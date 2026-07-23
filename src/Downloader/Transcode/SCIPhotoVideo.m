@@ -1,4 +1,5 @@
 #import "SCIPhotoVideo.h"
+#import "SCIPhotoVideoSheet.h"
 #import "SCITranscodeBanner.h"
 #import "../../Utils.h"
 #import "../../InstagramHeaders.h"
@@ -270,37 +271,22 @@ static const CGFloat kMaximumSide = 1920.0;
     });
 }
 
-+ (void)offerForPhoto:(NSURL *)photo audio:(NSURL *)audio {
-    if (!photo || !audio) return;
++ (void)offerForPhoto:(NSURL *)photo
+                audio:(NSURL *)audio
+            savePhoto:(void (^)(void))savePhoto {
 
-    UIAlertController *sheet =
-        [UIAlertController alertControllerWithTitle:SCILocalized(@"photovid_title")
-                                            message:SCILocalized(@"photovid_body")
-                                     preferredStyle:UIAlertControllerStyleActionSheet];
-
-    for (NSNumber *seconds in @[@5, @10, @15, @30, @60, @(SCIPhotoVideo.maximumDuration)]) {
-        NSString *label = [NSString stringWithFormat:SCILocalized(@"photovid_seconds"),
-                           (long)seconds.integerValue];
-
-        [sheet addAction:[UIAlertAction actionWithTitle:label
-                                                  style:UIAlertActionStyleDefault
-                                                handler:^(UIAlertAction *action) {
-            [self renderAndSave:photo audio:audio seconds:seconds.doubleValue];
-        }]];
+    // No audio means there is nothing to choose between; the picture is the only
+    // thing there is, so it is saved without a word.
+    if (!photo || !audio) {
+        if (savePhoto) savePhoto();
+        return;
     }
 
-    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
-                                              style:UIAlertActionStyleCancel
-                                            handler:nil]];
-
-    UIViewController *host = topMostController();
-
-    // An action sheet without an anchor is fatal on iPad.
-    sheet.popoverPresentationController.sourceView = host.view;
-    sheet.popoverPresentationController.sourceRect =
-        CGRectMake(CGRectGetMidX(host.view.bounds), CGRectGetMaxY(host.view.bounds) - 40, 1, 1);
-
-    [host presentViewController:sheet animated:YES completion:nil];
+    [SCIPhotoVideoSheet presentWithOnPhoto:^{
+        if (savePhoto) savePhoto();
+    } onVideo:^(NSTimeInterval seconds) {
+        [self renderAndSave:photo audio:audio seconds:seconds];
+    }];
 }
 
 @end
