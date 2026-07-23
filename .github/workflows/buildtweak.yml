@@ -21,8 +21,21 @@ jobs:
     build:
         name: Build rootless + roothide + dylib
         runs-on: macos-latest
+
+        # Required by actions/deploy-pages, which refuses to run without it.
+        environment:
+            name: github-pages
+            url: ${{ steps.deploy.outputs.page_url }}
+
         permissions:
             contents: write
+            # Needed to deploy the APT index ourselves. GitHub does not start a
+            # workflow from a push made with GITHUB_TOKEN, and the implicit Pages
+            # build that used to be exempt no longer fires — so the branch updated
+            # while the site kept serving the previous release. Deploying from this
+            # job removes the dependency on that trigger entirely.
+            pages: write
+            id-token: write
 
         steps:
             - name: Checkout Main
@@ -424,6 +437,19 @@ jobs:
                 git commit -q -m "Repo: Albrhi ${ALBRHI_VERSION}"
                 git push -q origin gh-pages
 
-                echo "Repo published. Enable Pages at:"
-                echo "  https://github.com/${{ github.repository }}/settings/pages"
-                echo "  Source: Deploy from a branch -> gh-pages / (root)"
+                echo "Index committed to gh-pages; the deploy steps below publish it."
+
+            # The branch above stays the source of truth and stays readable. These
+            # steps only make the publish explicit: it succeeds or fails inside this
+            # run, with a log, instead of depending on a trigger that can stop
+            # firing without notice — which is exactly what happened.
+            - name: Upload the repo for Pages
+              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+              uses: actions/upload-pages-artifact@v3
+              with:
+                path: pages
+
+            - name: Deploy to Pages
+              id: deploy
+              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+              uses: actions/deploy-pages@v4
