@@ -178,15 +178,24 @@ jobs:
 
                 mv "$BUILT_DEB" "com.albrhi.tweak_${ALBRHI_VERSION}+rootless.deb"
 
-            - name: Collect the dylib alongside the deb
+            - name: Build the standalone dylib for sideloading
               if: steps.release_check.outputs.needed == 'true'
               run: |
                 cd main
 
-                # The tweak binary is produced on the way to the .deb but never
-                # copied out. Sideloaders (LiveContainer, Sideloadly, cyan) want the
-                # dylib on its own, so ship both from one build. Collected before the
-                # roothide build, which wipes .theos.
+                # Built separately from the packages, not copied out of them. The
+                # package binary hooks through CydiaSubstrate, which a sideloaded
+                # app has no reason to have — injected on its own it would load
+                # nothing and Instagram would simply look untweaked, with no error
+                # to explain why. This build carries its own hooking instead.
+                make clean
+                rm -rf .theos
+
+                # Same scheme the published dylib was built under before, so the
+                # only difference from the previous binary is the hooking layer.
+                export THEOS_PACKAGE_SCHEME=rootless
+                make SELFCONTAINED=1 FINALPACKAGE=1
+
                 DYLIB=$(find .theos/obj -name 'Albrhi.dylib' -type f | head -n1)
 
                 if [ -z "$DYLIB" ]; then
@@ -194,7 +203,26 @@ jobs:
                   exit 1
                 fi
 
+                # Proof, not assumption: a leftover reference to CydiaSubstrate
+                # means the dylib still needs it at load time, and calling it
+                # standalone would be a lie the user only discovers on device.
+                echo "Linked libraries:"
+                otool -L "$DYLIB"
+
+                if otool -L "$DYLIB" | grep -qi 'substrate'; then
+                  echo "::error::The dylib still links CydiaSubstrate — it is not standalone"
+                  exit 1
+                fi
+
+                echo "Standalone: no Substrate dependency."
+
                 cp "$DYLIB" "packages/Albrhi_${ALBRHI_VERSION}.dylib"
+
+                # The package builds that follow must not inherit this build's
+                # objects, or a .deb would ship the sideload flavour.
+                make clean
+                rm -rf .theos
+
                 ls -la packages
 
             - name: Setup roothide Theos

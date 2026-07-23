@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v3.2.6
+
+- **The sideload dylib now stands on its own.** It no longer needs CydiaSubstrate
+  installed beside it, so it can be injected by TrollStore, SideStore, a
+  certificate, LiveContainer or anything else — on its own. Jailbreak packages are
+  unchanged.
+
 ## v3.2.5
 
 - Fixed "couldn't check right now" when looking for updates.

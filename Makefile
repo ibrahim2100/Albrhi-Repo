@@ -25,3 +25,20 @@ include $(THEOS_MAKE_PATH)/tweak.mk
 ifdef SIDELOAD
 	$(TWEAK_NAME)_SUBPROJECTS += modules/flexing
 endif
+
+# A dylib that carries its own hooking, so it can be injected on its own — by
+# TrollStore, a certificate, SideStore, LiveContainer, anything — without
+# CydiaSubstrate having to be present alongside it.
+#
+# Off by default and never set for the jailbreak packages: those keep using
+# Substrate exactly as they always have, and this cannot affect them.
+#
+# src/Compat/SCISubstrateShim.m supplies MSHookMessageEx itself. Defining it in
+# our own binary means the linker resolves it internally, and -dead_strip_dylibs
+# then drops the now-unreferenced CydiaSubstrate load command — which is what
+# makes the result genuinely standalone rather than merely appearing to be.
+# CI verifies that with otool rather than trusting it.
+ifdef SELFCONTAINED
+	$(TWEAK_NAME)_CFLAGS += -DSCI_SELFCONTAINED
+	$(TWEAK_NAME)_LDFLAGS += -Wl,-dead_strip_dylibs
+endif
