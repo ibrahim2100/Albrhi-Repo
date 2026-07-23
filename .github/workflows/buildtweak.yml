@@ -203,9 +203,9 @@ jobs:
                   exit 1
                 fi
 
-                # Proof, not assumption: a leftover reference to CydiaSubstrate
-                # means the dylib still needs it at load time, and calling it
-                # standalone would be a lie the user only discovers on device.
+                # Proof, not assumption: calling this standalone is something the
+                # user would otherwise only get to disprove on their own device,
+                # where the failure is silent — Instagram just looks untweaked.
                 echo "Linked libraries:"
                 otool -L "$DYLIB"
 
@@ -214,7 +214,20 @@ jobs:
                   exit 1
                 fi
 
-                echo "Standalone: no Substrate dependency."
+                # The stricter half. A library can be dropped from the load
+                # commands while an undefined MS* symbol remains, and that would
+                # fail at load time rather than here. Every symbol the dylib still
+                # expects from outside is listed, and any MS one is fatal.
+                echo "Undefined symbols beginning with MS:"
+                nm -u "$DYLIB" | grep -E '^_MS' || echo "  (none)"
+
+                if nm -u "$DYLIB" | grep -qE '^_MS'; then
+                  echo "::error::The dylib still expects Substrate symbols at load time"
+                  nm -u "$DYLIB" | grep -E '^_MS'
+                  exit 1
+                fi
+
+                echo "Standalone: no Substrate library, no Substrate symbols."
 
                 cp "$DYLIB" "packages/Albrhi_${ALBRHI_VERSION}.dylib"
 
