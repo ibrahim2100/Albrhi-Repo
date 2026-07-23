@@ -3,6 +3,7 @@
 #import "Tweak.h"
 #import "Utils.h"
 #import "Onboarding/SCIWhatsNewViewController.h"
+#import "Features/General/SCIUpdateChecker.h"
 #import "Downloader/Queue/SCIDownloadQueue.h"
 
 ///////////////////////////////////////////////////////////
@@ -17,7 +18,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.2.3";  // Albrhi
+NSString *SCIVersionString = @"v3.2.4";  // Albrhi
 
 // Variables that work across features
 
@@ -74,6 +75,11 @@ NSString *SCIVersionString = @"v3.2.3";  // Albrhi
         @"date_combine": @"off",
         @"oled_theme": @(NO),
 
+        // On: a version check is a plain GET to GitHub carrying nothing about the
+        // user, and someone running a beta should hear when it is superseded. The
+        // setting says what it contacts, and turns it off.
+        @"update_check_enabled": @(YES),
+
         // DM additions, all off: each changes what Instagram shows or sends, so
         // none of them turns itself on.
         @"dm_full_last_active": @(NO),
@@ -92,6 +98,12 @@ NSString *SCIVersionString = @"v3.2.3";  // Albrhi
     // silently fails.
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [SCIWhatsNewViewController presentIfNeededFromWindow:[self window]];
+    });
+
+    // After the welcome screen has had its moment, so two things never appear at
+    // once. Silent unless there is genuinely a newer release.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(6.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [SCIUpdateChecker checkQuietly];
     });
 
     // Opt-in: jump straight into settings on every launch.

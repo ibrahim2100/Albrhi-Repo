@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v3.2.4
+
+- **Update notifications.** Albrhi now tells you when a newer version is out, and
+  there's a "Check for updates" button in the settings. Jailbroken installs are
+  pointed at the source, sideloaded ones at the new dylib. It contacts GitHub once
+  a day and sends nothing about you — turn it off under Credits if you'd rather.
+
 ## v3.2.3
 
 - **New Privacy page** — seen receipts, typing, screenshots and searches gathered in one place.

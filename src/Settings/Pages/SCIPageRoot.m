@@ -1,4 +1,5 @@
 #import "../SCISettingsRegistry.h"
+#import "../../Features/General/SCIUpdateChecker.h"
 #import "../TweakSettings.h"
 #import "../../Onboarding/SCIWhatsNewViewController.h"
 #import "../SCIDiagnosticsViewController.h"
@@ -157,6 +158,13 @@
                                      subtitle:SCILocalized(@"credits_sub")
                                          icon:[SCISymbol symbolWithName:@"heart.text.square.fill" color:[UIColor systemPinkColor] size:20.0]
                                           url:@"https://github.com/SoCuul/SCInsta"],
+                [SCISetting buttonCellWithTitle:SCILocalized(@"update_check_t")
+                                       subtitle:SCILocalized(@"update_check_s")
+                                           icon:[SCISymbol symbolWithName:@"arrow.triangle.2.circlepath" color:[SCIUtils SCIColor_Primary] size:20.0]
+                                         action:^{ [SCIUpdateChecker checkFromSettings:nil]; }],
+                [SCISetting switchCellWithTitle:SCILocalized(@"update_auto_t")
+                                       subtitle:SCILocalized(@"update_auto_s")
+                                    defaultsKey:@"update_check_enabled"],
                 [SCISetting linkCellWithTitle:SCILocalized(@"view_repo_title")
                                      subtitle:SCILocalized(@"view_repo_sub")
                                          icon:[SCISymbol symbolWithName:@"chevron.left.forwardslash.chevron.right" color:[SCIUtils SCIColor_Primary] size:20.0]
