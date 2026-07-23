@@ -2,6 +2,8 @@
 
 ## v3.2.7
 
+- **Save voice messages (beta).** Long-press one and Albrhi asks whether to save
+  it — it never saves without asking. Off by default, under Stories & messages.
 - **Send any file in a DM (beta).** Adds "Send file" to the composer's plus
   button, so a PDF or a zip goes through like any other message. Off by default,
   under Stories & messages.

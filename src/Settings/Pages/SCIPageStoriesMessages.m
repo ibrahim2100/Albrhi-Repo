@@ -25,6 +25,7 @@
                 @"rows": @[
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_dm_voicecall_t") subtitle:SCILocalized(@"p_dm_voicecall_s") defaultsKey:@"hide_voice_call_button" requiresRestart:YES],
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_dm_videocall_t") subtitle:SCILocalized(@"p_dm_videocall_s") defaultsKey:@"hide_video_call_button" requiresRestart:YES],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_dm_dlaudio_t") subtitle:SCILocalized(@"p_dm_dlaudio_s") defaultsKey:@"download_audio_message" requiresRestart:YES],
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_dm_sendfile_t") subtitle:SCILocalized(@"p_dm_sendfile_s") defaultsKey:@"send_file" requiresRestart:YES]
                 ]
             },

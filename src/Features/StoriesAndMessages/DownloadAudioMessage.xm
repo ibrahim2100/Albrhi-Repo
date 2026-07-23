@@ -1,23 +1,24 @@
 #import "../../Utils.h"
 #import "../../InstagramHeaders.h"
 #import "../../Localization/SCILocalize.h"
+#import "../../Downloader/SCIMediaDownloader.h"
 #import "../../Settings/SCIDiagnosticsViewController.h"
 
 #import <substrate.h>
 #import <objc/runtime.h>
 
 ///
-/// Groundwork for saving a voice message — beta, and not yet wired to a button.
+/// Saves a voice message — beta.
 ///
 /// A voice note is the one thing in a chat with no way out of it. The URL is
 /// there: a message holds an IGDirectAudio, which holds the IGAudio the app
 /// actually plays, which knows its playback URL.
 ///
-/// What is missing is only where to put the button. It belongs in the message's
-/// long-press menu, but that menu's items are built by IGDSPrismMenuView from an
-/// element type this project has not seen, and adding a download that fired when
-/// the menu merely opened — rather than when the user chose it — would be worse
-/// than not having one. So this resolves the URL, reports it, and stops there.
+/// Long-pressing a voice message asks whether to save it. The download does not
+/// belong to a menu item: those are built by IGDSPrismMenuView from an element
+/// type this project has not seen, and a long-press that saved without asking
+/// would be the wrong behaviour. A prompt gets consent without needing that type,
+/// and the whole thing stays off until switched on.
 ///
 /// Beta because that menu is a Swift class whose name carries its module
 /// mangling, and mangled names change more readily than ordinary ones. When it
@@ -29,7 +30,55 @@
 /// GPLv3), a fellow SCInsta fork.
 ///
 
-static NSURL *sciLastAudioURL = nil;
+@interface SCIAudioMessagePrompt : NSObject
++ (void)askFor:(NSURL *)audio;
+@end
+
+@implementation SCIAudioMessagePrompt
+
+/// The last URL asked about, and when. Instagram rebuilds the menu configuration
+/// several times for one long-press, which would otherwise stack identical
+/// alerts — but the guard expires, so declining once does not make the message
+/// unsaveable for the rest of the session.
+static NSString *sciLastAsked = nil;
+static NSTimeInterval sciLastAskedAt = 0;
+
++ (void)askFor:(NSURL *)audio {
+    if (!audio) return;
+
+    NSTimeInterval now = [NSDate date].timeIntervalSince1970;
+    BOOL sameMessage = sciLastAsked && [sciLastAsked isEqualToString:audio.absoluteString];
+    if (sameMessage && now - sciLastAskedAt < 3.0) return;
+
+    sciLastAsked = audio.absoluteString;
+    sciLastAskedAt = now;
+
+    UIViewController *host = topMostController();
+    if (!host || host.presentedViewController) return;
+
+    UIAlertController *alert =
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"dlaudio_title")
+                                            message:SCILocalized(@"dlaudio_body")
+                                     preferredStyle:UIAlertControllerStyleAlert];
+
+    [alert addAction:[UIAlertAction actionWithTitle:SCILocalized(@"dlaudio_save")
+                                              style:UIAlertActionStyleDefault
+                                            handler:^(UIAlertAction *action) {
+        // Through the one download path, so the album, the queue and the
+        // confirmations all behave here as they do everywhere else.
+        [SCIMediaDownloader downloadURL:audio
+                            sourceLabel:SCILocalized(@"dlaudio_source")
+                                isVideo:NO];
+    }]];
+
+    [alert addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
+                                              style:UIAlertActionStyleCancel
+                                            handler:nil]];
+
+    [host presentViewController:alert animated:YES completion:nil];
+}
+
+@end
 
 static NSString *const kMenuClass =
     @"_TtC32IGDirectMessageMenuConfiguration32IGDirectMessageMenuConfiguration";
@@ -90,17 +139,26 @@ static NSURL *SCIAudioURLForMessage(id message) {
 
     NSURL *audio = SCIAudioURLForMessage(message);
 
-    // Remembered, not acted on. Downloading here would fire the moment the menu
-    // opened rather than when the user chose to — the button that should trigger
-    // it lives in IGDSPrismMenuView, whose element type is not known yet, so this
-    // reports what it can resolve and waits.
     [SCIDiagnostics recordAudioMessageProbe:(message != nil)
                                   audioURL:audio.absoluteString
                               messageClass:message ? NSStringFromClass([message class]) : nil];
 
-    if (audio) sciLastAudioURL = audio;
+    if (!audio) return %orig;                                    // not a voice message
+    if (![SCIUtils getBoolPref:@"download_audio_message"]) return %orig;
 
-    return %orig;
+    id original = %orig;
+
+    // Asking rather than acting. This runs when the menu opens, not when an item
+    // is chosen — building an item would mean constructing a menu element type
+    // this project has not seen — so consent comes from the prompt instead. A
+    // long-press that silently downloaded would be the wrong behaviour, and the
+    // setting is off until asked for precisely because this is a prompt, not a
+    // button.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [SCIAudioMessagePrompt askFor:audio];
+    });
+
+    return original;
 }
 
 %end
