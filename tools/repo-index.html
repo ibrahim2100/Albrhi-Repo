@@ -174,13 +174,53 @@
     }).filter(function (f) { return f.Package; });
   }
 
+  /**
+   * Compares two version strings the way a package manager would, near enough:
+   * numeric runs compare as numbers so 3.2.10 sorts above 3.2.9, and anything
+   * left over compares as text.
+   */
+  function compareVersions(a, b) {
+    var left = String(a || '').split(/[^0-9a-zA-Z]+/);
+    var right = String(b || '').split(/[^0-9a-zA-Z]+/);
+
+    for (var i = 0; i < Math.max(left.length, right.length); i++) {
+      var x = left[i] || '';
+      var y = right[i] || '';
+      if (x === y) continue;
+
+      if (/^\d+$/.test(x) && /^\d+$/.test(y)) {
+        return parseInt(x, 10) - parseInt(y, 10);
+      }
+      return x < y ? -1 : 1;
+    }
+    return 0;
+  }
+
+  /**
+   * The index carries every version still installable, so that a bad build can
+   * be rolled back from Sileo. This page is a shop window rather than a package
+   * manager, so it shows each package once, at its newest.
+   */
+  function newestOnly(pkgs) {
+    var best = {};
+
+    pkgs.forEach(function (p) {
+      var key = p.Package + '|' + (p.Architecture || '');
+      if (!best[key] || compareVersions(p.Version, best[key].Version) > 0) {
+        best[key] = p;
+      }
+    });
+
+    return Object.keys(best).map(function (key) { return best[key]; });
+  }
+
   fetch('Packages', { cache: 'no-store' })
     .then(function (r) {
       if (!r.ok) throw new Error(r.status);
       return r.text();
     })
     .then(function (text) {
-      var pkgs = parsePackages(text);
+      var pkgs = newestOnly(parsePackages(text));
 
       // Newest first by name is meaningless; sort by display name instead.
       pkgs.sort(function (a, b) {

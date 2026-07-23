@@ -10,13 +10,14 @@
 # extra-debs/ in the source tree. Adding another tweak to the source is therefore
 # a matter of copying its .deb into that folder and pushing.
 #
-# Usage: tools/make-repo.sh <deb-dir> <output-dir> <base-url>
+# Usage: tools/make-repo.sh <deb-dir> <output-dir> <base-url> [previous-deb-dir]
 
 set -euo pipefail
 
 DEB_DIR="${1:?deb directory required}"
 OUT_DIR="${2:?output directory required}"
 BASE_URL="${3:?base url required}"
+PREV_DIR="${4:-}"
 
 # Rebuilt from scratch every run, so the published repo is an exact mirror of what
 # is in the tree right now. Copying without clearing left deleted packages behind:
@@ -31,6 +32,26 @@ echo "Built packages found: ${built}"
 
 if [ "$built" -gt 0 ]; then
     find "$DEB_DIR" -maxdepth 1 -name '*.deb' -type f -exec cp -f {} "$OUT_DIR/debs/" \;
+fi
+
+# Earlier releases of Albrhi itself, so a bad build is not a dead end: the
+# previous version stays installable from the source and Sileo offers it under
+# the package's version list.
+#
+# These come from the published releases rather than from whatever the last run
+# happened to leave on gh-pages. Keeping the old files in place would have done
+# it too, but then a package deleted from extra-debs would linger forever --
+# which is the exact bug the wipe above exists to prevent. Re-fetching a bounded
+# number of releases keeps both properties.
+if [ -n "$PREV_DIR" ] && [ -d "$PREV_DIR" ]; then
+    kept=$(find "$PREV_DIR" -maxdepth 1 -name '*.deb' -type f | wc -l | tr -d ' ')
+    echo "Previous releases kept for rollback: ${kept}"
+
+    if [ "$kept" -gt 0 ]; then
+        # -n, so a current build of the same filename is never overwritten by an
+        # older copy of it.
+        find "$PREV_DIR" -maxdepth 1 -name '*.deb' -type f -exec cp -n {} "$OUT_DIR/debs/" \;
+    fi
 fi
 
 # Hand-added packages. Copied after the built ones so a file placed here can

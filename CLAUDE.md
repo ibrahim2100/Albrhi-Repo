@@ -156,6 +156,14 @@ checks → version → decide → [build ×2 + dylib] → release → repo index
   `extra-debs/` takes effect without touching Albrhi's version.
 - `debs/` on `gh-pages` is **rebuilt from scratch** each run. It used to be copied
   over, which meant deleted packages lingered in Sileo forever.
+- **The last three releases of Albrhi are re-fetched into the index** so a bad build
+  can be rolled back from Sileo rather than by hunting for an asset on the releases
+  page. They come from the published releases, not from what the previous run left
+  behind — keeping the old files in place would preserve deleted extras too, which
+  is the exact bug the wipe above exists to prevent. `dpkg-scanpackages -m` already
+  indexes several versions of one package; `repo-index.html` shows each package
+  once, at its newest, since the landing page is a shop window and not a package
+  manager.
 - URLs in `control` are rewritten from the repository the build runs in, so renaming
   the repo needs no edit there.
 - **dpkg is installed on every run, not only on build runs.** The repo index needs

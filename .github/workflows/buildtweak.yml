@@ -415,6 +415,53 @@ jobs:
                 git commit -q -m "Prepare added packages: normalise and label [skip ci]"
                 git push -q "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" HEAD:main
 
+            - name: Keep earlier releases installable
+              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+              env:
+                GH_TOKEN: ${{ github.token }}
+              run: |
+                # A published version must stay reachable after the next one goes
+                # out: if a build turns out to be broken on device, rolling back
+                # has to be possible from Sileo rather than by hunting for an
+                # asset on the releases page.
+                #
+                # Three, not all of them: every release is fetched on every push
+                # to main, and the source is a rollback path, not an archive.
+                KEEP=3
+                mkdir -p main/packages-previous
+
+                # Newest first, and prereleases included -- /releases/latest skips
+                # those, and Albrhi's have been published as prereleases before.
+                TAGS=$(gh api "repos/${{ github.repository }}/releases?per_page=20" \
+                       --jq '.[] | select(.draft == false) | .tag_name')
+
+                taken=0
+                for tag in $TAGS; do
+                  # The version being published now is already in main/packages.
+                  if [ "$tag" = "v${ALBRHI_VERSION}" ]; then
+                    continue
+                  fi
+
+                  # A release with no .deb (a dylib-only one, say) must not count
+                  # against the three, or it would push a real one out.
+                  if gh release download "$tag" \
+                       --repo "${{ github.repository }}" \
+                       --pattern '*.deb' \
+                       --dir main/packages-previous \
+                       --clobber 2>/dev/null; then
+                    echo "Kept ${tag} for rollback."
+                    taken=$((taken + 1))
+                  else
+                    echo "No .deb in ${tag} — skipping."
+                  fi
+
+                  if [ "$taken" -ge "$KEEP" ]; then
+                    break
+                  fi
+                done
+
+                ls -la main/packages-previous || true
+
             - name: Publish APT repo to GitHub Pages
               if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
               env:
@@ -445,7 +492,7 @@ jobs:
                 cd ..
 
                 chmod +x main/tools/make-repo.sh
-                ./main/tools/make-repo.sh main/packages pages "$REPO_URL"
+                ./main/tools/make-repo.sh main/packages pages "$REPO_URL" main/packages-previous
 
                 cp main/tools/repo-index.html pages/index.html
 
