@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.2.3\n\n- **New Privacy page** — seen receipts, typing, screenshots and searches gathered in one place.\n- **First-launch intro** — a quick \"how to open the settings\" welcome before the what's-new page.\n- **Brand header** at the top of the settings.\n\n## v3.2.2\n\n- Album download choice can be turned off under Downloads.\n- Transcode banner shows the full resolution and frame rate it's saving, e.g. \"1440 × 2560 @ 60\".\n\n## v3.2.1 — a real leap\n\n- **1080p downloads on device** — AV1 decoded with dav1d, re-encoded to H.264 with a live progress banner. Optional.\n- **Full DASH quality ladder** — best saveable H.264/HEVC taken automatically.\n- **Custom date & time formats** everywhere, incl. numeric relative times (\"Active 4h ago\").\n- **OLED black theme.**\n- **Full last-active time**, and **hide the voice / video call buttons** independently.\n- **Backup & restore** all Albrhi settings to a file.\n- **Search the settings** — find any toggle instantly.\n- **Download whole albums** — pick this slide or all of them; **copy any text** (caption, comment, bio) by long-press.\n- **Tidier settings** — grouped headers, search bar, language above the developer links, accent under Appearance.\n\n_DM & date hook points from RyukGram (github.com/faroukbmiled/RyukGram, GPLv3)._",
+          "markdown": "## v3.2.4\n\n- **Update notifications.** Albrhi now tells you when a newer version is out, and\n  there's a \"Check for updates\" button in the settings. Jailbroken installs are\n  pointed at the source, sideloaded ones at the new dylib. It contacts GitHub once\n  a day and sends nothing about you — turn it off under Credits if you'd rather.\n\n## v3.2.3\n\n- **New Privacy page** — seen receipts, typing, screenshots and searches gathered in one place.\n- **First-launch intro** — a quick \"how to open the settings\" welcome before the what's-new page.\n- **Brand header** at the top of the settings.\n\n## v3.2.2\n\n- Album download choice can be turned off under Downloads.\n- Transcode banner shows the full resolution and frame rate it's saving, e.g. \"1440 × 2560 @ 60\".",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.2.3"
+          "text": "3.2.4"
         },
         {
           "class": "DepictionTableTextView",
