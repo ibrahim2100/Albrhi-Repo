@@ -155,6 +155,47 @@ static void SCIAddressAnchor(void) {}
     [host presentViewController:alert animated:YES completion:nil];
 }
 
+// MARK: - Instagram compatibility
+
+// The newest Instagram Albrhi has actually been tested on. Raise it once a newer
+// build has been used and found to work — it is a statement of fact, not a
+// ceiling, and nothing is gated on it.
+static NSString *const kTestedInstagram = @"410.1.0";
+
++ (void)warnIfInstagramIsNewer {
+    NSString *current = [SCIUtils IGVersionString];
+    if (!current.length) return;
+
+    if (![self version:current isNewerThan:kTestedInstagram]) return;
+
+    // Once per Instagram version. Repeating it on every launch would be nagging
+    // about something the user cannot change and probably will not notice.
+    NSString *key = [@"compat_warned_" stringByAppendingString:current];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    if ([defaults boolForKey:key]) return;
+
+    [defaults setBool:YES forKey:key];
+
+    UIAlertController *alert =
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"compat_title")
+                                            message:[NSString stringWithFormat:SCILocalized(@"compat_body"),
+                                                     current, kTestedInstagram]
+                                     preferredStyle:UIAlertControllerStyleAlert];
+
+    [alert addAction:[UIAlertAction actionWithTitle:SCILocalized(@"compat_report")
+                                              style:UIAlertActionStyleDefault
+                                            handler:^(UIAlertAction *action) {
+        NSURL *url = [NSURL URLWithString:SCIIssuesURL];
+        if (url) [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+    }]];
+
+    [alert addAction:[UIAlertAction actionWithTitle:SCILocalized(@"compat_ok")
+                                              style:UIAlertActionStyleCancel
+                                            handler:nil]];
+
+    [topMostController() presentViewController:alert animated:YES completion:nil];
+}
+
 // MARK: - Entry points
 
 + (void)checkQuietly {

@@ -31,6 +31,14 @@ NS_ASSUME_NONNULL_BEGIN
 /// YES when this copy was installed as a jailbreak package rather than sideloaded.
 + (BOOL)isJailbrokenInstall;
 
+/// Warns once when Instagram is newer than the version Albrhi was tested against.
+///
+/// Nothing is blocked and nothing is disabled — a newer Instagram usually works
+/// fine. It is shown so that if something does misbehave, the user knows why and
+/// where to report it, instead of assuming the tweak is simply broken. Shown once
+/// per Instagram version, not once per launch.
++ (void)warnIfInstagramIsNewer;
+
 @end
 
 NS_ASSUME_NONNULL_END

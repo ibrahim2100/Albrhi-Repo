@@ -3,6 +3,9 @@
 ## v3.2.5
 
 - Fixed "couldn't check right now" when looking for updates.
+- **Compatibility notice.** If your Instagram is newer than the version Albrhi was
+  tested on, you'll be told once — nothing is disabled, but if something misbehaves
+  you'll know why and how to report it.
 
 ## v3.2.4
 

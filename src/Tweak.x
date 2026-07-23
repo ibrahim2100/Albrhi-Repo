@@ -106,6 +106,13 @@ NSString *SCIVersionString = @"v3.2.5";  // Albrhi
         [SCIUpdateChecker checkQuietly];
     });
 
+    // Later still, so it can never stack on top of the update alert. Shown once
+    // per Instagram version, and only when that version is newer than the one
+    // Albrhi was tested against.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(9.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [SCIUpdateChecker warnIfInstagramIsNewer];
+    });
+
     // Opt-in: jump straight into settings on every launch.
     if ([SCIUtils getBoolPref:@"tweak_settings_app_launch"]) {
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
