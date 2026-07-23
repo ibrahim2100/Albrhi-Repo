@@ -111,7 +111,9 @@ static void SCIAddressAnchor(void) {}
             SCIRepoOwner, SCIRepoName];
 }
 
-+ (void)presentUpdate:(NSString *)version notes:(NSString *)notes from:(UIViewController *)presenter {
+/// @c presenter may be nil — the launch check has none — and then whatever is
+/// frontmost presents the alert.
++ (void)presentUpdate:(NSString *)version notes:(NSString *)notes from:(nullable UIViewController *)presenter {
     NSString *how = [self isJailbrokenInstall] ? SCILocalized(@"update_how_jailbreak")
                                                : SCILocalized(@"update_how_sideload");
 
@@ -164,7 +166,7 @@ static void SCIAddressAnchor(void) {}
     }];
 }
 
-+ (void)checkFromSettings:(UIViewController *)presenter {
++ (void)checkFromSettings:(nullable UIViewController *)presenter {
     JGProgressHUD *hud = [SCIUtils showProgressHUDWithText:SCILocalized(@"update_checking")];
 
     [self fetchLatest:^(NSString *version, NSString *notes, NSError *error) {

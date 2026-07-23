@@ -23,7 +23,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// The "check for updates" button. Always reports something, including "you are up
 /// to date" and any error, because here the user asked.
-+ (void)checkFromSettings:(UIViewController *)presenter;
+///
+/// @c presenter may be nil — a settings row has no view controller to hand — in
+/// which case whatever is frontmost presents the result.
++ (void)checkFromSettings:(nullable UIViewController *)presenter;
 
 /// YES when this copy was installed as a jailbreak package rather than sideloaded.
 + (BOOL)isJailbrokenInstall;
