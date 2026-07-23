@@ -44,6 +44,7 @@
                 @"rows": @[
                     [SCISetting switchCellWithTitle:SCILocalized(@"dw_reel_audio_title") subtitle:SCILocalized(@"dw_reel_audio_sub") defaultsKey:@"dw_reel_audio"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"dw_voice_msg_title") subtitle:SCILocalized(@"dw_voice_msg_sub") defaultsKey:@"download_audio_message" requiresRestart:YES],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"dw_photovid_title") subtitle:SCILocalized(@"dw_photovid_sub") defaultsKey:@"photo_as_video"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"dw_silent_video_title") subtitle:SCILocalized(@"dw_silent_video_sub") defaultsKey:@"dw_silent_video"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"dw_transcode_av1_title") subtitle:SCILocalized(@"dw_transcode_av1_sub") defaultsKey:@"dw_transcode_av1"]
                 ]

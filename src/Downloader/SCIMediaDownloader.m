@@ -3,6 +3,7 @@
 #import "Queue/SCIDownloadQueue.h"
 #import "Transcode/SCIAV1Transcoder.h"
 #import "Transcode/SCITranscodeBanner.h"
+#import "Transcode/SCIPhotoVideo.h"
 #import "../Utils.h"
 #import "../Localization/SCILocalize.h"
 #import "../Settings/SCIDiagnosticsViewController.h"
@@ -193,6 +194,18 @@
     NSURL *photoUrl = [SCIUtils getPhotoUrlForMedia:media];
     if (photoUrl) {
         [SCIDiagnostics recordDownloadKind:@"photo"];
+
+        // A photo with music behind it — in reels or in the feed — loses the sound
+        // when saved as a picture. Offered only when there is genuinely audio, so
+        // an ordinary photo still downloads with one press and no questions.
+        if ([SCIUtils getBoolPref:@"photo_as_video"]) {
+            NSURL *audioUrl = [SCIUtils getAudioUrlForMedia:media];
+            if (audioUrl) {
+                [SCIPhotoVideo offerForPhoto:photoUrl audio:audioUrl];
+                return;
+            }
+        }
+
         [self downloadURL:photoUrl sourceLabel:sourceLabel isVideo:NO];
         return;
     }

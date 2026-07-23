@@ -18,7 +18,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.2.7";  // Albrhi
+NSString *SCIVersionString = @"v3.2.8";  // Albrhi
 
 // Variables that work across features
 
@@ -88,7 +88,10 @@ NSString *SCIVersionString = @"v3.2.7";  // Albrhi
         // Beta: adds an entry to the composer sheet that sends any file through
         // Instagram's own sender. Off until asked for.
         @"send_file": @(NO),
-        @"download_audio_message": @(NO)
+        @"download_audio_message": @(NO),
+        // Beta: renders a photo that carries music into a short video. Off, since
+        // it turns a one-press download into a question.
+        @"photo_as_video": @(NO)
     };
     [[NSUserDefaults standardUserDefaults] registerDefaults:sciDefaults];
 

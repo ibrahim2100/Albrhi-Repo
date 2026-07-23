@@ -1,7 +1,11 @@
 # Albrhi Changelog
 
-## v3.2.7
+## v3.2.8
 
+- **Save photos with their music as a video (beta).** Instagram plays audio over
+  still photos in reels and in the feed, but saving one only ever gave you the
+  picture. Now you pick a length — 5 seconds up to 90 — and get a clip with the
+  sound. Under Downloads, off by default.
 - **Save voice messages (beta).** Long-press one and Albrhi asks whether to save
   it — it never saves without asking. Off by default, under Stories & messages.
 - **Send any file in a DM (beta).** Adds "Send file" to the composer's plus
