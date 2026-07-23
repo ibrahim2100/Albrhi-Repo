@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.2.5\n\n- Fixed \"couldn't check right now\" when looking for updates.\n- **Compatibility notice.** If your Instagram is newer than the version Albrhi was\n  tested on, you'll be told once — nothing is disabled, but if something misbehaves\n  you'll know why and how to report it.\n\n## v3.2.4\n\n- **Update notifications.** Albrhi now tells you when a newer version is out, and\n  there's a \"Check for updates\" button in the settings. Jailbroken installs are\n  pointed at the source, sideloaded ones at the new dylib. It contacts GitHub once\n  a day and sends nothing about you — turn it off under Credits if you'd rather.\n\n## v3.2.3\n\n- **New Privacy page** — seen receipts, typing, screenshots and searches gathered in one place.\n- **First-launch intro** — a quick \"how to open the settings\" welcome before the what's-new page.\n- **Brand header** at the top of the settings.",
+          "markdown": "## v3.2.6\n\n- **The sideload dylib now stands on its own.** It no longer needs CydiaSubstrate\n  installed beside it, so it can be injected by TrollStore, SideStore, a\n  certificate, LiveContainer or anything else — on its own. Jailbreak packages are\n  unchanged.\n\n## v3.2.5\n\n- Fixed \"couldn't check right now\" when looking for updates.\n- **Compatibility notice.** If your Instagram is newer than the version Albrhi was\n  tested on, you'll be told once — nothing is disabled, but if something misbehaves\n  you'll know why and how to report it.\n\n## v3.2.4\n\n- **Update notifications.** Albrhi now tells you when a newer version is out, and\n  there's a \"Check for updates\" button in the settings. Jailbroken installs are\n  pointed at the source, sideloaded ones at the new dylib. It contacts GitHub once\n  a day and sends nothing about you — turn it off under Credits if you'd rather.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.2.5"
+          "text": "3.2.6"
         },
         {
           "class": "DepictionTableTextView",
