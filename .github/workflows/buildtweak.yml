@@ -180,6 +180,12 @@ jobs:
 
             - name: Build the standalone dylib for sideloading
               if: steps.release_check.outputs.needed == 'true'
+              env:
+                # This step invokes make directly rather than through build.sh, so
+                # it needs THEOS declared just as the other build steps do —
+                # without it the Makefile's include expands to /makefiles/common.mk
+                # and nothing builds.
+                THEOS: ${{ github.workspace }}/theos
               run: |
                 cd main
 
