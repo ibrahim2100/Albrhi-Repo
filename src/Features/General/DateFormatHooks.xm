@@ -28,7 +28,7 @@
 // Every hooked selector keeps its own original. Sharing one pointer across
 // several would mean the last install overwrote the rest, and each call would
 // then run the wrong original — silently returning another method's answer.
-#define SCI_MAX_DATE_HOOKS 16
+#define SCI_MAX_DATE_HOOKS 24
 
 static struct { SEL selector; IMP original; } sHooked[SCI_MAX_DATE_HOOKS];
 static size_t sHookedCount = 0;
@@ -106,11 +106,27 @@ static void SCIInstall(NSString *name, IMP replacement) {
 %ctor {
     @autoreleasepool {
         NSArray<NSString *> *zeroArgument = @[
-            @"formattedDateInMixedFormat",
+            // Relative producers — the wording feed, stories and DMs draw most.
             @"formattedDateRelativeToNow",
             @"shortenedFormattedDateRelativeToNow",
             @"partiallyShortenedFormattedDateRelativeToNow",
             @"shortenedFormattedDateRelativeToNowIncludeYears",
+
+            // Absolute producers. A count of the NSDate category in Instagram
+            // 439.0.0 showed eight zero-argument -formattedDateIn…/-With… methods;
+            // only the mixed one was hooked, so surfaces that ask for a full or
+            // month date — profile join dates, post detail, shortened month labels
+            // — kept Instagram's own wording no matter the chosen format. The time
+            // system is meant to be app-wide, so every one is covered. Ones a given
+            // build does not have are skipped in SCIInstall, not errors.
+            @"formattedDateInMixedFormat",
+            @"formattedDateInCustomMixedFormat",
+            @"formattedDateInFullDateFormat",
+            @"formattedDateInLongFormat",
+            @"formattedDateInShortenedMixedFormat",
+            @"formattedDateInShortenedMonthFormat",
+            @"formattedDateInShortenedMonthFormatWithoutYear",
+            @"formattedDateWithShortenedDayOfWeekFormat",
         ];
         NSArray<NSString *> *oneArgument = @[
             @"shortenedFormattedDateRelativeToNowHideSeconds:",
