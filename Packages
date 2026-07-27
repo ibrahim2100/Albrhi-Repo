@@ -1,88 +1,4 @@
 Package: com.albrhi.tweak
-Version: 3.2.5
-Architecture: iphoneos-arm64
-Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
-Installed-Size: 1424
-Depends: mobilesubstrate
-Conflicts: com.albrhi.tweak.roothide
-Replaces: com.albrhi.tweak.roothide
-Filename: debs/com.albrhi.tweak_3.2.5+rootless.deb
-Size: 431024
-MD5sum: 00bbd6739027f6a9132f490219a6e175
-SHA1: 9ce27b3b1bac4d4ea800ff17d3e487c50c2d5d9f
-SHA256: ff01588a06eb98c7959a9dd651dc630b2b776a4a2b0dff1c920306a48feeebb0
-Section: Tweaks
-Homepage: https://github.com/ibrahim2100/Albrhi-Repo
-Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
- .
- Albrhi puts a download button where Instagram should have put one, strips the feed
- back to the people you actually follow, and stops the app reporting what you watch.
- Everything lives in a settings panel that looks like it shipped with the app.
- .
- ▍DOWNLOADS
- A native download button sits in the action row of every post and reel, beside the
- save icon. One tap grabs the highest quality available and writes it straight to
- Photos — optionally into its own album.
- .
- Stories and view-once DMs get their own button. Reels can be saved as video or as
- the original audio track. Profile pictures download in full HD on a long press.
- .
- ▍DOWNLOAD CENTER
- A real queue behind it all: pause, resume, retry and cancel, several transfers at
- once, and downloads that keep running after you leave the app. Duplicate links are
- detected, finished files are cleared once they reach Photos, and a searchable
- history records everything you have saved.
- .
- ▍A QUIETER FEED
- Remove ads, sponsored posts, suggested posts, suggested accounts, suggested reels,
- Threads posts, Meta AI, the friends map, trending searches and the explore grid.
- Hide the stories tray — or the entire feed.
- .
- ▍PRIVACY
- Watch stories without sending a seen receipt, and decide per story when to send one.
- View-once photos and videos stay unseen until you tap the eye button on that exact
- message. Hide the typing indicator and disable screenshot detection.
- .
- ▍REELS
- Tap to pause or mute instead of liking. Keep the progress scrubber visible. Stop
- reels unmuting themselves. Hide the header and the blend button.
- .
- ▍CONFIRMATIONS
- An optional prompt before liking, following, reposting, calling, commenting or
- sending a voice message — so a mis-tap never turns into a notification.
- .
- ▍BUILT TO FIT IN
- Full Arabic and English with automatic right-to-left layout. SF Symbols, a
- customisable accent colour, dark mode, and a settings panel opened by holding the
- menu button on your profile. Includes a diagnostics page that reports what the
- tweak actually sees on your build and files a bug report in one tap.
- .
- ▍TESTED ON
- Instagram 410.1.0. Not chosen for any principled reason — that is simply the newest
- build the developer's phone will still accept. The phone has served with honour and
- is now retired to a life of testing tweaks.
- .
- Newer Instagram versions will most likely work: nothing here depends on a version
- number, and the tweak looks up what it needs at runtime. But "most likely" is doing
- real work in that sentence, and honesty costs nothing.
- .
- ▍BETA
- This is a pre-release. Features are tested but your Instagram build may differ from
- ours — if something misbehaves, Settings › Diagnostics writes the report for you,
- Instagram version included, so we stop guessing and start fixing.
- .
- Developed by Ibrahim Ismail AL-Rahn. An educational and corrective derivative of
- SCInsta by SoCuul, rebuilt with AI assistance to improve code quality, design,
- performance and user experience. Free and open source under the GNU GPL v3, with
- original authorship fully credited and preserved.
-Tag: role::enduser
-Author: Ibrahim Ismail AL-Rahn (based on SCInsta by SoCuul, GPLv3)
-Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
-Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Name: Albrhi for Instagram (rootless)
-Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
-
-Package: com.albrhi.tweak
 Version: 3.2.6
 Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
@@ -334,19 +250,19 @@ Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
 Name: Albrhi for Instagram (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
-Package: com.albrhi.tweak.roothide
-Version: 3.2.5
-Architecture: iphoneos-arm64e
+Package: com.albrhi.tweak
+Version: 3.2.9.1
+Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
-Installed-Size: 1424
+Installed-Size: 1504
 Depends: mobilesubstrate
-Conflicts: com.albrhi.tweak
-Replaces: com.albrhi.tweak
-Filename: debs/com.albrhi.tweak.roothide_3.2.5.deb
-Size: 430908
-MD5sum: 23ec64f256caff55d9cac04efa1c1238
-SHA1: 9fd886c3247e1935c97ac368d29401b8f69dc95a
-SHA256: 5ab0c935a8cf01935c8fb18283f632d473431b12b2176823bd37b57014d04856
+Conflicts: com.albrhi.tweak.roothide
+Replaces: com.albrhi.tweak.roothide
+Filename: debs/com.albrhi.tweak_3.2.9.1+rootless.deb
+Size: 445816
+MD5sum: 553df7ffe85258cfa3ffba4c1be5521a
+SHA1: 63d48bc553ed8d763f7a919dc0e35d27b98e868b
+SHA256: f668cebc421d6fe08894b97b612eb7fed11d797cc39be66bc33011a50c885800
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
@@ -415,7 +331,7 @@ Tag: role::enduser
 Author: Ibrahim Ismail AL-Rahn (based on SCInsta by SoCuul, GPLv3)
 Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
 Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Name: Albrhi for Instagram (roothide)
+Name: Albrhi for Instagram (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
 Package: com.albrhi.tweak.roothide
@@ -599,6 +515,90 @@ Size: 444686
 MD5sum: 58f9c9c16120f52e1728b1a1cec7fec2
 SHA1: 741733cc93efffb38c7de6a04c44e8da2870b43a
 SHA256: 36eb6c4690c72c5171baccbe492704ada2f459f2fe89f4f448bd171cf7a45bc3
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
+ .
+ Albrhi puts a download button where Instagram should have put one, strips the feed
+ back to the people you actually follow, and stops the app reporting what you watch.
+ Everything lives in a settings panel that looks like it shipped with the app.
+ .
+ ▍DOWNLOADS
+ A native download button sits in the action row of every post and reel, beside the
+ save icon. One tap grabs the highest quality available and writes it straight to
+ Photos — optionally into its own album.
+ .
+ Stories and view-once DMs get their own button. Reels can be saved as video or as
+ the original audio track. Profile pictures download in full HD on a long press.
+ .
+ ▍DOWNLOAD CENTER
+ A real queue behind it all: pause, resume, retry and cancel, several transfers at
+ once, and downloads that keep running after you leave the app. Duplicate links are
+ detected, finished files are cleared once they reach Photos, and a searchable
+ history records everything you have saved.
+ .
+ ▍A QUIETER FEED
+ Remove ads, sponsored posts, suggested posts, suggested accounts, suggested reels,
+ Threads posts, Meta AI, the friends map, trending searches and the explore grid.
+ Hide the stories tray — or the entire feed.
+ .
+ ▍PRIVACY
+ Watch stories without sending a seen receipt, and decide per story when to send one.
+ View-once photos and videos stay unseen until you tap the eye button on that exact
+ message. Hide the typing indicator and disable screenshot detection.
+ .
+ ▍REELS
+ Tap to pause or mute instead of liking. Keep the progress scrubber visible. Stop
+ reels unmuting themselves. Hide the header and the blend button.
+ .
+ ▍CONFIRMATIONS
+ An optional prompt before liking, following, reposting, calling, commenting or
+ sending a voice message — so a mis-tap never turns into a notification.
+ .
+ ▍BUILT TO FIT IN
+ Full Arabic and English with automatic right-to-left layout. SF Symbols, a
+ customisable accent colour, dark mode, and a settings panel opened by holding the
+ menu button on your profile. Includes a diagnostics page that reports what the
+ tweak actually sees on your build and files a bug report in one tap.
+ .
+ ▍TESTED ON
+ Instagram 410.1.0. Not chosen for any principled reason — that is simply the newest
+ build the developer's phone will still accept. The phone has served with honour and
+ is now retired to a life of testing tweaks.
+ .
+ Newer Instagram versions will most likely work: nothing here depends on a version
+ number, and the tweak looks up what it needs at runtime. But "most likely" is doing
+ real work in that sentence, and honesty costs nothing.
+ .
+ ▍BETA
+ This is a pre-release. Features are tested but your Instagram build may differ from
+ ours — if something misbehaves, Settings › Diagnostics writes the report for you,
+ Instagram version included, so we stop guessing and start fixing.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. An educational and corrective derivative of
+ SCInsta by SoCuul, rebuilt with AI assistance to improve code quality, design,
+ performance and user experience. Free and open source under the GNU GPL v3, with
+ original authorship fully credited and preserved.
+Tag: role::enduser
+Author: Ibrahim Ismail AL-Rahn (based on SCInsta by SoCuul, GPLv3)
+Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi for Instagram (roothide)
+Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
+
+Package: com.albrhi.tweak.roothide
+Version: 3.2.9.1
+Architecture: iphoneos-arm64e
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 1504
+Depends: mobilesubstrate
+Conflicts: com.albrhi.tweak
+Replaces: com.albrhi.tweak
+Filename: debs/com.albrhi.tweak.roothide_3.2.9.1.deb
+Size: 445632
+MD5sum: 20435ba137560ad0d519a6c9ce19161c
+SHA1: c4cd4c7dfd0c2750095f4a09a6a02208f47f3be7
+SHA256: e232a8886044ba296b21bcd20062baccfcdf91f1cfeb3f68491b96feece4798a
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
