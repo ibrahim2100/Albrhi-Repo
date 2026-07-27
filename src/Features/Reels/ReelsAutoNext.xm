@@ -5,65 +5,91 @@
 #import "../../SCILog.h"
 
 ///
-/// Auto-advance to the next reel.
+/// Auto-advance to the next reel — across Instagram versions.
 ///
-/// Instagram already scrolls reels on its own — but only for accounts the feature
-/// has been rolled out to. A count of Instagram 439.0.0 showed why the first
-/// attempt never fired: it forced -autoScrollState, a selector that build does not
-/// have, and forced -autoAdvanceToNextItem while leaving the actual gate untouched.
+/// Reels auto-scroll is gated by a handful of BOOL getters, and which ones a build
+/// has differs. Counting them in the real 410 and 439 binaries settled it:
 ///
-/// The gate is -shouldForceEnableAutoScroll on IGSundialAutoScroll, the Swift
-/// engine that drives the reels feed. Instagram returns YES there itself to bypass
-/// the server flag that decides whether auto-scroll is offered at all; forcing it
-/// on is what makes this work on any account, and is the piece that was missing.
-/// The feed controller's own -autoAdvanceToNextItem is kept as reinforcement.
+///   -isAutoAdvanceEnabled        both       the gate that decides it at all
+///   -autoAdvanceToNextItem       both       the feed's own state
+///   -shouldForceEnableAutoScroll 439 only    the override that skips the server flag
+///   -autoScrollState             410 only    the old feed getter
+///
+/// The first version forced -autoScrollState (gone in 439) and left -isAutoAdvanceEnabled
+/// — the one gate present on both — untouched, which is why it never scrolled. This
+/// forces every gate that actually exists, on whichever class owns it, and does it
+/// by hand with a per-method guard so a selector a build does not have is skipped
+/// rather than added as a dead method. Forcing a selector that is not there was the
+/// original mistake.
+///
+/// The gate names came from RyukGram (github.com/faroukbmiled/RyukGram, GPLv3),
+/// which ships a separate build per Instagram version for exactly this reason; here
+/// one build carries all of them and lets the guard pick. The mechanism is Albrhi's.
 ///
 /// No on-screen button — toggled from Reels settings — so the reels action bar and
-/// its download button stay exactly where Instagram puts them.
+/// its download button stay where Instagram puts them.
 ///
 
 static BOOL SCIWantsAutoScroll(void) {
     return [SCIUtils getBoolPref:@"reels_auto_next"];
 }
 
-// MARK: - Feed controller state
+// MARK: - Forced gates
 
-%hook IGSundialFeedViewController
+// One trampoline for every gate. When the feature is on it forces YES; when off it
+// must return the real answer, so each install keeps its own original, found by the
+// selector plus the class the call actually belongs to (a selector can live on more
+// than one of the classes below).
+#define SCI_MAX_GATES 8
+static struct { Class cls; SEL selector; IMP original; } sGates[SCI_MAX_GATES];
+static size_t sGateCount = 0;
 
-- (BOOL)autoAdvanceToNextItem {
+static BOOL SCIGateTrampoline(id self, SEL _cmd) {
     if (SCIWantsAutoScroll()) return YES;
-    return %orig;
+
+    for (size_t i = 0; i < sGateCount; i++) {
+        if (sGates[i].selector == _cmd && [self isKindOfClass:sGates[i].cls] && sGates[i].original) {
+            return ((BOOL (*)(id, SEL))sGates[i].original)(self, _cmd);
+        }
+    }
+    return NO;
 }
 
-%end
+static void SCIForceGate(Class cls, NSString *name) {
+    if (!cls || sGateCount >= SCI_MAX_GATES) return;
 
-// MARK: - Swift engine gate
+    SEL selector = NSSelectorFromString(name);
+    // Only where the method genuinely exists: class_getInstanceMethod walks the
+    // superclasses too, so an inherited gate still counts, and a build without it is
+    // left alone instead of gaining a method nothing calls.
+    if (!selector || !class_getInstanceMethod(cls, selector)) return;
 
-// Bound by its mangled name at load: Logos %hook cannot name a Swift class, so the
-// class is fetched at runtime and the one method swizzled by hand, the same way
-// the direct-message menu configuration is reached elsewhere.
-static BOOL (*orig_shouldForceEnableAutoScroll)(id, SEL);
+    IMP original = NULL;
+    MSHookMessageEx(cls, selector, (IMP)SCIGateTrampoline, &original);
+    if (!original) return;
 
-static BOOL sci_shouldForceEnableAutoScroll(id self, SEL _cmd) {
-    if (SCIWantsAutoScroll()) return YES;
-    return orig_shouldForceEnableAutoScroll ? orig_shouldForceEnableAutoScroll(self, _cmd) : NO;
+    sGates[sGateCount].cls = cls;
+    sGates[sGateCount].selector = selector;
+    sGates[sGateCount].original = original;
+    sGateCount++;
 }
 
 %ctor {
     @autoreleasepool {
+        // The feed controller carries the state getters; the Swift engine carries the
+        // force override. isAutoAdvanceEnabled can sit on either, so it is offered to
+        // both and the guard installs it wherever it really is.
+        Class feed = objc_getClass("IGSundialFeedViewController");
         Class engine = objc_getClass("_TtC19IGSundialAutoScroll19IGSundialAutoScroll");
-        SEL gate = NSSelectorFromString(@"shouldForceEnableAutoScroll");
 
-        // Absent on a build without the Swift auto-scroll engine: the feed-controller
-        // hook above still stands, and forcing a selector that is not there is exactly
-        // what broke the feature before.
-        if (engine && class_getInstanceMethod(engine, gate)) {
-            MSHookMessageEx(engine, gate,
-                            (IMP)sci_shouldForceEnableAutoScroll,
-                            (IMP *)&orig_shouldForceEnableAutoScroll);
-            SCILogV(@"[Albrhi] reels auto-scroll gate hooked: %@", orig_shouldForceEnableAutoScroll ? @"yes" : @"no");
-        } else {
-            SCILogV(@"[Albrhi] reels auto-scroll gate not present on this build");
-        }
+        SCIForceGate(feed, @"isAutoAdvanceEnabled");
+        SCIForceGate(feed, @"autoAdvanceToNextItem");
+        SCIForceGate(feed, @"autoScrollState");                // 410
+
+        SCIForceGate(engine, @"shouldForceEnableAutoScroll");  // 439
+        SCIForceGate(engine, @"isAutoAdvanceEnabled");
+        SCIForceGate(engine, @"autoAdvanceToNextItem");
+
+        SCILogV(@"[Albrhi] reels auto-scroll gates forced: %zu", sGateCount);
     }
 }

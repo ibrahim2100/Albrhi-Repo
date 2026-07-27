@@ -233,14 +233,17 @@ far less surface area than a real compressor for a few-kilobyte archive.
 - **Working:** inline download button (posts + reels), Download Center queue, story
   seen-receipt control, per-message mark-as-seen in DMs, follow-back badge, feed and
   reels cleanup, confirmations, bilingual UI, diagnostics, auto-release, APT source.
-- **Reels auto-advance** (`reels_auto_next`) works again, under Reels settings. It
-  was hidden for a long time because it never fired: the old hook forced
-  `-autoScrollState` (a selector Instagram 439 does not have) and left the real gate
-  alone. The gate is `-shouldForceEnableAutoScroll` on the Swift `IGSundialAutoScroll`
-  engine — the override Instagram itself uses to bypass the server flag that decides
-  whether auto-scroll is offered. Forcing that on, plus the feed controller's
-  `-autoAdvanceToNextItem`, is what made it hold. Found by counting the NSDate and
-  Sundial selectors in the real 439 binary, not by guessing.
+- **Reels auto-advance** (`reels_auto_next`) works again, under Reels settings, on
+  both 410 and 439 from one build. It was hidden for a long time because it never
+  fired: the old hook forced `-autoScrollState` (a 410-only getter, gone in 439) and
+  left `-isAutoAdvanceEnabled` — the one gate present on both — untouched. The gates
+  differ by version: `-isAutoAdvanceEnabled` and `-autoAdvanceToNextItem` on both,
+  `-shouldForceEnableAutoScroll` (the server-flag override) on the Swift
+  `IGSundialAutoScroll` engine in 439 only, `-autoScrollState` in 410 only. The hook
+  forces every one that exists, on whichever class owns it, each behind a
+  `class_getInstanceMethod` guard so a selector a build lacks is skipped rather than
+  added as a dead method. Established by counting the Sundial selectors in the real
+  410 and 439 binaries, not by guessing — the point of keeping both IPAs around.
 - **Removed in 3.1.4:** liquid glass, teen icons, doom-scrolling limits, per-surface
   download toggles, long-press tuning, keep-deleted-messages, quality picker. They
   were broken or made redundant by the inline button. Do not reintroduce without a
