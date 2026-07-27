@@ -1,6 +1,7 @@
 #import "../SCISettingsRegistry.h"
 #import "../TweakSettings.h"
 #import "../../Features/General/SCIDateFormat.h"
+#import "../../Features/General/SCIAppIcon.h"
 #import "../../InstagramHeaders.h"   // topMostController()
 #import "../../Utils.h"
 
@@ -13,6 +14,7 @@
 @interface SCIPageAppearance : NSObject
 + (NSString *)patternSubtitle;
 + (void)editPattern;
++ (NSDictionary *)appIconSection;
 @end
 
 @implementation SCIPageAppearance
@@ -57,6 +59,26 @@
     }]];
 
     [topMostController() presentViewController:sheet animated:YES completion:nil];
+}
+
+/// The icon row, or a plain "not supported" line on a build that offers none, so
+/// the section never appears empty or dead.
++ (NSDictionary *)appIconSection {
+    UIMenu *menu = [SCIAppIcon iconMenu];
+
+    SCISetting *row;
+    if (menu) {
+        NSString *current = [SCIAppIcon currentIconName] ?: SCILocalized(@"appicon_default");
+        row = [SCISetting menuCellWithTitle:SCILocalized(@"appicon_title")
+                                   subtitle:current
+                                       menu:menu];
+    } else {
+        row = [SCISetting staticCellWithTitle:SCILocalized(@"appicon_title")
+                                     subtitle:SCILocalized(@"appicon_unsupported")
+                                         icon:nil];
+    }
+
+    return @{ @"header": SCILocalized(@"p_hdr_appicon"), @"rows": @[row] };
 }
 
 + (void)load {
@@ -116,7 +138,8 @@
                                                icon:[SCISymbol symbolWithName:@"arrow.counterclockwise"]
                                              action:^{ [SCIUtils resetAccentColor]; }]
                 ]
-            }
+            },
+            [SCIPageAppearance appIconSection]
         ];
     }];
 }
