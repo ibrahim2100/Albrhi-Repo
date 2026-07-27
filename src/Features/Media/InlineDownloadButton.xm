@@ -326,47 +326,57 @@ static void SCILayoutInlineButton(UIView *bar, id target) {
     UIView *reference = controls.lastObject;
     CGFloat side = MAX(MIN(CGRectGetHeight(reference.frame), CGRectGetWidth(reference.frame)), 22.0);
     CGFloat gap = 14.0;
-    CGRect frame;
 
     if (vertical) {
-        // Sort by vertical position and sit below the bottom-most control.
-        NSArray<UIView *> *byY = [controls sortedArrayUsingComparator:^NSComparisonResult(UIView *a, UIView *b) {
-            if (CGRectGetMinY(a.frame) == CGRectGetMinY(b.frame)) return NSOrderedSame;
-            return (CGRectGetMinY(a.frame) < CGRectGetMinY(b.frame)) ? NSOrderedAscending : NSOrderedDescending;
-        }];
+        // Pin the button to the bar with constraints, so it rides the reels sidebar
+        // as one piece and holds its place. Positioning it by frame each layout pass
+        // left it a step behind while a swipe was in flight — the layout that moves
+        // the sidebar does not re-run our math mid-animation, so the button appeared
+        // to peel away from the reel. Constraints re-solve with the sidebar and it
+        // no longer drifts.
+        //
+        // Installed once: -translatesAutoresizingMaskIntoConstraints staying YES is
+        // the "not yet pinned" flag, since turning it off is the first thing we do.
+        if (button.translatesAutoresizingMaskIntoConstraints) {
+            button.translatesAutoresizingMaskIntoConstraints = NO;
 
-        // Sits above the top-most control — above the like button on reels, where
-        // it is immediately visible instead of buried under the action stack.
-        // Overflowing the bar's bounds is fine: clipping is off.
-        UIView *top = byY.firstObject;
-        CGFloat y = CGRectGetMinY(top.frame) - side - gap;
+            // Above the top of the stack — above the like button — where it reads at
+            // once instead of being buried. Overflowing the bar is fine: clipping is
+            // off, set when the button was added.
+            [NSLayoutConstraint activateConstraints:@[
+                [button.widthAnchor constraintEqualToConstant:side],
+                [button.heightAnchor constraintEqualToConstant:side],
+                [button.centerXAnchor constraintEqualToAnchor:bar.centerXAnchor],
+                [button.bottomAnchor constraintEqualToAnchor:bar.topAnchor constant:-gap],
+            ]];
+        }
 
-        frame = CGRectMake(CGRectGetMidX(top.frame) - side / 2.0, y, side, side);
         button.hidden = NO;
-    }
-    else {
-        // The save button sits at the trailing edge; slot in just inside it.
-        UIView *rightmost = controls.lastObject;
-        CGFloat x = CGRectGetMinX(rightmost.frame) - side - gap;
-
-        if (controls.count > 1) {
-            UIView *neighbour = controls[controls.count - 2];
-
-            if (x < CGRectGetMaxX(neighbour.frame) + 6.0) {
-                x = CGRectGetMaxX(rightmost.frame) + gap;
-            }
-        }
-
-        if (x < 0 || x + side > CGRectGetWidth(bar.bounds)) {
-            x = CGRectGetWidth(bar.bounds) - side - gap;
-        }
-
-        frame = CGRectMake(x, CGRectGetMidY(rightmost.frame) - side / 2.0, side, side);
-        button.hidden = (x < 0);
+        button.tintColor = [UIColor labelColor];
+        [bar bringSubviewToFront:button];
+        return;
     }
 
+    // Feed posts: a horizontal row, placed by frame. The save button sits at the
+    // trailing edge; slot in just inside it.
+    UIView *rightmost = controls.lastObject;
+    CGFloat x = CGRectGetMinX(rightmost.frame) - side - gap;
+
+    if (controls.count > 1) {
+        UIView *neighbour = controls[controls.count - 2];
+
+        if (x < CGRectGetMaxX(neighbour.frame) + 6.0) {
+            x = CGRectGetMaxX(rightmost.frame) + gap;
+        }
+    }
+
+    if (x < 0 || x + side > CGRectGetWidth(bar.bounds)) {
+        x = CGRectGetWidth(bar.bounds) - side - gap;
+    }
+
+    button.hidden = (x < 0);
     button.tintColor = [UIColor labelColor];
-    button.frame = frame;
+    button.frame = CGRectMake(x, CGRectGetMidY(rightmost.frame) - side / 2.0, side, side);
 
     [bar bringSubviewToFront:button];
 }
