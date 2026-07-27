@@ -17,7 +17,8 @@
                 @"header": SCILocalized(@"p_hdr_messages"),
                 @"rows": @[
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_dm_save_t") subtitle:SCILocalized(@"p_dm_save_s") defaultsKey:@"dm_media_save_button"],
-                    [SCISetting switchCellWithTitle:SCILocalized(@"p_dm_lastactive_t") subtitle:SCILocalized(@"p_dm_lastactive_s") defaultsKey:@"dm_full_last_active"]
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_dm_lastactive_t") subtitle:SCILocalized(@"p_dm_lastactive_s") defaultsKey:@"dm_full_last_active"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_dm_keepunsent_t") subtitle:SCILocalized(@"p_dm_keepunsent_s") defaultsKey:@"keep_unsent_messages" requiresRestart:YES]
                 ]
             },
             @{

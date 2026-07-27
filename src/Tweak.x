@@ -91,7 +91,10 @@ NSString *SCIVersionString = @"v3.2.8";  // Albrhi
         @"download_audio_message": @(NO),
         // Beta: renders a photo that carries music into a short video. Off, since
         // it turns a one-press download into a question.
-        @"photo_as_video": @(NO)
+        @"photo_as_video": @(NO),
+        // Beta: keeps messages other people unsend by emptying the removal
+        // processor's key list. Off until confirmed on device.
+        @"keep_unsent_messages": @(NO)
     };
     [[NSUserDefaults standardUserDefaults] registerDefaults:sciDefaults];
 
