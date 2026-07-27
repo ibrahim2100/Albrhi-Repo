@@ -521,6 +521,10 @@ static NSDictionary *_arTable = nil;
         // Auto-advance reels
         @"p_reels_autonext_t": @"Auto-scroll reels",
         @"p_reels_autonext_s": @"When a reel finishes, move to the next on its own",
+        @"p_reels_autonextbtn_t": @"Auto-scroll button on reels",
+        @"p_reels_autonextbtn_s": @"Adds a button on the reel sidebar, above the download button, to turn auto-scroll on and off",
+        @"reels_autonext_on": @"Auto-scroll on",
+        @"reels_autonext_off": @"Auto-scroll off",
     };
 
     _arTable = @{
@@ -996,6 +1000,10 @@ static NSDictionary *_arTable = nil;
         // التنقل التلقائي للريل
         @"p_reels_autonext_t": @"التمرير التلقائي للريلز",
         @"p_reels_autonext_s": @"عند انتهاء الريل ينتقل إلى التالي تلقائيًا",
+        @"p_reels_autonextbtn_t": @"زر التمرير التلقائي على الريلز",
+        @"p_reels_autonextbtn_s": @"يضيف زرًا على شريط الريل، فوق زر التحميل، لتشغيل وإيقاف التمرير التلقائي",
+        @"reels_autonext_on": @"التمرير التلقائي مُفعّل",
+        @"reels_autonext_off": @"التمرير التلقائي مُوقف",
     };
 }
 

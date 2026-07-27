@@ -19,6 +19,7 @@
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_reels_scrubber_t") subtitle:SCILocalized(@"p_reels_scrubber_s") defaultsKey:@"reels_show_scrubber"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_reels_unmute_t") subtitle:SCILocalized(@"p_reels_unmute_s") defaultsKey:@"disable_auto_unmuting_reels" requiresRestart:YES],
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_reels_autonext_t") subtitle:SCILocalized(@"p_reels_autonext_s") defaultsKey:@"reels_auto_next"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"p_reels_autonextbtn_t") subtitle:SCILocalized(@"p_reels_autonextbtn_s") defaultsKey:@"reels_autoscroll_button"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"p_reels_refresh_t") subtitle:SCILocalized(@"p_reels_refresh_s") defaultsKey:@"refresh_reel_confirm"]
                 ]
             },

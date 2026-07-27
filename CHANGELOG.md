@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v3.2.9.1
+
+- **Auto-scroll now works on the older Instagram too.** Reading both versions'
+  binaries showed the older one gates it differently; the feature now drives every
+  gate a build actually has, so it holds on both.
+- **A button on the reel sidebar to turn auto-scroll on and off**, above the
+  download button, without opening settings. Under Reels, off by default.
+
 ## v3.2.9
 
 - **Auto-scroll reels.** When a reel finishes it moves to the next on its own.

@@ -18,7 +18,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.2.9";  // Albrhi
+NSString *SCIVersionString = @"v3.2.9.1";  // Albrhi
 
 // Variables that work across features
 
@@ -94,7 +94,10 @@ NSString *SCIVersionString = @"v3.2.9";  // Albrhi
         @"photo_as_video": @(NO),
         // Beta: keeps messages other people unsend by emptying the removal
         // processor's key list. Off until confirmed on device.
-        @"keep_unsent_messages": @(NO)
+        @"keep_unsent_messages": @(NO),
+        // An on-screen toggle for reels auto-scroll, on the sidebar above the
+        // download button. Off by default; the feature itself is reels_auto_next.
+        @"reels_autoscroll_button": @(NO)
     };
     [[NSUserDefaults standardUserDefaults] registerDefaults:sciDefaults];
 

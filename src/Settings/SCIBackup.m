@@ -34,6 +34,7 @@ static SCIBackup *sciBackupDelegate = nil;
         @"nav_icon_ordering", @"no_recent_searches", @"no_seen_receipt", @"no_suggested_account",
         @"no_suggested_chats", @"no_suggested_post", @"no_suggested_reels", @"no_suggested_threads",
         @"no_suggested_users", @"oled_theme", @"post_comment_confirm", @"reels_auto_next",
+        @"reels_autoscroll_button",
         @"reels_show_scrubber", @"reels_tap_control", @"refresh_reel_confirm", @"remove_lastseen",
         @"remove_screenshot_alert", @"repost_confirm", @"save_profile", @"settings_shortcut",
         @"shh_mode_confirm", @"show_follow_status", @"sticker_interact_confirm", @"story_download_button",
