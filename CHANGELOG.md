@@ -1,5 +1,21 @@
 # Albrhi Changelog
 
+## v3.2.9
+
+- **Auto-scroll reels.** When a reel finishes it moves to the next on its own.
+  Works on both the tested Instagram versions — it forces whichever auto-advance
+  gate the running build actually has. Under Reels, off by default.
+- **Custom app icon.** Pick any of Instagram's alternate icons — the ones normally
+  behind the subscription — from a new row under Appearance. Nothing is unlocked
+  server-side; the icons ship in the app and just get set.
+- **Keep unsent messages (beta).** A message someone unsends stays in the chat. A
+  pull-to-refresh still reloads from the server and clears it. Off by default,
+  under Stories & messages.
+- **The reels download button holds its place** on the sidebar instead of drifting
+  as you swipe between reels.
+- **The chosen date format now reaches every surface** — full dates and month
+  labels like profile join dates, not only the ones that already changed.
+
 ## v3.2.8
 
 - **Save photos with their music as a video (beta).** Instagram plays audio over
