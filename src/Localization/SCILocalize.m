@@ -511,6 +511,8 @@ static NSDictionary *_arTable = nil;
         @"p_press_zoom": @"Zoom (peek)",
         @"p_press_off": @"Off",
         // Auto-advance reels
+        @"p_reels_autonext_t": @"Auto-scroll reels",
+        @"p_reels_autonext_s": @"When a reel finishes, move to the next on its own",
     };
 
     _arTable = @{
@@ -976,6 +978,8 @@ static NSDictionary *_arTable = nil;
         @"p_press_zoom": @"تكبير (معاينة)",
         @"p_press_off": @"إيقاف",
         // التنقل التلقائي للريل
+        @"p_reels_autonext_t": @"التمرير التلقائي للريلز",
+        @"p_reels_autonext_s": @"عند انتهاء الريل ينتقل إلى التالي تلقائيًا",
     };
 }
 
