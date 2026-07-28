@@ -178,37 +178,77 @@ static const CGFloat kMaximumSide = 1920.0;
     if (![writer startWriting]) { CVPixelBufferRelease(frame); return NO; }
     [writer startSessionAtSourceTime:kCMTimeZero];
 
-    // Video first, and it is tiny: identical frames cost the encoder nothing
-    // after the first, so this finishes long before the audio does.
+    BOOL hasAudio = (reader && audio && [reader startReading]);
+
+    // Both tracks are fed in parallel, each from its own pump. Writing all the video
+    // first and the audio afterwards is what stalled this at a few per cent: the
+    // muxer will not drain video until audio covers the same span, so the video loop
+    // spun on isReadyForMoreMediaData that could never come true again. The AV1
+    // transcode hit exactly this and is written the same way — the lesson is in the
+    // changelog, and this code had not learned it.
     NSInteger total = MAX(2, (NSInteger)(seconds * kFrameRate));
 
-    for (NSInteger i = 0; i < total; i++) {
-        while (!video.isReadyForMoreMediaData && writer.status == AVAssetWriterStatusWriting) {
-            [NSThread sleepForTimeInterval:0.005];
-        }
-        if (writer.status != AVAssetWriterStatusWriting) break;
+    dispatch_group_t group = dispatch_group_create();
 
-        [adaptor appendPixelBuffer:frame withPresentationTime:CMTimeMake(i, kFrameRate)];
+    dispatch_group_enter(group);
+    __block BOOL videoDone = NO;
+    __block NSInteger nextFrame = 0;
+    dispatch_queue_t vq = dispatch_queue_create("com.albrhi.photovid.video", DISPATCH_QUEUE_SERIAL);
 
-        if (progress && i % kFrameRate == 0) progress((float)i / (float)total * 0.5f);
-    }
-    [video markAsFinished];
-    CVPixelBufferRelease(frame);
+    [video requestMediaDataWhenReadyOnQueue:vq usingBlock:^{
+        if (videoDone) return;
 
-    if (reader && audio && [reader startReading]) {
-        CMSampleBufferRef sample;
-        while ((sample = [readerOutput copyNextSampleBuffer])) {
-            while (!audio.isReadyForMoreMediaData && writer.status == AVAssetWriterStatusWriting) {
-                [NSThread sleepForTimeInterval:0.005];
+        while (video.isReadyForMoreMediaData) {
+            if (writer.status != AVAssetWriterStatusWriting || nextFrame >= total) {
+                videoDone = YES;
+                [video markAsFinished];
+                dispatch_group_leave(group);
+                return;
             }
-            if (writer.status == AVAssetWriterStatusWriting) [audio appendSampleBuffer:sample];
-            CFRelease(sample);
-            if (writer.status != AVAssetWriterStatusWriting) break;
+
+            [adaptor appendPixelBuffer:frame withPresentationTime:CMTimeMake(nextFrame, kFrameRate)];
+            nextFrame++;
+
+            if (progress && nextFrame % kFrameRate == 0) {
+                progress((float)nextFrame / (float)total * 0.9f);
+            }
         }
-        [audio markAsFinished];
+    }];
+
+    if (hasAudio) {
+        dispatch_group_enter(group);
+        __block BOOL audioDone = NO;
+        dispatch_queue_t aq = dispatch_queue_create("com.albrhi.photovid.audio", DISPATCH_QUEUE_SERIAL);
+
+        [audio requestMediaDataWhenReadyOnQueue:aq usingBlock:^{
+            if (audioDone) return;
+
+            while (audio.isReadyForMoreMediaData) {
+                CMSampleBufferRef sample = (writer.status == AVAssetWriterStatusWriting)
+                    ? [readerOutput copyNextSampleBuffer] : NULL;
+
+                if (!sample) {
+                    audioDone = YES;
+                    [audio markAsFinished];
+                    dispatch_group_leave(group);
+                    return;
+                }
+
+                [audio appendSampleBuffer:sample];
+                CFRelease(sample);
+            }
+        }];
     } else if (audio) {
         [audio markAsFinished];
     }
+
+    // Bounded, so a stalled pump reports failure instead of leaving the banner up.
+    if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 180 * NSEC_PER_SEC)) != 0) {
+        CVPixelBufferRelease(frame);
+        return NO;
+    }
+
+    CVPixelBufferRelease(frame);
 
     if (progress) progress(0.95f);
 

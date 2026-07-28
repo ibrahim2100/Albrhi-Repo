@@ -1,5 +1,18 @@
 # Albrhi Changelog
 
+## v3.3.3
+
+- **Saving a photo with its music no longer stalls.** It stopped a few per cent in
+  every time: the video was written in full before the audio, and the muxer will not
+  take more video until the audio has caught up, so it waited forever. Both tracks
+  are now written together.
+- **Hidden story views are remembered on your side.** Hiding the receipt was also
+  wiping Instagram's own local record, so stories kept coming back round until you
+  pressed the eye. The record is now left alone and only the upload is blocked — the
+  author still sees nothing.
+- **The eye button now marks the story as seen and moves to the next one** in one
+  tap, instead of toggling a mode.
+
 ## v3.3.2
 
 - **Fixed a crash when using GIFs.** The sticker tray was being rebuilt on every

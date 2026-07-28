@@ -1,61 +1,88 @@
+#import <substrate.h>
+#import <objc/runtime.h>
 #import "../../Utils.h"
 #import "../../InstagramHeaders.h"
 #import "../../Settings/SCIDiagnosticsViewController.h"
 
 ///
-/// Stops a watched story from being reported as seen.
+/// Watches stories without telling their author.
 ///
-/// This used to hook IGStorySeenStateUploader, returning nil from its init and from
-/// -networker. Walking the class metadata of both tested Instagram binaries showed
-/// why that never worked: the class has exactly three methods — an init, a networker
-/// getter and .cxx_destruct — so it cannot upload anything itself. Whatever nil it
-/// was handed, the receipt left by another route.
+/// The distinction that matters here, and that the previous version got wrong: a
+/// story being *seen* is two separate things. Instagram keeps a local record — which
+/// is what greys out the ring and stops a story coming back round — and it uploads a
+/// receipt, which is what the author sees. Only the second one is anybody else's
+/// business.
 ///
-/// The receipt is carried by IGStorySeenState, built with dictionaries of what was
-/// watched. Both builds declare it identically — same seven-argument init, same
-/// ivars — so emptying the seen dictionaries as it is constructed blocks the report
-/// at a place every route has to pass through, on either version.
+/// The version before this emptied IGStorySeenState as it was built. That object
+/// backs both jobs, so it silenced the author *and* wiped the local record, which is
+/// why stories kept reappearing until the eye button was pressed. Nothing is done to
+/// it now; the local record fills exactly as Instagram intends.
 ///
-/// The skipped dictionaries are left alone: skipping past a story is not the same
-/// claim as having watched it, and blanking everything would make the object useless
-/// rather than merely silent.
+/// The upload is blocked instead, at each build's own chokepoint:
 ///
-/// The class was identified from RyukGram (github.com/faroukbmiled/RyukGram, GPLv3),
-/// which references it in both of its per-version builds; the code here is Albrhi's.
+///   IGStorySeenStateUploader -networker        both builds — the request has no
+///                                             networker to go out on
+///   IGStoryPendingSeenStateStore -_uploadSeenState:   the newer build's Swift store,
+///                                             hooked by mangled name
+///
+/// Both were found by reading the class metadata out of the two tested binaries. The
+/// pending store keeps its queue either way, so nothing downstream is left holding a
+/// half-built object.
 ///
 
 /// Set by the eye button in StorySeenButton.x. While true the receipt is let
-/// through, so the story currently being watched registers as seen.
+/// through, so the story being watched right now does register with its author.
 extern BOOL storySeenOverrideEnabled;
 
-/// Whether the seen receipt should be blocked right now.
+/// Whether the receipt should be blocked right now.
 static BOOL SCIShouldBlockSeenReceipt(void) {
     if (![SCIUtils getBoolPref:@"no_seen_receipt"]) return NO;
 
     return !storySeenOverrideEnabled;
 }
 
-%hook IGStorySeenState
+// MARK: - The uploader's way out
 
-- (id)initWithReelSeenDictionary:(id)reelSeen
-              liveSeenDictionary:(id)liveSeen
-           reelSkippedDictionary:(id)reelSkipped
-           liveSkippedDictionary:(id)liveSkipped
-                 containerModule:(id)containerModule
-                    pushCategory:(id)pushCategory
-                    forceSeenIds:(id)forceSeenIds {
+%hook IGStorySeenStateUploader
 
+- (id)networker {
     if (!SCIShouldBlockSeenReceipt()) {
         return %orig;
     }
 
     [SCIDiagnostics recordStorySeenIntercept];
-    SCILogV(@"[Albrhi] Emptied a story seen report before it was sent");
+    SCILogV(@"[Albrhi] Withheld the networker a story seen receipt needed");
 
-    NSMutableDictionary *noReels = [NSMutableDictionary dictionary];
-    NSMutableDictionary *noLive = [NSMutableDictionary dictionary];
-
-    return %orig(noReels, noLive, reelSkipped, liveSkipped, containerModule, pushCategory, @[]);
+    return nil;
 }
 
 %end
+
+// MARK: - The newer build's Swift store
+
+// -_uploadSeenState: is where the newer build hands a batch of seen state off to be
+// sent. Swallowing it leaves the batch collected locally and unsent. Bound by
+// mangled name because Logos cannot name a Swift class, and skipped where the method
+// is absent rather than added as one nothing calls.
+static void (*orig_uploadSeenState)(id, SEL, id);
+
+static void sci_uploadSeenState(id self, SEL _cmd, id seenState) {
+    if (SCIShouldBlockSeenReceipt()) {
+        [SCIDiagnostics recordStorySeenIntercept];
+        SCILogV(@"[Albrhi] Swallowed a story seen upload");
+        return;
+    }
+
+    if (orig_uploadSeenState) orig_uploadSeenState(self, _cmd, seenState);
+}
+
+%ctor {
+    @autoreleasepool {
+        Class store = objc_getClass("_TtC26IGStoryPendingSeenStateKit28IGStoryPendingSeenStateStore");
+        SEL upload = NSSelectorFromString(@"_uploadSeenState:");
+
+        if (store && class_getInstanceMethod(store, upload)) {
+            MSHookMessageEx(store, upload, (IMP)sci_uploadSeenState, (IMP *)&orig_uploadSeenState);
+        }
+    }
+}

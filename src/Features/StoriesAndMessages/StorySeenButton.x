@@ -1,4 +1,5 @@
 #import "../../InstagramHeaders.h"
+#import <objc/message.h>
 #import "../../Utils.h"
 #import "../../Localization/SCILocalize.h"
 #import "../../Downloader/SCIMediaDownloader.h"
@@ -19,15 +20,37 @@ static const NSInteger SCIStorySeenButtonTag = 0x5CE7E;
 static const NSInteger SCIStoryDownloadButtonTag = 0x5C00D;
 
 static void SCIUpdateSeenButtonAppearance(UIButton *button) {
-    NSString *glyph = storySeenOverrideEnabled ? @"eye.fill" : @"eye.slash.fill";
-
+    // One action, one look: an eye with a tick, meaning "let this one count, then
+    // move on". It used to be a toggle whose two states were easy to misread as
+    // whether hiding was on at all.
     UIImageSymbolConfiguration *config =
         [UIImageSymbolConfiguration configurationWithPointSize:15.0 weight:UIImageSymbolWeightSemibold];
 
-    [button setImage:[UIImage systemImageNamed:glyph withConfiguration:config] forState:UIControlStateNormal];
+    UIImage *glyph = [UIImage systemImageNamed:@"eye.circle.fill" withConfiguration:config]
+                     ?: [UIImage systemImageNamed:@"eye.fill" withConfiguration:config];
 
-    button.tintColor = storySeenOverrideEnabled ? [SCIUtils SCIColor_Primary] : [UIColor whiteColor];
-    button.accessibilityLabel = SCILocalized(storySeenOverrideEnabled ? @"story_seen_on" : @"story_seen_off");
+    [button setImage:glyph forState:UIControlStateNormal];
+
+    button.tintColor = [UIColor whiteColor];
+    button.accessibilityLabel = SCILocalized(@"story_seen_mark_skip");
+}
+
+/// The section controller driving the story on screen, which is what knows how to
+/// move to the next one. Reached by trying the accessors the two builds use, and
+/// nil where none of them fit — the mark-as-seen half still works without it.
+static id SCICurrentStorySection(UIViewController *viewer) {
+    for (NSString *key in @[@"currentlyDisplayedSectionController",
+                            @"currentSectionController",
+                            @"focusedSectionController",
+                            @"_currentFullscreenSectionController"]) {
+        @try {
+            id candidate = [viewer valueForKey:key];
+            if ([candidate respondsToSelector:@selector(advanceToNextItemWithNavigationAction:)]) {
+                return candidate;
+            }
+        } @catch (__unused id error) {}
+    }
+    return nil;
 }
 
 %hook IGStoryViewerViewController
@@ -100,15 +123,25 @@ static void SCIUpdateSeenButtonAppearance(UIButton *button) {
 }
 
 %new - (void)sciToggleStorySeen:(UIButton *)sender {
-    storySeenOverrideEnabled = !storySeenOverrideEnabled;
-
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
 
-    SCIUpdateSeenButtonAppearance(sender);
+    // Let the receipt for the story on screen through, then move on. The flag is
+    // global and momentary: it is put back shortly afterwards so the stories that
+    // follow stay private, which is the whole point of the setting.
+    storySeenOverrideEnabled = YES;
 
-    [SCIUtils showToastForDuration:2.0
-                             title:SCILocalized(storySeenOverrideEnabled ? @"story_seen_on_toast"
-                                                                        : @"story_seen_off_toast")];
+    [SCIUtils showToastForDuration:1.4 title:SCILocalized(@"story_seen_marked_toast")];
+
+    id section = SCICurrentStorySection(self);
+    if (section) {
+        ((void (*)(id, SEL, NSInteger))objc_msgSend)(section, @selector(advanceToNextItemWithNavigationAction:), 0);
+    }
+
+    // Long enough for the receipt to have been built and sent for this story, short
+    // enough that the next one is still covered.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        storySeenOverrideEnabled = NO;
+    });
 }
 
 %new - (void)sciDownloadStory:(UIButton *)sender {
