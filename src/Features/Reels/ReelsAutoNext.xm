@@ -141,35 +141,6 @@ static void SCIStyleAutoScrollButton(UIButton *button) {
 
 %hook IGSundialFeedViewController
 
-// Duration-aware drive for the builds where forcing the gates is not enough — the
-// older Instagram, whose auto-scroll timer never starts however the gates are set.
-//
-// The feed controller tells each reel its length through this method, with a block
-// to run when the countdown ends — i.e. when the reel has played through. Wrapping
-// that block to also advance is auto-scroll that respects each reel's real length,
-// driven by Instagram's own -advanceToNextReelForAutoScroll rather than a timer of
-// ours. The method only exists on the build that needs it; where it is absent the
-// hook simply never runs.
-- (void)setReelDuration:(double)duration onCountdownFinishedCallBack:(void (^)(void))callback {
-    if (!SCIWantsAutoScroll()) {
-        %orig;
-        return;
-    }
-
-    void (^wrapped)(void) = ^{
-        if (callback) callback();
-
-        // Re-checked at fire time, not just install time: the toggle may have flipped
-        // while the reel was playing.
-        if (SCIWantsAutoScroll() &&
-            [self respondsToSelector:@selector(advanceToNextReelForAutoScroll)]) {
-            ((void (*)(id, SEL))objc_msgSend)(self, @selector(advanceToNextReelForAutoScroll));
-        }
-    };
-
-    %orig(duration, wrapped);
-}
-
 - (void)viewDidAppear:(BOOL)animated {
     %orig;
 
@@ -192,12 +163,11 @@ static void SCIStyleAutoScrollButton(UIButton *button) {
 
     [self.view addSubview:button];
 
-    // Trailing edge, above vertical centre — clear of the action stack that sits at
-    // the bottom-right, so it reads as sitting above it without depending on where
-    // Instagram happens to lay that stack out.
+    // Upper-right, below the camera row and well above the like button at the top of
+    // the action stack — the earlier centre placement landed right on the like.
     [NSLayoutConstraint activateConstraints:@[
         [button.trailingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.trailingAnchor constant:-14.0],
-        [button.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor constant:-40.0],
+        [button.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:104.0],
         [button.widthAnchor constraintEqualToConstant:34.0],
         [button.heightAnchor constraintEqualToConstant:34.0]
     ]];
@@ -212,6 +182,70 @@ static void SCIStyleAutoScrollButton(UIButton *button) {
 
     [SCIUtils showToastForDuration:1.6
                              title:SCILocalized(next ? @"reels_autonext_on" : @"reels_autonext_off")];
+}
+
+%end
+
+// MARK: - Duration-aware drive from the progress indicator
+
+// Forcing the gates does not start the older build's auto-scroll timer, and the
+// countdown callback that would have fed it is itself gated off. The progress
+// indicator is not: it updates continuously as the reel plays, on both builds, so it
+// is the one reliable "the reel is ending" signal. When progress reaches the end the
+// feed controller is told to advance, once per play — Instagram's own advance, so the
+// transition is the native one.
+
+// The feed controller this cell belongs to, found up the responder chain.
+static UIViewController *SCIFeedControllerForView(UIView *view) {
+    Class feed = objc_getClass("IGSundialFeedViewController");
+    UIResponder *responder = view;
+    while ((responder = responder.nextResponder)) {
+        if (feed && [responder isKindOfClass:feed]) return (UIViewController *)responder;
+    }
+    return nil;
+}
+
+// One "already advanced this play" flag per cell, cleared when the reel loops back to
+// the start, so each play triggers exactly one advance.
+static const void *SCIReelAdvancedKey = &SCIReelAdvancedKey;
+
+%hook IGSundialViewerVideoCell
+
+- (void)updateProgressIndicatorWithProgress:(double)progress
+                          remainingDuration:(double)remaining
+                            elapsedDuration:(double)elapsed
+                              totalDuration:(double)total {
+    %orig;
+
+    if (!SCIWantsAutoScroll()) return;
+
+    // Back at the start of a loop: arm for the next end.
+    if (progress < 0.5) {
+        objc_setAssociatedObject(self, SCIReelAdvancedKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        return;
+    }
+
+    // A real, played-through clip near its end, and not already handled this loop.
+    // The total guards against zero-length or still-loading items firing instantly.
+    if (progress < 0.985 || total < 0.3) return;
+    if (objc_getAssociatedObject(self, SCIReelAdvancedKey)) return;
+
+    objc_setAssociatedObject(self, SCIReelAdvancedKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+    UIViewController *feed = SCIFeedControllerForView(self);
+    if (!feed) return;
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (!SCIWantsAutoScroll()) return;
+
+        // The auto-scroll advance where it exists (the older build), else the plain
+        // next-item advance. Both are Instagram's own.
+        if ([feed respondsToSelector:@selector(advanceToNextReelForAutoScroll)]) {
+            ((void (*)(id, SEL))objc_msgSend)(feed, @selector(advanceToNextReelForAutoScroll));
+        } else if ([feed respondsToSelector:@selector(advanceToNextItemWithNavigationAction:)]) {
+            ((void (*)(id, SEL, NSInteger))objc_msgSend)(feed, @selector(advanceToNextItemWithNavigationAction:), 0);
+        }
+    });
 }
 
 %end

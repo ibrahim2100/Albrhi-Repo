@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v3.2.9.3
+
+- **Auto-scroll now advances from the reel's progress bar.** The countdown it was
+  reading before is gated off on the older build, so it never fired; the progress
+  indicator runs on every reel regardless, and advancing when it reaches the end is
+  the reliable trigger. Each reel advances once, when it finishes.
+- **The auto-scroll button moved to the upper-right,** clear of the like button it
+  was sitting on.
+
 ## v3.2.9.2
 
 - **Auto-scroll actually advances on the older Instagram now.** Forcing its gates
