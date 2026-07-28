@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.2.9.5\n\n- **Auto-scroll on the newer Instagram.** It works on the older one; the newer one\n  reports playback from a different object and ignores the scroll request, so there\n  it now also listens to that object and, if the feed has not moved shortly after\n  asking, pages it directly. The older build is untouched — none of this runs there.\n- Diagnostics now names which object reported playback progress.\n\n## v3.2.9.4\n\n- **Auto-scroll now moves the feed directly** instead of asking Instagram's own\n  auto-advance, which is gated behind the same rollout this feature exists to work\n  around. Scrolling to the next reel is not gated.\n- **Diagnostics reports what auto-scroll is doing** — gates forced, playback\n  progress seen, advance attempts — so a build where it still does not work can say\n  which link is broken instead of being guessed at.\n\n## v3.2.9.3\n\n- **Auto-scroll now advances from the reel's progress bar.** The countdown it was\n  reading before is gated off on the older build, so it never fired; the progress\n  indicator runs on every reel regardless, and advancing when it reaches the end is\n  the reliable trigger. Each reel advances once, when it finishes.\n- **The auto-scroll button moved to the upper-right,** clear of the like button it\n  was sitting on.",
+          "markdown": "## v3.2.9.6\n\n- **Auto-scroll waits for the reel to finish.** It was moving on a percentage of\n  the way through, which on a long reel meant cutting it off a second or two early.\n  It now goes by the time actually left, so it moves when the reel ends — whatever\n  its length.\n\n## v3.2.9.5\n\n- **Auto-scroll on the newer Instagram.** It works on the older one; the newer one\n  reports playback from a different object and ignores the scroll request, so there\n  it now also listens to that object and, if the feed has not moved shortly after\n  asking, pages it directly. The older build is untouched — none of this runs there.\n- Diagnostics now names which object reported playback progress.\n\n## v3.2.9.4\n\n- **Auto-scroll now moves the feed directly** instead of asking Instagram's own\n  auto-advance, which is gated behind the same rollout this feature exists to work\n  around. Scrolling to the next reel is not gated.\n- **Diagnostics reports what auto-scroll is doing** — gates forced, playback\n  progress seen, advance attempts — so a build where it still does not work can say\n  which link is broken instead of being guessed at.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.2.9.5"
+          "text": "3.2.9.6"
         },
         {
           "class": "DepictionTableTextView",
