@@ -3,6 +3,11 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.4.2
+
+- Diagnostics now reports how many video qualities a post really offers, and how many
+  of them iPhone can actually save. Groundwork for bringing back the quality picker.
+
 ## v3.4.1
 
 - **Confirmations appear straight away again.** Asking twice in a row could leave the

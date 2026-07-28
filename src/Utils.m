@@ -1,6 +1,7 @@
 #import "Utils.h"
 #import <os/lock.h>
 #import "UI/SCIConfirmSheet.h"
+#import "Settings/SCIDiagnosticsViewController.h"
 #import <objc/runtime.h>
 
 // Delegate that persists the chosen accent color as a hex string.
@@ -655,11 +656,37 @@ static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
         long long fallbackArea = 0;
         NSURL *best = fallback;
 
-        for (NSDictionary *rep in [self dashRepresentationsForVideo:video media:nil]) {
+        // Counted per stage rather than at the end. A quality picker was built three
+        // times against this pipeline and each one showed a single option, because
+        // nobody knew which stage the renditions were being lost at — whether the
+        // manifest carried few, whether parsing dropped them, or whether they were
+        // all in a codec iOS cannot save. One total answers none of that.
+        NSInteger versions = 0;
+        @try {
+            if ([video respondsToSelector:@selector(videoVersions)]) {
+                id list = [video performSelector:@selector(videoVersions)];
+                if ([list respondsToSelector:@selector(count)]) versions = (NSInteger)[list count];
+            }
+        } @catch (__unused id e) {}
+
+        NSArray<NSDictionary *> *reps = [self dashRepresentationsForVideo:video media:nil];
+
+        NSInteger videoReps = 0;
+        NSInteger saveable = 0;
+        NSMutableSet<NSString *> *distinct = [NSMutableSet set];
+        NSString *chosen = nil;
+
+        for (NSDictionary *rep in reps) {
             if (![rep[@"type"] isEqualToString:@"video"]) continue;
+            videoReps++;
 
             NSString *family = rep[@"family"];
             if (![family isEqualToString:@"h264"] && ![family isEqualToString:@"hevc"]) continue;
+            saveable++;
+
+            // What a picker would actually be able to offer: one entry per distinct
+            // resolution, since the ladder repeats a size at several bitrates.
+            [distinct addObject:[NSString stringWithFormat:@"%@x%@", rep[@"width"], rep[@"height"]]];
 
             long long area = [rep[@"area"] longLongValue];
             if (area <= fallbackArea) continue;
@@ -674,7 +701,15 @@ static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
 
             best = url;
             fallbackArea = area;
+            chosen = [NSString stringWithFormat:@"%@x%@ %@", rep[@"width"], rep[@"height"], family];
         }
+
+        [SCIDiagnostics recordQualityFunnelWithVersions:versions
+                                       representations:(NSInteger)reps.count
+                                             videoReps:videoReps
+                                              saveable:saveable
+                                              distinct:(NSInteger)distinct.count
+                                                chosen:chosen];
 
         return best;
     } @catch (__unused id e) {

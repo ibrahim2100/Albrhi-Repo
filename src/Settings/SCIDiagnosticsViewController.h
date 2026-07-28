@@ -131,6 +131,20 @@ NS_ASSUME_NONNULL_BEGIN
 /// rather than leave a silent zero meaning either "never fired" or "nothing to do".
 + (void)recordUnsendPath:(NSString *)path detail:(nullable NSString *)detail;
 
+/// Every stage of resolving a video's quality, counted separately.
+///
+/// A quality picker was built three times against this pipeline and each one offered
+/// a single option. One total could never say why: whether the manifest carried few
+/// renditions, whether parsing dropped them, or whether they were all in a codec iOS
+/// refuses to save. These are the numbers that decide whether a picker is worth
+/// building at all, and on which source.
++ (void)recordQualityFunnelWithVersions:(NSInteger)versions
+                        representations:(NSInteger)representations
+                              videoReps:(NSInteger)videoReps
+                               saveable:(NSInteger)saveable
+                               distinct:(NSInteger)distinct
+                                 chosen:(nullable NSString *)chosen;
+
 @end
 
 NS_ASSUME_NONNULL_END

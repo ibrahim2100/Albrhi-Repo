@@ -38,6 +38,8 @@ static NSInteger _unsendsKept = 0;
 static NSMutableArray<NSString *> *_unsendReasons = nil;
 static NSMutableArray<NSString *> *_unsendPaths = nil;
 static NSArray<SCIFeatureAuditResult *> *_auditResults = nil;
+static NSString *_qualityFunnel = nil;
+static NSString *_qualityChosen = nil;
 static BOOL _reelsFoundController = NO;
 static NSString *_audioProbe = nil;
 static NSInteger _dateRewrites = 0;
@@ -198,6 +200,19 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
         if (![_unsendPaths containsObject:entry] && _unsendPaths.count < 6) {
             [_unsendPaths addObject:entry];
         }
+    }
+}
+
++ (void)recordQualityFunnelWithVersions:(NSInteger)versions
+                        representations:(NSInteger)representations
+                              videoReps:(NSInteger)videoReps
+                               saveable:(NSInteger)saveable
+                               distinct:(NSInteger)distinct
+                                 chosen:(NSString *)chosen {
+    @synchronized (self) {
+        _qualityFunnel = [NSString stringWithFormat:@"versions %ld · reps %ld · video %ld · saveable %ld · distinct %ld",
+                          (long)versions, (long)representations, (long)videoReps, (long)saveable, (long)distinct];
+        _qualityChosen = [chosen copy];
     }
 }
 
@@ -510,6 +525,12 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
             @{@"title": SCILocalized(@"diag_download_kind"),
               @"detail": _lastDownloadKind ?: @"—",
               @"ok": @(_lastDownloadKind != nil)},
+            @{@"title": SCILocalized(@"diag_quality_funnel"),
+              @"detail": _qualityFunnel ?: @"—",
+              @"ok": @(_qualityFunnel != nil)},
+            @{@"title": SCILocalized(@"diag_quality_chosen"),
+              @"detail": _qualityChosen ?: @"—",
+              @"ok": @(_qualityChosen != nil)},
             @{@"title": SCILocalized(@"diag_quality_source"),
               @"detail": _lastVideoClass ?: @"—",
               @"ok": @(_lastVideoClass != nil)}
