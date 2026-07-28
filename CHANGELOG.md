@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v3.2.9.6
+
+- **Auto-scroll waits for the reel to finish.** It was moving on a percentage of
+  the way through, which on a long reel meant cutting it off a second or two early.
+  It now goes by the time actually left, so it moves when the reel ends — whatever
+  its length.
+
 ## v3.2.9.5
 
 - **Auto-scroll on the newer Instagram.** It works on the older one; the newer one

@@ -234,13 +234,17 @@ static UIScrollView *SCIEnclosingScrollView(UIView *view) {
 // back to the start, so each play triggers exactly one advance.
 static const void *SCIReelAdvancedKey = &SCIReelAdvancedKey;
 
+// The previous progress reading, kept so a wrap back to the start can be told from
+// an ordinary early-in-the-reel update.
+static const void *SCIReelLastFractionKey = &SCIReelLastFractionKey;
+
 // A second guard across reporters. On the newer build two objects report progress
 // for the same reel, and without this each would advance — one skipped reel per
 // tick. Not needed on the older build, where only the cell reports, so its timing
 // is unaffected either way.
 static NSTimeInterval sLastAdvance = 0;
 
-static void SCIReelProgressTick(UIView *reporter, double progress, double total) {
+static void SCIReelProgressTick(UIView *reporter, double progress, double remaining, double total) {
     if (!SCIWantsAutoScroll()) return;
 
     // Recorded before any threshold, so Diagnostics can say whether this fires at
@@ -251,15 +255,34 @@ static void SCIReelProgressTick(UIView *reporter, double progress, double total)
     // would otherwise trip the end test on the first update and skip instantly.
     double fraction = progress > 1.5 ? progress / 100.0 : progress;
 
-    // Back at the start of a loop: arm for the next end.
-    if (fraction < 0.5) {
-        objc_setAssociatedObject(reporter, SCIReelAdvancedKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        return;
+    // How near the end, in seconds. A percentage cannot answer this: the same 3%
+    // short of the end is under a second on a short reel and nearly two on a long
+    // one, which is exactly how the first version came to cut clips off early.
+    // Instagram reports the remaining time itself; it is only derived when that
+    // reading is missing or nonsensical.
+    double secondsLeft = remaining;
+    if (secondsLeft <= 0.0 || secondsLeft > total) secondsLeft = total * (1.0 - fraction);
+
+    double previous = [objc_getAssociatedObject(reporter, SCIReelLastFractionKey) doubleValue];
+    objc_setAssociatedObject(reporter, SCIReelLastFractionKey, @(fraction), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+    // The reel just looped back to the start, so it played all the way through.
+    // This is the backstop for updates too sparse to land inside the window below —
+    // without it a missed window means watching the whole reel a second time.
+    BOOL wrapped = (previous > 0.9 && fraction < 0.1);
+
+    if (!wrapped) {
+        // Early in the reel: arm for the coming end.
+        if (fraction < 0.5) {
+            objc_setAssociatedObject(reporter, SCIReelAdvancedKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            return;
+        }
+
+        // Not at the end yet. The total guards against zero-length or still-loading
+        // items reading as finished the moment they appear.
+        if (secondsLeft > 0.25 || total < 0.3) return;
     }
 
-    // A real, played-through clip near its end, and not already handled this loop.
-    // The total guards against zero-length or still-loading items firing instantly.
-    if (fraction < 0.97 || total < 0.3) return;
     if (objc_getAssociatedObject(reporter, SCIReelAdvancedKey)) return;
 
     objc_setAssociatedObject(reporter, SCIReelAdvancedKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
@@ -325,7 +348,7 @@ static void SCIReelProgressTick(UIView *reporter, double progress, double total)
                               totalDuration:(double)total {
     %orig;
 
-    SCIReelProgressTick((UIView *)self, progress, total);
+    SCIReelProgressTick((UIView *)self, progress, remaining, total);
 }
 
 %end
@@ -355,7 +378,7 @@ static void sci_overlayProgress(id self, SEL _cmd, double progress, double remai
     }
 
     if ([self isKindOfClass:[UIView class]]) {
-        SCIReelProgressTick((UIView *)self, progress, total);
+        SCIReelProgressTick((UIView *)self, progress, remaining, total);
     }
 }
 
