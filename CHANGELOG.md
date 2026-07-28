@@ -1,5 +1,16 @@
 # Albrhi Changelog
 
+**Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
+newer versions are expected to work and you will be told if yours is untested.
+
+## v3.3.5
+
+- **Changing the app icon works.** The icon list was being thrown away before it
+  reached the menu, so the row opened onto nothing.
+- **Every "are you sure" has been redesigned** — liking a reel, refreshing, following,
+  changing a theme. One card, in your language, instead of a stock system alert
+  whose buttons were hard-coded English.
+
 ## v3.3.4
 
 - **Auto-scroll waits for the reel to finish properly.** It moved when the reel was

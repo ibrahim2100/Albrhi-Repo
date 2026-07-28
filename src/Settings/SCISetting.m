@@ -214,6 +214,15 @@
             [children addObject:[self submenuForButton:button submenu:(UIMenu *)obj]];
             continue;
         }
+        // A UIAction already carries the handler that does the work, so it is passed
+        // through as it is. Only UICommand entries are rebuilt below, because those
+        // are the ones whose tick has to be worked out from a stored preference.
+        // Dropping everything that was not a UICommand is what left the app-icon
+        // menu empty and looking like a feature that did nothing.
+        else if ([obj isKindOfClass:[UIAction class]]) {
+            [children addObject:obj];
+            continue;
+        }
         else if (![obj isKindOfClass:[UICommand class]]) {
             continue;
         }

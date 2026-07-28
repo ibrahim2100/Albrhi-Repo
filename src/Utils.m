@@ -1,4 +1,5 @@
 #import "Utils.h"
+#import "UI/SCIConfirmSheet.h"
 #import <objc/runtime.h>
 
 // Delegate that persists the chosen accent color as a hex string.
@@ -881,28 +882,12 @@ static const void *SCIParentAudioKey = &SCIParentAudioKey;
 
 // Alerts
 + (BOOL)showConfirmation:(void(^)(void))okHandler title:(NSString *)title {
-    UIAlertController* alert = [UIAlertController alertControllerWithTitle:title message:@"Are you sure?" preferredStyle:UIAlertControllerStyleAlert];
-    [alert addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        okHandler();
-    }]];
-    [alert addAction:[UIAlertAction actionWithTitle:@"No!" style:UIAlertActionStyleCancel handler:nil]];
-
-    [topMostController() presentViewController:alert animated:YES completion:nil];
+    [SCIConfirmSheet presentWithTitle:title symbol:nil confirm:okHandler cancel:nil];
 
     return nil;
 };
 + (BOOL)showConfirmation:(void(^)(void))okHandler cancelHandler:(void(^)(void))cancelHandler title:(NSString *)title {
-    UIAlertController* alert = [UIAlertController alertControllerWithTitle:title message:@"Are you sure?" preferredStyle:UIAlertControllerStyleAlert];
-    [alert addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        okHandler();
-    }]];
-    [alert addAction:[UIAlertAction actionWithTitle:@"No!" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
-        if (cancelHandler != nil) {
-            cancelHandler();
-        }
-    }]];
-
-    [topMostController() presentViewController:alert animated:YES completion:nil];
+    [SCIConfirmSheet presentWithTitle:title symbol:nil confirm:okHandler cancel:cancelHandler];
 
     return nil;
 };
@@ -913,13 +898,10 @@ static const void *SCIParentAudioKey = &SCIParentAudioKey;
     return [self showConfirmation:okHandler cancelHandler:cancelHandler title:nil];
 }
 + (void)showRestartConfirmation {
-    UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"Restart required" message:@"You must restart the app to apply this change" preferredStyle:UIAlertControllerStyleAlert];
-    [alert addAction:[UIAlertAction actionWithTitle:@"Restart" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        exit(0);
-    }]];
-    [alert addAction:[UIAlertAction actionWithTitle:@"Later" style:UIAlertActionStyleCancel handler:nil]];
-
-    [topMostController() presentViewController:alert animated:YES completion:nil];
+    [SCIConfirmSheet presentWithTitle:SCILocalized(@"confirm_restart_title")
+                               symbol:@"arrow.clockwise"
+                              confirm:^{ exit(0); }
+                               cancel:nil];
 };
 
 // Toasts
