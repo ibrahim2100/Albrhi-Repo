@@ -3,138 +3,28 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.3.7
+
+- **Check every feature at once.** Settings → Diagnostics → the checklist icon.
+  It tells you which features still work on your Instagram version and which an
+  update has broken — instead of you finding out days later.
+- The what's-new page icons match what it says again.
+
 ## v3.3.6
 
-- **Lighter while you scroll.** Every switch Albrhi checks was being read from disk,
-  twice, each time it was asked — and some of those questions get asked on every
-  frame of a scrolling feed. They are answered from memory now, and forgotten the
-  moment a setting changes, so nothing is stale.
-- **The what's-new page is current again.** It had still been describing the 3.2
-  release.
-
-## v3.3.5
-
-- **Changing the app icon works.** The icon list was being thrown away before it
-  reached the menu, so the row opened onto nothing.
-- **Every "are you sure" has been redesigned** — liking a reel, refreshing, following,
-  changing a theme. One card, in your language, instead of a stock system alert
-  whose buttons were hard-coded English.
-
-## v3.3.4
-
-- **Auto-scroll waits for the reel to finish properly.** It moved when the reel was
-  nearly over, which still cut the end off; it now waits for the reel to actually
-  play through.
-- **Saving a photo with its music works on multi-photo posts too.** The music
-  belongs to the post rather than to one picture, so a slide asked on its own had
-  none and the choice never appeared.
-
-## v3.3.3
-
-- **Saving a photo with its music no longer stalls.** It stopped a few per cent in
-  every time: the video was written in full before the audio, and the muxer will not
-  take more video until the audio has caught up, so it waited forever. Both tracks
-  are now written together.
-- **Hidden story views are remembered on your side.** Hiding the receipt was also
-  wiping Instagram's own local record, so stories kept coming back round until you
-  pressed the eye. The record is now left alone and only the upload is blocked — the
-  author still sees nothing.
-- **The eye button now marks the story as seen and moves to the next one** in one
-  tap, instead of toggling a mode.
-
-## v3.3.2
-
-- **Fixed a crash when using GIFs.** The sticker tray was being rebuilt on every
-  call even with nothing to remove; it is now left alone unless it needs changing.
-- **Keep unsent messages (beta) now covers both of Instagram's messaging stacks.**
-  It had only been watching the older one, and which stack a chat uses is decided by
-  Instagram, so on many accounts it never saw the removal at all.
-- Diagnostics now names which removal path Instagram actually used, so a chat where
-  this still does nothing can say why.
-
-## v3.3.1
-
-- **Keep unsent messages (beta) now works on both Instagram versions.** It had been
-  attached to the path your *own* unsends take on the way out, which is the wrong
-  side entirely — someone else's unsend arrives by another route. It now meets it
-  where it lands, and only touches removals, so read state and edits are unaffected.
-  Your own unsends still go through normally.
-
-## v3.3.0
-
-- **Hiding story views works again.** It was attached to an object that turns out to
-  have no way of sending anything, so the receipt always went out by another route.
-  It now empties the report itself, at a point both Instagram versions share.
-- **Keep unsent messages (beta) actually keeps them.** It was clearing a field by a
-  name that does not exist on the object, and the error was being swallowed, so the
-  feature had never once run.
-
-## v3.2.9.6
-
-- **Auto-scroll waits for the reel to finish.** It was moving on a percentage of
-  the way through, which on a long reel meant cutting it off a second or two early.
-  It now goes by the time actually left, so it moves when the reel ends — whatever
-  its length.
-
-## v3.2.9.5
-
-- **Auto-scroll on the newer Instagram.** It works on the older one; the newer one
-  reports playback from a different object and ignores the scroll request, so there
-  it now also listens to that object and, if the feed has not moved shortly after
-  asking, pages it directly. The older build is untouched — none of this runs there.
-- Diagnostics now names which object reported playback progress.
-
-## v3.2.9.4
-
-- **Auto-scroll now moves the feed directly** instead of asking Instagram's own
-  auto-advance, which is gated behind the same rollout this feature exists to work
-  around. Scrolling to the next reel is not gated.
-- **Diagnostics reports what auto-scroll is doing** — gates forced, playback
-  progress seen, advance attempts — so a build where it still does not work can say
-  which link is broken instead of being guessed at.
-
-## v3.2.9.3
-
-- **Auto-scroll now advances from the reel's progress bar.** The countdown it was
-  reading before is gated off on the older build, so it never fired; the progress
-  indicator runs on every reel regardless, and advancing when it reaches the end is
-  the reliable trigger. Each reel advances once, when it finishes.
-- **The auto-scroll button moved to the upper-right,** clear of the like button it
-  was sitting on.
-
-## v3.2.9.2
-
-- **Auto-scroll actually advances on the older Instagram now.** Forcing its gates
-  was not enough — its own timer never starts — so on that build it now advances
-  each reel when the reel finishes playing, using Instagram's own countdown, so the
-  timing follows the reel's real length.
-- **The auto-scroll button appears reliably.** It is now a floating button on the
-  reel screen rather than a member of the action bar, so it always shows, holds its
-  place, and no longer disturbs the download button.
-
-## v3.2.9.1
-
-- **Auto-scroll now works on the older Instagram too.** Reading both versions'
-  binaries showed the older one gates it differently; the feature now drives every
-  gate a build actually has, so it holds on both.
-- **A button on the reel sidebar to turn auto-scroll on and off**, above the
-  download button, without opening settings. Under Reels, off by default.
-
-## v3.2.9
-
-- **Auto-scroll reels.** When a reel finishes it moves to the next on its own.
-  Works on both the tested Instagram versions — it forces whichever auto-advance
-  gate the running build actually has. Under Reels, off by default.
-- **Custom app icon.** Pick any of Instagram's alternate icons — the ones normally
-  behind the subscription — from a new row under Appearance. Nothing is unlocked
-  server-side; the icons ship in the app and just get set.
-- **Keep unsent messages (beta).** A message someone unsends stays in the chat. A
-  pull-to-refresh still reloads from the server and clears it. Off by default,
-  under Stories & messages.
-- **The reels download button holds its place** on the sidebar instead of drifting
-  as you swipe between reels.
-- **The chosen date format now reaches every surface** — full dates and month
-  labels like profile join dates, not only the ones that already changed.
+- **Reels can scroll themselves.** When a reel ends, the next one comes up. There's a
+  button on the reel screen to turn it on and off.
+- **Choose your app icon** from the ones Instagram keeps for paid subscribers.
+  Under Appearance.
+- **Save a photo with its music** as a short video — pick the length, 5 seconds up
+  to 90. Works on single photos and albums.
+- **Keep messages people unsend** so they stay in the chat. Beta, off by default.
+- **Watch stories invisibly without them repeating.** Your phone remembers what you
+  watched; the author still sees nothing. The eye button marks one as seen and moves
+  on.
+- **Every "are you sure" looks better** and finally speaks your language.
+- **Lighter and faster while scrolling.**
+- Fixed a crash when using GIFs.
 
 ## v3.2.8
 

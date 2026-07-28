@@ -124,27 +124,27 @@ static NSString *const SCILastSeenVersionKey = @"albrhi_last_seen_version";
     }
 
     return @[
-        [SCIWhatsNewItem itemWithSymbol:@"4k.tv.fill"
+        [SCIWhatsNewItem itemWithSymbol:@"infinity"
                                   title:SCILocalized(@"wn_u1_title")
                                  detail:SCILocalized(@"wn_u1_detail")
                                    tint:accent],
-        [SCIWhatsNewItem itemWithSymbol:@"calendar"
+        [SCIWhatsNewItem itemWithSymbol:@"app.fill"
                                   title:SCILocalized(@"wn_u2_title")
                                  detail:SCILocalized(@"wn_u2_detail")
                                    tint:[UIColor systemPurpleColor]],
-        [SCIWhatsNewItem itemWithSymbol:@"circle.lefthalf.filled"
+        [SCIWhatsNewItem itemWithSymbol:@"music.note"
                                   title:SCILocalized(@"wn_u3_title")
                                  detail:SCILocalized(@"wn_u3_detail")
                                    tint:[UIColor systemTealColor]],
-        [SCIWhatsNewItem itemWithSymbol:@"square.and.arrow.up.on.square.fill"
+        [SCIWhatsNewItem itemWithSymbol:@"bubble.left.and.bubble.right.fill"
                                   title:SCILocalized(@"wn_u4_title")
                                  detail:SCILocalized(@"wn_u4_detail")
                                    tint:[UIColor systemGreenColor]],
-        [SCIWhatsNewItem itemWithSymbol:@"magnifyingglass"
+        [SCIWhatsNewItem itemWithSymbol:@"eye.circle.fill"
                                   title:SCILocalized(@"wn_u5_title")
                                  detail:SCILocalized(@"wn_u5_detail")
                                    tint:[UIColor systemBlueColor]],
-        [SCIWhatsNewItem itemWithSymbol:@"square.stack.3d.down.right.fill"
+        [SCIWhatsNewItem itemWithSymbol:@"bolt.fill"
                                   title:SCILocalized(@"wn_u6_title")
                                  detail:SCILocalized(@"wn_u6_detail")
                                    tint:[UIColor systemPinkColor]]

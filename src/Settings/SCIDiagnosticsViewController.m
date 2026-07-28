@@ -1,4 +1,5 @@
 #import "SCIDiagnosticsViewController.h"
+#import "SCIFeatureAudit.h"
 #import "../Utils.h"
 #import "../Localization/SCILocalize.h"
 #import "../Tweak.h"
@@ -36,6 +37,7 @@ static NSString *_reelsAdvanceSelector = nil;
 static NSInteger _unsendsKept = 0;
 static NSMutableArray<NSString *> *_unsendReasons = nil;
 static NSMutableArray<NSString *> *_unsendPaths = nil;
+static NSArray<SCIFeatureAuditResult *> *_auditResults = nil;
 static BOOL _reelsFoundController = NO;
 static NSString *_audioProbe = nil;
 static NSInteger _dateRewrites = 0;
@@ -412,6 +414,10 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
                                          style:UIBarButtonItemStylePlain
                                         target:self
                                         action:@selector(copyReport)],
+        [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"checklist"]
+                                         style:UIBarButtonItemStylePlain
+                                        target:self
+                                        action:@selector(runFeatureAudit)],
         [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"magnifyingglass"]
                                          style:UIBarButtonItemStylePlain
                                         target:self
@@ -511,6 +517,7 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
         @{@"header": SCILocalized(@"diag_section_dash"), @"rows": [self dashRows]},
         @{@"header": SCILocalized(@"diag_section_transcode"), @"rows": [self transcodeRows]},
         @{@"header": SCILocalized(@"diag_section_scan"), @"rows": [self scanRows]},
+        @{@"header": SCILocalized(@"diag_section_audit"), @"rows": [self featureAuditRows]},
         @{@"header": SCILocalized(@"diag_section_reels"), @"rows": [self reelsAutoScrollRows]},
         @{@"header": SCILocalized(@"diag_section_daterewrite"), @"rows": [self dateRewriteRows]},
         @{@"header": SCILocalized(@"diag_section_audio"), @"rows": [self audioRows]},
@@ -680,6 +687,15 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
     return cell;
 }
 
+/// Asks the runtime whether each feature's target is still here. Cheap enough to run
+/// on a tap: it looks classes and methods up, and calls none of them.
+- (void)runFeatureAudit {
+    _auditResults = [SCIFeatureAudit run];
+
+    [[[UINotificationFeedbackGenerator alloc] init] notificationOccurred:UINotificationFeedbackTypeSuccess];
+    [self.tableView reloadData];
+}
+
 - (void)runScan {
     _scanResults = [SCIDiagnostics scanForActionRowCandidates];
     _timestampResults = [SCIDiagnostics scanForTimestampLabels];
@@ -697,6 +713,37 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
         }
         return @[@{@"title": _audioProbe, @"detail": @"", @"ok": @YES}];
     }
+}
+
+- (NSArray<NSDictionary *> *)featureAuditRows {
+    if (!_auditResults) {
+        return @[@{@"title": SCILocalized(@"audit_prompt"),
+                   @"detail": SCILocalized(@"audit_hint"),
+                   @"ok": @YES}];
+    }
+
+    NSMutableArray<NSDictionary *> *rows = [NSMutableArray array];
+
+    [rows addObject:@{@"title": SCILocalized(@"audit_result_title"),
+                      @"detail": [SCIFeatureAudit summaryForResults:_auditResults],
+                      @"ok": @YES}];
+
+    // Anything still attached is the uninteresting case, so the ones that are not
+    // come first — those are the features an Instagram update has quietly broken.
+    NSMutableArray<NSDictionary *> *missing = [NSMutableArray array];
+    NSMutableArray<NSDictionary *> *present = [NSMutableArray array];
+
+    for (SCIFeatureAuditResult *result in _auditResults) {
+        NSDictionary *row = @{@"title": result.feature,
+                              @"detail": result.detail ?: @"—",
+                              @"ok": @(result.attached)};
+        [(result.attached ? present : missing) addObject:row];
+    }
+
+    [rows addObjectsFromArray:missing];
+    [rows addObjectsFromArray:present];
+
+    return rows;
 }
 
 - (NSArray<NSDictionary *> *)reelsAutoScrollRows {
