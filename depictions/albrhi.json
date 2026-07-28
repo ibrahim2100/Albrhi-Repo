@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.3.8\n\n- **A proper header at the top of the settings,** and four shortcuts under it:\n  Private, Clean feed, Downloads, No prompts. One tap sets the handful of switches\n  that case is about — and nothing else, so it is never a reset.\n\n## v3.3.7\n\n- **Check every feature at once.** Settings → Diagnostics → the checklist icon.\n  It tells you which features still work on your Instagram version and which an\n  update has broken — instead of you finding out days later.\n- The what's-new page icons match what it says again.\n\n## v3.3.6\n\n- **Reels can scroll themselves.** When a reel ends, the next one comes up. There's a\n  button on the reel screen to turn it on and off.\n- **Choose your app icon** from the ones Instagram keeps for paid subscribers.\n  Under Appearance.\n- **Save a photo with its music** as a short video — pick the length, 5 seconds up\n  to 90. Works on single photos and albums.\n- **Keep messages people unsend** so they stay in the chat. Beta, off by default.\n- **Watch stories invisibly without them repeating.** Your phone remembers what you\n  watched; the author still sees nothing. The eye button marks one as seen and moves\n  on.\n- **Every \"are you sure\" looks better** and finally speaks your language.\n- **Lighter and faster while scrolling.**\n- Fixed a crash when using GIFs.",
+          "markdown": "## v3.3.9\n\n- **The shortcuts now open a page you can edit.** Tapping one shows the handful of\n  settings it covers, each with its own switch — turn them on or off as you like,\n  then apply. Nothing outside that list is touched.\n- The settings header no longer sits under the search bar.\n\n## v3.3.8\n\n- **A proper header at the top of the settings,** and four shortcuts under it:\n  Private, Clean feed, Downloads, No prompts. One tap sets the handful of switches\n  that case is about — and nothing else, so it is never a reset.\n\n## v3.3.7\n\n- **Check every feature at once.** Settings → Diagnostics → the checklist icon.\n  It tells you which features still work on your Instagram version and which an\n  update has broken — instead of you finding out days later.\n- The what's-new page icons match what it says again.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.3.8"
+          "text": "3.3.9"
         },
         {
           "class": "DepictionTableTextView",
