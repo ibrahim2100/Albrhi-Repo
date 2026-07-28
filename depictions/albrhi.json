@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.3.0\n\n- **Hiding story views works again.** It was attached to an object that turns out to\n  have no way of sending anything, so the receipt always went out by another route.\n  It now empties the report itself, at a point both Instagram versions share.\n- **Keep unsent messages (beta) actually keeps them.** It was clearing a field by a\n  name that does not exist on the object, and the error was being swallowed, so the\n  feature had never once run.\n\n## v3.2.9.6\n\n- **Auto-scroll waits for the reel to finish.** It was moving on a percentage of\n  the way through, which on a long reel meant cutting it off a second or two early.\n  It now goes by the time actually left, so it moves when the reel ends — whatever\n  its length.\n\n## v3.2.9.5\n\n- **Auto-scroll on the newer Instagram.** It works on the older one; the newer one\n  reports playback from a different object and ignores the scroll request, so there\n  it now also listens to that object and, if the feed has not moved shortly after\n  asking, pages it directly. The older build is untouched — none of this runs there.\n- Diagnostics now names which object reported playback progress.",
+          "markdown": "## v3.3.1\n\n- **Keep unsent messages (beta) now works on both Instagram versions.** It had been\n  attached to the path your *own* unsends take on the way out, which is the wrong\n  side entirely — someone else's unsend arrives by another route. It now meets it\n  where it lands, and only touches removals, so read state and edits are unaffected.\n  Your own unsends still go through normally.\n\n## v3.3.0\n\n- **Hiding story views works again.** It was attached to an object that turns out to\n  have no way of sending anything, so the receipt always went out by another route.\n  It now empties the report itself, at a point both Instagram versions share.\n- **Keep unsent messages (beta) actually keeps them.** It was clearing a field by a\n  name that does not exist on the object, and the error was being swallowed, so the\n  feature had never once run.\n\n## v3.2.9.6\n\n- **Auto-scroll waits for the reel to finish.** It was moving on a percentage of\n  the way through, which on a long reel meant cutting it off a second or two early.\n  It now goes by the time actually left, so it moves when the reel ends — whatever\n  its length.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.3.0"
+          "text": "3.3.1"
         },
         {
           "class": "DepictionTableTextView",
