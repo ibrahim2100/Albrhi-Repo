@@ -14,7 +14,7 @@
 + (void)load {
     [SCISettingsRegistry registerFeaturePageWithTitle:^NSString *{ return SCILocalized(@"page_privacy"); }
                                                  icon:@"hand.raised.fill"
-                                                order:45
+                                                order:30
                                              sections:^NSArray *{
         return @[
             @{

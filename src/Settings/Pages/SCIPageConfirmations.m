@@ -9,7 +9,7 @@
 + (void)load {
     [SCISettingsRegistry registerFeaturePageWithTitle:^NSString *{ return SCILocalized(@"page_confirmations"); }
                                                  icon:@"checkmark"
-                                                order:70
+                                                order:90
                                              sections:^NSArray *{
         return @[
             @{

@@ -3,6 +3,14 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.4.0
+
+- **The shortcuts show how things actually stand.** Each switch opens at what it is
+  really set to, so you can turn things on *and* off from there, any time — not just
+  switch them on once. There's a "turn all on" if you just want the lot.
+- **The settings are in a more useful order:** downloads and privacy near the top,
+  looks and behaviour further down.
+
 ## v3.3.9
 
 - **The shortcuts now open a page you can edit.** Tapping one shows the handful of

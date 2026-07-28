@@ -9,7 +9,7 @@
 + (void)load {
     [SCISettingsRegistry registerFeaturePageWithTitle:^NSString *{ return SCILocalized(@"page_stories_messages"); }
                                                  icon:@"rectangle.portrait.on.rectangle.portrait.angled"
-                                                order:50
+                                                order:60
                                              sections:^NSArray *{
         // Seen receipts, typing, screenshots and searches now live on the Privacy page.
         return @[

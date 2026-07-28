@@ -9,7 +9,7 @@
 + (void)load {
     [SCISettingsRegistry registerFeaturePageWithTitle:^NSString *{ return SCILocalized(@"page_navigation"); }
                                                  icon:@"hand.draw.fill"
-                                                order:60
+                                                order:80
                                              sections:^NSArray *{
         return @[
             @{

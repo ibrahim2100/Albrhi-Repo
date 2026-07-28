@@ -10,7 +10,7 @@
 + (void)load {
     [SCISettingsRegistry registerFeaturePageWithTitle:^NSString *{ return SCILocalized(@"section_downloads"); }
                                                  icon:@"arrow.down.circle.fill"
-                                                order:40
+                                                order:20
                                              sections:^NSArray *{
         return @[
             @{

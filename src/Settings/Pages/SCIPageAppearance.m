@@ -84,7 +84,7 @@
 + (void)load {
     [SCISettingsRegistry registerFeaturePageWithTitle:^NSString *{ return SCILocalized(@"page_appearance"); }
                                                  icon:@"paintbrush"
-                                                order:25
+                                                order:70
                                              sections:^NSArray *{
         return @[
             @{

@@ -9,7 +9,7 @@
 + (void)load {
     [SCISettingsRegistry registerFeaturePageWithTitle:^NSString *{ return SCILocalized(@"page_reels"); }
                                                  icon:@"film.stack"
-                                                order:30
+                                                order:50
                                              sections:^NSArray *{
         return @[
             @{

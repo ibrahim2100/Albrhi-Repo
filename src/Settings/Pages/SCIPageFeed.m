@@ -9,7 +9,7 @@
 + (void)load {
     [SCISettingsRegistry registerFeaturePageWithTitle:^NSString *{ return SCILocalized(@"page_feed"); }
                                                  icon:@"rectangle.stack"
-                                                order:20
+                                                order:40
                                              sections:^NSArray *{
         return @[
             @{

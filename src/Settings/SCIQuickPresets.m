@@ -30,6 +30,8 @@
 @property (nonatomic, copy) NSString *presetTitle;
 @property (nonatomic, copy) NSString *symbolName;
 @property (nonatomic, strong) NSArray<SCIPresetItem *> *items;
+@property (nonatomic, assign) BOOL allState;   ///< what "set them all" means here
+@property (nonatomic, strong) NSArray<UISwitch *> *toggles;
 @property (nonatomic, strong) UIView *card;
 @end
 
@@ -105,15 +107,26 @@
     rows.axis = UILayoutConstraintAxisVertical;
     rows.spacing = 2;
 
+    NSMutableArray<UISwitch *> *collected = [NSMutableArray array];
     for (NSUInteger i = 0; i < self.items.count; i++) {
-        [rows addArrangedSubview:[self rowForItem:self.items[i] index:i]];
+        [rows addArrangedSubview:[self rowForItem:self.items[i] index:i collecting:collected]];
     }
+    self.toggles = collected;
 
     UIScrollView *scroller = [[UIScrollView alloc] init];
     scroller.translatesAutoresizingMaskIntoConstraints = NO;
     scroller.showsVerticalScrollIndicator = YES;
     [scroller addSubview:rows];
     [self.card addSubview:scroller];
+
+    UIButton *setAll = [UIButton buttonWithType:UIButtonTypeSystem];
+    setAll.translatesAutoresizingMaskIntoConstraints = NO;
+    [setAll setTitle:SCILocalized(self.allState ? @"preset_all_on" : @"preset_all_off")
+            forState:UIControlStateNormal];
+    [setAll setTitleColor:accent forState:UIControlStateNormal];
+    setAll.titleLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightSemibold];
+    [setAll addTarget:self action:@selector(setAllTapped) forControlEvents:UIControlEventTouchUpInside];
+    [self.card addSubview:setAll];
 
     UIButton *apply = [self buttonWithTitle:SCILocalized(@"preset_apply")
                                  background:accent
@@ -168,7 +181,10 @@
         [subtitle.leadingAnchor constraintEqualToAnchor:title.leadingAnchor],
         [subtitle.trailingAnchor constraintEqualToAnchor:title.trailingAnchor],
 
-        [scroller.topAnchor constraintEqualToAnchor:subtitle.bottomAnchor constant:14],
+        [setAll.topAnchor constraintEqualToAnchor:subtitle.bottomAnchor constant:6],
+        [setAll.centerXAnchor constraintEqualToAnchor:self.card.centerXAnchor],
+
+        [scroller.topAnchor constraintEqualToAnchor:setAll.bottomAnchor constant:8],
         [scroller.leadingAnchor constraintEqualToAnchor:self.card.leadingAnchor constant:14],
         [scroller.trailingAnchor constraintEqualToAnchor:self.card.trailingAnchor constant:-14],
         listHeight,
@@ -187,7 +203,7 @@
     ]];
 }
 
-- (UIView *)rowForItem:(SCIPresetItem *)item index:(NSUInteger)index {
+- (UIView *)rowForItem:(SCIPresetItem *)item index:(NSUInteger)index collecting:(NSMutableArray<UISwitch *> *)collected {
     UIView *row = [[UIView alloc] init];
     row.translatesAutoresizingMaskIntoConstraints = NO;
 
@@ -205,6 +221,7 @@
     toggle.tag = (NSInteger)index;
     [toggle addTarget:self action:@selector(toggleChanged:) forControlEvents:UIControlEventValueChanged];
     [row addSubview:toggle];
+    [collected addObject:toggle];
 
     [NSLayoutConstraint activateConstraints:@[
         [row.heightAnchor constraintEqualToConstant:46],
@@ -232,6 +249,18 @@
     [button setTitleColor:textColor forState:UIControlStateNormal];
     [button addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
     return button;
+}
+
+/// Flips every switch to what this shortcut is for — on for most, off for the one
+/// about silencing prompts. The one-tap behaviour the first version had, kept as a
+/// choice rather than as the only outcome.
+- (void)setAllTapped {
+    for (NSUInteger i = 0; i < self.items.count && i < self.toggles.count; i++) {
+        self.items[i].wanted = self.allState;
+        [self.toggles[i] setOn:self.allState animated:YES];
+    }
+
+    [[[UISelectionFeedbackGenerator alloc] init] selectionChanged];
 }
 
 - (void)toggleChanged:(UISwitch *)sender {
@@ -349,8 +378,8 @@
     ];
 }
 
-/// Everything in a shortcut is proposed on, except "No prompts", which is entirely
-/// about turning things off.
+/// What "turn the whole shortcut on" means for it. Everything is switched on, except
+/// "No prompts", which is entirely about switching things off.
 + (BOOL)proposedStateForPreset:(NSString *)preset {
     return ![preset isEqualToString:@"quiet"];
 }
@@ -425,23 +454,24 @@
     NSString *preset = sender.accessibilityIdentifier;
     if (!preset.length) return;
 
-    BOOL proposed = [self proposedStateForPreset:preset];
-
     NSMutableArray<SCIPresetItem *> *items = [NSMutableArray array];
     for (NSArray<NSString *> *entry in [self entriesForPreset:preset]) {
         SCIPresetItem *item = [[SCIPresetItem alloc] init];
         item.defaultsKey = entry[0];
         item.title = SCILocalized(entry[1]);
 
-        // Anything already set the way the shortcut wants stays that way; the rest
-        // starts at what the shortcut proposes, so the sheet opens showing the
-        // result rather than the current state.
-        item.wanted = proposed;
+        // Each switch opens at what it is actually set to right now. The first
+        // version opened them all at what the shortcut proposed, which made the
+        // sheet a one-way door: it always looked the same however things stood, and
+        // reopening it never showed what had been applied. Reading the real value
+        // makes it a page you can come back to and change either way.
+        item.wanted = [SCIUtils getBoolPref:item.defaultsKey];
         [items addObject:item];
     }
 
     SCIPresetSheetController *sheet = [[SCIPresetSheetController alloc] init];
     sheet.presetTitle = [sender titleForState:UIControlStateNormal] ?: @"";
+    sheet.allState = [self proposedStateForPreset:preset];
     sheet.symbolName = [self symbolForPreset:preset];
     sheet.items = items;
     sheet.modalPresentationStyle = UIModalPresentationOverFullScreen;
