@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.2.9.6\n\n- **Auto-scroll waits for the reel to finish.** It was moving on a percentage of\n  the way through, which on a long reel meant cutting it off a second or two early.\n  It now goes by the time actually left, so it moves when the reel ends — whatever\n  its length.\n\n## v3.2.9.5\n\n- **Auto-scroll on the newer Instagram.** It works on the older one; the newer one\n  reports playback from a different object and ignores the scroll request, so there\n  it now also listens to that object and, if the feed has not moved shortly after\n  asking, pages it directly. The older build is untouched — none of this runs there.\n- Diagnostics now names which object reported playback progress.\n\n## v3.2.9.4\n\n- **Auto-scroll now moves the feed directly** instead of asking Instagram's own\n  auto-advance, which is gated behind the same rollout this feature exists to work\n  around. Scrolling to the next reel is not gated.\n- **Diagnostics reports what auto-scroll is doing** — gates forced, playback\n  progress seen, advance attempts — so a build where it still does not work can say\n  which link is broken instead of being guessed at.",
+          "markdown": "## v3.3.0\n\n- **Hiding story views works again.** It was attached to an object that turns out to\n  have no way of sending anything, so the receipt always went out by another route.\n  It now empties the report itself, at a point both Instagram versions share.\n- **Keep unsent messages (beta) actually keeps them.** It was clearing a field by a\n  name that does not exist on the object, and the error was being swallowed, so the\n  feature had never once run.\n\n## v3.2.9.6\n\n- **Auto-scroll waits for the reel to finish.** It was moving on a percentage of\n  the way through, which on a long reel meant cutting it off a second or two early.\n  It now goes by the time actually left, so it moves when the reel ends — whatever\n  its length.\n\n## v3.2.9.5\n\n- **Auto-scroll on the newer Instagram.** It works on the older one; the newer one\n  reports playback from a different object and ignores the scroll request, so there\n  it now also listens to that object and, if the feed has not moved shortly after\n  asking, pages it directly. The older build is untouched — none of this runs there.\n- Diagnostics now names which object reported playback progress.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.2.9.6"
+          "text": "3.3.0"
         },
         {
           "class": "DepictionTableTextView",
