@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.4.1\n\n- **Confirmations appear straight away again.** Asking twice in a row could leave the\n  second one waiting, and what you confirmed only started once the card had finished\n  animating away. Both are fixed, and the card arrives quicker.\n- The reels refresh confirmation is finally in your language.\n\n## v3.4.0\n\n- **The shortcuts show how things actually stand.** Each switch opens at what it is\n  really set to, so you can turn things on *and* off from there, any time — not just\n  switch them on once. There's a \"turn all on\" if you just want the lot.\n- **The settings are in a more useful order:** downloads and privacy near the top,\n  looks and behaviour further down.\n\n## v3.3.9\n\n- **The shortcuts now open a page you can edit.** Tapping one shows the handful of\n  settings it covers, each with its own switch — turn them on or off as you like,\n  then apply. Nothing outside that list is touched.\n- The settings header no longer sits under the search bar.",
+          "markdown": "## v3.4.2\n\n- Diagnostics now reports how many video qualities a post really offers, and how many\n  of them iPhone can actually save. Groundwork for bringing back the quality picker.\n\n## v3.4.1\n\n- **Confirmations appear straight away again.** Asking twice in a row could leave the\n  second one waiting, and what you confirmed only started once the card had finished\n  animating away. Both are fixed, and the card arrives quicker.\n- The reels refresh confirmation is finally in your language.\n\n## v3.4.0\n\n- **The shortcuts show how things actually stand.** Each switch opens at what it is\n  really set to, so you can turn things on *and* off from there, any time — not just\n  switch them on once. There's a \"turn all on\" if you just want the lot.\n- **The settings are in a more useful order:** downloads and privacy near the top,\n  looks and behaviour further down.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.4.1"
+          "text": "3.4.2"
         },
         {
           "class": "DepictionTableTextView",
