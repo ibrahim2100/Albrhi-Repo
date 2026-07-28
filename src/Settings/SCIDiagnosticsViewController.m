@@ -30,6 +30,7 @@ static NSInteger _reelsGatesForced = -1;
 static NSInteger _reelsProgressCalls = 0;
 static double _reelsProgressMax = 0;
 static double _reelsProgressTotal = 0;
+static NSString *_reelsProgressClass = nil;
 static NSInteger _reelsAdvances = 0;
 static NSString *_reelsAdvanceSelector = nil;
 static BOOL _reelsFoundController = NO;
@@ -151,11 +152,12 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
     _reelsGatesForced = count;
 }
 
-+ (void)recordReelsProgress:(double)progress total:(double)total {
++ (void)recordReelsProgress:(double)progress total:(double)total from:(NSString *)className {
     @synchronized (self) {
         _reelsProgressCalls++;
         if (progress > _reelsProgressMax) _reelsProgressMax = progress;
         _reelsProgressTotal = total;
+        if (className.length) _reelsProgressClass = className;
     }
 }
 
@@ -680,8 +682,9 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
         // that never approaches the end means the trigger threshold can never be met.
         [rows addObject:@{@"title": SCILocalized(@"diag_reels_progress"),
                           @"detail": _reelsProgressCalls == 0 ? @"0"
-                                     : [NSString stringWithFormat:@"%ld · max %.3f · total %.1fs",
-                                        (long)_reelsProgressCalls, _reelsProgressMax, _reelsProgressTotal],
+                                     : [NSString stringWithFormat:@"%ld · max %.3f · %.1fs · %@",
+                                        (long)_reelsProgressCalls, _reelsProgressMax, _reelsProgressTotal,
+                                        _reelsProgressClass ?: @"—"],
                           @"ok": @(_reelsProgressCalls > 0)}];
 
         [rows addObject:@{@"title": SCILocalized(@"diag_reels_advance"),

@@ -197,6 +197,19 @@ static void SCIStyleAutoScrollButton(UIButton *button) {
 // feed controller is told to advance, once per play — Instagram's own advance, so the
 // transition is the native one.
 
+// Which build this is, decided by a method only the older one has. The older build
+// is the one this feature is confirmed working on, so everything added for the newer
+// one is kept behind this test and cannot change what already works.
+static BOOL SCIIsLegacyBuild(void) {
+    static BOOL legacy = NO;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        Class feed = objc_getClass("IGSundialFeedViewController");
+        legacy = feed && class_getInstanceMethod(feed, @selector(advanceToNextReelForAutoScroll)) != NULL;
+    });
+    return legacy;
+}
+
 // The feed controller this cell belongs to, found up the responder chain.
 static UIViewController *SCIFeedControllerForView(UIView *view) {
     Class feed = objc_getClass("IGSundialFeedViewController");
@@ -207,23 +220,32 @@ static UIViewController *SCIFeedControllerForView(UIView *view) {
     return nil;
 }
 
-// One "already advanced this play" flag per cell, cleared when the reel loops back to
-// the start, so each play triggers exactly one advance.
+// The scrolling view the reels are paged in, for the fallback below.
+static UIScrollView *SCIEnclosingScrollView(UIView *view) {
+    UIView *parent = view.superview;
+    while (parent) {
+        if ([parent isKindOfClass:[UIScrollView class]]) return (UIScrollView *)parent;
+        parent = parent.superview;
+    }
+    return nil;
+}
+
+// One "already advanced this play" flag per reporter, cleared when the reel loops
+// back to the start, so each play triggers exactly one advance.
 static const void *SCIReelAdvancedKey = &SCIReelAdvancedKey;
 
-%hook IGSundialViewerVideoCell
+// A second guard across reporters. On the newer build two objects report progress
+// for the same reel, and without this each would advance — one skipped reel per
+// tick. Not needed on the older build, where only the cell reports, so its timing
+// is unaffected either way.
+static NSTimeInterval sLastAdvance = 0;
 
-- (void)updateProgressIndicatorWithProgress:(double)progress
-                          remainingDuration:(double)remaining
-                            elapsedDuration:(double)elapsed
-                              totalDuration:(double)total {
-    %orig;
-
+static void SCIReelProgressTick(UIView *reporter, double progress, double total) {
     if (!SCIWantsAutoScroll()) return;
 
     // Recorded before any threshold, so Diagnostics can say whether this fires at
     // all and how far progress actually gets — the two things guesswork got wrong.
-    [SCIDiagnostics recordReelsProgress:progress total:total];
+    [SCIDiagnostics recordReelsProgress:progress total:total from:NSStringFromClass([reporter class])];
 
     // Progress is reported 0–1 on the builds measured, but a build reporting 0–100
     // would otherwise trip the end test on the first update and skip instantly.
@@ -231,18 +253,22 @@ static const void *SCIReelAdvancedKey = &SCIReelAdvancedKey;
 
     // Back at the start of a loop: arm for the next end.
     if (fraction < 0.5) {
-        objc_setAssociatedObject(self, SCIReelAdvancedKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(reporter, SCIReelAdvancedKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         return;
     }
 
     // A real, played-through clip near its end, and not already handled this loop.
     // The total guards against zero-length or still-loading items firing instantly.
     if (fraction < 0.97 || total < 0.3) return;
-    if (objc_getAssociatedObject(self, SCIReelAdvancedKey)) return;
+    if (objc_getAssociatedObject(reporter, SCIReelAdvancedKey)) return;
 
-    objc_setAssociatedObject(self, SCIReelAdvancedKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(reporter, SCIReelAdvancedKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
-    UIViewController *feed = SCIFeedControllerForView(self);
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    if (now - sLastAdvance < 0.8) return;
+    sLastAdvance = now;
+
+    UIViewController *feed = SCIFeedControllerForView(reporter);
 
     // -scrollToNextItemAnimated: is the plain scroll both builds have, and is what
     // Instagram's own interaction coordinator calls to move on. The auto-scroll
@@ -257,17 +283,102 @@ static const void *SCIReelAdvancedKey = &SCIReelAdvancedKey;
     }
 
     [SCIDiagnostics recordReelsAdvance:used foundController:(feed != nil)];
-    if (!feed || !used) return;
+
+    UIScrollView *pager = SCIEnclosingScrollView(reporter);
 
     dispatch_async(dispatch_get_main_queue(), ^{
         if (!SCIWantsAutoScroll()) return;
 
-        if ([used isEqualToString:@"scrollToNextItemAnimated:"]) {
+        CGPoint before = pager ? pager.contentOffset : CGPointZero;
+
+        if (feed && [used isEqualToString:@"scrollToNextItemAnimated:"]) {
             ((void (*)(id, SEL, BOOL))objc_msgSend)(feed, @selector(scrollToNextItemAnimated:), YES);
-        } else {
+        } else if (feed && used) {
             ((void (*)(id, SEL))objc_msgSend)(feed, @selector(advanceToNextReelForAutoScroll));
         }
+
+        // Ask afterwards whether it actually moved, and page the scroll view by hand
+        // if it did not. Only on the newer build: the older one moves, so this never
+        // runs there and cannot disturb it. This is the same "measure the result
+        // rather than assume it" the rest of this file had to learn.
+        if (SCIIsLegacyBuild() || !pager) return;
+
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            if (!SCIWantsAutoScroll()) return;
+            if (fabs(pager.contentOffset.y - before.y) > 1.0) return;   // it moved
+
+            CGFloat page = pager.bounds.size.height;
+            CGFloat limit = pager.contentSize.height - page;
+            if (page < 1.0 || before.y + page > limit + 1.0) return;
+
+            [SCIDiagnostics recordReelsAdvance:@"manual page scroll" foundController:(feed != nil)];
+            [pager setContentOffset:CGPointMake(before.x, before.y + page) animated:YES];
+        });
     });
 }
 
+%hook IGSundialViewerVideoCell
+
+- (void)updateProgressIndicatorWithProgress:(double)progress
+                          remainingDuration:(double)remaining
+                            elapsedDuration:(double)elapsed
+                              totalDuration:(double)total {
+    %orig;
+
+    SCIReelProgressTick((UIView *)self, progress, total);
+}
+
 %end
+
+// MARK: - The newer build's second reporter
+
+// On the newer build the video cell alone did not carry this, so the Swift controls
+// overlay — which reports the same progress and exists on both — is hooked as well.
+// Installed only there: on the older build the cell is proven and adding a second
+// reporter could only change timing that already works.
+typedef void (*SCIProgressIMP)(id, SEL, double, double, double, double);
+
+// One original per class. Each of these carries its own implementation of the
+// method, so a single shared slot would run another class's body on this instance
+// for whichever was hooked second.
+#define SCI_MAX_PROGRESS_HOOKS 4
+static struct { Class cls; SCIProgressIMP original; } sProgressHooks[SCI_MAX_PROGRESS_HOOKS];
+static size_t sProgressHookCount = 0;
+
+static void sci_overlayProgress(id self, SEL _cmd, double progress, double remaining,
+                                double elapsed, double total) {
+    for (size_t i = 0; i < sProgressHookCount; i++) {
+        if ([self isKindOfClass:sProgressHooks[i].cls] && sProgressHooks[i].original) {
+            sProgressHooks[i].original(self, _cmd, progress, remaining, elapsed, total);
+            break;
+        }
+    }
+
+    if ([self isKindOfClass:[UIView class]]) {
+        SCIReelProgressTick((UIView *)self, progress, total);
+    }
+}
+
+%ctor {
+    @autoreleasepool {
+        if (SCIIsLegacyBuild()) return;
+
+        SEL progress = NSSelectorFromString(@"updateProgressIndicatorWithProgress:remainingDuration:elapsedDuration:totalDuration:");
+
+        for (NSString *name in @[@"_TtC30IGSundialViewerControlsOverlay34IGSundialViewerControlsOverlayView",
+                                 @"IGSundialViewerCarouselCell"]) {
+            if (sProgressHookCount >= SCI_MAX_PROGRESS_HOOKS) break;
+
+            Class cls = objc_getClass(name.UTF8String);
+            if (!cls || !class_getInstanceMethod(cls, progress)) continue;
+
+            IMP previous = NULL;
+            MSHookMessageEx(cls, progress, (IMP)sci_overlayProgress, &previous);
+            if (!previous) continue;
+
+            sProgressHooks[sProgressHookCount].cls = cls;
+            sProgressHooks[sProgressHookCount].original = (SCIProgressIMP)previous;
+            sProgressHookCount++;
+        }
+    }
+}

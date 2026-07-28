@@ -113,7 +113,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// Every playback-progress update seen on a reel cell, with the highest progress
 /// reached. Whether this fires at all decides where the auto-scroll trigger has to
 /// live — a count of zero means the progress indicator is not the signal to use.
-+ (void)recordReelsProgress:(double)progress total:(double)total;
++ (void)recordReelsProgress:(double)progress total:(double)total from:(nullable NSString *)className;
 
 /// One attempt to move to the next reel: which selector was used and whether the
 /// feed controller was found at all.

@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v3.2.9.5
+
+- **Auto-scroll on the newer Instagram.** It works on the older one; the newer one
+  reports playback from a different object and ignores the scroll request, so there
+  it now also listens to that object and, if the feed has not moved shortly after
+  asking, pages it directly. The older build is untouched — none of this runs there.
+- Diagnostics now names which object reported playback progress.
+
 ## v3.2.9.4
 
 - **Auto-scroll now moves the feed directly** instead of asking Instagram's own
