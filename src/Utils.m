@@ -1,4 +1,5 @@
 #import "Utils.h"
+#import <os/lock.h>
 #import "UI/SCIConfirmSheet.h"
 #import <objc/runtime.h>
 
@@ -20,10 +21,47 @@
 
 @implementation SCIUtils
 
-+ (BOOL)getBoolPref:(NSString *)key {
-    if (![key length] || [[NSUserDefaults standardUserDefaults] objectForKey:key] == nil) return false;
+///
+/// Switches are read constantly — several of these hooks run inside -layoutSubviews,
+/// so a scrolling feed asks the same handful of questions tens of times a second, and
+/// each answer used to cost two trips into NSUserDefaults. The answers are kept here
+/// instead and thrown away whenever anything writes to defaults, so a setting still
+/// takes effect the moment it is changed.
+///
+/// os_unfair_lock rather than @synchronized: this sits on the drawing path, and the
+/// lock is held only long enough to read or write one dictionary entry.
+static NSMutableDictionary<NSString *, NSNumber *> *sBoolPrefCache = nil;
+static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
 
-    return [[NSUserDefaults standardUserDefaults] boolForKey:key];
++ (void)load {
+    [[NSNotificationCenter defaultCenter] addObserverForName:NSUserDefaultsDidChangeNotification
+                                                      object:nil
+                                                       queue:nil
+                                                  usingBlock:^(__unused NSNotification *note) {
+        os_unfair_lock_lock(&sBoolPrefLock);
+        [sBoolPrefCache removeAllObjects];
+        os_unfair_lock_unlock(&sBoolPrefLock);
+    }];
+}
+
++ (BOOL)getBoolPref:(NSString *)key {
+    if (![key length]) return false;
+
+    os_unfair_lock_lock(&sBoolPrefLock);
+    NSNumber *cached = sBoolPrefCache[key];
+    os_unfair_lock_unlock(&sBoolPrefLock);
+
+    if (cached) return cached.boolValue;
+
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    BOOL value = ([defaults objectForKey:key] != nil) && [defaults boolForKey:key];
+
+    os_unfair_lock_lock(&sBoolPrefLock);
+    if (!sBoolPrefCache) sBoolPrefCache = [NSMutableDictionary dictionary];
+    sBoolPrefCache[key] = @(value);
+    os_unfair_lock_unlock(&sBoolPrefLock);
+
+    return value;
 }
 + (double)getDoublePref:(NSString *)key {
     if (![key length] || [[NSUserDefaults standardUserDefaults] objectForKey:key] == nil) return 0;

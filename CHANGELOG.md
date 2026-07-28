@@ -3,6 +3,15 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.3.6
+
+- **Lighter while you scroll.** Every switch Albrhi checks was being read from disk,
+  twice, each time it was asked — and some of those questions get asked on every
+  frame of a scrolling feed. They are answered from memory now, and forgotten the
+  moment a setting changes, so nothing is stale.
+- **The what's-new page is current again.** It had still been describing the 3.2
+  release.
+
 ## v3.3.5
 
 - **Changing the app icon works.** The icon list was being thrown away before it
