@@ -106,6 +106,19 @@ NS_ASSUME_NONNULL_BEGIN
                        audioURL:(nullable NSString *)url
                    messageClass:(nullable NSString *)className;
 
+/// How many reels auto-scroll gates were found and forced. Zero means this build
+/// names them differently.
++ (void)recordReelsGatesForced:(NSInteger)count;
+
+/// Every playback-progress update seen on a reel cell, with the highest progress
+/// reached. Whether this fires at all decides where the auto-scroll trigger has to
+/// live — a count of zero means the progress indicator is not the signal to use.
++ (void)recordReelsProgress:(double)progress total:(double)total;
+
+/// One attempt to move to the next reel: which selector was used and whether the
+/// feed controller was found at all.
++ (void)recordReelsAdvance:(nullable NSString *)selector foundController:(BOOL)found;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v3.2.9.4
+
+- **Auto-scroll now moves the feed directly** instead of asking Instagram's own
+  auto-advance, which is gated behind the same rollout this feature exists to work
+  around. Scrolling to the next reel is not gated.
+- **Diagnostics reports what auto-scroll is doing** — gates forced, playback
+  progress seen, advance attempts — so a build where it still does not work can say
+  which link is broken instead of being guessed at.
+
 ## v3.2.9.3
 
 - **Auto-scroll now advances from the reel's progress bar.** The countdown it was

@@ -23,6 +23,16 @@ static NSMutableArray<NSString *> *_transcodeStages = nil;
 static NSMutableDictionary<NSString *, NSNumber *> *_dateFormatterCounts = nil;
 static NSMutableArray<NSString *> *_dateFormatterSamples = nil;
 static NSInteger _dateHooksInstalled = -1;
+
+// Reels auto-scroll. The point of these is to say which link in the chain breaks:
+// gates not found, progress never reported, or the advance running with no effect.
+static NSInteger _reelsGatesForced = -1;
+static NSInteger _reelsProgressCalls = 0;
+static double _reelsProgressMax = 0;
+static double _reelsProgressTotal = 0;
+static NSInteger _reelsAdvances = 0;
+static NSString *_reelsAdvanceSelector = nil;
+static BOOL _reelsFoundController = NO;
 static NSString *_audioProbe = nil;
 static NSInteger _dateRewrites = 0;
 static NSInteger _dateRewritesExact = 0;
@@ -135,6 +145,26 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
 
 + (void)recordDateHooksInstalled:(NSInteger)count {
     _dateHooksInstalled = count;
+}
+
++ (void)recordReelsGatesForced:(NSInteger)count {
+    _reelsGatesForced = count;
+}
+
++ (void)recordReelsProgress:(double)progress total:(double)total {
+    @synchronized (self) {
+        _reelsProgressCalls++;
+        if (progress > _reelsProgressMax) _reelsProgressMax = progress;
+        _reelsProgressTotal = total;
+    }
+}
+
++ (void)recordReelsAdvance:(NSString *)selector foundController:(BOOL)found {
+    @synchronized (self) {
+        _reelsAdvances++;
+        _reelsAdvanceSelector = selector ?: @"(none)";
+        _reelsFoundController = found;
+    }
 }
 
 + (void)recordDateRewrite:(NSString *)original exact:(BOOL)exact {
@@ -449,6 +479,7 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
         @{@"header": SCILocalized(@"diag_section_dash"), @"rows": [self dashRows]},
         @{@"header": SCILocalized(@"diag_section_transcode"), @"rows": [self transcodeRows]},
         @{@"header": SCILocalized(@"diag_section_scan"), @"rows": [self scanRows]},
+        @{@"header": SCILocalized(@"diag_section_reels"), @"rows": [self reelsAutoScrollRows]},
         @{@"header": SCILocalized(@"diag_section_daterewrite"), @"rows": [self dateRewriteRows]},
         @{@"header": SCILocalized(@"diag_section_audio"), @"rows": [self audioRows]},
         @{@"header": SCILocalized(@"diag_section_dateformat"), @"rows": [self dateFormatterRows]},
@@ -633,6 +664,34 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
                        @"ok": @NO}];
         }
         return @[@{@"title": _audioProbe, @"detail": @"", @"ok": @YES}];
+    }
+}
+
+- (NSArray<NSDictionary *> *)reelsAutoScrollRows {
+    @synchronized ([SCIDiagnostics class]) {
+        NSMutableArray<NSDictionary *> *rows = [NSMutableArray array];
+
+        [rows addObject:@{@"title": SCILocalized(@"diag_reels_gates"),
+                          @"detail": _reelsGatesForced < 0 ? @"—"
+                                     : [NSString stringWithFormat:@"%ld", (long)_reelsGatesForced],
+                          @"ok": @(_reelsGatesForced > 0)}];
+
+        // Whether the progress indicator reports at all, and how far it gets. A max
+        // that never approaches the end means the trigger threshold can never be met.
+        [rows addObject:@{@"title": SCILocalized(@"diag_reels_progress"),
+                          @"detail": _reelsProgressCalls == 0 ? @"0"
+                                     : [NSString stringWithFormat:@"%ld · max %.3f · total %.1fs",
+                                        (long)_reelsProgressCalls, _reelsProgressMax, _reelsProgressTotal],
+                          @"ok": @(_reelsProgressCalls > 0)}];
+
+        [rows addObject:@{@"title": SCILocalized(@"diag_reels_advance"),
+                          @"detail": _reelsAdvances == 0 ? @"0"
+                                     : [NSString stringWithFormat:@"%ld · %@ · vc %@",
+                                        (long)_reelsAdvances, _reelsAdvanceSelector ?: @"—",
+                                        _reelsFoundController ? @"yes" : @"no"],
+                          @"ok": @(_reelsAdvances > 0 && _reelsFoundController)}];
+
+        return rows;
     }
 }
 

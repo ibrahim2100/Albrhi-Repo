@@ -5,6 +5,7 @@
 #import "../../Utils.h"
 #import "../../SCILog.h"
 #import "../../Localization/SCILocalize.h"
+#import "../../Settings/SCIDiagnosticsViewController.h"
 
 ///
 /// Auto-advance to the next reel — across Instagram versions.
@@ -110,6 +111,7 @@ static BOOL sci_shouldAutoScrollToObject(id self, SEL _cmd, id object, NSUIntege
                             (IMP *)&orig_shouldAutoScrollToObject);
         }
 
+        [SCIDiagnostics recordReelsGatesForced:(NSInteger)sGateCount];
         SCILogV(@"[Albrhi] reels auto-scroll gates forced: %zu", sGateCount);
     }
 }
@@ -219,31 +221,51 @@ static const void *SCIReelAdvancedKey = &SCIReelAdvancedKey;
 
     if (!SCIWantsAutoScroll()) return;
 
+    // Recorded before any threshold, so Diagnostics can say whether this fires at
+    // all and how far progress actually gets — the two things guesswork got wrong.
+    [SCIDiagnostics recordReelsProgress:progress total:total];
+
+    // Progress is reported 0–1 on the builds measured, but a build reporting 0–100
+    // would otherwise trip the end test on the first update and skip instantly.
+    double fraction = progress > 1.5 ? progress / 100.0 : progress;
+
     // Back at the start of a loop: arm for the next end.
-    if (progress < 0.5) {
+    if (fraction < 0.5) {
         objc_setAssociatedObject(self, SCIReelAdvancedKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         return;
     }
 
     // A real, played-through clip near its end, and not already handled this loop.
     // The total guards against zero-length or still-loading items firing instantly.
-    if (progress < 0.985 || total < 0.3) return;
+    if (fraction < 0.97 || total < 0.3) return;
     if (objc_getAssociatedObject(self, SCIReelAdvancedKey)) return;
 
     objc_setAssociatedObject(self, SCIReelAdvancedKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
     UIViewController *feed = SCIFeedControllerForView(self);
-    if (!feed) return;
+
+    // -scrollToNextItemAnimated: is the plain scroll both builds have, and is what
+    // Instagram's own interaction coordinator calls to move on. The auto-scroll
+    // advance was tried first and did nothing on the older build, which suggests it
+    // is gated behind the same rollout this feature exists to bypass; a direct
+    // scroll is not.
+    NSString *used = nil;
+    if ([feed respondsToSelector:@selector(scrollToNextItemAnimated:)]) {
+        used = @"scrollToNextItemAnimated:";
+    } else if ([feed respondsToSelector:@selector(advanceToNextReelForAutoScroll)]) {
+        used = @"advanceToNextReelForAutoScroll";
+    }
+
+    [SCIDiagnostics recordReelsAdvance:used foundController:(feed != nil)];
+    if (!feed || !used) return;
 
     dispatch_async(dispatch_get_main_queue(), ^{
         if (!SCIWantsAutoScroll()) return;
 
-        // The auto-scroll advance where it exists (the older build), else the plain
-        // next-item advance. Both are Instagram's own.
-        if ([feed respondsToSelector:@selector(advanceToNextReelForAutoScroll)]) {
+        if ([used isEqualToString:@"scrollToNextItemAnimated:"]) {
+            ((void (*)(id, SEL, BOOL))objc_msgSend)(feed, @selector(scrollToNextItemAnimated:), YES);
+        } else {
             ((void (*)(id, SEL))objc_msgSend)(feed, @selector(advanceToNextReelForAutoScroll));
-        } else if ([feed respondsToSelector:@selector(advanceToNextItemWithNavigationAction:)]) {
-            ((void (*)(id, SEL, NSInteger))objc_msgSend)(feed, @selector(advanceToNextItemWithNavigationAction:), 0);
         }
     });
 }
