@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v3.3.1
+
+- **Keep unsent messages (beta) now works on both Instagram versions.** It had been
+  attached to the path your *own* unsends take on the way out, which is the wrong
+  side entirely — someone else's unsend arrives by another route. It now meets it
+  where it lands, and only touches removals, so read state and edits are unaffected.
+  Your own unsends still go through normally.
+
 ## v3.3.0
 
 - **Hiding story views works again.** It was attached to an object that turns out to
