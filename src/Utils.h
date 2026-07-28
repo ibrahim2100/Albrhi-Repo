@@ -67,6 +67,12 @@
 + (NSURL *)getVideoUrl:(IGVideo *)video;
 + (NSURL *)getVideoUrlForMedia:(id)media;
 + (NSURL *)getAudioUrlForMedia:(id)mediaLike;
+
+/// Remembers the post a carousel slide belongs to. Music is a property of the post,
+/// not of the individual slide, so a slide asked about its audio on its own has none
+/// and the save-as-video choice never appears on multi-photo posts. Recorded where
+/// the slides are resolved, since that is the one place both are in hand.
++ (void)rememberParentPost:(id)parent forSlide:(id)slide;
 + (NSArray<NSDictionary *> *)availableVideoQualitiesForVideo:(IGVideo *)video;
 
 /// The raw DASH manifest XML for a video, or nil when this build exposes none.

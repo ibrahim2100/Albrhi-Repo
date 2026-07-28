@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v3.3.4
+
+- **Auto-scroll waits for the reel to finish properly.** It moved when the reel was
+  nearly over, which still cut the end off; it now waits for the reel to actually
+  play through.
+- **Saving a photo with its music works on multi-photo posts too.** The music
+  belongs to the post rather than to one picture, so a slide asked on its own had
+  none and the choice never appeared.
+
 ## v3.3.3
 
 - **Saving a photo with its music no longer stalls.** It stopped a few per cent in

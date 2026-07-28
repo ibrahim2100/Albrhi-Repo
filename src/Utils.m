@@ -773,6 +773,23 @@
     return out;
 }
 // Accepts an IGMedia directly, or any object exposing a media/feedItem accessor.
+// The post's audio URL is what gets kept on the slide, rather than the post itself.
+// Holding the post would either retain it — and the post already holds its slides,
+// so that is a cycle — or hold it unsafely and leave a dangling pointer once it goes.
+// A URL is a value: neither problem applies.
+static const void *SCIParentAudioKey = &SCIParentAudioKey;
+
++ (void)rememberParentPost:(id)parent forSlide:(id)slide {
+    if (!parent || !slide || parent == slide) return;
+
+    NSURL *audio = [self getAudioUrlForMedia:parent];
+    if (!audio) return;
+
+    @try {
+        objc_setAssociatedObject(slide, SCIParentAudioKey, audio, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    } @catch (__unused id error) {}
+}
+
 + (NSURL *)getAudioUrlForMedia:(id)mediaLike {
     if (!mediaLike) return nil;
 
@@ -801,7 +818,13 @@
             asset = [media performSelector:@selector(sundialMusicAsset)];
         }
     } @catch (__unused id e) {}
-    if (!asset) return nil;
+
+    // A carousel slide carries no music of its own — the post does. Fall back to
+    // what the post had, noted when the slides were resolved, so multi-photo posts
+    // offer the same choice a single photo does.
+    if (!asset) {
+        return objc_getAssociatedObject(mediaLike, SCIParentAudioKey);
+    }
 
     @try {
         if ([asset respondsToSelector:@selector(audioFileUrl)]) {

@@ -266,9 +266,10 @@ static void SCIReelProgressTick(UIView *reporter, double progress, double remain
     double previous = [objc_getAssociatedObject(reporter, SCIReelLastFractionKey) doubleValue];
     objc_setAssociatedObject(reporter, SCIReelLastFractionKey, @(fraction), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
-    // The reel just looped back to the start, so it played all the way through.
-    // This is the backstop for updates too sparse to land inside the window below —
-    // without it a missed window means watching the whole reel a second time.
+    // The reel has looped back to the start, which is the only proof that it played
+    // the whole way through. This is the trigger: anything based on being *near* the
+    // end moves while the reel is still playing, and a quarter second of a clip cut
+    // off is still a clip cut off — which is exactly what kept being reported.
     BOOL wrapped = (previous > 0.9 && fraction < 0.1);
 
     if (!wrapped) {
@@ -278,9 +279,12 @@ static void SCIReelProgressTick(UIView *reporter, double progress, double remain
             return;
         }
 
-        // Not at the end yet. The total guards against zero-length or still-loading
-        // items reading as finished the moment they appear.
-        if (secondsLeft > 0.25 || total < 0.3) return;
+        // Not looped yet. The tiny remaining-time window below is only a safety net
+        // for a build that stops reporting at the end instead of wrapping; at five
+        // hundredths of a second it cannot cut anything short that a viewer would
+        // notice. The total guards against zero-length or still-loading items
+        // reading as finished the moment they appear.
+        if (secondsLeft > 0.05 || total < 0.3) return;
     }
 
     if (objc_getAssociatedObject(reporter, SCIReelAdvancedKey)) return;

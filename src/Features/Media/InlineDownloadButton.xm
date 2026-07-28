@@ -146,7 +146,14 @@ static NSArray *SCICarouselChildren(id media) {
     for (NSString *key in @[@"carouselMedia", @"items"]) {
         id children = nil;
         @try { children = [media valueForKey:key]; } @catch (__unused id e) {}
-        if ([children isKindOfClass:[NSArray class]] && [(NSArray *)children count] > 1) return children;
+        if ([children isKindOfClass:[NSArray class]] && [(NSArray *)children count] > 1) {
+            // Note which post each slide belongs to while both are in hand. Music
+            // hangs off the post, so without this a slide asked about its audio has
+            // none and the save-as-video choice never appears on a multi-photo post.
+            for (id slide in (NSArray *)children) [SCIUtils rememberParentPost:media forSlide:slide];
+
+            return children;
+        }
     }
     return nil;
 }
