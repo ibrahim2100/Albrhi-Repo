@@ -125,6 +125,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// worth observing rather than assuming.
 + (void)recordUnsendKeptWithReason:(NSInteger)reason messageCount:(NSInteger)count;
 
+/// Which message-removal path Instagram actually used, recorded whether or not
+/// anything was held back. Direct runs on two stacks and which one a chat uses is a
+/// server decision, so a feature that touches removals has to say which path it saw
+/// rather than leave a silent zero meaning either "never fired" or "nothing to do".
++ (void)recordUnsendPath:(NSString *)path detail:(nullable NSString *)detail;
+
 @end
 
 NS_ASSUME_NONNULL_END

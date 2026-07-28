@@ -181,6 +181,14 @@
 // Direct sticker tray picker view
 %hook IGStickerTrayListAdapterDataSource
 - (id)objectsForListAdapter:(id)arg1 {
+    // Hand back Instagram's own list untouched unless there is something to remove.
+    // This rebuilt the array on every call regardless of the setting, so the sticker
+    // tray — GIFs included — was served a different object than Instagram produced
+    // even with the feature off, for no gain.
+    if (![SCIUtils getBoolPref:@"hide_meta_ai"]) {
+        return %orig;
+    }
+
     NSArray *originalObjs = %orig();
     NSMutableArray *filteredObjs = [NSMutableArray arrayWithCapacity:[originalObjs count]];
 

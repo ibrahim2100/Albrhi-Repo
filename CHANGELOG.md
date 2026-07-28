@@ -1,5 +1,15 @@
 # Albrhi Changelog
 
+## v3.3.2
+
+- **Fixed a crash when using GIFs.** The sticker tray was being rebuilt on every
+  call even with nothing to remove; it is now left alone unless it needs changing.
+- **Keep unsent messages (beta) now covers both of Instagram's messaging stacks.**
+  It had only been watching the older one, and which stack a chat uses is decided by
+  Instagram, so on many accounts it never saw the removal at all.
+- Diagnostics now names which removal path Instagram actually used, so a chat where
+  this still does nothing can say why.
+
 ## v3.3.1
 
 - **Keep unsent messages (beta) now works on both Instagram versions.** It had been

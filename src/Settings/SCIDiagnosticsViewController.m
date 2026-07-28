@@ -35,6 +35,7 @@ static NSInteger _reelsAdvances = 0;
 static NSString *_reelsAdvanceSelector = nil;
 static NSInteger _unsendsKept = 0;
 static NSMutableArray<NSString *> *_unsendReasons = nil;
+static NSMutableArray<NSString *> *_unsendPaths = nil;
 static BOOL _reelsFoundController = NO;
 static NSString *_audioProbe = nil;
 static NSInteger _dateRewrites = 0;
@@ -181,6 +182,19 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
                            count < 0 ? @"ivar not found" : [NSString stringWithFormat:@"%ld message(s)", (long)count]];
         if (![_unsendReasons containsObject:entry] && _unsendReasons.count < 6) {
             [_unsendReasons addObject:entry];
+        }
+    }
+}
+
++ (void)recordUnsendPath:(NSString *)path detail:(NSString *)detail {
+    if (!path.length) return;
+
+    @synchronized (self) {
+        if (!_unsendPaths) _unsendPaths = [NSMutableArray array];
+
+        NSString *entry = detail.length ? [NSString stringWithFormat:@"%@ (%@)", path, detail] : path;
+        if (![_unsendPaths containsObject:entry] && _unsendPaths.count < 6) {
+            [_unsendPaths addObject:entry];
         }
     }
 }
@@ -702,6 +716,10 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
                                         (long)_reelsProgressCalls, _reelsProgressMax, _reelsProgressTotal,
                                         _reelsProgressClass ?: @"—"],
                           @"ok": @(_reelsProgressCalls > 0)}];
+
+        [rows addObject:@{@"title": SCILocalized(@"diag_unsend_paths"),
+                          @"detail": _unsendPaths.count ? [_unsendPaths componentsJoinedByString:@", "] : @"—",
+                          @"ok": @(_unsendPaths.count > 0)}];
 
         [rows addObject:@{@"title": SCILocalized(@"diag_unsend_kept"),
                           @"detail": _unsendsKept == 0 ? @"0"
