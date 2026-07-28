@@ -3,6 +3,12 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.3.8
+
+- **A proper header at the top of the settings,** and four shortcuts under it:
+  Private, Clean feed, Downloads, No prompts. One tap sets the handful of switches
+  that case is about — and nothing else, so it is never a reset.
+
 ## v3.3.7
 
 - **Check every feature at once.** Settings → Diagnostics → the checklist icon.

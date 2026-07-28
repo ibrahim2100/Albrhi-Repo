@@ -1,6 +1,7 @@
 #import "SCISettingsViewController.h"
 #import "../SCILog.h"
 #import "../Tweak.h"   // SCIVersionString
+#import "SCIQuickPresets.h"
 
 static char rowStaticRef[] = "row";
 
@@ -110,40 +111,77 @@ static char rowStaticRef[] = "row";
 - (UIView *)brandHeaderView {
     UIColor *accent = [SCIUtils SCIColor_Primary];
 
-    UIView *header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.view.bounds), 92)];
+    CGFloat width = CGRectGetWidth(self.view.bounds);
+    CGFloat cardHeight = 104.0;
+    CGFloat height = cardHeight + [SCIQuickPresets shortcutsHeight];
+
+    UIView *header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, width, height)];
     header.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+
+    // A card rather than loose text: the settings are a list of grey rows, and the
+    // identity was reading as one more of them.
+    UIView *card = [[UIView alloc] init];
+    card.translatesAutoresizingMaskIntoConstraints = NO;
+    card.backgroundColor = [accent colorWithAlphaComponent:0.12];
+    card.layer.cornerRadius = 20.0;
+    card.layer.cornerCurve = kCACornerCurveContinuous;
+    [header addSubview:card];
+
+    UIView *badge = [[UIView alloc] init];
+    badge.translatesAutoresizingMaskIntoConstraints = NO;
+    badge.backgroundColor = accent;
+    badge.layer.cornerRadius = 15.0;
+    badge.layer.cornerCurve = kCACornerCurveContinuous;
+    [card addSubview:badge];
 
     UIImageView *glyph = [[UIImageView alloc] initWithImage:
         [UIImage systemImageNamed:@"sparkles"
-                withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:28.0 weight:UIImageSymbolWeightSemibold]]];
-    glyph.tintColor = accent;
+                withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:20.0 weight:UIImageSymbolWeightBold]]];
+    glyph.translatesAutoresizingMaskIntoConstraints = NO;
+    glyph.tintColor = [UIColor whiteColor];
     glyph.contentMode = UIViewContentModeScaleAspectFit;
+    [badge addSubview:glyph];
 
     UILabel *name = [[UILabel alloc] init];
+    name.translatesAutoresizingMaskIntoConstraints = NO;
     name.text = @"Albrhi";
-    name.font = [UIFont systemFontOfSize:28.0 weight:UIFontWeightBold];
+    name.font = [UIFont systemFontOfSize:26.0 weight:UIFontWeightBold];
     name.textColor = [UIColor labelColor];
+    [card addSubview:name];
 
     UILabel *version = [[UILabel alloc] init];
+    version.translatesAutoresizingMaskIntoConstraints = NO;
     version.text = [NSString stringWithFormat:@"%@  ·  Instagram %@", SCIVersionString, [SCIUtils IGVersionString]];
     version.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightMedium];
     version.textColor = [UIColor secondaryLabelColor];
+    [card addSubview:version];
 
-    UIStackView *text = [[UIStackView alloc] initWithArrangedSubviews:@[name, version]];
-    text.axis = UILayoutConstraintAxisVertical;
-    text.alignment = UIStackViewAlignmentLeading;
-    text.spacing = 1.0;
+    UIView *shortcuts = [SCIQuickPresets shortcutsViewWithWidth:width];
+    shortcuts.frame = CGRectMake(0, cardHeight, width, [SCIQuickPresets shortcutsHeight]);
+    shortcuts.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    [header addSubview:shortcuts];
 
-    UIStackView *row = [[UIStackView alloc] initWithArrangedSubviews:@[glyph, text]];
-    row.axis = UILayoutConstraintAxisHorizontal;
-    row.alignment = UIStackViewAlignmentCenter;
-    row.spacing = 12.0;
-    row.translatesAutoresizingMaskIntoConstraints = NO;
-
-    [header addSubview:row];
     [NSLayoutConstraint activateConstraints:@[
-        [row.centerXAnchor constraintEqualToAnchor:header.centerXAnchor],
-        [row.centerYAnchor constraintEqualToAnchor:header.centerYAnchor]
+        [card.leadingAnchor constraintEqualToAnchor:header.leadingAnchor constant:16.0],
+        [card.trailingAnchor constraintEqualToAnchor:header.trailingAnchor constant:-16.0],
+        [card.topAnchor constraintEqualToAnchor:header.topAnchor constant:8.0],
+        [card.heightAnchor constraintEqualToConstant:cardHeight - 16.0],
+
+        [badge.leadingAnchor constraintEqualToAnchor:card.leadingAnchor constant:16.0],
+        [badge.centerYAnchor constraintEqualToAnchor:card.centerYAnchor],
+        [badge.widthAnchor constraintEqualToConstant:46.0],
+        [badge.heightAnchor constraintEqualToConstant:46.0],
+
+        [glyph.centerXAnchor constraintEqualToAnchor:badge.centerXAnchor],
+        [glyph.centerYAnchor constraintEqualToAnchor:badge.centerYAnchor],
+
+        [name.leadingAnchor constraintEqualToAnchor:badge.trailingAnchor constant:14.0],
+        [name.trailingAnchor constraintEqualToAnchor:card.trailingAnchor constant:-16.0],
+        [name.bottomAnchor constraintEqualToAnchor:card.centerYAnchor constant:2.0],
+
+        [version.leadingAnchor constraintEqualToAnchor:name.leadingAnchor],
+        [version.trailingAnchor constraintEqualToAnchor:name.trailingAnchor],
+        [version.topAnchor constraintEqualToAnchor:name.bottomAnchor constant:2.0]
     ]];
 
     return header;
