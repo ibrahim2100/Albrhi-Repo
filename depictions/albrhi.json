@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.3.7\n\n- **Check every feature at once.** Settings → Diagnostics → the checklist icon.\n  It tells you which features still work on your Instagram version and which an\n  update has broken — instead of you finding out days later.\n- The what's-new page icons match what it says again.\n\n## v3.3.6\n\n- **Reels can scroll themselves.** When a reel ends, the next one comes up. There's a\n  button on the reel screen to turn it on and off.\n- **Choose your app icon** from the ones Instagram keeps for paid subscribers.\n  Under Appearance.\n- **Save a photo with its music** as a short video — pick the length, 5 seconds up\n  to 90. Works on single photos and albums.\n- **Keep messages people unsend** so they stay in the chat. Beta, off by default.\n- **Watch stories invisibly without them repeating.** Your phone remembers what you\n  watched; the author still sees nothing. The eye button marks one as seen and moves\n  on.\n- **Every \"are you sure\" looks better** and finally speaks your language.\n- **Lighter and faster while scrolling.**\n- Fixed a crash when using GIFs.\n\n## v3.2.8\n\n- **Save photos with their music as a video (beta).** Instagram plays audio over\n  still photos in reels and in the feed, but saving one only ever gave you the\n  picture. Now saving asks first — the photo on its own, or a clip with the sound\n  at a length you pick, 5 seconds up to 90. Under Downloads, off by default.\n- **Save voice messages (beta).** Long-press one and Albrhi asks whether to save\n  it — it never saves without asking. Off by default, under Stories & messages.\n- **Send any file in a DM (beta).** Adds \"Send file\" to the composer's plus\n  button, so a PDF or a zip goes through like any other message. Off by default,\n  under Stories & messages.",
+          "markdown": "## v3.3.8\n\n- **A proper header at the top of the settings,** and four shortcuts under it:\n  Private, Clean feed, Downloads, No prompts. One tap sets the handful of switches\n  that case is about — and nothing else, so it is never a reset.\n\n## v3.3.7\n\n- **Check every feature at once.** Settings → Diagnostics → the checklist icon.\n  It tells you which features still work on your Instagram version and which an\n  update has broken — instead of you finding out days later.\n- The what's-new page icons match what it says again.\n\n## v3.3.6\n\n- **Reels can scroll themselves.** When a reel ends, the next one comes up. There's a\n  button on the reel screen to turn it on and off.\n- **Choose your app icon** from the ones Instagram keeps for paid subscribers.\n  Under Appearance.\n- **Save a photo with its music** as a short video — pick the length, 5 seconds up\n  to 90. Works on single photos and albums.\n- **Keep messages people unsend** so they stay in the chat. Beta, off by default.\n- **Watch stories invisibly without them repeating.** Your phone remembers what you\n  watched; the author still sees nothing. The eye button marks one as seen and moves\n  on.\n- **Every \"are you sure\" looks better** and finally speaks your language.\n- **Lighter and faster while scrolling.**\n- Fixed a crash when using GIFs.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.3.7"
+          "text": "3.3.8"
         },
         {
           "class": "DepictionTableTextView",
