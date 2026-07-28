@@ -168,8 +168,11 @@
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
 
-    [UIView animateWithDuration:0.42 delay:0 usingSpringWithDamping:0.82
-          initialSpringVelocity:0.5 options:0 animations:^{
+    // Brisk on purpose. A confirmation is in the way of something the user has
+    // already decided to do, so it should arrive rather than make an entrance; the
+    // longer spring this had was noticeable every single time.
+    [UIView animateWithDuration:0.26 delay:0 usingSpringWithDamping:0.86
+          initialSpringVelocity:0.6 options:UIViewAnimationOptionAllowUserInteraction animations:^{
         self.card.transform = CGAffineTransformIdentity;
     } completion:nil];
 }
@@ -182,8 +185,12 @@
 
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
 
+    // Dismiss and act together rather than acting once the animation has finished.
+    // Waiting meant the thing being confirmed did not start until the card had gone,
+    // which is most of the delay felt between one confirmation and the next.
     void (^handler)(void) = self.onConfirm;
-    [self dismissViewControllerAnimated:YES completion:^{ if (handler) handler(); }];
+    [self dismissViewControllerAnimated:YES completion:nil];
+    if (handler) handler();
 }
 
 - (void)cancelTapped {
@@ -191,7 +198,8 @@
     self.answered = YES;
 
     void (^handler)(void) = self.onCancel;
-    [self dismissViewControllerAnimated:YES completion:^{ if (handler) handler(); }];
+    [self dismissViewControllerAnimated:YES completion:nil];
+    if (handler) handler();
 }
 
 // Two recognisers in different views both fire, so the card is ruled out by where
@@ -220,7 +228,35 @@
     sheet.modalPresentationStyle = UIModalPresentationOverFullScreen;
     sheet.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
 
-    [topMostController() presentViewController:sheet animated:YES completion:nil];
+    [self present:sheet attempt:0];
+}
+
+/// Presents once the way is clear.
+///
+/// A confirmation often follows straight on from the previous one being dismissed,
+/// and asking a controller that is still finishing a transition to present gets the
+/// request dropped — which showed up as the second confirmation in a row taking a
+/// noticeable moment to appear, or not appearing at all. Retrying on the next runloop
+/// costs nothing and lets the transition finish first.
++ (void)present:(UIViewController *)sheet attempt:(NSInteger)attempt {
+    UIViewController *host = topMostController();
+
+    BOOL busy = host.isBeingDismissed || host.isBeingPresented || host.presentedViewController != nil;
+
+    // Spaced out rather than retried on the next runloop: a dismissal takes about a
+    // third of a second, and eight runloop turns pass in microseconds — they would
+    // all be spent before the previous card had begun to leave. Eight attempts at
+    // 50ms covers a dismissal with room to spare, and is bounded so a controller
+    // that is somehow never ready cannot spin forever.
+    if (busy && attempt < 8) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.05 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            [self present:sheet attempt:attempt + 1];
+        });
+        return;
+    }
+
+    [host presentViewController:sheet animated:YES completion:nil];
 }
 
 @end

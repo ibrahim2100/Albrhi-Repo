@@ -40,7 +40,7 @@
             IGRefreshControl *_refreshControl = MSHookIvar<IGRefreshControl *>(self, "_refreshControl");
             [self refreshControlDidEndFinishLoadingAnimation:_refreshControl];
         }
-                             title:@"Refresh Reels"];
+                             title:SCILocalized(@"confirm_refresh_reels")];
     } else {
         return %orig;
     }

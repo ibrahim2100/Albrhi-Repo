@@ -3,6 +3,13 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.4.1
+
+- **Confirmations appear straight away again.** Asking twice in a row could leave the
+  second one waiting, and what you confirmed only started once the card had finished
+  animating away. Both are fixed, and the card arrives quicker.
+- The reels refresh confirmation is finally in your language.
+
 ## v3.4.0
 
 - **The shortcuts show how things actually stand.** Each switch opens at what it is
