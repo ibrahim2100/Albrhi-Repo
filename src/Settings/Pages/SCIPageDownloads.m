@@ -46,7 +46,8 @@
                     [SCISetting switchCellWithTitle:SCILocalized(@"dw_voice_msg_title") subtitle:SCILocalized(@"dw_voice_msg_sub") defaultsKey:@"download_audio_message" requiresRestart:YES],
                     [SCISetting switchCellWithTitle:SCILocalized(@"dw_photovid_title") subtitle:SCILocalized(@"dw_photovid_sub") defaultsKey:@"photo_as_video"],
                     [SCISetting switchCellWithTitle:SCILocalized(@"dw_silent_video_title") subtitle:SCILocalized(@"dw_silent_video_sub") defaultsKey:@"dw_silent_video"],
-                    [SCISetting switchCellWithTitle:SCILocalized(@"dw_transcode_av1_title") subtitle:SCILocalized(@"dw_transcode_av1_sub") defaultsKey:@"dw_transcode_av1"]
+                    [SCISetting switchCellWithTitle:SCILocalized(@"dw_transcode_av1_title") subtitle:SCILocalized(@"dw_transcode_av1_sub") defaultsKey:@"dw_transcode_av1"],
+                    [SCISetting switchCellWithTitle:SCILocalized(@"dw_quality_picker_t") subtitle:SCILocalized(@"dw_quality_picker_s") defaultsKey:@"dw_quality_picker"]
                 ]
             },
             @{

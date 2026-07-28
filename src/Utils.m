@@ -739,7 +739,63 @@ static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
     return [a[@"bandwidth"] longLongValue] > [b[@"bandwidth"] longLongValue];
 }
 
+/// The clip's length, from the manifest's mediaPresentationDuration="PT10.5S".
+/// Both the transcode banner and the quality sheet need it, so it is parsed here
+/// rather than twice.
++ (double)dashDurationForVideo:(id)video media:(id)media {
+    NSString *xml = [self dashManifestXMLForVideo:video media:media];
+    NSString *dur = [self dashString:@"mediaPresentationDuration" inBlock:xml ?: @""];
+
+    if ([dur hasPrefix:@"PT"] && [dur hasSuffix:@"S"]) {
+        double seconds = [[dur substringWithRange:NSMakeRange(2, dur.length - 3)] doubleValue];
+        if (seconds > 0) return seconds;
+    }
+    return 0;
+}
+
+/// The distinct AV1 heights this video offers, tallest first — what a picker can
+/// meaningfully present. The ladder repeats a resolution at several bitrates, and
+/// choosing between two copies of 720p is not a choice anyone wants to make, so the
+/// tallest bitrate of each height is the only one kept.
++ (NSArray<NSDictionary *> *)transcodeOptionsForVideo:(id)video media:(id)media {
+    NSMutableDictionary<NSNumber *, NSDictionary *> *byHeight = [NSMutableDictionary dictionary];
+
+    @try {
+        for (NSDictionary *rep in [self dashRepresentationsForVideo:video media:media]) {
+            if (![rep[@"family"] isEqualToString:@"av1"]) continue;
+            if (![rep[@"type"] isEqualToString:@"video"]) continue;
+
+            NSNumber *height = rep[@"height"];
+            NSDictionary *existing = byHeight[height];
+
+            if (!existing || [rep[@"bandwidth"] longLongValue] > [existing[@"bandwidth"] longLongValue]) {
+                byHeight[height] = rep;
+            }
+        }
+    } @catch (__unused id e) {}
+
+    // The clip length lives on the manifest, not on a Representation, so it is
+    // folded into each option here — the sheet needs it to turn a bitrate into the
+    // megabytes a download will actually cost.
+    double duration = [self dashDurationForVideo:video media:media];
+
+    NSMutableArray<NSDictionary *> *options = [NSMutableArray array];
+    for (NSDictionary *rep in [byHeight allValues]) {
+        NSMutableDictionary *option = [rep mutableCopy];
+        if (duration > 0) option[@"duration"] = @(duration);
+        [options addObject:option];
+    }
+
+    return [options sortedArrayUsingComparator:^NSComparisonResult(NSDictionary *a, NSDictionary *b) {
+        return [b[@"height"] compare:a[@"height"]];
+    }];
+}
+
 + (NSDictionary *)transcodePlanForVideo:(id)video media:(id)media {
+    return [self transcodePlanForVideo:video media:media preferredHeight:0];
+}
+
++ (NSDictionary *)transcodePlanForVideo:(id)video media:(id)media preferredHeight:(long long)preferredHeight {
     @try {
         NSArray<NSDictionary *> *reps = [self dashRepresentationsForVideo:video media:media];
         if (reps.count == 0) return nil;
@@ -764,6 +820,11 @@ static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
             }
 
             if ([family isEqualToString:@"av1"]) {
+                // A requested height narrows the field to that rung of the ladder;
+                // within it the best bitrate still wins. With none requested this is
+                // exactly the old behaviour — the tallest rendition, automatically.
+                if (preferredHeight > 0 && h != preferredHeight) continue;
+
                 if (!bestAV1 || [self dashRep:rep beats:bestAV1]) {
                     bestAV1 = rep;
                 }
@@ -775,7 +836,11 @@ static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
         // Only worth the transcode when AV1 clears both the DASH H.264 ladder and
         // the ~720p progressive rendition -videoVersions typically tops out at.
         long long av1Height = [bestAV1[@"height"] longLongValue];
-        if (av1Height <= bestSaveableHeight || av1Height <= 720) return nil;
+
+        // The "is it worth it" test only applies to the automatic path. Someone who
+        // picked 720p from a list asked for 720p, and refusing them because it is not
+        // an improvement would make the picker look broken.
+        if (preferredHeight == 0 && (av1Height <= bestSaveableHeight || av1Height <= 720)) return nil;
 
         NSURL *videoURL = [self urlFromDashRep:bestAV1];
         if (!videoURL) return nil;
@@ -788,12 +853,8 @@ static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
 
         // Clip duration (mediaPresentationDuration="PT10.517188S") lets the banner
         // show a real percentage: total frames ≈ duration × fps.
-        NSString *xml = [self dashManifestXMLForVideo:video media:media];
-        NSString *dur = [self dashString:@"mediaPresentationDuration" inBlock:xml ?: @""];
-        if ([dur hasPrefix:@"PT"] && [dur hasSuffix:@"S"]) {
-            double seconds = [[dur substringWithRange:NSMakeRange(2, dur.length - 3)] doubleValue];
-            if (seconds > 0) plan[@"duration"] = @(seconds);
-        }
+        double seconds = [self dashDurationForVideo:video media:media];
+        if (seconds > 0) plan[@"duration"] = @(seconds);
         if (bestAudio) {
             NSURL *audioURL = [self urlFromDashRep:bestAudio];
             if (audioURL) plan[@"audioURL"] = audioURL;

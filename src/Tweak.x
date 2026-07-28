@@ -18,7 +18,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.4.2";  // Albrhi
+NSString *SCIVersionString = @"v3.5.0";  // Albrhi
 
 // Variables that work across features
 
@@ -61,6 +61,9 @@ NSString *SCIVersionString = @"v3.4.2";  // Albrhi
         // time) and experimental. When off, videos download at their best saveable
         // progressive quality exactly as before.
         @"dw_transcode_av1": @(NO),
+        // Off: taking the best quality automatically is the point of the tweak. This
+        // only exists for when the top rung costs more time and space than wanted.
+        @"dw_quality_picker": @(NO),
 
         // Presentation-only, all off so Instagram looks exactly as it did until
         // the user asks otherwise.

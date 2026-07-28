@@ -1,4 +1,5 @@
 #import "SCIMediaDownloader.h"
+#import "../UI/SCIQualitySheet.h"
 #import "Download.h"
 #import "Queue/SCIDownloadQueue.h"
 #import "Transcode/SCIAV1Transcoder.h"
@@ -227,7 +228,30 @@
 + (BOOL)tryTranscodeForVideo:(IGVideo *)video media:(id)media sourceLabel:(NSString *)sourceLabel {
     if (![SCIUtils getBoolPref:@"dw_transcode_av1"]) return NO;
 
-    NSDictionary *plan = [SCIUtils transcodePlanForVideo:video media:media];
+    // Opt-in: ask which resolution to take rather than always taking the tallest.
+    // Off, this path is untouched and still picks the best automatically, which is
+    // what the tweak is for; on, it is the user's call.
+    if ([SCIUtils getBoolPref:@"dw_quality_picker"]) {
+        NSArray<NSDictionary *> *options = [SCIUtils transcodeOptionsForVideo:video media:media];
+
+        if (options.count > 1) {
+            [SCIQualitySheet presentWithOptions:options chosen:^(long long height) {
+                [self runTranscodeForVideo:video media:media sourceLabel:sourceLabel height:height];
+            }];
+            return YES;
+        }
+    }
+
+    return [self runTranscodeForVideo:video media:media sourceLabel:sourceLabel height:0];
+}
+
+/// @param height  a chosen rung of the AV1 ladder, or zero for the tallest.
++ (BOOL)runTranscodeForVideo:(IGVideo *)video
+                       media:(id)media
+                 sourceLabel:(NSString *)sourceLabel
+                      height:(long long)height {
+
+    NSDictionary *plan = [SCIUtils transcodePlanForVideo:video media:media preferredHeight:height];
     if (!plan) return NO;
 
     NSString *title = [NSString stringWithFormat:SCILocalized(@"transcode_progress"),

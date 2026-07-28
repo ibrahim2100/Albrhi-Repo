@@ -3,6 +3,13 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.5.0
+
+- **Choose the video quality (beta).** Reels carry up to 2K, and Albrhi still takes
+  the best automatically — that has not changed. Turn this on under Downloads and it
+  asks instead, listing every resolution with its size, so you can take 1080p when 2K
+  is more waiting and storage than you wanted.
+
 ## v3.4.2
 
 - Diagnostics now reports how many video qualities a post really offers, and how many

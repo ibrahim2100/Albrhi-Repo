@@ -105,6 +105,15 @@
 /// (AV1), optional @c audioURL (xHE-AAC), @c fps, @c width, @c height.
 + (nullable NSDictionary *)transcodePlanForVideo:(nullable id)video media:(nullable id)media;
 
+/// As above, but for one chosen rung of the AV1 ladder. Zero means "the best one",
+/// which is what the automatic path passes and what it has always done.
++ (nullable NSDictionary *)transcodePlanForVideo:(nullable id)video
+                                           media:(nullable id)media
+                                 preferredHeight:(long long)preferredHeight;
+
+/// The distinct AV1 resolutions on offer, tallest first, for the optional picker.
++ (NSArray<NSDictionary *> *)transcodeOptionsForVideo:(nullable id)video media:(nullable id)media;
+
 /// Every zero-argument selector on an object's class hierarchy whose name
 /// contains @c needle, case-insensitively.
 ///
