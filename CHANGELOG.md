@@ -1,5 +1,15 @@
 # Albrhi Changelog
 
+## v3.2.9.2
+
+- **Auto-scroll actually advances on the older Instagram now.** Forcing its gates
+  was not enough — its own timer never starts — so on that build it now advances
+  each reel when the reel finishes playing, using Instagram's own countdown, so the
+  timing follows the reel's real length.
+- **The auto-scroll button appears reliably.** It is now a floating button on the
+  reel screen rather than a member of the action bar, so it always shows, holds its
+  place, and no longer disturbs the download button.
+
 ## v3.2.9.1
 
 - **Auto-scroll now works on the older Instagram too.** Reading both versions'

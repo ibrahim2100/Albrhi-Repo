@@ -1,5 +1,6 @@
 #import <substrate.h>
 #import <objc/runtime.h>
+#import <objc/message.h>
 #import "../../InstagramHeaders.h"
 #import "../../Utils.h"
 #import "../../SCILog.h"
@@ -115,75 +116,91 @@ static BOOL sci_shouldAutoScrollToObject(id self, SEL _cmd, id object, NSUIntege
 
 // MARK: - On-screen toggle
 
-// An optional button on the reels sidebar that turns auto-scroll on and off without
-// a trip to settings — the control the sidebar was missing. It sits above the inline
-// download button (or above the top control when that button is off), and holds its
-// place because it is positioned every layout pass, in the bar's own coordinates.
+// An optional button that turns auto-scroll on and off without a trip to settings.
+//
+// It is a floating overlay on the reels view controller — pinned to the trailing
+// edge with constraints — not a member of Instagram's action bar. An earlier try
+// added it into the sidebar, where it fought the download button's own layout hook
+// for the same bar and, on a build whose bar is a different class, never appeared at
+// all. Sitting on the view controller sidesteps both: it always shows, holds its
+// place as reels scroll underneath, and never touches the action bar.
 
 static const NSInteger SCIAutoScrollButtonTag = 0x5CA57;
-// Must match SCIInlineDownloadButtonTag in InlineDownloadButton.xm — the download
-// button this one stacks above.
-static const NSInteger SCIInlineDownloadButtonTag = 0x5CD10;
 
 static void SCIStyleAutoScrollButton(UIButton *button) {
     BOOL on = SCIWantsAutoScroll();
     NSString *glyph = on ? @"infinity.circle.fill" : @"infinity.circle";
 
     UIImageSymbolConfiguration *config =
-        [UIImageSymbolConfiguration configurationWithPointSize:20.0 weight:UIImageSymbolWeightRegular];
+        [UIImageSymbolConfiguration configurationWithPointSize:17.0 weight:UIImageSymbolWeightSemibold];
     [button setImage:[UIImage systemImageNamed:glyph withConfiguration:config] forState:UIControlStateNormal];
 
-    button.tintColor = on ? [SCIUtils SCIColor_Primary] : [UIColor labelColor];
+    button.tintColor = on ? [SCIUtils SCIColor_Primary] : [UIColor whiteColor];
     button.accessibilityLabel = SCILocalized(@"p_reels_autonext_t");
 }
 
-// The topmost interactive control in the bar, used as the fallback anchor when the
-// download button is not present.
-static UIView *SCITopControlInBar(UIView *bar) {
-    UIView *top = nil;
-    for (UIView *sub in bar.subviews) {
-        if (sub.tag == SCIAutoScrollButtonTag || sub.tag == SCIInlineDownloadButtonTag) continue;
-        if (sub.hidden || sub.alpha < 0.01 || CGRectIsEmpty(sub.frame)) continue;
-        if (!top || CGRectGetMinY(sub.frame) < CGRectGetMinY(top.frame)) top = sub;
-    }
-    return top;
-}
+%hook IGSundialFeedViewController
 
-%hook IGSundialViewerVerticalUFI
-
-- (void)layoutSubviews {
-    %orig;
-
-    UIButton *button = (UIButton *)[self viewWithTag:SCIAutoScrollButtonTag];
-
-    if (![SCIUtils getBoolPref:@"reels_autoscroll_button"]) {
-        [button removeFromSuperview];
+// Duration-aware drive for the builds where forcing the gates is not enough — the
+// older Instagram, whose auto-scroll timer never starts however the gates are set.
+//
+// The feed controller tells each reel its length through this method, with a block
+// to run when the countdown ends — i.e. when the reel has played through. Wrapping
+// that block to also advance is auto-scroll that respects each reel's real length,
+// driven by Instagram's own -advanceToNextReelForAutoScroll rather than a timer of
+// ours. The method only exists on the build that needs it; where it is absent the
+// hook simply never runs.
+- (void)setReelDuration:(double)duration onCountdownFinishedCallBack:(void (^)(void))callback {
+    if (!SCIWantsAutoScroll()) {
+        %orig;
         return;
     }
 
-    if (!button) {
-        button = [UIButton buttonWithType:UIButtonTypeSystem];
-        button.tag = SCIAutoScrollButtonTag;
-        [button addTarget:self action:@selector(sciToggleAutoScroll:) forControlEvents:UIControlEventTouchUpInside];
-        self.clipsToBounds = NO;   // the button sits above the bar's own bounds
-        [self addSubview:button];
+    void (^wrapped)(void) = ^{
+        if (callback) callback();
+
+        // Re-checked at fire time, not just install time: the toggle may have flipped
+        // while the reel was playing.
+        if (SCIWantsAutoScroll() &&
+            [self respondsToSelector:@selector(advanceToNextReelForAutoScroll)]) {
+            ((void (*)(id, SEL))objc_msgSend)(self, @selector(advanceToNextReelForAutoScroll));
+        }
+    };
+
+    %orig(duration, wrapped);
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    %orig;
+
+    if (![SCIUtils getBoolPref:@"reels_autoscroll_button"]) {
+        [[self.view viewWithTag:SCIAutoScrollButtonTag] removeFromSuperview];
+        return;
     }
+    if ([self.view viewWithTag:SCIAutoScrollButtonTag]) return;
 
-    // Prefer to stack above the download button; fall back to the top control.
-    UIView *anchor = (UIView *)[self viewWithTag:SCIInlineDownloadButtonTag];
-    if (!anchor || anchor.hidden) anchor = SCITopControlInBar(self);
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
+    button.tag = SCIAutoScrollButtonTag;
+    button.translatesAutoresizingMaskIntoConstraints = NO;
 
-    if (!anchor) { button.hidden = YES; return; }
+    // A dark disc so the glyph stays legible over any reel.
+    button.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.35];
+    button.layer.cornerRadius = 17.0;
 
-    CGFloat side = MAX(MIN(CGRectGetHeight(anchor.frame), CGRectGetWidth(anchor.frame)), 22.0);
-    CGFloat gap = 14.0;
-
-    button.hidden = NO;
-    button.frame = CGRectMake(CGRectGetMidX(anchor.frame) - side / 2.0,
-                              CGRectGetMinY(anchor.frame) - side - gap,
-                              side, side);
     SCIStyleAutoScrollButton(button);
-    [self bringSubviewToFront:button];
+    [button addTarget:self action:@selector(sciToggleAutoScroll:) forControlEvents:UIControlEventTouchUpInside];
+
+    [self.view addSubview:button];
+
+    // Trailing edge, above vertical centre — clear of the action stack that sits at
+    // the bottom-right, so it reads as sitting above it without depending on where
+    // Instagram happens to lay that stack out.
+    [NSLayoutConstraint activateConstraints:@[
+        [button.trailingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.trailingAnchor constant:-14.0],
+        [button.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor constant:-40.0],
+        [button.widthAnchor constraintEqualToConstant:34.0],
+        [button.heightAnchor constraintEqualToConstant:34.0]
+    ]];
 }
 
 %new - (void)sciToggleAutoScroll:(UIButton *)sender {
