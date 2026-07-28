@@ -119,6 +119,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// feed controller was found at all.
 + (void)recordReelsAdvance:(nullable NSString *)selector foundController:(BOOL)found;
 
+/// One unsend that was held back, with the removal reason Instagram gave and how
+/// many messages it covered. The reason tells apart a message someone else unsent
+/// from one unsent here, which decides whether both should be kept; the values are
+/// worth observing rather than assuming.
++ (void)recordUnsendKeptWithReason:(NSInteger)reason messageCount:(NSInteger)count;
+
 @end
 
 NS_ASSUME_NONNULL_END

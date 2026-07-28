@@ -1,5 +1,6 @@
 #import "../../Utils.h"
 #import "../../InstagramHeaders.h"
+#import "../../Settings/SCIDiagnosticsViewController.h"
 
 ///
 /// Keeps messages that get unsent — beta.
@@ -15,14 +16,20 @@
 /// messages — clearing its key list keeps the message without touching read-state,
 /// which lives on an entirely different path. That was the missing separation.
 ///
-/// The target class and its `_removeMessages_messageKeys` store were identified
-/// from RyukGram (github.com/faroukbmiled/RyukGram, GPLv3), a fellow SCInsta fork;
-/// the mechanism here is Albrhi's own. The class is bound by name at load, so a
-/// build without it simply does nothing rather than failing.
+/// The class was identified from RyukGram (github.com/faroukbmiled/RyukGram, GPLv3),
+/// a fellow SCInsta fork; the mechanism here is Albrhi's own.
 ///
-/// Beta, and off by default: the exact behaviour still wants confirming on device
-/// through Settings → Diagnostics, and pull-to-refresh in the inbox reloads threads
-/// from the server, so anything kept only on this device goes with the refresh.
+/// The first attempt at this hooked the right class and still did nothing, because
+/// it wrote to `removeMessages_messageKeys` — a name taken from a string in the
+/// binary that turned out to belong to something else. Reading the class's real ivar
+/// list gives `_messageKeys`, and the wrong key threw an exception the @try quietly
+/// swallowed, so the feature had never once run. The reason is the second ivar,
+/// `_reason`, an integer distinguishing one kind of removal from another; it is
+/// reported to Diagnostics so which value means what can be settled by observation
+/// rather than assumed.
+///
+/// Beta, and off by default: pull-to-refresh in the inbox reloads threads from the
+/// server, so anything kept only on this device goes with the refresh.
 ///
 
 %hook IGDirectMessageOutgoingUpdateRemoveMessagesMutationProcessor
@@ -31,20 +38,27 @@
                networker:(id)networker
                 threadId:(id)threadId
              messageKeys:(id)messageKeys
-                  reason:(id)reason
+                  reason:(NSInteger)reason
             dataProvider:(id)dataProvider {
 
     id processor = %orig;
 
-    if (processor && [SCIUtils getBoolPref:@"keep_unsent_messages"]) {
-        // Empty the key list so the processor has nothing to remove. KVC finds the
-        // _removeMessages_messageKeys ivar by name and assigns it under ARC, which a
-        // raw ivar write would not do safely. Wrapped, because a build that renames
-        // the store must not crash — it just means the feature no-ops there.
-        @try {
-            [processor setValue:@[] forKey:@"removeMessages_messageKeys"];
-        } @catch (__unused id error) {}
+    if (!processor || ![SCIUtils getBoolPref:@"keep_unsent_messages"]) {
+        return processor;
     }
+
+    NSInteger removed = [messageKeys isKindOfClass:[NSArray class]] ? (NSInteger)[(NSArray *)messageKeys count] : 0;
+
+    // Empty the key list so the processor has nothing left to remove. KVC assigns
+    // through the _messageKeys ivar under ARC, which a raw ivar write would not do
+    // safely. Still wrapped: a build that renames the ivar should no-op, not crash.
+    @try {
+        [processor setValue:@[] forKey:@"messageKeys"];
+    } @catch (__unused id error) {
+        removed = -1;
+    }
+
+    [SCIDiagnostics recordUnsendKeptWithReason:reason messageCount:removed];
 
     return processor;
 }

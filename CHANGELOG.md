@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v3.3.0
+
+- **Hiding story views works again.** It was attached to an object that turns out to
+  have no way of sending anything, so the receipt always went out by another route.
+  It now empties the report itself, at a point both Instagram versions share.
+- **Keep unsent messages (beta) actually keeps them.** It was clearing a field by a
+  name that does not exist on the object, and the error was being swallowed, so the
+  feature had never once run.
+
 ## v3.2.9.6
 
 - **Auto-scroll waits for the reel to finish.** It was moving on a percentage of

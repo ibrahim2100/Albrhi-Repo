@@ -33,6 +33,8 @@ static double _reelsProgressTotal = 0;
 static NSString *_reelsProgressClass = nil;
 static NSInteger _reelsAdvances = 0;
 static NSString *_reelsAdvanceSelector = nil;
+static NSInteger _unsendsKept = 0;
+static NSMutableArray<NSString *> *_unsendReasons = nil;
 static BOOL _reelsFoundController = NO;
 static NSString *_audioProbe = nil;
 static NSInteger _dateRewrites = 0;
@@ -166,6 +168,20 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
         _reelsAdvances++;
         _reelsAdvanceSelector = selector ?: @"(none)";
         _reelsFoundController = found;
+    }
+}
+
++ (void)recordUnsendKeptWithReason:(NSInteger)reason messageCount:(NSInteger)count {
+    @synchronized (self) {
+        _unsendsKept++;
+        if (!_unsendReasons) _unsendReasons = [NSMutableArray array];
+
+        NSString *entry = [NSString stringWithFormat:@"reason %ld · %@",
+                           (long)reason,
+                           count < 0 ? @"ivar not found" : [NSString stringWithFormat:@"%ld message(s)", (long)count]];
+        if (![_unsendReasons containsObject:entry] && _unsendReasons.count < 6) {
+            [_unsendReasons addObject:entry];
+        }
     }
 }
 
@@ -686,6 +702,12 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
                                         (long)_reelsProgressCalls, _reelsProgressMax, _reelsProgressTotal,
                                         _reelsProgressClass ?: @"—"],
                           @"ok": @(_reelsProgressCalls > 0)}];
+
+        [rows addObject:@{@"title": SCILocalized(@"diag_unsend_kept"),
+                          @"detail": _unsendsKept == 0 ? @"0"
+                                     : [NSString stringWithFormat:@"%ld · %@", (long)_unsendsKept,
+                                        [_unsendReasons componentsJoinedByString:@", "]],
+                          @"ok": @(_unsendsKept > 0)}];
 
         [rows addObject:@{@"title": SCILocalized(@"diag_reels_advance"),
                           @"detail": _reelsAdvances == 0 ? @"0"
