@@ -3,6 +3,13 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.3.9
+
+- **The shortcuts now open a page you can edit.** Tapping one shows the handful of
+  settings it covers, each with its own switch — turn them on or off as you like,
+  then apply. Nothing outside that list is touched.
+- The settings header no longer sits under the search bar.
+
 ## v3.3.8
 
 - **A proper header at the top of the settings,** and four shortcuts under it:

@@ -112,7 +112,10 @@ static char rowStaticRef[] = "row";
     UIColor *accent = [SCIUtils SCIColor_Primary];
 
     CGFloat width = CGRectGetWidth(self.view.bounds);
-    CGFloat cardHeight = 104.0;
+    // Top inset included: the search bar sits directly above this view and the
+    // card was starting under it.
+    CGFloat topInset = 14.0;
+    CGFloat cardHeight = 104.0 + topInset;
     CGFloat height = cardHeight + [SCIQuickPresets shortcutsHeight];
 
     UIView *header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, width, height)];
@@ -164,8 +167,8 @@ static char rowStaticRef[] = "row";
     [NSLayoutConstraint activateConstraints:@[
         [card.leadingAnchor constraintEqualToAnchor:header.leadingAnchor constant:16.0],
         [card.trailingAnchor constraintEqualToAnchor:header.trailingAnchor constant:-16.0],
-        [card.topAnchor constraintEqualToAnchor:header.topAnchor constant:8.0],
-        [card.heightAnchor constraintEqualToConstant:cardHeight - 16.0],
+        [card.topAnchor constraintEqualToAnchor:header.topAnchor constant:topInset + 8.0],
+        [card.heightAnchor constraintEqualToConstant:cardHeight - topInset - 16.0],
 
         [badge.leadingAnchor constraintEqualToAnchor:card.leadingAnchor constant:16.0],
         [badge.centerYAnchor constraintEqualToAnchor:card.centerYAnchor],
