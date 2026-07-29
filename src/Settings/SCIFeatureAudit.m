@@ -89,6 +89,7 @@ static SCIFeatureAuditResult *SCICheckAny(NSString *feature, NSArray<NSArray<NSS
 
     // Messages
     [results addObject:SCICheckAny(SCILocalized(@"audit_keep_unsent"), @[
+        @[@"IGDirectRealtimeIrisDeltaApplicator", @"_applyThreadUpdates:"],
         @[@"IGDirectCacheUpdatesApplicator", @"_applyThreadUpdates:completion:"],
         @[@"IGDirectCacheUpdatesApplicator", @"_applyThreadUpdates:completion:userAccess:"],
         @[@"MDCoreDelta", @"matchAddMessageDelta:deleteThreadDelta:createReactionDelta:deleteMessageDelta:deleteReactionDelta:"]

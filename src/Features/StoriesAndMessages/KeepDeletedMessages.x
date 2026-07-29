@@ -104,8 +104,49 @@ static void SCIDefuseThreadUpdates(id updates, NSInteger depth) {
     }
 
     Ivar messageUpdate = class_getInstanceVariable(cls, "_messageUpdate");
-    if (messageUpdate) SCIDefuseMessageUpdate(object_getIvar(updates, messageUpdate));
+    if (messageUpdate) {
+        SCIDefuseMessageUpdate(object_getIvar(updates, messageUpdate));
+        return;
+    }
+
+    // A wrapper holding the updates rather than being them. Named fields only, and
+    // only these three: an earlier version followed every object field of anything
+    // Instagram-shaped, on every batch, which was slow and the likely cause of a
+    // crash around GIFs. Naming them keeps the reach without the risk.
+    for (NSString *field in @[@"_threadUpdates", @"_updates", @"_deltas"]) {
+        Ivar ivar = class_getInstanceVariable(cls, field.UTF8String);
+        if (ivar) SCIDefuseThreadUpdates(object_getIvar(updates, ivar), depth + 1);
+    }
 }
+
+// MARK: - The realtime channel
+
+// Where an unsend actually arrives.
+//
+// Everything before this hooked IGDirectCacheUpdatesApplicator — the cache's own
+// applicator — and Diagnostics kept reporting nothing held back, because a message
+// someone else unsends does not come through the cache. It comes down Instagram's
+// realtime channel, Iris, and that has its own applicator with a one-argument apply.
+// The class and the signature are identical on both tested builds.
+//
+// The earliest version of this feature, back in 3.1, hooked IGDirectRealtimeIrisThreadDelta
+// — the right channel, the wrong method. Disabling it moved the search away from the
+// channel entirely, and three attempts were spent on the wrong side of it.
+//
+// Regram hooks both applicators and reads the same two ivars, which is what pointed
+// back here.
+%hook IGDirectRealtimeIrisDeltaApplicator
+
+- (void)_applyThreadUpdates:(id)updates {
+    if (SCIWantsToKeepUnsent()) {
+        [SCIDiagnostics recordUnsendPath:@"iris applyThreadUpdates" detail:NSStringFromClass([updates class])];
+        SCIDefuseThreadUpdates(updates, 0);
+    }
+
+    %orig;
+}
+
+%end
 
 %hook IGDirectCacheUpdatesApplicator
 

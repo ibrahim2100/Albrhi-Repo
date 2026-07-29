@@ -3,6 +3,13 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.7.0
+
+- **Keeping unsent messages should finally work.** It had been watching the wrong
+  channel: a message someone unsends arrives on Instagram's live connection, not
+  through the part we were listening to. Beta, off by default, under Stories &
+  messages — and Diagnostics now shows which channel it saw.
+
 ## v3.6.2
 
 - **The story eye now moves to the next story of the same person** instead of jumping
