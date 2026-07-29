@@ -162,25 +162,60 @@ static void SCIDefuseThreadUpdates(id updates, NSInteger depth) {
         return;
     }
 
-    // A wrapper holding the updates rather than being them. Named fields only, and
-    // only these three: an earlier version followed every object field of anything
-    // Instagram-shaped, on every batch, which was slow and the likely cause of a
-    // crash around GIFs. Naming them keeps the reach without the risk.
+    // Fields found by declared type rather than by name.
+    //
+    // The name was the problem. This looked for `_messageUpdate`, which is what
+    // IGDirectThreadUpdate calls it — but what actually arrives is
+    // IGDirectCacheThreadUpdate, a Swift class whose field names are not ours to
+    // guess. Its type encoding still says what it holds, and a field declared as an
+    // IGDirect…MessageUpdate is the one worth following whatever it is called.
+    //
+    // Still narrow: only object fields whose type names a message or thread update
+    // are read. The version that read every object field of anything Instagram-shaped
+    // was slow and the likely cause of a crash around GIFs.
     BOOL followed = NO;
-    for (NSString *field in @[@"_threadUpdates", @"_updates", @"_deltas"]) {
-        Ivar ivar = class_getInstanceVariable(cls, field.UTF8String);
-        if (!ivar) continue;
+
+    unsigned int count = 0;
+    Ivar *fields = class_copyIvarList(cls, &count);
+
+    for (unsigned int i = 0; fields && i < count; i++) {
+        const char *encoding = ivar_getTypeEncoding(fields[i]);
+        if (!encoding || encoding[0] != '@') continue;
+
+        NSString *type = @(encoding);
+        if ([type rangeOfString:@"MessageUpdate"].location == NSNotFound
+            && [type rangeOfString:@"ThreadUpdate"].location == NSNotFound) {
+            continue;
+        }
 
         followed = YES;
-        SCIDefuseThreadUpdates(object_getIvar(updates, ivar), depth + 1);
+        SCIDefuseThreadUpdates(object_getIvar(updates, fields[i]), depth + 1);
     }
+
+    if (fields) free(fields);
     if (followed) return;
 
-    // Nothing here matched, so say what this actually was. Reporting only the class
-    // handed to the hook named the container — "__NSSingleObjectArrayI" — which says
-    // the hook fired and nothing about why it found no removal inside. The object
-    // that failed to match is the fact worth having.
-    [SCIDiagnostics recordUnsendPath:@"unmatched" detail:NSStringFromClass(cls)];
+    // Nothing matched, so report the object *and its object fields*. The class name
+    // alone already moved this forward once — it named IGDirectCacheThreadUpdate
+    // where IGDirectThreadUpdate was assumed — and if the search by type misses too,
+    // the field list says what is actually in there instead of inviting another
+    // guess. Names only, capped, and only when nothing matched, so it costs nothing
+    // in the normal case.
+    NSMutableArray<NSString *> *shape = [NSMutableArray array];
+
+    unsigned int total = 0;
+    Ivar *all = class_copyIvarList(cls, &total);
+
+    for (unsigned int i = 0; all && i < total && shape.count < 6; i++) {
+        const char *encoding = ivar_getTypeEncoding(all[i]);
+        if (encoding && encoding[0] == '@') [shape addObject:@(ivar_getName(all[i]))];
+    }
+    if (all) free(all);
+
+    [SCIDiagnostics recordUnsendPath:@"unmatched"
+                              detail:[NSString stringWithFormat:@"%@ {%@}",
+                                      NSStringFromClass(cls),
+                                      [shape componentsJoinedByString:@","]]];
 }
 
 // MARK: - The realtime channel
