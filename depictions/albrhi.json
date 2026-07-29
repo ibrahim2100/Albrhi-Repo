@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.4.2\n\n- Diagnostics now reports how many video qualities a post really offers, and how many\n  of them iPhone can actually save. Groundwork for bringing back the quality picker.\n\n## v3.4.1\n\n- **Confirmations appear straight away again.** Asking twice in a row could leave the\n  second one waiting, and what you confirmed only started once the card had finished\n  animating away. Both are fixed, and the card arrives quicker.\n- The reels refresh confirmation is finally in your language.\n\n## v3.4.0\n\n- **The shortcuts show how things actually stand.** Each switch opens at what it is\n  really set to, so you can turn things on *and* off from there, any time — not just\n  switch them on once. There's a \"turn all on\" if you just want the lot.\n- **The settings are in a more useful order:** downloads and privacy near the top,\n  looks and behaviour further down.",
+          "markdown": "## v3.5.1\n\n- Fixes the 3.5.0 build, which did not compile and so never shipped.\n\n## v3.5.0\n\n- **Choose the video quality (beta).** Reels carry up to 2K, and Albrhi still takes\n  the best automatically — that has not changed. Turn this on under Downloads and it\n  asks instead, listing every resolution with its size, so you can take 1080p when 2K\n  is more waiting and storage than you wanted.\n\n## v3.4.2\n\n- Diagnostics now reports how many video qualities a post really offers, and how many\n  of them iPhone can actually save. Groundwork for bringing back the quality picker.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.4.2"
+          "text": "3.5.1"
         },
         {
           "class": "DepictionTableTextView",
