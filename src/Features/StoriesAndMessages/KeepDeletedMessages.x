@@ -43,6 +43,56 @@ static BOOL SCIWantsToKeepUnsent(void) {
     return [SCIUtils getBoolPref:@"keep_unsent_messages"];
 }
 
+// MARK: - What is being held
+
+/// The message keys held back so far, and how many.
+///
+/// Blocking the removal is only half of it. The message stays because Instagram was
+/// stopped from taking it away, but nothing here knows *which* messages those are —
+/// so nothing can tell the user a refresh is about to lose them, and nothing can mark
+/// them apart from ordinary messages later.
+///
+/// Regram keeps exactly this: a list of ids, their content, and a
+/// -clearAllUnsentMessagesAfterRefresh, which is why it can warn before a reload.
+/// This is the same idea, kept to what is needed and no more.
+static NSMutableOrderedSet *sHeldKeys = nil;
+static NSObject *sHeldLock = nil;
+
+static NSObject *SCIHeldLock(void) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{ sHeldLock = [[NSObject alloc] init]; });
+    return sHeldLock;
+}
+
+static void SCIRememberHeldKeys(NSArray *keys) {
+    if (!keys.count) return;
+
+    @synchronized (SCIHeldLock()) {
+        if (!sHeldKeys) sHeldKeys = [NSMutableOrderedSet orderedSet];
+
+        for (id key in keys) {
+            NSString *text = [key isKindOfClass:[NSString class]] ? key : [key description];
+            if (text.length) [sHeldKeys addObject:text];
+        }
+
+        // Bounded: a long session should not grow this without limit, and only the
+        // recent ones matter for a warning about the refresh about to happen.
+        while (sHeldKeys.count > 200) [sHeldKeys removeObjectAtIndex:0];
+    }
+}
+
+NSInteger SCIHeldUnsendCount(void) {
+    @synchronized (SCIHeldLock()) {
+        return (NSInteger)sHeldKeys.count;
+    }
+}
+
+void SCIClearHeldUnsends(void) {
+    @synchronized (SCIHeldLock()) {
+        [sHeldKeys removeAllObjects];
+    }
+}
+
 // MARK: - Older path: thread updates
 
 /// Empties one message update's removal list.
@@ -67,6 +117,9 @@ static void SCIDefuseMessageUpdate(id messageUpdate) {
         char *base = (char *)(__bridge void *)messageUpdate;
         reason = *(NSInteger *)(base + ivar_getOffset(reasonIvar));
     }
+
+    // Noted before the list is emptied, since afterwards there is nothing to note.
+    SCIRememberHeldKeys(keys);
 
     @try {
         [messageUpdate setValue:@[] forKey:@"removeMessages_messageKeys"];
@@ -197,6 +250,40 @@ static void SCIDefuseThreadUpdates(id updates, NSInteger depth) {
     };
 
     %orig(addMessage, deleteThread, createReaction, swallow, deleteReaction);
+}
+
+%end
+
+// MARK: - Warning before a refresh throws them away
+
+// A pull-to-refresh reloads threads from the server, and anything kept only on this
+// device goes with it. That was written in the setting's description and then left to
+// happen silently, which is the worst of both: the user is told once, in settings,
+// and never at the moment it matters.
+//
+// Regram guards the same moment — it has a reload alert and a
+// -clearAllUnsentMessagesAfterRefresh — and that is what makes its version of this
+// feature feel deliberate rather than fragile.
+//
+// The selector exists on the newer build only, so the older one refreshes as it
+// always has. A warning on one build and not the other is not ideal; a warning
+// nowhere is worse.
+%hook IGDirectInboxViewController
+
+- (void)pullToRefreshIfPossible {
+    if (!SCIWantsToKeepUnsent() || SCIHeldUnsendCount() == 0) {
+        %orig;
+        return;
+    }
+
+    [SCIUtils showToastForDuration:2.4
+                             title:SCILocalized(@"keep_unsent_refresh_warning")];
+
+    // Cleared here rather than left to drift: after this refresh they are gone from
+    // the chat, so continuing to count them would make the next warning a lie.
+    SCIClearHeldUnsends();
+
+    %orig;
 }
 
 %end

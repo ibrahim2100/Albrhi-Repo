@@ -9,6 +9,9 @@ newer versions are expected to work and you will be told if yours is untested.
   channel: a message someone unsends arrives on Instagram's live connection, not
   through the part we were listening to. Beta, off by default, under Stories &
   messages — and Diagnostics now shows which channel it saw.
+- **You're told when a refresh clears them.** Pulling to refresh reloads the chat from
+  Instagram, which wipes anything kept only on your phone. It used to happen without
+  a word.
 
 ## v3.6.2
 
