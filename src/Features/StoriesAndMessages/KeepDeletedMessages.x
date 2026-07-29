@@ -1,3 +1,4 @@
+#import <objc/message.h>
 #import <objc/runtime.h>
 #import "../../Utils.h"
 #import "../../InstagramHeaders.h"
@@ -195,6 +196,45 @@ static void SCIDefuseThreadUpdates(id updates, NSInteger depth) {
     if (fields) free(fields);
     if (followed) return;
 
+    // No usable fields — which is what a Swift class looks like from here. Its stored
+    // properties are reachable as zero-argument getters instead, so those are tried:
+    // any that returns an object gets walked, exactly as a field would have been.
+    //
+    // Confined to getters whose name mentions an update, and to objects that return
+    // one, so this is not a sweep of everything the class can do.
+    unsigned int methodCount = 0;
+    Method *methods = class_copyMethodList(cls, &methodCount);
+
+    for (unsigned int i = 0; methods && i < methodCount; i++) {
+        SEL selector = method_getName(methods[i]);
+        NSString *name = NSStringFromSelector(selector);
+
+        if ([name rangeOfString:@":"].location != NSNotFound) continue;
+        if ([name rangeOfString:@"pdate" options:NSCaseInsensitiveSearch].location == NSNotFound) continue;
+
+        // Object-returning only: calling a getter that hands back a scalar and
+        // treating the result as an object is how a tweak crashes an app.
+        // method_copyReturnType allocates, and this runs on every batch of updates,
+        // so it is freed rather than leaked a few bytes at a time.
+        char *returnType = method_copyReturnType(methods[i]);
+        BOOL returnsObject = (returnType && returnType[0] == '@');
+        free(returnType);
+
+        if (!returnsObject) continue;
+
+        id value = nil;
+        @try {
+            value = ((id (*)(id, SEL))objc_msgSend)(updates, selector);
+        } @catch (__unused id error) { continue; }
+
+        if (value && value != updates) {
+            followed = YES;
+            SCIDefuseThreadUpdates(value, depth + 1);
+        }
+    }
+    if (methods) free(methods);
+    if (followed) return;
+
     // Nothing matched, so report the object *and its object fields*. The class name
     // alone already moved this forward once — it named IGDirectCacheThreadUpdate
     // where IGDirectThreadUpdate was assumed — and if the search by type misses too,
@@ -211,6 +251,24 @@ static void SCIDefuseThreadUpdates(id updates, NSInteger depth) {
         if (encoding && encoding[0] == '@') [shape addObject:@(ivar_getName(all[i]))];
     }
     if (all) free(all);
+
+    // The last report came back with no fields at all, which rules out reading this
+    // through ivars entirely. A Swift class exposes its stored properties as methods
+    // rather than as ivars, so the methods are what to look at — and a getter
+    // returning the update is as good a way in as a field would have been.
+    unsigned int methodCount = 0;
+    Method *methods = class_copyMethodList(cls, &methodCount);
+
+    for (unsigned int i = 0; methods && i < methodCount && shape.count < 14; i++) {
+        NSString *name = NSStringFromSelector(method_getName(methods[i]));
+
+        // Getters only: no arguments, and not the memory-management plumbing.
+        if ([name rangeOfString:@":"].location != NSNotFound) continue;
+        if ([name hasPrefix:@"."] || [name isEqualToString:@"dealloc"]) continue;
+
+        [shape addObject:name];
+    }
+    if (methods) free(methods);
 
     [SCIDiagnostics recordUnsendPath:@"unmatched"
                               detail:[NSString stringWithFormat:@"%@ {%@}",

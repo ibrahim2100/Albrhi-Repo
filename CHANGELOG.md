@@ -3,6 +3,11 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.7.5
+
+- Keeping unsent messages: the update Instagram sends keeps its contents behind
+  getters rather than plain fields, so it is read that way now.
+
 ## v3.7.4
 
 - Another go at keeping unsent messages: it was looking for the wrong field name
