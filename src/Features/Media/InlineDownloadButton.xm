@@ -5,6 +5,7 @@
 #import "../../Downloader/SCIMediaDownloader.h"
 #import "../../Localization/SCILocalize.h"
 #import "../../Settings/SCIDiagnosticsViewController.h"
+#import "../../Features/General/SCIDateFormat.h"
 
 ///
 /// Inline download button
@@ -20,6 +21,48 @@
 ///
 
 static const NSInteger SCIInlineDownloadButtonTag = 0x5CD10;
+static const NSInteger SCIReelDateLabelTag = 0x5CDA7;
+
+/// When a reel was posted, written in whichever format the user chose.
+///
+/// Instagram shows a date on a feed post and none at all on a reel, so there is no
+/// way to tell whether the thing on screen went up this morning or three years ago.
+/// The media carries the timestamp — -takenAt on both tested builds — it is simply
+/// never drawn.
+static NSString *SCIReelDateTextForBar(UIView *bar) {
+    id media = SCIMediaForButtonBar(bar);
+    if (!media) return nil;
+
+    NSDate *date = nil;
+    for (NSString *key in @[@"takenAtDate", @"takenAt", @"creationDate"]) {
+        id value = nil;
+        @try { value = [media valueForKey:key]; } @catch (__unused id e) {}
+
+        if ([value isKindOfClass:[NSDate class]]) { date = value; break; }
+
+        // -takenAt is a unix timestamp on some builds and an NSDate on others.
+        if ([value isKindOfClass:[NSNumber class]] && [value doubleValue] > 1000000000.0) {
+            date = [NSDate dateWithTimeIntervalSince1970:[value doubleValue]];
+            break;
+        }
+    }
+    if (!date) return nil;
+
+    // The chosen format when the date feature is on, so this matches every other
+    // timestamp in the app; a plain short date when it is off, since someone who has
+    // not set a format still needs this one to be readable.
+    NSString *formatted = [SCIDateFormat enabled] ? [SCIDateFormat stringForDate:date] : nil;
+    if (formatted.length) return formatted;
+
+    static NSDateFormatter *fallback = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        fallback = [[NSDateFormatter alloc] init];
+        fallback.dateStyle = NSDateFormatterShortStyle;
+        fallback.timeStyle = NSDateFormatterNoStyle;
+    });
+    return [fallback stringFromDate:date];
+}
 
 // Does this object actually carry a downloadable payload?
 static BOOL SCIHasMediaPayload(id candidate) {
@@ -378,6 +421,53 @@ static void SCILayoutInlineButton(UIView *bar, id target) {
     button.frame = frame;
 
     [bar bringSubviewToFront:button];
+
+    if (vertical) SCILayoutReelDate(bar, button, side);
+}
+
+/// Draws the date under the download button on the reels sidebar. Only there: a feed
+/// post already shows its own timestamp, and a second one would be noise.
+static void SCILayoutReelDate(UIView *bar, UIButton *button, CGFloat side) {
+    UILabel *label = (UILabel *)[bar viewWithTag:SCIReelDateLabelTag];
+
+    if (![SCIUtils getBoolPref:@"reels_show_date"]) {
+        [label removeFromSuperview];
+        return;
+    }
+
+    NSString *text = SCIReelDateTextForBar(bar);
+    if (!text.length) {
+        label.hidden = YES;
+        return;
+    }
+
+    if (!label) {
+        label = [[UILabel alloc] init];
+        label.tag = SCIReelDateLabelTag;
+        label.textAlignment = NSTextAlignmentCenter;
+        label.font = [UIFont systemFontOfSize:10 weight:UIFontWeightSemibold];
+        label.textColor = [UIColor whiteColor];
+        label.numberOfLines = 1;
+        label.adjustsFontSizeToFitWidth = YES;
+        label.minimumScaleFactor = 0.7;
+
+        // A dark plate, because a reel behind it can be any colour.
+        label.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.45];
+        label.layer.cornerRadius = 6.0;
+        label.layer.masksToBounds = YES;
+
+        [bar addSubview:label];
+    }
+
+    label.hidden = NO;
+    label.text = text;
+
+    CGFloat width = MAX(side * 2.2, 62.0);
+    label.frame = CGRectMake(CGRectGetMidX(button.frame) - width / 2.0,
+                             CGRectGetMaxY(button.frame) + 4.0,
+                             width, 16.0);
+
+    [bar bringSubviewToFront:label];
 }
 
 static void SCILogRowOnce(UIView *bar) {

@@ -166,6 +166,12 @@
     detail.userInteractionEnabled = NO;
 
     NSMutableArray<NSString *> *parts = [NSMutableArray array];
+
+    // Frame rate first: at one resolution it is the difference people actually feel,
+    // and a 60 fps rung is worth waiting longer for in a way a higher bitrate is not.
+    int fps = (int)round([option[@"fps"] doubleValue]);
+    if (fps > 0) [parts addObject:[NSString stringWithFormat:@"%d fps", fps]];
+
     if (bandwidth > 0) {
         [parts addObject:[NSString stringWithFormat:@"%.1f Mbps", bandwidth / 1000000.0]];
     }

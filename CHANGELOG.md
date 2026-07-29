@@ -3,6 +3,14 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.6.0
+
+- **See when a reel was posted.** Instagram shows a date on posts but never on reels.
+  Turn it on under Reels and it appears under the download button.
+- **The eye button on stories now skips to the next one,** and turns green once the
+  view has actually been sent — so you can tell it worked.
+- **The quality list shows frame rate too**, so you can spot the 60 fps one.
+
 ## v3.5.2
 
 - **The download button is back on reels** for the newer Instagram, where the sidebar

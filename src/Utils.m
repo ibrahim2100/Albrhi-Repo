@@ -768,7 +768,10 @@ static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
             NSNumber *height = rep[@"height"];
             NSDictionary *existing = byHeight[height];
 
-            if (!existing || [rep[@"bandwidth"] longLongValue] > [existing[@"bandwidth"] longLongValue]) {
+            // Ranked the same way the transcoder ranks, so the option offered for a
+            // height is exactly the rendition that will be fetched for it. Comparing
+            // bitrate alone could show 30 fps while the transcoder took the 60.
+            if (!existing || [self dashRep:rep beats:existing]) {
                 byHeight[height] = rep;
             }
         }

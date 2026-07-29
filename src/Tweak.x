@@ -18,7 +18,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v3.5.2";  // Albrhi
+NSString *SCIVersionString = @"v3.6.0";  // Albrhi
 
 // Variables that work across features
 
@@ -100,7 +100,10 @@ NSString *SCIVersionString = @"v3.5.2";  // Albrhi
         @"keep_unsent_messages": @(NO),
         // An on-screen toggle for reels auto-scroll, on the sidebar above the
         // download button. Off by default; the feature itself is reels_auto_next.
-        @"reels_autoscroll_button": @(NO)
+        @"reels_autoscroll_button": @(NO),
+        // Reels never show when they were posted. Off by default: it adds something
+        // Instagram does not draw, and that should be asked for.
+        @"reels_show_date": @(NO)
     };
     [[NSUserDefaults standardUserDefaults] registerDefaults:sciDefaults];
 

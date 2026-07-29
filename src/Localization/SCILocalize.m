@@ -571,6 +571,8 @@ static NSDictionary *_arTable = nil;
         @"p_reels_autonext_s": @"When a reel finishes, move to the next on its own",
         @"p_reels_autonextbtn_t": @"Auto-scroll button on reels",
         @"p_reels_autonextbtn_s": @"Adds a button on the reel sidebar, above the download button, to turn auto-scroll on and off",
+        @"p_reels_date_t": @"Show when a reel was posted",
+        @"p_reels_date_s": @"Instagram shows a date on posts but never on reels. This puts it under the download button, in your chosen format",
         @"reels_autonext_on": @"Auto-scroll on",
         @"reels_autonext_off": @"Auto-scroll off",
     };
@@ -1098,6 +1100,8 @@ static NSDictionary *_arTable = nil;
         @"p_reels_autonext_s": @"عند انتهاء الريل ينتقل إلى التالي تلقائيًا",
         @"p_reels_autonextbtn_t": @"زر التمرير التلقائي على الريلز",
         @"p_reels_autonextbtn_s": @"يضيف زرًا على شريط الريل، فوق زر التحميل، لتشغيل وإيقاف التمرير التلقائي",
+        @"p_reels_date_t": @"إظهار تاريخ نشر الريل",
+        @"p_reels_date_s": @"انستقرام يعرض التاريخ على المنشورات ولا يعرضه على الريلز أبدًا. هذا يضعه تحت زر التحميل، بالتنسيق الذي اخترته",
         @"reels_autonext_on": @"التمرير التلقائي مُفعّل",
         @"reels_autonext_off": @"التمرير التلقائي مُوقف",
     };

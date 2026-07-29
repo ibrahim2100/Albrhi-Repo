@@ -34,6 +34,9 @@
 /// through, so the story being watched right now does register with its author.
 extern BOOL storySeenOverrideEnabled;
 
+/// Posted when a seen receipt is actually allowed out.
+NSString * const SCIStorySeenSentNotification = @"SCIStorySeenSent";
+
 /// Whether the receipt should be blocked right now.
 static BOOL SCIShouldBlockSeenReceipt(void) {
     if (![SCIUtils getBoolPref:@"no_seen_receipt"]) return NO;
@@ -47,6 +50,13 @@ static BOOL SCIShouldBlockSeenReceipt(void) {
 
 - (id)networker {
     if (!SCIShouldBlockSeenReceipt()) {
+        // Blocking is on but this one is being let through — the eye was pressed.
+        // Announced so the button can show that the receipt really went, rather than
+        // just that a tap was registered.
+        if ([SCIUtils getBoolPref:@"no_seen_receipt"]) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:SCIStorySeenSentNotification
+                                                                object:nil];
+        }
         return %orig;
     }
 

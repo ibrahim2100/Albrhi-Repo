@@ -1,5 +1,7 @@
 #import "../../InstagramHeaders.h"
 #import <objc/message.h>
+
+extern NSString * const SCIStorySeenSentNotification;
 #import "../../Utils.h"
 #import "../../Localization/SCILocalize.h"
 #import "../../Downloader/SCIMediaDownloader.h"
@@ -35,9 +37,34 @@ static void SCIUpdateSeenButtonAppearance(UIButton *button) {
     button.accessibilityLabel = SCILocalized(@"story_seen_mark_skip");
 }
 
+/// The paged scroll view the stories sit in, for builds that expose no section
+/// controller. Reels are paged the same way, and it is the only route the older
+/// Instagram leaves open: it has no -currentlyDisplayedSectionController at all,
+/// which is why the skip did nothing there.
+static UIScrollView *SCIStoryPager(UIView *view, NSInteger depth) {
+    if (!view || depth > 4) return nil;
+
+    for (UIView *sub in view.subviews) {
+        if ([sub isKindOfClass:[UIScrollView class]]) {
+            UIScrollView *scroller = (UIScrollView *)sub;
+
+            // Horizontal and at least a page wide — the story pager, not the reply
+            // bar's own scrolling or a nested carousel.
+            if (scroller.contentSize.width > scroller.bounds.size.width + 1
+                && scroller.bounds.size.width > 100) {
+                return scroller;
+            }
+        }
+
+        UIScrollView *nested = SCIStoryPager(sub, depth + 1);
+        if (nested) return nested;
+    }
+    return nil;
+}
+
 /// The section controller driving the story on screen, which is what knows how to
 /// move to the next one. Reached by trying the accessors the two builds use, and
-/// nil where none of them fit — the mark-as-seen half still works without it.
+/// nil where none of them fit — the pager above covers that case.
 static id SCICurrentStorySection(UIViewController *viewer) {
     for (NSString *key in @[@"currentlyDisplayedSectionController",
                             @"currentSectionController",
@@ -79,6 +106,11 @@ static id SCICurrentStorySection(UIViewController *viewer) {
     SCIUpdateSeenButtonAppearance(button);
 
     [button addTarget:self action:@selector(sciToggleStorySeen:) forControlEvents:UIControlEventTouchUpInside];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(sciSeenReceiptWasSent:)
+                                                 name:SCIStorySeenSentNotification
+                                               object:nil];
 
     [self.view addSubview:button];
 
@@ -122,6 +154,22 @@ static id SCICurrentStorySection(UIViewController *viewer) {
     ]];
 }
 
+%new - (void)sciSeenReceiptWasSent:(NSNotification *)note {
+    UIButton *button = (UIButton *)[self.view viewWithTag:SCIStorySeenButtonTag];
+    if (!button) return;
+
+    // Green means the author has been told — not merely that the button was pressed.
+    // It is posted from the uploader, so it cannot appear unless a receipt really
+    // went out.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        button.tintColor = [UIColor systemGreenColor];
+
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            button.tintColor = [UIColor whiteColor];
+        });
+    });
+}
+
 %new - (void)sciToggleStorySeen:(UIButton *)sender {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
 
@@ -132,10 +180,25 @@ static id SCICurrentStorySection(UIViewController *viewer) {
 
     [SCIUtils showToastForDuration:1.4 title:SCILocalized(@"story_seen_marked_toast")];
 
-    id section = SCICurrentStorySection(self);
-    if (section) {
-        ((void (*)(id, SEL, NSInteger))objc_msgSend)(section, @selector(advanceToNextItemWithNavigationAction:), 0);
-    }
+    // Given a moment so the receipt for this story is on its way before the view
+    // moves on; advancing instantly can cut it off.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        id section = SCICurrentStorySection(self);
+
+        if (section) {
+            ((void (*)(id, SEL, NSInteger))objc_msgSend)(section, @selector(advanceToNextItemWithNavigationAction:), 0);
+            return;
+        }
+
+        UIScrollView *pager = SCIStoryPager(self.view, 0);
+        if (!pager) return;
+
+        CGFloat page = pager.bounds.size.width;
+        CGFloat next = pager.contentOffset.x + page;
+        if (page < 1.0 || next > pager.contentSize.width - page + 1.0) return;
+
+        [pager setContentOffset:CGPointMake(next, pager.contentOffset.y) animated:YES];
+    });
 
     // Long enough for the receipt to have been built and sent for this story, short
     // enough that the next one is still covered.
