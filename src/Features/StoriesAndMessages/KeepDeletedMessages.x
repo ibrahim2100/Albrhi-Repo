@@ -281,7 +281,10 @@ static void SCIDefuseThreadUpdates(id updates, NSInteger depth) {
 // nowhere is worse.
 %hook IGDirectInboxViewController
 
-%new - (void)sciWarnAboutRefresh {
+// A plain function rather than a %new method: sending a message to the hooked class
+// would need an @interface for it, since Logos only forward-declares what it hooks —
+// the rule this project already wrote down after the same mistake.
+static void SCIWarnAboutRefresh(void) {
     if (!SCIWantsToKeepUnsent() || SCIHeldUnsendCount() == 0) return;
 
     [SCIUtils showToastForDuration:2.4
@@ -294,7 +297,7 @@ static void SCIDefuseThreadUpdates(id updates, NSInteger depth) {
 
 // The newer build.
 - (void)pullToRefreshIfPossible {
-    [self sciWarnAboutRefresh];
+    SCIWarnAboutRefresh();
 
     %orig;
 }
@@ -302,7 +305,7 @@ static void SCIDefuseThreadUpdates(id updates, NSInteger depth) {
 // The older build spells it with a leading underscore, which is why the warning never
 // appeared there — the hook was attached to a name that build does not have.
 - (void)_pullToRefreshIfPossible {
-    [self sciWarnAboutRefresh];
+    SCIWarnAboutRefresh();
 
     %orig;
 }

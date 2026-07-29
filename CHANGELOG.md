@@ -3,6 +3,10 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.7.3
+
+- Fixes the 3.7.2 build, which did not compile and so never shipped.
+
 ## v3.7.2
 
 - The refresh warning now works on both Instagram versions.
