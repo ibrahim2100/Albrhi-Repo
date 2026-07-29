@@ -218,6 +218,73 @@ static char rowStaticRef[] = "row";
     return out;
 }
 
+/// The words a setting is worth finding by, beyond the ones printed on it.
+///
+/// Searching only the visible text means the word you reach for has to be the word
+/// the row happens to use. Someone typing "حفظ" wants the download rows; someone
+/// typing "ads" in an Arabic interface finds nothing at all, and vice versa. Neither
+/// is a spelling mistake — they are simply different names for the same thing.
+///
+/// Each entry is one idea: everything on the line finds everything else on it, in
+/// both languages. Matching is on the row's own text, so nothing has to be tagged.
++ (NSArray<NSArray<NSString *> *> *)synonymGroups {
+    static NSArray<NSArray<NSString *> *> *groups = nil;
+    static dispatch_once_t onceToken;
+
+    dispatch_once(&onceToken, ^{
+        groups = @[
+            @[@"download", @"save", @"تحميل", @"تنزيل", @"حفظ"],
+            @[@"video", @"reel", @"reels", @"فيديو", @"ريل", @"ريلز", @"مقطع"],
+            @[@"photo", @"image", @"picture", @"صورة", @"صور"],
+            @[@"story", @"stories", @"قصة", @"قصص", @"ستوري"],
+            @[@"message", @"messages", @"dm", @"direct", @"chat", @"رسالة", @"رسائل", @"خاص", @"محادثة"],
+            @[@"seen", @"receipt", @"read", @"مشاهدة", @"قراءة", @"مقروء", @"إيصال"],
+            @[@"hide", @"remove", @"block", @"إخفاء", @"اخفاء", @"حذف", @"منع"],
+            @[@"ad", @"ads", @"sponsored", @"إعلان", @"إعلانات", @"اعلانات", @"ممول"],
+            @[@"quality", @"resolution", @"1080", @"2k", @"جودة", @"دقة", @"وضوح"],
+            @[@"date", @"time", @"clock", @"تاريخ", @"وقت", @"توقيت", @"ساعة"],
+            @[@"theme", @"colour", @"color", @"dark", @"oled", @"سمة", @"لون", @"مظهر", @"داكن", @"أسود"],
+            @[@"icon", @"أيقونة", @"ايقونة", @"شعار"],
+            @[@"confirm", @"ask", @"alert", @"تأكيد", @"تاكيد", @"سؤال", @"تنبيه"],
+            @[@"privacy", @"private", @"hidden", @"خصوصية", @"خفي", @"سري"],
+            @[@"typing", @"كتابة", @"يكتب"],
+            @[@"audio", @"sound", @"music", @"voice", @"صوت", @"صوتي", @"موسيقى", @"أغنية"],
+            @[@"backup", @"restore", @"export", @"import", @"نسخة", @"نسخ", @"استعادة", @"تصدير", @"استيراد"],
+            @[@"language", @"arabic", @"english", @"لغة", @"عربي", @"إنجليزي"],
+            @[@"profile", @"account", @"user", @"حساب", @"ملف", @"بروفايل"],
+            @[@"feed", @"home", @"timeline", @"صفحة", @"رئيسية", @"تغذية"],
+            @[@"comment", @"comments", @"تعليق", @"تعليقات"],
+            @[@"like", @"إعجاب", @"اعجاب", @"لايك"],
+            @[@"follow", @"follower", @"following", @"متابعة", @"متابع", @"يتابع"]
+        ];
+    });
+
+    return groups;
+}
+
+/// Every word worth trying for this query — the query itself, plus anything that
+/// means the same. A query matching no group searches for exactly what was typed.
++ (NSArray<NSString *> *)termsForQuery:(NSString *)query {
+    NSMutableArray<NSString *> *terms = [NSMutableArray arrayWithObject:query];
+
+    for (NSArray<NSString *> *group in [self synonymGroups]) {
+        BOOL inGroup = NO;
+        for (NSString *word in group) {
+            // Prefix rather than equality, so "تحمي" on the way to "تحميل" already
+            // works and a search narrows as it is typed instead of only at the end.
+            if ([word rangeOfString:query options:NSCaseInsensitiveSearch].location == 0
+                || [query rangeOfString:word options:NSCaseInsensitiveSearch].location == 0) {
+                inGroup = YES;
+                break;
+            }
+        }
+
+        if (inGroup) [terms addObjectsFromArray:group];
+    }
+
+    return terms;
+}
+
 - (void)updateSearchResultsForSearchController:(UISearchController *)searchController {
     NSString *query = [searchController.searchBar.text stringByTrimmingCharactersInSet:
                        [NSCharacterSet whitespaceCharacterSet]];
@@ -230,10 +297,23 @@ static char rowStaticRef[] = "row";
 
     if (!self.searchIndex) self.searchIndex = [self flattenSections:self.sections];
 
+    NSArray<NSString *> *terms = [SCISettingsViewController termsForQuery:query];
+
     NSMutableArray<SCISetting *> *matches = [NSMutableArray array];
     for (SCISetting *row in self.searchIndex) {
-        BOOL hit = (row.title.length && [row.title rangeOfString:query options:NSCaseInsensitiveSearch].location != NSNotFound)
-                || (row.subtitle.length && [row.subtitle rangeOfString:query options:NSCaseInsensitiveSearch].location != NSNotFound);
+        BOOL hit = NO;
+
+        for (NSString *term in terms) {
+            if (row.title.length && [row.title rangeOfString:term options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                hit = YES;
+                break;
+            }
+            if (row.subtitle.length && [row.subtitle rangeOfString:term options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                hit = YES;
+                break;
+            }
+        }
+
         if (hit) [matches addObject:row];
     }
 

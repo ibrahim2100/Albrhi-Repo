@@ -3,6 +3,12 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.8.0
+
+- **Settings search understands what you meant.** Type "حفظ" and the download settings
+  come up; type "ads" with the tweak in Arabic and the ad settings come up. It works
+  in either language and while you are still typing.
+
 ## v3.7.6
 
 - Fixes the 3.7.5 build, which did not compile and so never shipped.
