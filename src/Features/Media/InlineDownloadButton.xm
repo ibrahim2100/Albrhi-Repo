@@ -1,3 +1,5 @@
+#import <substrate.h>
+#import <objc/runtime.h>
 #import "../../InstagramHeaders.h"
 #import "../../Utils.h"
 #import "../../Downloader/SCIMediaDownloader.h"
@@ -457,3 +459,45 @@ static void SCIRefreshInlineButton(UIView *bar, id target) {
 }
 
 %end
+
+// MARK: - The newer build's reels bar
+
+// On the older Instagram the reels sidebar is IGSundialViewerVerticalUFI, an
+// Objective-C class the %hook above reaches. On the newer one the same view became a
+// Swift class, and its runtime name is mangled — Logos cannot name it, so the hook
+// found nothing and the download button simply never appeared on reels there.
+//
+// Bound by mangled name instead. The class exists on exactly one of the two builds,
+// so the other skips this entirely and behaves as it always has.
+
+static void (*orig_swiftReelsLayout)(id, SEL);
+
+static void sci_swiftReelsLayout(id self, SEL _cmd) {
+    if (orig_swiftReelsLayout) orig_swiftReelsLayout(self, _cmd);
+
+    SCIRefreshInlineButton((UIView *)self, self);
+}
+
+// The button targets its bar, so the Swift class needs this method too — the %new
+// above only adds it to the classes Logos hooked.
+static void sci_swiftReelsPressed(id self, __unused SEL _cmd, UIButton *sender) {
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+
+    SCIHandleDownloadForBar((UIView *)self, sender);
+}
+
+%ctor {
+    @autoreleasepool {
+        Class bar = objc_getClass("_TtC26IGSundialViewerVerticalUFI26IGSundialViewerVerticalUFI");
+        if (!bar) return;
+
+        class_addMethod(bar, @selector(sciInlineDownloadPressed:), (IMP)sci_swiftReelsPressed, "v@:@");
+
+        SEL layout = @selector(layoutSubviews);
+        if (!class_getInstanceMethod(bar, layout)) return;
+
+        MSHookMessageEx(bar, layout, (IMP)sci_swiftReelsLayout, (IMP *)&orig_swiftReelsLayout);
+
+        SCILogV(@"[Albrhi] Inline download: bound the Swift reels bar");
+    }
+}

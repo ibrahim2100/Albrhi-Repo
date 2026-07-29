@@ -63,6 +63,7 @@ static SCIFeatureAuditResult *SCICheckAny(NSString *feature, NSArray<NSArray<NSS
     [results addObject:SCICheckAny(SCILocalized(@"audit_inline_button"), @[
         @[@"IGUFIInteractionCountsView", @"layoutSubviews"],
         @[@"IGSundialViewerVerticalUFI", @"layoutSubviews"],
+        @[@"_TtC26IGSundialViewerVerticalUFI26IGSundialViewerVerticalUFI", @"layoutSubviews"],
         @[@"IGUFIButtonBarView", @"layoutSubviews"]
     ])];
 

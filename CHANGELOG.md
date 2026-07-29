@@ -3,6 +3,12 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.5.2
+
+- **The download button is back on reels** for the newer Instagram, where the sidebar
+  it attaches to had been rewritten and Albrhi could no longer find it. The older
+  version is unaffected.
+
 ## v3.5.1
 
 - Fixes the 3.5.0 build, which did not compile and so never shipped.
