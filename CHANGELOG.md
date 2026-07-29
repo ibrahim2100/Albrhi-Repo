@@ -3,6 +3,10 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.6.1
+
+- Fixes the 3.6.0 build, which did not compile and so never shipped.
+
 ## v3.6.0
 
 - **See when a reel was posted.** Instagram shows a date on posts but never on reels.

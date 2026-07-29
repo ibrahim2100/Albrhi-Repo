@@ -23,6 +23,11 @@
 static const NSInteger SCIInlineDownloadButtonTag = 0x5CD10;
 static const NSInteger SCIReelDateLabelTag = 0x5CDA7;
 
+// Declared ahead of use: the date helpers sit beside the code they belong with
+// rather than being ordered by what C needs to see first.
+static id SCIMediaForButtonBar(UIView *bar);
+static void SCILayoutReelDate(UIView *bar, UIButton *button, CGFloat side);
+
 /// When a reel was posted, written in whichever format the user chose.
 ///
 /// Instagram shows a date on a feed post and none at all on a reel, so there is no
