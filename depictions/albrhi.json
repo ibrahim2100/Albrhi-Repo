@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.5.2\n\n- **The download button is back on reels** for the newer Instagram, where the sidebar\n  it attaches to had been rewritten and Albrhi could no longer find it. The older\n  version is unaffected.\n\n## v3.5.1\n\n- Fixes the 3.5.0 build, which did not compile and so never shipped.\n\n## v3.5.0\n\n- **Choose the video quality (beta).** Reels carry up to 2K, and Albrhi still takes\n  the best automatically — that has not changed. Turn this on under Downloads and it\n  asks instead, listing every resolution with its size, so you can take 1080p when 2K\n  is more waiting and storage than you wanted.",
+          "markdown": "## v3.6.1\n\n- Fixes the 3.6.0 build, which did not compile and so never shipped.\n\n## v3.6.0\n\n- **See when a reel was posted.** Instagram shows a date on posts but never on reels.\n  Turn it on under Reels and it appears under the download button.\n- **The eye button on stories now skips to the next one,** and turns green once the\n  view has actually been sent — so you can tell it worked.\n- **The quality list shows frame rate too**, so you can spot the 60 fps one.\n\n## v3.5.2\n\n- **The download button is back on reels** for the newer Instagram, where the sidebar\n  it attaches to had been rewritten and Albrhi could no longer find it. The older\n  version is unaffected.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.5.2"
+          "text": "3.6.1"
         },
         {
           "class": "DepictionTableTextView",
