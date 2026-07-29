@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.6.1\n\n- Fixes the 3.6.0 build, which did not compile and so never shipped.\n\n## v3.6.0\n\n- **See when a reel was posted.** Instagram shows a date on posts but never on reels.\n  Turn it on under Reels and it appears under the download button.\n- **The eye button on stories now skips to the next one,** and turns green once the\n  view has actually been sent — so you can tell it worked.\n- **The quality list shows frame rate too**, so you can spot the 60 fps one.\n\n## v3.5.2\n\n- **The download button is back on reels** for the newer Instagram, where the sidebar\n  it attaches to had been rewritten and Albrhi could no longer find it. The older\n  version is unaffected.",
+          "markdown": "## v3.6.2\n\n- **The story eye now moves to the next story of the same person** instead of jumping\n  to another account.\n- **It turns green properly** once the view has been sent.\n- **The reel's date is no longer cut off,** and sits beside the account name.\n\n## v3.6.1\n\n- Fixes the 3.6.0 build, which did not compile and so never shipped.\n\n## v3.6.0\n\n- **See when a reel was posted.** Instagram shows a date on posts but never on reels.\n  Turn it on under Reels and it appears under the download button.\n- **The eye button on stories now skips to the next one,** and turns green once the\n  view has actually been sent — so you can tell it worked.\n- **The quality list shows frame rate too**, so you can spot the 60 fps one.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.6.1"
+          "text": "3.6.2"
         },
         {
           "class": "DepictionTableTextView",
