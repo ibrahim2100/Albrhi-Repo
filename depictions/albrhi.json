@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.5.1\n\n- Fixes the 3.5.0 build, which did not compile and so never shipped.\n\n## v3.5.0\n\n- **Choose the video quality (beta).** Reels carry up to 2K, and Albrhi still takes\n  the best automatically — that has not changed. Turn this on under Downloads and it\n  asks instead, listing every resolution with its size, so you can take 1080p when 2K\n  is more waiting and storage than you wanted.\n\n## v3.4.2\n\n- Diagnostics now reports how many video qualities a post really offers, and how many\n  of them iPhone can actually save. Groundwork for bringing back the quality picker.",
+          "markdown": "## v3.5.2\n\n- **The download button is back on reels** for the newer Instagram, where the sidebar\n  it attaches to had been rewritten and Albrhi could no longer find it. The older\n  version is unaffected.\n\n## v3.5.1\n\n- Fixes the 3.5.0 build, which did not compile and so never shipped.\n\n## v3.5.0\n\n- **Choose the video quality (beta).** Reels carry up to 2K, and Albrhi still takes\n  the best automatically — that has not changed. Turn this on under Downloads and it\n  asks instead, listing every resolution with its size, so you can take 1080p when 2K\n  is more waiting and storage than you wanted.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.5.1"
+          "text": "3.5.2"
         },
         {
           "class": "DepictionTableTextView",
