@@ -3,6 +3,10 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.5.1
+
+- Fixes the 3.5.0 build, which did not compile and so never shipped.
+
 ## v3.5.0
 
 - **Choose the video quality (beta).** Reels carry up to 2K, and Albrhi still takes

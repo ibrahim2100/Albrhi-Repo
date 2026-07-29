@@ -40,8 +40,6 @@
 }
 
 - (void)buildCard {
-    UIColor *accent = [SCIUtils SCIColor_Primary];
-
     UIVisualEffectView *blur = [[UIVisualEffectView alloc]
         initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemThickMaterial]];
     blur.translatesAutoresizingMaskIntoConstraints = NO;
