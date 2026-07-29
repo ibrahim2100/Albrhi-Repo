@@ -3,6 +3,12 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.7.2
+
+- The refresh warning now works on both Instagram versions.
+- Diagnostics reports what an unsend update actually contained, so the last piece of
+  keeping unsent messages can be finished.
+
 ## v3.7.1
 
 - Ships the refresh warning that missed the 3.7.0 release.

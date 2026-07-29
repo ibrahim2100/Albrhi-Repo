@@ -166,10 +166,21 @@ static void SCIDefuseThreadUpdates(id updates, NSInteger depth) {
     // only these three: an earlier version followed every object field of anything
     // Instagram-shaped, on every batch, which was slow and the likely cause of a
     // crash around GIFs. Naming them keeps the reach without the risk.
+    BOOL followed = NO;
     for (NSString *field in @[@"_threadUpdates", @"_updates", @"_deltas"]) {
         Ivar ivar = class_getInstanceVariable(cls, field.UTF8String);
-        if (ivar) SCIDefuseThreadUpdates(object_getIvar(updates, ivar), depth + 1);
+        if (!ivar) continue;
+
+        followed = YES;
+        SCIDefuseThreadUpdates(object_getIvar(updates, ivar), depth + 1);
     }
+    if (followed) return;
+
+    // Nothing here matched, so say what this actually was. Reporting only the class
+    // handed to the hook named the container — "__NSSingleObjectArrayI" — which says
+    // the hook fired and nothing about why it found no removal inside. The object
+    // that failed to match is the fact worth having.
+    [SCIDiagnostics recordUnsendPath:@"unmatched" detail:NSStringFromClass(cls)];
 }
 
 // MARK: - The realtime channel
@@ -270,11 +281,8 @@ static void SCIDefuseThreadUpdates(id updates, NSInteger depth) {
 // nowhere is worse.
 %hook IGDirectInboxViewController
 
-- (void)pullToRefreshIfPossible {
-    if (!SCIWantsToKeepUnsent() || SCIHeldUnsendCount() == 0) {
-        %orig;
-        return;
-    }
+%new - (void)sciWarnAboutRefresh {
+    if (!SCIWantsToKeepUnsent() || SCIHeldUnsendCount() == 0) return;
 
     [SCIUtils showToastForDuration:2.4
                              title:SCILocalized(@"keep_unsent_refresh_warning")];
@@ -282,6 +290,19 @@ static void SCIDefuseThreadUpdates(id updates, NSInteger depth) {
     // Cleared here rather than left to drift: after this refresh they are gone from
     // the chat, so continuing to count them would make the next warning a lie.
     SCIClearHeldUnsends();
+}
+
+// The newer build.
+- (void)pullToRefreshIfPossible {
+    [self sciWarnAboutRefresh];
+
+    %orig;
+}
+
+// The older build spells it with a leading underscore, which is why the warning never
+// appeared there — the hook was attached to a name that build does not have.
+- (void)_pullToRefreshIfPossible {
+    [self sciWarnAboutRefresh];
 
     %orig;
 }
