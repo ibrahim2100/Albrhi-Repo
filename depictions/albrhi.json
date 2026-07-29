@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.7.4\n\n- Another go at keeping unsent messages: it was looking for the wrong field name\n  inside the update Instagram sends. It now finds it by what it holds instead.\n\n## v3.7.3\n\n- Fixes the 3.7.2 build, which did not compile and so never shipped.\n\n## v3.7.2\n\n- The refresh warning now works on both Instagram versions.\n- Diagnostics reports what an unsend update actually contained, so the last piece of\n  keeping unsent messages can be finished.",
+          "markdown": "## v3.7.6\n\n- Fixes the 3.7.5 build, which did not compile and so never shipped.\n\n## v3.7.5\n\n- Keeping unsent messages: the update Instagram sends keeps its contents behind\n  getters rather than plain fields, so it is read that way now.\n\n## v3.7.4\n\n- Another go at keeping unsent messages: it was looking for the wrong field name\n  inside the update Instagram sends. It now finds it by what it holds instead.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.7.4"
+          "text": "3.7.6"
         },
         {
           "class": "DepictionTableTextView",
