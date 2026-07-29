@@ -3,6 +3,13 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.6.2
+
+- **The story eye now moves to the next story of the same person** instead of jumping
+  to another account.
+- **It turns green properly** once the view has been sent.
+- **The reel's date is no longer cut off,** and sits beside the account name.
+
 ## v3.6.1
 
 - Fixes the 3.6.0 build, which did not compile and so never shipped.

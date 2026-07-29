@@ -46,6 +46,31 @@ static BOOL SCIShouldBlockSeenReceipt(void) {
 
 // MARK: - The uploader's way out
 
+// A seen report being *built* while the override is on means the eye was pressed and
+// this one is going out. Announced from here as well as from the uploader below: that
+// class is three methods deep and its -networker is evidently not asked for on every
+// build, which is why the button never turned green. This object is constructed on
+// both, so the signal arrives either way. Nothing is changed — %orig is untouched.
+%hook IGStorySeenState
+
+- (id)initWithReelSeenDictionary:(id)reelSeen
+              liveSeenDictionary:(id)liveSeen
+           reelSkippedDictionary:(id)reelSkipped
+           liveSkippedDictionary:(id)liveSkipped
+                 containerModule:(id)containerModule
+                    pushCategory:(id)pushCategory
+                    forceSeenIds:(id)forceSeenIds {
+
+    if (storySeenOverrideEnabled && [SCIUtils getBoolPref:@"no_seen_receipt"]) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:SCIStorySeenSentNotification
+                                                            object:nil];
+    }
+
+    return %orig;
+}
+
+%end
+
 %hook IGStorySeenStateUploader
 
 - (id)networker {

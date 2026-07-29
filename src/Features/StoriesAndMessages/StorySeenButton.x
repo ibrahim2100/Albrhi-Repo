@@ -37,35 +37,27 @@ static void SCIUpdateSeenButtonAppearance(UIButton *button) {
     button.accessibilityLabel = SCILocalized(@"story_seen_mark_skip");
 }
 
-/// The paged scroll view the stories sit in, for builds that expose no section
-/// controller. Reels are paged the same way, and it is the only route the older
-/// Instagram leaves open: it has no -currentlyDisplayedSectionController at all,
-/// which is why the skip did nothing there.
-static UIScrollView *SCIStoryPager(UIView *view, NSInteger depth) {
-    if (!view || depth > 4) return nil;
+/// The section controller for the story on screen right now.
+///
+/// The older Instagram exposes no accessor for it, so it is caught as it goes past
+/// instead: the viewer is told which controller is about to display a story, and
+/// that controller is the one that knows how to move to the next item *within* this
+/// person's stories.
+///
+/// Weak, because it belongs to Instagram and outliving it here would be a leak at
+/// best. A stale one simply fails the check below.
+static __weak id sciCurrentStorySection = nil;
 
-    for (UIView *sub in view.subviews) {
-        if ([sub isKindOfClass:[UIScrollView class]]) {
-            UIScrollView *scroller = (UIScrollView *)sub;
-
-            // Horizontal and at least a page wide — the story pager, not the reply
-            // bar's own scrolling or a nested carousel.
-            if (scroller.contentSize.width > scroller.bounds.size.width + 1
-                && scroller.bounds.size.width > 100) {
-                return scroller;
-            }
-        }
-
-        UIScrollView *nested = SCIStoryPager(sub, depth + 1);
-        if (nested) return nested;
-    }
-    return nil;
-}
-
-/// The section controller driving the story on screen, which is what knows how to
-/// move to the next one. Reached by trying the accessors the two builds use, and
-/// nil where none of them fit — the pager above covers that case.
+/// The section controller to advance with, or nil when none can be reached.
+///
+/// Paging the story scroll view used to be the fallback here. It is gone: a page is
+/// the *next account*, so skipping jumped over the rest of the person's stories
+/// instead of moving one along, which is not what the eye means.
 static id SCICurrentStorySection(UIViewController *viewer) {
+    if ([sciCurrentStorySection respondsToSelector:@selector(advanceToNextItemWithNavigationAction:)]) {
+        return sciCurrentStorySection;
+    }
+
     for (NSString *key in @[@"currentlyDisplayedSectionController",
                             @"currentSectionController",
                             @"focusedSectionController",
@@ -81,6 +73,13 @@ static id SCICurrentStorySection(UIViewController *viewer) {
 }
 
 %hook IGStoryViewerViewController
+
+// Both tested builds send this, and it carries the one object the skip needs.
+- (void)fullscreenSectionController:(id)controller willDisplayStoryModel:(id)model {
+    %orig;
+
+    sciCurrentStorySection = controller;
+}
 
 - (void)viewDidAppear:(BOOL)animated {
     %orig;
@@ -190,14 +189,7 @@ static id SCICurrentStorySection(UIViewController *viewer) {
             return;
         }
 
-        UIScrollView *pager = SCIStoryPager(self.view, 0);
-        if (!pager) return;
-
-        CGFloat page = pager.bounds.size.width;
-        CGFloat next = pager.contentOffset.x + page;
-        if (page < 1.0 || next > pager.contentSize.width - page + 1.0) return;
-
-        [pager setContentOffset:CGPointMake(next, pager.contentOffset.y) animated:YES];
+        SCILogV(@"[Albrhi] No story section controller to advance with");
     });
 
     // Long enough for the receipt to have been built and sent for this story, short

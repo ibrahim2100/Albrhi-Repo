@@ -467,10 +467,17 @@ static void SCILayoutReelDate(UIView *bar, UIButton *button, CGFloat side) {
     label.hidden = NO;
     label.text = text;
 
-    CGFloat width = MAX(side * 2.2, 62.0);
-    label.frame = CGRectMake(CGRectGetMidX(button.frame) - width / 2.0,
-                             CGRectGetMaxY(button.frame) + 4.0,
-                             width, 16.0);
+    // Sized to the text rather than to the sidebar. Pinned to the bar's width it came
+    // out cropped, because a full date is far wider than a column of round buttons.
+    CGSize needed = [label sizeThatFits:CGSizeMake(CGFLOAT_MAX, 18.0)];
+    CGFloat width = needed.width + 12.0;
+
+    // Laid out to the left of the sidebar and low down, which puts it by the account
+    // name rather than in the middle of the action stack. The bar does not clip, so
+    // reaching outside it is fine.
+    label.frame = CGRectMake(-width - 6.0,
+                             CGRectGetHeight(bar.bounds) - 18.0,
+                             width, 18.0);
 
     [bar bringSubviewToFront:label];
 }
