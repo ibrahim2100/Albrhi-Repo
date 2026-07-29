@@ -256,11 +256,11 @@ static void SCIDefuseThreadUpdates(id updates, NSInteger depth) {
     // through ivars entirely. A Swift class exposes its stored properties as methods
     // rather than as ivars, so the methods are what to look at — and a getter
     // returning the update is as good a way in as a field would have been.
-    unsigned int methodCount = 0;
-    Method *methods = class_copyMethodList(cls, &methodCount);
+    unsigned int reportCount = 0;
+    Method *reportMethods = class_copyMethodList(cls, &reportCount);
 
-    for (unsigned int i = 0; methods && i < methodCount && shape.count < 14; i++) {
-        NSString *name = NSStringFromSelector(method_getName(methods[i]));
+    for (unsigned int i = 0; reportMethods && i < reportCount && shape.count < 14; i++) {
+        NSString *name = NSStringFromSelector(method_getName(reportMethods[i]));
 
         // Getters only: no arguments, and not the memory-management plumbing.
         if ([name rangeOfString:@":"].location != NSNotFound) continue;
@@ -268,7 +268,7 @@ static void SCIDefuseThreadUpdates(id updates, NSInteger depth) {
 
         [shape addObject:name];
     }
-    if (methods) free(methods);
+    if (reportMethods) free(reportMethods);
 
     [SCIDiagnostics recordUnsendPath:@"unmatched"
                               detail:[NSString stringWithFormat:@"%@ {%@}",
