@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.7.0\n\n- **Keeping unsent messages should finally work.** It had been watching the wrong\n  channel: a message someone unsends arrives on Instagram's live connection, not\n  through the part we were listening to. Beta, off by default, under Stories &\n  messages — and Diagnostics now shows which channel it saw.\n\n## v3.6.2\n\n- **The story eye now moves to the next story of the same person** instead of jumping\n  to another account.\n- **It turns green properly** once the view has been sent.\n- **The reel's date is no longer cut off,** and sits beside the account name.\n\n## v3.6.1\n\n- Fixes the 3.6.0 build, which did not compile and so never shipped.",
+          "markdown": "## v3.7.0\n\n- **Keeping unsent messages should finally work.** It had been watching the wrong\n  channel: a message someone unsends arrives on Instagram's live connection, not\n  through the part we were listening to. Beta, off by default, under Stories &\n  messages — and Diagnostics now shows which channel it saw.\n- **You're told when a refresh clears them.** Pulling to refresh reloads the chat from\n  Instagram, which wipes anything kept only on your phone. It used to happen without\n  a word.\n\n## v3.6.2\n\n- **The story eye now moves to the next story of the same person** instead of jumping\n  to another account.\n- **It turns green properly** once the view has been sent.\n- **The reel's date is no longer cut off,** and sits beside the account name.\n\n## v3.6.1\n\n- Fixes the 3.6.0 build, which did not compile and so never shipped.",
           "useSpacing": true
         }
       ]
