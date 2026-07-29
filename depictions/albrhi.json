@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.7.6\n\n- Fixes the 3.7.5 build, which did not compile and so never shipped.\n\n## v3.7.5\n\n- Keeping unsent messages: the update Instagram sends keeps its contents behind\n  getters rather than plain fields, so it is read that way now.\n\n## v3.7.4\n\n- Another go at keeping unsent messages: it was looking for the wrong field name\n  inside the update Instagram sends. It now finds it by what it holds instead.",
+          "markdown": "## v3.8.0\n\n- **Settings search understands what you meant.** Type \"حفظ\" and the download settings\n  come up; type \"ads\" with the tweak in Arabic and the ad settings come up. It works\n  in either language and while you are still typing.\n\n## v3.7.6\n\n- Fixes the 3.7.5 build, which did not compile and so never shipped.\n\n## v3.7.5\n\n- Keeping unsent messages: the update Instagram sends keeps its contents behind\n  getters rather than plain fields, so it is read that way now.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.7.6"
+          "text": "3.8.0"
         },
         {
           "class": "DepictionTableTextView",
