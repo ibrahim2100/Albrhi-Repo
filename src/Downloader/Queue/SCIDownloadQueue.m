@@ -23,6 +23,33 @@ static NSInteger const SCIHistoryLimit = 250;
 
 @end
 
+/// How many times a transfer is retried before it is called a failure.
+static const NSInteger SCIDownloadMaxAttempts = 3;
+
+/// Whether this error is the network faltering rather than the request being refused.
+///
+/// Retrying a 404 or a cancelled transfer is pointless and would leave the queue
+/// looking stuck; retrying a lost connection is exactly what someone walking out of
+/// wifi wants, and iOS keeps the resume data that makes it cheap.
+static BOOL SCIErrorIsWorthRetrying(NSError *error) {
+    if (!error || ![error.domain isEqualToString:NSURLErrorDomain]) return NO;
+
+    switch (error.code) {
+        case NSURLErrorTimedOut:
+        case NSURLErrorCannotFindHost:
+        case NSURLErrorCannotConnectToHost:
+        case NSURLErrorNetworkConnectionLost:
+        case NSURLErrorNotConnectedToInternet:
+        case NSURLErrorDNSLookupFailed:
+        case NSURLErrorResourceUnavailable:
+        case NSURLErrorInternationalRoamingOff:
+        case NSURLErrorDataNotAllowed:
+            return YES;
+        default:
+            return NO;
+    }
+}
+
 @implementation SCIDownloadQueue
 
 + (SCIDownloadQueue *)shared {
@@ -497,10 +524,45 @@ didCompleteWithError:(NSError *)error {
     dispatch_async(self.stateQueue, ^{
         [self.tasks removeObjectForKey:job.identifier];
         [self.throughputSamples removeObjectForKey:job.identifier];
-        [self.mutableActive removeObject:job];
 
-        job.finishedAt = [NSDate date];
         job.bytesPerSecond = 0;
+
+        // A transfer that died because the network went, rather than because the
+        // server refused, is worth trying again: the file is still there and iOS
+        // hands back resume data, so a retry picks up where it stopped instead of
+        // starting over. Without this, walking past a lift lost a 2K download that
+        // was nearly finished, and the queue called it a failure as if it were final.
+        //
+        // Checked before the job leaves the active list, since a job that is not in
+        // it is one -pumpQueue will never look at again.
+        if (error) {
+            NSData *resume = error.userInfo[NSURLSessionDownloadTaskResumeData];
+            if (resume) self.resumeData[job.identifier] = resume;
+
+            if (SCIErrorIsWorthRetrying(error) && job.attemptCount < SCIDownloadMaxAttempts) {
+                job.attemptCount++;
+                job.state = SCIDownloadStateQueued;
+                job.failureReason = nil;
+
+                // Backed off, so a network that is down rather than blinking is not
+                // hammered: roughly 2s, 6s, 14s.
+                double delay = 2.0 * (double)((1 << job.attemptCount) - 1);
+
+                SCILogV(@"[Albrhi] Download interrupted, retry %ld in %.0fs — %@",
+                        (long)job.attemptCount, delay, error.localizedDescription);
+
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
+                               self.stateQueue, ^{
+                    [self pumpQueue];
+                });
+
+                [self notifyChangeForJob:job];
+                return;
+            }
+        }
+
+        [self.mutableActive removeObject:job];
+        job.finishedAt = [NSDate date];
 
         if (error) {
             job.state = (error.code == NSURLErrorCancelled)

@@ -3,6 +3,12 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.8.1
+
+- **Downloads survive losing signal.** A transfer cut off by the network now retries
+  on its own and carries on from where it stopped, instead of failing outright. Up to
+  three tries, spaced out. A download the server actually refuses still fails at once.
+
 ## v3.8.0
 
 - **Settings search understands what you meant.** Type "حفظ" and the download settings
