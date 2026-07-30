@@ -2,14 +2,14 @@
 
 # Albrhi · البرهي
 
-### The complete Instagram experience for iOS — bilingual, native, open source
+### iOS tweaks, built in the open — bilingual, native, and written to be read
 
-**العربية · English** · maximum-quality downloads · ad-free feed · real privacy controls
+**العربية · English** · a working APT source · one repository, one tweak per app
 
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B-lightgrey.svg)]()
 [![Rootless](https://img.shields.io/badge/rootless-supported-success.svg)](#-compatibility)
-[![Version](https://img.shields.io/badge/version-3.2.3-orange.svg)](CHANGELOG.md)
+[![Instagram](https://img.shields.io/badge/Instagram-3.8.2-orange.svg)](tweaks/instagram/CHANGELOG.md)
 [![Based on](https://img.shields.io/badge/based%20on-SCInsta-lightblue.svg)](https://github.com/SoCuul/SCInsta)
 
 <br/>
@@ -70,12 +70,25 @@ LiveContainer, Sideloadly or cyan.
 
 ## Overview
 
-**Albrhi** is an Instagram tweak for jailbroken and sideloaded iOS. It adds maximum-quality media
-downloads, strips advertising and algorithmic clutter, gives you real control over what Instagram
-reports about you, and wraps it all in a settings panel that looks and feels native — in **Arabic
-or English**, with automatic right-to-left layout.
+**Albrhi** is a personal workshop for iOS tweaks that also happens to be a working APT source: it
+builds itself, publishes its own releases, and serves a Sileo/Zebra repository from GitHub Pages.
+It is written for learning as much as for using — the code is commented to explain *why*, not just
+what, and the reasoning behind the awkward parts is kept in [CLAUDE.md](CLAUDE.md) rather than lost.
 
 Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrahim2100)).
+
+### What is in here
+
+| Tweak | App | Status |
+|---|---|---|
+| **Albrhi for Instagram** | Instagram | **Released** — `com.albrhi.tweak`, the whole feature list below |
+| Albrhi for YouTube | YouTube | **Being started.** Nothing published, nothing installable yet |
+
+Each tweak is a self-contained project under `tweaks/`, with its own sources, package identity and
+version number. They are **separate packages that never meet at runtime**: an injection filter binds
+each dylib to one bundle id, so the YouTube tweak is never loaded into Instagram and neither can
+affect the other on your device. What they share is the build plumbing — the checks, the build
+script and the APT index — which is why installing one has nothing to do with the other.
 
 > Albrhi is an **educational and corrective derivative** of
 > [SCInsta](https://github.com/SoCuul/SCInsta) by **SoCuul**, developed with AI assistance to
@@ -136,7 +149,7 @@ actually attached at runtime, with one-tap issue reporting.
 |---|---|
 | **iOS** | 15.0 and later |
 | **Architecture** | `arm64` — runs on arm64 and arm64e devices |
-| **Instagram** | Built and tested on **410.1.0** *(not a ceiling — see below)* |
+| **Instagram** | Built and tested on **410.1.0 and 439.0.0**, from one build *(not a ceiling — see below)* |
 | **Jailbreaks** | Rootless (Dopamine, palera1n) · roothide · rootful (unc0ver, checkra1n) |
 | **Sideloading** | Supported via the bundled FLEXing sub-project |
 
@@ -145,8 +158,10 @@ actually attached at runtime, with one-tap issue reporting.
 
 <br/>
 
-Albrhi is built and tested against **Instagram 410.1.0** — the newest build the developer's phone
-will still accept, and the phone is not taking questions.
+Albrhi is built and tested against **Instagram 410.1.0 and 439.0.0** — one build serves both. 410 is
+the newest release the developer's phone will still accept, and the phone is not taking questions;
+439 is kept alongside it precisely so version differences are measured in two real binaries instead
+of guessed at.
 
 Nothing is pinned to a version number: every Instagram class the tweak touches is resolved at
 runtime, and anything it can't find is skipped rather than crashed into. Newer builds *should* be
@@ -166,14 +181,29 @@ Requires [Theos](https://theos.dev) with an iOS SDK and toolchain.
 git clone https://github.com/ibrahim2100/Albrhi-Repo.git
 cd Albrhi-Repo
 git submodule update --init --recursive
-
-export THEOS_PACKAGE_SCHEME=rootless   # omit for a rootful .deb
-make package
-# → packages/com.albrhi.tweak_3.2.3_iphoneos-arm64.deb
+./build.sh instagram rootless
 ```
 
-Install straight to a connected device with `make package install`. GitHub Actions builds are also
-configured — see [BUILD.md](BUILD.md) and [GITHUB_BUILD.md](GITHUB_BUILD.md).
+The result lands in `tweaks/instagram/packages/`. Swap `rootless` for `roothide`, `rootful` or
+`sideload`. `python3 tools/check.py` runs the source checks on their own — it takes a second and
+catches the mistakes that have actually broken this build before.
+
+GitHub Actions builds are also configured — see [BUILD.md](BUILD.md) and
+[GITHUB_BUILD.md](GITHUB_BUILD.md).
+
+### Layout
+
+```
+tweaks/<app>/     a complete tweak: Makefile, control, filter plist, src/
+shared/           the Theos flags and build modes every tweak shares
+tools/            source checks, APT index, depiction, logo, .deb editing
+modules/ vendor/  third-party code, shared
+extra-debs/       drop a .deb here and the source publishes it
+```
+
+Adding a tweak means adding a directory under `tweaks/` — `tools/check.py` finds it and checks it
+without being told, and `./build.sh <name> rootless` builds it. Releasing a second one still needs
+the workflow taught about per-tweak versions and tags; see [CLAUDE.md](CLAUDE.md).
 
 ---
 
@@ -198,6 +228,7 @@ quick-access* on, holding the **home tab** works too.
 - [x] Backup, restore, export and import of settings
 - [x] Diagnostics — runtime info, attached hooks, live view-hierarchy scan, issue reporting
 - [x] Self-publishing APT source with a browser control panel
+- [ ] **Albrhi for YouTube** — a second tweak in this repository, sharing none of Instagram's runtime
 - [ ] Settings profiles — several configurations, switched per account
 - [ ] Crash protection that isolates and disables a faulting feature rather than the whole tweak
 
@@ -209,7 +240,7 @@ Issues and pull requests are welcome.
 
 1. Fork and branch from `main`.
 2. Keep one feature per file under `tweaks/instagram/src/Features/<Category>/`; register its settings page under
-   `tweaks/instagram/src/Settings/Pages/` and its defaults in `src/Tweak.x`.
+   `tweaks/instagram/src/Settings/Pages/` and its defaults in that tweak's `src/Tweak.x`.
 3. Add **both** Arabic and English strings to `tweaks/instagram/src/Localization/SCILocalize.m` — never hard-code
    user-facing text (`tools/check.py` enforces parity).
 4. Follow the `SCI` prefix and Objective-C style; build before opening the PR.
