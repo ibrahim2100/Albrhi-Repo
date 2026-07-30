@@ -48,10 +48,20 @@
 - (void)reloadData;
 @end
 
-/// Builds each section on demand. Hooking updateSectionForCategory:withEntry: is
-/// what lets a category we invented be answered rather than ignored.
+/// Builds each section on demand.
+///
+/// The property that used to be declared here is gone, and it is the reason 0.1.1
+/// crashed. `_settingsViewControllerDelegate` is an **ivar with no getter**: it is set
+/// once through
+/// -initWithParentResponder:controllerDelegate:dataDelegate:settingsViewControllerDelegate:
+/// and never exposed. Declaring it as a property made `self.settingsViewControllerDelegate`
+/// compile, which was never the question -- at runtime it was an unrecognised selector,
+/// went to message forwarding, and took the app down the moment Settings opened.
+///
+/// The crash report named this exactly: our own dylib, then _CF_forwarding_prep_0, then
+/// the exception. Reaching that ivar again means object_getIvar or KVC, not a property
+/// invented in a header.
 @interface YTSettingsSectionItemManager : NSObject
-@property (nonatomic, weak) YTSettingsViewController *settingsViewControllerDelegate;
 - (void)updateSectionForCategory:(NSInteger)category withEntry:(id)entry;
 @end
 

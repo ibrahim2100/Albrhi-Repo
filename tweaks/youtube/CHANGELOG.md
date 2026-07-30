@@ -3,6 +3,24 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.1.3
+
+- **The panel is back, and it is ours.** Hold **two fingers anywhere in YouTube** for
+  about half a second and it opens. Inside: verbose logging, and the diagnostics report.
+- Why not inside YouTube's own settings, after two goes at it? Because the crash report
+  from 0.1.1 named the exact reason, and it is not fixable by trying harder: putting a
+  section there means satisfying a contract with tables the tweak has no access to. The
+  tweak that this project studied for its hook points does not do it either — it carries
+  its own panel. That is the right shape, not a workaround.
+- A survey of that tweak's targets also found **nineteen class names it uses that do not
+  exist in YouTube 21.30.5 at all** — including the obvious place to hang an entry point.
+  So this one hangs off `UIWindow`, which is part of iOS and cannot go missing.
+- **Two fingers, not one**, so it never fights YouTube's own long presses — on a video,
+  in comments, on the player. And the gesture never swallows a touch: everything under
+  it keeps working exactly as before.
+- The report is still written to `Documents/AlbrhiYT-report.txt` as well, at launch and
+  on every video. The panel is now a second way to reach it, not the only way.
+
 ## v0.1.2
 
 - **Fixes the crash when opening YouTube's settings in 0.1.1.** Install this over it.

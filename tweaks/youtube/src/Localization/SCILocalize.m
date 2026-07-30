@@ -13,8 +13,9 @@ static NSDictionary *_arTable = nil;
 
 static void SCIBuildTables(void) {
     _enTable = @{
-        @"settings_section_title": @"Albrhi",
-        @"settings_section_note": @"Settings for the Albrhi tweak.",
+        @"panel_title": @"Albrhi for YouTube",
+        @"panel_subtitle": @"Hold two fingers anywhere to open this",
+        @"panel_close": @"Close",
 
         @"verbose_logging": @"Verbose logging",
         @"verbose_logging_note": @"Writes what the tweak is doing to the system log. Leave this off unless you are collecting a report — it is noisy and slows things down.",
@@ -47,8 +48,9 @@ static void SCIBuildTables(void) {
     };
 
     _arTable = @{
-        @"settings_section_title": @"البرهي",
-        @"settings_section_note": @"إعدادات أداة البرهي.",
+        @"panel_title": @"البرهي ليوتيوب",
+        @"panel_subtitle": @"اضغط بإصبعين في أي مكان لفتح هذه اللوحة",
+        @"panel_close": @"إغلاق",
 
         @"verbose_logging": @"سجل مفصّل",
         @"verbose_logging_note": @"يكتب ما تفعله الأداة في سجل النظام. اتركه مطفأً إلا إذا كنت تجمع تقريرًا — فهو مزعج ويُبطئ الأداء.",
