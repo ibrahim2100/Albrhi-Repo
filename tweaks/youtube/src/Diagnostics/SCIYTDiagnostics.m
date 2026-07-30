@@ -95,6 +95,17 @@ static NSString *sciSettingsGroups = nil;
     sciSettingsGroups = [text copy];
 }
 
+// Kept so the report can say the panel failed and why. A caught exception that is
+// recorded nowhere is worse than one that crashes: the app survives and the fault goes
+// silent, which is the exact failure mode this page exists to prevent.
+static NSString *sciPanelFailure = nil;
+
++ (void)recordPanelFailure:(NSString *)reason {
+    if (!reason.length) return;
+    sciPanelFailure = [reason copy];
+    [self writeReportToFile];
+}
+
 + (void)recordPlayerResponse:(id)response {
     if (!response) return;
     sciLastResponse = response;
@@ -162,6 +173,11 @@ static NSString *sciSettingsGroups = nil;
             name, row[@"why"]];
     }
     [out appendString:@"\n"];
+
+    // First, because it is the answer to "I held two fingers and nothing happened".
+    if (sciPanelFailure.length) {
+        [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_panel_failed"), sciPanelFailure];
+    }
 
     // Printed before the video section because when the settings section itself is
     // missing, this is the part that says why -- and in 0.1.0 it was missing.

@@ -36,6 +36,8 @@ static void SCIBuildTables(void) {
         @"diag_present": @"found",
         @"diag_absent": @"missing",
 
+        @"diag_panel_failed": @"The panel could not be built",
+
         @"diag_groups": @"Settings groups YouTube built",
         @"diag_groups_none": @"None seen yet. Open YouTube's settings once, then come back.",
 
@@ -70,6 +72,8 @@ static void SCIBuildTables(void) {
         @"diag_attached": @"ما تم ربطه",
         @"diag_present": @"موجود",
         @"diag_absent": @"غير موجود",
+
+        @"diag_panel_failed": @"تعذّر بناء اللوحة",
 
         @"diag_groups": @"مجموعات الإعدادات التي بناها يوتيوب",
         @"diag_groups_none": @"لم تُرَ بعد. افتح إعدادات يوتيوب مرة ثم ارجع.",

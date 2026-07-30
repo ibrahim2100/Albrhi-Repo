@@ -1,6 +1,6 @@
 Package: com.albrhi.youtube
 Name: Albrhi for YouTube (rootless)
-Version: 0.1.3
+Version: 0.1.4
 Architecture: iphoneos-arm64
 Description: A native settings panel for YouTube, in Arabic or English — starting with the truth about your build.
  .

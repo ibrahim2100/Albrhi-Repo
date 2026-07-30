@@ -3,6 +3,22 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.1.4
+
+- **Fixes the crash when opening the panel in 0.1.3.** Install this over it.
+- The cause was in the panel's own layout, and the honest version is that the crash
+  report could not point at the exact line. So this release does not guess at one — it
+  removes the room for the mistake instead. Each row now has a single fixed height set
+  in one place, where three different things used to be sizing it at once.
+- **And the panel can no longer take YouTube down at all.** Building it is now wrapped:
+  if anything in it goes wrong, the panel simply does not open and the report says what
+  happened, under "The panel could not be built". A tool whose job is to explain what is
+  going on must never be the reason the app dies — that was true of 0.1.1 and 0.1.3 and
+  it is now enforced rather than intended.
+- Nothing else changed. The report still writes itself to
+  `Documents/AlbrhiYT-report.txt` at launch and on every video, so it is readable whether
+  or not the panel opens.
+
 ## v0.1.3
 
 - **The panel is back, and it is ours.** Hold **two fingers anywhere in YouTube** for

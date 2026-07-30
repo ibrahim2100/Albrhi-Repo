@@ -147,13 +147,22 @@ static UIColor *SCIAccent(void) {
     ]];
 }
 
+/// A row, sized by a fixed height rather than by what is inside it.
+///
+/// The height constraint used to be activated in here, on a view that had no superview
+/// yet, and the rows also had top and bottom constraints to their own labels *and* were
+/// arranged by a stack view -- three things sizing one view. 0.1.3 threw inside Auto
+/// Layout on exactly this path.
+///
+/// The fix is not a cleverer constraint, it is fewer of them. One height, set by us, and
+/// nothing inside a row is allowed to have an opinion about that row's size. Rows are
+/// short and the text in them is ours, so nothing is lost.
 - (UIView *)rowContainer {
     UIView *row = [[UIView alloc] init];
     row.translatesAutoresizingMaskIntoConstraints = NO;
     row.backgroundColor = [UIColor.whiteColor colorWithAlphaComponent:0.08];
     row.layer.cornerRadius = 16;
     row.layer.cornerCurve = kCACornerCurveContinuous;
-    [row.heightAnchor constraintGreaterThanOrEqualToConstant:58].active = YES;
     return row;
 }
 
@@ -177,6 +186,14 @@ static UIColor *SCIAccent(void) {
     }
 
     label.attributedText = body;
+
+    // Capped, because the row's height is fixed now. Text that wants more room than it
+    // has is what makes Auto Layout unsatisfiable, and truncating a hint is a much
+    // smaller loss than a panel that will not open.
+    label.numberOfLines = 3;
+    label.adjustsFontSizeToFitWidth = NO;
+    label.lineBreakMode = NSLineBreakByTruncatingTail;
+
     return label;
 }
 
@@ -195,10 +212,11 @@ static UIColor *SCIAccent(void) {
     [row addSubview:toggle];
 
     [NSLayoutConstraint activateConstraints:@[
+        [row.heightAnchor constraintEqualToConstant:74],
+
         [label.leadingAnchor constraintEqualToAnchor:row.leadingAnchor constant:14],
         [label.trailingAnchor constraintEqualToAnchor:toggle.leadingAnchor constant:-12],
-        [label.topAnchor constraintEqualToAnchor:row.topAnchor constant:11],
-        [label.bottomAnchor constraintEqualToAnchor:row.bottomAnchor constant:-11],
+        [label.centerYAnchor constraintEqualToAnchor:row.centerYAnchor],
 
         [toggle.trailingAnchor constraintEqualToAnchor:row.trailingAnchor constant:-14],
         [toggle.centerYAnchor constraintEqualToAnchor:row.centerYAnchor],
@@ -225,10 +243,11 @@ static UIColor *SCIAccent(void) {
     [row addGestureRecognizer:tap];
 
     [NSLayoutConstraint activateConstraints:@[
+        [row.heightAnchor constraintEqualToConstant:74],
+
         [label.leadingAnchor constraintEqualToAnchor:row.leadingAnchor constant:14],
         [label.trailingAnchor constraintEqualToAnchor:chevron.leadingAnchor constant:-12],
-        [label.topAnchor constraintEqualToAnchor:row.topAnchor constant:11],
-        [label.bottomAnchor constraintEqualToAnchor:row.bottomAnchor constant:-11],
+        [label.centerYAnchor constraintEqualToAnchor:row.centerYAnchor],
 
         [chevron.trailingAnchor constraintEqualToAnchor:row.trailingAnchor constant:-16],
         [chevron.centerYAnchor constraintEqualToAnchor:row.centerYAnchor],
@@ -317,11 +336,34 @@ static UIColor *SCIAccent(void) {
         return;
     }
 
-    SCIYTPanelController *panel = [[SCIYTPanelController alloc] init];
-    panel.modalPresentationStyle = UIModalPresentationOverFullScreen;
-    panel.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
+    // Guarded, and this is not defensive decoration.
+    //
+    // 0.1.3 threw inside Auto Layout while building this panel, and the app went down
+    // with it. A tweak whose entire purpose is to report what is happening must not be
+    // able to kill its host: the worst a broken panel may do is fail to open and say so
+    // in the report.
+    //
+    // Only this presentation is wrapped. Nothing here is load-bearing for YouTube, so
+    // swallowing an exception costs the user nothing except a panel -- whereas letting
+    // it through costs them the app.
+    @try {
+        SCIYTPanelController *panel = [[SCIYTPanelController alloc] init];
+        panel.modalPresentationStyle = UIModalPresentationOverFullScreen;
+        panel.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
 
-    [host presentViewController:panel animated:YES completion:nil];
+        // Forced here rather than left to the presentation, so a layout fault happens
+        // inside this @try instead of later inside UIKit's own transition, where it
+        // would be out of reach again.
+        (void)panel.view;
+
+        [host presentViewController:panel animated:YES completion:nil];
+    } @catch (NSException *exception) {
+        [SCIYTDiagnostics recordPanelFailure:
+            [NSString stringWithFormat:@"%@: %@", exception.name, exception.reason]];
+
+        NSLog(@"[AlbrhiYT] the panel could not be built: %@ — %@",
+              exception.name, exception.reason);
+    }
 }
 
 @end

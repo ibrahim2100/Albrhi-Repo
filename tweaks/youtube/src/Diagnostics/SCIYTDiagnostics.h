@@ -20,6 +20,10 @@
 /// getting the wrong one is why 0.1.0 showed no section at all.
 + (void)recordSettingsGroups:(NSArray *)groups;
 
+/// Recorded when the panel could not be built. It is caught rather than allowed to
+/// reach the app, so it has to be written down somewhere or the failure is invisible.
++ (void)recordPanelFailure:(NSString *)reason;
+
 /// The whole report as text, exactly as the page shows it and the copy button copies.
 + (NSString *)report;
 
