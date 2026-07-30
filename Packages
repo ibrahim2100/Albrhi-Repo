@@ -503,55 +503,6 @@ Name: Albrhi for Instagram (roothide)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
 Package: com.albrhi.youtube
-Version: 0.1.2
-Architecture: iphoneos-arm64
-Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
-Installed-Size: 132
-Depends: mobilesubstrate
-Conflicts: com.albrhi.youtube.roothide
-Replaces: com.albrhi.youtube.roothide
-Filename: debs/com.albrhi.youtube_0.1.2_iphoneos-arm64.deb
-Size: 29382
-MD5sum: 0d79e5349431c1a7a6f0a48eeec374e7
-SHA1: 1af86c1a0c2272c55ddd87a22810474d46244107
-SHA256: 50d29a1eba387fd95fb85e818f1a9fbfa2e3c75dee92c4f9da79543597b8f785
-Section: Tweaks
-Homepage: https://github.com/ibrahim2100/Albrhi-Repo
-Description: A native settings panel for YouTube, in Arabic or English — starting with the truth about your build.
- .
- This is the first release of Albrhi for YouTube and it is deliberately small. It
- adds its own section to YouTube's own settings, and one page inside it that reports
- what the tweak actually finds in your copy of YouTube.
- .
- ▍WHY START HERE
- Downloading from YouTube is not a matter of grabbing a link. YouTube streams
- through a protocol that hands out media in pieces rather than files, and the app
- also carries its own downloader for offline playback. Which of those is reachable
- cannot be read off the app from outside — it has to be measured on a real device,
- on a real video.
- .
- That is what this page does. Play something, open it, and it prints exactly what
- YouTube told the app about that video: every quality, every format, every stream.
- One tap copies the report. Guessing instead of measuring is how weeks get wasted.
- .
- ▍WHAT IS HERE NOW
- A settings section that looks like it shipped with YouTube, full Arabic and English
- with right-to-left layout, and the diagnostics page above.
- .
- ▍WHAT IS NOT HERE YET
- Everything else. No downloads, no ad removal, no player changes. They are being
- built on what this page reports rather than on guesswork, and each will arrive when
- it is verified against a real build instead of assumed.
- .
- Installing this changes nothing about how YouTube plays, looks or behaves.
- .
- Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
-Tag: role::enduser
-Author: Ibrahim Ismail AL-Rahn
-Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Name: Albrhi for YouTube (rootless)
-
-Package: com.albrhi.youtube
 Version: 0.1.3
 Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
@@ -649,54 +600,65 @@ Author: Ibrahim Ismail AL-Rahn
 Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
 Name: Albrhi for YouTube (rootless)
 
-Package: com.albrhi.youtube.roothide
-Version: 0.1.2
-Architecture: iphoneos-arm64e
+Package: com.albrhi.youtube
+Version: 0.2.0
+Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
-Installed-Size: 132
+Installed-Size: 168
 Depends: mobilesubstrate
-Conflicts: com.albrhi.youtube
-Replaces: com.albrhi.youtube
-Filename: debs/com.albrhi.youtube.roothide_0.1.2_iphoneos-arm64e.deb
-Size: 29360
-MD5sum: 6be9a8b7ac7554807978cefa00e82e8c
-SHA1: e2af5385748b127a7018e59216b6987c0e314b78
-SHA256: 8de837968f7f38f1ede266ae53d0dfdedbb03de25cc06e980a2c454037f5c25a
+Conflicts: com.albrhi.youtube.roothide
+Replaces: com.albrhi.youtube.roothide
+Filename: debs/com.albrhi.youtube_0.2.0_iphoneos-arm64.deb
+Size: 37646
+MD5sum: 680689ef9ab29f4e3771cf093b553e68
+SHA1: f3e1535a412ca1a40e8d86654c97ca2eb2eac41e
+SHA256: a7ed51b359ab8845470011a050499b75c7cd88d96b36c032d5de871ebe6a2248
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
-Description: A native settings panel for YouTube, in Arabic or English — starting with the truth about your build.
+Description: No ads, background playback, and a settings panel in Arabic or English.
  .
- This is the first release of Albrhi for YouTube and it is deliberately small. It
- adds its own section to YouTube's own settings, and one page inside it that reports
- what the tweak actually finds in your copy of YouTube.
+ ◍ DOWNLOADS
+ Not yet. That one is being measured before it is built — see the diagnostics page.
  .
- ▍WHY START HERE
- Downloading from YouTube is not a matter of grabbing a link. YouTube streams
- through a protocol that hands out media in pieces rather than files, and the app
- also carries its own downloader for offline playback. Which of those is reachable
- cannot be read off the app from outside — it has to be measured on a real device,
- on a real video.
+ ▍ NO ADS
+ Ads are stopped at three separate points, because they arrive by three separate
+ routes and blocking one does nothing about the others.
  .
- That is what this page does. Play something, open it, and it prints exactly what
- YouTube told the app about that video: every quality, every format, every stream.
- One tap copies the report. Guessing instead of measuring is how weeks get wasted.
+ First, the app stops telling YouTube it wants ads at all, so they are never sent
+ rather than sent and then hidden. Second, promoted rows are dropped out of the feed
+ by the identifier YouTube's own servers attach to them — including the plain-looking
+ layouts that carry sponsored content without the word "ad" anywhere in them. Third,
+ the player refuses ads before a video, in the middle of one, and the kind stitched
+ into the stream itself, which nothing else can reach.
  .
- ▍WHAT IS HERE NOW
- A settings section that looks like it shipped with YouTube, full Arabic and English
- with right-to-left layout, and the diagnostics page above.
+ ▍ BACKGROUND PLAYBACK
+ Audio keeps going when you leave the app or lock the screen.
  .
- ▍WHAT IS NOT HERE YET
- Everything else. No downloads, no ad removal, no player changes. They are being
- built on what this page reports rather than on guesswork, and each will arrive when
- it is verified against a real build instead of assumed.
+ ▍ QUIETER
+ Silence the prompt to update — updating replaces the app and removes this tweak. And
+ optionally hide the paid-promotion banner, off by default, because it is a disclosure.
  .
- Installing this changes nothing about how YouTube plays, looks or behaves.
+ ▍ SETTINGS
+ Hold two fingers anywhere in YouTube. Full Arabic and English with right-to-left
+ layout, and a card at the top that says whether everything actually attached to your
+ build rather than leaving you to wonder.
+ .
+ ▍ DIAGNOSTICS
+ Reports what the tweak finds in your copy of YouTube and what YouTube said about the
+ last video you played. Also written to Documents/AlbrhiYT-report.txt, so it is
+ readable even if nothing else worked.
+ .
+ ▍ TESTED ON
+ YouTube 21.30.5. Nothing is pinned to a version number: every class is looked up at
+ runtime and skipped if it is not there. The hooks are on YouTube's model and service
+ layer rather than its views — views get renamed and rewritten between releases, and a
+ tweak that hooks them quietly stops working. A player response does not.
  .
  Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
 Tag: role::enduser
 Author: Ibrahim Ismail AL-Rahn
 Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Name: Albrhi for YouTube (roothide)
+Name: Albrhi for YouTube (rootless)
 
 Package: com.albrhi.youtube.roothide
 Version: 0.1.3
@@ -789,6 +751,66 @@ Description: A native settings panel for YouTube, in Arabic or English — start
  it is verified against a real build instead of assumed.
  .
  Installing this changes nothing about how YouTube plays, looks or behaves.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+Tag: role::enduser
+Author: Ibrahim Ismail AL-Rahn
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi for YouTube (roothide)
+
+Package: com.albrhi.youtube.roothide
+Version: 0.2.0
+Architecture: iphoneos-arm64e
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 168
+Depends: mobilesubstrate
+Conflicts: com.albrhi.youtube
+Replaces: com.albrhi.youtube
+Filename: debs/com.albrhi.youtube.roothide_0.2.0_iphoneos-arm64e.deb
+Size: 37570
+MD5sum: e7224742aad46d7a2919a64a3503966a
+SHA1: dbb85604723e5da8b3ffb1530546686cac46fe6c
+SHA256: 7162547c633f4b77cdec00d975337b1941baf4c96139b8fde2cf1406a2899b41
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: No ads, background playback, and a settings panel in Arabic or English.
+ .
+ ◍ DOWNLOADS
+ Not yet. That one is being measured before it is built — see the diagnostics page.
+ .
+ ▍ NO ADS
+ Ads are stopped at three separate points, because they arrive by three separate
+ routes and blocking one does nothing about the others.
+ .
+ First, the app stops telling YouTube it wants ads at all, so they are never sent
+ rather than sent and then hidden. Second, promoted rows are dropped out of the feed
+ by the identifier YouTube's own servers attach to them — including the plain-looking
+ layouts that carry sponsored content without the word "ad" anywhere in them. Third,
+ the player refuses ads before a video, in the middle of one, and the kind stitched
+ into the stream itself, which nothing else can reach.
+ .
+ ▍ BACKGROUND PLAYBACK
+ Audio keeps going when you leave the app or lock the screen.
+ .
+ ▍ QUIETER
+ Silence the prompt to update — updating replaces the app and removes this tweak. And
+ optionally hide the paid-promotion banner, off by default, because it is a disclosure.
+ .
+ ▍ SETTINGS
+ Hold two fingers anywhere in YouTube. Full Arabic and English with right-to-left
+ layout, and a card at the top that says whether everything actually attached to your
+ build rather than leaving you to wonder.
+ .
+ ▍ DIAGNOSTICS
+ Reports what the tweak finds in your copy of YouTube and what YouTube said about the
+ last video you played. Also written to Documents/AlbrhiYT-report.txt, so it is
+ readable even if nothing else worked.
+ .
+ ▍ TESTED ON
+ YouTube 21.30.5. Nothing is pinned to a version number: every class is looked up at
+ runtime and skipped if it is not there. The hooks are on YouTube's model and service
+ layer rather than its views — views get renamed and rewritten between releases, and a
+ tweak that hooks them quietly stops working. A player response does not.
  .
  Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
 Tag: role::enduser
