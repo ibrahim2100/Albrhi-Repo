@@ -120,7 +120,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "## v3.8.1\n\n- **Downloads survive losing signal.** A transfer cut off by the network now retries\n  on its own and carries on from where it stopped, instead of failing outright. Up to\n  three tries, spaced out. A download the server actually refuses still fails at once.\n\n## v3.8.0\n\n- **Settings search understands what you meant.** Type \"حفظ\" and the download settings\n  come up; type \"ads\" with the tweak in Arabic and the ad settings come up. It works\n  in either language and while you are still typing.\n\n## v3.7.6\n\n- Fixes the 3.7.5 build, which did not compile and so never shipped.",
+          "markdown": "## v3.8.2\n\n- **Nothing changed in the app.** Every feature, setting and button is exactly where\n  it was. This release only reorganises how the project is stored, so the same source\n  can hold a second tweak for another app later on — a YouTube one is being started.\n- If anything at all behaves differently from 3.8.1, that is a bug and not a change.\n  Settings › Diagnostics writes the report.\n\n## v3.8.1\n\n- **Downloads survive losing signal.** A transfer cut off by the network now retries\n  on its own and carries on from where it stopped, instead of failing outright. Up to\n  three tries, spaced out. A download the server actually refuses still fails at once.\n\n## v3.8.0\n\n- **Settings search understands what you meant.** Type \"حفظ\" and the download settings\n  come up; type \"ads\" with the tweak in Arabic and the ad settings come up. It works\n  in either language and while you are still typing.",
           "useSpacing": true
         }
       ]
@@ -132,7 +132,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.8.1"
+          "text": "3.8.2"
         },
         {
           "class": "DepictionTableTextView",
