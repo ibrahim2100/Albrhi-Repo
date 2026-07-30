@@ -551,6 +551,104 @@ Author: Ibrahim Ismail AL-Rahn
 Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
 Name: Albrhi for YouTube (rootless)
 
+Package: com.albrhi.youtube
+Version: 0.1.1
+Architecture: iphoneos-arm64
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 148
+Depends: mobilesubstrate
+Conflicts: com.albrhi.youtube.roothide
+Replaces: com.albrhi.youtube.roothide
+Filename: debs/com.albrhi.youtube_0.1.1_iphoneos-arm64.deb
+Size: 30228
+MD5sum: 1bfbca7b1b55377ef295f3456c5ab71d
+SHA1: 98f37140810218ba8828ac2137e18a5ef181700e
+SHA256: afe9234b1b8c07f0b4a0bd724eada7b36643e585abed1e44e83f90e7c6c1b745
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: A native settings panel for YouTube, in Arabic or English — starting with the truth about your build.
+ .
+ This is the first release of Albrhi for YouTube and it is deliberately small. It
+ adds its own section to YouTube's own settings, and one page inside it that reports
+ what the tweak actually finds in your copy of YouTube.
+ .
+ ▍WHY START HERE
+ Downloading from YouTube is not a matter of grabbing a link. YouTube streams
+ through a protocol that hands out media in pieces rather than files, and the app
+ also carries its own downloader for offline playback. Which of those is reachable
+ cannot be read off the app from outside — it has to be measured on a real device,
+ on a real video.
+ .
+ That is what this page does. Play something, open it, and it prints exactly what
+ YouTube told the app about that video: every quality, every format, every stream.
+ One tap copies the report. Guessing instead of measuring is how weeks get wasted.
+ .
+ ▍WHAT IS HERE NOW
+ A settings section that looks like it shipped with YouTube, full Arabic and English
+ with right-to-left layout, and the diagnostics page above.
+ .
+ ▍WHAT IS NOT HERE YET
+ Everything else. No downloads, no ad removal, no player changes. They are being
+ built on what this page reports rather than on guesswork, and each will arrive when
+ it is verified against a real build instead of assumed.
+ .
+ Installing this changes nothing about how YouTube plays, looks or behaves.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+Tag: role::enduser
+Author: Ibrahim Ismail AL-Rahn
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi for YouTube (rootless)
+
+Package: com.albrhi.youtube
+Version: 0.1.2
+Architecture: iphoneos-arm64
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 132
+Depends: mobilesubstrate
+Conflicts: com.albrhi.youtube.roothide
+Replaces: com.albrhi.youtube.roothide
+Filename: debs/com.albrhi.youtube_0.1.2_iphoneos-arm64.deb
+Size: 29382
+MD5sum: 0d79e5349431c1a7a6f0a48eeec374e7
+SHA1: 1af86c1a0c2272c55ddd87a22810474d46244107
+SHA256: 50d29a1eba387fd95fb85e818f1a9fbfa2e3c75dee92c4f9da79543597b8f785
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: A native settings panel for YouTube, in Arabic or English — starting with the truth about your build.
+ .
+ This is the first release of Albrhi for YouTube and it is deliberately small. It
+ adds its own section to YouTube's own settings, and one page inside it that reports
+ what the tweak actually finds in your copy of YouTube.
+ .
+ ▍WHY START HERE
+ Downloading from YouTube is not a matter of grabbing a link. YouTube streams
+ through a protocol that hands out media in pieces rather than files, and the app
+ also carries its own downloader for offline playback. Which of those is reachable
+ cannot be read off the app from outside — it has to be measured on a real device,
+ on a real video.
+ .
+ That is what this page does. Play something, open it, and it prints exactly what
+ YouTube told the app about that video: every quality, every format, every stream.
+ One tap copies the report. Guessing instead of measuring is how weeks get wasted.
+ .
+ ▍WHAT IS HERE NOW
+ A settings section that looks like it shipped with YouTube, full Arabic and English
+ with right-to-left layout, and the diagnostics page above.
+ .
+ ▍WHAT IS NOT HERE YET
+ Everything else. No downloads, no ad removal, no player changes. They are being
+ built on what this page reports rather than on guesswork, and each will arrive when
+ it is verified against a real build instead of assumed.
+ .
+ Installing this changes nothing about how YouTube plays, looks or behaves.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+Tag: role::enduser
+Author: Ibrahim Ismail AL-Rahn
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi for YouTube (rootless)
+
 Package: com.albrhi.youtube.roothide
 Version: 0.1.0
 Architecture: iphoneos-arm64e
@@ -564,6 +662,104 @@ Size: 29104
 MD5sum: 7c3f4b4b3295920aef4930b56a6c0aeb
 SHA1: cacc051c2abe4853c1df2ccc88820a9c4d3d03a0
 SHA256: 3df1d84b41409875aa5d1a428f950b6821962c8e4cdbbaa1f48d0fde6f74145d
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: A native settings panel for YouTube, in Arabic or English — starting with the truth about your build.
+ .
+ This is the first release of Albrhi for YouTube and it is deliberately small. It
+ adds its own section to YouTube's own settings, and one page inside it that reports
+ what the tweak actually finds in your copy of YouTube.
+ .
+ ▍WHY START HERE
+ Downloading from YouTube is not a matter of grabbing a link. YouTube streams
+ through a protocol that hands out media in pieces rather than files, and the app
+ also carries its own downloader for offline playback. Which of those is reachable
+ cannot be read off the app from outside — it has to be measured on a real device,
+ on a real video.
+ .
+ That is what this page does. Play something, open it, and it prints exactly what
+ YouTube told the app about that video: every quality, every format, every stream.
+ One tap copies the report. Guessing instead of measuring is how weeks get wasted.
+ .
+ ▍WHAT IS HERE NOW
+ A settings section that looks like it shipped with YouTube, full Arabic and English
+ with right-to-left layout, and the diagnostics page above.
+ .
+ ▍WHAT IS NOT HERE YET
+ Everything else. No downloads, no ad removal, no player changes. They are being
+ built on what this page reports rather than on guesswork, and each will arrive when
+ it is verified against a real build instead of assumed.
+ .
+ Installing this changes nothing about how YouTube plays, looks or behaves.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+Tag: role::enduser
+Author: Ibrahim Ismail AL-Rahn
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi for YouTube (roothide)
+
+Package: com.albrhi.youtube.roothide
+Version: 0.1.1
+Architecture: iphoneos-arm64e
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 148
+Depends: mobilesubstrate
+Conflicts: com.albrhi.youtube
+Replaces: com.albrhi.youtube
+Filename: debs/com.albrhi.youtube.roothide_0.1.1_iphoneos-arm64e.deb
+Size: 30182
+MD5sum: ce73e9adab59abf2289e5f67eb3f03c9
+SHA1: 63d9bccafaf0039e39373bdfbaec83e4cbb2b5e7
+SHA256: ed2da9e4a9a1e3895d6bc19f6331659f9e7e5daed7142e7c0e06b7deb0068a49
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: A native settings panel for YouTube, in Arabic or English — starting with the truth about your build.
+ .
+ This is the first release of Albrhi for YouTube and it is deliberately small. It
+ adds its own section to YouTube's own settings, and one page inside it that reports
+ what the tweak actually finds in your copy of YouTube.
+ .
+ ▍WHY START HERE
+ Downloading from YouTube is not a matter of grabbing a link. YouTube streams
+ through a protocol that hands out media in pieces rather than files, and the app
+ also carries its own downloader for offline playback. Which of those is reachable
+ cannot be read off the app from outside — it has to be measured on a real device,
+ on a real video.
+ .
+ That is what this page does. Play something, open it, and it prints exactly what
+ YouTube told the app about that video: every quality, every format, every stream.
+ One tap copies the report. Guessing instead of measuring is how weeks get wasted.
+ .
+ ▍WHAT IS HERE NOW
+ A settings section that looks like it shipped with YouTube, full Arabic and English
+ with right-to-left layout, and the diagnostics page above.
+ .
+ ▍WHAT IS NOT HERE YET
+ Everything else. No downloads, no ad removal, no player changes. They are being
+ built on what this page reports rather than on guesswork, and each will arrive when
+ it is verified against a real build instead of assumed.
+ .
+ Installing this changes nothing about how YouTube plays, looks or behaves.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+Tag: role::enduser
+Author: Ibrahim Ismail AL-Rahn
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi for YouTube (roothide)
+
+Package: com.albrhi.youtube.roothide
+Version: 0.1.2
+Architecture: iphoneos-arm64e
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 132
+Depends: mobilesubstrate
+Conflicts: com.albrhi.youtube
+Replaces: com.albrhi.youtube
+Filename: debs/com.albrhi.youtube.roothide_0.1.2_iphoneos-arm64e.deb
+Size: 29360
+MD5sum: 6be9a8b7ac7554807978cefa00e82e8c
+SHA1: e2af5385748b127a7018e59216b6987c0e314b78
+SHA256: 8de837968f7f38f1ede266ae53d0dfdedbb03de25cc06e980a2c454037f5c25a
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: A native settings panel for YouTube, in Arabic or English — starting with the truth about your build.
