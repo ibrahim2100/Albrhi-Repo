@@ -3,6 +3,14 @@
 **Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
 newer versions are expected to work and you will be told if yours is untested.
 
+## v3.8.2
+
+- **Nothing changed in the app.** Every feature, setting and button is exactly where
+  it was. This release only reorganises how the project is stored, so the same source
+  can hold a second tweak for another app later on — a YouTube one is being started.
+- If anything at all behaves differently from 3.8.1, that is a bug and not a change.
+  Settings › Diagnostics writes the report.
+
 ## v3.8.1
 
 - **Downloads survive losing signal.** A transfer cut off by the network now retries
