@@ -1,0 +1,339 @@
+name: Build and release Albrhi for YouTube
+
+#
+# Deliberately a second workflow rather than a second job inside the Instagram one.
+#
+# The two tweaks have separate versions, separate tags and separate release assets,
+# and a failure in one must not hold back the other: a YouTube build that will not
+# compile should never be able to block an Instagram release, which is exactly what
+# would happen if both lived in one job.
+#
+# The one thing they cannot help sharing is the APT index, and that is where the
+# hazard was. make-repo.sh wipes the published debs/ directory and rebuilds it on
+# purpose, so an index built from one tweak's build output would erase the other
+# tweak from the source. Both workflows therefore build the index from what is
+# *published* -- tools/fetch-published-debs.sh -- so either one produces a complete,
+# correct index, and both take the albrhi-pages concurrency group so they never write
+# to gh-pages at the same time.
+#
+# No standalone .dylib is published for YouTube yet: that build needs the Substrate
+# shim under Compat/, which this tweak does not carry, and shipping a dylib that
+# silently hooks nothing is worse than shipping none.
+#
+
+on:
+    push:
+        branches:
+            - 'main'
+        paths:
+            # Only when something that affects this tweak changed. The Instagram
+            # workflow rebuilds the index on every push regardless, so nothing is
+            # missed by staying quiet here.
+            - 'tweaks/youtube/**'
+            - 'shared/**'
+            - 'tools/**'
+            - '.github/workflows/buildyoutube.yml'
+    workflow_dispatch:
+        inputs:
+            force_rebuild:
+                description: 'Rebuild even if this version was already released'
+                type: boolean
+                default: false
+
+env:
+    TWEAK_DIR: main/tweaks/youtube
+    TWEAK_NAME: youtube
+
+jobs:
+    build:
+        name: Build YouTube rootless + roothide
+        runs-on: macos-latest
+
+        environment:
+            name: github-pages
+            url: ${{ steps.deploy.outputs.page_url }}
+
+        permissions:
+            contents: write
+            pages: write
+            id-token: write
+
+        # Shared with the Instagram workflow: see the note at the top of this file.
+        concurrency:
+            group: albrhi-pages
+            cancel-in-progress: false
+
+        steps:
+            - name: Checkout Main
+              uses: actions/checkout@v4
+              with:
+                path: main
+                submodules: recursive
+
+            - name: Source checks
+              run: |
+                cd main
+                # Checks every tweak, not just this one: a change under shared/ or
+                # tools/ can break the other tweak, and finding that out here costs
+                # seconds instead of a failed Instagram release later.
+                python3 tools/check.py
+
+            - name: Get version
+              run: |
+                YT_VERSION=$(awk -F': *' '/^Version:/ {print $2; exit}' "$TWEAK_DIR/control")
+
+                if [ -z "$YT_VERSION" ]; then
+                  echo "::error::Could not read Version from $TWEAK_DIR/control"
+                  exit 1
+                fi
+
+                echo "YT_VERSION=${YT_VERSION}" >> "$GITHUB_ENV"
+
+            - name: Point control at this repository
+              run: |
+                cd "$TWEAK_DIR"
+
+                OWNER="${{ github.repository_owner }}"
+                PROJECT="${{ github.event.repository.name }}"
+
+                sed -i.bak \
+                  -e "s|^Homepage: .*|Homepage: https://github.com/${OWNER}/${PROJECT}|" \
+                  -e "s|^Icon: .*|Icon: https://${OWNER}.github.io/${PROJECT}/CydiaIcon.png|" \
+                  control
+                rm -f control.bak
+
+                grep -E '^(Homepage|Icon):' control
+
+            - name: Decide whether a build is needed
+              id: release_check
+              env:
+                GH_TOKEN: ${{ github.token }}
+              run: |
+                # Its own tag namespace, so YouTube's versions can never be confused
+                # with Instagram's -- which share this repository's releases page.
+                TAG="youtube-v${YT_VERSION}"
+                echo "TAG=${TAG}" >> "$GITHUB_ENV"
+
+                if [ "${{ github.event.inputs.force_rebuild }}" = "true" ]; then
+                  echo "Forced rebuild requested."
+                  echo "needed=true" >> "$GITHUB_OUTPUT"
+                elif gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+                  echo "::notice::${TAG} is already released - skipping the build."
+                  echo "::notice::Bump Version in $TWEAK_DIR/control to build again."
+                  echo "needed=false" >> "$GITHUB_OUTPUT"
+                else
+                  echo "${TAG} is new - building."
+                  echo "needed=true" >> "$GITHUB_OUTPUT"
+                fi
+
+            - name: Install dpkg
+              # Needed on every run, not only build runs: the index is assembled with
+              # dpkg-deb and dpkg-scanpackages even when the build is skipped. Gating
+              # this behind the build broke exactly that in the Instagram workflow.
+              run: brew install dpkg
+
+            - name: Install build dependencies
+              if: steps.release_check.outputs.needed == 'true'
+              run: brew install ldid make
+
+            - name: Set PATH environment variable
+              if: steps.release_check.outputs.needed == 'true'
+              run: echo "$(brew --prefix make)/libexec/gnubin" >> $GITHUB_PATH
+
+            - name: Setup Theos
+              if: steps.release_check.outputs.needed == 'true'
+              uses: actions/checkout@v4
+              with:
+                repository: theos/theos
+                ref: master
+                path: ${{ github.workspace }}/theos
+                submodules: recursive
+
+            - name: SDK Caching
+              if: steps.release_check.outputs.needed == 'true'
+              id: SDK
+              uses: actions/cache@v4
+              env:
+                cache-name: iPhoneOS16.2.sdk
+              with:
+                path: ${{ github.workspace }}/theos/sdks/
+                key: ${{ env.cache-name }}
+                restore-keys: ${{ env.cache-name }}
+
+            - name: Download iOS SDK
+              if: steps.release_check.outputs.needed == 'true' && steps.SDK.outputs.cache-hit != 'true'
+              run: |
+                git clone --quiet -n --depth=1 --filter=tree:0 https://github.com/xybp888/iOS-SDKs/
+                cd iOS-SDKs
+                git sparse-checkout set --no-cone iPhoneOS16.2.sdk
+                git checkout
+                mv *.sdk $THEOS/sdks
+              env:
+                THEOS: ${{ github.workspace }}/theos
+
+            - name: Build for rootless
+              if: steps.release_check.outputs.needed == 'true'
+              run: |
+                cd main
+                chmod +x build.sh
+                ./build.sh youtube rootless
+                ls -la tweaks/youtube/packages
+              env:
+                THEOS: ${{ github.workspace }}/theos
+
+            - name: Rename rootless deb
+              if: steps.release_check.outputs.needed == 'true'
+              run: |
+                cd "$TWEAK_DIR/packages"
+
+                BUILT_DEB=$(ls -t *.deb | head -n1)
+                if [ -z "$BUILT_DEB" ]; then
+                  echo "::error::No .deb produced by build.sh"
+                  exit 1
+                fi
+
+                mv "$BUILT_DEB" "com.albrhi.youtube_${YT_VERSION}+rootless.deb"
+                ls -la
+
+            - name: Setup roothide Theos
+              if: steps.release_check.outputs.needed == 'true'
+              uses: actions/checkout@v4
+              with:
+                repository: roothide/theos
+                ref: master
+                path: ${{ github.workspace }}/theos-roothide
+                submodules: recursive
+
+            - name: Share the SDK with roothide Theos
+              if: steps.release_check.outputs.needed == 'true'
+              run: |
+                mkdir -p "${{ github.workspace }}/theos-roothide/sdks"
+                cp -R "${{ github.workspace }}/theos/sdks/." "${{ github.workspace }}/theos-roothide/sdks/"
+                ls "${{ github.workspace }}/theos-roothide/sdks"
+
+            - name: Build for roothide
+              if: steps.release_check.outputs.needed == 'true'
+              run: |
+                cd main
+                ./build.sh youtube roothide
+                ls -la tweaks/youtube/packages
+              env:
+                THEOS: ${{ github.workspace }}/theos-roothide
+
+            - name: Rename roothide deb
+              if: steps.release_check.outputs.needed == 'true'
+              run: |
+                cd "$TWEAK_DIR/packages"
+
+                # Matched on the roothide identity rather than on "whatever is
+                # newest": an exact name cannot pick up the rootless build by mistake.
+                BUILT_DEB=$(ls -t com.albrhi.youtube.roothide_*.deb 2>/dev/null | head -n1)
+                if [ -z "$BUILT_DEB" ]; then
+                  echo "::error::No roothide .deb produced — the package identity swap may have failed"
+                  ls -la
+                  exit 1
+                fi
+
+                TARGET="com.albrhi.youtube.roothide_${YT_VERSION}.deb"
+                if [ "$BUILT_DEB" != "$TARGET" ]; then
+                  mv "$BUILT_DEB" "$TARGET"
+                fi
+                ls -la
+
+            - name: Extract changelog for this version
+              if: steps.release_check.outputs.needed == 'true'
+              run: |
+                awk -v ver="$YT_VERSION" '
+                  $0 ~ "^## v?" ver { found=1; next }
+                  found && /^## / { exit }
+                  found { print }
+                ' "$TWEAK_DIR/CHANGELOG.md" > release-notes.md
+
+                if [ ! -s release-notes.md ]; then
+                  echo "Albrhi for YouTube ${YT_VERSION}." > release-notes.md
+                fi
+
+                cat release-notes.md
+
+            - name: Publish release
+              if: steps.release_check.outputs.needed == 'true'
+              uses: softprops/action-gh-release@v2
+              with:
+                tag_name: ${{ env.TAG }}
+                name: Albrhi for YouTube ${{ env.YT_VERSION }}
+                body_path: release-notes.md
+                prerelease: true
+                files: |
+                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/com.albrhi.youtube_${{ env.YT_VERSION }}+rootless.deb
+                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/com.albrhi.youtube.roothide_${{ env.YT_VERSION }}.deb
+                fail_on_unmatched_files: true
+              env:
+                GITHUB_TOKEN: ${{ github.token }}
+
+            - name: Gather every published package
+              env:
+                GH_TOKEN: ${{ github.token }}
+              run: |
+                # Both tweaks, from the releases rather than from this run's output --
+                # the whole reason two workflows can share one source without one
+                # erasing the other. See the note at the top of this file.
+                chmod +x main/tools/fetch-published-debs.sh
+                ./main/tools/fetch-published-debs.sh published "${{ github.repository }}" 3
+
+            # Both workflows deploy, and that is not redundancy -- it is what makes
+            # the order they run in irrelevant.
+            #
+            # A push that touches this tweak starts both. If Instagram's run gathers
+            # the published packages before this one has published its release, its
+            # index will not have YouTube in it; this run then publishes and deploys a
+            # complete one. In the other order, this run deploys a complete index and
+            # Instagram's run deploys the same complete index again. Either way the
+            # last deployment is correct, and neither has to know about the other
+            # beyond taking the same concurrency group.
+            - name: Publish APT repo to GitHub Pages
+              env:
+                GH_TOKEN: ${{ github.token }}
+              run: |
+                REPO_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+
+                rm -rf pages
+                mkdir pages
+
+                chmod +x main/tools/make-repo.sh
+                ./main/tools/make-repo.sh published pages "$REPO_URL"
+
+                cp main/tools/repo-index.html pages/index.html
+
+                mkdir -p pages/deb-edit
+                cp main/tools/deb-edit.html pages/deb-edit/index.html
+
+                mkdir -p pages/inject
+                cp main/tools/ipa-inject.html pages/inject/index.html
+
+                # Instagram's depiction is regenerated by its own workflow from its own
+                # changelog. Carried across untouched here rather than rebuilt: this
+                # workflow has no business deciding what Instagram's package page says,
+                # and dropping it would leave a dead link in Sileo.
+                if git ls-remote --exit-code --heads \
+                     "https://github.com/${{ github.repository }}.git" gh-pages >/dev/null 2>&1; then
+                  git clone -q --depth 1 --branch gh-pages \
+                    "https://github.com/${{ github.repository }}.git" previous-pages
+                  if [ -d previous-pages/depictions ]; then
+                    cp -R previous-pages/depictions pages/depictions
+                    echo "Carried over $(ls pages/depictions | wc -l) depiction files."
+                  fi
+                fi
+
+                python3 main/tools/make-logo.py pages/CydiaIcon.png 512
+
+                touch pages/.nojekyll
+                ls -la pages
+
+            - name: Upload the repo for Pages
+              uses: actions/upload-pages-artifact@v3
+              with:
+                path: pages
+
+            - name: Deploy to Pages
+              id: deploy
+              uses: actions/deploy-pages@v4

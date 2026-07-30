@@ -102,11 +102,25 @@ Create `tweaks/<name>/` with a `Makefile` (ending in
 a `SCIVersionString` matching `control`. `tools/check.py` finds it automatically
 and checks it like the others; `./build.sh <name> rootless` builds it.
 
-Releasing it is the part that is **not** automatic yet: the workflow still
-releases exactly one tweak, named in the `TWEAK_DIR` env var at the top of
-`buildtweak.yml`. Per-tweak versions and tags will be designed when there is a
-second package to test them against — designing that scheme against a guess is
-how the version gate would quietly stop protecting Albrhi.
+Releasing it means **its own workflow**, modelled on `buildyoutube.yml`: its own
+version gate, its own tag namespace (`youtube-v*`, so two tweaks' versions can
+never be confused on one releases page), its own assets. Separate workflows rather
+than one job per tweak, so a tweak that will not compile can never block another
+tweak's release.
+
+**The one thing they cannot help sharing is the APT index, and that was the trap.**
+`make-repo.sh` wipes `debs/` and rebuilds it on purpose, so an index built from one
+tweak's build output would erase the other tweak from the source. Both workflows
+therefore build the index from what is **published** — `tools/fetch-published-debs.sh`
+gathers the newest three versions of every package from the releases — and both take
+the `albrhi-pages` concurrency group so they never write `gh-pages` at once.
+
+Both also deploy, which is not redundancy: it is what makes the order they run in
+irrelevant. Whichever finishes last deploys a complete index, from either direction.
+
+That change also closed a gap that existed with one tweak: when a build was skipped
+because the version was already released, the index depended on a separate download
+step succeeding. Now there is a single source of truth for what the source serves.
 
 ### Settings are self-registering
 
