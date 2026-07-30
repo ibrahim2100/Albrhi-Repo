@@ -27,6 +27,16 @@
 /// The whole report as text, exactly as the page shows it and the copy button copies.
 + (NSString *)report;
 
+/// YouTube's own version, for the identity card and the report.
++ (NSString *)appVersion;
+
+/// Whether every class the features hook is actually present.
+///
+/// Read by the identity card so the answer is the first thing on the settings screen
+/// rather than something to go looking for. Earlier versions buried it -- 0.1.0 put it
+/// behind the very thing that had failed.
++ (BOOL)featuresAttached;
+
 /// Writes the report to a file inside the app's own container, and returns its path.
 ///
 /// 0.1.0 put the only way to read a diagnostic *inside* the settings section, so when

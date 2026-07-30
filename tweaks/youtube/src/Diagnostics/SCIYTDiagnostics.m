@@ -134,6 +134,29 @@ static NSString *sciPanelFailure = nil;
     [self writeReportToFile];
 }
 
+/// Only the rows the *features* depend on. The report lists more than this -- the
+/// download paths, the settings model -- and none of those failing means a feature is
+/// broken, so none of them may turn the identity badge amber.
++ (BOOL)featuresAttached {
+    NSArray *required = @[
+        @"YTAdsInnerTubeContextDecorator",
+        @"YTAdShieldUtils",
+        @"YTIPlayerResponse",
+        @"YTLocalPlaybackController",
+        @"YTInnerTubeCollectionViewController",
+        @"YTIPlayabilityStatus",
+        @"MLVideo",
+    ];
+
+    for (NSString *name in required) {
+        if (objc_getClass([name UTF8String]) == NULL) {
+            SCILogV(@"audit: %@ is missing", name);
+            return NO;
+        }
+    }
+    return YES;
+}
+
 + (NSString *)appVersion {
     NSString *version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
     return version.length ? version : @"unknown";

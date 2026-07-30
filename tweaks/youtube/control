@@ -1,34 +1,45 @@
 Package: com.albrhi.youtube
 Name: Albrhi for YouTube (rootless)
-Version: 0.1.4
+Version: 0.2.0
 Architecture: iphoneos-arm64
-Description: A native settings panel for YouTube, in Arabic or English — starting with the truth about your build.
+Description: No ads, background playback, and a settings panel in Arabic or English.
  .
- This is the first release of Albrhi for YouTube and it is deliberately small. It
- adds its own section to YouTube's own settings, and one page inside it that reports
- what the tweak actually finds in your copy of YouTube.
+ ◍ DOWNLOADS
+ Not yet. That one is being measured before it is built — see the diagnostics page.
  .
- ▍WHY START HERE
- Downloading from YouTube is not a matter of grabbing a link. YouTube streams
- through a protocol that hands out media in pieces rather than files, and the app
- also carries its own downloader for offline playback. Which of those is reachable
- cannot be read off the app from outside — it has to be measured on a real device,
- on a real video.
+ ▍ NO ADS
+ Ads are stopped at three separate points, because they arrive by three separate
+ routes and blocking one does nothing about the others.
  .
- That is what this page does. Play something, open it, and it prints exactly what
- YouTube told the app about that video: every quality, every format, every stream.
- One tap copies the report. Guessing instead of measuring is how weeks get wasted.
+ First, the app stops telling YouTube it wants ads at all, so they are never sent
+ rather than sent and then hidden. Second, promoted rows are dropped out of the feed
+ by the identifier YouTube's own servers attach to them — including the plain-looking
+ layouts that carry sponsored content without the word "ad" anywhere in them. Third,
+ the player refuses ads before a video, in the middle of one, and the kind stitched
+ into the stream itself, which nothing else can reach.
  .
- ▍WHAT IS HERE NOW
- A settings section that looks like it shipped with YouTube, full Arabic and English
- with right-to-left layout, and the diagnostics page above.
+ ▍ BACKGROUND PLAYBACK
+ Audio keeps going when you leave the app or lock the screen.
  .
- ▍WHAT IS NOT HERE YET
- Everything else. No downloads, no ad removal, no player changes. They are being
- built on what this page reports rather than on guesswork, and each will arrive when
- it is verified against a real build instead of assumed.
+ ▍ QUIETER
+ Silence the prompt to update — updating replaces the app and removes this tweak. And
+ optionally hide the paid-promotion banner, off by default, because it is a disclosure.
  .
- Installing this changes nothing about how YouTube plays, looks or behaves.
+ ▍ SETTINGS
+ Hold two fingers anywhere in YouTube. Full Arabic and English with right-to-left
+ layout, and a card at the top that says whether everything actually attached to your
+ build rather than leaving you to wonder.
+ .
+ ▍ DIAGNOSTICS
+ Reports what the tweak finds in your copy of YouTube and what YouTube said about the
+ last video you played. Also written to Documents/AlbrhiYT-report.txt, so it is
+ readable even if nothing else worked.
+ .
+ ▍ TESTED ON
+ YouTube 21.30.5. Nothing is pinned to a version number: every class is looked up at
+ runtime and skipped if it is not there. The hooks are on YouTube's model and service
+ layer rather than its views — views get renamed and rewritten between releases, and a
+ tweak that hooks them quietly stops working. A player response does not.
  .
  Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo

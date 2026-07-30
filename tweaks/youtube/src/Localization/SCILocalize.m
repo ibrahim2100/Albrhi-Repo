@@ -15,7 +15,25 @@ static void SCIBuildTables(void) {
     _enTable = @{
         @"panel_title": @"Albrhi for YouTube",
         @"panel_subtitle": @"Hold two fingers anywhere to open this",
-        @"panel_close": @"Close",
+
+        @"section_ads": @"Ads",
+        @"section_player": @"Player",
+        @"section_general": @"General",
+
+        @"identity_attached": @"Everything attached",
+        @"identity_partial": @"Some features could not attach",
+
+        @"hide_ads": @"Hide ads",
+        @"hide_ads_note": @"Stops the app asking for ads at all, drops promoted rows out of the feed, and refuses ads before, during and inside the video.",
+
+        @"hide_paid_promotion": @"Hide the paid promotion notice",
+        @"hide_paid_promotion_note": @"Removes the banner a creator shows when a video is sponsored. Off by default — it is a disclosure.",
+
+        @"background_playback": @"Keep playing in the background",
+        @"background_playback_note": @"Audio carries on when you leave the app or lock the screen.",
+
+        @"block_update_nag": @"Silence the update prompt",
+        @"block_update_nag_note": @"Stops YouTube asking you to update, which would replace the app and remove this tweak.",
 
         @"verbose_logging": @"Verbose logging",
         @"verbose_logging_note": @"Writes what the tweak is doing to the system log. Leave this off unless you are collecting a report — it is noisy and slows things down.",
@@ -52,7 +70,25 @@ static void SCIBuildTables(void) {
     _arTable = @{
         @"panel_title": @"البرهي ليوتيوب",
         @"panel_subtitle": @"اضغط بإصبعين في أي مكان لفتح هذه اللوحة",
-        @"panel_close": @"إغلاق",
+
+        @"section_ads": @"الإعلانات",
+        @"section_player": @"المشغّل",
+        @"section_general": @"عام",
+
+        @"identity_attached": @"كل شيء مرتبط",
+        @"identity_partial": @"بعض المميزات لم ترتبط",
+
+        @"hide_ads": @"حجب الإعلانات",
+        @"hide_ads_note": @"يمنع التطبيق من طلبها أصلًا، ويُسقط الصفوف المُموّلة من الخصائص، ويرفض الإعلانات قبل الفيديو وأثناءه والمدموجة فيه.",
+
+        @"hide_paid_promotion": @"إخفاء تنبيه الترويج المدفوع",
+        @"hide_paid_promotion_note": @"يُزيل الشريط الذي يظهر عندما يكون الفيديو مموّلًا. مطفأ افتراضيًا — لأنه إفصاح.",
+
+        @"background_playback": @"الاستمرار في الخلفية",
+        @"background_playback_note": @"يكمل الصوت عند خروجك من التطبيق أو قفل الشاشة.",
+
+        @"block_update_nag": @"كتم تنبيه التحديث",
+        @"block_update_nag_note": @"يمنع يوتيوب من مطالبتك بالتحديث، فالتحديث يستبدل التطبيق ويُزيل هذه الأداة.",
 
         @"verbose_logging": @"سجل مفصّل",
         @"verbose_logging_note": @"يكتب ما تفعله الأداة في سجل النظام. اتركه مطفأً إلا إذا كنت تجمع تقريرًا — فهو مزعج ويُبطئ الأداء.",

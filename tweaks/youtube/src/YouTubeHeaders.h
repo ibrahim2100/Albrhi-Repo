@@ -126,3 +126,75 @@
 @interface YTPlayerOverlayWrapper : NSObject
 - (void)setPlayerResponse:(YTIPlayerResponse *)playerResponse;
 @end
+
+// MARK: - Ads and playback
+//
+// Everything below is the *model and service* layer, and that is a decision rather
+// than a coincidence.
+//
+// Two reference tweaks were measured against this binary. The one that hooks view
+// classes has nineteen target names that are not classes in 21.30.5 at all -- so
+// those features are dead for its users with nothing to say so. The one that hooks
+// models and services, 68 KB doing only this, has **zero** dead selectors and
+// thirteen of its fifteen classes alive. Views get renamed and rewritten in Swift
+// between releases; a player response does not.
+//
+// Every selector below was checked against the class that actually implements it,
+// class methods against the metaclass, where a naive dump does not look.
+
+/// Adds ad capability and targeting to the InnerTube request context. Emptied, the
+/// server is never told this client wants ads -- so they are not sent, rather than
+/// sent and then hidden.
+@interface YTAdsInnerTubeContextDecorator : NSObject
+- (void)decorateContext:(id)context;
+@end
+
+@interface YTAccountScopedAdsInnerTubeContextDecorator : NSObject
+- (void)decorateContext:(id)context;
+@end
+
+/// The anti-adblock fingerprint. Class methods, so they live on the metaclass.
+@interface YTAdShieldUtils : NSObject
++ (NSDictionary *)spamSignalsDictionary;
++ (NSDictionary *)spamSignalsDictionaryWithoutIDFA;
+@end
+
+/// Where in-player ads are decided: pre-roll, mid-roll, and the kind the server
+/// stitches into the stream itself.
+@interface YTIPlayerResponse (SCIAds)
+- (BOOL)isMonetized;
+- (id)adIntroRenderer;
+- (BOOL)hasAdLoggingData;
+- (BOOL)isCuepointAdsEnabled;
+- (BOOL)isDAIEnabledPlayback;
+- (id)paidContentOverlayElementRendererOptions;
+@end
+
+/// Builds the coordinator that plays ads. No coordinator, no ad playback.
+@interface YTLocalPlaybackController : NSObject
+- (id)createAdsPlaybackCoordinator;
+@end
+
+/// Whether the server says this video may keep playing with the screen off. The gate
+/// for background playback, and it sits on the response rather than on any view.
+@interface YTIPlayabilityStatus : GPBMessage
+- (BOOL)isPlayableInBackground;
+@end
+
+/// The same question, asked again by the playback layer rather than the response.
+/// Both implement it, both are asked at different moments, and forcing one while
+/// leaving the other gives playback that stops depending on which path the app took.
+@interface YTPlaybackData : NSObject
+- (BOOL)isPlayableInBackground;
+@end
+
+/// Owns the "please update" dialog, among much else.
+@interface YTGlobalConfig : NSObject
+- (BOOL)shouldBlockUpgradeDialog;
+@end
+
+/// The feed. Sections arrive here as renderers, which is where a promoted one can be
+/// dropped by the identifier the server itself attached to it.
+@interface YTInnerTubeCollectionViewController : UIViewController
+- (void)addSectionsFromArray:(NSArray *)sections;
+@end

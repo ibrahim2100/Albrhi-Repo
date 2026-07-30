@@ -3,6 +3,36 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.2.0
+
+- **No ads.** Blocked at three separate points, because ads arrive by three separate
+  routes and stopping one does nothing about the others: the app stops asking YouTube
+  for ads at all, promoted rows are dropped out of the feed, and the player refuses ads
+  before a video, mid-video, and the kind stitched into the stream itself.
+
+  The feed filter matches on the identifiers YouTube's own servers attach to promoted
+  rows — including plain-sounding layouts with no "ad" in the name, which are the ones a
+  hand-written list always misses.
+
+- **Background playback.** Audio keeps going when you leave the app or lock the screen.
+
+- **Silence the update prompt**, since updating YouTube replaces the app and removes
+  this tweak. And optionally hide the paid-promotion banner — off by default, because
+  it is a disclosure and removing one for everybody is not this tweak's call.
+
+- **A real settings screen at last.** Hold two fingers anywhere in YouTube. Sections,
+  switches, Arabic and English with right-to-left layout, and a card at the top that
+  says whether everything actually attached to *your* build instead of leaving you to
+  wonder.
+
+  Built on a standard grouped table this time. Three releases in a row either failed to
+  appear or crashed, the last one inside the layout engine while assembling a panel out
+  of hand-written constraints. A table has almost none of that surface — the system does
+  the layout.
+
+- Ad hiding, background playback and the update prompt are **on by default**; they are
+  why you would install this.
+
 ## v0.1.4
 
 - **Fixes the crash when opening the panel in 0.1.3.** Install this over it.

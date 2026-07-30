@@ -1,9 +1,10 @@
 #import "YouTubeHeaders.h"
 #import "Tweak.h"
 #import "SCILog.h"
+#import "Prefs.h"
 #import "Diagnostics/SCIYTDiagnostics.h"
 
-NSString *SCIVersionString = @"v0.1.4";  // AlbrhiYT
+NSString *SCIVersionString = @"v0.2.0";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.
@@ -76,8 +77,16 @@ NSString *SCIVersionString = @"v0.1.4";  // AlbrhiYT
     // returns NO, which happens to be right for verbose logging and would be wrong
     // for the next setting added here. Registering makes the intended default
     // explicit at the one place it can be seen.
+    // Ad hiding and background playback default to on: they are why someone installs
+    // this, and shipping them off would mean a tweak that appears to do nothing until
+    // its settings are found. The paid-promotion overlay defaults to *off* on purpose --
+    // it is a disclosure, and removing one for everybody is not this tweak's call.
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{
-        @"verbose_logging": @NO,
+        SCIPrefHideAds: @YES,
+        SCIPrefBackgroundPlay: @YES,
+        SCIPrefBlockUpdateNag: @YES,
+        SCIPrefHidePaidPromo: @NO,
+        SCIPrefVerboseLogging: @NO,
     }];
 
     // Unconditional, and the only line here that is.

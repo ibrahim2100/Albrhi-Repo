@@ -1,7 +1,7 @@
 #import "../YouTubeHeaders.h"
 #import "../Tweak.h"
 #import "../SCILog.h"
-#import "../UI/SCIYTPanel.h"
+#import "../UI/SCIYTSettingsController.h"
 #import "../Diagnostics/SCIYTDiagnostics.h"
 #import <objc/runtime.h>
 
@@ -47,7 +47,7 @@
     if (recognizer.state != UIGestureRecognizerStateBegan) return;
 
     SCILogV(@"entry: two-finger long press");
-    [SCIYTPanel present];
+    [SCIYTSettingsController present];
 }
 
 @end
