@@ -193,6 +193,26 @@
 - (BOOL)shouldBlockUpgradeDialog;
 @end
 
+/// The player, and the one class that owns every piece SponsorBlock needs: it is told
+/// when a video activates, it is told when the time moves, and it can seek.
+///
+/// The signatures below are the type encodings read out of the binary, not inferred:
+///   currentVideoMediaTime                                    d16@0:8
+///   seekToTime:                                              v24@0:8d16
+///   playbackController:didActivateVideo:withPlaybackData:    v40@0:8@16@24@32
+///   potentiallyMutatedSingleVideo:currentVideoTimeDidChange: v32@0:8@16@24
+///
+/// So the time is a double and both delegate arguments are objects. Getting that wrong
+/// in a Logos hook does not fail to compile -- it passes garbage.
+///
+/// Note what is *not* declared: -singleVideo:currentVideoTimeDidChange:. Other classes
+/// implement it, this one does not, and the reference tweak hooks it here anyway --
+/// adding a method that is never called.
+@interface YTPlayerViewController : UIViewController
+- (double)currentVideoMediaTime;
+- (void)seekToTime:(double)time;
+@end
+
 /// The feed. Sections arrive here as renderers, which is where a promoted one can be
 /// dropped by the identifier the server itself attached to it.
 @interface YTInnerTubeCollectionViewController : UIViewController

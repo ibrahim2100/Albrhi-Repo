@@ -1,0 +1,42 @@
+#import <Foundation/Foundation.h>
+
+///
+/// One segment of a video that somebody has marked as skippable.
+///
+@interface SCISponsorSegment : NSObject
+@property (nonatomic, copy) NSString *category;
+@property (nonatomic, copy) NSString *uuid;
+@property (nonatomic, assign) NSTimeInterval start;
+@property (nonatomic, assign) NSTimeInterval end;
+@end
+
+
+///
+/// Asks sponsor.ajay.app which parts of a video are sponsored.
+///
+/// Segment data comes from the SponsorBlock database and is licensed CC BY-NC-SA 4.0.
+/// The attribution is not decoration: it is a licence condition, and it is shown in the
+/// settings screen the same way SCInsta's authorship is shown on the Instagram side.
+///
+/// **The video ID is never sent.** SponsorBlock offers two endpoints: one takes the
+/// video ID, the other takes the first four characters of its SHA-256 and returns the
+/// segments of every video whose hash starts the same way. The first is simpler and
+/// tells a third party exactly what you are watching, every time you watch something.
+/// For a tweak whose Instagram half exists to stop an app reporting what you look at,
+/// that was not a real choice.
+///
+/// The cost is honest and paid locally: the hashed endpoint returns the raw submissions
+/// rather than the server's curated pick, so the filtering by votes and action type that
+/// the server would have done happens here instead.
+///
+@interface SCIYTSponsorClient : NSObject
+
+/// Looks up a video's segments, already filtered to the categories the user enabled.
+/// The completion runs on the main queue, always, and may receive an empty array.
++ (void)segmentsForVideo:(NSString *)videoID
+              completion:(void (^)(NSArray<SCISponsorSegment *> *segments))completion;
+
+/// A human name for a category, for the notice shown after a skip.
++ (NSString *)displayNameForCategory:(NSString *)category;
+
+@end

@@ -3,6 +3,38 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.3.0
+
+- **Skips the sponsored parts.** Paid plugs, the creator's own promotion, and subscribe
+  reminders are jumped over automatically, using segments other viewers submitted to
+  SponsorBlock. A short line at the top names what was skipped and offers an undo, so a
+  wrong segment costs one tap rather than a rewind.
+
+- **Eight categories, each with its own switch.** Sponsor, self-promotion and subscribe
+  reminders are on. Intros, endcards, recaps, tangents and non-music sections are off
+  until you turn them on — somebody chose to make that content, and deciding for you
+  that it is worthless is not this tweak's call.
+
+- **Your video is never sent.** SponsorBlock offers two ways to ask, and this uses the
+  one that sends only the first four characters of the video's fingerprint — so the
+  reply covers many videos and the server cannot tell which one you are watching. The
+  other way is simpler and would report every video you play to a third party, which for
+  a tweak with a privacy half would have been a strange thing to do.
+
+  The cost is paid here instead: that endpoint returns the raw submissions rather than
+  the server's curated pick, so downvoted and non-skip segments are filtered on the
+  phone.
+
+- Nothing is requested at all when the feature is off, or when every category is off.
+  Not requested and discarded — not requested.
+
+- Segment data is from SponsorBlock (sponsor.ajay.app), licensed CC BY-NC-SA 4.0 and
+  credited in the settings screen. That is a licence condition, not a courtesy.
+
+- **Not yet:** the coloured markers on the progress bar. Those need a hook on a view
+  rather than the player, and views are where this tweak's earlier crashes came from —
+  it will come once it can be done without risking the skipping that already works.
+
 ## v0.2.0
 
 - **No ads.** Blocked at three separate points, because ads arrive by three separate

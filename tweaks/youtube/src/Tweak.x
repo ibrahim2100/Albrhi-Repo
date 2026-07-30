@@ -4,7 +4,7 @@
 #import "Prefs.h"
 #import "Diagnostics/SCIYTDiagnostics.h"
 
-NSString *SCIVersionString = @"v0.2.0";  // AlbrhiYT
+NSString *SCIVersionString = @"v0.3.0";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.
@@ -87,6 +87,24 @@ NSString *SCIVersionString = @"v0.2.0";  // AlbrhiYT
         SCIPrefBlockUpdateNag: @YES,
         SCIPrefHidePaidPromo: @NO,
         SCIPrefVerboseLogging: @NO,
+
+        // SponsorBlock on, and its three least arguable categories with it: a paid
+        // plug, the creator's own promotion, and a subscribe reminder are what people
+        // mean by "skip the sponsor".
+        //
+        // Intros, endcards, recaps, tangents and non-music sections stay off. Each of
+        // those is content somebody chose to make, and deciding for every user that it
+        // is worthless is not this tweak's call — the switches are right there.
+        SCIPrefSponsorBlock: @YES,
+        SCIPrefSBNotice: @YES,
+        SCIPrefSBSponsor: @YES,
+        SCIPrefSBSelfPromo: @YES,
+        SCIPrefSBInteraction: @YES,
+        SCIPrefSBIntro: @NO,
+        SCIPrefSBOutro: @NO,
+        SCIPrefSBPreview: @NO,
+        SCIPrefSBFiller: @NO,
+        SCIPrefSBMusicOffTopic: @NO,
     }];
 
     // Unconditional, and the only line here that is.

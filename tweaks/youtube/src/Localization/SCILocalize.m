@@ -35,6 +35,35 @@ static void SCIBuildTables(void) {
         @"block_update_nag": @"Silence the update prompt",
         @"block_update_nag_note": @"Stops YouTube asking you to update, which would replace the app and remove this tweak.",
 
+        @"section_sponsorblock": @"SponsorBlock",
+        @"sponsorblock": @"Skip sponsored parts",
+        @"sponsorblock_note": @"Uses segments other viewers submitted, so paid plugs and intros are jumped over.",
+        @"sponsorblock_notice": @"Say what was skipped",
+        @"sponsorblock_notice_note": @"A short line at the top naming what was skipped, with an undo.",
+
+        @"sb_categories": @"What to skip",
+        @"sb_sponsor": @"Paid sponsor",
+        @"sb_sponsor_note": @"A plug the creator was paid for.",
+        @"sb_selfpromo": @"Self-promotion",
+        @"sb_selfpromo_note": @"The creator's own merchandise, channel or Patreon.",
+        @"sb_interaction": @"Like and subscribe",
+        @"sb_interaction_note": @"A reminder to subscribe or hit the bell.",
+        @"sb_intro": @"Intro",
+        @"sb_intro_note": @"Title animations and intermissions with no content.",
+        @"sb_outro": @"Endcards",
+        @"sb_outro_note": @"Credits and the end screen.",
+        @"sb_preview": @"Recap",
+        @"sb_preview_note": @"A summary of what is coming, or of an earlier episode.",
+        @"sb_filler": @"Tangents",
+        @"sb_filler_note": @"Jokes and asides that are not needed to follow along. Aggressive — off by default.",
+        @"sb_music_offtopic": @"Non-music parts",
+        @"sb_music_offtopic_note": @"In a music video, the parts that are not the music.",
+
+        @"sb_skipped_format": @"Skipped: %@",
+        @"sb_undo": @"Undo",
+
+        @"sb_credit": @"Segment data from SponsorBlock (sponsor.ajay.app), licensed CC BY-NC-SA 4.0. Your video is never sent — only the first four characters of its fingerprint, so the server cannot tell which video you are watching.",
+
         @"verbose_logging": @"Verbose logging",
         @"verbose_logging_note": @"Writes what the tweak is doing to the system log. Leave this off unless you are collecting a report — it is noisy and slows things down.",
 
@@ -89,6 +118,35 @@ static void SCIBuildTables(void) {
 
         @"block_update_nag": @"كتم تنبيه التحديث",
         @"block_update_nag_note": @"يمنع يوتيوب من مطالبتك بالتحديث، فالتحديث يستبدل التطبيق ويُزيل هذه الأداة.",
+
+        @"section_sponsorblock": @"سبونسر بلوك",
+        @"sponsorblock": @"تخطّي المقاطع المموّلة",
+        @"sponsorblock_note": @"يستخدم مقاطع أرسلها مشاهدون آخرون، فتُتجاوَز الإعلانات المدفوعة والمقدّمات.",
+        @"sponsorblock_notice": @"إظهار ما تم تخطّيه",
+        @"sponsorblock_notice_note": @"سطر قصير في الأعلى يسمّي ما تُخطّي، ومعه زر تراجع.",
+
+        @"sb_categories": @"ما الذي يُتخطّى",
+        @"sb_sponsor": @"إعلان مدفوع",
+        @"sb_sponsor_note": @"ترويج تلقّى صاحب القناة مقابلًا عليه.",
+        @"sb_selfpromo": @"ترويج ذاتي",
+        @"sb_selfpromo_note": @"منتجات صاحب القناة أو قناته أو دعمه.",
+        @"sb_interaction": @"طلب الإعجاب والاشتراك",
+        @"sb_interaction_note": @"تذكير بالاشتراك أو تفعيل الجرس.",
+        @"sb_intro": @"المقدّمة",
+        @"sb_intro_note": @"مقدّمات وحركات العنوان بلا محتوى.",
+        @"sb_outro": @"الخاتمة",
+        @"sb_outro_note": @"الشكر وشاشة النهاية.",
+        @"sb_preview": @"التلخيص",
+        @"sb_preview_note": @"ملخّص لما سيأتي، أو لحلقة سابقة.",
+        @"sb_filler": @"الاستطراد",
+        @"sb_filler_note": @"نكات وجُمل جانبية لا يحتاجها الفهم. حادّ — مطفأ افتراضيًا.",
+        @"sb_music_offtopic": @"غير الموسيقى",
+        @"sb_music_offtopic_note": @"في المقاطع الغنائية، الأجزاء التي ليست موسيقى.",
+
+        @"sb_skipped_format": @"تم تخطّي: %@",
+        @"sb_undo": @"تراجع",
+
+        @"sb_credit": @"بيانات المقاطع من سبونسر بلوك (sponsor.ajay.app) برخصة CC BY-NC-SA 4.0. لا يُرسَل الفيديو الذي تشاهده إطلاقًا — تُرسَل أربعة أحرف من بصمته فقط، فلا يعرف الخادم أيّ فيديو تشاهد.",
 
         @"verbose_logging": @"سجل مفصّل",
         @"verbose_logging_note": @"يكتب ما تفعله الأداة في سجل النظام. اتركه مطفأً إلا إذا كنت تجمع تقريرًا — فهو مزعج ويُبطئ الأداء.",

@@ -13,6 +13,23 @@
 #define SCIPrefBlockUpdateNag   @"block_update_nag"
 #define SCIPrefVerboseLogging   @"verbose_logging"
 
+/// SponsorBlock. One key for the feature, one per category.
+///
+/// Per-category rather than a single switch, because these are not the same request of
+/// the video: skipping a paid advertisement is not the same decision as skipping the
+/// creator's own intro, and a user who wants one may well not want the other.
+#define SCIPrefSponsorBlock     @"sponsorblock"
+#define SCIPrefSBNotice         @"sponsorblock_notice"
+
+#define SCIPrefSBSponsor        @"sb_sponsor"
+#define SCIPrefSBSelfPromo      @"sb_selfpromo"
+#define SCIPrefSBInteraction    @"sb_interaction"
+#define SCIPrefSBIntro          @"sb_intro"
+#define SCIPrefSBOutro          @"sb_outro"
+#define SCIPrefSBPreview        @"sb_preview"
+#define SCIPrefSBFiller         @"sb_filler"
+#define SCIPrefSBMusicOffTopic  @"sb_music_offtopic"
+
 /// Read on every hook call, so it has to be cheap.
 ///
 /// NSUserDefaults caches in memory after the first read, and these hooks run on the
