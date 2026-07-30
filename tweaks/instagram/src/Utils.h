@@ -4,7 +4,7 @@
 #import <os/log.h>
 #import <objc/message.h>
 
-#import "../modules/JGProgressHUD/JGProgressHUD.h"
+#import "modules/JGProgressHUD/JGProgressHUD.h"
 
 #import "SCILog.h"
 #import "InstagramHeaders.h"

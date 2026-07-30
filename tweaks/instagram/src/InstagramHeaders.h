@@ -1,7 +1,7 @@
 #import <Foundation/Foundation.h>
 #include <objc/NSObject.h>
 #import <UIKit/UIKit.h>
-#import "../modules/JGProgressHUD/JGProgressHUD.h"
+#import "modules/JGProgressHUD/JGProgressHUD.h"
 
 #ifdef __cplusplus
 #define _Bool bool

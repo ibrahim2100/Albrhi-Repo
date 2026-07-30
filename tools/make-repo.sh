@@ -10,14 +10,39 @@
 # extra-debs/ in the source tree. Adding another tweak to the source is therefore
 # a matter of copying its .deb into that folder and pushing.
 #
-# Usage: tools/make-repo.sh <deb-dir> <output-dir> <base-url> [previous-deb-dir]
+# Usage: tools/make-repo.sh <deb-dirs> <output-dir> <base-url> [previous-deb-dirs]
+#
+# <deb-dirs> and <previous-deb-dirs> may each name several directories, separated
+# by spaces -- one per tweak this repository builds. A directory that does not
+# exist is skipped rather than fatal, so a run that built only some of the tweaks
+# still publishes an index for the ones it did.
 
 set -euo pipefail
 
-DEB_DIR="${1:?deb directory required}"
+DEB_DIRS="${1:?deb directory required}"
 OUT_DIR="${2:?output directory required}"
 BASE_URL="${3:?base url required}"
-PREV_DIR="${4:-}"
+PREV_DIRS="${4:-}"
+
+# Copies every .deb directly inside each named directory. Kept in one place
+# because the built packages, the rollback copies and extra-debs all need it and
+# differ only in whether an existing file may be overwritten.
+copy_debs() {
+    local mode="$1"; shift
+    local total=0
+
+    for dir in "$@"; do
+        [ -d "$dir" ] || continue
+        local n
+        n=$(find "$dir" -maxdepth 1 -name '*.deb' -type f | wc -l | tr -d ' ')
+        total=$((total + n))
+        if [ "$n" -gt 0 ]; then
+            find "$dir" -maxdepth 1 -name '*.deb' -type f -exec cp "$mode" {} "$OUT_DIR/debs/" \;
+        fi
+    done
+
+    echo "$total"
+}
 
 # Rebuilt from scratch every run, so the published repo is an exact mirror of what
 # is in the tree right now. Copying without clearing left deleted packages behind:
@@ -27,12 +52,8 @@ rm -rf "$OUT_DIR/debs"
 mkdir -p "$OUT_DIR/debs"
 
 # Everything below is therefore a fresh copy, not a merge.
-built=$(find "$DEB_DIR" -maxdepth 1 -name '*.deb' -type f | wc -l | tr -d ' ')
+built=$(copy_debs -f $DEB_DIRS)
 echo "Built packages found: ${built}"
-
-if [ "$built" -gt 0 ]; then
-    find "$DEB_DIR" -maxdepth 1 -name '*.deb' -type f -exec cp -f {} "$OUT_DIR/debs/" \;
-fi
 
 # Earlier releases of Albrhi itself, so a bad build is not a dead end: the
 # previous version stays installable from the source and Sileo offers it under
@@ -43,30 +64,20 @@ fi
 # it too, but then a package deleted from extra-debs would linger forever --
 # which is the exact bug the wipe above exists to prevent. Re-fetching a bounded
 # number of releases keeps both properties.
-if [ -n "$PREV_DIR" ] && [ -d "$PREV_DIR" ]; then
-    kept=$(find "$PREV_DIR" -maxdepth 1 -name '*.deb' -type f | wc -l | tr -d ' ')
+if [ -n "$PREV_DIRS" ]; then
+    # -n, so a current build of the same filename is never overwritten by an
+    # older copy of it.
+    kept=$(copy_debs -n $PREV_DIRS)
     echo "Previous releases kept for rollback: ${kept}"
-
-    if [ "$kept" -gt 0 ]; then
-        # -n, so a current build of the same filename is never overwritten by an
-        # older copy of it.
-        find "$PREV_DIR" -maxdepth 1 -name '*.deb' -type f -exec cp -n {} "$OUT_DIR/debs/" \;
-    fi
 fi
 
 # Hand-added packages. Copied after the built ones so a file placed here can
 # deliberately override a build of the same name.
 EXTRA_DIR="$(dirname "$0")/../extra-debs"
-if [ -d "$EXTRA_DIR" ]; then
-    # find, not ls: a glob that matches nothing makes ls exit non-zero, and under
-    # `set -o pipefail` that killed the whole script before it printed anything.
-    count=$(find "$EXTRA_DIR" -maxdepth 1 -name '*.deb' -type f | wc -l | tr -d ' ')
-    echo "Extra packages found: ${count}"
-
-    if [ "$count" -gt 0 ]; then
-        find "$EXTRA_DIR" -maxdepth 1 -name '*.deb' -type f -exec cp -f {} "$OUT_DIR/debs/" \;
-    fi
-fi
+# find, not ls: a glob that matches nothing makes ls exit non-zero, and under
+# `set -o pipefail` that killed the whole script before it printed anything.
+count=$(copy_debs -f "$EXTRA_DIR")
+echo "Extra packages found: ${count}"
 
 if ! ls "$OUT_DIR"/debs/*.deb >/dev/null 2>&1; then
     echo "::error::No .deb files to index"

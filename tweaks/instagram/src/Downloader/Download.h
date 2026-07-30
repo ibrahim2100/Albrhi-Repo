@@ -2,7 +2,7 @@
 #import <Foundation/Foundation.h>
 #import <Photos/Photos.h>
 #import <AVFoundation/AVFoundation.h>
-#import "../../modules/JGProgressHUD/JGProgressHUD.h"
+#import "modules/JGProgressHUD/JGProgressHUD.h"
 
 #import "../InstagramHeaders.h"
 #import "../Utils.h"

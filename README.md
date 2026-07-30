@@ -208,9 +208,9 @@ quick-access* on, holding the **home tab** works too.
 Issues and pull requests are welcome.
 
 1. Fork and branch from `main`.
-2. Keep one feature per file under `src/Features/<Category>/`; register its settings page under
-   `src/Settings/Pages/` and its defaults in `src/Tweak.x`.
-3. Add **both** Arabic and English strings to `src/Localization/SCILocalize.m` — never hard-code
+2. Keep one feature per file under `tweaks/instagram/src/Features/<Category>/`; register its settings page under
+   `tweaks/instagram/src/Settings/Pages/` and its defaults in `src/Tweak.x`.
+3. Add **both** Arabic and English strings to `tweaks/instagram/src/Localization/SCILocalize.m` — never hard-code
    user-facing text (`tools/check.py` enforces parity).
 4. Follow the `SCI` prefix and Objective-C style; build before opening the PR.
 5. By contributing you agree your work is licensed under the GPLv3.

@@ -57,4 +57,4 @@ Then re-open Instagram. Open settings by holding the ☰ on your profile.
 - **FLEXing submodule:** the rootless build does **not** need it (it's only used for the non-jailbreak sideload build, gated behind `SIDELOAD`). If the checkout warns about the FLEXing submodule, it's harmless for rootless.
 - **Re-building after changes:** any push to `main` re-runs the build automatically. Or use **Run workflow** manually anytime.
 - **SDK caching:** the first build downloads the iOS 16.2 SDK (~1 min); subsequent builds reuse it from cache.
-- **Build fails?** Open the failed step's log in the Actions run — the error is usually a missing class/selector for your Instagram version. Note it and it can be patched in `src/InstagramHeaders.h`.
+- **Build fails?** Open the failed step's log in the Actions run — the error is usually a missing class/selector for your Instagram version. Note it and it can be patched in `tweaks/instagram/src/InstagramHeaders.h`.

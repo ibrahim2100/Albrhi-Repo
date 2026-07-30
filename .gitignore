@@ -53,8 +53,8 @@ packages
 dumps
 livecontainer
 
-src/**/wip.x
-src/**/wip.xm
+tweaks/*/src/**/wip.x
+tweaks/*/src/**/wip.xm
 # Build output stays ignored, but packages published through the source are
 # deliberately committed — that is how a tweak gets added to the repo.
 !extra-debs/*.deb

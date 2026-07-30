@@ -1,11 +1,48 @@
-"""Pre-build checks for Albrhi.
+"""Pre-build checks for every tweak in this repository.
 
 Every rule here exists because that exact mistake reached CI at least once.
+
+The rules themselves are written against one tweak, using paths relative to its
+own directory -- 'src/**', 'control'. When run from the repository root this
+file re-executes itself once per directory under tweaks/, with the working
+directory moved there. That keeps eight rules that were each tightened against a
+real false positive completely untouched: generalising them in place would have
+meant rewriting the part of this file that is most expensive to get wrong.
 """
 import re
 import glob
 import collections
 import os
+import subprocess
+import sys
+
+TWEAKS_DIR = 'tweaks'
+
+if os.path.isdir(TWEAKS_DIR):
+    tweaks = sorted(name for name in os.listdir(TWEAKS_DIR)
+                    if os.path.isfile(os.path.join(TWEAKS_DIR, name, 'control')))
+    if not tweaks:
+        print('FAIL  no tweak found under %s/ (each needs its own control)' % TWEAKS_DIR)
+        raise SystemExit(1)
+
+    script = os.path.abspath(__file__)
+    failed = []
+    for name in tweaks:
+        # flush=True, or the header sits in this process's buffer while the child
+        # writes straight to the terminal and every heading lands after its output.
+        print('=== %s ===' % name, flush=True)
+        result = subprocess.run([sys.executable, script],
+                                cwd=os.path.join(TWEAKS_DIR, name))
+        if result.returncode:
+            failed.append(name)
+        print()
+
+    if failed:
+        print('FAILED: %s' % ', '.join(failed))
+        raise SystemExit(1)
+
+    print('ALL TWEAKS CLEAN')
+    raise SystemExit(0)
 
 SRC = (glob.glob('src/**/*.x', recursive=True)
        + glob.glob('src/**/*.xm', recursive=True)
@@ -184,22 +221,68 @@ for path in SRC:
             continue
         report('%s used in %s without importing %s' % (symbol, path, ' or '.join(headers)))
 
-# 6. Localization parity and completeness.
-loc = open('src/Localization/SCILocalize.m', encoding='utf-8').read()
-en = loc[loc.index('_enTable = @{'):loc.index('_arTable = @{')]
-ar = loc[loc.index('_arTable = @{'):]
-key_re = re.compile(r'@"([a-z0-9_]+)":\s*@"')
-en_keys, ar_keys = set(key_re.findall(en)), set(key_re.findall(ar))
+# 9. Quoted imports that resolve to nothing.
+#
+# Moving the sources one level deeper broke four files that reached the shared
+# modules/ directory by counting "../" — a path that was correct only at the depth
+# it was written. Nothing caught it: the count is still syntactically fine, and
+# only the compiler knows the file is not there.
+#
+# A quoted import is resolved the way clang does: first beside the importing file,
+# then against the include path. The include path is read out of the makefiles
+# rather than assumed -- the first version of this rule hard-coded the repository
+# root and immediately cried wolf over "dav1d/dav1d.h", which is perfectly valid
+# and reachable through Instagram's own -Ivendor/dav1d/include.
+def include_roots():
+    roots = []
+    for makefile in ('Makefile', '../../shared/tweak.mk'):
+        if not os.path.isfile(makefile):
+            continue
+        text = open(makefile, encoding='utf-8').read()
+        for flag in re.findall(r'-I(\S+)', text):
+            roots.append(flag.replace('$(ROOT)', '../..'))
+    return roots
 
-for key in sorted(en_keys ^ ar_keys):
-    report('localization key present in only one table: %s' % key)
 
-used = set()
+INCLUDE_ROOTS = include_roots()
+
 for path in SRC + HDR:
-    used |= set(re.findall(r'SCILocalized\(@"([a-z0-9_]+)"\)', open(path, encoding='utf-8').read()))
+    here = os.path.dirname(path)
+    for imported in re.findall(r'#import "([^"<>]+)"', open(path, encoding='utf-8').read()):
+        candidates = [os.path.join(here, imported)]
+        candidates += [os.path.join(root, imported) for root in INCLUDE_ROOTS]
+        if not any(os.path.isfile(c) for c in candidates):
+            report('%s imports "%s", which is not there' % (path, imported))
 
-for key in sorted(used - en_keys):
-    report('localized key used but never defined: %s' % key)
+# 6. Localization parity and completeness.
+#
+# Reported rather than raised when the table is missing: a tweak with no
+# bilingual table breaks a convention this project treats as a rule, and a
+# traceback would say so far less clearly than a named failure.
+LOC_PATH = 'src/Localization/SCILocalize.m'
+loc = ''
+en_keys, ar_keys, used = set(), set(), set()
+
+if not os.path.isfile(LOC_PATH):
+    # Reported rather than raised: a tweak with no bilingual table breaks a
+    # convention this project treats as a rule, and a traceback would say so far
+    # less clearly than a named failure among the others.
+    report('no localization table at %s — every tweak here is bilingual' % LOC_PATH)
+else:
+    loc = open(LOC_PATH, encoding='utf-8').read()
+    en = loc[loc.index('_enTable = @{'):loc.index('_arTable = @{')]
+    ar = loc[loc.index('_arTable = @{'):]
+    key_re = re.compile(r'@"([a-z0-9_]+)":\s*@"')
+    en_keys, ar_keys = set(key_re.findall(en)), set(key_re.findall(ar))
+
+    for key in sorted(en_keys ^ ar_keys):
+        report('localization key present in only one table: %s' % key)
+
+    for path in SRC + HDR:
+        used |= set(re.findall(r'SCILocalized\(@"([a-z0-9_]+)"\)', open(path, encoding='utf-8').read()))
+
+    for key in sorted(used - en_keys):
+        report('localized key used but never defined: %s' % key)
 
 # 6b. A stray quote inside a localized value.
 #
@@ -225,12 +308,27 @@ for number, line in enumerate(loc.splitlines(), 1):
                % (number, stripped[:70]))
 
 # 7. Version consistency across the files a release depends on.
+#
+# The version string is searched for across the sources rather than read from a
+# fixed src/Tweak.x: each tweak names its entry point after itself, and pinning
+# the filename here would mean the rule quietly stopped applying to the second
+# one -- a version mismatch that reaches a release is the whole reason this rule
+# exists.
 control = open('control', encoding='utf-8').read()
 control_version = re.search(r'^Version:\s*(\S+)', control, re.M).group(1)
-tweak_version = re.search(r'SCIVersionString = @"v?([^"]+)"', open('src/Tweak.x', encoding='utf-8').read()).group(1)
 
-if control_version != tweak_version:
-    report('version mismatch: control=%s Tweak.x=%s' % (control_version, tweak_version))
+version_re = re.compile(r'SCIVersionString\s*=\s*@"v?([^"]+)"')
+declared = {}
+for path in SRC + HDR:
+    match = version_re.search(open(path, encoding='utf-8').read())
+    if match:
+        declared[path] = match.group(1)
+
+if not declared:
+    report('no SCIVersionString found in any source — nothing pins the build to control')
+for path, version in sorted(declared.items()):
+    if version != control_version:
+        report('version mismatch: control=%s %s=%s' % (control_version, path, version))
 
 print('keys: %d EN / %d AR   orphans: %d' % (len(en_keys), len(ar_keys), len(en_keys - used)))
 print('version: %s' % control_version)

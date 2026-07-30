@@ -17,6 +17,17 @@ on:
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
+
+env:
+    # Which tweak this workflow releases, stated once. Every path below is built
+    # from it, so moving or renaming a tweak is a one-line edit here.
+    #
+    # Still one tweak per run: the version gate, the tag and the three assets all
+    # assume a single package. Releasing a second tweak from this workflow means
+    # per-tweak versions and tags, which is a change to how Albrhi itself is
+    # released -- so it waits until there is a second package to test it against
+    # rather than being designed against a guess.
+    TWEAK_DIR: main/tweaks/instagram
 jobs:
     build:
         name: Build rootless + roothide + dylib
@@ -59,7 +70,7 @@ jobs:
               run: |
                 # Anchored to the start of the line: the Description block is multi-line
                 # and must never be mistaken for the version field.
-                ALBRHI_VERSION=$(awk -F': *' '/^Version:/ {print $2; exit}' main/control)
+                ALBRHI_VERSION=$(awk -F': *' '/^Version:/ {print $2; exit}' "$TWEAK_DIR/control")
 
                 if [ -z "$ALBRHI_VERSION" ]; then
                   echo "::error::Could not read Version from control"
@@ -71,7 +82,7 @@ jobs:
             
             - name: Point control at this repository
               run: |
-                cd main
+                cd "$TWEAK_DIR"
 
                 # Homepage and depiction URLs are rewritten from the repository this
                 # build is running in, so renaming the repo needs no edit in control.
@@ -159,8 +170,8 @@ jobs:
                 ls -la
 
                 chmod +x build.sh
-                ./build.sh rootless
-                ls -la packages
+                ./build.sh instagram rootless
+                ls -la tweaks/instagram/packages
                 
               env:
                 THEOS: ${{ github.workspace }}/theos
@@ -168,7 +179,7 @@ jobs:
             - name: Rename deb to include version info
               if: steps.release_check.outputs.needed == 'true'
               run: |
-                cd main/packages
+                cd "$TWEAK_DIR/packages"
 
                 BUILT_DEB=$(ls -t *.deb | head -n1)
                 if [ -z "$BUILT_DEB" ]; then
@@ -187,7 +198,7 @@ jobs:
                 # and nothing builds.
                 THEOS: ${{ github.workspace }}/theos
               run: |
-                cd main
+                cd "$TWEAK_DIR"
 
                 # Built separately from the packages, not copied out of them. The
                 # package binary hooks through CydiaSubstrate, which a sideloaded
@@ -264,15 +275,15 @@ jobs:
               if: steps.release_check.outputs.needed == 'true'
               run: |
                 cd main
-                ./build.sh roothide
-                ls -la packages
+                ./build.sh instagram roothide
+                ls -la tweaks/instagram/packages
               env:
                 THEOS: ${{ github.workspace }}/theos-roothide
 
             - name: Rename roothide deb
               if: steps.release_check.outputs.needed == 'true'
               run: |
-                cd main/packages
+                cd "$TWEAK_DIR/packages"
 
                 # The roothide build packages under its own identity, so match on
                 # that rather than on "whatever is newest" -- an exact name cannot
@@ -295,16 +306,16 @@ jobs:
               env:
                 GH_TOKEN: ${{ github.token }}
               run: |
-                mkdir -p main/packages
+                mkdir -p "$TWEAK_DIR/packages"
 
                 # The published assets for this version are byte-identical to what a
                 # rebuild would produce, so the repo can be refreshed without one.
                 gh release download "v${ALBRHI_VERSION}" \
                   --repo "${{ github.repository }}" \
-                  --dir main/packages \
+                  --dir "$TWEAK_DIR/packages" \
                   --clobber
 
-                ls -la main/packages
+                ls -la "$TWEAK_DIR/packages"
 
             - name: Pass package name to upload action
               id: package_name
@@ -319,9 +330,9 @@ jobs:
               with:
                 name: Albrhi-${{ env.ALBRHI_VERSION }}
                 path: |
-                  ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.package }}
-                  ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.dylib }}
-                  ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.roothide }}
+                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/${{ steps.package_name.outputs.package }}
+                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/${{ steps.package_name.outputs.dylib }}
+                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/${{ steps.package_name.outputs.roothide }}
                 if-no-files-found: error
 
             - name: Extract changelog for this version
@@ -333,7 +344,7 @@ jobs:
                   $0 ~ "^## v?" ver { found=1; next }
                   found && /^## / { exit }
                   found { print }
-                ' main/CHANGELOG.md > release-notes.md
+                ' "$TWEAK_DIR/CHANGELOG.md" > release-notes.md
 
                 if [ ! -s release-notes.md ]; then
                   echo "Release ${ALBRHI_VERSION}." > release-notes.md
@@ -366,9 +377,9 @@ jobs:
                 body_path: release-notes.md
                 prerelease: true
                 files: |
-                  ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.package }}
-                  ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.dylib }}
-                  ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.roothide }}
+                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/${{ steps.package_name.outputs.package }}
+                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/${{ steps.package_name.outputs.dylib }}
+                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/${{ steps.package_name.outputs.roothide }}
                 fail_on_unmatched_files: true
 
             - name: Prepare added packages
@@ -428,7 +439,7 @@ jobs:
                 # Three, not all of them: every release is fetched on every push
                 # to main, and the source is a rollback path, not an archive.
                 KEEP=3
-                mkdir -p main/packages-previous
+                mkdir -p "$TWEAK_DIR/packages-previous"
 
                 # Newest first, and prereleases included -- /releases/latest skips
                 # those, and Albrhi's have been published as prereleases before.
@@ -437,7 +448,7 @@ jobs:
 
                 taken=0
                 for tag in $TAGS; do
-                  # The version being published now is already in main/packages.
+                  # The version being published now is already in the tweak's packages dir.
                   if [ "$tag" = "v${ALBRHI_VERSION}" ]; then
                     continue
                   fi
@@ -447,7 +458,7 @@ jobs:
                   if gh release download "$tag" \
                        --repo "${{ github.repository }}" \
                        --pattern '*.deb' \
-                       --dir main/packages-previous \
+                       --dir "$TWEAK_DIR/packages-previous" \
                        --clobber 2>/dev/null; then
                     echo "Kept ${tag} for rollback."
                     taken=$((taken + 1))
@@ -460,7 +471,7 @@ jobs:
                   fi
                 done
 
-                ls -la main/packages-previous || true
+                ls -la "$TWEAK_DIR/packages-previous" || true
 
             - name: Publish APT repo to GitHub Pages
               if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
@@ -492,7 +503,7 @@ jobs:
                 cd ..
 
                 chmod +x main/tools/make-repo.sh
-                ./main/tools/make-repo.sh main/packages pages "$REPO_URL" main/packages-previous
+                ./main/tools/make-repo.sh "$TWEAK_DIR/packages" pages "$REPO_URL" "$TWEAK_DIR/packages-previous"
 
                 cp main/tools/repo-index.html pages/index.html
 
@@ -511,7 +522,7 @@ jobs:
                 # reads CHANGELOG.md relative to its own working directory, hence
                 # the cd; the output path is absolute so the cd cannot redirect it.
                 PAGES_DIR="$(pwd)/pages"
-                ( cd main && python3 tools/make-depiction.py "$PAGES_DIR" "$ALBRHI_VERSION" "$REPO_URL" )
+                ( cd "$TWEAK_DIR" && python3 ../../tools/make-depiction.py "$PAGES_DIR" "$ALBRHI_VERSION" "$REPO_URL" )
 
                 ls -la pages/depictions
 

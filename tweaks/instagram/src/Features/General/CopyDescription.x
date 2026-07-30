@@ -1,7 +1,7 @@
 #import "../../Utils.h"
 #import "../../InstagramHeaders.h"
 #import "../../Localization/SCILocalize.h"
-#import "../../../modules/JGProgressHUD/JGProgressHUD.h"
+#import "modules/JGProgressHUD/JGProgressHUD.h"
 
 ///
 /// Copy any text. IGCoreTextView is Instagram's shared rich-text view — captions,

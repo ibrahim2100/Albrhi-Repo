@@ -36,7 +36,7 @@ Output:
 ```
 packages/com.albrhi.tweak_*_iphoneos-arm64.deb
 ```
-The bundled `build.sh` also works: `./build.sh rootless`.
+The bundled `build.sh` also works: `./build.sh instagram rootless`.
 
 ## 4. Install on the device
 
@@ -50,7 +50,7 @@ sudo sbreload   # or fully re-open Instagram
 
 ## 5. Converting to .deb from other formats
 
-If you build the sideload/IPA variant instead (`./build.sh sideload`), that produces an `.ipa`, not a `.deb`. For Dopamine 2 you want the **rootless `.deb`** from step 3 — no conversion needed.
+If you build the sideload/IPA variant instead (`./build.sh instagram sideload`), that produces an `.ipa`, not a `.deb`. For Dopamine 2 you want the **rootless `.deb`** from step 3 — no conversion needed.
 
 ---
 
@@ -59,7 +59,7 @@ If you build the sideload/IPA variant instead (`./build.sh sideload`), that prod
 SCInsta was tested on Instagram **418.2.0**; you're on **409**. Class names are almost always identical across this range, but if a specific feature misbehaves:
 
 1. Confirm which hook is failing (check Console logs filtered by `Albrhi` / `SCInsta`).
-2. `class-dump` your installed Instagram binary and compare the class/ivar names in `src/InstagramHeaders.h`.
+2. `class-dump` your installed Instagram binary and compare the class/ivar names in `tweaks/instagram/src/InstagramHeaders.h`.
 3. Adjust only the mismatched selector/ivar; leave the rest intact.
 
 ### Download quality — how it now works
@@ -98,7 +98,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/roothide/theos/master/bi
 Then, with `THEOS` pointing at that installation:
 
 ```bash
-./build.sh roothide
+./build.sh instagram roothide
 ```
 
 Albrhi needs no `jbroot()` calls: it writes only inside Instagram's own container

@@ -58,26 +58,55 @@ Objective-C has no multi-line strings. Write a script file instead.
 
 ## Layout
 
+The repository holds **one tweak per directory under `tweaks/`**. Each is a
+complete Theos project — its own `Makefile`, `control`, filter plist and `src/` —
+and nothing outside it knows which app it patches. Everything above that level is
+shared: the build script, the checks, the APT index, `modules/`, `vendor/`.
+
 ```
-src/
-  Tweak.x                  entry point, NSUserDefaults defaults registration
-  SCIProject.h             repo owner/name — rename the repo, edit only here
-  SCILog.h                 SCILogV, gated on the verbose_logging preference
-  Utils.m/.h               shared helpers, media URL resolution, colours
-  InstagramHeaders.h       every Instagram class the tweak touches
-  Localization/            bilingual string tables (AR/EN must stay in parity)
-  Settings/
-    SCISettingsRegistry    features register their own pages in +load
-    Pages/                 one file per settings page; delete a file, page is gone
-    SCIDiagnosticsViewController   runtime truth + one-tap issue reporting
-  Downloader/
-    SCIMediaDownloader     THE single entry point for every download
-    Queue/                 background queue, history, Download Center UI
-  Features/<Category>/     one file per feature
-  Onboarding/              welcome / what's-new screen
+tweaks/
+  instagram/               Albrhi for Instagram — com.albrhi.tweak
+    Makefile               its identity: target process, frameworks, dav1d
+    Albrhi.plist           injection filter (com.burbn.instagram)
+    control                package metadata; Version drives the release
+    CHANGELOG.md           release notes and the Sileo depiction come from here
+    src/
+      Tweak.x              entry point, NSUserDefaults defaults registration
+      SCIProject.h         repo owner/name — rename the repo, edit only here
+      SCILog.h             SCILogV, gated on the verbose_logging preference
+      Utils.m/.h           shared helpers, media URL resolution, colours
+      InstagramHeaders.h   every Instagram class the tweak touches
+      Localization/        bilingual string tables (AR/EN must stay in parity)
+      Settings/
+        SCISettingsRegistry  features register their own pages in +load
+        Pages/             one file per settings page; delete a file, page is gone
+        SCIDiagnosticsViewController   runtime truth + one-tap issue reporting
+      Downloader/
+        SCIMediaDownloader THE single entry point for every download
+        Queue/             background queue, history, Download Center UI
+      Features/<Category>/ one file per feature
+      Onboarding/          welcome / what's-new screen
+shared/
+  tweak.mk                 the Theos flags, modules and build modes every tweak shares
+build.sh                   ./build.sh <tweak> <mode> — reads the tweak's own control
 tools/                     repo, depiction, logo, deb editing — see below
+modules/  vendor/          third-party code, shared across tweaks
 extra-debs/                drop third-party .deb files here to publish them
 ```
+
+### Adding a tweak
+
+Create `tweaks/<name>/` with a `Makefile` (ending in
+`include $(ROOT)/shared/tweak.mk`), a `control`, a filter plist named after
+`TWEAK_NAME`, and `src/` containing at minimum a `Localization/SCILocalize.m` and
+a `SCIVersionString` matching `control`. `tools/check.py` finds it automatically
+and checks it like the others; `./build.sh <name> rootless` builds it.
+
+Releasing it is the part that is **not** automatic yet: the workflow still
+releases exactly one tweak, named in the `TWEAK_DIR` env var at the top of
+`buildtweak.yml`. Per-tweak versions and tags will be designed when there is a
+second package to test them against — designing that scheme against a guess is
+how the version gate would quietly stop protecting Albrhi.
 
 ### Settings are self-registering
 
@@ -111,8 +140,12 @@ published build carried debug symbols and a `-1+debug` version suffix.
 
 **Rootless and roothide packages have separate identities** — `com.albrhi.tweak`
 and `com.albrhi.tweak.roothide`, each declaring `Conflicts`/`Replaces` on the
-other. `build.sh roothide` swaps the fields in `control` and restores them via a
-`trap` on exit, including on failure.
+other. `build.sh <tweak> roothide` swaps the fields in `control` and restores them
+via a `trap` on exit, including on failure. The new id and name are **derived from
+that tweak's own `control`**, not written out in the script: the earlier version
+matched literal package ids with `sed`, which would silently do nothing for a
+second tweak — and doing nothing there means shipping a roothide build wearing the
+rootless identity.
 
 ---
 
@@ -127,13 +160,20 @@ from a real build failure:
 3. hooked class used with properties but never declared
 4. fragile `%orig` placement
 5. unterminated string literals (comment-aware, so `https://` is not a false hit)
-6. localization parity and undefined keys
-7. version match between `control` and `Tweak.x`
+6. localization parity and undefined keys — and a missing table at all
+7. version match between `control` and whichever source declares `SCIVersionString`
 8. project symbols used without their header, resolved transitively
 
 A check that cries wolf gets ignored. Three of these produced false positives on
 first writing and were tightened before landing. If you add a rule, prove it fails
 when it should by reintroducing the bug.
+
+**The rules are written against one tweak** and use paths relative to it (`src/**`,
+`control`). Run from the repository root, `check.py` re-executes itself once per
+directory under `tweaks/`, with the working directory moved there. Generalising the
+rules in place would have meant rewriting the part of that file most expensive to
+get wrong; a ten-line driver leaves all eight untouched. A failing tweak is named,
+and the others still run.
 
 ---
 
@@ -176,7 +216,7 @@ checks → version → decide → [build ×2 + dylib] → release → repo index
 | file | purpose |
 |---|---|
 | `check.py` | pre-build source checks (above) |
-| `make-repo.sh` | builds the APT index; guards against two packages sharing name+version+architecture, and labels each package rootful/rootless/roothide |
+| `make-repo.sh` | builds the APT index from one or more package directories (space-separated, one per tweak); guards against two packages sharing name+version+architecture, and labels each package rootful/rootless/roothide |
 | `make-depiction.py` | Sileo native depiction + HTML fallback, generated from the changelog so it cannot go stale |
 | `make-logo.py` | repo icon, rasterised in pure Python; drop `tools/logo.png` in to override |
 | `deb-edit.py` | edit .deb metadata from a terminal; interactive when double-clicked on Windows |
@@ -223,7 +263,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 - Logging goes through `SCILogV`, off unless `verbose_logging` is on.
 - Comments explain **why**, especially where the code looks odd — most odd-looking
   code here is working around something real and documented above.
-- Bump the version in `control` **and** `Tweak.x` together, and add a changelog
+- Bump the version in the tweak's `control` **and** its `SCIVersionString` together, and add a changelog
   entry — the release notes and the Sileo depiction are generated from it.
 
 ---
