@@ -3,7 +3,7 @@
 #import "SCILog.h"
 #import "Diagnostics/SCIYTDiagnostics.h"
 
-NSString *SCIVersionString = @"v0.1.0";  // AlbrhiYT
+NSString *SCIVersionString = @"v0.1.1";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.
@@ -80,6 +80,15 @@ NSString *SCIVersionString = @"v0.1.0";  // AlbrhiYT
         @"verbose_logging": @NO,
     }];
 
-    SCILogV(@"AlbrhiYT %@ loaded into %@", SCIVersionString,
-            [[NSBundle mainBundle] bundleIdentifier]);
+    // Unconditional, and the only line here that is.
+    //
+    // 0.1.0 shipped with every way of telling whether the tweak had loaded sitting
+    // behind a settings section that did not appear. One line at launch costs nothing
+    // and means "is it even in there" is never a question again.
+    NSLog(@"[AlbrhiYT] %@ loaded into %@", SCIVersionString,
+          [[NSBundle mainBundle] bundleIdentifier]);
+
+    // Written once at launch and refreshed whenever a video is captured, so the
+    // report is retrievable from the app's container even if no hook attached.
+    [SCIYTDiagnostics writeReportToFile];
 }

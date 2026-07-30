@@ -55,10 +55,32 @@
 - (void)updateSectionForCategory:(NSInteger)category withEntry:(id)entry;
 @end
 
-/// Owns the order categories appear in. Appending to +settingsCategoryOrder is what
-/// puts our row on the list at all.
+/// Declares a category order — and in 21.30.5 the settings screen does not read it.
+///
+/// This is the mistake this project's own notes warn about, made again: the selector
+/// is in the binary, so it looks like the way in, and appending to it puts a category
+/// on a list nobody consults. The row simply never appeared. Kept hooked because it
+/// costs nothing and older builds may still use it, but it is not what makes the
+/// section show up.
 @interface YTAppSettingsPresentationData : NSObject
 + (NSArray *)settingsCategoryOrder;
+@end
+
+/// What the settings screen actually reads. Categories live inside groups, and a
+/// category in no group is a category on no screen.
+@interface YTAppSettingsGroupPresentationData : NSObject
++ (NSArray *)orderedGroups;
+@end
+
+/// One group of categories — "Account", "Video and audio", and so on.
+///
+/// -type is an unsigned enum whose values are not readable from the binary, so
+/// nothing here guesses at them: the group to extend is identified by position in
+/// +orderedGroups and matched afterwards by the type it turned out to have.
+@interface YTSettingsGroupData : NSObject
+@property (nonatomic, readonly) NSString *title;
+@property (nonatomic, readonly) unsigned long long type;
+- (NSArray *)orderedCategories;
 @end
 
 // MARK: - Playback

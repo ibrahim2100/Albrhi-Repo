@@ -17,7 +17,16 @@ static NSArray<NSDictionary *> *SCIAuditTable(void) {
         @{@"class": @"YTSettingsSectionItem",         @"why": @"builds our settings rows"},
         @{@"class": @"YTSettingsViewController",      @"why": @"shows our settings section"},
         @{@"class": @"YTSettingsSectionItemManager",  @"why": @"answers for our category"},
-        @{@"class": @"YTAppSettingsPresentationData", @"why": @"lists our category"},
+
+        // These two are what actually put the section on screen. The one below them
+        // looked like it did, and 0.1.0 shipped relying on it: it exists, it accepts
+        // the category, and the screen never reads it.
+        @{@"class": @"YTAppSettingsGroupPresentationData",
+          @"why": @"the group list the screen is really built from"},
+        @{@"class": @"YTSettingsGroupData",
+          @"why": @"holds the categories — a category in no group is on no screen"},
+        @{@"class": @"YTAppSettingsPresentationData",
+          @"why": @"legacy category order; present but not consulted on 21.30.5"},
 
         @{@"class": @"YTPlayerOverlayWrapper",        @"why": @"hands us the player response"},
         @{@"class": @"MLVideo",                       @"why": @"carries the streams in use"},
@@ -53,6 +62,38 @@ static id sciLastResponse = nil;
 static id sciLastStreamingData = nil;
 static NSString *sciLastVideoID = nil;
 
+// The settings groups, as text, captured the moment the screen asked for them.
+// Text and not the objects: the report needs the numbers and the names, and holding
+// YouTube's model objects to reach two fields each would pin far more than that.
+static NSString *sciSettingsGroups = nil;
+
++ (void)recordSettingsGroups:(NSArray *)groups {
+    if (!groups.count) return;
+
+    NSMutableString *text = [NSMutableString string];
+    for (id group in groups) {
+        unsigned long long type = 0;
+        NSString *title = nil;
+
+        if ([group respondsToSelector:@selector(type)]) {
+            type = ((YTSettingsGroupData *)group).type;
+        }
+        if ([group respondsToSelector:@selector(title)]) {
+            title = ((YTSettingsGroupData *)group).title;
+        }
+
+        NSArray *categories = nil;
+        if ([group respondsToSelector:@selector(orderedCategories)]) {
+            categories = [(YTSettingsGroupData *)group orderedCategories];
+        }
+
+        [text appendFormat:@"  type %llu — %@ (%lu categories)\n",
+            type, title ?: @"?", (unsigned long)categories.count];
+    }
+
+    sciSettingsGroups = [text copy];
+}
+
 + (void)recordPlayerResponse:(id)response {
     if (!response) return;
     sciLastResponse = response;
@@ -75,6 +116,10 @@ static NSString *sciLastVideoID = nil;
 
     SCILogV(@"captured video %@ (streams: %@)", sciLastVideoID,
             sciLastStreamingData ? @"yes" : @"no");
+
+    // Refreshed on the file too, so the report is complete without the page having
+    // to be reachable.
+    [self writeReportToFile];
 }
 
 + (NSString *)appVersion {
@@ -117,6 +162,13 @@ static NSString *sciLastVideoID = nil;
     }
     [out appendString:@"\n"];
 
+    // Printed before the video section because when the settings section itself is
+    // missing, this is the part that says why -- and in 0.1.0 it was missing.
+    [out appendFormat:@"%@\n", SCILocalized(@"diag_groups")];
+    [out appendString:sciSettingsGroups ?: [NSString stringWithFormat:@"  %@\n",
+        SCILocalized(@"diag_groups_none")]];
+    [out appendString:@"\n"];
+
     [out appendFormat:@"%@\n", SCILocalized(@"diag_video")];
 
     if (!sciLastResponse && !sciLastStreamingData && !sciLastVideoID) {
@@ -140,6 +192,28 @@ static NSString *sciLastVideoID = nil;
     }
 
     return out;
+}
+
++ (NSString *)writeReportToFile {
+    NSString *directory = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+    NSString *path = [directory stringByAppendingPathComponent:@"AlbrhiYT-report.txt"];
+
+    NSError *error = nil;
+    BOOL written = [[self report] writeToFile:path
+                                   atomically:YES
+                                     encoding:NSUTF8StringEncoding
+                                        error:&error];
+
+    // NSLog and not SCILogV: this line is the fallback for the case where the
+    // settings section did not appear, so it cannot be behind a switch that only
+    // that section can reach.
+    if (written) {
+        NSLog(@"[AlbrhiYT] report written to %@", path);
+        return path;
+    }
+
+    NSLog(@"[AlbrhiYT] could not write the report to %@: %@", path, error.localizedDescription);
+    return nil;
 }
 
 + (UIViewController *)viewController {

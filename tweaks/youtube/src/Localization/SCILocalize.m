@@ -35,6 +35,9 @@ static void SCIBuildTables(void) {
         @"diag_present": @"found",
         @"diag_absent": @"missing",
 
+        @"diag_groups": @"Settings groups YouTube built",
+        @"diag_groups_none": @"None seen yet. Open YouTube's settings once, then come back.",
+
         @"diag_video": @"Last video played",
         @"diag_no_video": @"Nothing yet. Play a video, then come back to this page.",
         @"diag_video_id": @"Video",
@@ -65,6 +68,9 @@ static void SCIBuildTables(void) {
         @"diag_attached": @"ما تم ربطه",
         @"diag_present": @"موجود",
         @"diag_absent": @"غير موجود",
+
+        @"diag_groups": @"مجموعات الإعدادات التي بناها يوتيوب",
+        @"diag_groups_none": @"لم تُرَ بعد. افتح إعدادات يوتيوب مرة ثم ارجع.",
 
         @"diag_video": @"آخر فيديو شُغّل",
         @"diag_no_video": @"لا شيء بعد. شغّل فيديو ثم ارجع إلى هذه الصفحة.",
