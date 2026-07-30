@@ -1,88 +1,4 @@
 Package: com.albrhi.tweak
-Version: 3.7.6
-Architecture: iphoneos-arm64
-Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
-Installed-Size: 1588
-Depends: mobilesubstrate
-Conflicts: com.albrhi.tweak.roothide
-Replaces: com.albrhi.tweak.roothide
-Filename: debs/com.albrhi.tweak_3.7.6+rootless.deb
-Size: 470982
-MD5sum: 90dc82fd35a9c763076d4d3a7beb85b1
-SHA1: d8d3741153fb9769eed5d177568cdd299bce6faa
-SHA256: 16079c9d150659ffa38ceed584796834417848b0bd44f63c5243623501ed9c26
-Section: Tweaks
-Homepage: https://github.com/ibrahim2100/Albrhi-Repo
-Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
- .
- Albrhi puts a download button where Instagram should have put one, strips the feed
- back to the people you actually follow, and stops the app reporting what you watch.
- Everything lives in a settings panel that looks like it shipped with the app.
- .
- ▍DOWNLOADS
- A native download button sits in the action row of every post and reel, beside the
- save icon. One tap grabs the highest quality available and writes it straight to
- Photos — optionally into its own album.
- .
- Stories and view-once DMs get their own button. Reels can be saved as video or as
- the original audio track. Profile pictures download in full HD on a long press.
- .
- ▍DOWNLOAD CENTER
- A real queue behind it all: pause, resume, retry and cancel, several transfers at
- once, and downloads that keep running after you leave the app. Duplicate links are
- detected, finished files are cleared once they reach Photos, and a searchable
- history records everything you have saved.
- .
- ▍A QUIETER FEED
- Remove ads, sponsored posts, suggested posts, suggested accounts, suggested reels,
- Threads posts, Meta AI, the friends map, trending searches and the explore grid.
- Hide the stories tray — or the entire feed.
- .
- ▍PRIVACY
- Watch stories without sending a seen receipt, and decide per story when to send one.
- View-once photos and videos stay unseen until you tap the eye button on that exact
- message. Hide the typing indicator and disable screenshot detection.
- .
- ▍REELS
- Tap to pause or mute instead of liking. Keep the progress scrubber visible. Stop
- reels unmuting themselves. Hide the header and the blend button.
- .
- ▍CONFIRMATIONS
- An optional prompt before liking, following, reposting, calling, commenting or
- sending a voice message — so a mis-tap never turns into a notification.
- .
- ▍BUILT TO FIT IN
- Full Arabic and English with automatic right-to-left layout. SF Symbols, a
- customisable accent colour, dark mode, and a settings panel opened by holding the
- menu button on your profile. Includes a diagnostics page that reports what the
- tweak actually sees on your build and files a bug report in one tap.
- .
- ▍TESTED ON
- Instagram 410.1.0. Not chosen for any principled reason — that is simply the newest
- build the developer's phone will still accept. The phone has served with honour and
- is now retired to a life of testing tweaks.
- .
- Newer Instagram versions will most likely work: nothing here depends on a version
- number, and the tweak looks up what it needs at runtime. But "most likely" is doing
- real work in that sentence, and honesty costs nothing.
- .
- ▍BETA
- This is a pre-release. Features are tested but your Instagram build may differ from
- ours — if something misbehaves, Settings › Diagnostics writes the report for you,
- Instagram version included, so we stop guessing and start fixing.
- .
- Developed by Ibrahim Ismail AL-Rahn. An educational and corrective derivative of
- SCInsta by SoCuul, rebuilt with AI assistance to improve code quality, design,
- performance and user experience. Free and open source under the GNU GPL v3, with
- original authorship fully credited and preserved.
-Tag: role::enduser
-Author: Ibrahim Ismail AL-Rahn (based on SCInsta by SoCuul, GPLv3)
-Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
-Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Name: Albrhi for Instagram (rootless)
-Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
-
-Package: com.albrhi.tweak
 Version: 3.8.0
 Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
@@ -90,7 +6,7 @@ Installed-Size: 1588
 Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak.roothide
 Replaces: com.albrhi.tweak.roothide
-Filename: debs/com.albrhi.tweak_3.8.0+rootless.deb
+Filename: debs/com.albrhi.tweak_3.8.0_iphoneos-arm64.deb
 Size: 472146
 MD5sum: 7c52231445e4a4d5658b60eaa5ba7ffa
 SHA1: f8aecce586b9660e216fe52cc7421280bd254249
@@ -174,7 +90,7 @@ Installed-Size: 1588
 Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak.roothide
 Replaces: com.albrhi.tweak.roothide
-Filename: debs/com.albrhi.tweak_3.8.1+rootless.deb
+Filename: debs/com.albrhi.tweak_3.8.1_iphoneos-arm64.deb
 Size: 472194
 MD5sum: a316123d217470fcc60e8ab689fc3c25
 SHA1: 8541743b5f6688992e90a3e9164181433d52aedf
@@ -258,7 +174,7 @@ Installed-Size: 1588
 Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak.roothide
 Replaces: com.albrhi.tweak.roothide
-Filename: debs/com.albrhi.tweak_3.8.2+rootless.deb
+Filename: debs/com.albrhi.tweak_3.8.2_iphoneos-arm64.deb
 Size: 472336
 MD5sum: 981963b396509df49f82280d2d064a9e
 SHA1: e7d6f82385b1880ab0eebd4c1788470aef20dad7
@@ -335,90 +251,6 @@ Name: Albrhi for Instagram (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
 Package: com.albrhi.tweak.roothide
-Version: 3.7.6
-Architecture: iphoneos-arm64e
-Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
-Installed-Size: 1588
-Depends: mobilesubstrate
-Conflicts: com.albrhi.tweak
-Replaces: com.albrhi.tweak
-Filename: debs/com.albrhi.tweak.roothide_3.7.6.deb
-Size: 470750
-MD5sum: c136ab6499daccd6b4c8437409d92a5b
-SHA1: 74d01da49af31e6c0cd7c2e0068a826f9c4a20ce
-SHA256: 58eb553975da380e1802c8e13fe33652a0227c54bb72e831d9bccaf78ca7158f
-Section: Tweaks
-Homepage: https://github.com/ibrahim2100/Albrhi-Repo
-Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
- .
- Albrhi puts a download button where Instagram should have put one, strips the feed
- back to the people you actually follow, and stops the app reporting what you watch.
- Everything lives in a settings panel that looks like it shipped with the app.
- .
- ▍DOWNLOADS
- A native download button sits in the action row of every post and reel, beside the
- save icon. One tap grabs the highest quality available and writes it straight to
- Photos — optionally into its own album.
- .
- Stories and view-once DMs get their own button. Reels can be saved as video or as
- the original audio track. Profile pictures download in full HD on a long press.
- .
- ▍DOWNLOAD CENTER
- A real queue behind it all: pause, resume, retry and cancel, several transfers at
- once, and downloads that keep running after you leave the app. Duplicate links are
- detected, finished files are cleared once they reach Photos, and a searchable
- history records everything you have saved.
- .
- ▍A QUIETER FEED
- Remove ads, sponsored posts, suggested posts, suggested accounts, suggested reels,
- Threads posts, Meta AI, the friends map, trending searches and the explore grid.
- Hide the stories tray — or the entire feed.
- .
- ▍PRIVACY
- Watch stories without sending a seen receipt, and decide per story when to send one.
- View-once photos and videos stay unseen until you tap the eye button on that exact
- message. Hide the typing indicator and disable screenshot detection.
- .
- ▍REELS
- Tap to pause or mute instead of liking. Keep the progress scrubber visible. Stop
- reels unmuting themselves. Hide the header and the blend button.
- .
- ▍CONFIRMATIONS
- An optional prompt before liking, following, reposting, calling, commenting or
- sending a voice message — so a mis-tap never turns into a notification.
- .
- ▍BUILT TO FIT IN
- Full Arabic and English with automatic right-to-left layout. SF Symbols, a
- customisable accent colour, dark mode, and a settings panel opened by holding the
- menu button on your profile. Includes a diagnostics page that reports what the
- tweak actually sees on your build and files a bug report in one tap.
- .
- ▍TESTED ON
- Instagram 410.1.0. Not chosen for any principled reason — that is simply the newest
- build the developer's phone will still accept. The phone has served with honour and
- is now retired to a life of testing tweaks.
- .
- Newer Instagram versions will most likely work: nothing here depends on a version
- number, and the tweak looks up what it needs at runtime. But "most likely" is doing
- real work in that sentence, and honesty costs nothing.
- .
- ▍BETA
- This is a pre-release. Features are tested but your Instagram build may differ from
- ours — if something misbehaves, Settings › Diagnostics writes the report for you,
- Instagram version included, so we stop guessing and start fixing.
- .
- Developed by Ibrahim Ismail AL-Rahn. An educational and corrective derivative of
- SCInsta by SoCuul, rebuilt with AI assistance to improve code quality, design,
- performance and user experience. Free and open source under the GNU GPL v3, with
- original authorship fully credited and preserved.
-Tag: role::enduser
-Author: Ibrahim Ismail AL-Rahn (based on SCInsta by SoCuul, GPLv3)
-Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
-Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Name: Albrhi for Instagram (roothide)
-Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
-
-Package: com.albrhi.tweak.roothide
 Version: 3.8.0
 Architecture: iphoneos-arm64e
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
@@ -426,7 +258,7 @@ Installed-Size: 1588
 Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak
 Replaces: com.albrhi.tweak
-Filename: debs/com.albrhi.tweak.roothide_3.8.0.deb
+Filename: debs/com.albrhi.tweak.roothide_3.8.0_iphoneos-arm64e.deb
 Size: 472126
 MD5sum: dbaf38cc1a937291029d774d48f5e4c0
 SHA1: 5f9f7098e6f22d1de378154883f293750796f6d8
@@ -510,7 +342,7 @@ Installed-Size: 1588
 Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak
 Replaces: com.albrhi.tweak
-Filename: debs/com.albrhi.tweak.roothide_3.8.1.deb
+Filename: debs/com.albrhi.tweak.roothide_3.8.1_iphoneos-arm64e.deb
 Size: 472074
 MD5sum: bf12637041b841f0e1b6cc567111705d
 SHA1: fef0070aef7ac7856c2955cbe51094c590522091
@@ -594,7 +426,7 @@ Installed-Size: 1588
 Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak
 Replaces: com.albrhi.tweak
-Filename: debs/com.albrhi.tweak.roothide_3.8.2.deb
+Filename: debs/com.albrhi.tweak.roothide_3.8.2_iphoneos-arm64e.deb
 Size: 472272
 MD5sum: d6319526c236a37a6dde312964c76aba
 SHA1: 654954d1502f0d6cf5f97d617f27ff2ad02c4434
@@ -669,6 +501,104 @@ Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
 Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
 Name: Albrhi for Instagram (roothide)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
+
+Package: com.albrhi.youtube
+Version: 0.1.0
+Architecture: iphoneos-arm64
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 132
+Depends: mobilesubstrate
+Conflicts: com.albrhi.youtube.roothide
+Replaces: com.albrhi.youtube.roothide
+Filename: debs/com.albrhi.youtube_0.1.0_iphoneos-arm64.deb
+Size: 29208
+MD5sum: 6d66e5f61aed8247a9986df655ecd8de
+SHA1: 74914e1110290cbc46f3e06cadd70dedf45ae2c0
+SHA256: 87ceaba67fa7dd12a254983e403aa221267c85071d1c63058af20ac18e5b11c7
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: A native settings panel for YouTube, in Arabic or English — starting with the truth about your build.
+ .
+ This is the first release of Albrhi for YouTube and it is deliberately small. It
+ adds its own section to YouTube's own settings, and one page inside it that reports
+ what the tweak actually finds in your copy of YouTube.
+ .
+ ▍WHY START HERE
+ Downloading from YouTube is not a matter of grabbing a link. YouTube streams
+ through a protocol that hands out media in pieces rather than files, and the app
+ also carries its own downloader for offline playback. Which of those is reachable
+ cannot be read off the app from outside — it has to be measured on a real device,
+ on a real video.
+ .
+ That is what this page does. Play something, open it, and it prints exactly what
+ YouTube told the app about that video: every quality, every format, every stream.
+ One tap copies the report. Guessing instead of measuring is how weeks get wasted.
+ .
+ ▍WHAT IS HERE NOW
+ A settings section that looks like it shipped with YouTube, full Arabic and English
+ with right-to-left layout, and the diagnostics page above.
+ .
+ ▍WHAT IS NOT HERE YET
+ Everything else. No downloads, no ad removal, no player changes. They are being
+ built on what this page reports rather than on guesswork, and each will arrive when
+ it is verified against a real build instead of assumed.
+ .
+ Installing this changes nothing about how YouTube plays, looks or behaves.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+Tag: role::enduser
+Author: Ibrahim Ismail AL-Rahn
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi for YouTube (rootless)
+
+Package: com.albrhi.youtube.roothide
+Version: 0.1.0
+Architecture: iphoneos-arm64e
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 132
+Depends: mobilesubstrate
+Conflicts: com.albrhi.youtube
+Replaces: com.albrhi.youtube
+Filename: debs/com.albrhi.youtube.roothide_0.1.0_iphoneos-arm64e.deb
+Size: 29104
+MD5sum: 7c3f4b4b3295920aef4930b56a6c0aeb
+SHA1: cacc051c2abe4853c1df2ccc88820a9c4d3d03a0
+SHA256: 3df1d84b41409875aa5d1a428f950b6821962c8e4cdbbaa1f48d0fde6f74145d
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: A native settings panel for YouTube, in Arabic or English — starting with the truth about your build.
+ .
+ This is the first release of Albrhi for YouTube and it is deliberately small. It
+ adds its own section to YouTube's own settings, and one page inside it that reports
+ what the tweak actually finds in your copy of YouTube.
+ .
+ ▍WHY START HERE
+ Downloading from YouTube is not a matter of grabbing a link. YouTube streams
+ through a protocol that hands out media in pieces rather than files, and the app
+ also carries its own downloader for offline playback. Which of those is reachable
+ cannot be read off the app from outside — it has to be measured on a real device,
+ on a real video.
+ .
+ That is what this page does. Play something, open it, and it prints exactly what
+ YouTube told the app about that video: every quality, every format, every stream.
+ One tap copies the report. Guessing instead of measuring is how weeks get wasted.
+ .
+ ▍WHAT IS HERE NOW
+ A settings section that looks like it shipped with YouTube, full Arabic and English
+ with right-to-left layout, and the diagnostics page above.
+ .
+ ▍WHAT IS NOT HERE YET
+ Everything else. No downloads, no ad removal, no player changes. They are being
+ built on what this page reports rather than on guesswork, and each will arrive when
+ it is verified against a real build instead of assumed.
+ .
+ Installing this changes nothing about how YouTube plays, looks or behaves.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+Tag: role::enduser
+Author: Ibrahim Ismail AL-Rahn
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi for YouTube (roothide)
 
 Package: com.junesiphone.designer
 Version: 1.5.5
