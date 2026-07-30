@@ -24,7 +24,7 @@ static NSArray<NSDictionary *> *SCIAuditTable(void) {
         @{@"class": @"YTAppSettingsGroupPresentationData",
           @"why": @"the group list the screen is really built from"},
         @{@"class": @"YTSettingsGroupData",
-          @"why": @"holds the categories — a category in no group is on no screen"},
+          @"why": @"holds the categories — announcing one here crashed 0.1.1"},
         @{@"class": @"YTAppSettingsPresentationData",
           @"why": @"legacy category order; present but not consulted on 21.30.5"},
 
@@ -82,13 +82,14 @@ static NSString *sciSettingsGroups = nil;
             title = ((YTSettingsGroupData *)group).title;
         }
 
-        NSArray *categories = nil;
-        if ([group respondsToSelector:@selector(orderedCategories)]) {
-            categories = [(YTSettingsGroupData *)group orderedCategories];
-        }
-
-        [text appendFormat:@"  type %llu — %@ (%lu categories)\n",
-            type, title ?: @"?", (unsigned long)categories.count];
+        // -orderedCategories is deliberately *not* called here.
+        //
+        // This runs inside +orderedGroups, while that method is still returning, and
+        // asking a group for its contents at that moment means reading an object whose
+        // construction may not have finished. The category count was never worth that:
+        // what the next attempt needs from this report is which groups exist and what
+        // number each one carries.
+        [text appendFormat:@"  type %llu — %@\n", type, title ?: @"?"];
     }
 
     sciSettingsGroups = [text copy];

@@ -3,7 +3,7 @@
 #import "SCILog.h"
 #import "Diagnostics/SCIYTDiagnostics.h"
 
-NSString *SCIVersionString = @"v0.1.1";  // AlbrhiYT
+NSString *SCIVersionString = @"v0.1.2";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.

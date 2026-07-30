@@ -3,6 +3,24 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.1.2
+
+- **Fixes the crash when opening YouTube's settings in 0.1.1.** Install this over it.
+- The cause: 0.1.1 added a settings section of its own, and a section is not something
+  a tweak can simply announce. YouTube looks the new entry up in its own tables for a
+  title, an icon and a page identifier — and an entry those tables have never heard of
+  is not an empty row, it is a crash.
+- So the section is gone again for now, and will come back once the rest of what
+  YouTube expects is known rather than assumed. A settings panel that stops the app
+  opening its settings is worse than no panel.
+- **The report is unaffected**, because it never depended on the panel: it is written
+  to `Documents/AlbrhiYT-report.txt` inside YouTube's own folder, at launch and
+  whenever a video plays. That is the whole purpose of these early versions and it
+  still works.
+- The report now also lists YouTube's settings groups with the number each one carries,
+  which is exactly what the next attempt needs — measured from your build instead of
+  guessed at twice more.
+
 ## v0.1.1
 
 - **The Albrhi section now actually appears in YouTube's settings.** In 0.1.0 it did
