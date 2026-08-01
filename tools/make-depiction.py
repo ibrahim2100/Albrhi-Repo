@@ -176,16 +176,63 @@ ACCENT = CONFIG['accent']
 FEATURES = CONFIG['features']
 
 
-def latest_changelog(path='CHANGELOG.md', limit=3):
-    """The most recent few entries, as markdown."""
-    try:
-        text = open(path, encoding='utf-8').read()
-    except OSError:
-        return '_No changelog available._'
+def _condense(body, limit=160):
+    """A bullet's headline: its first sentence, or a trimmed opening.
 
-    sections = re.split(r'\n(?=## )', text)
-    # sections[0] is the file title
-    return '\n\n'.join(s.strip() for s in sections[1:limit + 1]) or '_No entries._'
+    The changelog is written to explain *why* a change was made, at length. That
+    belongs in the file, not on a store page — someone deciding whether to install
+    this wants the list, and the reasoning is one tap away on GitHub.
+    """
+    body = re.sub(r'\s+', ' ', body).strip()
+
+    # First sentence, but only if it is a sentence rather than an abbreviation or a
+    # version number: the split has to land after a space.
+    match = re.search(r'(?<=[.!?])\s', body)
+    if match and match.start() <= limit:
+        return body[:match.start() + 1].strip()
+
+    if len(body) <= limit:
+        return body
+    return body[:limit].rsplit(' ', 1)[0].rstrip(' ,;:') + '…'
+
+
+def changelog_entries(path='CHANGELOG.md', limit=3):
+    """The most recent versions, as (title, [headlines]) pairs.
+
+    Parsed rather than pasted. The first version of this dumped three whole entries
+    into one markdown view, and Sileo does not render headings — so the page showed
+    a literal '## v0.4.1' on top of a wall of prose. Structure has to be built out of
+    the views Sileo actually has, which means splitting the file up here.
+    """
+    try:
+        raw = open(path, encoding='utf-8').read()
+    except OSError:
+        return []
+
+    entries = []
+
+    # sections[0] is the file title and any preamble.
+    for section in re.split(r'\n(?=## )', raw)[1:limit + 1]:
+        lines = section.strip().split('\n')
+        title = lines[0].lstrip('# ').strip()
+
+        # Top-level bullets only. A continuation line is indented, and the paragraphs
+        # between bullets are the reasoning — both are deliberately left out.
+        headlines = []
+        for line in lines[1:]:
+            if line.startswith('- '):
+                headlines.append(_condense(line[2:]))
+
+        # A version written as prose rather than bullets still deserves a line.
+        if not headlines:
+            paragraph = ' '.join(l for l in lines[1:] if l.strip())
+            if paragraph:
+                headlines.append(_condense(paragraph))
+
+        if headlines:
+            entries.append((title, headlines))
+
+    return entries
 
 
 def header(title):
@@ -224,6 +271,19 @@ details = [
 for name, body in FEATURES:
     details += [header(name), text(body), spacer(8)]
 
+# One subheader per version, then its headlines as a list — rather than one markdown
+# blob per release, which is what made the page unreadable.
+whats_new = []
+for entry_title, headlines in changelog_entries():
+    whats_new += [
+        header(entry_title),
+        text('\n'.join('• %s' % line for line in headlines)),
+        spacer(10),
+    ]
+
+if not whats_new:
+    whats_new = [text('_No changelog available._')]
+
 info = [
     row('Version', version),
     row('Developer', 'Ibrahim Ismail AL-Rahn'),
@@ -248,7 +308,7 @@ depiction = {
     'tabs': [
         {'class': 'DepictionStackView', 'tabname': 'Details', 'views': details},
         {'class': 'DepictionStackView', 'tabname': "What's New",
-         'views': [text(latest_changelog())]},
+         'views': whats_new},
         {'class': 'DepictionStackView', 'tabname': 'Info', 'views': info},
     ],
 }

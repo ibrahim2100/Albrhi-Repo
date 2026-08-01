@@ -1,59 +1,41 @@
 Package: com.albrhi.youtube
 Name: Albrhi for YouTube (rootless)
-Version: 0.4.1
+Version: 0.4.2
 Architecture: iphoneos-arm64
 Description: No ads, skip the sponsored parts, background playback — in Arabic or English.
  .
- ◍ DOWNLOADS
- Not yet. That one is being measured before it is built — see the diagnostics page.
+ NO ADS
+ Stopped at three points, because ads arrive by three routes and blocking one does
+ nothing about the others: the app stops asking for ads at all, promoted rows are
+ dropped from the feed by the identifier YouTube's own servers attach to them, and the
+ player refuses ads before a video, mid-video, and the kind stitched into the stream.
  .
- ▍ NO ADS
- Ads are stopped at three separate points, because they arrive by three separate
- routes and blocking one does nothing about the others.
+ SKIP THE SPONSORED PARTS
+ Paid plugs, self-promotion and subscribe reminders are jumped over using segments
+ other viewers submitted to SponsorBlock. A line names what was skipped and offers an
+ undo, and each segment is coloured on the progress bar. Eight categories, each with
+ its own switch. Your video is never sent: only four characters of its fingerprint,
+ so the server cannot tell which video you are watching.
  .
- First, the app stops telling YouTube it wants ads at all, so they are never sent
- rather than sent and then hidden. Second, promoted rows are dropped out of the feed
- by the identifier YouTube's own servers attach to them — including the plain-looking
- layouts that carry sponsored content without the word "ad" anywhere in them. Third,
- the player refuses ads before a video, in the middle of one, and the kind stitched
- into the stream itself, which nothing else can reach.
- .
- ▍ SKIP THE SPONSORED PARTS
- Paid plugs, self-promotion and subscribe reminders are jumped over automatically,
- using segments other viewers submitted to SponsorBlock. A short line names what was
- skipped and offers an undo, and each segment is marked on the progress bar in its own
- colour so you can see what is coming. Intros, endcards, recaps and tangents each have
- their own switch and are off until you turn them on — somebody made that content, and
- deciding for you that it is worthless is not this tweak's call.
- .
- Your video is never sent. SponsorBlock offers two ways to ask, and this uses the one
- that sends only the first four characters of the video's fingerprint, so the server
- cannot tell which video you are watching. Segment data is from sponsor.ajay.app,
- licensed CC BY-NC-SA 4.0, credited in the settings screen. The coloured markers are
- derived from iSponsorBlock by Galactic Dev, GPLv3.
- .
- ▍ BACKGROUND PLAYBACK
+ BACKGROUND PLAYBACK
  Audio keeps going when you leave the app or lock the screen.
  .
- ▍ QUIETER
- Silence the prompt to update — updating replaces the app and removes this tweak. And
- optionally hide the paid-promotion banner, off by default, because it is a disclosure.
+ QUIETER
+ Silence the prompt to update, since updating removes this tweak. Optionally hide the
+ paid-promotion banner — off by default, because it is a disclosure.
  .
- ▍ SETTINGS
- Hold two fingers anywhere in YouTube. Full Arabic and English with right-to-left
- layout, and a card at the top that says whether everything actually attached to your
- build rather than leaving you to wonder.
+ SETTINGS AND DIAGNOSTICS
+ Hold two fingers anywhere in YouTube. Arabic and English with right-to-left layout,
+ and a card that says whether everything attached to your build. The report is also
+ written to Documents/AlbrhiYT-report.txt.
  .
- ▍ DIAGNOSTICS
- Reports what the tweak finds in your copy of YouTube and what YouTube said about the
- last video you played. Also written to Documents/AlbrhiYT-report.txt, so it is
- readable even if nothing else worked.
+ TESTED ON YouTube 21.30.5. Nothing is pinned to a version number: every class is
+ looked up at runtime and skipped if it is not there.
  .
- ▍ TESTED ON
- YouTube 21.30.5. Nothing is pinned to a version number: every class is looked up at
- runtime and skipped if it is not there. The hooks are on YouTube's model and service
- layer rather than its views — views get renamed and rewritten between releases, and a
- tweak that hooks them quietly stops working. A player response does not.
+ Downloads are not here yet — that one is being measured before it is built.
+ .
+ Segment data from SponsorBlock (sponsor.ajay.app), CC BY-NC-SA 4.0. The coloured
+ markers are derived from iSponsorBlock by Galactic Dev, GPLv3.
  .
  Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo

@@ -3,6 +3,17 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.4.2
+
+- **The package page, actually readable this time.** 0.4.1 gave Sileo a page but
+  filled its What's New tab with the changelog pasted in whole — and Sileo does not
+  render headings, so it came out as a literal `## v0.4.1` on top of a wall of prose.
+  Each version is now a heading of its own with its changes listed under it, one line
+  each. The reasoning stays in this file, where there is room for it.
+
+- The description is shorter and no longer drawn with block characters, which not
+  every font has.
+
 ## v0.4.1
 
 - **A proper package page.** Sileo had nothing to render but the raw description
