@@ -81,8 +81,8 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 
 | Tweak | App | Status |
 |---|---|---|
-| **Albrhi for Instagram** | Instagram | **Released** — `com.albrhi.tweak`, the whole feature list below |
-| Albrhi for YouTube | YouTube | **Being started.** Nothing published, nothing installable yet |
+| **Albrhi for Instagram** | Instagram | **Released** — `com.albrhi.tweak` |
+| **Albrhi for YouTube** | YouTube | **Released** — `com.albrhi.youtube`: no ads, SponsorBlock, background playback |
 
 Each tweak is a self-contained project under `tweaks/`, with its own sources, package identity and
 version number. They are **separate packages that never meet at runtime**: an injection filter binds
@@ -98,7 +98,7 @@ script and the APT index — which is why installing one has nothing to do with 
 
 ---
 
-## ✨ Features
+## ✨ Albrhi for Instagram
 
 ### 📥 Downloads
 - One-tap **download button** in the post and reel action rows.
@@ -140,6 +140,43 @@ Native inset-grouped settings with **search** · **backup & restore** all your s
 **copy any text** (caption, comment, bio) by long-press · full dark mode · Arabic/English with RTL ·
 navigation-bar tab ordering, hiding and swipe-between-tabs · a **Diagnostics** page reporting what
 actually attached at runtime, with one-tap issue reporting.
+
+---
+
+## ▶️ Albrhi for YouTube
+
+### 🚫 No ads
+Stopped at three points, because they arrive by three routes and blocking one does nothing about
+the others: the app **stops asking** for ads at all, promoted rows are dropped from the feed by the
+identifier YouTube's own servers attach to them, and the player refuses ads before a video, mid-video,
+and the kind **stitched into the stream itself**.
+
+### ⏭️ Skip the sponsored parts
+Paid plugs, self-promotion and subscribe reminders are jumped over automatically, using segments
+other viewers submitted to **SponsorBlock**. A short line names what was skipped and offers an undo,
+and each segment is **coloured on the progress bar** so you can see what is coming. Eight categories,
+each with its own switch — intros, endcards, recaps and tangents are off until you turn them on.
+
+**Your video is never sent.** SponsorBlock offers two ways to ask; this uses the one that sends only
+the first four characters of the video's fingerprint, so the server cannot tell which video you are
+watching. Nothing is requested at all when the feature is off.
+
+### 🎧 Background playback
+Audio keeps going when you leave the app or lock the screen.
+
+### 🤫 Quieter
+Silence the prompt to update — updating replaces the app and removes the tweak. And optionally hide
+the paid-promotion banner, off by default, because it is a disclosure.
+
+### ⚙️ Settings & diagnostics
+**Hold two fingers anywhere** in YouTube. Arabic and English with RTL, and a card at the top saying
+whether everything actually attached to *your* build. The report is also written to
+`Documents/AlbrhiYT-report.txt`, so it is readable even if nothing else worked.
+
+> Hooked on YouTube's **model and service layer, never its views** — view classes get renamed between
+> releases and a tweak that hooks them quietly stops working. The one exception is the progress-bar
+> colouring, which has to be drawn on a view; it is laid out with frames rather than constraints, and
+> a fault there costs the colours, never the video.
 
 ---
 

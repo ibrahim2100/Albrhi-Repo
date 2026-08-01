@@ -1,4 +1,4 @@
-"""Generates the Sileo depiction for Albrhi.
+"""Generates a Sileo depiction.
 
 A depiction is the package page Sileo renders instead of the plain Description
 field: tabs, headings, styled text. Sileo reads a JSON description of native
@@ -7,7 +7,16 @@ views; Cydia and older managers read an HTML page, so both are produced.
 Generated rather than hand-written, so the version and changelog on the page can
 never drift from what actually shipped.
 
-Usage: python3 tools/make-depiction.py <out-dir> <version> <base-url>
+One script, one entry per tweak. The YouTube package shipped with no depiction at
+all for three releases, so Sileo fell back to rendering the raw Description field
+-- a wall of prose where Instagram had a tabbed page. The fix is not a second
+script to keep in sync with this one; it is a table.
+
+Usage: python3 tools/make-depiction.py <out-dir> <version> <base-url> [tweak]
+
+`tweak` is instagram (the default, so the existing call site keeps working) or
+youtube. The changelog is read from the current working directory, which is why
+callers cd into the tweak's own directory first.
 """
 import json
 import os
@@ -15,6 +24,7 @@ import re
 import sys
 
 out_dir, version, base_url = sys.argv[1], sys.argv[2], sys.argv[3].rstrip('/')
+tweak = (sys.argv[4] if len(sys.argv) > 4 else 'instagram').lower()
 
 # Derived from the Pages URL (https://<owner>.github.io/<project>) so renaming the
 # repository needs no edit here.
@@ -24,9 +34,7 @@ _project = _parts[3] if len(_parts) > 3 else ''
 REPO = 'https://github.com/%s/%s' % (_owner, _project)
 ISSUES = REPO + '/issues/new'
 
-ACCENT = '#E8590C'
-
-FEATURES = [
+INSTAGRAM_FEATURES = [
     ('Downloads',
      'A native download button in the action row of every post and reel, beside '
      'the save icon. One tap takes the highest quality available straight to '
@@ -60,6 +68,112 @@ FEATURES = [
      'customisable accent colour and dark mode. Hold the menu button on your '
      'profile to open it.'),
 ]
+
+YOUTUBE_FEATURES = [
+    ('No ads',
+     'Stopped at three points, because ads arrive by three routes and blocking '
+     'one does nothing about the others. The app stops asking for ads at all, so '
+     'they are never sent rather than sent and hidden; promoted rows are dropped '
+     'from the feed by the identifier YouTube\'s own servers attach to them; and '
+     'the player refuses ads before a video, in the middle of one, and the kind '
+     'stitched into the stream itself.'),
+
+    ('Skip the sponsored parts',
+     'Paid plugs, self-promotion and subscribe reminders are jumped over using '
+     'segments other viewers submitted to SponsorBlock. A short line names what '
+     'was skipped and offers an undo, and each segment is coloured on the progress '
+     'bar so you can see what is coming. Eight categories, each with its own '
+     'switch — intros, endcards, recaps and tangents stay off until you turn them '
+     'on, because somebody chose to make that content.'),
+
+    ('Your video is never sent',
+     'SponsorBlock offers two ways to ask, and this uses the one that sends only '
+     'the first four characters of the video\'s fingerprint — so the reply covers '
+     'many videos and the server cannot tell which one you are watching. Nothing '
+     'is requested at all when the feature is off, or when every category is off.'),
+
+    ('Background playback',
+     'Audio keeps going when you leave the app or lock the screen.'),
+
+    ('Quieter',
+     'Silence the prompt to update, since updating replaces the app and removes '
+     'this tweak. And optionally hide the paid-promotion banner — off by default, '
+     'because it is a disclosure.'),
+
+    ('Settings and diagnostics',
+     'Hold two fingers anywhere in YouTube. Arabic and English with right-to-left '
+     'layout, and a card at the top saying whether everything actually attached to '
+     'your build. The report is also written to Documents/AlbrhiYT-report.txt, so '
+     'it is readable even if nothing else worked.'),
+]
+
+# Everything that differs between the two package pages, in one place.
+TWEAKS = {
+    'instagram': {
+        'slug': 'albrhi',                       # the existing filename; URLs in
+                                                # control already point at it
+        'title': 'Albrhi',
+        'accent': '#E8590C',
+        'features': INSTAGRAM_FEATURES,
+        'tagline': '**Download anything, hide the noise, browse invisibly** — in '
+                   'Arabic or English.\n\nAlbrhi puts a download button where '
+                   'Instagram should have put one, strips the feed back to the '
+                   'people you actually follow, and stops the app reporting what '
+                   'you watch.',
+        'html_tagline': '<strong>Download anything, hide the noise, browse '
+                        'invisibly</strong> — in Arabic or English.',
+        'app': 'Instagram',
+        'tested': 'Instagram 410.1.0',
+        'tested_note': 'Tested on Instagram **410.1.0** — the newest build the '
+                       'developer\'s phone will still accept. Nothing here is '
+                       'pinned to a version number, so newer builds should work. '
+                       'If one misbehaves, Settings › Diagnostics writes the bug '
+                       'report for you.',
+        'rows': [('Based on', 'SCInsta by SoCuul')],
+        'footer_html': 'GPLv3 · based on SCInsta by SoCuul · not affiliated with '
+                       'Instagram or Meta.',
+        'disclaimer': '_Free and open source. Not affiliated with, endorsed by or '
+                      'sponsored by Instagram or Meta Platforms._',
+    },
+    'youtube': {
+        'slug': 'albrhi-youtube',
+        'title': 'Albrhi for YouTube',
+        'accent': '#FF0021',                    # the red the tweak's own panel uses
+        'features': YOUTUBE_FEATURES,
+        'tagline': '**No ads, skip the sponsored parts, background playback** — in '
+                   'Arabic or English.\n\nHooked on YouTube\'s model and service '
+                   'layer rather than its views: views get renamed between releases '
+                   'and a tweak that hooks them quietly stops working. A player '
+                   'response does not.',
+        'html_tagline': '<strong>No ads, skip the sponsored parts, background '
+                        'playback</strong> — in Arabic or English.',
+        'app': 'YouTube',
+        'tested': 'YouTube 21.30.5',
+        'tested_note': 'Tested on YouTube **21.30.5**. Nothing is pinned to a '
+                       'version number: every class is looked up at runtime and '
+                       'skipped if it is not there. Hold two fingers anywhere for '
+                       'the settings, and the diagnostics page says what attached '
+                       'to your build.',
+        'rows': [('Segment data', 'SponsorBlock, CC BY-NC-SA 4.0'),
+                 ('Markers from', 'iSponsorBlock by Galactic Dev, GPLv3')],
+        'footer_html': 'GPLv3 · segment data from SponsorBlock (CC BY-NC-SA 4.0) · '
+                       'markers derived from iSponsorBlock by Galactic Dev · not '
+                       'affiliated with YouTube or Google.',
+        'disclaimer': '_Free and open source. Segment data from SponsorBlock '
+                      '(sponsor.ajay.app), CC BY-NC-SA 4.0. The coloured markers are '
+                      'derived from iSponsorBlock by Galactic Dev, GPLv3. Not '
+                      'affiliated with, endorsed by or sponsored by YouTube or '
+                      'Google._',
+    },
+}
+
+if tweak not in TWEAKS:
+    sys.exit('Unknown tweak %r — expected one of: %s'
+             % (tweak, ', '.join(sorted(TWEAKS))))
+
+CONFIG = TWEAKS[tweak]
+ACCENT = CONFIG['accent']
+FEATURES = CONFIG['features']
 
 
 def latest_changelog(path='CHANGELOG.md', limit=3):
@@ -100,16 +214,10 @@ def link(title, action):
 
 
 details = [
-    text('**Download anything, hide the noise, browse invisibly** — in Arabic or '
-         'English.\n\nAlbrhi puts a download button where Instagram should have '
-         'put one, strips the feed back to the people you actually follow, and '
-         'stops the app reporting what you watch.'),
+    text(CONFIG['tagline']),
     spacer(),
     {'class': 'DepictionHeaderView', 'title': 'Beta'},
-    text('Tested on Instagram **410.1.0** — the newest build the developer\'s '
-         'phone will still accept. Nothing here is pinned to a version number, so '
-         'newer builds should work. If one misbehaves, Settings › Diagnostics '
-         'writes the bug report for you.'),
+    text(CONFIG['tested_note']),
     separator(),
 ]
 
@@ -119,17 +227,18 @@ for name, body in FEATURES:
 info = [
     row('Version', version),
     row('Developer', 'Ibrahim Ismail AL-Rahn'),
-    row('Based on', 'SCInsta by SoCuul'),
+]
+info += [row(title, value) for title, value in CONFIG['rows']]
+info += [
     row('Licence', 'GNU GPL v3'),
-    row('Tested on', 'Instagram 410.1.0'),
+    row('Tested on', CONFIG['tested']),
     separator(),
     link('Source code', REPO),
     link('Report an issue', ISSUES),
     link('Instagram — @Ib.11p', 'https://instagram.com/Ib.11p'),
     link('Telegram — @Ib11p', 'https://t.me/Ib11p'),
     separator(),
-    text('_Free and open source. Not affiliated with, endorsed by or sponsored by '
-         'Instagram or Meta Platforms._'),
+    text(CONFIG['disclaimer']),
 ]
 
 depiction = {
@@ -146,7 +255,7 @@ depiction = {
 
 os.makedirs(os.path.join(out_dir, 'depictions'), exist_ok=True)
 
-json_path = os.path.join(out_dir, 'depictions', 'albrhi.json')
+json_path = os.path.join(out_dir, 'depictions', CONFIG['slug'] + '.json')
 with open(json_path, 'w', encoding='utf-8') as f:
     json.dump(depiction, f, indent=2, ensure_ascii=False)
 
@@ -157,7 +266,7 @@ html_features = '\n'.join(
 html = """<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Albrhi %(version)s</title>
+<title>%(title)s %(version)s</title>
 <style>
 :root{--accent:%(accent)s;--bg:#fff;--fg:#1c1c1e;--muted:#6e6e73;--line:#e3e3e6}
 @media(prefers-color-scheme:dark){:root{--bg:#000;--fg:#f5f5f7;--muted:#98989d;--line:#2c2c2e}}
@@ -175,24 +284,26 @@ hr{border:0;border-top:1px solid var(--line);margin:26px 0}
 footer{color:var(--muted);font-size:13px;margin-top:30px}
 a{color:var(--accent)}
 </style></head><body><main>
-<h1>Albrhi<span class="beta">BETA</span></h1>
+<h1>%(title)s<span class="beta">BETA</span></h1>
 <div class="v">%(version)s · by Ibrahim Ismail AL-Rahn</div>
 <hr>
-<p><strong>Download anything, hide the noise, browse invisibly</strong> — in Arabic or English.</p>
+<p>%(tagline)s</p>
 %(features)s
 <hr>
-<p class="v">Tested on Instagram 410.1.0. Newer builds should work — if one misbehaves,
-Settings &rsaquo; Diagnostics writes the bug report for you.</p>
+<p class="v">Tested on %(tested)s. Newer builds should work — if one misbehaves, the
+diagnostics page writes the report for you.</p>
 <footer>
 <a href="%(repo)s">Source</a> ·
 <a href="%(issues)s">Report an issue</a><br>
-GPLv3 · based on SCInsta by SoCuul · not affiliated with Instagram or Meta.
+%(footer)s
 </footer>
 </main></body></html>
 """ % {'version': version, 'accent': ACCENT, 'features': html_features,
-     'repo': REPO, 'issues': ISSUES}
+     'repo': REPO, 'issues': ISSUES, 'title': CONFIG['title'],
+     'tagline': CONFIG['html_tagline'], 'tested': CONFIG['tested'],
+     'footer': CONFIG['footer_html']}
 
-with open(os.path.join(out_dir, 'depictions', 'albrhi.html'), 'w', encoding='utf-8') as f:
+with open(os.path.join(out_dir, 'depictions', CONFIG['slug'] + '.html'), 'w', encoding='utf-8') as f:
     f.write(html)
 
-print('Depiction written for %s' % version)
+print('Depiction written: %s %s (%s)' % (CONFIG['title'], version, CONFIG['slug']))

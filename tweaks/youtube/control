@@ -1,6 +1,6 @@
 Package: com.albrhi.youtube
 Name: Albrhi for YouTube (rootless)
-Version: 0.4.0
+Version: 0.4.1
 Architecture: iphoneos-arm64
 Description: No ads, skip the sponsored parts, background playback — in Arabic or English.
  .
@@ -61,6 +61,8 @@ Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Author: Ibrahim Ismail AL-Rahn
 Section: Tweaks
 Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-youtube.html
+SileoDepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-youtube.json
 Depends: mobilesubstrate
 Conflicts: com.albrhi.youtube.roothide
 Replaces: com.albrhi.youtube.roothide

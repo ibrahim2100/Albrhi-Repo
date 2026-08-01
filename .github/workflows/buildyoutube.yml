@@ -99,10 +99,12 @@ jobs:
                 sed -i.bak \
                   -e "s|^Homepage: .*|Homepage: https://github.com/${OWNER}/${PROJECT}|" \
                   -e "s|^Icon: .*|Icon: https://${OWNER}.github.io/${PROJECT}/CydiaIcon.png|" \
+                  -e "s|^Depiction: .*|Depiction: https://${OWNER}.github.io/${PROJECT}/depictions/albrhi-youtube.html|" \
+                  -e "s|^SileoDepiction: .*|SileoDepiction: https://${OWNER}.github.io/${PROJECT}/depictions/albrhi-youtube.json|" \
                   control
                 rm -f control.bak
 
-                grep -E '^(Homepage|Icon):' control
+                grep -E '^(Homepage|Icon|Depiction|SileoDepiction):' control
 
             - name: Decide whether a build is needed
               id: release_check
@@ -323,6 +325,19 @@ jobs:
                     echo "Carried over $(ls pages/depictions | wc -l) depiction files."
                   fi
                 fi
+
+                # This tweak's own package page, written after the carry-over so it
+                # replaces its own two files and leaves Instagram's alone.
+                #
+                # Without it Sileo has nothing to render but the Description field, which
+                # is how 0.1 through 0.4 shipped: a wall of prose beside Instagram's
+                # tabbed page. The generator reads CHANGELOG.md relative to its working
+                # directory, hence the cd; the output path is absolute so the cd cannot
+                # redirect it.
+                PAGES_DIR="$(pwd)/pages"
+                ( cd "$TWEAK_DIR" && python3 ../../tools/make-depiction.py "$PAGES_DIR" "$YT_VERSION" "$REPO_URL" youtube )
+
+                ls -la pages/depictions
 
                 python3 main/tools/make-logo.py pages/CydiaIcon.png 512
 

@@ -3,6 +3,17 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.4.1
+
+- **A proper package page.** Sileo had nothing to render but the raw description
+  field — a wall of prose, where the Instagram package has a tabbed page with
+  headings and a changelog. It has one of its own now: what each feature does, what
+  it was tested against, and who is credited.
+
+  Nothing in the tweak changed. The generator that writes Instagram's page simply
+  had Instagram written into it, so this taught it the difference between the two
+  rather than adding a second script to keep in sync with the first.
+
 ## v0.4.0
 
 - **The coloured markers, which 0.3.0 said were not ready.** Each segment is now drawn
