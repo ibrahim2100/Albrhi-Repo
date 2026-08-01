@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.5.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **Downloads.**\n• **No button is added to YouTube.**\n• Above 360p YouTube sends picture and sound as separate files.\n• Only formats iOS can actually play are offered, chosen by itag rather than by MIME type: YouTube serves VP9 and AV1 in containers that download happily and then show a…\n• The diagnostics page gains a \"Saveable\" line, so a video that offers nothing says so before you try.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.4.5",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.4.3",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **The diagnostics page no longer takes YouTube down when opened.**",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.4.5"
+          "text": "0.5.0"
         },
         {
           "class": "DepictionTableTextView",
