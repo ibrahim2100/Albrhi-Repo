@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Albrhi for YouTube 0.4.1</title>
+<style>
+:root{--accent:#FF0021;--bg:#fff;--fg:#1c1c1e;--muted:#6e6e73;--line:#e3e3e6}
+@media(prefers-color-scheme:dark){:root{--bg:#000;--fg:#f5f5f7;--muted:#98989d;--line:#2c2c2e}}
+body{margin:0;padding:24px 18px 60px;background:var(--bg);color:var(--fg);
+font:16px/1.55 -apple-system,BlinkMacSystemFont,system-ui,sans-serif}
+main{max-width:620px;margin:0 auto}
+h1{font-size:28px;margin:0 0 4px}
+.v{color:var(--muted);font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.beta{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);
+background:color-mix(in srgb,var(--accent) 14%,transparent);padding:3px 9px;
+border-radius:9px;margin-left:8px;vertical-align:3px}
+h2{font-size:15px;margin:26px 0 6px;color:var(--accent)}
+p{margin:0;color:var(--fg)}
+hr{border:0;border-top:1px solid var(--line);margin:26px 0}
+footer{color:var(--muted);font-size:13px;margin-top:30px}
+a{color:var(--accent)}
+</style></head><body><main>
+<h1>Albrhi for YouTube<span class="beta">BETA</span></h1>
+<div class="v">0.4.1 · by Ibrahim Ismail AL-Rahn</div>
+<hr>
+<p><strong>No ads, skip the sponsored parts, background playback</strong> — in Arabic or English.</p>
+<h2>No ads</h2><p>Stopped at three points, because ads arrive by three routes and blocking one does nothing about the others. The app stops asking for ads at all, so they are never sent rather than sent and hidden; promoted rows are dropped from the feed by the identifier YouTube's own servers attach to them; and the player refuses ads before a video, in the middle of one, and the kind stitched into the stream itself.</p>
+<h2>Skip the sponsored parts</h2><p>Paid plugs, self-promotion and subscribe reminders are jumped over using segments other viewers submitted to SponsorBlock. A short line names what was skipped and offers an undo, and each segment is coloured on the progress bar so you can see what is coming. Eight categories, each with its own switch — intros, endcards, recaps and tangents stay off until you turn them on, because somebody chose to make that content.</p>
+<h2>Your video is never sent</h2><p>SponsorBlock offers two ways to ask, and this uses the one that sends only the first four characters of the video's fingerprint — so the reply covers many videos and the server cannot tell which one you are watching. Nothing is requested at all when the feature is off, or when every category is off.</p>
+<h2>Background playback</h2><p>Audio keeps going when you leave the app or lock the screen.</p>
+<h2>Quieter</h2><p>Silence the prompt to update, since updating replaces the app and removes this tweak. And optionally hide the paid-promotion banner — off by default, because it is a disclosure.</p>
+<h2>Settings and diagnostics</h2><p>Hold two fingers anywhere in YouTube. Arabic and English with right-to-left layout, and a card at the top saying whether everything actually attached to your build. The report is also written to Documents/AlbrhiYT-report.txt, so it is readable even if nothing else worked.</p>
+<hr>
+<p class="v">Tested on YouTube 21.30.5. Newer builds should work — if one misbehaves, the
+diagnostics page writes the report for you.</p>
+<footer>
+<a href="https://github.com/ibrahim2100/Albrhi-Repo">Source</a> ·
+<a href="https://github.com/ibrahim2100/Albrhi-Repo/issues/new">Report an issue</a><br>
+GPLv3 · segment data from SponsorBlock (CC BY-NC-SA 4.0) · markers derived from iSponsorBlock by Galactic Dev · not affiliated with YouTube or Google.
+</footer>
+</main></body></html>
