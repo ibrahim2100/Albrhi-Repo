@@ -125,7 +125,7 @@
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **Nothing changed in the app.** Every feature, setting and button is exactly where\n• If anything at all behaves differently from 3.8.1, that is a bug and not a change.",
+          "markdown": "• **Nothing changed in the app.**\n• If anything at all behaves differently from 3.8.1, that is a bug and not a change.",
           "useSpacing": true
         },
         {
@@ -139,7 +139,7 @@
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **Downloads survive losing signal.** A transfer cut off by the network now retries",
+          "markdown": "• **Downloads survive losing signal.**",
           "useSpacing": true
         },
         {
@@ -153,7 +153,7 @@
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **Settings search understands what you meant.** Type \"حفظ\" and the download settings",
+          "markdown": "• **Settings search understands what you meant.**",
           "useSpacing": true
         },
         {
