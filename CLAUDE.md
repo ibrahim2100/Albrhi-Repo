@@ -118,6 +118,14 @@ the `albrhi-pages` concurrency group so they never write `gh-pages` at once.
 Both also deploy, which is not redundancy: it is what makes the order they run in
 irrelevant. Whichever finishes last deploys a complete index, from either direction.
 
+**That only holds for what lives on `gh-pages`.** The index does, because both
+workflows rebuild it from the published releases. A depiction does not build itself:
+it is generated, and the YouTube one was generated only into that workflow's Pages
+*artifact*. The Instagram workflow builds its deployment from the **branch**, so it
+deployed a site without it — and the page 404'd a minute after publishing, the two
+runs being a minute apart. Anything generated must be written to `gh-pages`, not just
+handed to the artifact, or the other tweak's next release quietly deletes it.
+
 That change also closed a gap that existed with one tweak: when a build was skipped
 because the version was already released, the index depended on a separate download
 step succeeding. Now there is a single source of truth for what the source serves.
