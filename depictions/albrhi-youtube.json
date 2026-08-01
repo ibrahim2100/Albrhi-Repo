@@ -119,9 +119,46 @@
       "tabname": "What's New",
       "views": [
         {
+          "class": "DepictionSubheaderView",
+          "title": "v0.4.2",
+          "useBoldText": true
+        },
+        {
           "class": "DepictionMarkdownView",
-          "markdown": "## v0.4.1\n\n- **A proper package page.** Sileo had nothing to render but the raw description\n  field — a wall of prose, where the Instagram package has a tabbed page with\n  headings and a changelog. It has one of its own now: what each feature does, what\n  it was tested against, and who is credited.\n\n  Nothing in the tweak changed. The generator that writes Instagram's page simply\n  had Instagram written into it, so this taught it the difference between the two\n  rather than adding a second script to keep in sync with the first.\n\n## v0.4.0\n\n- **The coloured markers, which 0.3.0 said were not ready.** Each segment is now drawn\n  on the progress bar in its SponsorBlock colour, so what is coming is visible before it\n  arrives. Its own switch, under SponsorBlock.\n\n  This is the only place the tweak hooks a view, and the reason it is safe now is not\n  courage: the markers are laid out with **frames, never constraints**. The layout engine\n  is what took 0.1.1 and 0.1.3 down, and a rectangle at start ÷ duration × width does not\n  need it. Drawing is wrapped as well — a fault there costs the colours, never the video.\n\n  All three bar classes are hooked, because which one a build renders cannot be read off\n  the binary, and the diagnostics page now says which one was found.\n\n- **Credit where it is owed.** The markers are derived from\n  [iSponsorBlock](https://github.com/Galactic-Dev/iSponsorBlock) by Galactic Dev, which\n  is GPLv3 as this is: the bar class names, the placement arithmetic, and the detail that\n  they must be redrawn the moment segments arrive rather than only on layout — which is\n  what makes them appear at all, and would have cost several builds to find by trial.\n  Credited in the settings screen and the package description as the licence requires.\n\n- Reading the video's identifier no longer depends on one accessor: the video object is\n  asked first, then the player controller, which is where iSponsorBlock reads it.\n\n## v0.3.1\n\n- **Fixes skipping, which never once worked in 0.3.0.** The feature asked the video\n  object for its identifier under four names, and the one this build actually uses was\n  not among them — so every lookup came back empty and the tweak returned before it had\n  asked SponsorBlock for anything. Nothing was broken downstream; nothing downstream\n  ever ran.\n\n  The right name was already in this repository: the diagnostics page has been reading\n  it since 0.1.0, having measured it rather than assumed it. That is the whole lesson\n  again, one level down — a class name copied from another project is a lead and not a\n  fact, and so is an accessor name.\n\n- **And the report now says which of the three it was.** \"Nothing was skipped\" looked\n  identical whether the ID could not be read, no segments matched your categories, or a\n  skip happened and you missed it. The SponsorBlock line names it.",
+          "markdown": "• **The package page, actually readable this time.** 0.4.1 gave Sileo a page but\n• The description is shorter and no longer drawn with block characters, which not",
           "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "v0.4.1",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **A proper package page.** Sileo had nothing to render but the raw description",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "v0.4.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **The coloured markers, which 0.3.0 said were not ready.** Each segment is now drawn\n• **Credit where it is owed.** The markers are derived from\n• Reading the video's identifier no longer depends on one accessor: the video object is",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
         }
       ]
     },
@@ -132,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.4.1"
+          "text": "0.4.2"
         },
         {
           "class": "DepictionTableTextView",
