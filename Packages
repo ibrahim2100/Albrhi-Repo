@@ -503,104 +503,6 @@ Name: Albrhi for Instagram (roothide)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
 Package: com.albrhi.youtube
-Version: 0.1.3
-Architecture: iphoneos-arm64
-Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
-Installed-Size: 152
-Depends: mobilesubstrate
-Conflicts: com.albrhi.youtube.roothide
-Replaces: com.albrhi.youtube.roothide
-Filename: debs/com.albrhi.youtube_0.1.3_iphoneos-arm64.deb
-Size: 34452
-MD5sum: 4d3e29dbc3c6a5a437e5228c8242c71f
-SHA1: 421ed6184919e30eae44353b94687fa2a15dd20c
-SHA256: 1e5ad870bda23f6507272ee505c2b8955854102b039f73768a6c860b50e7323a
-Section: Tweaks
-Homepage: https://github.com/ibrahim2100/Albrhi-Repo
-Description: A native settings panel for YouTube, in Arabic or English — starting with the truth about your build.
- .
- This is the first release of Albrhi for YouTube and it is deliberately small. It
- adds its own section to YouTube's own settings, and one page inside it that reports
- what the tweak actually finds in your copy of YouTube.
- .
- ▍WHY START HERE
- Downloading from YouTube is not a matter of grabbing a link. YouTube streams
- through a protocol that hands out media in pieces rather than files, and the app
- also carries its own downloader for offline playback. Which of those is reachable
- cannot be read off the app from outside — it has to be measured on a real device,
- on a real video.
- .
- That is what this page does. Play something, open it, and it prints exactly what
- YouTube told the app about that video: every quality, every format, every stream.
- One tap copies the report. Guessing instead of measuring is how weeks get wasted.
- .
- ▍WHAT IS HERE NOW
- A settings section that looks like it shipped with YouTube, full Arabic and English
- with right-to-left layout, and the diagnostics page above.
- .
- ▍WHAT IS NOT HERE YET
- Everything else. No downloads, no ad removal, no player changes. They are being
- built on what this page reports rather than on guesswork, and each will arrive when
- it is verified against a real build instead of assumed.
- .
- Installing this changes nothing about how YouTube plays, looks or behaves.
- .
- Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
-Tag: role::enduser
-Author: Ibrahim Ismail AL-Rahn
-Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Name: Albrhi for YouTube (rootless)
-
-Package: com.albrhi.youtube
-Version: 0.1.4
-Architecture: iphoneos-arm64
-Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
-Installed-Size: 152
-Depends: mobilesubstrate
-Conflicts: com.albrhi.youtube.roothide
-Replaces: com.albrhi.youtube.roothide
-Filename: debs/com.albrhi.youtube_0.1.4_iphoneos-arm64.deb
-Size: 34890
-MD5sum: c370ae9b7c065d3e7e1dd27ffc2bbbf8
-SHA1: faca6ce75704a6c094433f4335fe4d9fb59a439c
-SHA256: 8d87a4d45895e4b3f3b21a17b3e84595d7461a760572099800e0fd920f9be0f2
-Section: Tweaks
-Homepage: https://github.com/ibrahim2100/Albrhi-Repo
-Description: A native settings panel for YouTube, in Arabic or English — starting with the truth about your build.
- .
- This is the first release of Albrhi for YouTube and it is deliberately small. It
- adds its own section to YouTube's own settings, and one page inside it that reports
- what the tweak actually finds in your copy of YouTube.
- .
- ▍WHY START HERE
- Downloading from YouTube is not a matter of grabbing a link. YouTube streams
- through a protocol that hands out media in pieces rather than files, and the app
- also carries its own downloader for offline playback. Which of those is reachable
- cannot be read off the app from outside — it has to be measured on a real device,
- on a real video.
- .
- That is what this page does. Play something, open it, and it prints exactly what
- YouTube told the app about that video: every quality, every format, every stream.
- One tap copies the report. Guessing instead of measuring is how weeks get wasted.
- .
- ▍WHAT IS HERE NOW
- A settings section that looks like it shipped with YouTube, full Arabic and English
- with right-to-left layout, and the diagnostics page above.
- .
- ▍WHAT IS NOT HERE YET
- Everything else. No downloads, no ad removal, no player changes. They are being
- built on what this page reports rather than on guesswork, and each will arrive when
- it is verified against a real build instead of assumed.
- .
- Installing this changes nothing about how YouTube plays, looks or behaves.
- .
- Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
-Tag: role::enduser
-Author: Ibrahim Ismail AL-Rahn
-Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Name: Albrhi for YouTube (rootless)
-
-Package: com.albrhi.youtube
 Version: 0.2.0
 Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
@@ -660,103 +562,151 @@ Author: Ibrahim Ismail AL-Rahn
 Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
 Name: Albrhi for YouTube (rootless)
 
-Package: com.albrhi.youtube.roothide
-Version: 0.1.3
-Architecture: iphoneos-arm64e
+Package: com.albrhi.youtube
+Version: 0.3.0
+Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
-Installed-Size: 152
+Installed-Size: 200
 Depends: mobilesubstrate
-Conflicts: com.albrhi.youtube
-Replaces: com.albrhi.youtube
-Filename: debs/com.albrhi.youtube.roothide_0.1.3_iphoneos-arm64e.deb
-Size: 34418
-MD5sum: 44b074856c425450ce314ec297812900
-SHA1: 9167f6cd5f4f06212f089649f6f3629b72d52733
-SHA256: a6d21f6850b3c2077b02e0aa4e20cc378aeeb4b4c684b84e68a5a1c574e45dc3
+Conflicts: com.albrhi.youtube.roothide
+Replaces: com.albrhi.youtube.roothide
+Filename: debs/com.albrhi.youtube_0.3.0_iphoneos-arm64.deb
+Size: 45538
+MD5sum: fecffb27749b9fe10d252e361c552af1
+SHA1: 1325a91fbd2649cd6f786533bc6c191c41b4bf4e
+SHA256: 5561d930db9466500d4646ab23fe60b48094e141693c3a85846be28cc4104445
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
-Description: A native settings panel for YouTube, in Arabic or English — starting with the truth about your build.
+Description: No ads, skip the sponsored parts, background playback — in Arabic or English.
  .
- This is the first release of Albrhi for YouTube and it is deliberately small. It
- adds its own section to YouTube's own settings, and one page inside it that reports
- what the tweak actually finds in your copy of YouTube.
+ ◍ DOWNLOADS
+ Not yet. That one is being measured before it is built — see the diagnostics page.
  .
- ▍WHY START HERE
- Downloading from YouTube is not a matter of grabbing a link. YouTube streams
- through a protocol that hands out media in pieces rather than files, and the app
- also carries its own downloader for offline playback. Which of those is reachable
- cannot be read off the app from outside — it has to be measured on a real device,
- on a real video.
+ ▍ NO ADS
+ Ads are stopped at three separate points, because they arrive by three separate
+ routes and blocking one does nothing about the others.
  .
- That is what this page does. Play something, open it, and it prints exactly what
- YouTube told the app about that video: every quality, every format, every stream.
- One tap copies the report. Guessing instead of measuring is how weeks get wasted.
+ First, the app stops telling YouTube it wants ads at all, so they are never sent
+ rather than sent and then hidden. Second, promoted rows are dropped out of the feed
+ by the identifier YouTube's own servers attach to them — including the plain-looking
+ layouts that carry sponsored content without the word "ad" anywhere in them. Third,
+ the player refuses ads before a video, in the middle of one, and the kind stitched
+ into the stream itself, which nothing else can reach.
  .
- ▍WHAT IS HERE NOW
- A settings section that looks like it shipped with YouTube, full Arabic and English
- with right-to-left layout, and the diagnostics page above.
+ ▍ SKIP THE SPONSORED PARTS
+ Paid plugs, self-promotion and subscribe reminders are jumped over automatically,
+ using segments other viewers submitted to SponsorBlock. A short line names what was
+ skipped and offers an undo. Intros, endcards, recaps and tangents each have their own
+ switch and are off until you turn them on — somebody made that content, and deciding
+ for you that it is worthless is not this tweak's call.
  .
- ▍WHAT IS NOT HERE YET
- Everything else. No downloads, no ad removal, no player changes. They are being
- built on what this page reports rather than on guesswork, and each will arrive when
- it is verified against a real build instead of assumed.
+ Your video is never sent. SponsorBlock offers two ways to ask, and this uses the one
+ that sends only the first four characters of the video's fingerprint, so the server
+ cannot tell which video you are watching. Segment data is from sponsor.ajay.app,
+ licensed CC BY-NC-SA 4.0, credited in the settings screen.
  .
- Installing this changes nothing about how YouTube plays, looks or behaves.
+ ▍ BACKGROUND PLAYBACK
+ Audio keeps going when you leave the app or lock the screen.
+ .
+ ▍ QUIETER
+ Silence the prompt to update — updating replaces the app and removes this tweak. And
+ optionally hide the paid-promotion banner, off by default, because it is a disclosure.
+ .
+ ▍ SETTINGS
+ Hold two fingers anywhere in YouTube. Full Arabic and English with right-to-left
+ layout, and a card at the top that says whether everything actually attached to your
+ build rather than leaving you to wonder.
+ .
+ ▍ DIAGNOSTICS
+ Reports what the tweak finds in your copy of YouTube and what YouTube said about the
+ last video you played. Also written to Documents/AlbrhiYT-report.txt, so it is
+ readable even if nothing else worked.
+ .
+ ▍ TESTED ON
+ YouTube 21.30.5. Nothing is pinned to a version number: every class is looked up at
+ runtime and skipped if it is not there. The hooks are on YouTube's model and service
+ layer rather than its views — views get renamed and rewritten between releases, and a
+ tweak that hooks them quietly stops working. A player response does not.
  .
  Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
 Tag: role::enduser
 Author: Ibrahim Ismail AL-Rahn
 Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Name: Albrhi for YouTube (roothide)
+Name: Albrhi for YouTube (rootless)
 
-Package: com.albrhi.youtube.roothide
-Version: 0.1.4
-Architecture: iphoneos-arm64e
+Package: com.albrhi.youtube
+Version: 0.4.0
+Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
-Installed-Size: 152
+Installed-Size: 200
 Depends: mobilesubstrate
-Conflicts: com.albrhi.youtube
-Replaces: com.albrhi.youtube
-Filename: debs/com.albrhi.youtube.roothide_0.1.4_iphoneos-arm64e.deb
-Size: 34796
-MD5sum: ff283c37a4b697bb99a5a307ab88178f
-SHA1: f043d5e104aace36f16cf3fb5a018ee38d1dc7ed
-SHA256: 66e4130be97ba9e6f365809f3224eb1f07f967da9e64390f18de869cbc2bc302
+Conflicts: com.albrhi.youtube.roothide
+Replaces: com.albrhi.youtube.roothide
+Filename: debs/com.albrhi.youtube_0.4.0_iphoneos-arm64.deb
+Size: 47976
+MD5sum: 701dcbc832479b4cfe9f5adcd8f5b658
+SHA1: a31b7e77119dd51ab0ca063b010f1d70b9e804c3
+SHA256: a73b0e14ba901235a011158ca3863de7ba812c569b2096514f4a469bcc4a0707
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
-Description: A native settings panel for YouTube, in Arabic or English — starting with the truth about your build.
+Description: No ads, skip the sponsored parts, background playback — in Arabic or English.
  .
- This is the first release of Albrhi for YouTube and it is deliberately small. It
- adds its own section to YouTube's own settings, and one page inside it that reports
- what the tweak actually finds in your copy of YouTube.
+ ◍ DOWNLOADS
+ Not yet. That one is being measured before it is built — see the diagnostics page.
  .
- ▍WHY START HERE
- Downloading from YouTube is not a matter of grabbing a link. YouTube streams
- through a protocol that hands out media in pieces rather than files, and the app
- also carries its own downloader for offline playback. Which of those is reachable
- cannot be read off the app from outside — it has to be measured on a real device,
- on a real video.
+ ▍ NO ADS
+ Ads are stopped at three separate points, because they arrive by three separate
+ routes and blocking one does nothing about the others.
  .
- That is what this page does. Play something, open it, and it prints exactly what
- YouTube told the app about that video: every quality, every format, every stream.
- One tap copies the report. Guessing instead of measuring is how weeks get wasted.
+ First, the app stops telling YouTube it wants ads at all, so they are never sent
+ rather than sent and then hidden. Second, promoted rows are dropped out of the feed
+ by the identifier YouTube's own servers attach to them — including the plain-looking
+ layouts that carry sponsored content without the word "ad" anywhere in them. Third,
+ the player refuses ads before a video, in the middle of one, and the kind stitched
+ into the stream itself, which nothing else can reach.
  .
- ▍WHAT IS HERE NOW
- A settings section that looks like it shipped with YouTube, full Arabic and English
- with right-to-left layout, and the diagnostics page above.
+ ▍ SKIP THE SPONSORED PARTS
+ Paid plugs, self-promotion and subscribe reminders are jumped over automatically,
+ using segments other viewers submitted to SponsorBlock. A short line names what was
+ skipped and offers an undo, and each segment is marked on the progress bar in its own
+ colour so you can see what is coming. Intros, endcards, recaps and tangents each have
+ their own switch and are off until you turn them on — somebody made that content, and
+ deciding for you that it is worthless is not this tweak's call.
  .
- ▍WHAT IS NOT HERE YET
- Everything else. No downloads, no ad removal, no player changes. They are being
- built on what this page reports rather than on guesswork, and each will arrive when
- it is verified against a real build instead of assumed.
+ Your video is never sent. SponsorBlock offers two ways to ask, and this uses the one
+ that sends only the first four characters of the video's fingerprint, so the server
+ cannot tell which video you are watching. Segment data is from sponsor.ajay.app,
+ licensed CC BY-NC-SA 4.0, credited in the settings screen. The coloured markers are
+ derived from iSponsorBlock by Galactic Dev, GPLv3.
  .
- Installing this changes nothing about how YouTube plays, looks or behaves.
+ ▍ BACKGROUND PLAYBACK
+ Audio keeps going when you leave the app or lock the screen.
+ .
+ ▍ QUIETER
+ Silence the prompt to update — updating replaces the app and removes this tweak. And
+ optionally hide the paid-promotion banner, off by default, because it is a disclosure.
+ .
+ ▍ SETTINGS
+ Hold two fingers anywhere in YouTube. Full Arabic and English with right-to-left
+ layout, and a card at the top that says whether everything actually attached to your
+ build rather than leaving you to wonder.
+ .
+ ▍ DIAGNOSTICS
+ Reports what the tweak finds in your copy of YouTube and what YouTube said about the
+ last video you played. Also written to Documents/AlbrhiYT-report.txt, so it is
+ readable even if nothing else worked.
+ .
+ ▍ TESTED ON
+ YouTube 21.30.5. Nothing is pinned to a version number: every class is looked up at
+ runtime and skipped if it is not there. The hooks are on YouTube's model and service
+ layer rather than its views — views get renamed and rewritten between releases, and a
+ tweak that hooks them quietly stops working. A player response does not.
  .
  Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
 Tag: role::enduser
 Author: Ibrahim Ismail AL-Rahn
 Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Name: Albrhi for YouTube (roothide)
+Name: Albrhi for YouTube (rootless)
 
 Package: com.albrhi.youtube.roothide
 Version: 0.2.0
@@ -788,6 +738,152 @@ Description: No ads, background playback, and a settings panel in Arabic or Engl
  layouts that carry sponsored content without the word "ad" anywhere in them. Third,
  the player refuses ads before a video, in the middle of one, and the kind stitched
  into the stream itself, which nothing else can reach.
+ .
+ ▍ BACKGROUND PLAYBACK
+ Audio keeps going when you leave the app or lock the screen.
+ .
+ ▍ QUIETER
+ Silence the prompt to update — updating replaces the app and removes this tweak. And
+ optionally hide the paid-promotion banner, off by default, because it is a disclosure.
+ .
+ ▍ SETTINGS
+ Hold two fingers anywhere in YouTube. Full Arabic and English with right-to-left
+ layout, and a card at the top that says whether everything actually attached to your
+ build rather than leaving you to wonder.
+ .
+ ▍ DIAGNOSTICS
+ Reports what the tweak finds in your copy of YouTube and what YouTube said about the
+ last video you played. Also written to Documents/AlbrhiYT-report.txt, so it is
+ readable even if nothing else worked.
+ .
+ ▍ TESTED ON
+ YouTube 21.30.5. Nothing is pinned to a version number: every class is looked up at
+ runtime and skipped if it is not there. The hooks are on YouTube's model and service
+ layer rather than its views — views get renamed and rewritten between releases, and a
+ tweak that hooks them quietly stops working. A player response does not.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+Tag: role::enduser
+Author: Ibrahim Ismail AL-Rahn
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi for YouTube (roothide)
+
+Package: com.albrhi.youtube.roothide
+Version: 0.3.0
+Architecture: iphoneos-arm64e
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 200
+Depends: mobilesubstrate
+Conflicts: com.albrhi.youtube
+Replaces: com.albrhi.youtube
+Filename: debs/com.albrhi.youtube.roothide_0.3.0_iphoneos-arm64e.deb
+Size: 45498
+MD5sum: f3d01a8f8459567ab153bf244193ae0d
+SHA1: 5ba1e0443642b9d872490056c16b8de1aa5031b0
+SHA256: 396384c70c39df0251f75fd4d66b47eb9c4a65411002a3bf377aeb849c052d26
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: No ads, skip the sponsored parts, background playback — in Arabic or English.
+ .
+ ◍ DOWNLOADS
+ Not yet. That one is being measured before it is built — see the diagnostics page.
+ .
+ ▍ NO ADS
+ Ads are stopped at three separate points, because they arrive by three separate
+ routes and blocking one does nothing about the others.
+ .
+ First, the app stops telling YouTube it wants ads at all, so they are never sent
+ rather than sent and then hidden. Second, promoted rows are dropped out of the feed
+ by the identifier YouTube's own servers attach to them — including the plain-looking
+ layouts that carry sponsored content without the word "ad" anywhere in them. Third,
+ the player refuses ads before a video, in the middle of one, and the kind stitched
+ into the stream itself, which nothing else can reach.
+ .
+ ▍ SKIP THE SPONSORED PARTS
+ Paid plugs, self-promotion and subscribe reminders are jumped over automatically,
+ using segments other viewers submitted to SponsorBlock. A short line names what was
+ skipped and offers an undo. Intros, endcards, recaps and tangents each have their own
+ switch and are off until you turn them on — somebody made that content, and deciding
+ for you that it is worthless is not this tweak's call.
+ .
+ Your video is never sent. SponsorBlock offers two ways to ask, and this uses the one
+ that sends only the first four characters of the video's fingerprint, so the server
+ cannot tell which video you are watching. Segment data is from sponsor.ajay.app,
+ licensed CC BY-NC-SA 4.0, credited in the settings screen.
+ .
+ ▍ BACKGROUND PLAYBACK
+ Audio keeps going when you leave the app or lock the screen.
+ .
+ ▍ QUIETER
+ Silence the prompt to update — updating replaces the app and removes this tweak. And
+ optionally hide the paid-promotion banner, off by default, because it is a disclosure.
+ .
+ ▍ SETTINGS
+ Hold two fingers anywhere in YouTube. Full Arabic and English with right-to-left
+ layout, and a card at the top that says whether everything actually attached to your
+ build rather than leaving you to wonder.
+ .
+ ▍ DIAGNOSTICS
+ Reports what the tweak finds in your copy of YouTube and what YouTube said about the
+ last video you played. Also written to Documents/AlbrhiYT-report.txt, so it is
+ readable even if nothing else worked.
+ .
+ ▍ TESTED ON
+ YouTube 21.30.5. Nothing is pinned to a version number: every class is looked up at
+ runtime and skipped if it is not there. The hooks are on YouTube's model and service
+ layer rather than its views — views get renamed and rewritten between releases, and a
+ tweak that hooks them quietly stops working. A player response does not.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+Tag: role::enduser
+Author: Ibrahim Ismail AL-Rahn
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi for YouTube (roothide)
+
+Package: com.albrhi.youtube.roothide
+Version: 0.4.0
+Architecture: iphoneos-arm64e
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 200
+Depends: mobilesubstrate
+Conflicts: com.albrhi.youtube
+Replaces: com.albrhi.youtube
+Filename: debs/com.albrhi.youtube.roothide_0.4.0_iphoneos-arm64e.deb
+Size: 47900
+MD5sum: 74c6e4be60aa7030bfe08001782cbed9
+SHA1: 4a77830e005b2cffe0af48351ae120e38b715818
+SHA256: ee42b251ebb4aca117fd83edf1bb3d1f814d281e0b4414b3466fe629fbdaddb4
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: No ads, skip the sponsored parts, background playback — in Arabic or English.
+ .
+ ◍ DOWNLOADS
+ Not yet. That one is being measured before it is built — see the diagnostics page.
+ .
+ ▍ NO ADS
+ Ads are stopped at three separate points, because they arrive by three separate
+ routes and blocking one does nothing about the others.
+ .
+ First, the app stops telling YouTube it wants ads at all, so they are never sent
+ rather than sent and then hidden. Second, promoted rows are dropped out of the feed
+ by the identifier YouTube's own servers attach to them — including the plain-looking
+ layouts that carry sponsored content without the word "ad" anywhere in them. Third,
+ the player refuses ads before a video, in the middle of one, and the kind stitched
+ into the stream itself, which nothing else can reach.
+ .
+ ▍ SKIP THE SPONSORED PARTS
+ Paid plugs, self-promotion and subscribe reminders are jumped over automatically,
+ using segments other viewers submitted to SponsorBlock. A short line names what was
+ skipped and offers an undo, and each segment is marked on the progress bar in its own
+ colour so you can see what is coming. Intros, endcards, recaps and tangents each have
+ their own switch and are off until you turn them on — somebody made that content, and
+ deciding for you that it is worthless is not this tweak's call.
+ .
+ Your video is never sent. SponsorBlock offers two ways to ask, and this uses the one
+ that sends only the first four characters of the video's fingerprint, so the server
+ cannot tell which video you are watching. Segment data is from sponsor.ajay.app,
+ licensed CC BY-NC-SA 4.0, credited in the settings screen. The coloured markers are
+ derived from iSponsorBlock by Galactic Dev, GPLv3.
  .
  ▍ BACKGROUND PLAYBACK
  Audio keeps going when you leave the app or lock the screen.
