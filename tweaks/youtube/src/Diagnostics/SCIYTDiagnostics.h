@@ -39,8 +39,16 @@
 /// hooked and only one of them exists in any given build -- this reports which.
 + (void)recordMarkerBar:(NSString *)className count:(NSInteger)count;
 
-/// The whole report as text, exactly as the page shows it and the copy button copies.
+/// The whole report as text: what the file holds and the copy button copies.
 + (NSString *)report;
+
+/// The same report, bounded for the screen.
+///
+/// The full player response is a protobuf printed as text and runs to hundreds of
+/// kilobytes on a real video. Handing that to a UITextView in one string is what made
+/// this page take YouTube down when opened — and a crash inside the page that exists
+/// to explain crashes is the worst one there is. The file keeps everything.
++ (NSString *)reportForDisplay;
 
 /// YouTube's own version, for the identity card and the report.
 + (NSString *)appVersion;

@@ -3,6 +3,21 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.4.3
+
+- **The diagnostics page no longer takes YouTube down when opened.** It printed the
+  whole player response — a protobuf rendered as text, hundreds of kilobytes on a
+  real video — into a single text view. The page now shows the first 40 KB and says
+  where it stopped; the file on disk still holds all of it, and the copy button still
+  copies the lot.
+
+  The page is also wrapped now, the way the settings panel around it always was. It
+  was the one part left unguarded, which is a poor place for the exception to be: a
+  page whose job is to explain a failure must never be one.
+
+  Worth saying plainly: this is why the download feature is still "being measured".
+  The measurement was written to a page nobody could open.
+
 ## v0.4.2
 
 - **The package page, actually readable this time.** 0.4.1 gave Sileo a page but

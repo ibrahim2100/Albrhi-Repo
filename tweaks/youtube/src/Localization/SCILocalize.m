@@ -98,6 +98,10 @@ static void SCIBuildTables(void) {
         @"diag_markers_drawn": @"Markers drawn on %@ (%ld).",
         @"diag_markers_none": @"No progress bar found to draw markers on yet.",
 
+        @"ok": @"OK",
+        @"diag_truncated": @"— shown up to here. The rest is in the full report, written to %@ and copied whole by the button below.",
+        @"diag_page_failed": @"This page could not be opened, and the report was written to %@ instead.",
+
         @"diag_video": @"Last video played",
         @"diag_no_video": @"Nothing yet. Play a video, then come back to this page.",
         @"diag_video_id": @"Video",
@@ -191,6 +195,10 @@ static void SCIBuildTables(void) {
         @"diag_sponsor_skipped": @"تم تخطّي %@ (من %.1f ث إلى %.1f ث).",
         @"diag_markers_drawn": @"رُسمت العلامات على %@ (%ld).",
         @"diag_markers_none": @"لم يُعثر بعد على شريط تقدّم لرسم العلامات عليه.",
+
+        @"ok": @"حسنًا",
+        @"diag_truncated": @"— يُعرض إلى هنا. البقية في التقرير الكامل، وقد كُتب في %@ ويَنسخه الزر أدناه كاملًا.",
+        @"diag_page_failed": @"تعذّر فتح هذه الصفحة، وكُتب التقرير في %@ بدلًا من ذلك.",
 
         @"diag_video": @"آخر فيديو شُغّل",
         @"diag_no_video": @"لا شيء بعد. شغّل فيديو ثم ارجع إلى هذه الصفحة.",

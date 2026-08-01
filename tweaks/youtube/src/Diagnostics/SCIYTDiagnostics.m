@@ -265,6 +265,23 @@ static NSString *sciMarkerBar = nil;
     return out;
 }
 
++ (NSString *)reportForDisplay {
+    NSString *full = [self report];
+
+    // 40 KB is far more than anyone reads on a phone and far less than TextKit
+    // struggles with. The cut is announced rather than silent: a report that stops
+    // without saying so is a report nobody can trust.
+    const NSUInteger limit = 40000;
+    if (full.length <= limit) return full;
+
+    NSString *path = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"]
+                      stringByAppendingPathComponent:@"AlbrhiYT-report.txt"];
+
+    return [NSString stringWithFormat:@"%@\n\n%@",
+            [full substringToIndex:limit],
+            [NSString stringWithFormat:SCILocalized(@"diag_truncated"), path]];
+}
+
 + (NSString *)writeReportToFile {
     NSString *directory = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
     NSString *path = [directory stringByAppendingPathComponent:@"AlbrhiYT-report.txt"];
@@ -300,7 +317,7 @@ static NSString *sciMarkerBar = nil;
     text.editable = NO;
     text.backgroundColor = UIColor.clearColor;
     text.font = [UIFont monospacedSystemFontOfSize:11 weight:UIFontWeightRegular];
-    text.text = [SCIYTDiagnostics report];
+    text.text = [SCIYTDiagnostics reportForDisplay];
     text.textContainerInset = UIEdgeInsetsMake(16, 14, 16, 14);
     [host.view addSubview:text];
 

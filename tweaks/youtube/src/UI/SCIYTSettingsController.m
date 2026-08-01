@@ -359,7 +359,38 @@ typedef NS_ENUM(NSInteger, SCIRowKind) {
 }
 
 - (void)openDiagnostics {
-    UIViewController *page = [SCIYTDiagnostics viewController];
+    // Wrapped for the same reason the panel itself is: this page reads objects
+    // YouTube gave us and prints them, and it went unguarded while the panel around
+    // it was protected. The report is still on disk either way, which is the point
+    // of writing it there.
+    UIViewController *page = nil;
+
+    @try {
+        page = [SCIYTDiagnostics viewController];
+    } @catch (NSException *exception) {
+        [SCIYTDiagnostics recordPanelFailure:
+            [NSString stringWithFormat:@"diagnostics page: %@", exception.reason]];
+        SCILogV(@"diagnostics page could not be built: %@", exception.reason);
+    }
+
+    if (!page) {
+        // Says where the report is rather than failing silently — the file is the
+        // way out when the page is not.
+        NSString *path = [SCIYTDiagnostics writeReportToFile];
+
+        UIAlertController *alert = [UIAlertController
+            alertControllerWithTitle:SCILocalized(@"diag_title")
+                             message:[NSString stringWithFormat:SCILocalized(@"diag_page_failed"),
+                                      path ?: @"Documents/AlbrhiYT-report.txt"]
+                      preferredStyle:UIAlertControllerStyleAlert];
+
+        [alert addAction:[UIAlertAction actionWithTitle:SCILocalized(@"ok")
+                                                  style:UIAlertActionStyleDefault
+                                                handler:nil]];
+        [self presentViewController:alert animated:YES completion:nil];
+        return;
+    }
+
     [self.navigationController pushViewController:page animated:YES];
 }
 
