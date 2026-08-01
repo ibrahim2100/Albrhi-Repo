@@ -125,7 +125,7 @@
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **The package page, actually readable this time.** 0.4.1 gave Sileo a page but\n• The description is shorter and no longer drawn with block characters, which not",
+          "markdown": "• **The package page, actually readable this time.**\n• The description is shorter and no longer drawn with block characters, which not every font has.",
           "useSpacing": true
         },
         {
@@ -139,7 +139,7 @@
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **A proper package page.** Sileo had nothing to render but the raw description",
+          "markdown": "• **A proper package page.**",
           "useSpacing": true
         },
         {
@@ -153,7 +153,7 @@
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **The coloured markers, which 0.3.0 said were not ready.** Each segment is now drawn\n• **Credit where it is owed.** The markers are derived from\n• Reading the video's identifier no longer depends on one accessor: the video object is",
+          "markdown": "• **The coloured markers, which 0.3.0 said were not ready.**\n• **Credit where it is owed.**\n• Reading the video's identifier no longer depends on one accessor: the video object is asked first, then the player controller, which is where iSponsorBlock reads it.",
           "useSpacing": true
         },
         {
