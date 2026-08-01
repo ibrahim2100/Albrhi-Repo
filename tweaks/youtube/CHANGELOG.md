@@ -3,6 +3,23 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.4.4
+
+- **The diagnostics page opens.** 0.4.3 guessed at why it crashed and guessed wrong —
+  it was not the size of the report. The copy button was held only by a weak reference,
+  so nothing retained it and it was released before the next line ran; the layout then
+  tried to pin the text view to an anchor that was gone, and the exception said so in
+  a way that reads like nonsense until you know that. The guard added in 0.4.3 is what
+  printed it. It is held properly now.
+
+- **The streams section finally says something.** It printed `<MLStreamingData: 0x…>`
+  and nothing else, because that class is not a protobuf and does not describe itself.
+  Every format list it carries is now enumerated — itag, type, resolution, frame rate,
+  bitrate, and whether there is a plain URL — and if none answers, the report lists what
+  the object can be asked instead, from the runtime rather than from guesswork.
+
+  This is the measurement the download feature has been waiting on since 0.1.0.
+
 ## v0.4.3
 
 - **The diagnostics page no longer takes YouTube down when opened.** It printed the

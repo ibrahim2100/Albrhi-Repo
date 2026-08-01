@@ -251,8 +251,11 @@ static NSString *sciMarkerBar = nil;
         [out appendFormat:@"  %@: %@\n", SCILocalized(@"diag_video_id"), sciLastVideoID];
     }
 
-    NSString *streams = [self describeMessage:sciLastStreamingData];
-    if (streams) {
+    // Enumerated rather than described: MLStreamingData is not a protobuf and its
+    // -description is a class name and an address, which is what this section printed
+    // for four releases.
+    NSString *streams = [self describeStreams:sciLastStreamingData];
+    if (streams.length) {
         [out appendFormat:@"\n%@\n%@\n", SCILocalized(@"diag_streams"), streams];
     }
 
@@ -263,6 +266,137 @@ static NSString *sciMarkerBar = nil;
     }
 
     return out;
+}
+
+/// One value from an object, boxed, or nil. KVC rather than -performSelector: it
+/// returns numbers as NSNumber without the caller having to know the return type,
+/// which is the whole difficulty with an unfamiliar class.
++ (id)value:(NSString *)key from:(id)object {
+    if (!object || !key.length) return nil;
+    @try {
+        if (![object respondsToSelector:NSSelectorFromString(key)]) return nil;
+        return [object valueForKey:key];
+    } @catch (__unused NSException *exception) {
+        return nil;
+    }
+}
+
+/// What MLStreamingData actually holds.
+///
+/// Its -description prints the class and an address and nothing else: it is not a
+/// protobuf, so the trick that makes the player response readable does not work here,
+/// and this section of the report has been saying "<MLStreamingData: 0x...>" since
+/// 0.1.0 — the one measurement the download feature was waiting on.
+///
+/// The question is narrow and worth stating: does this build hand out plain file URLs
+/// per format, or only the piecewise UMP/ABR stream? A URL in the list below means the
+/// first; an empty list, or formats with no URL, means the second — and the difference
+/// is a week of work against a month of it.
++ (NSString *)describeStreams:(id)streamingData {
+    if (!streamingData) return nil;
+
+    NSMutableString *out = [NSMutableString string];
+    [out appendFormat:@"  class: %@\n", NSStringFromClass([streamingData class])];
+
+    // The names both this app and other tweaks use for the format lists. Asked in
+    // order; every one that answers is reported, because which of them is populated
+    // is exactly what is unknown.
+    NSArray<NSString *> *containers = @[
+        @"adaptiveStreams", @"adaptiveFormats", @"adaptiveFormatsArray",
+        @"formats", @"formatsArray", @"allFormats", @"streams", @"videoStreams",
+        @"audioStreams", @"progressiveStreams", @"hlsManifestURL", @"dashManifestURL",
+    ];
+
+    BOOL foundAny = NO;
+
+    for (NSString *name in containers) {
+        id value = [self value:name from:streamingData];
+        if (!value) continue;
+
+        foundAny = YES;
+
+        if (![value isKindOfClass:[NSArray class]]) {
+            [out appendFormat:@"  %@: %@\n", name, value];
+            continue;
+        }
+
+        NSArray *list = value;
+        [out appendFormat:@"  %@: %lu\n", name, (unsigned long)list.count];
+
+        // Twelve is more than enough to see the shape of the ladder, and keeps the
+        // page inside what a person will actually read.
+        NSUInteger shown = MIN(list.count, (NSUInteger)12);
+        for (NSUInteger i = 0; i < shown; i++) {
+            id stream = list[i];
+
+            id itag = [self value:@"itag" from:stream];
+            id mime = [self value:@"MIMEType" from:stream] ?: [self value:@"mimeType" from:stream];
+            id quality = [self value:@"qualityLabel" from:stream] ?: [self value:@"quality" from:stream];
+            id width = [self value:@"width" from:stream];
+            id height = [self value:@"height" from:stream];
+            id fps = [self value:@"fps" from:stream];
+            id bitrate = [self value:@"bitrate" from:stream] ?: [self value:@"averageBitrate" from:stream];
+            id url = [self value:@"URL" from:stream] ?: [self value:@"url" from:stream];
+
+            NSString *link = @"none";
+            if (url) {
+                NSString *text = [url isKindOfClass:[NSURL class]] ? [(NSURL *)url absoluteString]
+                                                                   : [url description];
+                // The first stretch only. A signed CDN link is a thousand characters of
+                // query string, and what matters here is that there is one at all.
+                link = text.length > 70 ? [[text substringToIndex:70] stringByAppendingString:@"…"] : text;
+            }
+
+            [out appendFormat:@"    [%@] %@ %@ %@x%@ %@fps %@bps\n      url: %@\n",
+                itag ?: @"?", mime ?: @"?", quality ?: @"?",
+                width ?: @"?", height ?: @"?", fps ?: @"?", bitrate ?: @"?", link];
+        }
+
+        if (list.count > shown) {
+            [out appendFormat:@"    … and %lu more\n", (unsigned long)(list.count - shown)];
+        }
+
+        // What else a stream can be asked, taken from the runtime rather than guessed.
+        // Printed once: if the fields above came back empty, this is the list that says
+        // what to ask for instead.
+        if (list.count) {
+            [out appendFormat:@"  stream class: %@\n", NSStringFromClass([list.firstObject class])];
+            [out appendFormat:@"  stream offers: %@\n", [self zeroArgumentSelectorsOn:list.firstObject]];
+        }
+    }
+
+    if (!foundAny) {
+        [out appendFormat:@"  no format list answered. offers: %@\n",
+            [self zeroArgumentSelectorsOn:streamingData]];
+    }
+
+    return out;
+}
+
+/// The zero-argument selectors a class declares, as one line.
+///
+/// Asking the runtime instead of guessing is how the Instagram side found the DASH
+/// manifest after three wrong guesses. Bounded, and only the class's own methods:
+/// walking every superclass would print most of NSObject.
++ (NSString *)zeroArgumentSelectorsOn:(id)object {
+    if (!object) return @"—";
+
+    NSMutableArray<NSString *> *names = [NSMutableArray array];
+    unsigned int count = 0;
+    Method *methods = class_copyMethodList([object class], &count);
+
+    for (unsigned int i = 0; i < count && names.count < 60; i++) {
+        NSString *name = NSStringFromSelector(method_getName(methods[i]));
+        if ([name containsString:@":"]) continue;      // takes arguments
+        if ([name hasPrefix:@"."]) continue;           // .cxx_destruct
+        if ([name hasPrefix:@"set"]) continue;         // setters answer nothing useful
+        [names addObject:name];
+    }
+
+    free(methods);
+
+    [names sortUsingSelector:@selector(compare:)];
+    return names.count ? [names componentsJoinedByString:@", "] : @"—";
 }
 
 + (NSString *)reportForDisplay {
@@ -324,39 +458,51 @@ static NSString *sciMarkerBar = nil;
     // The button reports back in its own title. A HUD would be another dependency
     // for one line of feedback, and the title is where the user is already looking.
     //
-    // UIAction rather than a target/action pair: there is no object here that
-    // outlives the page to act as a target, and inventing one to hold a selector is
-    // more moving parts than the job needs.
-    // Weak inside the handler: the button owns its primaryAction, so a strong
-    // capture here would be a button retaining a block retaining the button.
-    __block __weak UIButton *copy = nil;
-    UIAction *action = [UIAction actionWithTitle:SCILocalized(@"diag_copy")
+    // The button is held by a **strong** local, and this is the whole bug that made
+    // this page crash the app for four releases.
+    //
+    // It used to be assigned straight into a __weak variable so the handler block
+    // could reference it without a cycle. But a freshly built button assigned only to
+    // a weak reference has nothing retaining it, and ARC is entitled to release it on
+    // the spot -- so `copyButton` was nil before the next line ran. -addSubview: on nil
+    // does nothing, and then `copyButton.topAnchor` was nil too, which is what
+    // "a constraint cannot be made from an anchor to a constant" actually means: the
+    // other side of the pair was missing. The report named it once the page was
+    // wrapped, which is the argument for wrapping it.
+    //
+    // Strong for the layout, weak inside the handler, which is the pairing that was
+    // wanted in the first place.
+    UIButton *copyButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [copyButton setTitle:SCILocalized(@"diag_copy") forState:UIControlStateNormal];
+
+    __weak UIButton *weakCopy = copyButton;
+    UIAction *action = [UIAction actionWithTitle:@""
                                           image:nil
                                      identifier:nil
                                         handler:^(__kindof UIAction *sender) {
         UIPasteboard.generalPasteboard.string = [SCIYTDiagnostics report];
-        [copy setTitle:SCILocalized(@"diag_copied") forState:UIControlStateNormal];
+        [weakCopy setTitle:SCILocalized(@"diag_copied") forState:UIControlStateNormal];
     }];
+    [copyButton addAction:action forControlEvents:UIControlEventPrimaryActionTriggered];
 
-    copy = [UIButton buttonWithType:UIButtonTypeSystem primaryAction:action];
-    copy.translatesAutoresizingMaskIntoConstraints = NO;
-    copy.titleLabel.font = [UIFont systemFontOfSize:16 weight:UIFontWeightSemibold];
-    copy.backgroundColor = [UIColor.systemBlueColor colorWithAlphaComponent:0.14];
-    copy.layer.cornerRadius = 14;
-    copy.layer.cornerCurve = kCACornerCurveContinuous;
-    [host.view addSubview:copy];
+    copyButton.translatesAutoresizingMaskIntoConstraints = NO;
+    copyButton.titleLabel.font = [UIFont systemFontOfSize:16 weight:UIFontWeightSemibold];
+    copyButton.backgroundColor = [UIColor.systemBlueColor colorWithAlphaComponent:0.14];
+    copyButton.layer.cornerRadius = 14;
+    copyButton.layer.cornerCurve = kCACornerCurveContinuous;
+    [host.view addSubview:copyButton];
 
     UILayoutGuide *safe = host.view.safeAreaLayoutGuide;
     [NSLayoutConstraint activateConstraints:@[
         [text.topAnchor constraintEqualToAnchor:safe.topAnchor],
         [text.leadingAnchor constraintEqualToAnchor:safe.leadingAnchor],
         [text.trailingAnchor constraintEqualToAnchor:safe.trailingAnchor],
-        [text.bottomAnchor constraintEqualToAnchor:copy.topAnchor constant:-12],
+        [text.bottomAnchor constraintEqualToAnchor:copyButton.topAnchor constant:-12],
 
-        [copy.leadingAnchor constraintEqualToAnchor:safe.leadingAnchor constant:16],
-        [copy.trailingAnchor constraintEqualToAnchor:safe.trailingAnchor constant:-16],
-        [copy.heightAnchor constraintEqualToConstant:48],
-        [copy.bottomAnchor constraintEqualToAnchor:safe.bottomAnchor constant:-12],
+        [copyButton.leadingAnchor constraintEqualToAnchor:safe.leadingAnchor constant:16],
+        [copyButton.trailingAnchor constraintEqualToAnchor:safe.trailingAnchor constant:-16],
+        [copyButton.heightAnchor constraintEqualToConstant:48],
+        [copyButton.bottomAnchor constraintEqualToAnchor:safe.bottomAnchor constant:-12],
     ]];
 
     return host;
