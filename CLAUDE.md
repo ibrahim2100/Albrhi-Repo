@@ -118,6 +118,14 @@ the `albrhi-pages` concurrency group so they never write `gh-pages` at once.
 Both also deploy, which is not redundancy: it is what makes the order they run in
 irrelevant. Whichever finishes last deploys a complete index, from either direction.
 
+**And an index built from the releases API misses the release the same run just made.**
+YouTube 0.5.0 was published at 17:05:28; the run that published it finished at 17:06:41
+having built an index that stopped at the previous version. The listing is eventually
+consistent and the gather step is inside the "eventually". Each workflow therefore also
+copies its own freshly built `.deb` into the gathered set — the same package that was
+just uploaded, taken from the machine that built it rather than from a listing that has
+not caught up.
+
 **That only holds for what lives on `gh-pages`.** The index does, because both
 workflows rebuild it from the published releases. A depiction does not build itself:
 it is generated, and the YouTube one was generated only into that workflow's Pages

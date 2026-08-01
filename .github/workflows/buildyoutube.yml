@@ -282,6 +282,25 @@ jobs:
                 chmod +x main/tools/fetch-published-debs.sh
                 ./main/tools/fetch-published-debs.sh published "${{ github.repository }}" 3
 
+                # And this run's own packages, if it built any.
+                #
+                # Asking the API for "every published release" a minute after publishing
+                # one does not reliably include it: 0.5.0 was published at 17:05:28 and
+                # the run that published it finished at 17:06:41 having built an index
+                # that stopped at 0.4.5. The listing is eventually consistent and this
+                # step is inside the "eventually".
+                #
+                # Copying what was just built is not a second source of truth — it is the
+                # same package that was just uploaded, arriving from the machine that made
+                # it rather than from a listing that has not caught up. Skipped silently
+                # when the build was skipped, which is the case where there is nothing new
+                # to add and the release already appears in the listing anyway.
+                for deb in "$TWEAK_DIR"/packages/*.deb; do
+                  [ -f "$deb" ] || continue
+                  cp -f "$deb" published/
+                  echo "Added this run's $(basename "$deb")."
+                done
+
             # Both workflows deploy, and that is not redundancy -- it is what makes
             # the order they run in irrelevant.
             #
@@ -292,6 +311,11 @@ jobs:
             # Instagram's run deploys the same complete index again. Either way the
             # last deployment is correct, and neither has to know about the other
             # beyond taking the same concurrency group.
+            #
+            # That holds only because the step above now also copies in this run's own
+            # packages. Without it, "complete" meant "as complete as the releases API
+            # had caught up to", and the release published seconds earlier was the one
+            # thing missing.
             - name: Publish APT repo to GitHub Pages
               env:
                 GH_TOKEN: ${{ github.token }}
