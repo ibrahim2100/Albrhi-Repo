@@ -139,6 +139,10 @@ typedef NS_ENUM(NSInteger, SCIRowKind) {
                    detail:SCILocalized(@"sponsorblock_notice_note")
                    symbol:@"bubble.left.fill"
                   prefKey:SCIPrefSBNotice],
+        [SCIRow switchRow:SCILocalized(@"sponsorblock_markers")
+                   detail:SCILocalized(@"sponsorblock_markers_note")
+                   symbol:@"paintpalette.fill"
+                  prefKey:SCIPrefSBMarkers],
     ];
 
     SCISection *categories = [[SCISection alloc] init];

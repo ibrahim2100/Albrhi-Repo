@@ -4,7 +4,7 @@
 #import "Prefs.h"
 #import "Diagnostics/SCIYTDiagnostics.h"
 
-NSString *SCIVersionString = @"v0.3.0";  // AlbrhiYT
+NSString *SCIVersionString = @"v0.4.0";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.
@@ -97,6 +97,11 @@ NSString *SCIVersionString = @"v0.3.0";  // AlbrhiYT
         // is worthless is not this tweak's call — the switches are right there.
         SCIPrefSponsorBlock: @YES,
         SCIPrefSBNotice: @YES,
+
+        // The coloured markers on the progress bar. On, but it is the one switch here
+        // that turns off view work rather than a feature -- so if a future YouTube
+        // rewrites the bar, there is something to turn off that leaves skipping alone.
+        SCIPrefSBMarkers: @YES,
         SCIPrefSBSponsor: @YES,
         SCIPrefSBSelfPromo: @YES,
         SCIPrefSBInteraction: @YES,

@@ -24,6 +24,21 @@
 /// reach the app, so it has to be written down somewhere or the failure is invisible.
 + (void)recordPanelFailure:(NSString *)reason;
 
+/// The last thing SponsorBlock did, in one line.
+///
+/// Added because 0.3.0 shipped unable to read a video ID and there was no way to see
+/// that from the phone: the feature simply never fired, which looks identical to "no
+/// segments exist for this video" and to "the hook did not attach". Three different
+/// faults with one symptom is exactly what this page exists to separate.
++ (void)recordSponsorState:(NSString *)state;
+
+/// Which progress-bar class the markers were drawn on, and how many.
+///
+/// Separate from the state above because they answer different questions: that one says
+/// whether segments were found, this one says whether the bar was. Three bar classes are
+/// hooked and only one of them exists in any given build -- this reports which.
++ (void)recordMarkerBar:(NSString *)className count:(NSInteger)count;
+
 /// The whole report as text, exactly as the page shows it and the copy button copies.
 + (NSString *)report;
 

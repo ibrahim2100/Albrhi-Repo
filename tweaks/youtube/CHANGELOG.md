@@ -3,6 +3,47 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.4.0
+
+- **The coloured markers, which 0.3.0 said were not ready.** Each segment is now drawn
+  on the progress bar in its SponsorBlock colour, so what is coming is visible before it
+  arrives. Its own switch, under SponsorBlock.
+
+  This is the only place the tweak hooks a view, and the reason it is safe now is not
+  courage: the markers are laid out with **frames, never constraints**. The layout engine
+  is what took 0.1.1 and 0.1.3 down, and a rectangle at start ÷ duration × width does not
+  need it. Drawing is wrapped as well — a fault there costs the colours, never the video.
+
+  All three bar classes are hooked, because which one a build renders cannot be read off
+  the binary, and the diagnostics page now says which one was found.
+
+- **Credit where it is owed.** The markers are derived from
+  [iSponsorBlock](https://github.com/Galactic-Dev/iSponsorBlock) by Galactic Dev, which
+  is GPLv3 as this is: the bar class names, the placement arithmetic, and the detail that
+  they must be redrawn the moment segments arrive rather than only on layout — which is
+  what makes them appear at all, and would have cost several builds to find by trial.
+  Credited in the settings screen and the package description as the licence requires.
+
+- Reading the video's identifier no longer depends on one accessor: the video object is
+  asked first, then the player controller, which is where iSponsorBlock reads it.
+
+## v0.3.1
+
+- **Fixes skipping, which never once worked in 0.3.0.** The feature asked the video
+  object for its identifier under four names, and the one this build actually uses was
+  not among them — so every lookup came back empty and the tweak returned before it had
+  asked SponsorBlock for anything. Nothing was broken downstream; nothing downstream
+  ever ran.
+
+  The right name was already in this repository: the diagnostics page has been reading
+  it since 0.1.0, having measured it rather than assumed it. That is the whole lesson
+  again, one level down — a class name copied from another project is a lead and not a
+  fact, and so is an accessor name.
+
+- **And the report now says which of the three it was.** "Nothing was skipped" looked
+  identical whether the ID could not be read, no segments matched your categories, or a
+  skip happened and you missed it. The SponsorBlock line names it.
+
 ## v0.3.0
 
 - **Skips the sponsored parts.** Paid plugs, the creator's own promotion, and subscribe

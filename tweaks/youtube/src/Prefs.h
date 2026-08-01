@@ -20,6 +20,7 @@
 /// creator's own intro, and a user who wants one may well not want the other.
 #define SCIPrefSponsorBlock     @"sponsorblock"
 #define SCIPrefSBNotice         @"sponsorblock_notice"
+#define SCIPrefSBMarkers        @"sponsorblock_markers"
 
 #define SCIPrefSBSponsor        @"sb_sponsor"
 #define SCIPrefSBSelfPromo      @"sb_selfpromo"

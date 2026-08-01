@@ -106,6 +106,30 @@ static NSString *sciPanelFailure = nil;
     [self writeReportToFile];
 }
 
+// The latest SponsorBlock line, and only the latest: this is a status, not a log, and
+// a page that grows without bound is one nobody reads to the end of.
+//
+// Not written to the file on every update. This is touched on each time change during
+// playback, and writing the whole report to disk that often would cost far more than
+// the line is worth -- it lands on the next capture, which is a video away at most.
+static NSString *sciSponsorState = nil;
+
++ (void)recordSponsorState:(NSString *)state {
+    if (!state.length) return;
+    sciSponsorState = [state copy];
+}
+
+// Which bar the markers landed on. Set on every layout pass of that bar, so it is
+// assigned far more often than it changes -- a copy of a short string, and cheaper than
+// the comparison that would avoid it.
+static NSString *sciMarkerBar = nil;
+
++ (void)recordMarkerBar:(NSString *)className count:(NSInteger)count {
+    if (!className.length) return;
+    sciMarkerBar = [NSString stringWithFormat:SCILocalized(@"diag_markers_drawn"),
+        className, (long)count];
+}
+
 + (void)recordPlayerResponse:(id)response {
     if (!response) return;
     sciLastResponse = response;
@@ -208,6 +232,13 @@ static NSString *sciPanelFailure = nil;
     [out appendString:sciSettingsGroups ?: [NSString stringWithFormat:@"  %@\n",
         SCILocalized(@"diag_groups_none")]];
     [out appendString:@"\n"];
+
+    // Before the video section, because when someone says "it never skips anything"
+    // this line is the answer: whether a video ID was read, whether segments came
+    // back, and whether a skip was performed.
+    [out appendFormat:@"%@\n  %@\n  %@\n\n", SCILocalized(@"diag_sponsor"),
+        sciSponsorState ?: SCILocalized(@"diag_sponsor_none"),
+        sciMarkerBar ?: SCILocalized(@"diag_markers_none")];
 
     [out appendFormat:@"%@\n", SCILocalized(@"diag_video")];
 

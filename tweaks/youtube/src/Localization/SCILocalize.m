@@ -40,6 +40,8 @@ static void SCIBuildTables(void) {
         @"sponsorblock_note": @"Uses segments other viewers submitted, so paid plugs and intros are jumped over.",
         @"sponsorblock_notice": @"Say what was skipped",
         @"sponsorblock_notice_note": @"A short line at the top naming what was skipped, with an undo.",
+        @"sponsorblock_markers": @"Colour the progress bar",
+        @"sponsorblock_markers_note": @"Marks each segment on the bar in its SponsorBlock colour, so you can see what is coming.",
 
         @"sb_categories": @"What to skip",
         @"sb_sponsor": @"Paid sponsor",
@@ -62,7 +64,7 @@ static void SCIBuildTables(void) {
         @"sb_skipped_format": @"Skipped: %@",
         @"sb_undo": @"Undo",
 
-        @"sb_credit": @"Segment data from SponsorBlock (sponsor.ajay.app), licensed CC BY-NC-SA 4.0. Your video is never sent — only the first four characters of its fingerprint, so the server cannot tell which video you are watching.",
+        @"sb_credit": @"Segment data from SponsorBlock (sponsor.ajay.app), licensed CC BY-NC-SA 4.0. Your video is never sent — only the first four characters of its fingerprint, so the server cannot tell which video you are watching.\n\nThe coloured markers are derived from iSponsorBlock by Galactic Dev (GPLv3).",
 
         @"verbose_logging": @"Verbose logging",
         @"verbose_logging_note": @"Writes what the tweak is doing to the system log. Leave this off unless you are collecting a report — it is noisy and slows things down.",
@@ -87,6 +89,14 @@ static void SCIBuildTables(void) {
 
         @"diag_groups": @"Settings groups YouTube built",
         @"diag_groups_none": @"None seen yet. Open YouTube's settings once, then come back.",
+
+        @"diag_sponsor": @"SponsorBlock",
+        @"diag_sponsor_none": @"Nothing yet. Play a video with the feature on, then come back.",
+        @"diag_sponsor_no_id": @"Could not read a video ID from %@ — no segments were requested.",
+        @"diag_sponsor_segments": @"%@: %lu segments matched your categories.",
+        @"diag_sponsor_skipped": @"Skipped %@ (%.1fs to %.1fs).",
+        @"diag_markers_drawn": @"Markers drawn on %@ (%ld).",
+        @"diag_markers_none": @"No progress bar found to draw markers on yet.",
 
         @"diag_video": @"Last video played",
         @"diag_no_video": @"Nothing yet. Play a video, then come back to this page.",
@@ -124,6 +134,8 @@ static void SCIBuildTables(void) {
         @"sponsorblock_note": @"يستخدم مقاطع أرسلها مشاهدون آخرون، فتُتجاوَز الإعلانات المدفوعة والمقدّمات.",
         @"sponsorblock_notice": @"إظهار ما تم تخطّيه",
         @"sponsorblock_notice_note": @"سطر قصير في الأعلى يسمّي ما تُخطّي، ومعه زر تراجع.",
+        @"sponsorblock_markers": @"تلوين شريط التقدّم",
+        @"sponsorblock_markers_note": @"يعلّم كل مقطع على الشريط بلون سبونسر بلوك الخاص به، فترى ما هو قادم.",
 
         @"sb_categories": @"ما الذي يُتخطّى",
         @"sb_sponsor": @"إعلان مدفوع",
@@ -146,7 +158,7 @@ static void SCIBuildTables(void) {
         @"sb_skipped_format": @"تم تخطّي: %@",
         @"sb_undo": @"تراجع",
 
-        @"sb_credit": @"بيانات المقاطع من سبونسر بلوك (sponsor.ajay.app) برخصة CC BY-NC-SA 4.0. لا يُرسَل الفيديو الذي تشاهده إطلاقًا — تُرسَل أربعة أحرف من بصمته فقط، فلا يعرف الخادم أيّ فيديو تشاهد.",
+        @"sb_credit": @"بيانات المقاطع من سبونسر بلوك (sponsor.ajay.app) برخصة CC BY-NC-SA 4.0. لا يُرسَل الفيديو الذي تشاهده إطلاقًا — تُرسَل أربعة أحرف من بصمته فقط، فلا يعرف الخادم أيّ فيديو تشاهد.\n\nالعلامات الملوّنة مُشتقّة من iSponsorBlock لـ Galactic Dev (رخصة GPLv3).",
 
         @"verbose_logging": @"سجل مفصّل",
         @"verbose_logging_note": @"يكتب ما تفعله الأداة في سجل النظام. اتركه مطفأً إلا إذا كنت تجمع تقريرًا — فهو مزعج ويُبطئ الأداء.",
@@ -171,6 +183,14 @@ static void SCIBuildTables(void) {
 
         @"diag_groups": @"مجموعات الإعدادات التي بناها يوتيوب",
         @"diag_groups_none": @"لم تُرَ بعد. افتح إعدادات يوتيوب مرة ثم ارجع.",
+
+        @"diag_sponsor": @"سبونسر بلوك",
+        @"diag_sponsor_none": @"لا شيء بعد. شغّل فيديو والميزة مفعّلة ثم ارجع.",
+        @"diag_sponsor_no_id": @"تعذّرت قراءة معرّف الفيديو من %@ — لم تُطلب أي مقاطع.",
+        @"diag_sponsor_segments": @"%@: %lu مقطعًا يطابق فئاتك.",
+        @"diag_sponsor_skipped": @"تم تخطّي %@ (من %.1f ث إلى %.1f ث).",
+        @"diag_markers_drawn": @"رُسمت العلامات على %@ (%ld).",
+        @"diag_markers_none": @"لم يُعثر بعد على شريط تقدّم لرسم العلامات عليه.",
 
         @"diag_video": @"آخر فيديو شُغّل",
         @"diag_no_video": @"لا شيء بعد. شغّل فيديو ثم ارجع إلى هذه الصفحة.",

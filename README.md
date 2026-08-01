@@ -254,6 +254,8 @@ Issues and pull requests are welcome.
 - **[RyukGram](https://github.com/faroukbmiled/RyukGram)** by faroukbmiled (GPLv3) — a fellow SCInsta fork that identified the DM and timestamp hook points.
 - **[JGProgressHUD](https://github.com/JonasGessner/JGProgressHUD)** by Jonas Gessner — MIT.
 - **[dav1d](https://code.videolan.org/videolan/dav1d)** by VideoLAN — the AV1 decoder behind on-device transcoding.
+- **[SponsorBlock](https://sponsor.ajay.app)** by Ajay Ramachandran — the segment database the YouTube tweak skips by, CC BY-NC-SA 4.0.
+- **[iSponsorBlock](https://github.com/Galactic-Dev/iSponsorBlock)** by Galactic Dev (GPLv3) — the YouTube tweak's coloured progress-bar markers are derived from it.
 - **[FLEXing](https://github.com/SoCuul/FLEXing)** — runtime debugging support.
 - **Ibrahim Ismail AL-Rahn** — Albrhi rebuild, bilingual layer, download & transcode engine, and design.
 

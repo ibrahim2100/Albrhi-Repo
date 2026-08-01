@@ -1,6 +1,6 @@
 Package: com.albrhi.youtube
 Name: Albrhi for YouTube (rootless)
-Version: 0.3.0
+Version: 0.4.0
 Architecture: iphoneos-arm64
 Description: No ads, skip the sponsored parts, background playback — in Arabic or English.
  .
@@ -21,14 +21,16 @@ Description: No ads, skip the sponsored parts, background playback — in Arabic
  ▍ SKIP THE SPONSORED PARTS
  Paid plugs, self-promotion and subscribe reminders are jumped over automatically,
  using segments other viewers submitted to SponsorBlock. A short line names what was
- skipped and offers an undo. Intros, endcards, recaps and tangents each have their own
- switch and are off until you turn them on — somebody made that content, and deciding
- for you that it is worthless is not this tweak's call.
+ skipped and offers an undo, and each segment is marked on the progress bar in its own
+ colour so you can see what is coming. Intros, endcards, recaps and tangents each have
+ their own switch and are off until you turn them on — somebody made that content, and
+ deciding for you that it is worthless is not this tweak's call.
  .
  Your video is never sent. SponsorBlock offers two ways to ask, and this uses the one
  that sends only the first four characters of the video's fingerprint, so the server
  cannot tell which video you are watching. Segment data is from sponsor.ajay.app,
- licensed CC BY-NC-SA 4.0, credited in the settings screen.
+ licensed CC BY-NC-SA 4.0, credited in the settings screen. The coloured markers are
+ derived from iSponsorBlock by Galactic Dev, GPLv3.
  .
  ▍ BACKGROUND PLAYBACK
  Audio keeps going when you leave the app or lock the screen.

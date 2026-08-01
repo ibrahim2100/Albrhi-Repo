@@ -211,10 +211,53 @@
 @interface YTPlayerViewController : UIViewController
 - (double)currentVideoMediaTime;
 - (void)seekToTime:(double)time;
+
+/// The two below are *leads*, taken from iSponsorBlock, which is tested on this same
+/// 21.x line and reads both off this class. They are declared so the code compiles and
+/// called only behind -respondsToSelector:, because a lead that is wrong here is an
+/// unrecognised selector, which is how 0.1.1 died.
+///
+/// -currentVideoID matters because it is a second way to learn the video: 0.3.0 asked
+/// only the video object, under names it does not answer to, and skipped nothing at all.
+/// Asking two objects means one renamed accessor no longer takes the feature down.
+- (NSString *)currentVideoID;
+- (double)currentVideoTotalMediaTime;
 @end
 
 /// The feed. Sections arrive here as renderers, which is where a promoted one can be
 /// dropped by the identifier the server itself attached to it.
 @interface YTInnerTubeCollectionViewController : UIViewController
 - (void)addSectionsFromArray:(NSArray *)sections;
+@end
+
+// MARK: - The progress bar
+//
+// The one place this tweak hooks views, and it is done knowingly.
+//
+// Everything else here is model or service layer precisely because view classes get
+// renamed between releases. These three cannot be: a marker has to be drawn *on* the
+// bar, and the bar is a view. So the risk is accepted and then contained --
+//
+//   * all three are hooked, because which one a build renders is not knowable from
+//     the binary, and a %hook on a class that does not exist simply never attaches;
+//   * only -layoutSubviews is touched, which every UIView has;
+//   * the markers are laid out with frames, never constraints. The layout engine took
+//     this tweak down in 0.1.1 and again in 0.1.3, and a rectangle needs no help from it;
+//   * the diagnostics page reports which of the three was found, so "no colours" is
+//     answerable from the phone instead of by guessing.
+//
+// The names are from iSponsorBlock, which is tested on this same 21.x line. Leads, as
+// ever, not facts -- which is why the report says which one actually turned up.
+
+@interface YTInlinePlayerBarView : UIView
+/// Guarded by -respondsToSelector: at every call site; the fallback is the duration
+/// captured from the player controller.
+- (double)totalTime;
+@end
+
+@interface YTSegmentableInlinePlayerBarView : YTInlinePlayerBarView
+@end
+
+@interface YTModularPlayerBarView : UIView
+- (double)totalTime;
 @end
