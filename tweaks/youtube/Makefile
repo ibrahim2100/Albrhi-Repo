@@ -15,6 +15,6 @@ include $(THEOS)/makefiles/common.mk
 TWEAK_NAME = AlbrhiYT
 
 $(TWEAK_NAME)_FILES = $(shell find src -type f \( -iname \*.x -o -iname \*.xm -o -iname \*.m \))
-$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore AVFoundation Photos
+$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore AVFoundation CoreMedia Photos
 
 include $(ROOT)/shared/tweak.mk

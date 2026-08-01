@@ -1,8 +1,8 @@
 Package: com.albrhi.youtube
 Name: Albrhi for YouTube (rootless)
-Version: 0.4.5
+Version: 0.5.0
 Architecture: iphoneos-arm64
-Description: No ads, skip the sponsored parts, background playback — in Arabic or English.
+Description: Download videos, no ads, skip the sponsored parts, background playback — in Arabic or English.
  .
  NO ADS
  Stopped at three points, because ads arrive by three routes and blocking one does
@@ -32,7 +32,11 @@ Description: No ads, skip the sponsored parts, background playback — in Arabic
  TESTED ON YouTube 21.30.5. Nothing is pinned to a version number: every class is
  looked up at runtime and skipped if it is not there.
  .
- Downloads are not here yet — that one is being measured before it is built.
+ DOWNLOADS
+ Open the panel over a video and save it to Photos, at the quality you pick, up to
+ 1080p60. Above 360p YouTube sends picture and sound separately; both are fetched and
+ joined on the device. No button is added to YouTube itself — the row is in our own
+ panel, so it cannot stop working when YouTube renames a view.
  .
  Segment data from SponsorBlock (sponsor.ajay.app), CC BY-NC-SA 4.0. The coloured
  markers are derived from iSponsorBlock by Galactic Dev, GPLv3.

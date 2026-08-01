@@ -3,6 +3,35 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.5.0
+
+- **Downloads.** Open the panel over a video and there is a row that saves it to Photos,
+  at the quality you pick, up to 1080p60.
+
+- **No button is added to YouTube.** Every other tweak that does this puts one in the
+  player controls, which means hooking view classes that get renamed between releases —
+  the survey behind 0.1.3 found nineteen dead class names in one such tweak. The row
+  lives in our own panel, which cannot go stale, and it acts on the video the player is
+  already holding.
+
+- Above 360p YouTube sends picture and sound as separate files. Both are fetched and
+  joined on the device with AVFoundation; because only H.264 and AAC are offered in the
+  list, the join is a copy rather than a re-encode, and no FFmpeg is carried to do it.
+  If the sound cannot be fetched, the silent file is still saved and the message says so
+  rather than pretending.
+
+- Only formats iOS can actually play are offered, chosen by itag rather than by MIME
+  type: YouTube serves VP9 and AV1 in containers that download happily and then show a
+  black frame.
+
+- The diagnostics page gains a "Saveable" line, so a video that offers nothing says so
+  before you try.
+
+_Method derived from [YouMod](https://github.com/Tonwalter888/YouMod) by Tonwalter888
+(GPLv3): where the format list lives, that the real link hangs off the stream's nested
+formatStream rather than the stream itself, the itag sets, and the query handling that
+makes a link fetchable at full speed. Those cost that project real time to work out._
+
 ## v0.4.5
 
 - **The streams section, asked properly this time.** 0.4.4 got the ladder — 22 formats,

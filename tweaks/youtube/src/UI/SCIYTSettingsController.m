@@ -4,6 +4,7 @@
 #import "../Prefs.h"
 #import "../Localization/SCILocalize.h"
 #import "../Diagnostics/SCIYTDiagnostics.h"
+#import "../Features/Download/SCIYTDownload.h"
 #import <objc/runtime.h>
 
 /// YouTube's red. Written out rather than read from YTCommonColorPalette: one colour is
@@ -198,6 +199,10 @@ typedef NS_ENUM(NSInteger, SCIRowKind) {
                    detail:SCILocalized(@"verbose_logging_note")
                    symbol:@"text.alignleft"
                   prefKey:SCIPrefVerboseLogging],
+        [SCIRow disclosureRow:SCILocalized(@"dl_row")
+                       detail:SCILocalized(@"dl_row_note")
+                       symbol:@"arrow.down.circle.fill"
+                       action:^{ [SCIYTDownload presentFrom:weakSelf]; }],
         [SCIRow disclosureRow:SCILocalized(@"diagnostics")
                        detail:SCILocalized(@"diagnostics_note")
                        symbol:@"stethoscope"

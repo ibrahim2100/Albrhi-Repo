@@ -3,6 +3,7 @@
 #import "../Tweak.h"
 #import "../SCILog.h"
 #import "../Localization/SCILocalize.h"
+#import "../Features/Download/SCIYTDownload.h"
 #import <objc/runtime.h>
 
 ///
@@ -61,6 +62,7 @@ static NSArray<NSDictionary *> *SCIAuditTable(void) {
 static id sciLastResponse = nil;
 static id sciLastStreamingData = nil;
 static NSString *sciLastVideoID = nil;
+static NSString *sciLastVideoTitle = nil;
 
 // The settings groups, as text, captured the moment the screen asked for them.
 // Text and not the objects: the report needs the numbers and the names, and holding
@@ -150,6 +152,20 @@ static NSString *sciMarkerBar = nil;
         sciLastStreamingData = [(MLVideo *)video streamingData];
     }
 
+    // The title, for naming the file a download produces. Best effort and never
+    // required: an untitled save is a small annoyance, a crash here is not.
+    @try {
+        id details = [self value:@"videoDetails" from:video];
+        NSString *title = [self value:@"title" from:details];
+        NSString *author = [self value:@"author" from:details];
+
+        if ([title isKindOfClass:[NSString class]] && title.length) {
+            sciLastVideoTitle = [author isKindOfClass:[NSString class]] && author.length
+                ? [NSString stringWithFormat:@"%@ - %@", author, title]
+                : [title copy];
+        }
+    } @catch (__unused NSException *exception) {}
+
     SCILogV(@"captured video %@ (streams: %@)", sciLastVideoID,
             sciLastStreamingData ? @"yes" : @"no");
 
@@ -180,6 +196,10 @@ static NSString *sciMarkerBar = nil;
     }
     return YES;
 }
+
++ (id)lastStreamingData { return sciLastStreamingData; }
++ (NSString *)lastVideoID { return sciLastVideoID; }
++ (NSString *)lastVideoTitle { return sciLastVideoTitle; }
 
 + (NSString *)appVersion {
     NSString *version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
@@ -254,6 +274,11 @@ static NSString *sciMarkerBar = nil;
     // Enumerated rather than described: MLStreamingData is not a protobuf and its
     // -description is a class name and an address, which is what this section printed
     // for four releases.
+    // What the downloader makes of the same streams, first: it answers "can this video
+    // be saved" in one line, where the dump below answers "why not".
+    [out appendFormat:@"\n%@\n  %@\n", SCILocalized(@"diag_downloadable"),
+        [SCIYTDownload diagnosticsSummary]];
+
     NSString *streams = [self describeStreams:sciLastStreamingData];
     if (streams.length) {
         [out appendFormat:@"\n%@\n%@\n", SCILocalized(@"diag_streams"), streams];

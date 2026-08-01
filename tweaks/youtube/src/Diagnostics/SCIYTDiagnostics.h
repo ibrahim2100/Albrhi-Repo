@@ -15,6 +15,16 @@
 + (void)recordPlayerResponse:(id)response;
 + (void)recordVideo:(id)video;
 
+/// What the last video handed over, for anything that needs the streams rather than a
+/// report of them — the downloader, in practice.
+///
+/// Exposed here rather than captured a second time: these hooks already run for the
+/// report, and a second set watching the same two classes would be two things to keep
+/// in step for no gain.
++ (id)lastStreamingData;
++ (NSString *)lastVideoID;
++ (NSString *)lastVideoTitle;
+
 /// Recorded by the settings hooks: the groups YouTube's settings screen is built
 /// from, with the type of each. Those numbers cannot be read out of the binary, and
 /// getting the wrong one is why 0.1.0 showed no section at all.
