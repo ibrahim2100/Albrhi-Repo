@@ -176,17 +176,26 @@ ACCENT = CONFIG['accent']
 FEATURES = CONFIG['features']
 
 
-def _condense(body, limit=160):
-    """A bullet's headline: its first sentence, or a trimmed opening.
+def _condense(body, limit=170):
+    """A bullet's headline: the bold lead it opens with, or its first sentence.
 
     The changelog is written to explain *why* a change was made, at length. That
     belongs in the file, not on a store page — someone deciding whether to install
     this wants the list, and the reasoning is one tap away on GitHub.
+
+    The bold lead is checked first because these entries are written with one, and
+    it is exactly the headline wanted. Looking for a sentence instead used to cut in
+    the wrong place: the full stop in "**A proper package page.** Sileo had…" is
+    followed by an asterisk rather than a space, so the sentence search walked past
+    it and stopped at the end of the line, mid-thought.
     """
     body = re.sub(r'\s+', ' ', body).strip()
 
-    # First sentence, but only if it is a sentence rather than an abbreviation or a
-    # version number: the split has to land after a space.
+    lead = re.match(r'\*\*(.+?)\*\*', body)
+    if lead and len(lead.group(0)) <= limit:
+        return lead.group(0)
+
+    # Otherwise the first sentence, if it ends early enough to be a headline.
     match = re.search(r'(?<=[.!?])\s', body)
     if match and match.start() <= limit:
         return body[:match.start() + 1].strip()
@@ -216,12 +225,29 @@ def changelog_entries(path='CHANGELOG.md', limit=3):
         lines = section.strip().split('\n')
         title = lines[0].lstrip('# ').strip()
 
-        # Top-level bullets only. A continuation line is indented, and the paragraphs
-        # between bullets are the reasoning — both are deliberately left out.
+        # Top-level bullets only, each rejoined from the lines it is wrapped across
+        # before being condensed. Reading one physical line was the earlier mistake:
+        # a bullet that wrapped came out cut at the margin, mid-sentence.
+        #
+        # A blank line ends the bullet; the indented paragraphs after it are the
+        # reasoning, and are deliberately left out.
         headlines = []
+        current = None
+
         for line in lines[1:]:
             if line.startswith('- '):
-                headlines.append(_condense(line[2:]))
+                if current:
+                    headlines.append(_condense(current))
+                current = line[2:]
+            elif current is not None:
+                if line.strip() and line.startswith(' '):
+                    current += ' ' + line.strip()
+                else:
+                    headlines.append(_condense(current))
+                    current = None
+
+        if current:
+            headlines.append(_condense(current))
 
         # A version written as prose rather than bullets still deserves a line.
         if not headlines:
