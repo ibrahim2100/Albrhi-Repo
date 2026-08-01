@@ -3,6 +3,21 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.4.5
+
+- **The streams section, asked properly this time.** 0.4.4 got the ladder — 22 formats,
+  itags, resolutions up to 1080p60 — and then failed on the three things that matter
+  next. It listed what a stream "offers" by reading only its own class, and the
+  accessors are on the superclass, so it printed nothing at all. It printed the type as
+  an address, because MIMEType is a wrapper rather than a string. And it reported the
+  URL as `?cpn=…`, a query fragment, without saying which of the possible names that
+  came from.
+
+  All three are fixed: the class chain is walked, wrapped values are unwrapped, and
+  eleven names a stream might keep a real link under are tried with the answering one
+  printed beside it. Whether this build hands out fetchable links is the one question
+  standing between here and downloads.
+
 ## v0.4.4
 
 - **The diagnostics page opens.** 0.4.3 guessed at why it crashed and guessed wrong —

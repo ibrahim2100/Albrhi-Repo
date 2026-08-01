@@ -330,24 +330,41 @@ static NSString *sciMarkerBar = nil;
             id stream = list[i];
 
             id itag = [self value:@"itag" from:stream];
-            id mime = [self value:@"MIMEType" from:stream] ?: [self value:@"mimeType" from:stream];
-            id quality = [self value:@"qualityLabel" from:stream] ?: [self value:@"quality" from:stream];
+            NSString *mime = [self string:[self value:@"MIMEType" from:stream]
+                                            ?: [self value:@"mimeType" from:stream]];
+            NSString *quality = [self string:[self value:@"qualityLabel" from:stream]
+                                               ?: [self value:@"quality" from:stream]];
             id width = [self value:@"width" from:stream];
             id height = [self value:@"height" from:stream];
-            id fps = [self value:@"fps" from:stream];
+            id fps = [self value:@"fps" from:stream] ?: [self value:@"frameRate" from:stream]
+                     ?: [self value:@"videoFrameRate" from:stream];
             id bitrate = [self value:@"bitrate" from:stream] ?: [self value:@"averageBitrate" from:stream];
-            id url = [self value:@"URL" from:stream] ?: [self value:@"url" from:stream];
 
+            // The decisive question, and the reason the whole page exists: is there a
+            // fetchable link per format, or does playback go through the piecewise
+            // protocol only? The first probe answered "?cpn=..." — a query fragment,
+            // not a URL — so every name the stream might keep a real one under is asked
+            // for, and the one that answered is named alongside it.
             NSString *link = @"none";
-            if (url) {
-                NSString *text = [url isKindOfClass:[NSURL class]] ? [(NSURL *)url absoluteString]
-                                                                   : [url description];
-                // The first stretch only. A signed CDN link is a thousand characters of
-                // query string, and what matters here is that there is one at all.
-                link = text.length > 70 ? [[text substringToIndex:70] stringByAppendingString:@"…"] : text;
+            for (NSString *key in @[@"URL", @"url", @"baseURL", @"streamURL", @"videoURL",
+                                    @"assetURL", @"mediaURL", @"urlString", @"URLString",
+                                    @"absoluteURL", @"downloadURL"]) {
+                id candidate = [self value:key from:stream];
+                if (!candidate) continue;
+
+                NSString *text = [candidate isKindOfClass:[NSURL class]]
+                    ? [(NSURL *)candidate absoluteString] : [self string:candidate];
+                if (!text.length) continue;
+
+                // A signed CDN link runs to a thousand characters of query string; the
+                // opening is enough to tell a real one from a fragment.
+                NSString *shown = text.length > 90
+                    ? [[text substringToIndex:90] stringByAppendingString:@"…"] : text;
+                link = [NSString stringWithFormat:@"%@ = %@", key, shown];
+                break;
             }
 
-            [out appendFormat:@"    [%@] %@ %@ %@x%@ %@fps %@bps\n      url: %@\n",
+            [out appendFormat:@"    [%@] %@ %@ %@x%@ %@fps %@bps\n      %@\n",
                 itag ?: @"?", mime ?: @"?", quality ?: @"?",
                 width ?: @"?", height ?: @"?", fps ?: @"?", bitrate ?: @"?", link];
         }
@@ -382,21 +399,53 @@ static NSString *sciMarkerBar = nil;
     if (!object) return @"—";
 
     NSMutableArray<NSString *> *names = [NSMutableArray array];
-    unsigned int count = 0;
-    Method *methods = class_copyMethodList([object class], &count);
 
-    for (unsigned int i = 0; i < count && names.count < 60; i++) {
-        NSString *name = NSStringFromSelector(method_getName(methods[i]));
-        if ([name containsString:@":"]) continue;      // takes arguments
-        if ([name hasPrefix:@"."]) continue;           // .cxx_destruct
-        if ([name hasPrefix:@"set"]) continue;         // setters answer nothing useful
-        [names addObject:name];
+    // Up the chain, not just the class itself. MLRemoteStream declares almost nothing
+    // of its own -- the accessors are on its superclass -- so asking only the class
+    // printed an empty list, which read as "this object offers nothing" when it in
+    // fact offers everything the download feature needs to know about.
+    //
+    // Stopping before NSObject keeps -hash, -description and the rest out of it.
+    Class cls = [object class];
+    NSInteger levels = 0;
+
+    while (cls && cls != [NSObject class] && levels++ < 6 && names.count < 90) {
+        unsigned int count = 0;
+        Method *methods = class_copyMethodList(cls, &count);
+
+        for (unsigned int i = 0; i < count && names.count < 90; i++) {
+            NSString *name = NSStringFromSelector(method_getName(methods[i]));
+            if ([name containsString:@":"]) continue;      // takes arguments
+            if ([name hasPrefix:@"."]) continue;           // .cxx_destruct
+            if ([name hasPrefix:@"set"]) continue;         // setters answer nothing useful
+            if ([names containsObject:name]) continue;     // overridden further down
+            [names addObject:name];
+        }
+
+        free(methods);
+        cls = class_getSuperclass(cls);
     }
-
-    free(methods);
 
     [names sortUsingSelector:@selector(compare:)];
     return names.count ? [names componentsJoinedByString:@", "] : @"—";
+}
+
+/// A value as text, whatever kind of object it turns out to be.
+///
+/// MIMEType came back as <HAMMIMEType: 0x…> — a wrapper, not a string — so the report
+/// printed an address where a type should be. Anything that is not already a string is
+/// asked for one before being given up on.
++ (NSString *)string:(id)value {
+    if (!value) return nil;
+    if ([value isKindOfClass:[NSString class]]) return value;
+    if ([value isKindOfClass:[NSNumber class]]) return [value stringValue];
+
+    for (NSString *key in @[@"stringValue", @"string", @"type", @"name", @"value"]) {
+        id inner = [self value:key from:value];
+        if ([inner isKindOfClass:[NSString class]] && [inner length]) return inner;
+    }
+
+    return [value description];
 }
 
 + (NSString *)reportForDisplay {
