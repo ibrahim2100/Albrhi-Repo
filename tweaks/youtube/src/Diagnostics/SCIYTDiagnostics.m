@@ -404,6 +404,47 @@ static NSString *sciMarkerBar = nil;
         if (list.count) {
             [out appendFormat:@"  stream class: %@\n", NSStringFromClass([list.firstObject class])];
             [out appendFormat:@"  stream offers: %@\n", [self zeroArgumentSelectorsOn:list.firstObject]];
+
+            // And what is nested inside it, which is the one place left to look.
+            //
+            // Every stream in a real report answered -URL with "?cpn=..." — a query
+            // fragment and not a link — and four of the twelve were H.264, which iOS
+            // plays. So the codec was never the obstacle; the missing link was. The
+            // outer stream does not hold one, and this says whether the inner one does.
+            //
+            // If it does not either, the answer is settled: this build hands out no file
+            // URLs at all and downloading has to go through YouTube's own downloader or
+            // the piecewise protocol. That is a different project, and worth knowing
+            // before starting it rather than after.
+            id nested = [self value:@"formatStream" from:list.firstObject];
+            if (nested) {
+                [out appendFormat:@"  formatStream class: %@\n", NSStringFromClass([nested class])];
+                [out appendFormat:@"  formatStream offers: %@\n",
+                    [self zeroArgumentSelectorsOn:nested]];
+
+                for (NSString *key in @[@"URL", @"url", @"baseURL", @"urlString"]) {
+                    id candidate = [self value:key from:nested];
+                    if (!candidate) continue;
+
+                    NSString *text = [candidate isKindOfClass:[NSURL class]]
+                        ? [(NSURL *)candidate absoluteString] : [self string:candidate];
+                    if (!text.length) continue;
+
+                    NSString *head = text.length > 120
+                        ? [[text substringToIndex:120] stringByAppendingString:@"…"] : text;
+                    [out appendFormat:@"  formatStream %@ = %@\n", key, head];
+                }
+
+                // A GPBMessage prints its whole tree, which for a format stream is every
+                // field it carries — the fastest way to see a link that is under a name
+                // nobody thought to ask for.
+                NSString *tree = [self describeMessage:nested];
+                if (tree.length && tree.length < 4000) {
+                    [out appendFormat:@"  formatStream contents:\n%@\n", tree];
+                }
+            } else {
+                [out appendString:@"  formatStream: nothing nested\n"];
+            }
         }
     }
 

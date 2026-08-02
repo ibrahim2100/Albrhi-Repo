@@ -3,6 +3,25 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.6.1
+
+- **Holding the video works now.** In 0.6.0 the gesture was added and never fired once.
+  A gesture added to a view in an app that already has its own does not simply share the
+  screen with them — iOS lets one win, and YouTube's player is covered in them. Ours lost
+  every time, silently, which looks exactly like a gesture that was never added.
+- **The "nothing to save" message was misleading, and this is the important part.** A
+  report showed twelve formats: eight in codecs iOS cannot play, and **four in H.264,
+  which it can**. The message said "all in a codec iOS will not play", because eight is
+  more than four. What was actually stopping the download is that those four carried no
+  link to fetch.
+- So the message now names the wall that blocks the formats that would otherwise work,
+  not the one that happens to affect the most of them.
+- The diagnostics page now also opens up what is nested inside each stream, which is the
+  one place a link could still be hiding. If it is not there either, then this build of
+  YouTube hands out no file links at all — and that is worth knowing for certain rather
+  than assuming, because it decides whether downloading is a small feature or a different
+  project entirely.
+
 ## v0.6.0
 
 - **Hold the video to save it.** No need to open settings first. The settings row is

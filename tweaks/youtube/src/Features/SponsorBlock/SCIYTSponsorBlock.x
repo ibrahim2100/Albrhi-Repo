@@ -384,11 +384,41 @@ static void SCIDrawMarkers(UIView *bar, double barTotalTime) {
 ///
 static char kSCIDownloadGestureArmed;
 
-@interface SCIDownloadGestureTarget : NSObject
+/// The delegate matters as much as the recogniser.
+///
+/// 0.6.0 armed this gesture and it never fired once. A recogniser added to a view in an
+/// app that already has its own does not simply coexist: UIKit lets one win, and
+/// YouTube's player is covered in them — tap for the controls, double tap to seek, hold
+/// to speed up, pan to scrub. Ours lost every time, silently, which looks exactly like a
+/// gesture that was never added at all.
+///
+/// Answering YES to simultaneous recognition is what puts it back in contention. Safe,
+/// because nothing here consumes the touch: cancelsTouchesInView is off, so whatever
+/// YouTube meant to do with the press still happens whether or not this fires.
+@interface SCIDownloadGestureTarget : NSObject <UIGestureRecognizerDelegate>
 + (instancetype)shared;
 @end
 
 @implementation SCIDownloadGestureTarget
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)recognizer
+shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)other {
+    return YES;
+}
+
+/// A press that starts on a control or inside a scrolling list is not a request to save
+/// the video: it is someone reaching for a button, or the beginning of a scroll. The
+/// player's own surface is what this gesture is for.
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)recognizer
+       shouldReceiveTouch:(UITouch *)touch {
+    UIView *hit = touch.view;
+    while (hit) {
+        if ([hit isKindOfClass:[UIControl class]]) return NO;
+        if ([hit isKindOfClass:[UIScrollView class]]) return NO;
+        hit = hit.superview;
+    }
+    return YES;
+}
 
 + (instancetype)shared {
     static SCIDownloadGestureTarget *shared = nil;
@@ -428,6 +458,9 @@ static void SCIArmDownloadGesture(UIView *view) {
         [[UILongPressGestureRecognizer alloc] initWithTarget:[SCIDownloadGestureTarget shared]
                                                       action:@selector(pressed:)];
     press.minimumPressDuration = 0.65;
+
+    // The delegate is what makes it fire at all -- see the note on the target class.
+    press.delegate = [SCIDownloadGestureTarget shared];
 
     // Never swallows the touch: tap-to-pause, scrubbing and YouTube's own hold-to-speed
     // all have to keep working whether or not this fires.

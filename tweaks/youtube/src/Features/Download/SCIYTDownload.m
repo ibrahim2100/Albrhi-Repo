@@ -263,7 +263,15 @@ static NSString *sciRefusedItags = nil;
     if (sciSeen == 0) {
         return SCILocalized(@"dl_why_no_formats");
     }
-    if (sciNoURL > 0 && sciUnplayable == 0) {
+    // The link comes first, and getting that order wrong made the first version of this
+    // message actively misleading. A real report had twelve formats: eight in VP9 and
+    // AV1, and four in H.264 that this list accepts. It said "all in a codec iOS will
+    // not play" -- because eight is more than four -- when what actually stopped the
+    // download was that those four carried no link.
+    //
+    // So: anything that survived the codec check and still could not be fetched is the
+    // wall. The codec only matters when nothing survived it at all.
+    if (sciNoURL > 0) {
         return [NSString stringWithFormat:SCILocalized(@"dl_why_no_urls"), (long)sciNoURL];
     }
     if (sciUnplayable > 0) {
