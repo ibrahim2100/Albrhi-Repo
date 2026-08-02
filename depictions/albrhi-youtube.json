@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.8.4",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• Includes the crash fix from 0.8.3, which never had a chance to be installed.\n• **Looks for the video's formats in five more places.**\n• That is the useful part: rather than another guess, the next report will name the exact step where the search succeeds or stops.\n• The streams the app keeps for *playback* carry no download link.\n• Asking YouTube directly over the network is refused: two identities rejected outright, two others answered properly and said the video was unavailable to them.\n• Which leaves the player's own response — the one place that has never yet been reached without something failing first.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.8.3",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.8.1",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **The report now says what happened when it looked inside the app**\n• Three completely different outcomes were indistinguishable: the search stopping early, the app holding formats with no links, and it holding formats in codecs iOS cannot…\n• **A third place to look**\n• The four attempts in 0.7.3 all came back refused, and their messages are now specific enough to be worth reading: two were rejected outright, and two answered properly…",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.8.3"
+          "text": "0.8.4"
         },
         {
           "class": "DepictionTableTextView",
