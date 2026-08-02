@@ -196,9 +196,23 @@ from a real build failure:
    half of that table builds itself from every `@interface` in the tweak's own
    headers, matched on a word boundary
 
-A check that cries wolf gets ignored. Three of these produced false positives on
+9. quoted imports that resolve to nothing, checked against the `-I` flags in the makefiles
+10. a header promising a method its `@implementation` never defines
+
+A check that cries wolf gets ignored. Four of these produced false positives on
 first writing and were tightened before landing. If you add a rule, prove it fails
 when it should by reintroducing the bug.
+
+**Rules 8 and 10 exist because one process failure cost two builds in a row, and
+then a third edit in the very commit that documented it.** A script with several
+`assert`s raises partway through: part of the change is on disk, part is not, and
+nothing says so — a half-applied script is indistinguishable from one that worked.
+Once the header was written without the implementation; once an `#import` was
+dropped; once this paragraph itself failed to land while the commit went out anyway.
+
+Either make the whole change in one edit, or re-read the file afterwards. And when a
+script prints nothing where it should have printed a confirmation, that *is* the
+failure — do not carry on to the commit.
 
 **The rules are written against one tweak** and use paths relative to it (`src/**`,
 `control`). Run from the repository root, `check.py` re-executes itself once per
