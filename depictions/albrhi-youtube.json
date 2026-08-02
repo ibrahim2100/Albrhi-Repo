@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.12.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **Saved videos have their sound.**\n• Both halves are fetched now and joined into one file at the end.\n• **A download that loses its sound now says so**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.11.0",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.10.2",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **0.10.1 downloaded the same file over and over.**\n• YouTube's playlists list each piece as *a range of bytes inside one file*, not as a file of its own.\n• Now that line is understood, and it makes things simpler rather than harder: when the pieces are all ranges of one file, **that file is the video**.\n• The report also says what shape the playlist turned out to have — how many entries, how many actual addresses, whether ranges are used.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.11.0"
+          "text": "0.12.0"
         },
         {
           "class": "DepictionTableTextView",
