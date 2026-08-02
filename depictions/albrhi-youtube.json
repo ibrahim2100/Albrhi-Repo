@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.8.3",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **Fixes the crash in 0.8.2.**\n• Reading a format's number — its quality id, its height, its bitrate — went down a path that only works for text.\n• The previous code read these correctly.\n• **And the search can no longer take the app down at all**\n• One thing the fixed report did settle: the streams the app holds for playback really do carry no download link, under any name.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.8.2",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.8.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **The links were in the app the whole time, in a place nobody had looked.**\n• Everything so far read one source: the media layer's streaming data, whose streams answer with `?cpn=…` instead of a link because that layer fetches byte ranges rather…\n• But the app holds a *second* set of streams for the same video.\n• So the player is asked first now.\n• The `HTTP 403` and `HTTP 400` from 0.7.3 are still worth having fixed, and that work stays: better headers, four client identities, and the server's own error message in…\n• Found by reading **YouMod** by Tonwalter888 (GPLv3, as this is), which reads both sources and takes whichever answers.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.8.2"
+          "text": "0.8.3"
         },
         {
           "class": "DepictionTableTextView",
