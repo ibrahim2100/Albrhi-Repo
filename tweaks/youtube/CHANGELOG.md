@@ -3,6 +3,20 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.11.0
+
+- **Saving videos works.** The parts were downloading correctly all along — every one of
+  them — and were being thrown away at the very last step, because they arrive wrapped in a
+  format iPhone has never been able to open from a file. Nothing was wrong with the
+  download. The wrapper was wrong.
+- So the wrapper comes off. The video and the sound inside are already exactly what an
+  .mp4 holds, so nothing is re-encoded and nothing loses quality — it is unpacked and
+  repacked, and it is quick.
+- Other tweaks solve this by carrying a whole video-conversion library, between 2 and 19
+  megabytes of it. This one carries none. That is why the tweak is still small.
+- If it does fail now, it says which part failed: no picture inside, or no room on the
+  device. Not one sentence for three different problems.
+
 ## v0.10.3
 
 - **The error now tells you what it found**, instead of pointing at a page that had

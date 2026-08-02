@@ -2,6 +2,7 @@
 #import "../../SCILog.h"
 #import "../../Localization/SCILocalize.h"
 #import "../../Diagnostics/SCIYTDiagnostics.h"
+#import "SCIYTTransport.h"
 #import <AVFoundation/AVFoundation.h>
 
 @implementation SCIHLSVariant
@@ -380,6 +381,19 @@ static NSString *SCIWithShape(NSString *message) {
 /// says whether the joining worked -- an unreadable file fails here rather than arriving
 /// in Photos as something that will not play.
 + (void)exportJoined:(NSURL *)joined completion:(void (^)(NSURL *, NSString *))completion {
+    // A transport stream never reaches the export below, because it cannot: iOS has no
+    // reader for a local .ts, so AVURLAsset reports no video track and the file is thrown
+    // away as unreadable. That was the whole of the "the pieces do not join" failure --
+    // ninety-four parts fetched perfectly and then discarded at the last step for being in
+    // the wrong wrapper. SCIYTTransport unwraps them; from there this is an ordinary file.
+    if ([SCIYTTransport isTransportStream:joined]) {
+        [SCIYTTransport convert:joined completion:^(NSURL *output, NSString *error) {
+            [[NSFileManager defaultManager] removeItemAtURL:joined error:nil];
+            completion(output, output ? nil : SCIWithShape(error ?: SCILocalized(@"dl_hls_unreadable")));
+        }];
+        return;
+    }
+
     AVURLAsset *asset = [AVURLAsset URLAssetWithURL:joined options:nil];
 
     if (![asset tracksWithMediaType:AVMediaTypeVideo].count) {

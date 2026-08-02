@@ -84,6 +84,9 @@ static void SCIBuildTables(void) {
         @"dl_hls_no_variants": @"The playlist lists no quality iOS can save. Everything in it is in a codec that would download and then not play.",
         @"dl_hls_no_segments": @"The playlist for that quality is empty.",
         @"dl_hls_unreadable": @"The pieces downloaded, but they do not join into a video this device can read. This build serves them in a form that needs converting.",
+        @"dl_ts_empty": @"The download finished with nothing in it. Try again.",
+        @"dl_ts_no_video": @"The parts arrived, but there is no picture inside them this can convert. Try a different quality.",
+        @"dl_ts_write_failed": @"The video was unwrapped but could not be written out. There may be no room left on the device.",
         @"dl_unknown_quality": @"Unknown quality",
         @"dl_progress_format": @"Saving… %d%%",
 
@@ -219,6 +222,9 @@ static void SCIBuildTables(void) {
         @"dl_hls_no_variants": @"القائمة لا تعرض جودة يستطيع iOS حفظها. كل ما فيها بترميز يُحمَّل ثم لا يعمل.",
         @"dl_hls_no_segments": @"قائمة تلك الجودة فارغة.",
         @"dl_hls_unreadable": @"نُزّلت الأجزاء، لكنها لا تجتمع في فيديو يقرأه هذا الجهاز. هذا البناء يقدّمها بصيغة تحتاج تحويلًا.",
+        @"dl_ts_empty": @"انتهى التنزيل وليس فيه شيء. جرّب مرة أخرى.",
+        @"dl_ts_no_video": @"وصلت الأجزاء، لكن لا توجد بداخلها صورة يمكن تحويلها. جرّب جودة أخرى.",
+        @"dl_ts_write_failed": @"فُكَّ غلاف الفيديو لكن تعذّرت كتابته. قد لا تكون هناك مساحة كافية على الجهاز.",
         @"dl_unknown_quality": @"جودة غير معروفة",
         @"dl_progress_format": @"جارٍ الحفظ… %d%%",
 
