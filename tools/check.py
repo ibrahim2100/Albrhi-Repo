@@ -253,6 +253,57 @@ for path in SRC:
             continue
         report('%s used in %s without importing %s' % (symbol, path, ' or '.join(headers)))
 
+# 10. A header promising a method the implementation does not define.
+#
+#     Two builds in a row died on this, both the same way: a script with several
+#     asserts raised partway, so the header was written and the implementation was
+#     not, and the gap only surfaced five minutes later as clang's
+#     -Wincomplete-implementation. That is exactly the kind of failure this file
+#     exists to move from minutes to seconds.
+#
+#     Only classes whose @interface and @implementation are both inside the tweak
+#     are checked -- a category on a YouTube class declares methods the app defines,
+#     and demanding those here would flag every header in the project.
+_declared = collections.defaultdict(list)      # class -> [(kind, selector)]
+_defined = collections.defaultdict(set)        # class -> {(kind, base)}
+
+_method_re = re.compile(r'^\s*([+-])\s*\([^)]*\)\s*([A-Za-z_]\w*)', re.M)
+
+for path in HDR:
+    text = open(path, encoding='utf-8').read()
+
+    # Split at each @interface so a method is attributed to the class above it, and
+    # stop at @end so anything after it is not swept in.
+    for match in re.finditer(r'@interface\s+(\w+)\s*(?::\s*\w+)?[^\n]*\n(.*?)@end',
+                             text, re.S):
+        name, body = match.group(1), match.group(2)
+
+        # A category adds methods to a class defined elsewhere; its own @implementation
+        # is not required to exist here.
+        if re.match(r'@interface\s+\w+\s*\(', match.group(0)):
+            continue
+
+        for kind, base in _method_re.findall(body):
+            _declared[name].append((kind, base))
+
+for path in SRC:
+    text = open(path, encoding='utf-8').read()
+    for match in re.finditer(r'@implementation\s+(\w+)(.*?)@end', text, re.S):
+        name, body = match.group(1), match.group(2)
+        for kind, base in _method_re.findall(body):
+            _defined[name].add((kind, base))
+
+for name, methods in sorted(_declared.items()):
+    # Nothing to compare against: the class is declared for another file's benefit,
+    # which is how every YouTube and Instagram class in the headers is used.
+    if name not in _defined:
+        continue
+
+    for kind, base in methods:
+        if (kind, base) not in _defined[name]:
+            report('%s declares %s%s but %s never defines it'
+                   % (name, kind, base, name))
+
 # 9. Quoted imports that resolve to nothing.
 #
 # Moving the sources one level deeper broke four files that reached the shared

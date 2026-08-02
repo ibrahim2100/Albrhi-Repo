@@ -199,6 +199,34 @@ static NSString *sciMarkerBar = nil;
 
 + (id)lastStreamingData { return sciLastStreamingData; }
 + (NSString *)lastVideoID { return sciLastVideoID; }
+
+/// The video the player actually started, as opposed to the last one it built an object
+/// for. YouTube makes those for clips it is preloading too, so the two are not the same
+/// question — and a download that asked the wrong one reported the video as private.
+static NSString *sciActiveVideoID = nil;
+
+/// What the format request did, client by client.
+static NSMutableArray<NSString *> *sciStreamAttempts = nil;
+
++ (void)recordActiveVideoID:(NSString *)videoID {
+    if (!videoID.length) return;
+
+    sciActiveVideoID = [videoID copy];
+
+    // Cleared with the video, so the attempts listed always belong to the one on screen.
+    sciStreamAttempts = nil;
+}
+
++ (NSString *)activeVideoID { return sciActiveVideoID; }
+
++ (void)recordStreamAttempt:(NSString *)line {
+    if (!line.length) return;
+    if (!sciStreamAttempts) sciStreamAttempts = [NSMutableArray array];
+
+    // Bounded: two clients per video, and a run that somehow retried without end must
+    // not turn the report into a log file.
+    if (sciStreamAttempts.count < 8) [sciStreamAttempts addObject:line];
+}
 + (NSString *)lastVideoTitle { return sciLastVideoTitle; }
 
 + (NSString *)appVersion {

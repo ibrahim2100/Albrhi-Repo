@@ -3,6 +3,11 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.7.2
+
+- Fixes the build of 0.7.1, which never shipped: the diagnostics header promised three
+  things the code behind it did not have. Everything 0.7.1 describes is in this one.
+
 ## v0.7.1
 
 - **The download was asking YouTube about the wrong video.** A report made it plain:
