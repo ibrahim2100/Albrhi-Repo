@@ -3,6 +3,25 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.8.4
+
+- Includes the crash fix from 0.8.3, which never had a chance to be installed.
+- **Looks for the video's formats in five more places.** Comparing against DLEasy — whose
+  downloading works — showed it reaching them by different names than the two tweaks
+  looked at before it. None of the names is guaranteed to be the right one on your build,
+  so all of them are tried, and the report says which one actually answered.
+- That is the useful part: rather than another guess, the next report will name the exact
+  step where the search succeeds or stops.
+
+**What is now known for certain**, from the fixed measurement in 0.8.2 and 0.8.3:
+
+- The streams the app keeps for *playback* carry no download link. Not under any name, and
+  not in the format details nested inside them. That question is closed.
+- Asking YouTube directly over the network is refused: two identities rejected outright,
+  two others answered properly and said the video was unavailable to them.
+- Which leaves the player's own response — the one place that has never yet been reached
+  without something failing first. This release is about reaching it.
+
 ## v0.8.3
 
 - **Fixes the crash in 0.8.2.** Install this over it. Holding a video to save it took

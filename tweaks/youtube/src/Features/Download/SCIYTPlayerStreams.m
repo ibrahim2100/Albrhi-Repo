@@ -66,36 +66,6 @@ static __weak id sciPlayer = nil;
     return SCIGetString(object, name);
 }
 
-/// Every player response the controller can offer.
-///
-/// Two places, because they are not always both populated: the controller's own, and the
-/// one hanging off the video it has active.
-+ (NSArray *)playerResponses {
-    id player = sciPlayer;
-    if (!player) return @[];
-
-    NSMutableArray *responses = [NSMutableArray array];
-
-    id direct = SCIGet(player, @"contentPlayerResponse");
-    if (direct) [responses addObject:direct];
-
-    id activeVideo = SCIGet(player, @"activeVideo");
-    id fromVideo = SCIGet(activeVideo, @"contentPlayerResponse");
-    if (fromVideo && ![responses containsObject:fromVideo]) {
-        [responses addObject:fromVideo];
-    }
-
-    // And the one the overlay was handed, which the diagnostics page has been holding
-    // since 0.1.0. It costs nothing to add, it is a YTIPlayerResponse directly rather
-    // than a wrapper, and if the two above are empty on this build it may not be.
-    id captured = [SCIYTDiagnostics lastPlayerResponse];
-    if (captured && ![responses containsObject:captured]) {
-        [responses addObject:captured];
-    }
-
-    return responses;
-}
-
 ///
 /// What the walk found at each step, as one line for the report.
 ///
@@ -115,6 +85,59 @@ static void SCITrace(NSString *step, id value) {
 
 + (NSString *)lastTrace {
     return sciTrace.length ? [sciTrace copy] : nil;
+}
+
+/// Every player response the controller can offer.
+///
+/// Two places, because they are not always both populated: the controller's own, and the
+/// one hanging off the video it has active.
++ (NSArray *)playerResponses {
+    id player = sciPlayer;
+    if (!player) return @[];
+
+    NSMutableArray *responses = [NSMutableArray array];
+
+    // Two names for the response and two for the video, because two working tweaks reach
+    // it by different ones. YouMod takes -contentPlayerResponse off the controller;
+    // DLEasy takes -playerResponse and -singleVideo, neither of which the controller
+    // implements — so it must reach them through something else, and asking for both
+    // here costs a message send that returns nil.
+    //
+    // Only -contentPlayerResponse and -activeVideo are confirmed on
+    // YTPlayerViewController in 21.30.5. The others are leads, and the trace says which
+    // one actually answered rather than leaving it to be assumed.
+    for (NSString *name in @[@"contentPlayerResponse", @"playerResponse"]) {
+        id response = SCIGet(player, name);
+        if (response && ![responses containsObject:response]) {
+            [sciTrace appendFormat:@"%@✓ ", name];
+            [responses addObject:response];
+        }
+    }
+
+    for (NSString *videoName in @[@"activeVideo", @"singleVideo", @"currentVideo"]) {
+        id video = SCIGet(player, videoName);
+        if (!video) continue;
+
+        [sciTrace appendFormat:@"%@=%@ ", videoName, NSStringFromClass([video class])];
+
+        for (NSString *name in @[@"contentPlayerResponse", @"playerResponse"]) {
+            id response = SCIGet(video, name);
+            if (response && ![responses containsObject:response]) {
+                [sciTrace appendFormat:@"%@.%@✓ ", videoName, name];
+                [responses addObject:response];
+            }
+        }
+    }
+
+    // And the one the overlay was handed, which the diagnostics page has been holding
+    // since 0.1.0. It costs nothing to add, it is a YTIPlayerResponse directly rather
+    // than a wrapper, and if the two above are empty on this build it may not be.
+    id captured = [SCIYTDiagnostics lastPlayerResponse];
+    if (captured && ![responses containsObject:captured]) {
+        [responses addObject:captured];
+    }
+
+    return responses;
 }
 
 + (NSArray *)formatObjects {
