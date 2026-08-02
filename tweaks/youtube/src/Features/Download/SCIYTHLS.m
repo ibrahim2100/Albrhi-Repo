@@ -380,6 +380,82 @@ static NSString *SCIWithShape(NSString *message) {
     }];
 }
 
++ (void)downloadAudioFor:(SCIHLSVariant *)variant
+                progress:(void (^)(double))progress
+              completion:(void (^)(NSURL *, NSString *))completion {
+
+    // The whole saving of this route: when the soundtrack is its own playlist, asking
+    // for sound means downloading a few megabytes instead of a few hundred. The pictures
+    // are never fetched.
+    if (variant.audioPlaylistURL.length) {
+        [self downloadPlaylist:variant.audioPlaylistURL progress:progress completion:completion];
+        return;
+    }
+
+    // Otherwise there is nothing to fetch on its own, and the sound has to be taken out
+    // of the finished video. The download is the long part, so it gets the bar.
+    [self downloadVariant:variant
+                 progress:^(double fraction) { if (progress) progress(fraction * 0.95); }
+               completion:^(NSURL *file, NSString *failure) {
+        if (!file) { completion(nil, failure); return; }
+        [self stripPictures:file completion:completion];
+    }];
+}
+
+/// Keeps the sound of a finished video and throws the pictures away.
++ (void)stripPictures:(NSURL *)file completion:(void (^)(NSURL *, NSString *))completion {
+    AVURLAsset *asset = [AVURLAsset URLAssetWithURL:file options:nil];
+
+    [asset loadValuesAsynchronouslyForKeys:@[@"tracks", @"duration"] completionHandler:^{
+        AVAssetTrack *track = [asset tracksWithMediaType:AVMediaTypeAudio].firstObject;
+        if (!track) {
+            [[NSFileManager defaultManager] removeItemAtURL:file error:nil];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion(nil, SCILocalized(@"dl_no_audio_track"));
+            });
+            return;
+        }
+
+        AVMutableComposition *composition = [AVMutableComposition composition];
+        AVMutableCompositionTrack *sound =
+            [composition addMutableTrackWithMediaType:AVMediaTypeAudio
+                                     preferredTrackID:kCMPersistentTrackID_Invalid];
+
+        CMTime length = CMTIME_IS_NUMERIC(asset.duration) ? asset.duration : track.timeRange.duration;
+        NSError *error = nil;
+
+        if (![sound insertTimeRange:CMTimeRangeMake(kCMTimeZero, length)
+                            ofTrack:track atTime:kCMTimeZero error:&error]) {
+            [[NSFileManager defaultManager] removeItemAtURL:file error:nil];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion(nil, error.localizedDescription ?: SCILocalized(@"dl_failed"));
+            });
+            return;
+        }
+
+        NSURL *output = [NSURL fileURLWithPath:
+            [NSTemporaryDirectory() stringByAppendingPathComponent:
+                [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"m4a"]]];
+
+        AVAssetExportSession *export =
+            [[AVAssetExportSession alloc] initWithAsset:composition
+                                             presetName:AVAssetExportPresetPassthrough];
+        export.outputURL = output;
+        export.outputFileType = AVFileTypeAppleM4A;
+
+        [export exportAsynchronouslyWithCompletionHandler:^{
+            [[NSFileManager defaultManager] removeItemAtURL:file error:nil];
+
+            BOOL ok = (export.status == AVAssetExportSessionStatusCompleted);
+            if (!ok) [[NSFileManager defaultManager] removeItemAtURL:output error:nil];
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion(ok ? output : nil, ok ? nil : SCILocalized(@"dl_failed"));
+            });
+        }];
+    }];
+}
+
 /// Joins a video file and an audio file into one, without re-encoding either.
 ///
 /// A composition of two tracks exported passthrough: the samples are copied, and the only

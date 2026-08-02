@@ -62,4 +62,14 @@
                progress:(void (^)(double fraction))progress
              completion:(void (^)(NSURL *file, NSString *failure))completion;
 
+/// The sound alone, for someone who wanted the song and not the video.
+///
+/// Cheap when the manifest keeps its soundtracks apart, which this build does: only the
+/// audio rendition is fetched and the pictures are never downloaded at all. When it does
+/// not, there is nothing to fetch separately and the video is stripped down afterwards
+/// instead — slower, but the same file at the end.
++ (void)downloadAudioFor:(SCIHLSVariant *)variant
+                progress:(void (^)(double fraction))progress
+              completion:(void (^)(NSURL *file, NSString *failure))completion;
+
 @end

@@ -5,6 +5,7 @@
 #import "../Localization/SCILocalize.h"
 #import "../Diagnostics/SCIYTDiagnostics.h"
 #import "../Features/Download/SCIYTDownload.h"
+#import "../Features/Download/Center/SCIYTDownloadCenter.h"
 #import <objc/runtime.h>
 
 /// YouTube's red. Written out rather than read from YTCommonColorPalette: one colour is
@@ -126,6 +127,25 @@ typedef NS_ENUM(NSInteger, SCIRowKind) {
                   prefKey:SCIPrefBackgroundPlay],
     ];
 
+    // Downloads. The centre itself is the first row rather than a setting, because it is
+    // the thing someone opening this screen after saving a video came looking for.
+    SCISection *downloads = [[SCISection alloc] init];
+    downloads.title = SCILocalized(@"set_downloads_title");
+    downloads.rows = @[
+        [SCIRow disclosureRow:SCILocalized(@"set_open_centre")
+                       detail:nil
+                       symbol:@"arrow.down.circle.fill"
+                       action:^{ [SCIYTDownloadCenter present]; }],
+        [SCIRow switchRow:SCILocalized(@"set_tab_button")
+                   detail:nil
+                   symbol:@"square.grid.2x2"
+                  prefKey:SCIPrefTabButton],
+        [SCIRow switchRow:SCILocalized(@"set_auto_photos")
+                   detail:SCILocalized(@"set_auto_photos_note")
+                   symbol:@"photo.on.rectangle"
+                  prefKey:SCIPrefAutoPhotos],
+    ];
+
     // Two sections: the switch that turns it on, and the categories it governs. Split
     // because "skip sponsored parts" is one decision and "which parts count" is eight
     // more, and a single list of nine switches reads as nine equal choices.
@@ -215,7 +235,7 @@ typedef NS_ENUM(NSInteger, SCIRowKind) {
     // undiscoverable, which is the trade it makes.
     general.footer = SCILocalized(@"panel_subtitle");
 
-    self.sections = @[ads, player, sponsor, categories, general];
+    self.sections = @[downloads, ads, player, sponsor, categories, general];
 }
 
 ///

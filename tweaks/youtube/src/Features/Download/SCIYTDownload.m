@@ -1,10 +1,13 @@
-#import "SCIYTDownload.h"
+﻿#import "SCIYTDownload.h"
 #import "../../SCILog.h"
 #import "../../Localization/SCILocalize.h"
 #import "../../Diagnostics/SCIYTDiagnostics.h"
 #import "SCIYTStreamAPI.h"
 #import "SCIYTPlayerStreams.h"
 #import "SCIYTHLS.h"
+#import "Center/SCIYTLibrary.h"
+#import "Center/SCIYTChoiceSheet.h"
+#import "Center/SCIYTDownloadCenter.h"
 #import <AVFoundation/AVFoundation.h>
 #import <Photos/Photos.h>
 #import <objc/message.h>
@@ -34,7 +37,7 @@
 ///
 /// They asked MLRemoteStream, and the formatStream nested inside it, for a link under
 /// every name a link might have. A report from a real device settled it: every stream
-/// answers -URL with "?cpn=…" — a query fragment — because this build fetches ranges
+/// answers -URL with "?cpn=â€¦" â€” a query fragment â€” because this build fetches ranges
 /// over the piecewise protocol rather than downloading a file. There is no link to
 /// find under any name, and more probing would not have produced one.
 ///
@@ -47,7 +50,7 @@
 /// names iOS will happily download and then refuse to play, and the result is a file in
 /// Photos that shows a black frame. The itag says exactly which codec is inside.
 ///
-/// H.264 video, and AAC audio. VP9 and AV1 are deliberately absent — the Instagram side
+/// H.264 video, and AAC audio. VP9 and AV1 are deliberately absent â€” the Instagram side
 /// of this repository transcodes AV1 on device and it costs minutes of battery per clip;
 /// doing that here before the plain path is proven would be building the hard half first.
 ///
@@ -57,7 +60,7 @@ static NSSet<NSNumber *> *SCIPlayableVideoItags(void) {
     dispatch_once(&once, ^{
         itags = [NSSet setWithArray:@[
             @18, @22,                                  // muxed: video and audio in one file
-            @160, @133, @134, @135, @136, @137,        // H.264 video-only, 144p → 1080p
+            @160, @133, @134, @135, @136, @137,        // H.264 video-only, 144p â†’ 1080p
             @298, @299,                                // H.264 60fps, 720p and 1080p
             @264, @266,                                // H.264 1440p and 2160p
         ]];
@@ -86,7 +89,7 @@ static BOOL SCIItagIsMuxed(NSInteger itag) {
 ///
 /// Two changes, both from YouMod and both load-bearing:
 ///
-///   `n` removed — a parameter that throttles the transfer to roughly playback speed,
+///   `n` removed â€” a parameter that throttles the transfer to roughly playback speed,
 ///   which turns a two-minute download into the length of the video.
 ///
 ///   `ratebypass=yes` added, which asks for the whole file rather than a stream.
@@ -129,7 +132,7 @@ static NSString *SCIPreparedURL(NSString *urlString) {
 /// what 0.5.0 said for every one of three different causes: no streaming data at all,
 /// formats with no fetchable link, and formats in a codec iOS will not play. Those need
 /// three different answers, and telling them apart on a device meant reading the
-/// diagnostics page — for a message that could have named the reason itself.
+/// diagnostics page â€” for a message that could have named the reason itself.
 ///
 static NSInteger sciSeen = 0;
 static NSInteger sciNoURL = 0;
@@ -222,7 +225,7 @@ static NSInteger sciUnplayable = 0;
         // actually a link rather than the first that answers.
         //
         // That distinction is the whole bug. The diagnostics probe stopped at the first
-        // non-empty value; `URL` answers with the fragment "?cpn=…" on a media-layer
+        // non-empty value; `URL` answers with the fragment "?cpn=â€¦" on a media-layer
         // stream, so it reported that and never asked for anything else. Four releases
         // were spent on the conclusion that no link existed anywhere, drawn from a list
         // of one name.
@@ -323,7 +326,7 @@ static NSInteger sciUnplayable = 0;
     // The link comes first, and getting that order wrong made an earlier version of
     // this message actively misleading. A real report had twelve formats: eight in VP9
     // and AV1, and four in H.264 that this tweak accepts. It said "all in a codec iOS
-    // will not play" — because eight is more than four — when what actually stopped the
+    // will not play" â€” because eight is more than four â€” when what actually stopped the
     // download was that those four carried no link.
     //
     // Anything that survives the codec check and still cannot be fetched is the wall.
@@ -404,9 +407,9 @@ static NSInteger sciUnplayable = 0;
         local = [self formatsFromPlayer];
     } @catch (NSException *exception) {
         [SCIYTDiagnostics recordStreamAttempt:
-            [NSString stringWithFormat:@"player: threw — %@: %@",
+            [NSString stringWithFormat:@"player: threw â€” %@: %@",
              exception.name, exception.reason]];
-        SCILogV(@"download: the player walk threw — %@", exception.reason);
+        SCILogV(@"download: the player walk threw â€” %@", exception.reason);
         local = nil;
     }
 
@@ -425,7 +428,7 @@ static NSInteger sciUnplayable = 0;
 
     // There is a network round trip in front of the sheet now, so something has to say
     // so. Asking YouTube takes a moment, and a hold that appears to do nothing reads as
-    // a broken gesture — which is exactly how 0.6.0's looked while it was silently
+    // a broken gesture â€” which is exactly how 0.6.0's looked while it was silently
     // losing to YouTube's own recognisers.
     UIAlertController *waiting =
         [UIAlertController alertControllerWithTitle:SCILocalized(@"dl_title")
@@ -468,7 +471,7 @@ static NSInteger sciUnplayable = 0;
 ///
 /// Kept apart from the format-list one rather than folded into it: the two share a shape
 /// and nothing else. This has a network round trip before the sheet, a progress figure
-/// during, and a different failure vocabulary — a playlist can be fetched and turn out to
+/// during, and a different failure vocabulary â€” a playlist can be fetched and turn out to
 /// list nothing playable, which no format list can do.
 ///
 + (void)presentHLSFrom:(UIViewController *)presenter manifest:(NSString *)manifest {
@@ -496,7 +499,7 @@ static NSInteger sciUnplayable = 0;
                        completion:^(NSArray<SCIHLSVariant *> *variants, NSString *failure) {
         [SCIYTDiagnostics recordStreamAttempt:
             [NSString stringWithFormat:@"hls: %lu variants%@",
-             (unsigned long)variants.count, failure ? [@" — " stringByAppendingString:failure] : @""]];
+             (unsigned long)variants.count, failure ? [@" â€” " stringByAppendingString:failure] : @""]];
 
         done(^{
             if (!variants.count) {
@@ -504,87 +507,26 @@ static NSInteger sciUnplayable = 0;
                 return;
             }
 
-            UIAlertController *sheet =
-                [UIAlertController alertControllerWithTitle:SCILocalized(@"dl_choose_quality")
-                                                    message:[SCIYTDiagnostics lastVideoTitle]
-                                             preferredStyle:UIAlertControllerStyleActionSheet];
+            // Sound or pictures, and which size, on one screen. The action sheet this
+            // replaces was eight rows reading "1080p", "720p" and so on, with no way to
+            // ask for the sound alone and nothing to tell one row from another at a
+            // glance -- and it looked like a system warning rather than a choice.
+            NSString *title = [SCIYTDiagnostics lastVideoTitle];
+            [SCIYTChoiceSheet presentFrom:presenter
+                                 variants:variants
+                                    title:title
+                                   chosen:^(SCIHLSVariant *variant, SCIYTJobKind kind) {
+                [[SCIYTLibrary shared] startVariant:variant
+                                                kind:kind
+                                               title:title
+                                             videoID:[SCIYTDiagnostics activeVideoID]];
 
-            for (SCIHLSVariant *variant in variants) {
-                [sheet addAction:[UIAlertAction actionWithTitle:[variant label]
-                                                          style:UIAlertActionStyleDefault
-                                                        handler:^(UIAlertAction *action) {
-                    [self startHLS:variant from:presenter];
-                }]];
-            }
-
-            [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
-                                                      style:UIAlertActionStyleCancel
-                                                    handler:nil]];
-
-            // An unanchored action sheet is fatal on iPad.
-            sheet.popoverPresentationController.sourceView = presenter.view;
-            sheet.popoverPresentationController.sourceRect =
-                CGRectMake(CGRectGetMidX(presenter.view.bounds),
-                           CGRectGetMidY(presenter.view.bounds), 1, 1);
-
-            [presenter presentViewController:sheet animated:YES completion:nil];
-        });
-    }];
-}
-
-+ (void)startHLS:(SCIHLSVariant *)variant from:(UIViewController *)presenter {
-    UIAlertController *progress =
-        [UIAlertController alertControllerWithTitle:SCILocalized(@"dl_saving")
-                                            message:SCILocalized(@"dl_working")
-                                     preferredStyle:UIAlertControllerStyleAlert];
-
-    __block BOOL shown = NO;
-    __block void (^pending)(void) = nil;
-
-    void (^finish)(NSString *) = ^(NSString *message) {
-        void (^close)(void) = ^{
-            [progress dismissViewControllerAnimated:YES completion:^{
-                [self showMessage:message from:presenter];
+                // And that is the end of it here. The download is a row in the centre
+                // now, so the app is handed straight back -- watching something while a
+                // video saves is the ordinary case, not an edge one.
+                [self showMessage:SCILocalized(@"dl_started") from:presenter];
             }];
-        };
-        if (shown) close(); else pending = close;
-    };
-
-    [presenter presentViewController:progress animated:YES completion:^{
-        shown = YES;
-        if (pending) { void (^queued)(void) = pending; pending = nil; queued(); }
-    }];
-
-    [SCIYTHLS downloadVariant:variant progress:^(double fraction) {
-        // A count, because a playlist download is many small parts and a bare "working…"
-        // for two hundred megabytes reads as a hang.
-        progress.message = [NSString stringWithFormat:SCILocalized(@"dl_progress_format"),
-                            (int)(fraction * 100)];
-    } completion:^(NSURL *file, NSString *failure) {
-        if (!file) {
-            finish(failure ?: SCILocalized(@"dl_failed"));
-            return;
-        }
-
-        [self saveToPhotos:file completion:^(BOOL ok, NSString *detail) {
-            if (ok) { finish(SCILocalized(@"dl_saved")); return; }
-
-            // Downloaded, unwrapped and finished -- only the last step, handing it to
-            // Photos, did not happen. The share sheet asks the system for nothing the host
-            // app has to have declared, and "Save Video" from there works, so the file is
-            // offered rather than deleted with an apology.
-            if ([[NSFileManager defaultManager] fileExistsAtPath:file.path]) {
-                void (^offer)(void) = ^{
-                    [progress dismissViewControllerAnimated:YES completion:^{
-                        [self shareFile:file from:presenter];
-                    }];
-                };
-                if (shown) offer(); else pending = offer;
-                return;
-            }
-
-            finish(detail ?: SCILocalized(@"dl_failed"));
-        }];
+        });
     }];
 }
 
@@ -672,7 +614,7 @@ static NSInteger sciUnplayable = 0;
 /// A request that YouTube's CDN will serve.
 ///
 /// The headers are not decoration: a bare request for one of these links is refused.
-/// Identity encoding matters too — a gzipped video is not a video.
+/// Identity encoding matters too â€” a gzipped video is not a video.
 + (NSURLRequest *)requestForURL:(NSURL *)url {
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     [request setValue:@"https://www.youtube.com" forHTTPHeaderField:@"Origin"];
@@ -687,7 +629,7 @@ static NSInteger sciUnplayable = 0;
 /// No progress reporting, deliberately. A percentage would need an NSURLSession
 /// delegate object living beyond this call, and the alert it fed would still not be
 /// cancellable without more machinery again. Two transfers of a few tens of megabytes
-/// finish quickly enough that "working…" is honest, and it is one moving part instead
+/// finish quickly enough that "workingâ€¦" is honest, and it is one moving part instead
 /// of four.
 + (void)fetch:(NSString *)urlString
     extension:(NSString *)extension
@@ -736,7 +678,7 @@ static NSInteger sciUnplayable = 0;
 /// Puts a video track and an audio track into one file.
 ///
 /// AVMutableComposition rather than a remux library: both streams are already H.264 and
-/// AAC in MP4 containers — that is what the itag filter guaranteed — so nothing needs
+/// AAC in MP4 containers â€” that is what the itag filter guaranteed â€” so nothing needs
 /// re-encoding and the export is a passthrough copy. It is why this feature does not
 /// carry FFmpeg.
 + (void)mergeVideo:(NSURL *)videoURL
@@ -767,7 +709,7 @@ static NSInteger sciUnplayable = 0;
                                  preferredTrackID:kCMPersistentTrackID_Invalid];
 
     if (![video insertTimeRange:range ofTrack:videoTrack atTime:kCMTimeZero error:&videoError]) {
-        SCILogV(@"download: the picture would not go in — %@", videoError.localizedDescription);
+        SCILogV(@"download: the picture would not go in â€” %@", videoError.localizedDescription);
         completion(nil, videoError);
         return;
     }
@@ -789,7 +731,7 @@ static NSInteger sciUnplayable = 0;
                                      error:&audioError];
 
         if (!soundIsIn) {
-            SCILogV(@"download: the sound would not go in — %@", audioError.localizedDescription);
+            SCILogV(@"download: the sound would not go in â€” %@", audioError.localizedDescription);
         }
     }
 
@@ -807,7 +749,7 @@ static NSInteger sciUnplayable = 0;
         if (export.status == AVAssetExportSessionStatusCompleted) {
             completion(soundIsIn ? output : nil, nil);
         } else {
-            SCILogV(@"download: export failed — %@", export.error.localizedDescription);
+            SCILogV(@"download: export failed â€” %@", export.error.localizedDescription);
             completion(nil, export.error);
         }
     }];
@@ -1011,7 +953,7 @@ static NSInteger sciUnplayable = 0;
     NSError *error = nil;
     NSURL *destination = [NSURL fileURLWithPath:path];
     if (![[NSFileManager defaultManager] moveItemAtURL:file toURL:destination error:&error]) {
-        SCILogV(@"download: could not keep the file — %@", error.localizedDescription);
+        SCILogV(@"download: could not keep the file â€” %@", error.localizedDescription);
         return nil;
     }
     return destination;
@@ -1056,7 +998,7 @@ static NSInteger sciUnplayable = 0;
     NSBundle *host = [NSBundle mainBundle];
     if (![host objectForInfoDictionaryKey:@"NSPhotoLibraryAddUsageDescription"] &&
         ![host objectForInfoDictionaryKey:@"NSPhotoLibraryUsageDescription"]) {
-        SCILogV(@"download: the app declares no reason to add to Photos — keeping the file");
+        SCILogV(@"download: the app declares no reason to add to Photos â€” keeping the file");
         done(NO, SCILocalized(@"dl_no_photos_access"));
         return;
     }
@@ -1071,7 +1013,7 @@ static NSInteger sciUnplayable = 0;
         [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
             [PHAssetChangeRequest creationRequestForAssetFromVideoAtFileURL:file];
         } completionHandler:^(BOOL success, NSError *error) {
-            if (!success) SCILogV(@"download: Photos refused it — %@", error.localizedDescription);
+            if (!success) SCILogV(@"download: Photos refused it â€” %@", error.localizedDescription);
 
             // The temporary file has served its purpose -- but only if it reached Photos.
             // Removing it on failure too is how a download that worked ended as nothing at

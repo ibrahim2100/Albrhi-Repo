@@ -132,6 +132,36 @@ static void SCIBuildTables(void) {
         @"dl_saving": @"Saving",
         @"dl_working": @"Downloading, then writing to Photos. This stays open until it is done.",
         @"dl_saved": @"Saved to Photos.",
+
+        // The Download Centre.
+        @"dl_centre_title": @"Downloads",
+        @"dl_centre_empty": @"Nothing saved yet",
+        @"dl_centre_empty_hint": @"Hold a video to save it. What you save stays here — it does not go to Photos unless you send it.",
+        @"dl_centre_footer": @"%lu saved · %@",
+        @"dl_started": @"Saving. Watch it in Downloads.",
+        @"dl_untitled": @"Video",
+        @"dl_in_photos": @"in Photos",
+        @"dl_to_photos": @"To Photos",
+        @"dl_share": @"Share",
+        @"delete": @"Delete",
+        @"dl_audio_not_photos": @"Photos holds videos and pictures, not sound. Share it instead.",
+        @"dl_no_audio_track": @"There is no sound in this one to keep.",
+
+        // Choosing what to save.
+        @"dl_choose_title": @"Save",
+        @"dl_kind_video": @"Video",
+        @"dl_kind_audio": @"Sound",
+        @"dl_quality_header": @"Size",
+        @"dl_sound_header": @"Sound only",
+        @"dl_sound_only": @"Sound only",
+        @"dl_sound_small": @"A fraction of the size",
+
+        // Settings.
+        @"set_auto_photos": @"Also save to Photos",
+        @"set_auto_photos_note": @"Off: downloads stay in the Download Centre and go to Photos only when you send them.",
+        @"set_tab_button": @"Button beside You",
+        @"set_downloads_title": @"Downloads",
+        @"set_open_centre": @"Download Centre",
         @"dl_saved_silent": @"Saved, but without sound — the audio track would not download.",
         @"dl_failed": @"That did not work. The diagnostics page has the detail.",
         @"dl_no_permission": @"Photos access was refused, so there is nowhere to save it.",
@@ -271,6 +301,36 @@ static void SCIBuildTables(void) {
         @"dl_saving": @"جارٍ الحفظ",
         @"dl_working": @"يُنزَّل ثم يُكتب في الصور. تبقى هذه النافذة حتى ينتهي.",
         @"dl_saved": @"حُفظ في الصور.",
+
+        // مركز التحميلات.
+        @"dl_centre_title": @"التحميلات",
+        @"dl_centre_empty": @"لا شيء محفوظ بعد",
+        @"dl_centre_empty_hint": @"اضغط مطوّلًا على الفيديو لحفظه. ما تحفظه يبقى هنا — ولا يذهب إلى الصور إلا إذا أرسلته.",
+        @"dl_centre_footer": @"%lu محفوظ · %@",
+        @"dl_started": @"جارٍ الحفظ. تابعه في التحميلات.",
+        @"dl_untitled": @"فيديو",
+        @"dl_in_photos": @"في الصور",
+        @"dl_to_photos": @"إلى الصور",
+        @"dl_share": @"مشاركة",
+        @"delete": @"حذف",
+        @"dl_audio_not_photos": @"الصور تحفظ الفيديو والصور لا الصوت. شاركه بدل ذلك.",
+        @"dl_no_audio_track": @"لا صوت في هذا لحفظه.",
+
+        // اختيار ما يُحفظ.
+        @"dl_choose_title": @"حفظ",
+        @"dl_kind_video": @"فيديو",
+        @"dl_kind_audio": @"صوت",
+        @"dl_quality_header": @"الجودة",
+        @"dl_sound_header": @"الصوت فقط",
+        @"dl_sound_only": @"الصوت فقط",
+        @"dl_sound_small": @"جزء يسير من الحجم",
+
+        // الإعدادات.
+        @"set_auto_photos": @"احفظ في الصور أيضًا",
+        @"set_auto_photos_note": @"مُطفأ: تبقى التحميلات في مركز التحميلات ولا تذهب إلى الصور إلا حين ترسلها.",
+        @"set_tab_button": @"زر بجانب «أنت»",
+        @"set_downloads_title": @"التحميلات",
+        @"set_open_centre": @"مركز التحميلات",
         @"dl_saved_silent": @"حُفظ لكن بلا صوت — تعذّر تنزيل مسار الصوت.",
         @"dl_failed": @"لم ينجح ذلك. التفصيل في صفحة التشخيص.",
         @"dl_no_permission": @"رُفض الوصول إلى الصور، فلا مكان للحفظ فيه.",

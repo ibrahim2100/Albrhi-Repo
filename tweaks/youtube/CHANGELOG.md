@@ -3,6 +3,23 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.13.0
+
+- **A Download Centre, with a button beside You.** Everything saved lives in one list,
+  and tapping one plays it right there — the tweak has its own player now, so a saved
+  video does not have to leave for another app to be watched.
+- **Downloads stay yours.** They no longer go to Photos on their own. They are kept in
+  the Centre, and sending one to Photos is a swipe when you want it — or a switch in
+  settings for anyone who preferred the old ending. Sharing and deleting are swipes too.
+- **Sound on its own.** Choose sound instead of video and only the soundtrack is
+  fetched — a few megabytes instead of a few hundred, because YouTube keeps them apart.
+- **Choosing is one screen now**, with sound or video at the top and the sizes below,
+  each saying its bitrate. It replaces a list of eight identical rows that looked like a
+  system warning rather than a choice.
+- **The progress bar is out of your way.** It used to be a window that held YouTube
+  still until the download finished. It is a row in the Centre now, so saving something
+  costs you nothing — keep watching, and check on it whenever.
+
 ## v0.12.5
 
 - **The sound is now read correctly and joined correctly.** Last release got iPhone to

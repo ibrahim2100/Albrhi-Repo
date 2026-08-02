@@ -4,7 +4,7 @@
 #import "Prefs.h"
 #import "Diagnostics/SCIYTDiagnostics.h"
 
-NSString *SCIVersionString = @"v0.12.5";  // AlbrhiYT
+NSString *SCIVersionString = @"v0.13.0";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.
@@ -87,6 +87,12 @@ NSString *SCIVersionString = @"v0.12.5";  // AlbrhiYT
         SCIPrefBlockUpdateNag: @YES,
         SCIPrefHidePaidPromo: @NO,
         SCIPrefVerboseLogging: @NO,
+
+        // The button beside You is on: a Download Centre nobody can find is a Download
+        // Centre that does not exist. Saving to Photos automatically is off, which is
+        // the whole point of having somewhere else to put a download.
+        SCIPrefTabButton: @YES,
+        SCIPrefAutoPhotos: @NO,
 
         // SponsorBlock on, and its three least arguable categories with it: a paid
         // plug, the creator's own promotion, and a subscribe reminder are what people

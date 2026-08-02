@@ -15,6 +15,10 @@ include $(THEOS)/makefiles/common.mk
 TWEAK_NAME = AlbrhiYT
 
 $(TWEAK_NAME)_FILES = $(shell find src -type f \( -iname \*.x -o -iname \*.xm -o -iname \*.m \))
-$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore AVFoundation CoreMedia Photos
+
+# AVKit is here for the Download Centre's player and nothing else: a saved video is
+# played inside the tweak rather than handed to another app, and AVPlayerViewController
+# is the whole of that feature.
+$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore AVFoundation AVKit CoreMedia Photos
 
 include $(ROOT)/shared/tweak.mk

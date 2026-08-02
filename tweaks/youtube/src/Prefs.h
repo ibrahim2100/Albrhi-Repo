@@ -13,6 +13,15 @@
 #define SCIPrefBlockUpdateNag   @"block_update_nag"
 #define SCIPrefVerboseLogging   @"verbose_logging"
 
+/// Downloads.
+///
+/// `SCIPrefAutoPhotos` defaults to **off**, and that is the change 0.13.0 is about: a
+/// download used to go to Photos and nowhere else, which meant the tweak decided where
+/// someone's video lived. Now it stays in the Download Centre and going to Photos is a
+/// swipe, or this switch for anyone who wants the old ending back.
+#define SCIPrefAutoPhotos       @"auto_save_photos"
+#define SCIPrefTabButton        @"tab_download_button"
+
 /// SponsorBlock. One key for the feature, one per category.
 ///
 /// Per-category rather than a single switch, because these are not the same request of
