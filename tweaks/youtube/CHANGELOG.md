@@ -3,6 +3,17 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.12.5
+
+- **The sound is now read correctly and joined correctly.** Last release got iPhone to
+  read the soundtrack — it reports one proper audio track — and the joining step then
+  refused it without saying why. It was asking how long the sound was before anything had
+  read it: a bare AAC file carries no index, so its length is not known until the file has
+  been gone through, and a length that is not yet a number cannot be used to cut anything.
+  Both files are asked to measure themselves first now.
+- The two halves are also joined one at a time, so a refusal names which half it was.
+  A single message covering both is what sent the last round to the wrong track.
+
 ## v0.12.4
 
 - **The soundtrack is read by iPhone's own AAC parser now.** The device settled the last

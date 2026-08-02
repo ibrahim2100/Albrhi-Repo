@@ -395,10 +395,26 @@ static NSString *SCIWithShape(NSString *message) {
         dispatch_async(dispatch_get_main_queue(), ^{ completion(file, nil); });
     };
 
-    AVAssetTrack *videoTrack =
-        [[AVURLAsset URLAssetWithURL:video options:nil] tracksWithMediaType:AVMediaTypeVideo].firstObject;
-    AVAssetTrack *audioTrack =
-        [[AVURLAsset URLAssetWithURL:audio options:nil] tracksWithMediaType:AVMediaTypeAudio].firstObject;
+    AVURLAsset *videoAsset = [AVURLAsset URLAssetWithURL:video options:nil];
+    AVURLAsset *audioAsset = [AVURLAsset URLAssetWithURL:audio options:nil];
+
+    // Both files are made to say how long they are before anything is asked of them.
+    //
+    // A raw AAC file has no index in it. AVFoundation cannot know its length without
+    // reading the whole thing, and until it has, the track's timeRange is not a number --
+    // it is an invalid CMTime that arithmetic quietly propagates. A range built from that
+    // is what "the operation could not be completed" was: a refusal with nothing wrong in
+    // the media at all, only in a length nobody had waited for.
+    dispatch_group_t loading = dispatch_group_create();
+    for (AVURLAsset *asset in @[videoAsset, audioAsset]) {
+        dispatch_group_enter(loading);
+        [asset loadValuesAsynchronouslyForKeys:@[@"tracks", @"duration"]
+                             completionHandler:^{ dispatch_group_leave(loading); }];
+    }
+
+    dispatch_group_notify(loading, dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+    AVAssetTrack *videoTrack = [videoAsset tracksWithMediaType:AVMediaTypeVideo].firstObject;
+    AVAssetTrack *audioTrack = [audioAsset tracksWithMediaType:AVMediaTypeAudio].firstObject;
 
     // Whatever was actually obtained, rather than nothing. Every return below that hands
     // back `video` is a download that succeeded and lost its sound at the last step.
@@ -415,6 +431,23 @@ static NSString *SCIWithShape(NSString *message) {
         return;
     }
 
+    // The asset's own duration first, the track's as a fallback: for a stream with no
+    // index the two are not always both known, and either one alone is enough.
+    CMTime (^usable)(CMTime, CMTime) = ^CMTime(CMTime first, CMTime second) {
+        if (CMTIME_IS_NUMERIC(first) && CMTimeCompare(first, kCMTimeZero) > 0) return first;
+        return second;
+    };
+
+    CMTime length = usable(videoAsset.duration, videoTrack.timeRange.duration);
+    CMTime sung   = usable(audioAsset.duration, audioTrack.timeRange.duration);
+
+    if (!CMTIME_IS_NUMERIC(length) || CMTimeCompare(length, kCMTimeZero) <= 0) {
+        [SCIYTDiagnostics recordStreamAttempt:@"hls: the video will not say how long it is"];
+        finish(video);
+        return;
+    }
+    if (!CMTIME_IS_NUMERIC(sung) || CMTimeCompare(sung, kCMTimeZero) <= 0) sung = length;
+
     AVMutableComposition *composition = [AVMutableComposition composition];
     AVMutableCompositionTrack *pictures =
         [composition addMutableTrackWithMediaType:AVMediaTypeVideo
@@ -423,23 +456,25 @@ static NSString *SCIWithShape(NSString *message) {
         [composition addMutableTrackWithMediaType:AVMediaTypeAudio
                                  preferredTrackID:kCMPersistentTrackID_Invalid];
 
-    CMTime length = videoTrack.timeRange.duration;
     NSError *error = nil;
 
-    BOOL ok = [pictures insertTimeRange:CMTimeRangeMake(kCMTimeZero, length)
-                                ofTrack:videoTrack
-                                 atTime:kCMTimeZero
-                                  error:&error];
-    ok = ok && [sound insertTimeRange:CMTimeRangeMake(kCMTimeZero,
-                                          CMTimeMinimum(length, audioTrack.timeRange.duration))
-                              ofTrack:audioTrack
-                               atTime:kCMTimeZero
-                                error:&error];
+    // Separately, and each says which one it was. One generic refusal covering both sides
+    // is what sent the last round looking at the wrong track.
+    if (![pictures insertTimeRange:CMTimeRangeMake(kCMTimeZero, length)
+                           ofTrack:videoTrack atTime:kCMTimeZero error:&error]) {
+        [SCIYTDiagnostics recordStreamAttempt:[NSString stringWithFormat:
+            @"hls: pictures refused (%.1fs) — %@", CMTimeGetSeconds(length),
+            error.localizedDescription ?: @"?"]];
+        finish(video);
+        return;
+    }
 
-    if (!ok) {
-        [SCIYTDiagnostics recordStreamAttempt:
-            [@"hls: composition refused — " stringByAppendingString:
-                error.localizedDescription ?: @"?"]];
+    if (![sound insertTimeRange:CMTimeRangeMake(kCMTimeZero, CMTimeMinimum(length, sung))
+                        ofTrack:audioTrack atTime:kCMTimeZero error:&error]) {
+        [SCIYTDiagnostics recordStreamAttempt:[NSString stringWithFormat:
+            @"hls: sound refused (%.1fs of %.1fs) — %@",
+            CMTimeGetSeconds(sung), CMTimeGetSeconds(length),
+            error.localizedDescription ?: @"?"]];
         finish(video);
         return;
     }
@@ -466,6 +501,7 @@ static NSString *SCIWithShape(NSString *message) {
             finish(video);
         }
     }];
+    });
 }
 
 /// Fetches one playlist -- video or audio, the shapes are the same -- as an .mp4.
