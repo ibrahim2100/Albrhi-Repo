@@ -200,6 +200,25 @@ static void SCITrace(NSString *step, id value) {
         SCITrace(@"streamingData", streamingData);
         if (!streamingData) continue;
 
+        // The manifest-level links, which nothing has looked at yet.
+        //
+        // Every per-format link is absent on this build -- measured through four paths
+        // now -- but a streaming data carries three more URLs of its own, one level up
+        // from the formats. An HLS or DASH manifest is a list of ordinary http segment
+        // links, and iOS has native support for fetching HLS; serverAbrStreamingURL is
+        // the piecewise protocol's own endpoint and means the opposite.
+        //
+        // Which of the three is populated decides whether downloading is a week of work
+        // or a different project, so the report says plainly which one answered.
+        for (NSString *name in @[@"hlsManifestURL", @"dashManifestURL", @"serverAbrStreamingURL"]) {
+            NSString *manifest = SCIGetString(streamingData, name);
+            if (!manifest.length) continue;
+
+            NSString *head = manifest.length > 70
+                ? [[manifest substringToIndex:70] stringByAppendingString:@"…"] : manifest;
+            [sciTrace appendFormat:@"%@=%@ ", name, head];
+        }
+
         // Both lists. adaptiveFormatsArray is where the quality ladder lives;
         // formatStreamsArray carries the muxed ones, which need no joining at all.
         for (NSString *key in @[@"adaptiveFormatsArray", @"formatStreamsArray"]) {
@@ -223,8 +242,26 @@ static void SCITrace(NSString *step, id value) {
     // The reference tweak whose downloading works reads both sources and appends
     // whichever answers. So does this now, and the caller reads every name rather than
     // the first.
-    id mlStreamingData = SCIGet(SCIGet(sciPlayer, @"activeVideo"), @"streamingData");
+    // Reached through the playback data's own video, not the controller's -activeVideo.
+    //
+    // That returned a YTSingleVideoController, which has no streaming data on it, so this
+    // whole source was silently empty. YTPlaybackData answers -video with the media-layer
+    // object directly, which is one more thing that argument was already carrying.
+    id mlVideo = SCIGet(sciPlaybackData, @"video") ?: SCIGet(sciPlayer, @"activeVideo");
+    SCITrace(@"mlVideo", mlVideo);
+
+    id mlStreamingData = SCIGet(mlVideo, @"streamingData");
     SCITrace(@"mlStreamingData", mlStreamingData);
+
+    // The media layer keeps a master playlist of its own, and it is a different field
+    // from the response's. Worth a line either way: it is the one URL on this side that
+    // was never asked for.
+    NSString *master = SCIGetString(mlStreamingData, @"HLSMasterPlaylistURL");
+    if (master.length) {
+        NSString *head = master.length > 70
+            ? [[master substringToIndex:70] stringByAppendingString:@"…"] : master;
+        [sciTrace appendFormat:@"HLSMasterPlaylistURL=%@ ", head];
+    }
 
     id mlStreams = SCIGet(mlStreamingData, @"adaptiveStreams");
     if ([mlStreams isKindOfClass:[NSArray class]]) {

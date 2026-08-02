@@ -3,6 +3,26 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.9.1
+
+- **0.9.0's change worked**: the search now reaches the video's real format list, all
+  twenty of them, through the information YouTube hands over when a video starts. That
+  part is solved and stays solved.
+- And it answered the question that has been open since the beginning, definitively:
+  **twelve of those formats are in codecs iOS cannot play, and the other eight carry no
+  download link.** Not one. This build of YouTube fetches video in pieces and never
+  receives a plain link for anything — which is why nothing found anywhere in the app has
+  ever had one.
+- So this release looks one level up, at the three addresses the video's stream list holds
+  for *itself* rather than for each quality. One of them is a playlist of ordinary
+  segments — the kind iOS knows how to download natively — and another is the piecewise
+  protocol's own endpoint, which would mean the opposite. **Which one is present decides
+  whether saving videos is a week of work or a different project entirely**, and nothing
+  has ever looked.
+- Also fixed: a whole second source was quietly finding nothing, because it was reaching
+  for the video through something that does not hold one. It goes through the right object
+  now.
+
 ## v0.9.0
 
 - **The trace from 0.8.4 found it, and it was an argument being thrown away.**
