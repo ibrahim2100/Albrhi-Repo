@@ -567,7 +567,23 @@ static NSInteger sciUnplayable = 0;
         }
 
         [self saveToPhotos:file completion:^(BOOL ok, NSString *detail) {
-            finish(ok ? SCILocalized(@"dl_saved") : (detail ?: SCILocalized(@"dl_failed")));
+            if (ok) { finish(SCILocalized(@"dl_saved")); return; }
+
+            // Downloaded, unwrapped and finished -- only the last step, handing it to
+            // Photos, did not happen. The share sheet asks the system for nothing the host
+            // app has to have declared, and "Save Video" from there works, so the file is
+            // offered rather than deleted with an apology.
+            if ([[NSFileManager defaultManager] fileExistsAtPath:file.path]) {
+                void (^offer)(void) = ^{
+                    [progress dismissViewControllerAnimated:YES completion:^{
+                        [self shareFile:file from:presenter];
+                    }];
+                };
+                if (shown) offer(); else pending = offer;
+                return;
+            }
+
+            finish(detail ?: SCILocalized(@"dl_failed"));
         }];
     }];
 }
@@ -1015,10 +1031,40 @@ static NSInteger sciUnplayable = 0;
 }
 
 + (void)saveToPhotos:(NSURL *)file completion:(void (^)(BOOL ok, NSString *detail))completion {
+    // Every answer below leaves on the main queue, and that is the whole of the crash that
+    // arrived the instant a download first reached 100%.
+    //
+    // Photos calls its handlers on a thread of its own choosing. Both of them, and the
+    // caller does not merely note the result -- it dismisses the progress sheet and puts
+    // an alert up. That is UIKit from whatever thread the framework happened to pick, and
+    // UIKit off the main thread does not fail politely.
+    //
+    // It looked like a download bug because it only ever happened at the end. It is a
+    // threading bug, and it was there before any of this could reach the end at all.
+    void (^done)(BOOL, NSString *) = ^(BOOL ok, NSString *detail) {
+        dispatch_async(dispatch_get_main_queue(), ^{ completion(ok, detail); });
+    };
+
+    // Asking for access the host app never declared a reason for is not refused -- iOS
+    // terminates the process on the spot, before the handler above ever runs.
+    //
+    // The app that has to declare it is YouTube, not this tweak: the keys come from the
+    // main bundle's Info.plist and a tweak has no say in what is in it. YouTube declares
+    // *reading* the library, because it has a picker. Adding to it is a separate key it
+    // has no reason to carry. So this is checked rather than discovered from a crash, and
+    // when it is missing the file is kept instead of thrown away.
+    NSBundle *host = [NSBundle mainBundle];
+    if (![host objectForInfoDictionaryKey:@"NSPhotoLibraryAddUsageDescription"] &&
+        ![host objectForInfoDictionaryKey:@"NSPhotoLibraryUsageDescription"]) {
+        SCILogV(@"download: the app declares no reason to add to Photos — keeping the file");
+        done(NO, SCILocalized(@"dl_no_photos_access"));
+        return;
+    }
+
     [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelAddOnly
                                                handler:^(PHAuthorizationStatus status) {
         if (status != PHAuthorizationStatusAuthorized && status != PHAuthorizationStatusLimited) {
-            completion(NO, SCILocalized(@"dl_no_permission"));
+            done(NO, SCILocalized(@"dl_no_permission"));
             return;
         }
 
@@ -1027,10 +1073,12 @@ static NSInteger sciUnplayable = 0;
         } completionHandler:^(BOOL success, NSError *error) {
             if (!success) SCILogV(@"download: Photos refused it — %@", error.localizedDescription);
 
-            // The temporary file has served its purpose either way.
-            [[NSFileManager defaultManager] removeItemAtURL:file error:nil];
+            // The temporary file has served its purpose -- but only if it reached Photos.
+            // Removing it on failure too is how a download that worked ended as nothing at
+            // all, with no second chance to hand it anywhere else.
+            if (success) [[NSFileManager defaultManager] removeItemAtURL:file error:nil];
 
-            completion(success, success ? nil : SCILocalized(@"dl_failed"));
+            done(success, success ? nil : SCILocalized(@"dl_failed"));
         }];
     }];
 }

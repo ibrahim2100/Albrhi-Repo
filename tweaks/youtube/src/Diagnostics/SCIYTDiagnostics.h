@@ -42,8 +42,14 @@
 
 /// What the format request did, client by client. Recorded so a failure says which one
 /// was asked and what it answered, instead of one sentence covering every cause.
+///
+/// Safe to call from any thread, which it has to be: the download records from its own
+/// queues while the report is being rendered on the main one.
 + (void)recordStreamAttempt:(NSString *)line;
 + (void)clearStreamAttempts;
+
+/// A snapshot of the lines recorded so far. Whoever enumerates must hold a copy.
++ (NSArray<NSString *> *)attempts;
 + (NSString *)lastVideoTitle;
 
 /// Recorded by the settings hooks: the groups YouTube's settings screen is built

@@ -228,17 +228,41 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
 
 + (NSString *)activeVideoID { return sciActiveVideoID; }
 
+/// Guarded, because this list is the one piece of the report written from more than one
+/// thread, and it crashed the app the moment a second writer appeared.
+///
+/// Until 0.12.0 only the format request wrote here, always from its own network callback,
+/// and one writer needs no lock. Then the transport converter began recording what a
+/// stream declared -- from the conversion queue, while the report was being rendered on
+/// the main thread. Mutating an array while it is enumerated is not a race that sometimes
+/// loses a line; it throws, and the app went down the instant a download reached 100%.
+///
+/// The lock is on the class object so every path here shares one, and `attempts` hands
+/// out a copy: a caller holding a snapshot cannot be enumerating the live array.
 + (void)clearStreamAttempts {
-    sciStreamAttempts = nil;
+    @synchronized (self) {
+        sciStreamAttempts = nil;
+    }
 }
 
 + (void)recordStreamAttempt:(NSString *)line {
     if (!line.length) return;
-    if (!sciStreamAttempts) sciStreamAttempts = [NSMutableArray array];
 
-    // Bounded: two clients per video, and a run that somehow retried without end must
-    // not turn the report into a log file.
-    if (sciStreamAttempts.count < 8) [sciStreamAttempts addObject:line];
+    @synchronized (self) {
+        if (!sciStreamAttempts) sciStreamAttempts = [NSMutableArray array];
+
+        // Bounded: two clients per video, and a run that somehow retried without end must
+        // not turn the report into a log file. Raised from eight, because the download
+        // path now contributes lines of its own and the earliest ones -- which say what
+        // the playlist was -- must not be pushed out by the latest.
+        if (sciStreamAttempts.count < 16) [sciStreamAttempts addObject:[line copy]];
+    }
+}
+
++ (NSArray<NSString *> *)attempts {
+    @synchronized (self) {
+        return [sciStreamAttempts copy];
+    }
 }
 + (NSString *)lastVideoTitle { return sciLastVideoTitle; }
 
@@ -319,9 +343,12 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
         [out appendFormat:@"  %@: %@\n", SCILocalized(@"diag_active_video"), sciActiveVideoID];
     }
 
-    if (sciStreamAttempts.count) {
+    // A snapshot, never the live array: a download writing its next line while this
+    // enumerates is the crash described above.
+    NSArray<NSString *> *attempts = [self attempts];
+    if (attempts.count) {
         [out appendFormat:@"\n%@\n", SCILocalized(@"diag_stream_attempts")];
-        for (NSString *line in sciStreamAttempts) {
+        for (NSString *line in attempts) {
             [out appendFormat:@"  %@\n", line];
         }
     }

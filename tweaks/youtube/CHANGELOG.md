@@ -3,6 +3,20 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.12.1
+
+- **YouTube no longer closes the moment a download finishes.** It was not the download.
+  Photos answers on a thread of its own, and the reply was being used to close the
+  progress window and show a message right there — screen work from the wrong place, which
+  iOS does not forgive. Every reply now comes back where it belongs. This was happening
+  long before saving ever got far enough to reach it.
+- **And if the video cannot go to Photos, it is handed to you instead.** Permission to add
+  to the photo library belongs to YouTube, not to this tweak, and YouTube need not have
+  it. Rather than asking anyway — which ends the app instantly — that is checked first,
+  and the finished video opens in the share sheet where **Save Video** works normally.
+- A downloaded file is no longer deleted when saving fails. It used to be, so a download
+  that had worked from beginning to end came to nothing.
+
 ## v0.12.0
 
 - **Saved videos have their sound.** They were arriving silent, and the reason is that
