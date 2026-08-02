@@ -271,6 +271,20 @@ static NSString *sciMarkerBar = nil;
         [out appendFormat:@"  %@: %@\n", SCILocalized(@"diag_video_id"), sciLastVideoID];
     }
 
+    // Printed beside it, and only when the two disagree. A silent mismatch here is what
+    // sent the download asking YouTube about a video nobody was watching; the ids being
+    // equal is the normal case and not worth a line.
+    if (sciActiveVideoID.length && ![sciActiveVideoID isEqualToString:sciLastVideoID]) {
+        [out appendFormat:@"  %@: %@\n", SCILocalized(@"diag_active_video"), sciActiveVideoID];
+    }
+
+    if (sciStreamAttempts.count) {
+        [out appendFormat:@"\n%@\n", SCILocalized(@"diag_stream_attempts")];
+        for (NSString *line in sciStreamAttempts) {
+            [out appendFormat:@"  %@\n", line];
+        }
+    }
+
     // Enumerated rather than described: MLStreamingData is not a protobuf and its
     // -description is a class name and an address, which is what this section printed
     // for four releases.

@@ -1,6 +1,7 @@
 #import "SCIYTStreamAPI.h"
 #import "../../SCILog.h"
 #import "../../Localization/SCILocalize.h"
+#import "../../Diagnostics/SCIYTDiagnostics.h"
 
 ///
 /// The client identities to ask as, in order.
@@ -147,6 +148,13 @@ static NSArray<NSDictionary *> *SCIClients(void) {
         // because the two are refused by different videos.
         void (^next)(NSString *) = ^(NSString *why) {
             SCILogV(@"streams: %@ did not answer usefully — %@", client[@"name"], why);
+
+            // Written down, because "no downloadable formats" covers a client that was
+            // refused, one that answered without links, and one that never replied --
+            // and those need different fixes.
+            [SCIYTDiagnostics recordStreamAttempt:
+                [NSString stringWithFormat:@"%@ (%@): %@", client[@"name"], videoID, why]];
+
             [self ask:index + 1 forVideo:videoID completion:completion];
         };
 
@@ -190,6 +198,9 @@ static NSArray<NSDictionary *> *SCIClients(void) {
         }
 
         SCILogV(@"streams: %@ answered with %ld links", client[@"name"], (long)withLinks);
+
+        [SCIYTDiagnostics recordStreamAttempt:
+            [NSString stringWithFormat:@"%@ (%@): %ld links", client[@"name"], videoID, (long)withLinks]];
 
         dispatch_async(dispatch_get_main_queue(), ^{
             completion(streamingData, nil);

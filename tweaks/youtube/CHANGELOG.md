@@ -3,6 +3,22 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.7.1
+
+- **The download was asking YouTube about the wrong video.** A report made it plain:
+  SponsorBlock was working on one video id while the diagnostics page reported a different
+  one as the last played. The download used the second — so it asked YouTube for a video
+  nobody was watching, and reported back that it was private or blocked. It was neither.
+- The cause: YouTube builds a video object for each clip it *preloads*, not only the one
+  on screen, so "the last one made" is not "the one playing". The download now uses the
+  video the player actually started, which is the same one SponsorBlock has been using
+  correctly all along.
+- The diagnostics page prints both ids when they disagree, so this cannot hide again.
+- And it now lists every attempt to fetch formats — which client was asked, and what it
+  answered. "No downloadable formats" covered a client being refused, a client answering
+  without links, and a client never replying; those need different fixes and now they read
+  differently.
+
 ## v0.7.0
 
 - **Downloading works.** This is the release the last six were leading to.

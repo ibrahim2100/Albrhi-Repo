@@ -76,6 +76,9 @@ static void SCIBuildTables(void) {
         @"dl_api_no_links": @"YouTube did not return any downloadable formats for this video. It may be private, age restricted, or blocked where you are.",
         @"dl_why_unplayable_api": @"Found %ld formats, all in a codec iOS will not play. Saving one would give you a file that shows a black screen.",
 
+        @"diag_active_video": @"Actually playing",
+        @"diag_stream_attempts": @"Asking YouTube for formats",
+
         @"verbose_logging": @"Verbose logging",
         @"verbose_logging_note": @"Writes what the tweak is doing to the system log. Leave this off unless you are collecting a report — it is noisy and slows things down.",
 
@@ -199,6 +202,9 @@ static void SCIBuildTables(void) {
         @"dl_asking": @"جارٍ سؤال يوتيوب عن الصيغ…",
         @"dl_api_no_links": @"يوتيوب لم يُرجع أي صيغة قابلة للتحميل لهذا الفيديو. قد يكون خاصًّا أو مقيَّدًا بالعمر أو محجوبًا في بلدك.",
         @"dl_why_unplayable_api": @"وُجدت %ld صيغة، كلها بترميز لا يشغّله iOS. حفظ أيّ منها يعطيك ملفًا بشاشة سوداء.",
+
+        @"diag_active_video": @"المُشغَّل فعلًا",
+        @"diag_stream_attempts": @"سؤال يوتيوب عن الصيغ",
 
         @"verbose_logging": @"سجل مفصّل",
         @"verbose_logging_note": @"يكتب ما تفعله الأداة في سجل النظام. اتركه مطفأً إلا إذا كنت تجمع تقريرًا — فهو مزعج ويُبطئ الأداء.",

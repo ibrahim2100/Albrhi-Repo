@@ -23,6 +23,20 @@
 /// in step for no gain.
 + (id)lastStreamingData;
 + (NSString *)lastVideoID;
+
+/// The video the player actually activated, which is not always the last MLVideo made.
+///
+/// A report showed SponsorBlock working on VTBoGy0EynQ while this page reported
+/// XDRKSAqd4AA as the last video: MLVideo objects are created for videos the app is
+/// preloading as well as the one on screen, and the download was asking YouTube about
+/// whichever came last rather than the one being watched. Two ids, two different videos,
+/// and a download that could only fail.
++ (void)recordActiveVideoID:(NSString *)videoID;
++ (NSString *)activeVideoID;
+
+/// What the format request did, client by client. Recorded so a failure says which one
+/// was asked and what it answered, instead of one sentence covering every cause.
++ (void)recordStreamAttempt:(NSString *)line;
 + (NSString *)lastVideoTitle;
 
 /// Recorded by the settings hooks: the groups YouTube's settings screen is built

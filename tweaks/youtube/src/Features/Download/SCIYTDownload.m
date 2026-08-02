@@ -256,7 +256,13 @@ static NSInteger sciUnplayable = 0;
 + (void)presentFrom:(UIViewController *)presenter {
     if (!presenter) return;
 
-    NSString *videoID = [SCIYTDiagnostics lastVideoID];
+    // The activated video first, and the last MLVideo only as a fallback.
+    //
+    // They are not the same thing: MLVideo objects are created for videos the app is
+    // preloading as well as the one on screen. A report showed SponsorBlock working on
+    // one id while this asked YouTube about another, which is a download that could only
+    // ever fail -- and failed with a message blaming the video for being private.
+    NSString *videoID = [SCIYTDiagnostics activeVideoID] ?: [SCIYTDiagnostics lastVideoID];
     if (!videoID.length) {
         [self showMessage:SCILocalized(@"dl_why_no_data") from:presenter];
         return;

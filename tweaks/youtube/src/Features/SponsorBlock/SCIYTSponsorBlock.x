@@ -509,6 +509,12 @@ static void SCIArmDownloadGesture(UIView *view) {
 
     if ([videoID isEqualToString:sciCurrentVideoID] && sciSegments) return;
 
+    // The id the player actually activated, handed to the page that everything else
+    // reads from. MLVideo objects are made for preloaded videos too, so the id captured
+    // there is not reliably the one on screen -- a report showed the two disagreeing
+    // while the download was asking YouTube about the wrong one.
+    [SCIYTDiagnostics recordActiveVideoID:videoID];
+
     SCIResetForNewVideo(videoID);
 
     // Captured by value: by the time this returns, the user may well be on a different
