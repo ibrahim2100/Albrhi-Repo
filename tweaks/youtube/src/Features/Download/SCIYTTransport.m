@@ -417,6 +417,63 @@ static NSInteger SCIFindSync(const uint8_t *bytes, NSUInteger length) {
     return streams;
 }
 
+/// The length of an ID3 tag at `at`, or 0 if there is not one there.
+///
+/// Validated rather than matched on the three letters: those three bytes turn up in a few
+/// megabytes of audio by chance about one time in six, and a false one would read a length
+/// out of the audio itself and skip forward by it -- throwing away the rest of the track
+/// without a word.
+static NSUInteger SCIID3Length(const uint8_t *bytes, NSUInteger at, NSUInteger length) {
+    if (at + 10 > length) return 0;
+    if (bytes[at] != 'I' || bytes[at + 1] != 'D' || bytes[at + 2] != '3') return 0;
+    if (bytes[at + 3] == 0xFF || bytes[at + 4] == 0xFF) return 0;       // the version bytes
+
+    // The length is four syncsafe bytes: seven bits each, the top bit always clear so it
+    // can never look like a frame sync. Five constraints together, which chance does not
+    // meet by accident.
+    for (int i = 6; i < 10; i++) { if (bytes[at + i] & 0x80) return 0; }
+
+    NSUInteger size = ((NSUInteger)bytes[at + 6] << 21) | ((NSUInteger)bytes[at + 7] << 14)
+                    | ((NSUInteger)bytes[at + 8] << 7)  |  (NSUInteger)bytes[at + 9];
+
+    return (at + 10 + size <= length) ? 10 + size : 0;
+}
+
+/// The same as `demux:`, for audio that arrives with no wrapper at all.
+///
+/// An HLS audio rendition need not be a transport stream. "Packed audio" is the bare AAC
+/// frames with an ID3 tag in front of each part and nothing else around them -- which is
+/// what this build serves, and what 0.12.2 handed to AVFoundation by renaming the file.
+/// Renaming was not enough: twenty-six tags sit inside the joined file, not just at its
+/// start, and that is a shape a reader may make no sense of.
+///
+/// Nothing new is needed to read it. The frames are identical to the ones the transport
+/// path pulls out of PES packets, so the same parser takes them -- only the tags between
+/// the runs have to be stepped over first.
++ (NSDictionary<NSNumber *, SCIYTElementary *> *)packedAudio:(NSData *)input
+                                                      handle:(NSFileHandle *)scratch {
+    SCIYTElementary *stream = [[SCIYTElementary alloc] init];
+    stream.streamType = kSCIStreamTypeAAC;
+
+    const uint8_t *bytes = input.bytes;
+    NSUInteger length = input.length;
+    NSUInteger at = 0;
+    uint64_t offset = 0;
+
+    while (at < length) {
+        NSUInteger tag = SCIID3Length(bytes, at, length);
+        if (tag) { at += tag; continue; }
+
+        NSUInteger end = at + 1;
+        while (end < length && !SCIID3Length(bytes, end, length)) end++;
+
+        [self convertADTS:bytes + at length:end - at stream:stream handle:scratch offset:&offset];
+        at = end;
+    }
+
+    return [stream count] ? @{@(0): stream} : @{};
+}
+
 
 #pragma mark - Pass two: hand the frames to Apple
 
@@ -514,7 +571,11 @@ static NSInteger SCIFindSync(const uint8_t *bytes, NSUInteger length) {
         NSFileHandle *scratch = [NSFileHandle fileHandleForWritingAtPath:scratchPath];
         if (!scratch) { finish(nil, SCILocalized(@"dl_ts_empty")); return; }
 
-        NSDictionary<NSNumber *, SCIYTElementary *> *streams = [self demux:source handle:scratch];
+        // Which of the two shapes arrived. Both end in the same place -- a table of frames
+        // for Apple to index -- and only the unwrapping differs.
+        NSDictionary<NSNumber *, SCIYTElementary *> *streams =
+            [self isTransportStream:input] ? [self demux:source handle:scratch]
+                                           : [self packedAudio:source handle:scratch];
         [scratch closeFile];
 
         SCIYTElementary *video = nil, *audio = nil;

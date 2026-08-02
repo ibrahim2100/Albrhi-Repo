@@ -3,6 +3,18 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.12.3
+
+- **The soundtrack is read, not handed over.** 0.12.2 identified it correctly and gave it
+  a name iPhone would accept — but the file has a marker tag buried at the start of each
+  of its twenty-six pieces, not only at the front, and nothing was obliged to make sense
+  of that. It didn't, and said nothing. The tags are stepped over now and the sound is
+  unpacked by the same code that already unpacks the picture. The frames were never the
+  problem; only what was wrapped around them.
+- **Every step that can lose the sound now says so in Diagnostics.** The joining stage
+  had three ways to fail and reported none of them, which is what made this take a round
+  longer than it should have.
+
 ## v0.12.2
 
 - **The sound arrives.** 0.12.0 found where YouTube keeps it and fetched it; it was then

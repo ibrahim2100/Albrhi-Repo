@@ -317,9 +317,15 @@ static NSString *SCIWithShape(NSString *message) {
 
     // Whatever was actually obtained, rather than nothing. Every return below that hands
     // back `video` is a download that succeeded and lost its sound at the last step.
+    // Every way this can fail is recorded, not only logged.
+    //
+    // It used to be logged, and that cost a round: the join was the one step between a
+    // soundtrack that had downloaded and a video that came out silent, and the report said
+    // nothing about it at all. A step that can drop the sound has to say when it does.
     if (!videoTrack || !audioTrack) {
-        SCILogV(@"hls: nothing to join — video %@, audio %@",
-                videoTrack ? @"yes" : @"no", audioTrack ? @"yes" : @"no");
+        [SCIYTDiagnostics recordStreamAttempt:
+            [NSString stringWithFormat:@"hls: nothing to join — video %@, audio %@",
+                videoTrack ? @"yes" : @"no", audioTrack ? @"yes" : @"no"]];
         finish(video);
         return;
     }
@@ -346,7 +352,9 @@ static NSString *SCIWithShape(NSString *message) {
                                 error:&error];
 
     if (!ok) {
-        SCILogV(@"hls: composition refused — %@", error.localizedDescription);
+        [SCIYTDiagnostics recordStreamAttempt:
+            [@"hls: composition refused — " stringByAppendingString:
+                error.localizedDescription ?: @"?"]];
         finish(video);
         return;
     }
@@ -366,7 +374,9 @@ static NSString *SCIWithShape(NSString *message) {
             [[NSFileManager defaultManager] removeItemAtURL:video error:nil];
             finish(output);
         } else {
-            SCILogV(@"hls: join failed — %@", export.error.localizedDescription);
+            [SCIYTDiagnostics recordStreamAttempt:
+                [@"hls: join failed — " stringByAppendingString:
+                    export.error.localizedDescription ?: @"?"]];
             [[NSFileManager defaultManager] removeItemAtURL:output error:nil];
             finish(video);
         }
@@ -595,16 +605,21 @@ static NSString *SCIWithShape(NSString *message) {
         return;
     }
 
-    // Renamed rather than converted. There is nothing wrong with these bytes -- they are
-    // exactly what an .aac file holds -- and the only thing standing between them and
-    // Apple's own reader was an extension that said mp4.
+    // Read rather than renamed. 0.12.2 gave this file an .aac name and handed it to
+    // AVFoundation, on the reasoning that the bytes were already what an .aac file holds.
+    // The bytes are -- but twenty-six ID3 tags sit *inside* the joined file, one where
+    // each part begins, and a reader is entitled to make nothing of that. It made nothing
+    // of it silently, which is the same silence this began with.
+    //
+    // So the frames come out here, by the parser that already pulls the identical frames
+    // out of transport packets. Nothing about them is unusual; only the wrapper was.
     if (SCIIsPackedAudio(joined)) {
-        NSURL *renamed = [[joined URLByDeletingPathExtension]
-                          URLByAppendingPathExtension:@"aac"];
-        if ([[NSFileManager defaultManager] moveItemAtURL:joined toURL:renamed error:nil]) {
-            [SCIYTDiagnostics recordStreamAttempt:@"hls: packed audio (ADTS), read as .aac"];
-            joined = renamed;
-        }
+        [SCIYTDiagnostics recordStreamAttempt:@"hls: packed audio, reading the frames"];
+        [SCIYTTransport convert:joined completion:^(NSURL *output, NSString *error) {
+            [[NSFileManager defaultManager] removeItemAtURL:joined error:nil];
+            completion(output, output ? nil : SCIWithShape(error ?: SCILocalized(@"dl_hls_unreadable")));
+        }];
+        return;
     }
 
     AVURLAsset *asset = [AVURLAsset URLAssetWithURL:joined options:nil];
