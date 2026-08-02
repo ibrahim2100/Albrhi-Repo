@@ -195,7 +195,6 @@ from a real build failure:
 8. project symbols used without their header, resolved transitively — the class
    half of that table builds itself from every `@interface` in the tweak's own
    headers, matched on a word boundary
-
 9. quoted imports that resolve to nothing, checked against the `-I` flags in the makefiles
 10. a header promising a method its `@implementation` never defines
 
