@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.7.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **Downloading works.**\n• The reason it did not work before is worth writing down.\n• So it asks YouTube directly instead, the same way every working YouTube downloader does: a fresh request for the video's formats, made as one of the clients that is…\n• **What that means for privacy, plainly:**\n• When YouTube refuses a video — private, age restricted, blocked in your country — the message now says which, in YouTube's own words rather than a guess.\n• No extra weight.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.6.1",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.5.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **Downloads.**\n• **No button is added to YouTube.**\n• Above 360p YouTube sends picture and sound as separate files.\n• Only formats iOS can actually play are offered, chosen by itag rather than by MIME type: YouTube serves VP9 and AV1 in containers that download happily and then show a…\n• The diagnostics page gains a \"Saveable\" line, so a video that offers nothing says so before you try.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.6.1"
+          "text": "0.7.0"
         },
         {
           "class": "DepictionTableTextView",
