@@ -63,6 +63,17 @@
 /// What the last walk found at each step, for the report. Nil until one has run.
 + (NSString *)lastTrace;
 
+/// The video's HLS playlist, or nil.
+///
+/// This is what downloading turns on. Every individual format on this build arrives
+/// without an address -- measured through the media layer, the nested format, the player
+/// response and four InnerTube clients -- but the playlist that lists them has one, and
+/// a playlist is a list of ordinary segments.
+///
+/// It is also where every working tweak ends up: YTLite reads this exact field and hands
+/// it to a bundled FFmpeg, nineteen of its twenty megabytes.
++ (NSString *)hlsManifestURL;
+
 /// One field of a format object, by selector or by key.
 ///
 /// Exposed rather than kept private because a GPBMessage answers -respondsToSelector:

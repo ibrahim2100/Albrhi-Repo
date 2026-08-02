@@ -3,6 +3,29 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.10.0
+
+- **Saving videos, at last.** Hold a video and the qualities appear; pick one and it goes
+  to Photos, with a percentage while it works.
+
+- What made it possible was the report from 0.9.2, and it is worth saying what it found:
+  every individual quality on this build arrives without an address, but **the playlist
+  that lists them has one**. Nine releases of measurement to be sure of that — through the
+  media layer, the format details nested inside it, the player's own response, and four
+  different ways of asking YouTube directly. All of them agreed.
+
+- That is also where every other tweak that can save videos ends up. The difference is
+  what they carry to do it: each of the four taken apart along the way bundles a media
+  library of 2 to 19 megabytes for this one job.
+
+- **This does not.** The pieces YouTube serves join end to end into a file iOS reads
+  directly, so the last step is a copy rather than a conversion. If a video turns out to
+  be served in the other form, it says so plainly instead of leaving something broken in
+  your library.
+
+- Qualities that would download and then refuse to play are filtered out before you are
+  offered them, not after.
+
 ## v0.9.2
 
 - Asks two more questions in the same place 0.9.1 started asking, because taking apart

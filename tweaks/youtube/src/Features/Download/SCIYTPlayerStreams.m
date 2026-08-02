@@ -73,8 +73,15 @@ static NSString *sciCPN = nil;
     sciPlayer = player;
 }
 
+/// Recorded during the walk, so asking for it later costs nothing.
+static NSString *sciManifestURL = nil;
+
 + (void)rememberPlaybackData:(id)playbackData {
     sciPlaybackData = playbackData;
+
+    // Cleared with the video. A stale manifest would download whatever was playing
+    // before, which is the same class of fault as the stale video id in 0.7.1.
+    sciManifestURL = nil;
 
     NSString *cpn = SCIGetString(playbackData, @"CPN");
     sciCPN = cpn.length ? cpn : nil;
@@ -111,6 +118,13 @@ static void SCITrace(NSString *step, id value) {
 
 + (NSString *)lastTrace {
     return sciTrace.length ? [sciTrace copy] : nil;
+}
+
++ (NSString *)hlsManifestURL {
+    // Walk first if nothing has yet, so holding the video works before the settings
+    // screen has ever been opened.
+    if (!sciManifestURL) [self formatObjects];
+    return sciManifestURL;
 }
 
 /// Every player response the controller can offer.
@@ -214,6 +228,11 @@ static void SCITrace(NSString *step, id value) {
             NSString *manifest = SCIGetString(streamingData, name);
             if (!manifest.length) continue;
 
+            // Kept, because this is the one that downloading runs on. Not the ABR
+            // endpoint: that is the piecewise protocol's own address and means the
+            // opposite of a playlist.
+            if ([name isEqualToString:@"hlsManifestURL"]) sciManifestURL = [manifest copy];
+
             NSString *head = manifest.length > 70
                 ? [[manifest substringToIndex:70] stringByAppendingString:@"…"] : manifest;
             [sciTrace appendFormat:@"%@=%@ ", name, head];
@@ -271,6 +290,9 @@ static void SCITrace(NSString *step, id value) {
 
     NSString *master = SCIGetString(mlStreamingData, @"HLSMasterPlaylistURL");
     if (master.length) {
+        // The media layer's copy, used only if the response had none. Both sides
+        // answered with the same address on a real device, so either will do.
+        if (!sciManifestURL) sciManifestURL = [master copy];
         NSString *head = master.length > 70
             ? [[master substringToIndex:70] stringByAppendingString:@"…"] : master;
         [sciTrace appendFormat:@"HLSMasterPlaylistURL=%@ ", head];

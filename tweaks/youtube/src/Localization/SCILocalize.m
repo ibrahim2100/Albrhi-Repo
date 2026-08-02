@@ -80,6 +80,13 @@ static void SCIBuildTables(void) {
         @"diag_stream_attempts": @"Asking YouTube for formats",
 
 
+        @"dl_hls_none": @"No playlist for this video yet. Start it playing, then hold again.",
+        @"dl_hls_no_variants": @"The playlist lists no quality iOS can save. Everything in it is in a codec that would download and then not play.",
+        @"dl_hls_no_segments": @"The playlist for that quality is empty.",
+        @"dl_hls_unreadable": @"The pieces downloaded, but they do not join into a video this device can read. This build serves them in a form that needs converting.",
+        @"dl_unknown_quality": @"Unknown quality",
+        @"dl_progress_format": @"Saving… %d%%",
+
         @"verbose_logging": @"Verbose logging",
         @"verbose_logging_note": @"Writes what the tweak is doing to the system log. Leave this off unless you are collecting a report — it is noisy and slows things down.",
 
@@ -207,6 +214,13 @@ static void SCIBuildTables(void) {
         @"diag_active_video": @"المُشغَّل فعلًا",
         @"diag_stream_attempts": @"سؤال يوتيوب عن الصيغ",
 
+
+        @"dl_hls_none": @"لا توجد قائمة تشغيل لهذا الفيديو بعد. شغّله ثم اضغط مطوّلًا مرة أخرى.",
+        @"dl_hls_no_variants": @"القائمة لا تعرض جودة يستطيع iOS حفظها. كل ما فيها بترميز يُحمَّل ثم لا يعمل.",
+        @"dl_hls_no_segments": @"قائمة تلك الجودة فارغة.",
+        @"dl_hls_unreadable": @"نُزّلت الأجزاء، لكنها لا تجتمع في فيديو يقرأه هذا الجهاز. هذا البناء يقدّمها بصيغة تحتاج تحويلًا.",
+        @"dl_unknown_quality": @"جودة غير معروفة",
+        @"dl_progress_format": @"جارٍ الحفظ… %d%%",
 
         @"verbose_logging": @"سجل مفصّل",
         @"verbose_logging_note": @"يكتب ما تفعله الأداة في سجل النظام. اتركه مطفأً إلا إذا كنت تجمع تقريرًا — فهو مزعج ويُبطئ الأداء.",

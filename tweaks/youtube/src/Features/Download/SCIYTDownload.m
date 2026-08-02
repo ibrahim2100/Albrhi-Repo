@@ -4,6 +4,7 @@
 #import "../../Diagnostics/SCIYTDiagnostics.h"
 #import "SCIYTStreamAPI.h"
 #import "SCIYTPlayerStreams.h"
+#import "SCIYTHLS.h"
 #import <AVFoundation/AVFoundation.h>
 #import <Photos/Photos.h>
 #import <objc/message.h>
@@ -377,6 +378,21 @@ static NSInteger sciUnplayable = 0;
     // withdraw. The network path exists for when this comes up empty, not the reverse.
     [SCIYTDiagnostics clearStreamAttempts];
 
+    // The playlist first, because it is the only route measurement says exists.
+    //
+    // Nine releases established that no individual format on this build carries an
+    // address -- through the media layer, the nested format, the player response and four
+    // InnerTube clients. The playlist that lists them does, and that is where every tweak
+    // whose downloading works ends up.
+    NSString *manifest = [SCIYTPlayerStreams hlsManifestURL];
+    if (manifest.length) {
+        [SCIYTDiagnostics recordStreamAttempt:
+            [NSString stringWithFormat:@"hls: manifest found (%lu chars)",
+             (unsigned long)manifest.length]];
+        [self presentHLSFrom:presenter manifest:manifest];
+        return;
+    }
+
     // Guarded, on the same principle the settings screen already follows: a tweak whose
     // job is to report what is happening must not be able to kill the app it is
     // reporting on. 0.8.2 read a numeric field as an object pointer and took YouTube
@@ -444,6 +460,115 @@ static NSInteger sciUnplayable = 0;
             }
             [self presentSheetFor:formats from:presenter];
         });
+    }];
+}
+
+///
+/// The quality sheet, then the download, for the playlist route.
+///
+/// Kept apart from the format-list one rather than folded into it: the two share a shape
+/// and nothing else. This has a network round trip before the sheet, a progress figure
+/// during, and a different failure vocabulary — a playlist can be fetched and turn out to
+/// list nothing playable, which no format list can do.
+///
++ (void)presentHLSFrom:(UIViewController *)presenter manifest:(NSString *)manifest {
+    UIAlertController *waiting =
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"dl_title")
+                                            message:SCILocalized(@"dl_asking")
+                                     preferredStyle:UIAlertControllerStyleAlert];
+
+    __block BOOL shown = NO;
+    __block void (^pending)(void) = nil;
+
+    void (^done)(void (^)(void)) = ^(void (^after)(void)) {
+        void (^close)(void) = ^{
+            [waiting dismissViewControllerAnimated:YES completion:after];
+        };
+        if (shown) close(); else pending = close;
+    };
+
+    [presenter presentViewController:waiting animated:YES completion:^{
+        shown = YES;
+        if (pending) { void (^queued)(void) = pending; pending = nil; queued(); }
+    }];
+
+    [SCIYTHLS variantsForManifest:manifest
+                       completion:^(NSArray<SCIHLSVariant *> *variants, NSString *failure) {
+        [SCIYTDiagnostics recordStreamAttempt:
+            [NSString stringWithFormat:@"hls: %lu variants%@",
+             (unsigned long)variants.count, failure ? [@" — " stringByAppendingString:failure] : @""]];
+
+        done(^{
+            if (!variants.count) {
+                [self showMessage:(failure ?: SCILocalized(@"dl_hls_no_variants")) from:presenter];
+                return;
+            }
+
+            UIAlertController *sheet =
+                [UIAlertController alertControllerWithTitle:SCILocalized(@"dl_choose_quality")
+                                                    message:[SCIYTDiagnostics lastVideoTitle]
+                                             preferredStyle:UIAlertControllerStyleActionSheet];
+
+            for (SCIHLSVariant *variant in variants) {
+                [sheet addAction:[UIAlertAction actionWithTitle:[variant label]
+                                                          style:UIAlertActionStyleDefault
+                                                        handler:^(UIAlertAction *action) {
+                    [self startHLS:variant from:presenter];
+                }]];
+            }
+
+            [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
+                                                      style:UIAlertActionStyleCancel
+                                                    handler:nil]];
+
+            // An unanchored action sheet is fatal on iPad.
+            sheet.popoverPresentationController.sourceView = presenter.view;
+            sheet.popoverPresentationController.sourceRect =
+                CGRectMake(CGRectGetMidX(presenter.view.bounds),
+                           CGRectGetMidY(presenter.view.bounds), 1, 1);
+
+            [presenter presentViewController:sheet animated:YES completion:nil];
+        });
+    }];
+}
+
++ (void)startHLS:(SCIHLSVariant *)variant from:(UIViewController *)presenter {
+    UIAlertController *progress =
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"dl_saving")
+                                            message:SCILocalized(@"dl_working")
+                                     preferredStyle:UIAlertControllerStyleAlert];
+
+    __block BOOL shown = NO;
+    __block void (^pending)(void) = nil;
+
+    void (^finish)(NSString *) = ^(NSString *message) {
+        void (^close)(void) = ^{
+            [progress dismissViewControllerAnimated:YES completion:^{
+                [self showMessage:message from:presenter];
+            }];
+        };
+        if (shown) close(); else pending = close;
+    };
+
+    [presenter presentViewController:progress animated:YES completion:^{
+        shown = YES;
+        if (pending) { void (^queued)(void) = pending; pending = nil; queued(); }
+    }];
+
+    [SCIYTHLS downloadVariant:variant progress:^(double fraction) {
+        // A count, because a playlist download is many small parts and a bare "working…"
+        // for two hundred megabytes reads as a hang.
+        progress.message = [NSString stringWithFormat:SCILocalized(@"dl_progress_format"),
+                            (int)(fraction * 100)];
+    } completion:^(NSURL *file, NSString *failure) {
+        if (!file) {
+            finish(failure ?: SCILocalized(@"dl_failed"));
+            return;
+        }
+
+        [self saveToPhotos:file completion:^(BOOL ok, NSString *detail) {
+            finish(ok ? SCILocalized(@"dl_saved") : (detail ?: SCILocalized(@"dl_failed")));
+        }];
     }];
 }
 
