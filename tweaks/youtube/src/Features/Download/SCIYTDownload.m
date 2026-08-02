@@ -3,6 +3,7 @@
 #import "../../Localization/SCILocalize.h"
 #import "../../Diagnostics/SCIYTDiagnostics.h"
 #import "SCIYTStreamAPI.h"
+#import "SCIYTPlayerStreams.h"
 #import <AVFoundation/AVFoundation.h>
 #import <Photos/Photos.h>
 #import <objc/message.h>
@@ -173,6 +174,72 @@ static NSInteger sciUnplayable = 0;
     return format;
 }
 
+///
+/// The formats the player is already holding.
+///
+/// Tried before the network request, and it should have been tried before it was ever
+/// written. The tweak was reading MLStreamingData, whose streams answer -URL with a
+/// fragment because the media layer fetches byte ranges; the player response holds a
+/// second, entirely different streaming data whose YTIFormatStream objects carry a url.
+/// Same app, same video, an object graph nobody had walked.
+///
+/// Costs no request, borrows no client identity, and cannot be revoked. Everything the
+/// InnerTube path has to fight for is simply already here, if it is here at all.
+///
++ (NSArray<SCIYTFormat *> *)formatsFromPlayer {
+    sciSeen = 0;
+    sciNoURL = 0;
+    sciUnplayable = 0;
+
+    NSArray *objects = [SCIYTPlayerStreams formatObjects];
+    if (!objects.count) return @[];
+
+    NSMutableArray<SCIYTFormat *> *out = [NSMutableArray array];
+    NSMutableSet<NSNumber *> *seen = [NSMutableSet set];
+
+    for (id object in objects) {
+        NSInteger itag = [[SCIYTPlayerStreams valueOf:@"itag" on:object] integerValue];
+        if (!itag || [seen containsObject:@(itag)]) continue;
+
+        sciSeen++;
+
+        BOOL isVideo = [SCIPlayableVideoItags() containsObject:@(itag)];
+        BOOL isAudio = [SCIPlayableAudioItags() containsObject:@(itag)];
+        if (!isVideo && !isAudio) {
+            sciUnplayable++;
+            continue;
+        }
+
+        // Both spellings: the protobuf generates `url`, and some builds expose `URL`.
+        NSString *link = [SCIYTPlayerStreams stringOf:@"url" on:object]
+                      ?: [SCIYTPlayerStreams stringOf:@"URL" on:object];
+
+        if (![link hasPrefix:@"http"]) {
+            sciNoURL++;
+            continue;
+        }
+
+        [seen addObject:@(itag)];
+
+        SCIYTFormat *format = [[SCIYTFormat alloc] init];
+        format.itag = itag;
+        format.urlString = [SCIYTPlayerStreams preparedURLFrom:link];
+        format.isVideo = isVideo;
+        format.hasAudio = isAudio || SCIItagIsMuxed(itag);
+        format.height = [[SCIYTPlayerStreams valueOf:@"height" on:object] integerValue];
+        format.fps = [[SCIYTPlayerStreams valueOf:@"fps" on:object] integerValue];
+        format.bitrate = [[SCIYTPlayerStreams valueOf:@"bitrate" on:object] longLongValue];
+        format.qualityLabel = [SCIYTPlayerStreams stringOf:@"qualityLabel" on:object];
+
+        [out addObject:format];
+    }
+
+    SCILogV(@"download: player held %ld formats, %lu usable",
+            (long)sciSeen, (unsigned long)out.count);
+
+    return out;
+}
+
 /// Every usable format in a streaming-data dictionary.
 + (NSArray<SCIYTFormat *> *)formatsFromStreamingData:(NSDictionary *)streamingData {
     sciSeen = 0;
@@ -262,6 +329,17 @@ static NSInteger sciUnplayable = 0;
     // preloading as well as the one on screen. A report showed SponsorBlock working on
     // one id while this asked YouTube about another, which is a download that could only
     // ever fail -- and failed with a message blaming the video for being private.
+    // The player first. If it is holding formats with links, there is no reason to ask
+    // anyone for anything: no request, no borrowed client identity, nothing YouTube can
+    // withdraw. The network path exists for when this comes up empty, not the reverse.
+    NSArray<SCIYTFormat *> *local = [self formatsFromPlayer];
+    if (local.count) {
+        [SCIYTDiagnostics recordStreamAttempt:
+            [NSString stringWithFormat:SCILocalized(@"dl_from_player"), (long)local.count]];
+        [self presentSheetFor:local from:presenter];
+        return;
+    }
+
     NSString *videoID = [SCIYTDiagnostics activeVideoID] ?: [SCIYTDiagnostics lastVideoID];
     if (!videoID.length) {
         [self showMessage:SCILocalized(@"dl_why_no_data") from:presenter];

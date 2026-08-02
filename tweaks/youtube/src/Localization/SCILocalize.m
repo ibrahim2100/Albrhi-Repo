@@ -79,6 +79,8 @@ static void SCIBuildTables(void) {
         @"diag_active_video": @"Actually playing",
         @"diag_stream_attempts": @"Asking YouTube for formats",
 
+        @"dl_from_player": @"The player was already holding %ld formats — nothing was asked of YouTube.",
+
         @"verbose_logging": @"Verbose logging",
         @"verbose_logging_note": @"Writes what the tweak is doing to the system log. Leave this off unless you are collecting a report — it is noisy and slows things down.",
 
@@ -205,6 +207,8 @@ static void SCIBuildTables(void) {
 
         @"diag_active_video": @"المُشغَّل فعلًا",
         @"diag_stream_attempts": @"سؤال يوتيوب عن الصيغ",
+
+        @"dl_from_player": @"المشغّل كان يحمل %ld صيغة بالفعل — لم يُطلَب من يوتيوب شيء.",
 
         @"verbose_logging": @"سجل مفصّل",
         @"verbose_logging_note": @"يكتب ما تفعله الأداة في سجل النظام. اتركه مطفأً إلا إذا كنت تجمع تقريرًا — فهو مزعج ويُبطئ الأداء.",

@@ -3,6 +3,31 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.8.0
+
+- **The links were in the app the whole time, in a place nobody had looked.**
+
+- Everything so far read one source: the media layer's streaming data, whose streams
+  answer with `?cpn=…` instead of a link because that layer fetches byte ranges rather
+  than files. That is a genuine dead end — there is nothing in it to find, which is why
+  every probe came back empty and why 0.7.0 went looking on the network instead.
+
+- But the app holds a *second* set of streams for the same video. The player keeps its own
+  player response, and inside it the formats do carry links. Same app, same video, a
+  different object graph, and seven releases went past it.
+
+- So the player is asked first now. When it has the formats, **nothing is asked of YouTube
+  at all** — no request, no borrowed client identity, nothing that can stop working when
+  Google changes something. The network path stays as a fallback for when it does not.
+
+- The `HTTP 403` and `HTTP 400` from 0.7.3 are still worth having fixed, and that work
+  stays: better headers, four client identities, and the server's own error message in the
+  report rather than a bare status code. It is just no longer the first thing tried.
+
+- Found by reading **YouMod** by Tonwalter888 (GPLv3, as this is), which reads both sources
+  and takes whichever answers. Every selector was then checked against a real 21.30.5
+  binary before being used — the credit is in the code and in the package description too.
+
 ## v0.7.3
 
 - **Asking for the video id was fixed in 0.7.2 and it worked** — the request now goes out

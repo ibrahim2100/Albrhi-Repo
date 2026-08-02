@@ -4,6 +4,7 @@
 #import "../../Localization/SCILocalize.h"
 #import "SCIYTSponsorClient.h"
 #import "../Download/SCIYTDownload.h"
+#import "../Download/SCIYTPlayerStreams.h"
 #import "../../Diagnostics/SCIYTDiagnostics.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
@@ -514,6 +515,11 @@ static void SCIArmDownloadGesture(UIView *view) {
     // there is not reliably the one on screen -- a report showed the two disagreeing
     // while the download was asking YouTube about the wrong one.
     [SCIYTDiagnostics recordActiveVideoID:videoID];
+
+    // And the controller itself, which is the only route to -contentPlayerResponse --
+    // where the formats that actually carry links turned out to be. Held weakly by the
+    // other side; this is a hook that already runs, not a new one.
+    [SCIYTPlayerStreams rememberPlayer:self];
 
     SCIResetForNewVideo(videoID);
 
