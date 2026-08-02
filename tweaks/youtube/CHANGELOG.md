@@ -3,6 +3,18 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.9.2
+
+- Asks two more questions in the same place 0.9.1 started asking, because taking apart
+  **YTLite** — whose downloading works — showed it reads exactly that one field and nothing
+  else of the kind.
+- Its 20 MB is 19 of them spent on a media library, which understands playlists natively.
+  That is the whole trick: where individual qualities have no address, the playlist that
+  lists them does.
+- So the report now also says whether the video has playlist data at all, and how many
+  entries it holds. Between those and 0.9.1's three addresses, the next report answers
+  whether saving videos is possible on your build — and if it is, by which route.
+
 ## v0.9.1
 
 - **0.9.0's change worked**: the search now reaches the video's real format list, all

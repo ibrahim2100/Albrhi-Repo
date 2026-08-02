@@ -256,11 +256,33 @@ static void SCITrace(NSString *step, id value) {
     // The media layer keeps a master playlist of its own, and it is a different field
     // from the response's. Worth a line either way: it is the one URL on this side that
     // was never asked for.
+    // The HLS side of the media layer, in full.
+    //
+    // This is where every tweak whose downloading works ends up. YTLite reads exactly
+    // this field and hands it to a bundled FFmpeg, which understands HLS natively --
+    // nineteen of its twenty megabytes are that library. A master playlist is a list of
+    // ordinary http segments, so it is a way through where per-format links are absent,
+    // and per-format links are absent on this build through every path measured.
+    //
+    // hasHLSData first, because it is the cheap question: it says whether there is
+    // anything here at all before three more are asked.
+    id hasHLS = SCIGet(mlStreamingData, @"hasHLSData");
+    if (hasHLS) [sciTrace appendFormat:@"hasHLSData=%@ ", hasHLS];
+
     NSString *master = SCIGetString(mlStreamingData, @"HLSMasterPlaylistURL");
     if (master.length) {
         NSString *head = master.length > 70
             ? [[master substringToIndex:70] stringByAppendingString:@"…"] : master;
         [sciTrace appendFormat:@"HLSMasterPlaylistURL=%@ ", head];
+    }
+
+    // And the per-variant list, which would be better still: a variant playlist skips
+    // the master and names one quality directly.
+    id hlsStreams = SCIGet(mlStreamingData, @"HLSStreams");
+    if ([hlsStreams isKindOfClass:[NSArray class]]) {
+        [sciTrace appendFormat:@"HLSStreams=%lu ", (unsigned long)((NSArray *)hlsStreams).count];
+    } else if (hlsStreams) {
+        SCITrace(@"HLSStreams", hlsStreams);
     }
 
     id mlStreams = SCIGet(mlStreamingData, @"adaptiveStreams");
