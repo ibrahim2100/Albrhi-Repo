@@ -68,6 +68,91 @@ static BOOL SCIIsPackedAudio(NSURL *file) {
     return bytes[at] == 0xFF && (bytes[at + 1] & 0xF0) == 0xF0;   // an ADTS frame header
 }
 
+/// Rewrites packed audio as a plain .aac file: the tags removed, the frames untouched.
+///
+/// 0.12.3 established the frames are all there and all correct -- 7867 of them, which at
+/// 1024 samples each is 182.6 seconds, the exact length the video claims. It then handed
+/// them to AVAssetWriter, and what came back had no audio track in it. That code path had
+/// never once run before: until the sound was being fetched at all, nothing ever reached
+/// it, so "the writer works" was an assumption and not a measurement.
+///
+/// This does not use it. ADTS is a format iOS reads directly -- every AAC radio stream on
+/// the platform is exactly this -- and the only thing wrong with the joined file was the
+/// twenty-six ID3 tags scattered through it, one where each part begins. Take those out
+/// and what is left is an ordinary .aac file, read by Apple's own parser with nothing of
+/// ours between it and the bytes.
+///
+/// Written through a file handle rather than gathered: three hours of audio is a couple of
+/// hundred megabytes, and a phone should not be asked to hold it to copy it.
+static NSURL *SCIStripPackedAudio(NSURL *file) {
+    NSData *input = [NSData dataWithContentsOfURL:file
+                                          options:NSDataReadingMappedIfSafe
+                                            error:nil];
+    if (!input.length) return nil;
+
+    NSURL *clean = [[file URLByDeletingPathExtension] URLByAppendingPathExtension:@"aac"];
+    [[NSFileManager defaultManager] createFileAtPath:clean.path contents:nil attributes:nil];
+
+    NSFileHandle *handle = [NSFileHandle fileHandleForWritingToURL:clean error:nil];
+    if (!handle) return nil;
+
+    const uint8_t *bytes = input.bytes;
+    NSUInteger length = input.length;
+    NSUInteger at = 0;
+    unsigned long long kept = 0;
+
+    NSMutableData *batch = [NSMutableData dataWithCapacity:1 << 20];
+
+    while (at + 7 <= length) {
+        // A tag between two parts, stepped over whole. Validated on the syncsafe length
+        // bytes as well as the three letters, so audio that happens to spell ID3 cannot
+        // send this skipping over the rest of the track.
+        if (bytes[at] == 'I' && bytes[at + 1] == 'D' && bytes[at + 2] == '3' &&
+            at + 10 <= length &&
+            !(bytes[at + 6] & 0x80) && !(bytes[at + 7] & 0x80) &&
+            !(bytes[at + 8] & 0x80) && !(bytes[at + 9] & 0x80)) {
+
+            NSUInteger size = ((NSUInteger)bytes[at + 6] << 21)
+                            | ((NSUInteger)bytes[at + 7] << 14)
+                            | ((NSUInteger)bytes[at + 8] << 7)
+                            |  (NSUInteger)bytes[at + 9];
+            at += 10 + size;
+            continue;
+        }
+
+        if (!(bytes[at] == 0xFF && (bytes[at + 1] & 0xF0) == 0xF0)) { at++; continue; }
+
+        NSUInteger frame = ((NSUInteger)(bytes[at + 3] & 0x03) << 11)
+                         | ((NSUInteger)bytes[at + 4] << 3)
+                         | ((NSUInteger)(bytes[at + 5] & 0xE0) >> 5);
+        if (frame < 7 || at + frame > length) break;
+
+        // The header goes with it, unlike the transport path which strips it: a .aac file
+        // *is* its headers, one before every frame.
+        [batch appendBytes:bytes + at length:frame];
+        at += frame;
+        kept++;
+
+        if (batch.length >= (1 << 20)) {
+            @try { [handle writeData:batch]; } @catch (NSException *e) { break; }
+            [batch setLength:0];
+        }
+    }
+
+    if (batch.length) {
+        @try { [handle writeData:batch]; } @catch (NSException *e) {}
+    }
+    [handle closeFile];
+
+    if (!kept) {
+        [[NSFileManager defaultManager] removeItemAtURL:clean error:nil];
+        return nil;
+    }
+
+    SCILogV(@"hls: %llu ADTS frames kept, tags removed", kept);
+    return clean;
+}
+
 /// The value of one attribute in an EXT-X line.
 static NSString *SCIAttribute(NSString *line, NSString *name) {
     NSRange found = [line rangeOfString:[name stringByAppendingString:@"="]];
@@ -614,9 +699,35 @@ static NSString *SCIWithShape(NSString *message) {
     // So the frames come out here, by the parser that already pulls the identical frames
     // out of transport packets. Nothing about them is unusual; only the wrapper was.
     if (SCIIsPackedAudio(joined)) {
-        [SCIYTDiagnostics recordStreamAttempt:@"hls: packed audio, reading the frames"];
+        NSURL *clean = SCIStripPackedAudio(joined);
+        if (clean) {
+            NSUInteger tracks = [[AVURLAsset URLAssetWithURL:clean options:nil]
+                                    tracksWithMediaType:AVMediaTypeAudio].count;
+            [SCIYTDiagnostics recordStreamAttempt:[NSString stringWithFormat:
+                @"hls: packed audio → adts, %lu track(s)", (unsigned long)tracks]];
+
+            if (tracks) {
+                [[NSFileManager defaultManager] removeItemAtURL:joined error:nil];
+                completion(clean, nil);
+                return;
+            }
+            [[NSFileManager defaultManager] removeItemAtURL:clean error:nil];
+        }
+
+        // Unwrapping the frames ourselves, if Apple's reader will not have them plain.
+        // Kept as a second route rather than the first: it builds the track through code
+        // that no download had ever exercised, and this one leans on the parser iOS uses
+        // for AAC every day.
         [SCIYTTransport convert:joined completion:^(NSURL *output, NSString *error) {
             [[NSFileManager defaultManager] removeItemAtURL:joined error:nil];
+
+            if (output) {
+                NSUInteger tracks = [[AVURLAsset URLAssetWithURL:output options:nil]
+                                        tracksWithMediaType:AVMediaTypeAudio].count;
+                [SCIYTDiagnostics recordStreamAttempt:[NSString stringWithFormat:
+                    @"hls: converted audio, %lu track(s)", (unsigned long)tracks]];
+            }
+
             completion(output, output ? nil : SCIWithShape(error ?: SCILocalized(@"dl_hls_unreadable")));
         }];
         return;

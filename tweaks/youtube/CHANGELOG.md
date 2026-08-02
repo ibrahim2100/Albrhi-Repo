@@ -3,6 +3,18 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.12.4
+
+- **The soundtrack is read by iPhone's own AAC parser now.** The device settled the last
+  question itself: every frame of sound had been found, 7867 of them, adding up to exactly
+  the length the video says it is. They were then being rebuilt into a track by our code —
+  code no download had ever reached before, because until this month no sound ever got
+  that far. It was building nothing.
+- So it does not build anything. The marker tags scattered through the file are taken out,
+  the frames are left exactly as they arrived, and what remains is an ordinary AAC file of
+  the sort iPhone plays every day. Our own route stays as a second attempt if that ever
+  fails, and the report says which one was taken.
+
 ## v0.12.3
 
 - **The soundtrack is read, not handed over.** 0.12.2 identified it correctly and gave it
