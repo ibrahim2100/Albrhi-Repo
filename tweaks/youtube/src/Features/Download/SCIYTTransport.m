@@ -1,6 +1,7 @@
 #import "SCIYTTransport.h"
 #import "../../SCILog.h"
 #import "../../Localization/SCILocalize.h"
+#import "../../Diagnostics/SCIYTDiagnostics.h"
 #import <AVFoundation/AVFoundation.h>
 
 // MPEG-TS is a fixed grid: 188 bytes per packet, each beginning with 0x47. Everything
@@ -522,13 +523,33 @@ static NSInteger SCIFindSync(const uint8_t *bytes, NSUInteger length) {
             if (stream.streamType == kSCIStreamTypeAAC && [stream count]) audio = stream;
         }
 
+        // What the stream actually declared, in the report.
+        //
+        // Every way this can end up silent is invisible from outside: a PMT with no audio
+        // entry, an audio type this does not read, a stream registered but carrying no
+        // frames. All three produce the same file, and the file says nothing. One line
+        // costs nothing and tells the three apart without a second attempt.
+        NSMutableArray<NSString *> *declared = [NSMutableArray array];
+        for (SCIYTElementary *stream in streams.allValues) {
+            [declared addObject:[NSString stringWithFormat:@"0x%02X×%lu",
+                stream.streamType, (unsigned long)[stream count]]];
+        }
+        [SCIYTDiagnostics recordStreamAttempt:[NSString stringWithFormat:@"ts: %@",
+            declared.count ? [declared componentsJoinedByString:@", "] : @"no streams"]];
+
         NSString *(^fail)(NSString *) = ^NSString *(NSString *key) {
             [[NSFileManager defaultManager] removeItemAtPath:scratchPath error:nil];
             return SCILocalized(key);
         };
 
-        if (!video) { finish(nil, fail(@"dl_ts_no_video")); return; }
-        if (!video.sps.length || !video.pps.length) { finish(nil, fail(@"dl_ts_no_video")); return; }
+        // An audio-only stream is a legitimate input, not a broken one.
+        //
+        // It is what an HLS audio rendition is made of, and refusing it here -- which is
+        // what "no video" used to mean -- is why 0.11.0 could not fetch the sound that a
+        // manifest kept separate from the pictures. Either track alone is convertible;
+        // only neither is a failure.
+        BOOL hasVideo = (video && video.sps.length && video.pps.length);
+        if (!hasVideo && !audio) { finish(nil, fail(@"dl_ts_no_video")); return; }
 
         NSData *frames = [NSData dataWithContentsOfFile:scratchPath
                                                 options:NSDataReadingMappedIfSafe
@@ -537,15 +558,17 @@ static NSInteger SCIFindSync(const uint8_t *bytes, NSUInteger length) {
 
         // The picture description, built from the two parameter sets lifted out of the
         // stream. Apple writes them into the track, which is where a player looks.
-        const uint8_t *parameterSets[2] = { video.sps.bytes, video.pps.bytes };
-        const size_t parameterSizes[2] = { video.sps.length, video.pps.length };
-
         CMFormatDescriptionRef videoFormat = NULL;
-        if (CMVideoFormatDescriptionCreateFromH264ParameterSets(kCFAllocatorDefault, 2,
-                parameterSets, parameterSizes, 4, &videoFormat) != noErr || !videoFormat) {
-            finish(nil, fail(@"dl_ts_no_video"));
-            return;
+        if (hasVideo) {
+            const uint8_t *parameterSets[2] = { video.sps.bytes, video.pps.bytes };
+            const size_t parameterSizes[2] = { video.sps.length, video.pps.length };
+
+            if (CMVideoFormatDescriptionCreateFromH264ParameterSets(kCFAllocatorDefault, 2,
+                    parameterSets, parameterSizes, 4, &videoFormat) != noErr) {
+                videoFormat = NULL;
+            }
         }
+        if (!videoFormat && !audio) { finish(nil, fail(@"dl_ts_no_video")); return; }
 
         CMFormatDescriptionRef audioFormat = NULL;
         if (audio && audio.sampleRate) {
@@ -586,18 +609,20 @@ static NSInteger SCIFindSync(const uint8_t *bytes, NSUInteger length) {
                                                           fileType:AVFileTypeMPEG4
                                                              error:&writerError];
         if (!writer) {
-            CFRelease(videoFormat);
+            if (videoFormat) CFRelease(videoFormat);
             if (audioFormat) CFRelease(audioFormat);
             finish(nil, fail(@"dl_ts_write_failed"));
             return;
         }
 
-        AVAssetWriterInput *videoInput =
-            [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeVideo
-                                                outputSettings:nil
-                                              sourceFormatHint:videoFormat];
-        videoInput.expectsMediaDataInRealTime = NO;
-        if ([writer canAddInput:videoInput]) [writer addInput:videoInput];
+        AVAssetWriterInput *videoInput = nil;
+        if (videoFormat) {
+            videoInput = [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeVideo
+                                                            outputSettings:nil
+                                                          sourceFormatHint:videoFormat];
+            videoInput.expectsMediaDataInRealTime = NO;
+            if ([writer canAddInput:videoInput]) [writer addInput:videoInput]; else videoInput = nil;
+        }
 
         AVAssetWriterInput *audioInput = nil;
         if (audioFormat && [audio count]) {
@@ -608,14 +633,33 @@ static NSInteger SCIFindSync(const uint8_t *bytes, NSUInteger length) {
             if ([writer canAddInput:audioInput]) [writer addInput:audioInput]; else audioInput = nil;
         }
 
+        if (!videoInput && !audioInput) {
+            if (videoFormat) CFRelease(videoFormat);
+            if (audioFormat) CFRelease(audioFormat);
+            finish(nil, fail(@"dl_ts_write_failed"));
+            return;
+        }
+
         [writer startWriting];
 
-        const SCISample *first = video.index.bytes;
-        [writer startSessionAtSourceTime:CMTimeMake(first[0].dts, (int32_t)kSCITimescale)];
+        // Whichever track exists starts the session, in its own timescale. For an
+        // audio-only rendition there is no video index to read a first sample from, and
+        // reading one anyway is a null dereference rather than a wrong number.
+        if (videoInput) {
+            const SCISample *first = video.index.bytes;
+            [writer startSessionAtSourceTime:CMTimeMake(first[0].dts, (int32_t)kSCITimescale)];
+        } else {
+            const SCISample *first = audio.index.bytes;
+            [writer startSessionAtSourceTime:CMTimeMake(first[0].dts, (int32_t)audio.sampleRate)];
+        }
 
         const uint8_t *bytes = frames.bytes;
-        BOOL ok = [self writeTrack:video input:videoInput writer:writer format:videoFormat
-                             bytes:bytes timescale:(int32_t)kSCITimescale];
+        BOOL ok = YES;
+
+        if (videoInput) {
+            ok = [self writeTrack:video input:videoInput writer:writer format:videoFormat
+                            bytes:bytes timescale:(int32_t)kSCITimescale];
+        }
 
         if (ok && audioInput) {
             ok = [self writeTrack:audio input:audioInput writer:writer format:audioFormat
@@ -628,7 +672,7 @@ static NSInteger SCIFindSync(const uint8_t *bytes, NSUInteger length) {
 
         if (!ok) {
             [writer cancelWriting];
-            CFRelease(videoFormat);
+            if (videoFormat) CFRelease(videoFormat);
             if (audioFormat) CFRelease(audioFormat);
             finish(nil, fail(@"dl_ts_write_failed"));
             return;
@@ -636,7 +680,7 @@ static NSInteger SCIFindSync(const uint8_t *bytes, NSUInteger length) {
 
         [writer finishWritingWithCompletionHandler:^{
             AVAssetWriterStatus status = writer.status;
-            CFRelease(videoFormat);
+            if (videoFormat) CFRelease(videoFormat);
             if (audioFormat) CFRelease(audioFormat);
             [[NSFileManager defaultManager] removeItemAtPath:scratchPath error:nil];
 

@@ -10,6 +10,17 @@
 @property (nonatomic, assign) NSInteger width;
 @property (nonatomic, assign) long long bandwidth;
 
+/// The separate audio playlist, when the manifest keeps sound out of the video parts.
+///
+/// A variant's `CODECS` lists the codecs of the whole presentation — the pictures in its
+/// own segments *and* the sound in whichever `#EXT-X-MEDIA` group its `AUDIO=` attribute
+/// names. So a manifest can promise `avc1,mp4a` and hand over segments carrying no audio
+/// at all, and nothing about the download would look wrong: the parts arrive, the packets
+/// unwrap, the .mp4 is written, and it is silent. That is exactly what 0.11.0 produced.
+///
+/// Nil when the variant carries its own sound, which is the other shape and equally valid.
+@property (nonatomic, copy) NSString *audioPlaylistURL;
+
 /// "1080p · H.264", for the quality sheet.
 - (NSString *)label;
 @end

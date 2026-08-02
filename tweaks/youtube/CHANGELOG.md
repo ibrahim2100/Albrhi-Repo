@@ -3,6 +3,20 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.12.0
+
+- **Saved videos have their sound.** They were arriving silent, and the reason is that
+  YouTube does not always keep the sound in the same place as the picture: a playlist can
+  list its soundtracks separately and point the video at one of them. The download read
+  only the video half, and the half it skipped was never asked for.
+- Both halves are fetched now and joined into one file at the end. Nothing is re-encoded
+  for it — the sound is copied in exactly as it arrived — and the sound is trimmed to the
+  length of the picture, since a soundtrack often runs a fraction of a second longer and
+  the video would otherwise end on a frozen frame.
+- **A download that loses its sound now says so** in Diagnostics, along with what the
+  video actually contained. A silent file that explains nothing is what made this take a
+  release to find; that will not happen the same way twice.
+
 ## v0.11.0
 
 - **Saving videos works.** The parts were downloading correctly all along — every one of

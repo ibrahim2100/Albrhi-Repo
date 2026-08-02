@@ -35,8 +35,13 @@
 ///
 /// On success the output URL is passed and the input is left alone -- deleting it is the
 /// caller's business, since the caller is the one that knows whether it is a scratch file.
-/// On failure the message is already localized and already specific: which of the two
-/// tracks was missing, or which codec was found that this cannot carry.
+/// On failure the message is already localized and already specific.
+///
+/// Either track alone is enough. A stream with pictures and no sound converts, and so does
+/// one with sound and no pictures -- which is what an HLS audio rendition is, and refusing
+/// it was why a manifest that kept its sound separate produced silent downloads. Only a
+/// stream with neither is a failure. What the stream declared goes into the diagnostics
+/// report either way, because a missing track is otherwise invisible from the file.
 + (void)convert:(NSURL *)input
      completion:(void (^)(NSURL *output, NSString *error))completion;
 

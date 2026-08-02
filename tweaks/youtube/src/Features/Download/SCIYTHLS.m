@@ -122,6 +122,35 @@ static NSString *SCIWithShape(NSString *message) {
         NSArray<NSString *> *lines = [text componentsSeparatedByCharactersInSet:
             [NSCharacterSet newlineCharacterSet]];
 
+        // The audio groups first, because a variant refers to one by name and the
+        // reference can appear before the group is declared.
+        //
+        // This is the whole of the silent-download bug. A manifest may keep the sound in
+        // its own renditions and leave the video segments without any, and the variant
+        // line still advertises mp4a -- CODECS describes the presentation, not the parts.
+        // 0.11.0 read only EXT-X-STREAM-INF, so those renditions were never fetched and
+        // every download was a picture with nothing under it.
+        NSMutableDictionary<NSString *, NSString *> *audioGroups = [NSMutableDictionary dictionary];
+        for (NSString *raw in lines) {
+            NSString *line = [raw stringByTrimmingCharactersInSet:
+                [NSCharacterSet whitespaceCharacterSet]];
+            if (![line hasPrefix:@"#EXT-X-MEDIA"]) continue;
+            if (![SCIAttribute(line, @"TYPE") isEqualToString:@"AUDIO"]) continue;
+
+            NSString *group = SCIAttribute(line, @"GROUP-ID");
+            NSString *uri = SCIAttribute(line, @"URI");
+            if (!group.length || !uri.length) continue;
+
+            // A group can hold several languages. The one marked DEFAULT wins; failing
+            // that the first, which is the order the manifest itself considers best.
+            BOOL isDefault = [SCIAttribute(line, @"DEFAULT") isEqualToString:@"YES"];
+            if (audioGroups[group] && !isDefault) continue;
+
+            audioGroups[group] = [[NSURL URLWithString:uri
+                                         relativeToURL:[NSURL URLWithString:manifestURL]]
+                                  absoluteString] ?: uri;
+        }
+
         // An EXT-X-STREAM-INF line describes the next non-comment line, which is the URL.
         for (NSUInteger i = 0; i < lines.count; i++) {
             NSString *line = [lines[i] stringByTrimmingCharactersInSet:
@@ -148,6 +177,9 @@ static NSString *SCIWithShape(NSString *message) {
             variant.codecs = codecs;
             variant.bandwidth = [SCIAttribute(line, @"BANDWIDTH") longLongValue];
 
+            NSString *group = SCIAttribute(line, @"AUDIO");
+            if (group.length) variant.audioPlaylistURL = audioGroups[group];
+
             NSString *resolution = SCIAttribute(line, @"RESOLUTION");
             NSArray<NSString *> *parts = [resolution componentsSeparatedByString:@"x"];
             if (parts.count == 2) {
@@ -163,7 +195,20 @@ static NSString *SCIWithShape(NSString *message) {
             return a.bandwidth > b.bandwidth ? NSOrderedAscending : NSOrderedDescending;
         }];
 
-        SCILogV(@"hls: %lu playable variants", (unsigned long)variants.count);
+        NSUInteger separate = 0;
+        for (SCIHLSVariant *variant in variants) {
+            if (variant.audioPlaylistURL.length) separate++;
+        }
+
+        SCILogV(@"hls: %lu playable variants, %lu with separate audio",
+                (unsigned long)variants.count, (unsigned long)separate);
+
+        // In the report, because this is the difference between a download with sound and
+        // one without, and it is not visible anywhere else.
+        [SCIYTDiagnostics recordStreamAttempt:
+            [NSString stringWithFormat:@"hls: %lu variants, %lu audio groups, %lu variants use one",
+                (unsigned long)variants.count, (unsigned long)audioGroups.count,
+                (unsigned long)separate]];
 
         dispatch_async(dispatch_get_main_queue(), ^{
             completion(variants, variants.count ? nil : SCILocalized(@"dl_hls_no_variants"));
@@ -177,11 +222,133 @@ static NSString *SCIWithShape(NSString *message) {
                progress:(void (^)(double))progress
              completion:(void (^)(NSURL *, NSString *))completion {
 
+    NSString *audioPlaylist = variant.audioPlaylistURL;
+
+    // The pictures first, and that is the whole download when the variant carries its own
+    // sound. When it does not, the video is the first nine tenths of the bar: an audio
+    // rendition is a small fraction of the size, and a bar that drops back to zero
+    // halfway through reads as a failure to whoever is watching it.
+    [self downloadPlaylist:variant.playlistURL
+                  progress:^(double fraction) {
+                      if (progress) progress(audioPlaylist.length ? fraction * 0.9 : fraction);
+                  }
+                completion:^(NSURL *video, NSString *failure) {
+        if (!video || !audioPlaylist.length) {
+            completion(video, failure);
+            return;
+        }
+
+        [self downloadPlaylist:audioPlaylist
+                      progress:^(double fraction) {
+                          if (progress) progress(0.9 + fraction * 0.1);
+                      }
+                    completion:^(NSURL *audio, NSString *audioFailure) {
+            if (!audio) {
+                // The video was fetched and is fine. Throwing it away to report that its
+                // sound was not would be the worse of the two outcomes -- but it goes in
+                // the report, because a silent file with nothing said about it is the
+                // exact failure this release exists to end.
+                SCILogV(@"hls: audio rendition failed — %@", audioFailure);
+                [SCIYTDiagnostics recordStreamAttempt:
+                    [@"hls: audio rendition failed — " stringByAppendingString:
+                        audioFailure ?: @"?"]];
+                completion(video, nil);
+                return;
+            }
+
+            [self combineVideo:video audio:audio completion:completion];
+        }];
+    }];
+}
+
+/// Joins a video file and an audio file into one, without re-encoding either.
+///
+/// A composition of two tracks exported passthrough: the samples are copied, and the only
+/// thing produced is a new index. The sound is trimmed to the length of the picture --
+/// renditions routinely run a fraction of a second longer, and a composition is as long
+/// as its longest track, which would end the video on a frozen last frame.
++ (void)combineVideo:(NSURL *)video
+               audio:(NSURL *)audio
+          completion:(void (^)(NSURL *, NSString *))completion {
+
+    void (^finish)(NSURL *) = ^(NSURL *file) {
+        [[NSFileManager defaultManager] removeItemAtURL:audio error:nil];
+        dispatch_async(dispatch_get_main_queue(), ^{ completion(file, nil); });
+    };
+
+    AVAssetTrack *videoTrack =
+        [[AVURLAsset URLAssetWithURL:video options:nil] tracksWithMediaType:AVMediaTypeVideo].firstObject;
+    AVAssetTrack *audioTrack =
+        [[AVURLAsset URLAssetWithURL:audio options:nil] tracksWithMediaType:AVMediaTypeAudio].firstObject;
+
+    // Whatever was actually obtained, rather than nothing. Every return below that hands
+    // back `video` is a download that succeeded and lost its sound at the last step.
+    if (!videoTrack || !audioTrack) {
+        SCILogV(@"hls: nothing to join — video %@, audio %@",
+                videoTrack ? @"yes" : @"no", audioTrack ? @"yes" : @"no");
+        finish(video);
+        return;
+    }
+
+    AVMutableComposition *composition = [AVMutableComposition composition];
+    AVMutableCompositionTrack *pictures =
+        [composition addMutableTrackWithMediaType:AVMediaTypeVideo
+                                 preferredTrackID:kCMPersistentTrackID_Invalid];
+    AVMutableCompositionTrack *sound =
+        [composition addMutableTrackWithMediaType:AVMediaTypeAudio
+                                 preferredTrackID:kCMPersistentTrackID_Invalid];
+
+    CMTime length = videoTrack.timeRange.duration;
+    NSError *error = nil;
+
+    BOOL ok = [pictures insertTimeRange:CMTimeRangeMake(kCMTimeZero, length)
+                                ofTrack:videoTrack
+                                 atTime:kCMTimeZero
+                                  error:&error];
+    ok = ok && [sound insertTimeRange:CMTimeRangeMake(kCMTimeZero,
+                                          CMTimeMinimum(length, audioTrack.timeRange.duration))
+                              ofTrack:audioTrack
+                               atTime:kCMTimeZero
+                                error:&error];
+
+    if (!ok) {
+        SCILogV(@"hls: composition refused — %@", error.localizedDescription);
+        finish(video);
+        return;
+    }
+
+    NSURL *output = [NSURL fileURLWithPath:
+        [NSTemporaryDirectory() stringByAppendingPathComponent:
+            [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"mp4"]]];
+
+    AVAssetExportSession *export =
+        [[AVAssetExportSession alloc] initWithAsset:composition
+                                         presetName:AVAssetExportPresetPassthrough];
+    export.outputURL = output;
+    export.outputFileType = AVFileTypeMPEG4;
+
+    [export exportAsynchronouslyWithCompletionHandler:^{
+        if (export.status == AVAssetExportSessionStatusCompleted) {
+            [[NSFileManager defaultManager] removeItemAtURL:video error:nil];
+            finish(output);
+        } else {
+            SCILogV(@"hls: join failed — %@", export.error.localizedDescription);
+            [[NSFileManager defaultManager] removeItemAtURL:output error:nil];
+            finish(video);
+        }
+    }];
+}
+
+/// Fetches one playlist -- video or audio, the shapes are the same -- as an .mp4.
++ (void)downloadPlaylist:(NSString *)playlistURL
+                progress:(void (^)(double))progress
+              completion:(void (^)(NSURL *, NSString *))completion {
+
     void (^finish)(NSURL *, NSString *) = ^(NSURL *file, NSString *failure) {
         dispatch_async(dispatch_get_main_queue(), ^{ completion(file, failure); });
     };
 
-    [self fetchText:variant.playlistURL completion:^(NSString *text, NSString *failure) {
+    [self fetchText:playlistURL completion:^(NSString *text, NSString *failure) {
         if (!text) {
             finish(nil, failure);
             return;
@@ -190,7 +357,7 @@ static NSString *SCIWithShape(NSString *message) {
         NSMutableArray<NSString *> *segments = [NSMutableArray array];
         NSString *initSegment = nil;
         BOOL byteRanged = NO;
-        NSURL *base = [NSURL URLWithString:variant.playlistURL];
+        NSURL *base = [NSURL URLWithString:playlistURL];
 
         for (NSString *raw in [text componentsSeparatedByCharactersInSet:
                                [NSCharacterSet newlineCharacterSet]]) {
@@ -396,7 +563,10 @@ static NSString *SCIWithShape(NSString *message) {
 
     AVURLAsset *asset = [AVURLAsset URLAssetWithURL:joined options:nil];
 
-    if (![asset tracksWithMediaType:AVMediaTypeVideo].count) {
+    // Either track is enough. An audio rendition has no pictures in it and demanding
+    // some was the reason a separately-carried soundtrack could not be fetched at all.
+    if (![asset tracksWithMediaType:AVMediaTypeVideo].count &&
+        ![asset tracksWithMediaType:AVMediaTypeAudio].count) {
         [[NSFileManager defaultManager] removeItemAtURL:joined error:nil];
         completion(nil, SCIWithShape(SCILocalized(@"dl_hls_unreadable")));
         return;
