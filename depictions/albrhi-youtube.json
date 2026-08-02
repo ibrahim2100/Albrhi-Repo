@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.9.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **The trace from 0.8.4 found it, and it was an argument being thrown away.**\n• When a video starts, YouTube tells the tweak three things: which controller, which video, and the *playback data*.\n• That number is what every stream in the report was showing as a bare `?cpn=…`.\n• 0.8.4's trace also explained the other failure plainly: the controller it had held on to was alive but had gone quiet — YouTube builds one of those per surface, and the…\n• The session number is now used for the links rather than a fresh one made up on the spot.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.8.4",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.8.2",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **The diagnostics page has been misleading me for four releases, and this fixes it.**\n• When it listed what each stream offered, it asked for the link under eleven different names — and stopped at the first one that answered anything at all.\n• Everything since 0.7.0 followed from that: asking YouTube over the network, four borrowed client identities, and all of it refused.\n• So: the report now lists **every** name that answers, and the search for something to download reads every name too, plus the format nested inside — taking the first…\n• The source written off as a dead end in 0.8.0 is back in the search, for the same reason: it was written off on the strength of that same one-name probe.\n• Comparing against **YouMod** by Tonwalter888 is what surfaced this.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.8.4"
+          "text": "0.9.0"
         },
         {
           "class": "DepictionTableTextView",
