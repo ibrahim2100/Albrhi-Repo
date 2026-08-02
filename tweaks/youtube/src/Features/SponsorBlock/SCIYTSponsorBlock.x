@@ -3,6 +3,7 @@
 #import "../../Prefs.h"
 #import "../../Localization/SCILocalize.h"
 #import "SCIYTSponsorClient.h"
+#import "../Download/SCIYTDownload.h"
 #import "../../Diagnostics/SCIYTDiagnostics.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
@@ -52,11 +53,20 @@ static NSMutableSet<NSString *> *sciSkipped = nil;
 /// that may not exist. Zero means "not known yet", which is a reason to draw nothing.
 static double sciTotalTime = 0;
 
+/// What the markers currently on screen were drawn from.
+///
+/// -layoutSubviews on a player bar runs constantly while a video plays, and 0.5.0 tore
+/// down and rebuilt every marker view on each pass: five segments meant five UIView
+/// allocations per layout, for a picture that had not changed. Redrawing is only needed
+/// when the segments change, the bar resizes, or a switch is flipped.
+static NSString *sciMarkerSignature = nil;
+
 static void SCIResetForNewVideo(NSString *videoID) {
     sciCurrentVideoID = [videoID copy];
     sciSegments = nil;
     sciSkipped = [NSMutableSet set];
     sciTotalTime = 0;
+    sciMarkerSignature = nil;
 }
 
 /// The video's identifier, whatever this build happens to call it.
@@ -242,14 +252,28 @@ static void SCIDrawMarkers(UIView *bar, double barTotalTime) {
 
     sciLastBar = bar;
 
+    BOOL wanted = SCIPrefEnabled(SCIPrefSponsorBlock) && SCIPrefEnabled(SCIPrefSBMarkers);
+    double totalForSignature = (isfinite(barTotalTime) && barTotalTime > 0) ? barTotalTime : sciTotalTime;
+
+    // Everything a marker's position depends on. Cheap to build, and comparing it is
+    // what turns a redraw per frame into a redraw per change.
+    NSString *signature = [NSString stringWithFormat:@"%@|%d|%lu|%.1f|%.1f",
+        sciCurrentVideoID ?: @"-", wanted ? 1 : 0, (unsigned long)sciSegments.count,
+        totalForSignature, (double)bar.bounds.size.width];
+
+    if ([signature isEqualToString:sciMarkerSignature] &&
+        [bar viewWithTag:SCIMarkerTag] != nil) {
+        return;
+    }
+    sciMarkerSignature = signature;
+
     // Removed before every early return below, so switching the feature off or moving to
     // a video with no segments clears what the last one drew.
     for (UIView *existing in [bar.subviews copy]) {
         if (existing.tag == SCIMarkerTag) [existing removeFromSuperview];
     }
 
-    if (!SCIPrefEnabled(SCIPrefSponsorBlock) || !SCIPrefEnabled(SCIPrefSBMarkers)) return;
-    if (!sciSegments.count) return;
+    if (!wanted || !sciSegments.count) return;
 
     // The bar's own duration when it has one, ours when it does not.
     double total = (isfinite(barTotalTime) && barTotalTime > 0) ? barTotalTime : sciTotalTime;
@@ -287,6 +311,8 @@ static void SCIDrawMarkers(UIView *bar, double barTotalTime) {
         [bar bringSubviewToFront:marker];
     }
 
+    // Inside the redraw, so this formats a string when the picture actually changed
+    // rather than on every layout pass.
     [SCIYTDiagnostics recordMarkerBar:NSStringFromClass([bar class])
                                 count:(NSInteger)sciSegments.count];
 }
@@ -343,6 +369,77 @@ static void SCIDrawMarkers(UIView *bar, double barTotalTime) {
 %end
 
 
+// MARK: - Long press to download
+
+///
+/// Hold the video to save it.
+///
+/// On the player's own view, so the gesture is over the picture and nowhere else -- the
+/// settings row that used to be the only way in is still there, but nobody opens a
+/// settings screen to save the thing they are watching.
+///
+/// One finger here, unlike the two the settings panel needs: this gesture is confined to
+/// the player, and the only single long press YouTube itself puts there is the
+/// speed-up-while-held control, which needs a much shorter hold than this.
+///
+static char kSCIDownloadGestureArmed;
+
+@interface SCIDownloadGestureTarget : NSObject
++ (instancetype)shared;
+@end
+
+@implementation SCIDownloadGestureTarget
+
++ (instancetype)shared {
+    static SCIDownloadGestureTarget *shared = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{ shared = [[SCIDownloadGestureTarget alloc] init]; });
+    return shared;
+}
+
+- (void)pressed:(UILongPressGestureRecognizer *)recognizer {
+    if (recognizer.state != UIGestureRecognizerStateBegan) return;
+
+    UIResponder *responder = recognizer.view;
+    while (responder && ![responder isKindOfClass:[UIViewController class]]) {
+        responder = responder.nextResponder;
+    }
+
+    UIViewController *presenter = (UIViewController *)responder;
+    while (presenter.presentedViewController) {
+        presenter = presenter.presentedViewController;
+    }
+
+    if (!presenter) {
+        SCILogV(@"download: nothing to present the sheet from");
+        return;
+    }
+
+    [SCIYTDownload presentFrom:presenter];
+}
+
+@end
+
+static void SCIArmDownloadGesture(UIView *view) {
+    if (!view || objc_getAssociatedObject(view, &kSCIDownloadGestureArmed)) return;
+    objc_setAssociatedObject(view, &kSCIDownloadGestureArmed, @YES, OBJC_ASSOCIATION_RETAIN);
+
+    UILongPressGestureRecognizer *press =
+        [[UILongPressGestureRecognizer alloc] initWithTarget:[SCIDownloadGestureTarget shared]
+                                                      action:@selector(pressed:)];
+    press.minimumPressDuration = 0.65;
+
+    // Never swallows the touch: tap-to-pause, scrubbing and YouTube's own hold-to-speed
+    // all have to keep working whether or not this fires.
+    press.cancelsTouchesInView = NO;
+    press.delaysTouchesBegan = NO;
+    press.delaysTouchesEnded = NO;
+
+    [view addGestureRecognizer:press];
+    SCILogV(@"download: hold-to-save armed on %@", [view class]);
+}
+
+
 // MARK: - The player
 
 %hook YTPlayerViewController
@@ -371,6 +468,11 @@ static void SCIDrawMarkers(UIView *bar, double barTotalTime) {
                 NSStringFromClass([video class])]];
         return;
     }
+
+    // The player's own view is where the download gesture lives. Armed here rather than
+    // in a viewDidLoad hook because this is already a verified hook on a verified class,
+    // and self.view is UIViewController's own API -- so nothing new can go missing.
+    SCIArmDownloadGesture(self.view);
 
     if ([videoID isEqualToString:sciCurrentVideoID] && sciSegments) return;
 

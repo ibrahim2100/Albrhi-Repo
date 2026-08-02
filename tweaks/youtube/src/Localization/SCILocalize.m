@@ -66,6 +66,13 @@ static void SCIBuildTables(void) {
 
         @"sb_credit": @"Segment data from SponsorBlock (sponsor.ajay.app), licensed CC BY-NC-SA 4.0. Your video is never sent — only the first four characters of its fingerprint, so the server cannot tell which video you are watching.\n\nThe coloured markers are derived from iSponsorBlock by Galactic Dev (GPLv3).",
 
+        @"dl_audio_only": @"Audio only",
+        @"dl_why_no_data": @"YouTube has not handed over any stream information for this video yet. Start playing it, then hold again.",
+        @"dl_why_no_formats": @"Stream information arrived but it lists no formats. This build may only stream in pieces, which cannot be saved as a file.",
+        @"dl_why_no_urls": @"Found %ld formats, and none of them carries a link to fetch. This build streams in pieces rather than serving files.",
+        @"dl_why_unplayable": @"Found %ld formats, all in a codec iOS will not play (itags %@). Saving them would give you a file that shows a black screen.",
+        @"dl_why_unknown": @"Nothing could be saved, and the reason is not one this page knows. Settings, Diagnostics has the full report.",
+
         @"verbose_logging": @"Verbose logging",
         @"verbose_logging_note": @"Writes what the tweak is doing to the system log. Leave this off unless you are collecting a report — it is noisy and slows things down.",
 
@@ -111,7 +118,6 @@ static void SCIBuildTables(void) {
         @"dl_saved_silent": @"Saved, but without sound — the audio track would not download.",
         @"dl_failed": @"That did not work. The diagnostics page has the detail.",
         @"dl_no_permission": @"Photos access was refused, so there is nowhere to save it.",
-        @"dl_nothing_to_save": @"Nothing to save yet. Play the video first, then open this.",
         @"dl_diag_none": @"No saveable format found.",
         @"dl_diag_found": @"%ld video and %ld audio formats with links.",
         @"diag_downloadable": @"Saveable",
@@ -181,6 +187,13 @@ static void SCIBuildTables(void) {
 
         @"sb_credit": @"بيانات المقاطع من سبونسر بلوك (sponsor.ajay.app) برخصة CC BY-NC-SA 4.0. لا يُرسَل الفيديو الذي تشاهده إطلاقًا — تُرسَل أربعة أحرف من بصمته فقط، فلا يعرف الخادم أيّ فيديو تشاهد.\n\nالعلامات الملوّنة مُشتقّة من iSponsorBlock لـ Galactic Dev (رخصة GPLv3).",
 
+        @"dl_audio_only": @"الصوت فقط",
+        @"dl_why_no_data": @"يوتيوب لم يُسلّم بعد أي معلومات عن مقاطع هذا الفيديو. شغّله ثم اضغط مطوّلًا مرة أخرى.",
+        @"dl_why_no_formats": @"وصلت معلومات المقاطع لكنها بلا صيغ. قد تكون هذه النسخة تبثّ على أجزاء فقط، وهذا لا يُحفَظ كملف.",
+        @"dl_why_no_urls": @"وُجدت %ld صيغة، ولا واحدة منها تحمل رابطًا للتحميل. هذه النسخة تبثّ على أجزاء بدل أن تقدّم ملفات.",
+        @"dl_why_unplayable": @"وُجدت %ld صيغة، كلها بترميز لا يشغّله iOS (الرموز %@). حفظها يعطيك ملفًا بشاشة سوداء.",
+        @"dl_why_unknown": @"تعذّر حفظ أي شيء، والسبب ليس مما تعرفه هذه الصفحة. التقرير الكامل في الإعدادات ثم التشخيص.",
+
         @"verbose_logging": @"سجل مفصّل",
         @"verbose_logging_note": @"يكتب ما تفعله الأداة في سجل النظام. اتركه مطفأً إلا إذا كنت تجمع تقريرًا — فهو مزعج ويُبطئ الأداء.",
 
@@ -226,7 +239,6 @@ static void SCIBuildTables(void) {
         @"dl_saved_silent": @"حُفظ لكن بلا صوت — تعذّر تنزيل مسار الصوت.",
         @"dl_failed": @"لم ينجح ذلك. التفصيل في صفحة التشخيص.",
         @"dl_no_permission": @"رُفض الوصول إلى الصور، فلا مكان للحفظ فيه.",
-        @"dl_nothing_to_save": @"لا شيء لحفظه بعد. شغّل الفيديو أولًا ثم افتح هذا.",
         @"dl_diag_none": @"لم يُعثر على صيغة قابلة للحفظ.",
         @"dl_diag_found": @"%ld صيغة فيديو و%ld صيغة صوت بروابط.",
         @"diag_downloadable": @"قابلية الحفظ",

@@ -5,14 +5,18 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 /// Saving a video to Photos.
 ///
-/// The whole feature hangs off one entry point because there is only one way in: the
-/// panel, opened with two fingers over the player. **No view of YouTube's is hooked to
-/// get here**, and that is the design rather than a shortcut.
+/// Two ways in, and **no view of YouTube's is hooked to reach either**: a row in our own
+/// panel, and holding the video itself.
 ///
-/// Every other tweak that downloads puts a button in YouTube's own player controls,
-/// which means hooking view classes that get renamed between releases — this project's
-/// own survey found nineteen dead class names in one such tweak. A row in our panel
-/// cannot go stale that way, because the panel is ours.
+/// The hold is on YTPlayerViewController's own `view` — a class already verified and
+/// already hooked, and a property that belongs to UIViewController rather than to
+/// YouTube. So the gesture sits over the picture without depending on a single one of
+/// YouTube's view classes, nineteen of which this project's own survey found missing
+/// from the build a well-known tweak ships for.
+///
+/// That is the difference worth keeping: every other tweak that downloads puts a button
+/// inside YouTube's player controls, which means hooking the view hierarchy that gets
+/// renamed between releases. A gesture on a controller's view cannot go stale that way.
 ///
 /// What it operates on is what the player is already holding: the streams captured for
 /// the diagnostics page. So "download" means "save the video currently playing", which
@@ -25,8 +29,6 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 @interface SCIYTDownload : NSObject
 
-/// Whether there is anything to download — a video has played and offered formats.
-+ (BOOL)available;
 
 /// Asks which quality, then downloads, merges if it must, and saves to Photos.
 + (void)presentFrom:(UIViewController *)presenter;

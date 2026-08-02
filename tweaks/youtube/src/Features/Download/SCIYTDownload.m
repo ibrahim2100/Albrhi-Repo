@@ -166,12 +166,33 @@ static NSString *SCIPreparedURL(NSString *urlString) {
 
 #pragma mark - Discovery
 
+///
+/// Why the last scan produced what it did.
+///
+/// "Nothing to download" is the least useful sentence this tweak could say, and it is
+/// what 0.5.0 said for every one of three different causes: no streaming data at all,
+/// formats with no fetchable link, and formats in a codec iOS will not play. Those need
+/// three different answers, and telling them apart on a device meant reading the
+/// diagnostics page — for a message that could have named the reason itself.
+///
+static NSInteger sciSeen = 0;
+static NSInteger sciNoURL = 0;
+static NSInteger sciUnplayable = 0;
+static NSString *sciRefusedItags = nil;
+
 + (NSArray<SCIYTFormat *> *)formats {
     id streamingData = [SCIYTDiagnostics lastStreamingData];
+
+    sciSeen = 0;
+    sciNoURL = 0;
+    sciUnplayable = 0;
+    sciRefusedItags = nil;
+
     if (!streamingData) return @[];
 
     NSMutableArray<SCIYTFormat *> *out = [NSMutableArray array];
     NSMutableSet<NSNumber *> *seen = [NSMutableSet set];
+    NSMutableOrderedSet<NSNumber *> *refused = [NSMutableOrderedSet orderedSet];
 
     // Both names, because which one is populated varies and asking for the other costs
     // a message send that returns nil.
@@ -184,12 +205,24 @@ static NSString *SCIPreparedURL(NSString *urlString) {
             if (!itag) itag = SCIInteger(SCIValue(stream, @"formatStream"), @"itag");
             if (!itag || [seen containsObject:@(itag)]) continue;
 
+            sciSeen++;
+
             BOOL isVideo = [SCIPlayableVideoItags() containsObject:@(itag)];
             BOOL isAudio = [SCIPlayableAudioItags() containsObject:@(itag)];
-            if (!isVideo && !isAudio) continue;   // a codec iOS will not play
+            if (!isVideo && !isAudio) {
+                // A codec iOS will not play. The itag is kept rather than just counted:
+                // it names the codec exactly, which is what decides whether the answer
+                // is "widen this list" or "this build only streams".
+                sciUnplayable++;
+                [refused addObject:@(itag)];
+                continue;
+            }
 
             NSString *url = SCIPreparedURL(SCIURLForStream(stream));
-            if (!url.length) continue;
+            if (!url.length) {
+                sciNoURL++;
+                continue;
+            }
 
             [seen addObject:@(itag)];
 
@@ -207,11 +240,37 @@ static NSString *SCIPreparedURL(NSString *urlString) {
         }
     }
 
+    if (refused.count) {
+        NSMutableArray<NSString *> *names = [NSMutableArray array];
+        for (NSNumber *itag in [refused.array subarrayWithRange:
+                NSMakeRange(0, MIN(refused.count, (NSUInteger)8))]) {
+            [names addObject:itag.stringValue];
+        }
+        sciRefusedItags = [names componentsJoinedByString:@", "];
+    }
+
+    SCILogV(@"download: %ld seen, %ld unplayable, %ld without a link, %lu usable",
+            (long)sciSeen, (long)sciUnplayable, (long)sciNoURL, (unsigned long)out.count);
+
     return out;
 }
 
-+ (BOOL)available {
-    return [self formats].count > 0;
+/// The sentence shown when nothing can be saved, naming which of the three walls it hit.
++ (NSString *)refusalReason {
+    if (![SCIYTDiagnostics lastStreamingData]) {
+        return SCILocalized(@"dl_why_no_data");
+    }
+    if (sciSeen == 0) {
+        return SCILocalized(@"dl_why_no_formats");
+    }
+    if (sciNoURL > 0 && sciUnplayable == 0) {
+        return [NSString stringWithFormat:SCILocalized(@"dl_why_no_urls"), (long)sciNoURL];
+    }
+    if (sciUnplayable > 0) {
+        return [NSString stringWithFormat:SCILocalized(@"dl_why_unplayable"),
+                (long)sciUnplayable, sciRefusedItags ?: @"?"];
+    }
+    return SCILocalized(@"dl_why_unknown");
 }
 
 + (NSString *)diagnosticsSummary {
@@ -247,7 +306,9 @@ static NSString *SCIPreparedURL(NSString *urlString) {
     NSArray<SCIYTFormat *> *formats = [self formats];
 
     if (!formats.count) {
-        [self showMessage:SCILocalized(@"dl_nothing_to_save") from:presenter];
+        // Which of the three walls, in one sentence, instead of "nothing to download"
+        // for all of them.
+        [self showMessage:[self refusalReason] from:presenter];
         return;
     }
 
@@ -272,8 +333,10 @@ static NSString *SCIPreparedURL(NSString *urlString) {
         [videos addObject:format];
     }
 
-    if (!videos.count) {
-        [self showMessage:SCILocalized(@"dl_nothing_to_save") from:presenter];
+    // No video worth offering, but the sound may still be there -- a track people
+    // actually want on its own, and 0.5.0 refused the whole thing at this point.
+    if (!videos.count && ![self bestAudio:formats]) {
+        [self showMessage:[self refusalReason] from:presenter];
         return;
     }
 
@@ -300,6 +363,17 @@ static NSString *SCIPreparedURL(NSString *urlString) {
                                                   style:UIAlertActionStyleDefault
                                                 handler:^(UIAlertAction *action) {
             [self startVideo:video audio:(video.hasAudio ? nil : audio) from:presenter];
+        }]];
+    }
+
+    // Sound on its own. Kept last so it never sits between two qualities, and offered
+    // whenever there is an audio stream -- for music and podcasts it is the point, not a
+    // fallback.
+    if (audio) {
+        [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"dl_audio_only")
+                                                  style:UIAlertActionStyleDefault
+                                                handler:^(UIAlertAction *action) {
+            [self startAudioOnly:audio from:presenter];
         }]];
     }
 
@@ -403,15 +477,27 @@ static NSString *SCIPreparedURL(NSString *urlString) {
         return;
     }
 
-    NSError *error = nil;
+    // Each insert gets its own error and its own check. Sharing one NSError* meant the
+    // second call overwrote whatever the first reported, and neither return value was
+    // read at all -- so a failed video insert exported an empty composition and the
+    // result was saved as though it had worked.
+    NSError *videoError = nil;
     CMTimeRange range = CMTimeRangeMake(kCMTimeZero, videoAsset.duration);
 
     AVMutableCompositionTrack *video =
         [composition addMutableTrackWithMediaType:AVMediaTypeVideo
                                  preferredTrackID:kCMPersistentTrackID_Invalid];
-    [video insertTimeRange:range ofTrack:videoTrack atTime:kCMTimeZero error:&error];
+
+    if (![video insertTimeRange:range ofTrack:videoTrack atTime:kCMTimeZero error:&videoError]) {
+        SCILogV(@"download: the picture would not go in — %@", videoError.localizedDescription);
+        completion(nil, videoError);
+        return;
+    }
+
+    BOOL soundIsIn = NO;
 
     if (audioTrack) {
+        NSError *audioError = nil;
         AVMutableCompositionTrack *audio =
             [composition addMutableTrackWithMediaType:AVMediaTypeAudio
                                      preferredTrackID:kCMPersistentTrackID_Invalid];
@@ -419,10 +505,14 @@ static NSString *SCIPreparedURL(NSString *urlString) {
         // The audio may run a fraction longer or shorter than the picture; the shorter
         // of the two is the safe range, and a mismatch here is an export failure.
         CMTime length = CMTimeMinimum(videoAsset.duration, audioAsset.duration);
-        [audio insertTimeRange:CMTimeRangeMake(kCMTimeZero, length)
-                       ofTrack:audioTrack
-                        atTime:kCMTimeZero
-                         error:&error];
+        soundIsIn = [audio insertTimeRange:CMTimeRangeMake(kCMTimeZero, length)
+                                   ofTrack:audioTrack
+                                    atTime:kCMTimeZero
+                                     error:&audioError];
+
+        if (!soundIsIn) {
+            SCILogV(@"download: the sound would not go in — %@", audioError.localizedDescription);
+        }
     }
 
     NSURL *output = [NSURL fileURLWithPath:
@@ -437,7 +527,7 @@ static NSString *SCIPreparedURL(NSString *urlString) {
 
     [export exportAsynchronouslyWithCompletionHandler:^{
         if (export.status == AVAssetExportSessionStatusCompleted) {
-            completion(output, nil);
+            completion(soundIsIn ? output : nil, nil);
         } else {
             SCILogV(@"download: export failed — %@", export.error.localizedDescription);
             completion(nil, export.error);
@@ -447,20 +537,61 @@ static NSString *SCIPreparedURL(NSString *urlString) {
 
 #pragma mark - The run
 
+/// Deletes a temporary file, if there is one.
+///
+/// 0.5.0 removed only the file it handed to Photos, so a merged save left both inputs
+/// behind -- two files of tens of megabytes each, per download, sitting in the app's
+/// temporary directory until iOS decided to reclaim it.
++ (void)discard:(NSURL *)file {
+    if (!file) return;
+    [[NSFileManager defaultManager] removeItemAtURL:file error:nil];
+}
+
 + (void)startVideo:(SCIYTFormat *)video audio:(SCIYTFormat *)audio from:(UIViewController *)presenter {
     UIAlertController *progress =
         [UIAlertController alertControllerWithTitle:SCILocalized(@"dl_saving")
                                             message:SCILocalized(@"dl_working")
                                      preferredStyle:UIAlertControllerStyleAlert];
-    [presenter presentViewController:progress animated:YES completion:nil];
+
+    // Whether the alert has finished appearing.
+    //
+    // Dismissing a controller that is still animating in is ignored by UIKit, and its
+    // completion block never runs -- which left an alert with no buttons on screen and
+    // no way out but force-quitting YouTube. It was not a race in theory either: -fetch:
+    // calls back synchronously when the URL will not parse, on the same runloop turn
+    // that started the presentation.
+    __block BOOL shown = NO;
+    __block void (^pending)(void) = nil;
 
     void (^finish)(BOOL, NSString *) = ^(BOOL ok, NSString *detail) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [progress dismissViewControllerAnimated:YES completion:^{
-                [self showMessage:(ok ? SCILocalized(@"dl_saved") : detail) from:presenter];
-            }];
+            void (^close)(void) = ^{
+                [progress dismissViewControllerAnimated:YES completion:^{
+                    // detail is used on success too. 0.5.0 built the "saved without
+                    // sound" sentence and then threw it away here, so a silent file was
+                    // always reported as a clean save.
+                    [self showMessage:(detail.length ? detail : SCILocalized(@"dl_saved"))
+                                 from:presenter];
+                }];
+            };
+
+            if (shown) {
+                close();
+            } else {
+                // Held until the presentation finishes, rather than fired into it.
+                pending = close;
+            }
         });
     };
+
+    [presenter presentViewController:progress animated:YES completion:^{
+        shown = YES;
+        if (pending) {
+            void (^queued)(void) = pending;
+            pending = nil;
+            queued();
+        }
+    }];
 
     [self fetch:video.urlString extension:@"mp4" completion:^(NSURL *videoFile, NSError *error) {
         if (!videoFile) {
@@ -470,14 +601,16 @@ static NSString *SCIPreparedURL(NSString *urlString) {
 
         // Muxed already, or no audio to pair: save what arrived.
         if (!audio) {
-            [self saveToPhotos:videoFile completion:finish];
+            [self saveToPhotos:videoFile completion:^(BOOL ok, NSString *detail) {
+                finish(ok, ok ? nil : detail);
+            }];
             return;
         }
 
         [self fetch:audio.urlString extension:@"m4a" completion:^(NSURL *audioFile, NSError *audioError) {
             if (!audioFile) {
                 // The picture arrived and the sound did not. Saving the silent file is
-                // better than saving nothing, and the message says which it was.
+                // better than saving nothing, and the message now actually says so.
                 [self saveToPhotos:videoFile completion:^(BOOL ok, NSString *detail) {
                     finish(ok, ok ? SCILocalized(@"dl_saved_silent") : detail);
                 }];
@@ -485,10 +618,138 @@ static NSString *SCIPreparedURL(NSString *urlString) {
             }
 
             [self mergeVideo:videoFile audio:audioFile completion:^(NSURL *merged, NSError *mergeError) {
-                [self saveToPhotos:(merged ?: videoFile) completion:finish];
+                // Both inputs go, whichever way the merge went. saveToPhotos only ever
+                // removes the one file it was handed.
+                [self discard:audioFile];
+
+                if (merged) {
+                    [self discard:videoFile];
+                    [self saveToPhotos:merged completion:^(BOOL ok, NSString *detail) {
+                        finish(ok, ok ? nil : detail);
+                    }];
+                } else {
+                    // The merge failed, so what gets saved is the picture on its own.
+                    // Saying "saved" here would be a lie the user only discovers on
+                    // playback.
+                    [self saveToPhotos:videoFile completion:^(BOOL ok, NSString *detail) {
+                        finish(ok, ok ? SCILocalized(@"dl_saved_silent") : detail);
+                    }];
+                }
             }];
         }];
     }];
+}
+
+///
+/// Sound on its own, saved where sound can actually live.
+///
+/// Not Photos: it takes video and images, and an .m4a handed to it is refused. So the
+/// file goes to the app's own Documents folder and the share sheet opens on it, which
+/// puts it into Files, Music, a message, or anywhere else in one step.
+///
+/// Documents rather than the temporary directory, because a file the user chose to keep
+/// must survive iOS reclaiming scratch space -- and because it is where the download
+/// centre will read from next.
++ (void)startAudioOnly:(SCIYTFormat *)audio from:(UIViewController *)presenter {
+    UIAlertController *progress =
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"dl_saving")
+                                            message:SCILocalized(@"dl_working")
+                                     preferredStyle:UIAlertControllerStyleAlert];
+
+    __block BOOL shown = NO;
+    __block void (^pending)(void) = nil;
+
+    void (^finish)(NSURL *, NSString *) = ^(NSURL *file, NSString *failure) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            void (^close)(void) = ^{
+                [progress dismissViewControllerAnimated:YES completion:^{
+                    if (!file) {
+                        [self showMessage:(failure ?: SCILocalized(@"dl_failed")) from:presenter];
+                        return;
+                    }
+                    [self shareFile:file from:presenter];
+                }];
+            };
+            if (shown) close(); else pending = close;
+        });
+    };
+
+    [presenter presentViewController:progress animated:YES completion:^{
+        shown = YES;
+        if (pending) { void (^queued)(void) = pending; pending = nil; queued(); }
+    }];
+
+    [self fetch:audio.urlString extension:@"m4a" completion:^(NSURL *file, NSError *error) {
+        if (!file) {
+            finish(nil, SCILocalized(@"dl_failed"));
+            return;
+        }
+
+        NSString *title = [SCIYTDiagnostics lastVideoTitle] ?: @"audio";
+        NSURL *kept = [self keep:file named:title extension:@"m4a"];
+        finish(kept ?: file, nil);
+    }];
+}
+
+/// Moves a finished file into Documents under a readable name.
++ (NSURL *)keep:(NSURL *)file named:(NSString *)title extension:(NSString *)extension {
+    NSString *documents = [NSSearchPathForDirectoriesInDomains(
+        NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+    if (!documents) return nil;
+
+    NSString *folder = [documents stringByAppendingPathComponent:@"Albrhi"];
+    [[NSFileManager defaultManager] createDirectoryAtPath:folder
+                              withIntermediateDirectories:YES
+                                               attributes:nil
+                                                    error:nil];
+
+    // Anything a file system objects to, replaced. A YouTube title can contain slashes,
+    // colons and newlines, and a path built from one unfiltered simply fails to write.
+    // The control characters are added separately rather than written into the literal:
+    // Objective-C has no multi-line string, and this project has corrupted source files
+    // three times by putting an escape sequence through a shell heredoc. Once more here.
+    NSMutableCharacterSet *illegal =
+        [NSMutableCharacterSet characterSetWithCharactersInString:@"/\\?%*|\"<>:"];
+    [illegal formUnionWithCharacterSet:[NSCharacterSet controlCharacterSet]];
+    [illegal formUnionWithCharacterSet:[NSCharacterSet newlineCharacterSet]];
+    NSString *safe = [[title componentsSeparatedByCharactersInSet:illegal]
+        componentsJoinedByString:@" "];
+
+    safe = [safe stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    if (safe.length > 80) safe = [safe substringToIndex:80];
+    if (!safe.length) safe = @"audio";
+
+    NSString *path = [folder stringByAppendingPathComponent:
+        [safe stringByAppendingPathExtension:extension]];
+
+    // A second download of the same track must not fail on the name already being taken.
+    NSUInteger attempt = 2;
+    while ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
+        path = [folder stringByAppendingPathComponent:
+            [[NSString stringWithFormat:@"%@ (%lu)", safe, (unsigned long)attempt++]
+                stringByAppendingPathExtension:extension]];
+    }
+
+    NSError *error = nil;
+    NSURL *destination = [NSURL fileURLWithPath:path];
+    if (![[NSFileManager defaultManager] moveItemAtURL:file toURL:destination error:&error]) {
+        SCILogV(@"download: could not keep the file — %@", error.localizedDescription);
+        return nil;
+    }
+    return destination;
+}
+
++ (void)shareFile:(NSURL *)file from:(UIViewController *)presenter {
+    UIActivityViewController *share =
+        [[UIActivityViewController alloc] initWithActivityItems:@[file]
+                                          applicationActivities:nil];
+
+    // An unanchored sheet is fatal on iPad, the same as the quality one.
+    share.popoverPresentationController.sourceView = presenter.view;
+    share.popoverPresentationController.sourceRect =
+        CGRectMake(CGRectGetMidX(presenter.view.bounds), CGRectGetMidY(presenter.view.bounds), 1, 1);
+
+    [presenter presentViewController:share animated:YES completion:nil];
 }
 
 + (void)saveToPhotos:(NSURL *)file completion:(void (^)(BOOL ok, NSString *detail))completion {

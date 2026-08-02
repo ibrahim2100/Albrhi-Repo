@@ -3,6 +3,41 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.6.0
+
+- **Hold the video to save it.** No need to open settings first. The settings row is
+  still there, but nobody opens a settings screen to save the thing they are watching.
+  One finger, a little over half a second, and the gesture never swallows a touch — tap
+  to pause, scrubbing and YouTube's own hold-to-speed all keep working.
+
+- **Audio on its own.** Last entry in the quality list. It saves to Files rather than
+  Photos, because Photos refuses audio, and the share sheet opens on it so it can go
+  into Files, Music or a message in one step.
+
+- **"Nothing to download" now says why.** It stood for three completely different
+  situations: no stream information yet, formats with no link to fetch, and formats in a
+  codec iOS cannot play. Each gets its own sentence now, and the codec one names the
+  format numbers — so a report of this actually says what to do about it.
+
+- Fixes, all found reading the 0.5.0 code rather than on a device:
+  - Every download that had to merge audio left **both source files behind** — tens of
+    megabytes each, per download. Only the merged file was ever cleaned up.
+  - **"Saved without sound" never appeared.** The message was built and then discarded,
+    so a silent file was always reported as a clean save.
+  - The **"Saving…" alert could stick on screen with no buttons**, needing YouTube to be
+    force-quit. Dismissing an alert that is still animating in is ignored by iOS, and a
+    link that would not parse triggered exactly that, every time.
+  - A **failed merge was reported as success** — you got a silent video and were told it
+    saved fine. Neither track insertion was checked at all.
+  - The **SponsorBlock markers were rebuilt on every layout pass** of the player bar,
+    which runs constantly during playback. They now redraw when something actually
+    changes.
+
+- **Next:** the download centre — a list of what you have saved, with the audio player
+  and gallery inside the app. Deliberately after this release: a centre for a downloader
+  that cannot yet produce a file on your build would be building the hard half first, and
+  the message above is what tells us which half is hard.
+
 ## v0.5.0
 
 - **Downloads.** Open the panel over a video and there is a row that saves it to Photos,

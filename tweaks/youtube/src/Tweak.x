@@ -4,7 +4,7 @@
 #import "Prefs.h"
 #import "Diagnostics/SCIYTDiagnostics.h"
 
-NSString *SCIVersionString = @"v0.5.0";  // AlbrhiYT
+NSString *SCIVersionString = @"v0.6.0";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.
