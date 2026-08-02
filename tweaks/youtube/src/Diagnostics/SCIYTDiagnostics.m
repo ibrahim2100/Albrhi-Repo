@@ -214,8 +214,16 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
 
     sciActiveVideoID = [videoID copy];
 
-    // Cleared with the video, so the attempts listed always belong to the one on screen.
-    sciStreamAttempts = nil;
+    // The attempts are deliberately *not* cleared here.
+    //
+    // They used to be, so that the list always belonged to the video on screen. But
+    // YouTube re-announces a video while one is being saved -- on a quality change, on a
+    // resume -- and that wiped the record halfway through a download. The line naming
+    // what the playlist turned out to be was gone by the time anyone opened the page,
+    // which is exactly when it was wanted.
+    //
+    // The download clears them when it starts a round, which is the moment that actually
+    // marks one attempt from the next.
 }
 
 + (NSString *)activeVideoID { return sciActiveVideoID; }

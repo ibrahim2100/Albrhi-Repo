@@ -3,6 +3,19 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.10.3
+
+- **The error now tells you what it found**, instead of pointing at a page that had
+  already forgotten. Saving still fails on some videos, and 0.10.2 was supposed to record
+  why — but the record was being wiped mid-download, because YouTube re-announces a video
+  while one is being saved and that was treated as "a new video, start a fresh record".
+- So the reason travels with the message. If it fails you will now see the shape of the
+  playlist underneath: how many pieces, how many actual addresses, whether ranges are used,
+  and what the pieces are named. Those four facts distinguish the three completely
+  different problems that all produced the same sentence before.
+- The record is cleared when you start a save, which is the moment that actually separates
+  one attempt from the next.
+
 ## v0.10.2
 
 - **0.10.1 downloaded the same file over and over.** The playlist, the qualities and the

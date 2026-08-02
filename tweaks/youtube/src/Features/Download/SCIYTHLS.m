@@ -52,6 +52,18 @@ static NSString *SCIAttribute(NSString *line, NSString *name) {
 
 @implementation SCIYTHLS
 
+/// What the last playlist turned out to be.
+///
+/// Kept so the failure can say it. "The pieces do not join" fits all three shapes a
+/// playlist can have and distinguishes none of them, and the report that did carry the
+/// distinction was being cleared mid-download by YouTube re-announcing the video.
+static NSString *sciLastShape = nil;
+
+/// A failure sentence with the playlist's shape under it.
+static NSString *SCIWithShape(NSString *message) {
+    return [NSString stringWithFormat:@"%@\n\n%@", message ?: @"", sciLastShape ?: @"?"];
+}
+
 + (NSURLSession *)session {
     static NSURLSession *session = nil;
     static dispatch_once_t once;
@@ -223,11 +235,18 @@ static NSString *SCIAttribute(NSString *line, NSString *name) {
         // that the pieces would not join, which is a symptom and names none of the three
         // shapes a playlist can have.
         NSCountedSet *distinct = [NSCountedSet setWithArray:segments];
-        [SCIYTDiagnostics recordStreamAttempt:
-            [NSString stringWithFormat:@"hls: %lu entries, %lu distinct URLs%@%@",
-             (unsigned long)segments.count, (unsigned long)distinct.count,
-             byteRanged ? @", byte ranges" : @"",
-             initSegment ? @", fMP4 init" : @", no init"]];
+
+        // The last part of the first address, which is what says whether these are
+        // MPEG-TS parts or fragmented MP4 -- the one thing that decides whether joining
+        // them can work at all.
+        NSString *shape = [NSString stringWithFormat:@"%lu entries, %lu URLs%@%@, ends %@",
+            (unsigned long)segments.count, (unsigned long)distinct.count,
+            byteRanged ? @", ranges" : @"",
+            initSegment ? @", fMP4 init" : @", no init",
+            [[segments.firstObject componentsSeparatedByString:@"/"] lastObject] ?: @"?"];
+
+        sciLastShape = [shape copy];
+        [SCIYTDiagnostics recordStreamAttempt:[@"hls: " stringByAppendingString:shape]];
 
         // One file addressed by ranges: the whole of it is the media, so it is fetched
         // once instead of once per slice. This is both the fix for the previous release
@@ -365,7 +384,7 @@ static NSString *SCIAttribute(NSString *line, NSString *name) {
 
     if (![asset tracksWithMediaType:AVMediaTypeVideo].count) {
         [[NSFileManager defaultManager] removeItemAtURL:joined error:nil];
-        completion(nil, SCILocalized(@"dl_hls_unreadable"));
+        completion(nil, SCIWithShape(SCILocalized(@"dl_hls_unreadable")));
         return;
     }
 
@@ -386,7 +405,10 @@ static NSString *SCIAttribute(NSString *line, NSString *name) {
             completion(output, nil);
         } else {
             SCILogV(@"hls: export failed — %@", export.error.localizedDescription);
-            completion(nil, export.error.localizedDescription ?: SCILocalized(@"dl_hls_unreadable"));
+
+            // The shape, in the message. Whoever reports this should not have to open a
+            // second screen to say which of three completely different problems it was.
+            completion(nil, SCIWithShape(SCILocalized(@"dl_hls_unreadable")));
         }
     }];
 }
