@@ -70,8 +70,11 @@ static void SCIBuildTables(void) {
         @"dl_why_no_data": @"YouTube has not handed over any stream information for this video yet. Start playing it, then hold again.",
         @"dl_why_no_formats": @"Stream information arrived but it lists no formats. This build may only stream in pieces, which cannot be saved as a file.",
         @"dl_why_no_urls": @"Found %ld formats iOS can play, but not one of them carries a link to fetch. This build streams in pieces instead of serving files, so there is nothing to download yet.",
-        @"dl_why_unplayable": @"Found %ld formats, all in a codec iOS will not play (itags %@). Saving them would give you a file that shows a black screen.",
         @"dl_why_unknown": @"Nothing could be saved, and the reason is not one this page knows. Settings, Diagnostics has the full report.",
+
+        @"dl_asking": @"Asking YouTube for the formats…",
+        @"dl_api_no_links": @"YouTube did not return any downloadable formats for this video. It may be private, age restricted, or blocked where you are.",
+        @"dl_why_unplayable_api": @"Found %ld formats, all in a codec iOS will not play. Saving one would give you a file that shows a black screen.",
 
         @"verbose_logging": @"Verbose logging",
         @"verbose_logging_note": @"Writes what the tweak is doing to the system log. Leave this off unless you are collecting a report — it is noisy and slows things down.",
@@ -191,8 +194,11 @@ static void SCIBuildTables(void) {
         @"dl_why_no_data": @"يوتيوب لم يُسلّم بعد أي معلومات عن مقاطع هذا الفيديو. شغّله ثم اضغط مطوّلًا مرة أخرى.",
         @"dl_why_no_formats": @"وصلت معلومات المقاطع لكنها بلا صيغ. قد تكون هذه النسخة تبثّ على أجزاء فقط، وهذا لا يُحفَظ كملف.",
         @"dl_why_no_urls": @"وُجدت %ld صيغة يشغّلها iOS، لكن لا واحدة منها تحمل رابطًا للتحميل. هذه النسخة تبثّ على أجزاء بدل أن تقدّم ملفات، فلا شيء يمكن تحميله بعد.",
-        @"dl_why_unplayable": @"وُجدت %ld صيغة، كلها بترميز لا يشغّله iOS (الرموز %@). حفظها يعطيك ملفًا بشاشة سوداء.",
         @"dl_why_unknown": @"تعذّر حفظ أي شيء، والسبب ليس مما تعرفه هذه الصفحة. التقرير الكامل في الإعدادات ثم التشخيص.",
+
+        @"dl_asking": @"جارٍ سؤال يوتيوب عن الصيغ…",
+        @"dl_api_no_links": @"يوتيوب لم يُرجع أي صيغة قابلة للتحميل لهذا الفيديو. قد يكون خاصًّا أو مقيَّدًا بالعمر أو محجوبًا في بلدك.",
+        @"dl_why_unplayable_api": @"وُجدت %ld صيغة، كلها بترميز لا يشغّله iOS. حفظ أيّ منها يعطيك ملفًا بشاشة سوداء.",
 
         @"verbose_logging": @"سجل مفصّل",
         @"verbose_logging_note": @"يكتب ما تفعله الأداة في سجل النظام. اتركه مطفأً إلا إذا كنت تجمع تقريرًا — فهو مزعج ويُبطئ الأداء.",

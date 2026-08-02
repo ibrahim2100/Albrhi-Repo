@@ -26,39 +26,17 @@
 
 #pragma mark - Reading the streams
 
-/// A zero-argument getter's value, boxed, or nil.
 ///
-/// KVC rather than -performSelector:, because these return a mix of objects, integers
-/// and doubles and KVC boxes all three without the caller having to know which.
-static id SCIValue(id object, NSString *key) {
-    if (!object || !key.length) return nil;
-    @try {
-        if (![object respondsToSelector:NSSelectorFromString(key)]) return nil;
-        return [object valueForKey:key];
-    } @catch (__unused NSException *exception) {
-        return nil;
-    }
-}
-
-static NSString *SCIString(id object, NSString *key) {
-    id value = SCIValue(object, key);
-    if ([value isKindOfClass:[NSString class]]) return value;
-    if ([value isKindOfClass:[NSURL class]]) return [(NSURL *)value absoluteString];
-    if (!value) return nil;
-
-    // MIMEType comes back as a wrapper object rather than a string on this build.
-    for (NSString *inner in @[@"stringValue", @"string", @"type", @"name"]) {
-        id text = SCIValue(value, inner);
-        if ([text isKindOfClass:[NSString class]] && [text length]) return text;
-    }
-    return nil;
-}
-
-static NSInteger SCIInteger(id object, NSString *key) {
-    id value = SCIValue(object, key);
-    return [value respondsToSelector:@selector(integerValue)] ? [value integerValue] : 0;
-}
-
+/// The helpers that read the app's own stream objects used to sit here.
+///
+/// They asked MLRemoteStream, and the formatStream nested inside it, for a link under
+/// every name a link might have. A report from a real device settled it: every stream
+/// answers -URL with "?cpn=…" — a query fragment — because this build fetches ranges
+/// over the piecewise protocol rather than downloading a file. There is no link to
+/// find under any name, and more probing would not have produced one.
+///
+/// Formats come from a fresh player response now. See SCIYTStreamAPI.
+///
 ///
 /// itags iOS can actually play, listed rather than inferred.
 ///
@@ -98,31 +76,6 @@ static NSSet<NSNumber *> *SCIPlayableAudioItags(void) {
 /// The two itags that carry sound in the same file as the picture.
 static BOOL SCIItagIsMuxed(NSInteger itag) {
     return itag == 18 || itag == 22;
-}
-
-///
-/// A fetchable link for a stream.
-///
-/// The stream's own -URL answers with a query fragment ("?cpn=…") and nothing else on
-/// this build — measured, and the reason an earlier diagnostics run looked like there
-/// were no links at all. The real one hangs off a nested formatStream. That is the
-/// single most valuable thing taken from YouMod: it would have cost several rounds on
-/// a device to find.
-///
-static NSString *SCIURLForStream(id stream) {
-    id formatStream = SCIValue(stream, @"formatStream");
-
-    for (id source in @[stream, formatStream ?: [NSNull null]]) {
-        if ([source isKindOfClass:[NSNull class]]) continue;
-
-        for (NSString *key in @[@"URL", @"url", @"urlString", @"URLString"]) {
-            NSString *text = SCIString(source, key);
-
-            // A URL, not the fragment the outer stream answers with.
-            if ([text hasPrefix:@"http"]) return text;
-        }
-    }
-    return nil;
 }
 
 ///
@@ -178,75 +131,69 @@ static NSString *SCIPreparedURL(NSString *urlString) {
 static NSInteger sciSeen = 0;
 static NSInteger sciNoURL = 0;
 static NSInteger sciUnplayable = 0;
-static NSString *sciRefusedItags = nil;
 
-+ (NSArray<SCIYTFormat *> *)formats {
-    id streamingData = [SCIYTDiagnostics lastStreamingData];
+/// Turns one JSON format object into a format we can use, or nil.
++ (SCIYTFormat *)formatFromJSON:(NSDictionary *)json {
+    if (![json isKindOfClass:[NSDictionary class]]) return nil;
 
+    NSInteger itag = [json[@"itag"] respondsToSelector:@selector(integerValue)]
+        ? [json[@"itag"] integerValue] : 0;
+    if (!itag) return nil;
+
+    sciSeen++;
+
+    BOOL isVideo = [SCIPlayableVideoItags() containsObject:@(itag)];
+    BOOL isAudio = [SCIPlayableAudioItags() containsObject:@(itag)];
+    if (!isVideo && !isAudio) {
+        sciUnplayable++;
+        return nil;
+    }
+
+    NSString *url = json[@"url"];
+    if (![url isKindOfClass:[NSString class]] || ![url hasPrefix:@"http"]) {
+        sciNoURL++;
+        return nil;
+    }
+
+    SCIYTFormat *format = [[SCIYTFormat alloc] init];
+    format.itag = itag;
+    format.urlString = SCIPreparedURL(url);
+    format.isVideo = isVideo;
+    format.hasAudio = isAudio || SCIItagIsMuxed(itag);
+    format.height = [json[@"height"] respondsToSelector:@selector(integerValue)]
+        ? [json[@"height"] integerValue] : 0;
+    format.fps = [json[@"fps"] respondsToSelector:@selector(integerValue)]
+        ? [json[@"fps"] integerValue] : 0;
+    format.bitrate = [json[@"bitrate"] respondsToSelector:@selector(longLongValue)]
+        ? [json[@"bitrate"] longLongValue] : 0;
+    format.qualityLabel = [json[@"qualityLabel"] isKindOfClass:[NSString class]]
+        ? json[@"qualityLabel"] : nil;
+
+    return format;
+}
+
+/// Every usable format in a streaming-data dictionary.
++ (NSArray<SCIYTFormat *> *)formatsFromStreamingData:(NSDictionary *)streamingData {
     sciSeen = 0;
     sciNoURL = 0;
     sciUnplayable = 0;
-    sciRefusedItags = nil;
 
-    if (!streamingData) return @[];
+    if (![streamingData isKindOfClass:[NSDictionary class]]) return @[];
 
     NSMutableArray<SCIYTFormat *> *out = [NSMutableArray array];
     NSMutableSet<NSNumber *> *seen = [NSMutableSet set];
-    NSMutableOrderedSet<NSNumber *> *refused = [NSMutableOrderedSet orderedSet];
 
-    // Both names, because which one is populated varies and asking for the other costs
-    // a message send that returns nil.
-    for (NSString *key in @[@"adaptiveStreams", @"adaptiveFormatsArray", @"formats"]) {
-        id list = SCIValue(streamingData, key);
+    for (NSString *key in @[@"adaptiveFormats", @"formats"]) {
+        NSArray *list = streamingData[key];
         if (![list isKindOfClass:[NSArray class]]) continue;
 
-        for (id stream in (NSArray *)list) {
-            NSInteger itag = SCIInteger(stream, @"itag");
-            if (!itag) itag = SCIInteger(SCIValue(stream, @"formatStream"), @"itag");
-            if (!itag || [seen containsObject:@(itag)]) continue;
+        for (NSDictionary *entry in list) {
+            SCIYTFormat *format = [self formatFromJSON:entry];
+            if (!format || [seen containsObject:@(format.itag)]) continue;
 
-            sciSeen++;
-
-            BOOL isVideo = [SCIPlayableVideoItags() containsObject:@(itag)];
-            BOOL isAudio = [SCIPlayableAudioItags() containsObject:@(itag)];
-            if (!isVideo && !isAudio) {
-                // A codec iOS will not play. The itag is kept rather than just counted:
-                // it names the codec exactly, which is what decides whether the answer
-                // is "widen this list" or "this build only streams".
-                sciUnplayable++;
-                [refused addObject:@(itag)];
-                continue;
-            }
-
-            NSString *url = SCIPreparedURL(SCIURLForStream(stream));
-            if (!url.length) {
-                sciNoURL++;
-                continue;
-            }
-
-            [seen addObject:@(itag)];
-
-            SCIYTFormat *format = [[SCIYTFormat alloc] init];
-            format.itag = itag;
-            format.urlString = url;
-            format.isVideo = isVideo;
-            format.hasAudio = isAudio || SCIItagIsMuxed(itag);
-            format.height = SCIInteger(stream, @"height");
-            format.fps = SCIInteger(stream, @"fps");
-            format.bitrate = (long long)SCIInteger(stream, @"bitrate");
-            format.qualityLabel = SCIString(stream, @"qualityLabel");
-
+            [seen addObject:@(format.itag)];
             [out addObject:format];
         }
-    }
-
-    if (refused.count) {
-        NSMutableArray<NSString *> *names = [NSMutableArray array];
-        for (NSNumber *itag in [refused.array subarrayWithRange:
-                NSMakeRange(0, MIN(refused.count, (NSUInteger)8))]) {
-            [names addObject:itag.stringValue];
-        }
-        sciRefusedItags = [names componentsJoinedByString:@", "];
     }
 
     SCILogV(@"download: %ld seen, %ld unplayable, %ld without a link, %lu usable",
@@ -257,43 +204,40 @@ static NSString *sciRefusedItags = nil;
 
 /// The sentence shown when nothing can be saved, naming which of the three walls it hit.
 + (NSString *)refusalReason {
-    if (![SCIYTDiagnostics lastStreamingData]) {
-        return SCILocalized(@"dl_why_no_data");
-    }
     if (sciSeen == 0) {
         return SCILocalized(@"dl_why_no_formats");
     }
-    // The link comes first, and getting that order wrong made the first version of this
-    // message actively misleading. A real report had twelve formats: eight in VP9 and
-    // AV1, and four in H.264 that this list accepts. It said "all in a codec iOS will
-    // not play" -- because eight is more than four -- when what actually stopped the
+
+    // The link comes first, and getting that order wrong made an earlier version of
+    // this message actively misleading. A real report had twelve formats: eight in VP9
+    // and AV1, and four in H.264 that this tweak accepts. It said "all in a codec iOS
+    // will not play" — because eight is more than four — when what actually stopped the
     // download was that those four carried no link.
     //
-    // So: anything that survived the codec check and still could not be fetched is the
-    // wall. The codec only matters when nothing survived it at all.
+    // Anything that survives the codec check and still cannot be fetched is the wall.
+    // The codec only matters when nothing survived it at all.
     if (sciNoURL > 0) {
         return [NSString stringWithFormat:SCILocalized(@"dl_why_no_urls"), (long)sciNoURL];
     }
     if (sciUnplayable > 0) {
-        return [NSString stringWithFormat:SCILocalized(@"dl_why_unplayable"),
-                (long)sciUnplayable, sciRefusedItags ?: @"?"];
+        return [NSString stringWithFormat:SCILocalized(@"dl_why_unplayable_api"),
+                (long)sciUnplayable];
     }
     return SCILocalized(@"dl_why_unknown");
 }
 
 + (NSString *)diagnosticsSummary {
-    NSArray<SCIYTFormat *> *formats = [self formats];
-    if (!formats.count) {
+    // Deliberately not a live count any more. Formats come from a request to YouTube
+    // now, and a diagnostics page that fired one off every time it was opened would be
+    // asking about the user's video without being told to.
+    //
+    // What it can report without asking anything is what the last hold found, which is
+    // the number that matters when someone says saving did not work.
+    if (sciSeen == 0) {
         return SCILocalized(@"dl_diag_none");
     }
-
-    NSInteger video = 0, audio = 0;
-    for (SCIYTFormat *format in formats) {
-        if (format.isVideo) video++; else audio++;
-    }
-
     return [NSString stringWithFormat:SCILocalized(@"dl_diag_found"),
-            (long)video, (long)audio];
+            (long)(sciSeen - sciUnplayable - sciNoURL), (long)sciSeen];
 }
 
 /// The best audio available, for pairing with a video-only format.
@@ -311,14 +255,53 @@ static NSString *sciRefusedItags = nil;
 + (void)presentFrom:(UIViewController *)presenter {
     if (!presenter) return;
 
-    NSArray<SCIYTFormat *> *formats = [self formats];
-
-    if (!formats.count) {
-        // Which of the three walls, in one sentence, instead of "nothing to download"
-        // for all of them.
-        [self showMessage:[self refusalReason] from:presenter];
+    NSString *videoID = [SCIYTDiagnostics lastVideoID];
+    if (!videoID.length) {
+        [self showMessage:SCILocalized(@"dl_why_no_data") from:presenter];
         return;
     }
+
+    // There is a network round trip in front of the sheet now, so something has to say
+    // so. Asking YouTube takes a moment, and a hold that appears to do nothing reads as
+    // a broken gesture — which is exactly how 0.6.0's looked while it was silently
+    // losing to YouTube's own recognisers.
+    UIAlertController *waiting =
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"dl_title")
+                                            message:SCILocalized(@"dl_asking")
+                                     preferredStyle:UIAlertControllerStyleAlert];
+
+    __block BOOL shown = NO;
+    __block void (^pending)(void) = nil;
+
+    void (^done)(void (^)(void)) = ^(void (^next)(void)) {
+        void (^close)(void) = ^{
+            [waiting dismissViewControllerAnimated:YES completion:next];
+        };
+        if (shown) close(); else pending = close;
+    };
+
+    [presenter presentViewController:waiting animated:YES completion:^{
+        shown = YES;
+        if (pending) { void (^queued)(void) = pending; pending = nil; queued(); }
+    }];
+
+    [SCIYTStreamAPI streamingDataForVideo:videoID
+                               completion:^(NSDictionary *streamingData, NSString *failure) {
+        NSArray<SCIYTFormat *> *formats = [self formatsFromStreamingData:streamingData];
+
+        done(^{
+            if (!formats.count) {
+                // The server's own sentence when it gave one -- private, age-gated,
+                // blocked here -- and our tally when it did not.
+                [self showMessage:(failure ?: [self refusalReason]) from:presenter];
+                return;
+            }
+            [self presentSheetFor:formats from:presenter];
+        });
+    }];
+}
+
++ (void)presentSheetFor:(NSArray<SCIYTFormat *> *)formats from:(UIViewController *)presenter {
 
     // Highest first, and one entry per quality: three renditions of 1080p differ only
     // in a codec the user did not ask about.

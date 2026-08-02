@@ -3,6 +3,34 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.7.0
+
+- **Downloading works.** This is the release the last six were leading to.
+
+- The reason it did not work before is worth writing down. Every format the app was
+  holding had no link on it — just `?cpn=…`, a fragment. Four of them were in H.264, which
+  iOS plays perfectly well, so the codec was never the problem: YouTube 21.30.5 simply is
+  not given file links any more. It streams in pieces, asking for ranges. Nothing this
+  tweak could read out of the app was ever going to produce a downloadable file.
+
+- So it asks YouTube directly instead, the same way every working YouTube downloader does:
+  a fresh request for the video's formats, made as one of the clients that is still served
+  plain links. Those come back ready to fetch, and the rest of the pipeline — pick a
+  quality, fetch, join picture and sound, save — already worked.
+
+- **What that means for privacy, plainly:** the video's id goes to YouTube. Not to anyone
+  else, on the same connection, for the video it is already streaming to your phone a
+  second earlier. That is a different thing from the SponsorBlock lookup, which is asked
+  by fingerprint precisely so a *third party* cannot learn what you are watching.
+
+- When YouTube refuses a video — private, age restricted, blocked in your country — the
+  message now says which, in YouTube's own words rather than a guess.
+
+- No extra weight. A well-known tweak does this by carrying a 25 MB media library to join
+  the audio and video back together; this joins them with what iOS already has, which is
+  possible because the formats are filtered to the codecs iOS can handle in the first
+  place.
+
 ## v0.6.1
 
 - **Holding the video works now.** In 0.6.0 the gesture was added and never fired once.
