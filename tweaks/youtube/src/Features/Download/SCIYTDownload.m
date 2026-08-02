@@ -2,6 +2,7 @@
 #import "../../SCILog.h"
 #import "../../Localization/SCILocalize.h"
 #import "../../Diagnostics/SCIYTDiagnostics.h"
+#import "SCIYTStreamAPI.h"
 #import <AVFoundation/AVFoundation.h>
 #import <Photos/Photos.h>
 #import <objc/message.h>

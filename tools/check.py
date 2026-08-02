@@ -169,12 +169,39 @@ for path in SRC + HDR:
 # 8. Project symbols used without the header that declares them.
 #    A bulk rename introduced SCILogV across 36 files without checking imports;
 #    the compiler only complained in the four that could not already see it.
+#
+#    The macros and functions below are listed by hand because a header can offer
+#    them under more than one name -- SCILogV arrives through Utils.h as readily as
+#    through SCILog.h, and neither is wrong.
 SYMBOL_HEADERS = {
     'SCILogV': ('SCILog.h', 'Utils.h'),
     'SCIDiagnostics': ('SCIDiagnosticsViewController.h',),
     'SCIMediaDownloader': ('SCIMediaDownloader.h',),
     'SCILocalized': ('SCILocalize.h', 'Utils.h'),
 }
+
+# Classes, by contrast, are found rather than listed.
+#
+# The hand-written table above covered four Instagram symbols and nothing else, so
+# when a new class was used in a file that did not import its header, the check said
+# nothing and the failure arrived five minutes into a CI compile -- which is the one
+# thing this file exists to prevent. It happened to SCIYTStreamAPI in YouTube 0.7.0.
+#
+# Every @interface in the tweak's own headers is a symbol whose home is known exactly,
+# so the map builds itself and a class added tomorrow is covered without an edit here.
+# Only classes declared in exactly one header are included: a name in two places has no
+# single answer to "which import is missing", and guessing would be a false positive.
+_class_homes = collections.defaultdict(set)
+for path in HDR:
+    text = open(path, encoding='utf-8').read()
+    for name in re.findall(r'^@interface\s+(\w+)', text, re.M):
+        _class_homes[name].add(os.path.basename(path))
+
+for name, homes in _class_homes.items():
+    # Prefixed names only. A category on UIColor or NSString declares an @interface
+    # too, and requiring an import for UIKit's own classes would cry wolf immediately.
+    if len(homes) == 1 and name.startswith('SCI'):
+        SYMBOL_HEADERS.setdefault(name, tuple(homes))
 
 HEADER_BY_NAME = {}
 for path in HDR:
@@ -215,7 +242,12 @@ for path in SRC:
     visible = reachable_headers(path)
 
     for symbol, headers in SYMBOL_HEADERS.items():
-        if symbol not in text:
+        # On a word boundary, not as a substring. Plain containment cried wolf the
+        # moment classes were added to this table: SCIPhotoVideo is inside
+        # SCIPhotoVideoSheet, and SCIWhatsNew inside SCIWhatsNewViewController, so four
+        # files were accused of missing an import they did not need. A check that is
+        # wrong four times out of four is one nobody reads again.
+        if not re.search(r'\b%s\b' % re.escape(symbol), text):
             continue
         if visible & set(headers):
             continue

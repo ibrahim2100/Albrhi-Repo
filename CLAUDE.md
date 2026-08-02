@@ -192,7 +192,9 @@ from a real build failure:
 5. unterminated string literals (comment-aware, so `https://` is not a false hit)
 6. localization parity and undefined keys — and a missing table at all
 7. version match between `control` and whichever source declares `SCIVersionString`
-8. project symbols used without their header, resolved transitively
+8. project symbols used without their header, resolved transitively — the class
+   half of that table builds itself from every `@interface` in the tweak's own
+   headers, matched on a word boundary
 
 A check that cries wolf gets ignored. Three of these produced false positives on
 first writing and were tightened before landing. If you add a rule, prove it fails
