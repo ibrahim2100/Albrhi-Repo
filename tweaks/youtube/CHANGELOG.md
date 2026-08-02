@@ -3,6 +3,23 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.14.0
+
+- **A real player, not a file opener.** Previous, play, next, a scrubber and both times —
+  and the list you opened it from is the queue, in the order you were looking at, so next
+  means the next one down.
+- **Video and sound each have their own tab.** They are not the same thing to look at: a
+  saved video wants its own still beside it and a saved song does not, and one list sized
+  for both would be sized for neither.
+- **Every saved video shows a still of itself**, taken a second in — videos open on black
+  or on a title card often enough that the first frame is the least useful picture in the
+  file. How long each one runs is shown beside it.
+- **Sound keeps playing when you leave.** Lock the phone, switch apps, and it carries on,
+  with the title and the picture on the lock screen and its skip buttons wired to the same
+  queue. Video does the same: iPhone will not play through a picture nobody is looking at,
+  so the picture is put down while you are away and picked up when you come back — the
+  sound never stops.
+
 ## v0.13.0
 
 - **A Download Centre, with a button beside You.** Everything saved lives in one list,

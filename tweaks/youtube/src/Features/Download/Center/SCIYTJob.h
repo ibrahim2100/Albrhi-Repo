@@ -56,6 +56,13 @@ typedef NS_ENUM(NSInteger, SCIYTJobState) {
 @property (nonatomic, copy, nullable) NSString *fileName;
 
 @property (nonatomic) long long bytes;
+
+/// How long it plays, in seconds. Zero until it has been measured once.
+///
+/// Stored rather than asked each time: a list of thirty rows would otherwise open thirty
+/// assets on the main thread to draw itself, and a raw AAC file has to be read through
+/// before it will say.
+@property (nonatomic) double duration;
 @property (nonatomic, copy) NSDate *createdAt;
 @property (nonatomic, copy, nullable) NSString *failure;
 

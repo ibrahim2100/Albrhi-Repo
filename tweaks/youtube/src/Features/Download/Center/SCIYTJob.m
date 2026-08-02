@@ -66,6 +66,7 @@
     self.createdAt  = [coder decodeObjectOfClass:[NSDate class] forKey:@"created"];
     self.kind       = [coder decodeIntegerForKey:@"kind"];
     self.bytes      = [coder decodeInt64ForKey:@"bytes"];
+    self.duration   = [coder decodeDoubleForKey:@"duration"];
     self.exported   = [coder decodeBoolForKey:@"exported"];
 
     // Always Done. Only finished jobs are written out, and a decoder that trusted a
@@ -86,6 +87,7 @@
     [coder encodeObject:self.createdAt forKey:@"created"];
     [coder encodeInteger:self.kind forKey:@"kind"];
     [coder encodeInt64:self.bytes forKey:@"bytes"];
+    [coder encodeDouble:self.duration forKey:@"duration"];
     [coder encodeBool:self.exported forKey:@"exported"];
 }
 

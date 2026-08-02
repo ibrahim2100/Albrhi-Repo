@@ -16,9 +16,13 @@ TWEAK_NAME = AlbrhiYT
 
 $(TWEAK_NAME)_FILES = $(shell find src -type f \( -iname \*.x -o -iname \*.xm -o -iname \*.m \))
 
-# AVKit is here for the Download Centre's player and nothing else: a saved video is
-# played inside the tweak rather than handed to another app, and AVPlayerViewController
-# is the whole of that feature.
-$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore AVFoundation AVKit CoreMedia Photos
+# MediaPlayer is here for the Download Centre's player, and only for the lock screen:
+# what is playing, how far through it is, and the buttons that skip to the next one.
+#
+# AVKit is deliberately *not* here. AVPlayerViewController was the first player and it
+# cannot be given a "next" -- there is no supported way into its transport bar -- and a
+# list of saved videos you cannot move through is a file opener. The player is built on
+# AVPlayerLayer instead, which is AVFoundation, already linked for the downloads.
+$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore AVFoundation MediaPlayer CoreMedia Photos
 
 include $(ROOT)/shared/tweak.mk

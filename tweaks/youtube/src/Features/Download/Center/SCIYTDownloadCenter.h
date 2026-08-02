@@ -12,16 +12,15 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 /// The Download Centre.
 ///
-/// Everything that has been saved, and everything still being saved, in one list — and
-/// tapping one plays it here rather than sending it anywhere. That is the point of it:
-/// a downloaded video used to leave for Photos immediately and there was no such thing
-/// as "my downloads" at all.
+/// Two tabs — video and sound — each its own list, and tapping a row plays it here rather
+/// than sending it anywhere. That is the point of it: a downloaded video used to leave
+/// for Photos immediately and there was no such thing as "my downloads" at all.
 ///
-/// A UITableViewController for the reason the settings panel is one. Three releases were
-/// spent on a panel of hand-written constraints that either failed to appear or died in
-/// CoreAutoLayout, and the fix was to stop writing constraints between siblings.
+/// This class only opens the thing. The lists are `SCIYTDownloadList` and the player is
+/// `SCIYTPlayer`; keeping the way in separate from what it opens means the panel, the
+/// tab-bar button and anything added later all call one method.
 ///
-@interface SCIYTDownloadCenter : UITableViewController
+@interface SCIYTDownloadCenter : NSObject
 
 /// Opens it over whatever is on screen. Guarded; a screen that cannot be built must
 /// fail to open rather than take YouTube with it.
