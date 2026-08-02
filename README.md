@@ -82,7 +82,7 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 | Tweak | App | Status |
 |---|---|---|
 | **Albrhi for Instagram** | Instagram | **Released** — `com.albrhi.tweak` |
-| **Albrhi for YouTube** | YouTube | **Released** — `com.albrhi.youtube`: no ads, SponsorBlock, background playback |
+| **Albrhi for YouTube** | YouTube | **Released** — `com.albrhi.youtube`: video downloads, no ads, SponsorBlock, background playback |
 
 Each tweak is a self-contained project under `tweaks/`, with its own sources, package identity and
 version number. They are **separate packages that never meet at runtime**: an injection filter binds
@@ -144,6 +144,26 @@ actually attached at runtime, with one-tap issue reporting.
 ---
 
 ## ▶️ Albrhi for YouTube
+
+### 💾 Save a video
+**Hold the video**, or open the panel, and the qualities appear — pick one and it goes to
+Photos with a percentage while it works.
+
+Getting there took nine releases of measuring, and the finding is worth stating: on this
+build **every individual quality arrives without a download address**, through the media
+layer, the format nested inside it, the player response and four ways of asking YouTube
+directly. What does have an address is the **playlist** that lists them — which is where
+every tweak whose downloading works ends up.
+
+The difference is what gets carried to finish the job. YouTube serves those parts as
+MPEG-TS, which iOS has never opened from a file, and the usual answer is to bundle FFmpeg
+— **between 2 and 19 MB** of media library. Albrhi bundles none: the picture inside is
+already H.264 and the sound already AAC, so the transport wrapper is unpacked in about
+600 lines and Apple's own writer builds the .mp4. Nothing is re-encoded, so nothing loses
+quality, and the tweak stays small.
+
+Qualities iOS cannot play are filtered out *before* they are offered, and a failure names
+which of the three things went wrong rather than one sentence for all of them.
 
 ### 🚫 No ads
 Stopped at three points, because they arrive by three routes and blocking one does nothing about
@@ -246,12 +266,20 @@ the workflow taught about per-tweak versions and tags; see [CLAUDE.md](CLAUDE.md
 
 ## 📖 Usage
 
-Open the settings panel by **holding the ☰ button at the top right of your profile**. With *Settings
-quick-access* on, holding the **home tab** works too.
+**On Instagram** — open the panel by **holding the ☰ button** at the top right of your profile. With
+*Settings quick-access* on, holding the **home tab** works too.
 
 - **Download** a post/reel/story with the inline download button in the action row.
 - **Long-press** a post to **zoom** it (configurable under Downloads → Long-press action).
 - **Search** any setting from the search bar at the top of the panel.
+
+**On YouTube** — open the panel by **holding two fingers anywhere**. It is deliberately not in
+YouTube's own settings: two attempts at that crashed the app, because a settings entry has to satisfy
+tables the tweak cannot reach. The gesture is on `UIWindow`, which is UIKit and cannot go missing.
+
+- **Hold the video** to save it — or use the row in the panel.
+- Everything else is a switch in the panel, and the card at the top says whether it all attached to
+  your build.
 
 ---
 
@@ -265,7 +293,8 @@ quick-access* on, holding the **home tab** works too.
 - [x] Backup, restore, export and import of settings
 - [x] Diagnostics — runtime info, attached hooks, live view-hierarchy scan, issue reporting
 - [x] Self-publishing APT source with a browser control panel
-- [ ] **Albrhi for YouTube** — a second tweak in this repository, sharing none of Instagram's runtime
+- [x] **Albrhi for YouTube** — a second tweak in this repository, sharing none of Instagram's runtime
+- [x] Video downloads on YouTube, without bundling a media library to convert them
 - [ ] Settings profiles — several configurations, switched per account
 - [ ] Crash protection that isolates and disables a faulting feature rather than the whole tweak
 
