@@ -447,8 +447,14 @@ jobs:
                 # It also keeps earlier versions installable: a build that turns out
                 # to be broken on a device has to be rollable back from Sileo rather
                 # than by hunting for an asset on the releases page.
+                #
+                # The fourth argument folds in this run's own build, under the same
+                # naming as everything else. The releases listing is eventually
+                # consistent, so a release published seconds ago may not appear in
+                # it -- YouTube shipped an index missing its own release exactly
+                # that way, and this side had the same gap without having hit it.
                 chmod +x main/tools/fetch-published-debs.sh
-                ./main/tools/fetch-published-debs.sh published "${{ github.repository }}" 3
+                ./main/tools/fetch-published-debs.sh published "${{ github.repository }}" 3 "$TWEAK_DIR/packages"
 
             - name: Publish APT repo to GitHub Pages
               if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')

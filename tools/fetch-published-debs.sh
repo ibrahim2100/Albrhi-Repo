@@ -35,6 +35,20 @@ REPO="${2:?owner/repo required}"
 # the source is a rollback path, not an archive.
 KEEP="${3:-3}"
 
+# Directories of freshly built .deb files to fold in, space separated.
+#
+# Asking the API for "every published release" a minute after publishing one does not
+# reliably include it: a YouTube release published at 17:05:28 was missing from the
+# listing the run asked for at 17:06:41. The listing is eventually consistent and this
+# script runs inside the "eventually", so the run's own output is copied in as well.
+#
+# It goes through the same renaming as everything else, and that is the whole point of
+# it being here rather than a `cp` in the workflow. The first attempt copied the build
+# straight in under its own name -- com.albrhi.youtube_0.6.0+rootless.deb next to the
+# gathered com.albrhi.youtube_0.6.0_iphoneos-arm64.deb -- two files, one identity, and
+# the collision guard in make-repo.sh stopped the release. One naming rule, one place.
+LOCAL_DIRS="${4:-}"
+
 # How far back to look. Bounded, because every push rebuilds the index and walking
 # the entire release history each time would cost more the longer the project lives.
 SCAN=40
@@ -111,6 +125,25 @@ for tag in $tags; do
 
         record_for "$package" "$((count + 1))"
         echo "Kept ${package} ${version} ${arch} (from ${tag})"
+    done
+done
+
+# Folded in after the gather, so a locally built package always wins over the copy the
+# listing returned. They are the same bytes; the local one is certainly current.
+for dir in $LOCAL_DIRS; do
+    [ -d "$dir" ] || continue
+
+    for deb in "$dir"/*.deb; do
+        [ -f "$deb" ] || continue
+
+        package=$(dpkg-deb -f "$deb" Package 2>/dev/null || true)
+        [ -n "$package" ] || continue
+
+        version=$(dpkg-deb -f "$deb" Version 2>/dev/null || echo "0")
+        arch=$(dpkg-deb -f "$deb" Architecture 2>/dev/null || echo "unknown")
+
+        cp -f "$deb" "${OUT_DIR}/${package}_${version}_${arch}.deb"
+        echo "Added this run's ${package} ${version} ${arch}"
     done
 done
 
