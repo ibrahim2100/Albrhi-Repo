@@ -3,6 +3,22 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.10.2
+
+- **0.10.1 downloaded the same file over and over.** The playlist, the qualities and the
+  transfer all worked — and then the result would not open, for a reason that is
+  embarrassing once seen.
+- YouTube's playlists list each piece as *a range of bytes inside one file*, not as a file
+  of its own. The line saying so was being skipped, so the same address was read as though
+  it were a hundred separate pieces — the whole file fetched a hundred times and glued
+  end to end. Of course nothing could read it.
+- Now that line is understood, and it makes things simpler rather than harder: when the
+  pieces are all ranges of one file, **that file is the video**. It is fetched once, and
+  there is nothing to join at all.
+- The report also says what shape the playlist turned out to have — how many entries, how
+  many actual addresses, whether ranges are used. "The pieces would not join" describes a
+  symptom and names none of the three things a playlist can be.
+
 ## v0.10.1
 
 - Fixes the build of 0.10.0, which never shipped. Everything it describes is in this one.

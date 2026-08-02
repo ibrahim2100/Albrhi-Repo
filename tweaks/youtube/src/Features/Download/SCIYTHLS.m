@@ -1,6 +1,7 @@
 #import "SCIYTHLS.h"
 #import "../../SCILog.h"
 #import "../../Localization/SCILocalize.h"
+#import "../../Diagnostics/SCIYTDiagnostics.h"
 #import <AVFoundation/AVFoundation.h>
 
 @implementation SCIHLSVariant
@@ -175,6 +176,7 @@ static NSString *SCIAttribute(NSString *line, NSString *name) {
 
         NSMutableArray<NSString *> *segments = [NSMutableArray array];
         NSString *initSegment = nil;
+        BOOL byteRanged = NO;
         NSURL *base = [NSURL URLWithString:variant.playlistURL];
 
         for (NSString *raw in [text componentsSeparatedByCharactersInSet:
@@ -194,6 +196,18 @@ static NSString *SCIAttribute(NSString *line, NSString *name) {
                 continue;
             }
 
+            if ([line hasPrefix:@"#EXT-X-BYTERANGE"]) {
+                // Every "segment" is a slice of one file rather than a file of its own.
+                //
+                // This line was skipped along with every other tag, which is why 0.10.1
+                // downloaded something unusable: the parser saw the same URL repeated
+                // once per slice and fetched the *whole file* each time, then joined the
+                // copies end to end. Hundreds of megabytes, and of course nothing could
+                // read it.
+                byteRanged = YES;
+                continue;
+            }
+
             if ([line hasPrefix:@"#"]) continue;
 
             NSString *resolved = [[NSURL URLWithString:line relativeToURL:base] absoluteString];
@@ -202,6 +216,29 @@ static NSString *SCIAttribute(NSString *line, NSString *name) {
 
         if (!segments.count) {
             finish(nil, SCILocalized(@"dl_hls_no_segments"));
+            return;
+        }
+
+        // What the playlist actually turned out to be, in the report. 0.10.1 said only
+        // that the pieces would not join, which is a symptom and names none of the three
+        // shapes a playlist can have.
+        NSCountedSet *distinct = [NSCountedSet setWithArray:segments];
+        [SCIYTDiagnostics recordStreamAttempt:
+            [NSString stringWithFormat:@"hls: %lu entries, %lu distinct URLs%@%@",
+             (unsigned long)segments.count, (unsigned long)distinct.count,
+             byteRanged ? @", byte ranges" : @"",
+             initSegment ? @", fMP4 init" : @", no init"]];
+
+        // One file addressed by ranges: the whole of it is the media, so it is fetched
+        // once instead of once per slice. This is both the fix for the previous release
+        // and the simplest possible case -- a complete file, already muxed, no joining.
+        if (distinct.count == 1 && segments.count > 1) {
+            SCILogV(@"hls: %lu ranges over one file — fetching it whole",
+                    (unsigned long)segments.count);
+            [self joinSegments:@[segments.firstObject]
+                   initSegment:nil
+                      progress:progress
+                    completion:finish];
             return;
         }
 
