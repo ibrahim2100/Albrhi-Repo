@@ -54,8 +54,34 @@ static NSString *SCIGetString(id object, NSString *name) {
 
 static __weak id sciPlayer = nil;
 
+/// Held strongly, and deliberately.
+///
+/// One object per video, replaced each time a new one starts, carrying a player response
+/// and a nonce. Weak would mean the app deciding when the formats stop being readable,
+/// which is the same class of problem as the idle controller this replaces — and the
+/// diagnostics page has held the player response strongly since 0.1.0 for exactly that
+/// reason.
+static id sciPlaybackData = nil;
+
+/// The nonce YouTube issued for this playback session, from the playback data.
+///
+/// This is what the fragment "?cpn=…" on every media-layer stream was pointing at all
+/// along: the app keeps the nonce beside the streams rather than inside their URLs.
+static NSString *sciCPN = nil;
+
 + (void)rememberPlayer:(id)player {
     sciPlayer = player;
+}
+
++ (void)rememberPlaybackData:(id)playbackData {
+    sciPlaybackData = playbackData;
+
+    NSString *cpn = SCIGetString(playbackData, @"CPN");
+    sciCPN = cpn.length ? cpn : nil;
+
+    SCILogV(@"player streams: playback data %@, cpn %@",
+            playbackData ? NSStringFromClass([playbackData class]) : @"nil",
+            sciCPN ?: @"none");
 }
 
 + (id)valueOf:(NSString *)name on:(id)object {
@@ -92,10 +118,20 @@ static void SCITrace(NSString *step, id value) {
 /// Two places, because they are not always both populated: the controller's own, and the
 /// one hanging off the video it has active.
 + (NSArray *)playerResponses {
-    id player = sciPlayer;
-    if (!player) return @[];
-
     NSMutableArray *responses = [NSMutableArray array];
+
+    // The playback data first, because it is the only one of these that was handed over
+    // rather than gone looking for. Everything below it is a fallback for a build where
+    // this hook does not fire.
+    id fromPlayback = SCIGet(sciPlaybackData, @"playerResponse");
+    SCITrace(@"playbackData", sciPlaybackData);
+    if (fromPlayback) {
+        [sciTrace appendString:@"playbackData.playerResponse✓ "];
+        [responses addObject:fromPlayback];
+    }
+
+    id player = sciPlayer;
+    if (!player) return responses;
 
     // Two names for the response and two for the video, because two working tweaks reach
     // it by different ones. YouMod takes -contentPlayerResponse off the controller;
@@ -232,13 +268,23 @@ static void SCITrace(NSString *step, id value) {
     // them itself, so one of its own is asked for before falling back to a random one --
     // a nonce it did not issue is still better than none, but not by as much.
     if (!hasCPN) {
-        NSString *cpn = nil;
+        // The one YouTube issued for this session, taken from the playback data. It is
+        // the right answer rather than a generated stand-in: the server knows this nonce,
+        // and every media-layer stream in the diagnostics report was carrying it as a
+        // bare fragment, which is what pointed here.
+        NSString *cpn = sciCPN;
 
-        Class utils = objc_getClass("YTDataUtils");
-        if (utils && [utils respondsToSelector:@selector(generateClientSideNonce)]) {
-            id generated = ((id (*)(Class, SEL))objc_msgSend)(utils, @selector(generateClientSideNonce));
-            if ([generated isKindOfClass:[NSString class]] && ((NSString *)generated).length) {
-                cpn = generated;
+        // Only when the session did not supply one. Asking YouTube to mint a fresh nonce
+        // and using it *instead* of the session's would be strictly worse -- the server
+        // has never seen the new one, and it is the session's that the streams were
+        // pointing at.
+        if (!cpn.length) {
+            Class utils = objc_getClass("YTDataUtils");
+            if (utils && [utils respondsToSelector:@selector(generateClientSideNonce)]) {
+                id generated = ((id (*)(Class, SEL))objc_msgSend)(utils, @selector(generateClientSideNonce));
+                if ([generated isKindOfClass:[NSString class]] && ((NSString *)generated).length) {
+                    cpn = generated;
+                }
             }
         }
 

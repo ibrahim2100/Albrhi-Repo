@@ -38,6 +38,20 @@
 /// looking for a controller. Weak: the player belongs to YouTube.
 + (void)rememberPlayer:(id)player;
 
+/// The playback data handed to the same hook, which is where this should have been
+/// reading from all along.
+///
+/// A trace from a device showed the captured controller alive but answering nil to
+/// -contentPlayerResponse, -playerResponse and -activeVideo alike: YouTube builds a
+/// player controller per surface, and the one that last announced a video has gone idle
+/// by the time anyone holds the video down.
+///
+/// `withPlaybackData:` is the third argument of that hook and was being discarded.
+/// YTPlaybackData carries -playerResponse and -CPN and nothing else worth mentioning —
+/// it exists to hand exactly this over, at the moment it is true, with no searching and
+/// no stale object in between.
++ (void)rememberPlaybackData:(id)playbackData;
+
 /// The raw format objects the player is holding, or an empty array. Each is a
 /// `YTIFormatStream`; the caller reads the fields it needs.
 + (NSArray *)formatObjects;

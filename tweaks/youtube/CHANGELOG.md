@@ -3,6 +3,28 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.9.0
+
+- **The trace from 0.8.4 found it, and it was an argument being thrown away.**
+
+- When a video starts, YouTube tells the tweak three things: which controller, which video,
+  and the *playback data*. The first two have been used since the beginning. The third was
+  ignored — and it is the one that carries both halves of what saving a video needs: the
+  video's format list, and the session number the links are signed against.
+
+- That number is what every stream in the report was showing as a bare `?cpn=…`. Not a
+  broken link, but a pointer at where the real one is kept. Six releases were spent reading
+  the fragment as though it were the answer.
+
+- 0.8.4's trace also explained the other failure plainly: the controller it had held on to
+  was alive but had gone quiet — YouTube builds one of those per surface, and the one that
+  last announced a video is not the one still playing it by the time you hold the video
+  down. Nothing found through it could have worked. The playback data is handed over at the
+  moment it is true, so nothing has to be searched for or kept fresh.
+
+- The session number is now used for the links rather than a fresh one made up on the
+  spot. YouTube's server has never seen a made-up one.
+
 ## v0.8.4
 
 - Includes the crash fix from 0.8.3, which never had a chance to be installed.

@@ -521,6 +521,11 @@ static void SCIArmDownloadGesture(UIView *view) {
     // other side; this is a hook that already runs, not a new one.
     [SCIYTPlayerStreams rememberPlayer:self];
 
+    // And the playback data, which is the argument this hook has been discarding since
+    // 0.3.0. YTPlaybackData carries -playerResponse and -CPN, which is to say it carries
+    // both halves of what downloading needs, handed over at the moment they are true.
+    [SCIYTPlayerStreams rememberPlaybackData:playbackData];
+
     SCIResetForNewVideo(videoID);
 
     // Captured by value: by the time this returns, the user may well be on a different
