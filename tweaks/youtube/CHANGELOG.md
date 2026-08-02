@@ -3,6 +3,19 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.12.2
+
+- **The sound arrives.** 0.12.0 found where YouTube keeps it and fetched it; it was then
+  thrown away at the door. The soundtrack is not wrapped the way the video is — it is bare
+  audio, and joining the parts had given the file a name that said otherwise. iPhone
+  refused it on the strength of the name alone. The bytes decide now, and it is read the
+  way it actually is.
+- The device said all of this itself: seven qualities, two soundtracks, and a video track
+  carrying no sound in it. Three rounds of reading the report instead of guessing, and
+  each round narrowed it to one thing.
+- When something still cannot be read, the report now prints what it actually was rather
+  than only that it failed.
+
 ## v0.12.1
 
 - **YouTube no longer closes the moment a download finishes.** It was not the download.

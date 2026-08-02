@@ -34,6 +34,40 @@ static BOOL SCICodecsArePlayable(NSString *codecs) {
     return YES;
 }
 
+/// Whether the joined parts are bare AAC rather than a transport stream.
+///
+/// An audio rendition is not always wrapped. HLS allows "packed audio" — elementary AAC
+/// frames, optionally with an ID3 tag in front and nothing else — and that is what this
+/// build serves: twenty-six parts with no TS sync byte anywhere in them. They downloaded
+/// perfectly and were then refused, because joining gives the file an .mp4 name and
+/// AVFoundation believes the name.
+///
+/// So the bytes decide instead, and the fix is the name. iOS reads ADTS natively; it has
+/// to, since this is the format every HLS radio stream on the platform is made of.
+static BOOL SCIIsPackedAudio(NSURL *file) {
+    NSData *head = [NSData dataWithContentsOfURL:file
+                                         options:NSDataReadingMappedIfSafe
+                                           error:nil];
+    if (head.length < 10) return NO;
+
+    const uint8_t *bytes = head.bytes;
+    NSUInteger at = 0;
+
+    // The ID3 tag, if there is one: 'ID3', two version bytes, flags, then a length in
+    // four syncsafe bytes -- seven bits each, the top bit always clear so the length can
+    // never be mistaken for a frame sync.
+    if (bytes[0] == 'I' && bytes[1] == 'D' && bytes[2] == '3') {
+        NSUInteger size = ((NSUInteger)(bytes[6] & 0x7F) << 21)
+                        | ((NSUInteger)(bytes[7] & 0x7F) << 14)
+                        | ((NSUInteger)(bytes[8] & 0x7F) << 7)
+                        |  (NSUInteger)(bytes[9] & 0x7F);
+        at = 10 + size;
+    }
+
+    if (at + 1 >= head.length) return NO;
+    return bytes[at] == 0xFF && (bytes[at + 1] & 0xF0) == 0xF0;   // an ADTS frame header
+}
+
 /// The value of one attribute in an EXT-X line.
 static NSString *SCIAttribute(NSString *line, NSString *name) {
     NSRange found = [line rangeOfString:[name stringByAppendingString:@"="]];
@@ -561,14 +595,46 @@ static NSString *SCIWithShape(NSString *message) {
         return;
     }
 
+    // Renamed rather than converted. There is nothing wrong with these bytes -- they are
+    // exactly what an .aac file holds -- and the only thing standing between them and
+    // Apple's own reader was an extension that said mp4.
+    if (SCIIsPackedAudio(joined)) {
+        NSURL *renamed = [[joined URLByDeletingPathExtension]
+                          URLByAppendingPathExtension:@"aac"];
+        if ([[NSFileManager defaultManager] moveItemAtURL:joined toURL:renamed error:nil]) {
+            [SCIYTDiagnostics recordStreamAttempt:@"hls: packed audio (ADTS), read as .aac"];
+            joined = renamed;
+        }
+    }
+
     AVURLAsset *asset = [AVURLAsset URLAssetWithURL:joined options:nil];
 
     // Either track is enough. An audio rendition has no pictures in it and demanding
     // some was the reason a separately-carried soundtrack could not be fetched at all.
     if (![asset tracksWithMediaType:AVMediaTypeVideo].count &&
         ![asset tracksWithMediaType:AVMediaTypeAudio].count) {
+
+        // The first bytes, in the report. "Unreadable" names no format and the next
+        // attempt would begin by guessing which one arrived -- which is how the last two
+        // rounds were spent.
+        NSData *head = [NSData dataWithContentsOfURL:joined options:NSDataReadingMappedIfSafe
+                                               error:nil];
+        const uint8_t *bytes = head.bytes;
+        if (head.length >= 4) {
+            [SCIYTDiagnostics recordStreamAttempt:
+                [NSString stringWithFormat:@"hls: unreadable, starts %02X %02X %02X %02X",
+                    bytes[0], bytes[1], bytes[2], bytes[3]]];
+        }
+
         [[NSFileManager defaultManager] removeItemAtURL:joined error:nil];
         completion(nil, SCIWithShape(SCILocalized(@"dl_hls_unreadable")));
+        return;
+    }
+
+    // An audio rendition is handed back as it is. It goes into a composition next, which
+    // reads it directly, and rewrapping it first would only add a step that can refuse.
+    if (![asset tracksWithMediaType:AVMediaTypeVideo].count) {
+        completion(joined, nil);
         return;
     }
 
