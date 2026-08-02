@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.10.3",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **The error now tells you what it found**\n• So the reason travels with the message.\n• The record is cleared when you start a save, which is the moment that actually separates one attempt from the next.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.10.2",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.10.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **Saving videos, at last.**\n• What made it possible was the report from 0.9.2, and it is worth saying what it found: every individual quality on this build arrives without an address, but **the…\n• That is also where every other tweak that can save videos ends up.\n• **This does not.**\n• Qualities that would download and then refuse to play are filtered out before you are offered them, not after.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.10.2"
+          "text": "0.10.3"
         },
         {
           "class": "DepictionTableTextView",
