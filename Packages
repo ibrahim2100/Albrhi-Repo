@@ -1,88 +1,4 @@
 Package: com.albrhi.tweak
-Version: 3.6.2
-Architecture: iphoneos-arm64
-Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
-Installed-Size: 1588
-Depends: mobilesubstrate
-Conflicts: com.albrhi.tweak.roothide
-Replaces: com.albrhi.tweak.roothide
-Filename: debs/com.albrhi.tweak_3.6.2_iphoneos-arm64.deb
-Size: 469424
-MD5sum: 0ecb3f77f4f7e51f17d53d90779d2fa3
-SHA1: 21041473faffbba7255eaeee65eeda858fda92c8
-SHA256: aed9f7328bd86856bb1770f6d65b432f50919b0ba146f005812edf568f4ceebc
-Section: Tweaks
-Homepage: https://github.com/ibrahim2100/Albrhi-Repo
-Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
- .
- Albrhi puts a download button where Instagram should have put one, strips the feed
- back to the people you actually follow, and stops the app reporting what you watch.
- Everything lives in a settings panel that looks like it shipped with the app.
- .
- ▍DOWNLOADS
- A native download button sits in the action row of every post and reel, beside the
- save icon. One tap grabs the highest quality available and writes it straight to
- Photos — optionally into its own album.
- .
- Stories and view-once DMs get their own button. Reels can be saved as video or as
- the original audio track. Profile pictures download in full HD on a long press.
- .
- ▍DOWNLOAD CENTER
- A real queue behind it all: pause, resume, retry and cancel, several transfers at
- once, and downloads that keep running after you leave the app. Duplicate links are
- detected, finished files are cleared once they reach Photos, and a searchable
- history records everything you have saved.
- .
- ▍A QUIETER FEED
- Remove ads, sponsored posts, suggested posts, suggested accounts, suggested reels,
- Threads posts, Meta AI, the friends map, trending searches and the explore grid.
- Hide the stories tray — or the entire feed.
- .
- ▍PRIVACY
- Watch stories without sending a seen receipt, and decide per story when to send one.
- View-once photos and videos stay unseen until you tap the eye button on that exact
- message. Hide the typing indicator and disable screenshot detection.
- .
- ▍REELS
- Tap to pause or mute instead of liking. Keep the progress scrubber visible. Stop
- reels unmuting themselves. Hide the header and the blend button.
- .
- ▍CONFIRMATIONS
- An optional prompt before liking, following, reposting, calling, commenting or
- sending a voice message — so a mis-tap never turns into a notification.
- .
- ▍BUILT TO FIT IN
- Full Arabic and English with automatic right-to-left layout. SF Symbols, a
- customisable accent colour, dark mode, and a settings panel opened by holding the
- menu button on your profile. Includes a diagnostics page that reports what the
- tweak actually sees on your build and files a bug report in one tap.
- .
- ▍TESTED ON
- Instagram 410.1.0. Not chosen for any principled reason — that is simply the newest
- build the developer's phone will still accept. The phone has served with honour and
- is now retired to a life of testing tweaks.
- .
- Newer Instagram versions will most likely work: nothing here depends on a version
- number, and the tweak looks up what it needs at runtime. But "most likely" is doing
- real work in that sentence, and honesty costs nothing.
- .
- ▍BETA
- This is a pre-release. Features are tested but your Instagram build may differ from
- ours — if something misbehaves, Settings › Diagnostics writes the report for you,
- Instagram version included, so we stop guessing and start fixing.
- .
- Developed by Ibrahim Ismail AL-Rahn. An educational and corrective derivative of
- SCInsta by SoCuul, rebuilt with AI assistance to improve code quality, design,
- performance and user experience. Free and open source under the GNU GPL v3, with
- original authorship fully credited and preserved.
-Tag: role::enduser
-Author: Ibrahim Ismail AL-Rahn (based on SCInsta by SoCuul, GPLv3)
-Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
-Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Name: Albrhi for Instagram (rootless)
-Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
-
-Package: com.albrhi.tweak
 Version: 3.7.0
 Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
@@ -752,90 +668,6 @@ Author: Ibrahim Ismail AL-Rahn (based on SCInsta by SoCuul, GPLv3)
 Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
 Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
 Name: Albrhi for Instagram (rootless)
-Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
-
-Package: com.albrhi.tweak.roothide
-Version: 3.6.2
-Architecture: iphoneos-arm64e
-Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
-Installed-Size: 1588
-Depends: mobilesubstrate
-Conflicts: com.albrhi.tweak
-Replaces: com.albrhi.tweak
-Filename: debs/com.albrhi.tweak.roothide_3.6.2_iphoneos-arm64e.deb
-Size: 469258
-MD5sum: c3cab5496d0f9e50675f3afed2008c71
-SHA1: c9c21088a0972a3c441552892d4c1597c6875534
-SHA256: a80df8df9cc8e6661105563b75d51730f059bd9f9579e4ddaf731380de7c0577
-Section: Tweaks
-Homepage: https://github.com/ibrahim2100/Albrhi-Repo
-Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
- .
- Albrhi puts a download button where Instagram should have put one, strips the feed
- back to the people you actually follow, and stops the app reporting what you watch.
- Everything lives in a settings panel that looks like it shipped with the app.
- .
- ▍DOWNLOADS
- A native download button sits in the action row of every post and reel, beside the
- save icon. One tap grabs the highest quality available and writes it straight to
- Photos — optionally into its own album.
- .
- Stories and view-once DMs get their own button. Reels can be saved as video or as
- the original audio track. Profile pictures download in full HD on a long press.
- .
- ▍DOWNLOAD CENTER
- A real queue behind it all: pause, resume, retry and cancel, several transfers at
- once, and downloads that keep running after you leave the app. Duplicate links are
- detected, finished files are cleared once they reach Photos, and a searchable
- history records everything you have saved.
- .
- ▍A QUIETER FEED
- Remove ads, sponsored posts, suggested posts, suggested accounts, suggested reels,
- Threads posts, Meta AI, the friends map, trending searches and the explore grid.
- Hide the stories tray — or the entire feed.
- .
- ▍PRIVACY
- Watch stories without sending a seen receipt, and decide per story when to send one.
- View-once photos and videos stay unseen until you tap the eye button on that exact
- message. Hide the typing indicator and disable screenshot detection.
- .
- ▍REELS
- Tap to pause or mute instead of liking. Keep the progress scrubber visible. Stop
- reels unmuting themselves. Hide the header and the blend button.
- .
- ▍CONFIRMATIONS
- An optional prompt before liking, following, reposting, calling, commenting or
- sending a voice message — so a mis-tap never turns into a notification.
- .
- ▍BUILT TO FIT IN
- Full Arabic and English with automatic right-to-left layout. SF Symbols, a
- customisable accent colour, dark mode, and a settings panel opened by holding the
- menu button on your profile. Includes a diagnostics page that reports what the
- tweak actually sees on your build and files a bug report in one tap.
- .
- ▍TESTED ON
- Instagram 410.1.0. Not chosen for any principled reason — that is simply the newest
- build the developer's phone will still accept. The phone has served with honour and
- is now retired to a life of testing tweaks.
- .
- Newer Instagram versions will most likely work: nothing here depends on a version
- number, and the tweak looks up what it needs at runtime. But "most likely" is doing
- real work in that sentence, and honesty costs nothing.
- .
- ▍BETA
- This is a pre-release. Features are tested but your Instagram build may differ from
- ours — if something misbehaves, Settings › Diagnostics writes the report for you,
- Instagram version included, so we stop guessing and start fixing.
- .
- Developed by Ibrahim Ismail AL-Rahn. An educational and corrective derivative of
- SCInsta by SoCuul, rebuilt with AI assistance to improve code quality, design,
- performance and user experience. Free and open source under the GNU GPL v3, with
- original authorship fully credited and preserved.
-Tag: role::enduser
-Author: Ibrahim Ismail AL-Rahn (based on SCInsta by SoCuul, GPLv3)
-Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
-Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Name: Albrhi for Instagram (roothide)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
 Package: com.albrhi.tweak.roothide
@@ -1954,6 +1786,68 @@ Size: 82598
 MD5sum: fa25f1577385461bc28decae5aff9605
 SHA1: 1cf00bd1ea880fa09e6ced06c84fceb967f4b799
 SHA256: 5baec109e7c8e19c2759eecdf2874249df1df586f6b794dad895f0abc04eb22e
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: Download videos, no ads, skip the sponsored parts, background playback — in Arabic or English.
+ .
+ NO ADS
+ Stopped at three points, because ads arrive by three routes and blocking one does
+ nothing about the others: the app stops asking for ads at all, promoted rows are
+ dropped from the feed by the identifier YouTube's own servers attach to them, and the
+ player refuses ads before a video, mid-video, and the kind stitched into the stream.
+ .
+ SKIP THE SPONSORED PARTS
+ Paid plugs, self-promotion and subscribe reminders are jumped over using segments
+ other viewers submitted to SponsorBlock. A line names what was skipped and offers an
+ undo, and each segment is coloured on the progress bar. Eight categories, each with
+ its own switch. Your video is never sent: only four characters of its fingerprint,
+ so the server cannot tell which video you are watching.
+ .
+ BACKGROUND PLAYBACK
+ Audio keeps going when you leave the app or lock the screen.
+ .
+ QUIETER
+ Silence the prompt to update, since updating removes this tweak. Optionally hide the
+ paid-promotion banner — off by default, because it is a disclosure.
+ .
+ SETTINGS AND DIAGNOSTICS
+ Hold two fingers anywhere in YouTube. Arabic and English with right-to-left layout,
+ and a card that says whether everything attached to your build. The report is also
+ written to Documents/AlbrhiYT-report.txt.
+ .
+ TESTED ON YouTube 21.30.5. Nothing is pinned to a version number: every class is
+ looked up at runtime and skipped if it is not there.
+ .
+ DOWNLOADS
+ Open the panel over a video and save it to Photos, at the quality you pick, up to
+ 1080p60. Above 360p YouTube sends picture and sound separately; both are fetched and
+ joined on the device. No button is added to YouTube itself — the row is in our own
+ panel, so it cannot stop working when YouTube renames a view.
+ .
+ Segment data from SponsorBlock (sponsor.ajay.app), CC BY-NC-SA 4.0. The coloured
+ markers are derived from iSponsorBlock by Galactic Dev, GPLv3.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+Tag: role::enduser
+Author: Ibrahim Ismail AL-Rahn
+Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-youtube.html
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi for YouTube (rootless)
+Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-youtube.json
+
+Package: com.albrhi.youtube
+Version: 0.12.0
+Architecture: iphoneos-arm64
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 336
+Depends: mobilesubstrate
+Conflicts: com.albrhi.youtube.roothide
+Replaces: com.albrhi.youtube.roothide
+Filename: debs/com.albrhi.youtube_0.12.0_iphoneos-arm64.deb
+Size: 84810
+MD5sum: 1b1928c635aaf39bba4518b5e72c95b5
+SHA1: 8abfcfb69a946fb0a66291d32f21ab6777872996
+SHA256: 727326efec52981b90c39e5be1e7debc9bfb33aa0d1d1454e93a8d0bcf909aab
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download videos, no ads, skip the sponsored parts, background playback — in Arabic or English.
@@ -3829,6 +3723,68 @@ Size: 82670
 MD5sum: dced555dbb2bc455a31b817784daa6b2
 SHA1: 29bfcc09edcd4915c686ccc9f63de49e505adee5
 SHA256: 8137d552a2ac7239d83f01b6baa7de3ec3e5e805384b6019b43c952656f3b56d
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: Download videos, no ads, skip the sponsored parts, background playback — in Arabic or English.
+ .
+ NO ADS
+ Stopped at three points, because ads arrive by three routes and blocking one does
+ nothing about the others: the app stops asking for ads at all, promoted rows are
+ dropped from the feed by the identifier YouTube's own servers attach to them, and the
+ player refuses ads before a video, mid-video, and the kind stitched into the stream.
+ .
+ SKIP THE SPONSORED PARTS
+ Paid plugs, self-promotion and subscribe reminders are jumped over using segments
+ other viewers submitted to SponsorBlock. A line names what was skipped and offers an
+ undo, and each segment is coloured on the progress bar. Eight categories, each with
+ its own switch. Your video is never sent: only four characters of its fingerprint,
+ so the server cannot tell which video you are watching.
+ .
+ BACKGROUND PLAYBACK
+ Audio keeps going when you leave the app or lock the screen.
+ .
+ QUIETER
+ Silence the prompt to update, since updating removes this tweak. Optionally hide the
+ paid-promotion banner — off by default, because it is a disclosure.
+ .
+ SETTINGS AND DIAGNOSTICS
+ Hold two fingers anywhere in YouTube. Arabic and English with right-to-left layout,
+ and a card that says whether everything attached to your build. The report is also
+ written to Documents/AlbrhiYT-report.txt.
+ .
+ TESTED ON YouTube 21.30.5. Nothing is pinned to a version number: every class is
+ looked up at runtime and skipped if it is not there.
+ .
+ DOWNLOADS
+ Open the panel over a video and save it to Photos, at the quality you pick, up to
+ 1080p60. Above 360p YouTube sends picture and sound separately; both are fetched and
+ joined on the device. No button is added to YouTube itself — the row is in our own
+ panel, so it cannot stop working when YouTube renames a view.
+ .
+ Segment data from SponsorBlock (sponsor.ajay.app), CC BY-NC-SA 4.0. The coloured
+ markers are derived from iSponsorBlock by Galactic Dev, GPLv3.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+Tag: role::enduser
+Author: Ibrahim Ismail AL-Rahn
+Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-youtube.html
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi for YouTube (roothide)
+Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-youtube.json
+
+Package: com.albrhi.youtube.roothide
+Version: 0.12.0
+Architecture: iphoneos-arm64e
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 336
+Depends: mobilesubstrate
+Conflicts: com.albrhi.youtube
+Replaces: com.albrhi.youtube
+Filename: debs/com.albrhi.youtube.roothide_0.12.0_iphoneos-arm64e.deb
+Size: 84700
+MD5sum: 3dda364e60acc58a3efff7f7d9fd1bcc
+SHA1: 053767f19b61f0284031ec4ed026f0e001661049
+SHA256: 3e6f31b5004a5b657a48b665d4da17c89d51907de189cf7628393ed024a7c3a0
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download videos, no ads, skip the sponsored parts, background playback — in Arabic or English.
