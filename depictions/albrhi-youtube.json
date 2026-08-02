@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.9.2",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• Asks two more questions in the same place 0.9.1 started asking, because taking apart **YTLite** — whose downloading works — showed it reads exactly that one field and…\n• Its 20 MB is 19 of them spent on a media library, which understands playlists natively.\n• So the report now also says whether the video has playlist data at all, and how many entries it holds.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.9.1",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.8.4",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• Includes the crash fix from 0.8.3, which never had a chance to be installed.\n• **Looks for the video's formats in five more places.**\n• That is the useful part: rather than another guess, the next report will name the exact step where the search succeeds or stops.\n• The streams the app keeps for *playback* carry no download link.\n• Asking YouTube directly over the network is refused: two identities rejected outright, two others answered properly and said the video was unavailable to them.\n• Which leaves the player's own response — the one place that has never yet been reached without something failing first.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.9.1"
+          "text": "0.9.2"
         },
         {
           "class": "DepictionTableTextView",
