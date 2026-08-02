@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.8.2",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **The diagnostics page has been misleading me for four releases, and this fixes it.**\n• When it listed what each stream offered, it asked for the link under eleven different names — and stopped at the first one that answered anything at all.\n• Everything since 0.7.0 followed from that: asking YouTube over the network, four borrowed client identities, and all of it refused.\n• So: the report now lists **every** name that answers, and the search for something to download reads every name too, plus the format nested inside — taking the first…\n• The source written off as a dead end in 0.8.0 is back in the search, for the same reason: it was written off on the strength of that same one-name probe.\n• Comparing against **YouMod** by Tonwalter888 is what surfaced this.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.8.1",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.7.3",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **Asking for the video id was fixed in 0.7.2 and it worked**\n• **The report now shows what the server said**\n• The request was also missing headers YouTube expects.\n• **Two more client identities to fall back on**\n• The report lists one round of attempts instead of every press stacked up.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.8.1"
+          "text": "0.8.2"
         },
         {
           "class": "DepictionTableTextView",
