@@ -3,6 +3,24 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.8.3
+
+- **Fixes the crash in 0.8.2.** Install this over it. Holding a video to save it took
+  YouTube down, and that was a mistake I introduced in the previous release.
+- Reading a format's number — its quality id, its height, its bitrate — went down a path
+  that only works for text. The number came back as though it were an object, and the very
+  next step treated it as one. It happened on the first field of the first format, so it
+  crashed every time.
+- The previous code read these correctly. Changing it was an optimisation nothing had
+  asked for, applied where the answer's type is not known in advance.
+- **And the search can no longer take the app down at all**, whatever goes wrong in it —
+  the same rule the settings screen has followed since 0.1.4. A tool whose job is to
+  explain what is happening must not be the reason the app stops.
+- One thing the fixed report did settle: the streams the app holds for playback really do
+  carry no download link, under any name. That was previously a guess from a broken
+  measurement; it is now measured. What remains is the other place, which the crash
+  prevented from ever being reached.
+
 ## v0.8.2
 
 - **The diagnostics page has been misleading me for four releases, and this fixes it.**

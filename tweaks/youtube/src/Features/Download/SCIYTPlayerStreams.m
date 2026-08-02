@@ -12,16 +12,34 @@
 static id SCIGet(id object, NSString *name) {
     if (!object || !name.length) return nil;
 
-    SEL selector = NSSelectorFromString(name);
-    if ([object respondsToSelector:selector]) {
-        return ((id (*)(id, SEL))objc_msgSend)(object, selector);
+    // KVC first, and this order is the whole point.
+    //
+    // 0.8.2 sent the selector directly with objc_msgSend cast to return id, and that is
+    // a crash rather than a wrong answer: -itag, -height and -bitrate return integers,
+    // so the integer came back as a pointer and the next -integerValue sent a message to
+    // it. The app went down on the first numeric field of the first format.
+    //
+    // valueForKey: reads the same getters and boxes whatever they return, primitives
+    // included, which is exactly why the code this replaced used it. Sending the
+    // selector was an optimisation nobody asked for, applied to a case where the return
+    // type is not known in advance.
+    @try {
+        id value = [object valueForKey:name];
+        if (value) return value;
+    } @catch (__unused NSException *exception) {
+        // Not KVC-readable. The selector may still exist and return an object.
     }
 
-    @try {
-        return [object valueForKey:name];
-    } @catch (__unused NSException *exception) {
-        return nil;
-    }
+    // Only for object returns, and only once the signature says so. A GPBMessage
+    // resolves fields dynamically, so this covers the case KVC declined while still
+    // refusing to guess at a primitive.
+    SEL selector = NSSelectorFromString(name);
+    if (![object respondsToSelector:selector]) return nil;
+
+    NSMethodSignature *signature = [object methodSignatureForSelector:selector];
+    if (!signature || strcmp(signature.methodReturnType, @encode(id)) != 0) return nil;
+
+    return ((id (*)(id, SEL))objc_msgSend)(object, selector);
 }
 
 static NSString *SCIGetString(id object, NSString *name) {

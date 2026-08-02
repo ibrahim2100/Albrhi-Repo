@@ -377,7 +377,23 @@ static NSInteger sciUnplayable = 0;
     // withdraw. The network path exists for when this comes up empty, not the reverse.
     [SCIYTDiagnostics clearStreamAttempts];
 
-    NSArray<SCIYTFormat *> *local = [self formatsFromPlayer];
+    // Guarded, on the same principle the settings screen already follows: a tweak whose
+    // job is to report what is happening must not be able to kill the app it is
+    // reporting on. 0.8.2 read a numeric field as an object pointer and took YouTube
+    // down on the first format of the first video -- and the report, written only after
+    // the walk, said nothing at all because the process never got that far.
+    NSArray<SCIYTFormat *> *local = nil;
+
+    @try {
+        local = [self formatsFromPlayer];
+    } @catch (NSException *exception) {
+        [SCIYTDiagnostics recordStreamAttempt:
+            [NSString stringWithFormat:@"player: threw — %@: %@",
+             exception.name, exception.reason]];
+        SCILogV(@"download: the player walk threw — %@", exception.reason);
+        local = nil;
+    }
+
     [self recordPlayerWalkWith:local.count];
 
     if (local.count) {
