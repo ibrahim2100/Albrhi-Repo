@@ -115,8 +115,18 @@ therefore build the index from what is **published** — `tools/fetch-published-
 gathers the newest three versions of every package from the releases — and both take
 the `albrhi-pages` concurrency group so they never write `gh-pages` at once.
 
-Both also deploy, which is not redundancy: it is what makes the order they run in
-irrelevant. Whichever finishes last deploys a complete index, from either direction.
+Both also deploy, and this file used to say that made the order they run in irrelevant.
+**It does not, and the correction is worth keeping.** That only holds if both gathers see
+the same set of releases, and a release published *between* them breaks it: both runs
+started at 11:53:02, YouTube published 0.10.1 at 11:54:36, and the run that had already
+gathered deployed an index without it — last. Nothing failed. The release was fine, the
+packages were fine, and the source served a version older than both.
+
+So the gather **states what the index must contain and checks**: every `tweaks/*/control`
+names a package and a version that has to be present. Missing means the listing was read
+too early — worth one more look after a pause, then worth failing the run. A red build is
+recoverable in a minute; a source quietly a version behind is not noticed until someone
+asks why the tweak did not update.
 
 **And an index built from the releases API misses the release the same run just made.**
 YouTube 0.5.0 was published at 17:05:28; the run that published it finished at 17:06:41
