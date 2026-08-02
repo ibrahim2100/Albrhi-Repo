@@ -304,6 +304,43 @@ for name, methods in sorted(_declared.items()):
             report('%s declares %s%s but %s never defines it'
                    % (name, kind, base, name))
 
+# 11. A block variable that calls itself.
+#
+#     ARC refuses this outright -- the block captures itself strongly and can never
+#     be released -- so it is a build failure, not a leak. It is also the obvious way
+#     to write "fetch these in order, one after the last finishes", which is how it
+#     reached CI: `__block void (^next)(void)` ending in `next();`.
+#
+#     The usual workaround is a weak copy of the block, which trades the cycle for a
+#     block that may be gone when the callback arrives. The fix that has neither
+#     problem is a method calling itself, where the state is an argument rather than
+#     a capture -- so this rule says to write one.
+for path in SRC:
+    text = open(path, encoding='utf-8').read()
+
+    for match in re.finditer(r'__block\s+[\w\s*<>,]*\(\^(\w+)\)', text):
+        name = match.group(1)
+
+        # The body starts at the assignment that follows the declaration.
+        assignment = re.search(r'\b%s\s*=\s*\^' % re.escape(name), text[match.end():])
+        if not assignment:
+            continue
+
+        start = match.end() + assignment.end()
+        depth = 1
+        i = start
+        while i < len(text) and depth:
+            if text[i] == '{':
+                depth += 1
+            elif text[i] == '}':
+                depth -= 1
+            i += 1
+
+        body = text[start:i]
+        if re.search(r'\b%s\s*\(' % re.escape(name), body):
+            report('block %s in %s calls itself — ARC rejects the retain cycle; '
+                   'use a method that calls itself instead' % (name, path))
+
 # 9. Quoted imports that resolve to nothing.
 #
 # Moving the sources one level deeper broke four files that reached the shared

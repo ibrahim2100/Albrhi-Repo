@@ -248,54 +248,73 @@ static NSString *SCIAttribute(NSString *line, NSString *name) {
     if (initSegment) [queue addObject:initSegment];
     [queue addObjectsFromArray:segments];
 
-    NSUInteger total = queue.count;
-    __block NSUInteger done = 0;
+    // A method calling itself, not a block calling itself.
+    //
+    // The obvious way to write this is a __block block that invokes its own variable at
+    // the end, and ARC rejects it outright: the block captures itself strongly and can
+    // never be released. The usual dodge is a weak copy of it, which trades a leak for a
+    // block that may be gone by the time the next part arrives.
+    //
+    // A method has neither problem. The remaining work is an argument rather than a
+    // capture, so there is nothing to retain and nothing to keep alive.
+    [self writeNext:queue
+             handle:handle
+             joined:joined
+              total:queue.count
+               done:0
+           progress:progress
+         completion:completion];
+}
 
-    // A recursive block rather than a loop, because each part has to finish before the
-    // next is asked for -- appending out of order would produce a file that plays as
-    // nonsense.
-    __block void (^next)(void) = nil;
-    __weak typeof(self) weakSelf = self;
++ (void)writeNext:(NSMutableArray<NSString *> *)queue
+           handle:(NSFileHandle *)handle
+           joined:(NSURL *)joined
+            total:(NSUInteger)total
+             done:(NSUInteger)done
+         progress:(void (^)(double))progress
+       completion:(void (^)(NSURL *, NSString *))completion {
 
-    next = ^{
-        if (!queue.count) {
+    if (!queue.count) {
+        [handle closeFile];
+        [self exportJoined:joined completion:completion];
+        return;
+    }
+
+    NSString *address = queue.firstObject;
+    [queue removeObjectAtIndex:0];
+
+    [[[self session] dataTaskWithURL:[NSURL URLWithString:address]
+                   completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        if (!data || error) {
             [handle closeFile];
-            [weakSelf exportJoined:joined completion:completion];
+            [[NSFileManager defaultManager] removeItemAtURL:joined error:nil];
+            completion(nil, error.localizedDescription ?: SCILocalized(@"dl_failed"));
             return;
         }
 
-        NSString *address = queue.firstObject;
-        [queue removeObjectAtIndex:0];
+        @try {
+            [handle writeData:data];
+        } @catch (NSException *exception) {
+            [handle closeFile];
+            [[NSFileManager defaultManager] removeItemAtURL:joined error:nil];
+            completion(nil, exception.reason ?: SCILocalized(@"dl_failed"));
+            return;
+        }
 
-        [[[self session] dataTaskWithURL:[NSURL URLWithString:address]
-                       completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-            if (!data || error) {
-                [handle closeFile];
-                [[NSFileManager defaultManager] removeItemAtURL:joined error:nil];
-                completion(nil, error.localizedDescription ?: SCILocalized(@"dl_failed"));
-                return;
-            }
+        NSUInteger written = done + 1;
+        if (progress && total) {
+            double fraction = (double)written / (double)total;
+            dispatch_async(dispatch_get_main_queue(), ^{ progress(fraction); });
+        }
 
-            @try {
-                [handle writeData:data];
-            } @catch (NSException *exception) {
-                [handle closeFile];
-                [[NSFileManager defaultManager] removeItemAtURL:joined error:nil];
-                completion(nil, exception.reason ?: SCILocalized(@"dl_failed"));
-                return;
-            }
-
-            done++;
-            if (progress) {
-                double fraction = (double)done / (double)total;
-                dispatch_async(dispatch_get_main_queue(), ^{ progress(fraction); });
-            }
-
-            next();
-        }] resume];
-    };
-
-    next();
+        [self writeNext:queue
+                 handle:handle
+                 joined:joined
+                  total:total
+                   done:written
+               progress:progress
+             completion:completion];
+    }] resume];
 }
 
 /// Rewrites the joined parts as a normal .mp4.

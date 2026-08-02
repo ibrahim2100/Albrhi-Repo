@@ -197,6 +197,8 @@ from a real build failure:
    headers, matched on a word boundary
 9. quoted imports that resolve to nothing, checked against the `-I` flags in the makefiles
 10. a header promising a method its `@implementation` never defines
+11. a block variable that calls itself — ARC rejects the retain cycle, so it is a
+    build failure and not a leak
 
 A check that cries wolf gets ignored. Four of these produced false positives on
 first writing and were tightened before landing. If you add a rule, prove it fails

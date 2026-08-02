@@ -3,6 +3,10 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.10.1
+
+- Fixes the build of 0.10.0, which never shipped. Everything it describes is in this one.
+
 ## v0.10.0
 
 - **Saving videos, at last.** Hold a video and the qualities appear; pick one and it goes
