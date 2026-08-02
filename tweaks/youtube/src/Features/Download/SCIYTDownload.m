@@ -198,7 +198,14 @@ static NSInteger sciUnplayable = 0;
     NSMutableSet<NSNumber *> *seen = [NSMutableSet set];
 
     for (id object in objects) {
+        // The list now mixes two shapes: protobuf format streams from the player
+        // response, and media-layer streams that keep theirs nested. Both answer -itag,
+        // but only the outer one of a media-layer stream is guaranteed to.
         NSInteger itag = [[SCIYTPlayerStreams valueOf:@"itag" on:object] integerValue];
+        if (!itag) {
+            id nested = [SCIYTPlayerStreams valueOf:@"formatStream" on:object];
+            itag = [[SCIYTPlayerStreams valueOf:@"itag" on:nested] integerValue];
+        }
         if (!itag || [seen containsObject:@(itag)]) continue;
 
         sciSeen++;
@@ -210,11 +217,32 @@ static NSInteger sciUnplayable = 0;
             continue;
         }
 
-        // Both spellings: the protobuf generates `url`, and some builds expose `URL`.
-        NSString *link = [SCIYTPlayerStreams stringOf:@"url" on:object]
-                      ?: [SCIYTPlayerStreams stringOf:@"URL" on:object];
+        // Every name, and the nested formatStream after them, taking the first that is
+        // actually a link rather than the first that answers.
+        //
+        // That distinction is the whole bug. The diagnostics probe stopped at the first
+        // non-empty value; `URL` answers with the fragment "?cpn=…" on a media-layer
+        // stream, so it reported that and never asked for anything else. Four releases
+        // were spent on the conclusion that no link existed anywhere, drawn from a list
+        // of one name.
+        NSString *link = nil;
 
-        if (![link hasPrefix:@"http"]) {
+        for (NSString *name in @[@"url", @"URL", @"baseURL", @"urlString", @"URLString"]) {
+            NSString *candidate = [SCIYTPlayerStreams stringOf:name on:object];
+            if ([candidate hasPrefix:@"http"]) { link = candidate; break; }
+        }
+
+        if (!link) {
+            // A media-layer stream keeps its protobuf under formatStream, and that is
+            // where the link lives when the outer object has only a fragment.
+            id nested = [SCIYTPlayerStreams valueOf:@"formatStream" on:object];
+            for (NSString *name in @[@"url", @"URL"]) {
+                NSString *candidate = [SCIYTPlayerStreams stringOf:name on:nested];
+                if ([candidate hasPrefix:@"http"]) { link = candidate; break; }
+            }
+        }
+
+        if (!link) {
             sciNoURL++;
             continue;
         }

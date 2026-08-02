@@ -136,6 +136,25 @@ static void SCITrace(NSString *step, id value) {
         }
     }
 
+    // And the media layer's own list, which was written off too early.
+    //
+    // The report said its streams carry no link, and that conclusion came from a probe
+    // that asked for `URL`, got the fragment "?cpn=…", and stopped -- it never tried
+    // `url`, `baseURL` or the nested formatStream even once. "No link under any name"
+    // was drawn from a list of one name.
+    //
+    // The reference tweak whose downloading works reads both sources and appends
+    // whichever answers. So does this now, and the caller reads every name rather than
+    // the first.
+    id mlStreamingData = SCIGet(SCIGet(sciPlayer, @"activeVideo"), @"streamingData");
+    SCITrace(@"mlStreamingData", mlStreamingData);
+
+    id mlStreams = SCIGet(mlStreamingData, @"adaptiveStreams");
+    if ([mlStreams isKindOfClass:[NSArray class]]) {
+        [sciTrace appendFormat:@"adaptiveStreams=%lu ", (unsigned long)((NSArray *)mlStreams).count];
+        [formats addObjectsFromArray:mlStreams];
+    }
+
     [sciTrace appendFormat:@"→ %lu formats", (unsigned long)formats.count];
 
     SCILogV(@"player streams: %lu formats from %lu responses",

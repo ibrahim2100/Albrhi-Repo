@@ -3,6 +3,31 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.8.2
+
+- **The diagnostics page has been misleading me for four releases, and this fixes it.**
+
+- When it listed what each stream offered, it asked for the link under eleven different
+  names — and stopped at the first one that answered anything at all. The first name
+  answers with `?cpn=…`, a fragment rather than a link, so it printed that and **never
+  tried the other ten, not once**. "There is no link anywhere in the app" was a conclusion
+  drawn from a list of one name.
+
+- Everything since 0.7.0 followed from that: asking YouTube over the network, four
+  borrowed client identities, and all of it refused. None of that work was wrong, but it
+  was answering a question that had never actually been asked properly.
+
+- So: the report now lists **every** name that answers, and the search for something to
+  download reads every name too, plus the format nested inside — taking the first that is
+  genuinely a link rather than the first that replies.
+
+- The source written off as a dead end in 0.8.0 is back in the search, for the same
+  reason: it was written off on the strength of that same one-name probe.
+
+- Comparing against **YouMod** by Tonwalter888 is what surfaced this. It reads exactly the
+  same places this tweak does — it makes no network request at all — and the only
+  difference was that it falls through to the next name where this one stopped.
+
 ## v0.8.1
 
 - **The report now says what happened when it looked inside the app**, which 0.8.0 left

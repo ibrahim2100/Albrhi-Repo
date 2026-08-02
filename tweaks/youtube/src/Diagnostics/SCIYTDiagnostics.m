@@ -417,7 +417,19 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
             // protocol only? The first probe answered "?cpn=..." — a query fragment,
             // not a URL — so every name the stream might keep a real one under is asked
             // for, and the one that answered is named alongside it.
-            NSString *link = @"none";
+            // Every name that answers, not the first.
+            //
+            // This probe used to stop at the first non-empty one, and that single `break`
+            // steered four releases down the wrong road. `URL` answers with "?cpn=…" — a
+            // fragment — so the loop reported that and never tried `url`, `baseURL` or any
+            // of the rest even once. "No links anywhere" was a conclusion drawn from a
+            // list of one.
+            //
+            // The reference tweak whose download works reads `URL` and falls through to
+            // the nested formatStream when it is not usable, which is exactly the step
+            // this report was unable to show.
+            NSMutableArray<NSString *> *links = [NSMutableArray array];
+
             for (NSString *key in @[@"URL", @"url", @"baseURL", @"streamURL", @"videoURL",
                                     @"assetURL", @"mediaURL", @"urlString", @"URLString",
                                     @"absoluteURL", @"downloadURL"]) {
@@ -432,9 +444,12 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
                 // opening is enough to tell a real one from a fragment.
                 NSString *shown = text.length > 90
                     ? [[text substringToIndex:90] stringByAppendingString:@"…"] : text;
-                link = [NSString stringWithFormat:@"%@ = %@", key, shown];
-                break;
+                [links addObject:[NSString stringWithFormat:@"%@ = %@", key, shown]];
             }
+
+            NSString *link = links.count
+                ? [links componentsJoinedByString:@"\n      "]
+                : @"none";
 
             [out appendFormat:@"    [%@] %@ %@ %@x%@ %@fps %@bps\n      %@\n",
                 itag ?: @"?", mime ?: @"?", quality ?: @"?",
