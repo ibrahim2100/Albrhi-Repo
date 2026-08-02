@@ -147,6 +147,86 @@ for dir in $LOCAL_DIRS; do
     done
 done
 
+#
+# Every tweak's current version has to be here before this counts as complete.
+#
+# Both workflows build and deploy this index, and the note in CLAUDE.md said that made
+# the order they run in irrelevant. It does not -- that only holds if both gathers see
+# the same set of releases, and a release published *between* them breaks it. Exactly
+# that happened: both runs started at 11:53:02, YouTube published 0.10.1 at 11:54:36,
+# and the run that gathered first deployed an index without it, last. The release was
+# fine, the packages were fine, and the source served a version older than both.
+#
+# So the index states what it must contain and checks. Each tweak's control names the
+# version that has to be present for its package; anything missing means the listing was
+# read too early, which is worth one more look and then worth failing over. A source that
+# quietly serves a version behind the release is the failure this whole arrangement
+# exists to prevent.
+#
+verify_versions() {
+    local missing=""
+
+    # Relative to the script, not to the working directory: the workflow runs this
+    # from the workspace with the repository checked out into main/, the same reason
+    # extra-debs is reached that way above.
+    for control in "$(dirname "$0")"/../tweaks/*/control; do
+        [ -f "$control" ] || continue
+
+        local package version
+        package=$(awk -F': *' '/^Package:/ {print $2; exit}' "$control")
+        version=$(awk -F': *' '/^Version:/ {print $2; exit}' "$control")
+        [ -n "$package" ] && [ -n "$version" ] || continue
+
+        # The rootless build publishes as name_version+rootless_arch.deb and the roothide
+        # one as name.roothide_version_arch.deb, so the version is matched inside the
+        # filename rather than against the whole of it.
+        if ! ls "$OUT_DIR" 2>/dev/null | grep -q "^${package}_${version}"; then
+            missing="${missing} ${package} ${version}"
+        fi
+    done
+
+    printf '%s' "$missing"
+}
+
+missing="$(verify_versions)"
+
+if [ -n "$missing" ]; then
+    echo "::warning::Missing from the gathered set:${missing} — the releases listing was"
+    echo "::warning::probably read before they appeared. Waiting and asking again."
+    sleep 20
+
+    # Only the releases are re-read; the local fold-in above already ran and its files
+    # are still in place.
+    tags=$(gh api "repos/${REPO}/releases?per_page=${SCAN}" \
+           --jq '.[] | select(.draft == false) | .tag_name' || true)
+
+    for tag in $tags; do
+        dir="${staging}/retry-${tag//\//_}"
+        mkdir -p "$dir"
+        gh release download "$tag" --repo "$REPO" \
+            --pattern '*.deb' --dir "$dir" --clobber 2>/dev/null || continue
+
+        for deb in "$dir"/*.deb; do
+            [ -f "$deb" ] || continue
+            package=$(dpkg-deb -f "$deb" Package 2>/dev/null || true)
+            [ -n "$package" ] || continue
+            version=$(dpkg-deb -f "$deb" Version 2>/dev/null || echo "0")
+            arch=$(dpkg-deb -f "$deb" Architecture 2>/dev/null || echo "unknown")
+
+            target="${OUT_DIR}/${package}_${version}_${arch}.deb"
+            [ -f "$target" ] || cp -f "$deb" "$target"
+        done
+    done
+
+    missing="$(verify_versions)"
+fi
+
+if [ -n "$missing" ]; then
+    echo "::error::The index would be published without:${missing}"
+    echo "::error::Refusing to deploy a source that serves an older version than the release."
+    exit 1
+fi
+
 echo
 echo "Published packages gathered into ${OUT_DIR}:"
 ls -la "$OUT_DIR"
