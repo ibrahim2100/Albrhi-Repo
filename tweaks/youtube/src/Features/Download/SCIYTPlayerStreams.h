@@ -46,6 +46,9 @@
 /// arrived without one.
 + (NSString *)preparedURLFrom:(NSString *)urlString;
 
+/// What the last walk found at each step, for the report. Nil until one has run.
++ (NSString *)lastTrace;
+
 /// One field of a format object, by selector or by key.
 ///
 /// Exposed rather than kept private because a GPBMessage answers -respondsToSelector:

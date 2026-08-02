@@ -1,5 +1,6 @@
 #import "SCIYTPlayerStreams.h"
 #import "../../SCILog.h"
+#import "../../Diagnostics/SCIYTDiagnostics.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 
@@ -66,18 +67,60 @@ static __weak id sciPlayer = nil;
         [responses addObject:fromVideo];
     }
 
+    // And the one the overlay was handed, which the diagnostics page has been holding
+    // since 0.1.0. It costs nothing to add, it is a YTIPlayerResponse directly rather
+    // than a wrapper, and if the two above are empty on this build it may not be.
+    id captured = [SCIYTDiagnostics lastPlayerResponse];
+    if (captured && ![responses containsObject:captured]) {
+        [responses addObject:captured];
+    }
+
     return responses;
 }
 
+///
+/// What the walk found at each step, as one line for the report.
+///
+/// 0.8.0 recorded nothing when this path came up empty, so a report could not tell
+/// "the player held formats but none had a link" from "the chain broke before it got
+/// there" — and those are entirely different problems. Every step is named now, with
+/// the class it actually returned, because a nil three levels down looks the same as a
+/// nil at the top from the outside.
+///
+static NSMutableString *sciTrace = nil;
+
+static void SCITrace(NSString *step, id value) {
+    if (!sciTrace) sciTrace = [NSMutableString string];
+    [sciTrace appendFormat:@"%@=%@ ", step,
+        value ? NSStringFromClass([value class]) : @"nil"];
+}
+
++ (NSString *)lastTrace {
+    return sciTrace.length ? [sciTrace copy] : nil;
+}
+
 + (NSArray *)formatObjects {
+    sciTrace = [NSMutableString string];
+
+    SCITrace(@"player", sciPlayer);
+
     NSMutableArray *formats = [NSMutableArray array];
 
-    for (id response in [self playerResponses]) {
+    // Held rather than asked for twice: the walk is not free and the count is wanted at
+    // the end.
+    NSArray *responses = [self playerResponses];
+
+    for (id response in responses) {
         // -contentPlayerResponse answers with YTPlayerResponse, the Objective-C wrapper;
         // the protobuf with the streams in it is its playerData. Falling back to the
         // response itself covers a build where the two are the same object.
+        SCITrace(@"response", response);
+
         id playerData = SCIGet(response, @"playerData") ?: response;
+        SCITrace(@"playerData", playerData);
+
         id streamingData = SCIGet(playerData, @"streamingData");
+        SCITrace(@"streamingData", streamingData);
         if (!streamingData) continue;
 
         // Both lists. adaptiveFormatsArray is where the quality ladder lives;
@@ -85,13 +128,18 @@ static __weak id sciPlayer = nil;
         for (NSString *key in @[@"adaptiveFormatsArray", @"formatStreamsArray"]) {
             id list = SCIGet(streamingData, key);
             if ([list isKindOfClass:[NSArray class]]) {
+                [sciTrace appendFormat:@"%@=%lu ", key, (unsigned long)((NSArray *)list).count];
                 [formats addObjectsFromArray:list];
+            } else {
+                SCITrace(key, list);
             }
         }
     }
 
+    [sciTrace appendFormat:@"→ %lu formats", (unsigned long)formats.count];
+
     SCILogV(@"player streams: %lu formats from %lu responses",
-            (unsigned long)formats.count, (unsigned long)[self playerResponses].count);
+            (unsigned long)formats.count, (unsigned long)responses.count);
 
     return formats;
 }

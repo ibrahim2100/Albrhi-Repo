@@ -3,6 +3,24 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.8.1
+
+- **The report now says what happened when it looked inside the app**, which 0.8.0 left
+  out entirely. It recorded that path only when it worked, so a failure left no line at
+  all and the report jumped straight to the network attempts — reading as though the app
+  had never been asked.
+- Three completely different outcomes were indistinguishable: the search stopping early,
+  the app holding formats with no links, and it holding formats in codecs iOS cannot play.
+  Each step is now named with what it actually returned.
+- **A third place to look**, at no cost: the player response the video overlay is handed,
+  which this tweak has been holding for the report since its first release and never read
+  when searching for something to download.
+- The four attempts in 0.7.3 all came back refused, and their messages are now specific
+  enough to be worth reading: two were rejected outright, and two answered properly but
+  said the video was unavailable *to them*. That is the request being understood and
+  declined, which is different from it being malformed — the headers added in 0.7.3 did
+  their job.
+
 ## v0.8.0
 
 - **The links were in the app the whole time, in a place nobody had looked.**

@@ -22,6 +22,12 @@
 /// report, and a second set watching the same two classes would be two things to keep
 /// in step for no gain.
 + (id)lastStreamingData;
+
+/// The player response captured from the overlay — a YTIPlayerResponse, and a third
+/// place the formats might carry links. Held since 0.1.0 for the report, and never read
+/// by the downloader until it turned out that which streaming data you ask is the whole
+/// question.
++ (id)lastPlayerResponse;
 + (NSString *)lastVideoID;
 
 /// The video the player actually activated, which is not always the last MLVideo made.

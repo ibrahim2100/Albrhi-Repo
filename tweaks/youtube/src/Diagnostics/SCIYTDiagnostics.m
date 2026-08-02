@@ -198,6 +198,7 @@ static NSString *sciMarkerBar = nil;
 }
 
 + (id)lastStreamingData { return sciLastStreamingData; }
++ (id)lastPlayerResponse { return sciLastResponse; }
 + (NSString *)lastVideoID { return sciLastVideoID; }
 
 /// The video the player actually started, as opposed to the last one it built an object

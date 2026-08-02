@@ -240,6 +240,21 @@ static NSInteger sciUnplayable = 0;
     return out;
 }
 
+/// The player walk, written into the report whether it worked or not.
+///
+/// 0.8.0 recorded this path only on success, so a failed one left no trace at all and
+/// the report jumped straight to the network attempts -- which reads as though the
+/// player was never asked. Three different outcomes were indistinguishable: the walk
+/// breaking early, the player holding formats with no links, and it holding formats in
+/// codecs iOS cannot play.
++ (void)recordPlayerWalkWith:(NSUInteger)usable {
+    NSString *trace = [SCIYTPlayerStreams lastTrace] ?: @"no walk";
+
+    [SCIYTDiagnostics recordStreamAttempt:
+        [NSString stringWithFormat:@"player: %@ | %ld seen, %ld no link, %ld unplayable, %lu usable",
+         trace, (long)sciSeen, (long)sciNoURL, (long)sciUnplayable, (unsigned long)usable]];
+}
+
 /// Every usable format in a streaming-data dictionary.
 + (NSArray<SCIYTFormat *> *)formatsFromStreamingData:(NSDictionary *)streamingData {
     sciSeen = 0;
@@ -332,10 +347,12 @@ static NSInteger sciUnplayable = 0;
     // The player first. If it is holding formats with links, there is no reason to ask
     // anyone for anything: no request, no borrowed client identity, nothing YouTube can
     // withdraw. The network path exists for when this comes up empty, not the reverse.
+    [SCIYTDiagnostics clearStreamAttempts];
+
     NSArray<SCIYTFormat *> *local = [self formatsFromPlayer];
+    [self recordPlayerWalkWith:local.count];
+
     if (local.count) {
-        [SCIYTDiagnostics recordStreamAttempt:
-            [NSString stringWithFormat:SCILocalized(@"dl_from_player"), (long)local.count]];
         [self presentSheetFor:local from:presenter];
         return;
     }

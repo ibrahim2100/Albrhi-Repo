@@ -318,10 +318,9 @@ static NSArray<NSDictionary *> *SCIClients(void) {
         return;
     }
 
-    // Cleared per lookup, so the report shows one round rather than a history. Three
-    // presses on one video printed the same two failures three times over, which reads
-    // as a retry loop when it is nothing of the kind.
-    [SCIYTDiagnostics clearStreamAttempts];
+    // Not cleared here. The download starts each round and clears it there, having
+    // already written down what the player walk found -- clearing again at this point
+    // would erase the line that says why the network is being asked at all.
 
     // Every path out of -ask: that does not already hop to the main queue arrives here on
     // a background one, and the caller puts up UI.
