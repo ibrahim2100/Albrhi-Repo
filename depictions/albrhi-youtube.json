@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.7.3",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **Asking for the video id was fixed in 0.7.2 and it worked**\n• **The report now shows what the server said**\n• The request was also missing headers YouTube expects.\n• **Two more client identities to fall back on**\n• The report lists one round of attempts instead of every press stacked up.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.7.2",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.7.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **Downloading works.**\n• The reason it did not work before is worth writing down.\n• So it asks YouTube directly instead, the same way every working YouTube downloader does: a fresh request for the video's formats, made as one of the clients that is…\n• **What that means for privacy, plainly:**\n• When YouTube refuses a video — private, age restricted, blocked in your country — the message now says which, in YouTube's own words rather than a guess.\n• No extra weight.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.7.2"
+          "text": "0.7.3"
         },
         {
           "class": "DepictionTableTextView",
