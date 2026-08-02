@@ -37,6 +37,7 @@
 /// What the format request did, client by client. Recorded so a failure says which one
 /// was asked and what it answered, instead of one sentence covering every cause.
 + (void)recordStreamAttempt:(NSString *)line;
++ (void)clearStreamAttempts;
 + (NSString *)lastVideoTitle;
 
 /// Recorded by the settings hooks: the groups YouTube's settings screen is built

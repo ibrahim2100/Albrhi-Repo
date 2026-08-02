@@ -219,6 +219,10 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
 
 + (NSString *)activeVideoID { return sciActiveVideoID; }
 
++ (void)clearStreamAttempts {
+    sciStreamAttempts = nil;
+}
+
 + (void)recordStreamAttempt:(NSString *)line {
     if (!line.length) return;
     if (!sciStreamAttempts) sciStreamAttempts = [NSMutableArray array];

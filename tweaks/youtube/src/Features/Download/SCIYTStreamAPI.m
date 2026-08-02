@@ -6,14 +6,19 @@
 ///
 /// The client identities to ask as, in order.
 ///
-/// Both are public InnerTube clients, and both are still served plain format URLs — which
-/// the app's own client is not. Two rather than one because they fail differently: a
-/// video that one refuses on age or region grounds the other often serves, and trying the
-/// second costs one request on a path that has already failed.
+/// These are public InnerTube clients, and the keys are not secrets: they identify a
+/// client the way a web page's API key does, and authorise nothing.
 ///
-/// The keys are not secrets. They are the public API keys those clients ship with, the
-/// same way a web page's API key is public — they identify the client, they do not
-/// authorise anything.
+/// Four rather than two, because they are refused differently and this is a moving
+/// target. The two taken from a reference tweak were answered with HTTP 403 and HTTP
+/// 400 on a real device — that tweak's build predates whatever changed, and a client
+/// identity copied from a working project is a lead with a shelf life, not a fact.
+/// The embedded-player clients below are the ones that historically outlive the rest,
+/// because a page embedding a video has to be served one.
+///
+/// Each carries its numeric id as well as its name: the server wants the client in the
+/// request headers *and* in the body, and a request that declares it in only one of the
+/// two is a request it cannot place.
 ///
 static NSArray<NSDictionary *> *SCIClients(void) {
     static NSArray *clients = nil;
@@ -21,19 +26,8 @@ static NSArray<NSDictionary *> *SCIClients(void) {
     dispatch_once(&once, ^{
         clients = @[
             @{
-                @"name": @"MEDIA_CONNECT_FRONTEND",
-                @"key": @"AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w",
-                @"context": @{
-                    @"client": @{
-                        @"hl": @"en",
-                        @"gl": @"US",
-                        @"clientName": @"MEDIA_CONNECT_FRONTEND",
-                        @"clientVersion": @"0.1",
-                    },
-                },
-            },
-            @{
                 @"name": @"IOS",
+                @"clientID": @"5",
                 @"key": @"AIzaSyB-63vPrdThhKuerbB2N_l7Kwwcxj6yUAc",
                 @"userAgent": @"com.google.ios.youtube/19.09.3 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)",
                 @"context": @{
@@ -42,7 +36,59 @@ static NSArray<NSDictionary *> *SCIClients(void) {
                         @"gl": @"US",
                         @"clientName": @"IOS",
                         @"clientVersion": @"19.09.3",
+                        @"deviceMake": @"Apple",
                         @"deviceModel": @"iPhone14,3",
+                        @"osName": @"iPhone",
+                        @"osVersion": @"15.6.0.19G71",
+                        @"platform": @"MOBILE",
+                    },
+                },
+            },
+            @{
+                @"name": @"TVHTML5_SIMPLY_EMBEDDED_PLAYER",
+                @"clientID": @"85",
+                @"key": @"AIzaSyDCU8hByM-4DrUqRUYnGn-3llEO78bcxq8",
+                @"context": @{
+                    @"client": @{
+                        @"hl": @"en",
+                        @"gl": @"US",
+                        @"clientName": @"TVHTML5_SIMPLY_EMBEDDED_PLAYER",
+                        @"clientVersion": @"2.0",
+                        @"clientScreen": @"EMBED",
+                        @"platform": @"TV",
+                    },
+                    // An embedded player is always playing on behalf of a page, and the
+                    // server expects to be told which. Left as YouTube's own watch page,
+                    // which is where the video is in fact being watched.
+                    @"thirdParty": @{@"embedUrl": @"https://www.youtube.com/"},
+                },
+            },
+            @{
+                @"name": @"WEB_EMBEDDED_PLAYER",
+                @"clientID": @"56",
+                @"key": @"AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8",
+                @"context": @{
+                    @"client": @{
+                        @"hl": @"en",
+                        @"gl": @"US",
+                        @"clientName": @"WEB_EMBEDDED_PLAYER",
+                        @"clientVersion": @"1.20240101.00.00",
+                        @"clientScreen": @"EMBED",
+                        @"platform": @"DESKTOP",
+                    },
+                    @"thirdParty": @{@"embedUrl": @"https://www.youtube.com/"},
+                },
+            },
+            @{
+                @"name": @"MEDIA_CONNECT_FRONTEND",
+                @"clientID": @"95",
+                @"key": @"AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w",
+                @"context": @{
+                    @"client": @{
+                        @"hl": @"en",
+                        @"gl": @"US",
+                        @"clientName": @"MEDIA_CONNECT_FRONTEND",
+                        @"clientVersion": @"0.1",
                     },
                 },
             },
@@ -119,6 +165,22 @@ static NSArray<NSDictionary *> *SCIClients(void) {
     request.HTTPMethod = @"POST";
     [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
 
+    // The headers InnerTube expects alongside the context, which 0.7.2 left out.
+    //
+    // The client is declared twice on purpose -- once in the JSON body and once in
+    // these headers -- and the server checks both. A request carrying only the body
+    // is a request the server cannot place, which is what an HTTP 400 on a
+    // well-formed body means.
+    //
+    // X-Goog-Api-Format-Version selects the error shape as well as the request one, so
+    // it is also what makes the message read above worth reading.
+    [request setValue:client[@"clientID"] forHTTPHeaderField:@"X-YouTube-Client-Name"];
+    [request setValue:client[@"context"][@"client"][@"clientVersion"]
+   forHTTPHeaderField:@"X-YouTube-Client-Version"];
+    [request setValue:@"2" forHTTPHeaderField:@"X-Goog-Api-Format-Version"];
+    [request setValue:@"https://www.youtube.com" forHTTPHeaderField:@"Origin"];
+    [request setValue:@"https://www.youtube.com/" forHTTPHeaderField:@"Referer"];
+
     if (client[@"userAgent"]) {
         [request setValue:client[@"userAgent"] forHTTPHeaderField:@"User-Agent"];
     }
@@ -166,7 +228,44 @@ static NSArray<NSDictionary *> *SCIClients(void) {
         NSInteger status = [response isKindOfClass:[NSHTTPURLResponse class]]
             ? [(NSHTTPURLResponse *)response statusCode] : 0;
         if (status != 200) {
-            next([NSString stringWithFormat:@"HTTP %ld", (long)status]);
+            // The body, not just the number. A 400 and a 403 both mean "no" and mean
+            // completely different things: one is a request the server could not read,
+            // the other a client it will not serve. InnerTube says which in a JSON
+            // error message, and 0.7.2 threw that away and reported the digits -- so a
+            // report could say the wall was hit without saying which wall.
+            NSString *detail = nil;
+
+            NSDictionary *envelope = [NSJSONSerialization JSONObjectWithData:data
+                                                                     options:0
+                                                                       error:nil];
+            if ([envelope isKindOfClass:[NSDictionary class]]) {
+                NSDictionary *problem = envelope[@"error"];
+                if ([problem isKindOfClass:[NSDictionary class]]) {
+                    NSString *message = problem[@"message"];
+                    NSString *reason = nil;
+
+                    NSArray *errors = problem[@"errors"];
+                    if ([errors isKindOfClass:[NSArray class]] && errors.count) {
+                        NSDictionary *first = errors.firstObject;
+                        if ([first isKindOfClass:[NSDictionary class]]) reason = first[@"reason"];
+                    }
+
+                    detail = [NSString stringWithFormat:@"%@%@",
+                        [message isKindOfClass:[NSString class]] ? message : @"",
+                        [reason isKindOfClass:[NSString class]]
+                            ? [NSString stringWithFormat:@" (%@)", reason] : @""];
+                }
+            }
+
+            if (!detail.length) {
+                // Not JSON, or not shaped like an error envelope. The opening of the
+                // body is still worth more than nothing.
+                NSString *text = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+                detail = text.length > 160 ? [text substringToIndex:160] : text;
+            }
+
+            next([NSString stringWithFormat:@"HTTP %ld — %@", (long)status,
+                  detail.length ? detail : @"no message"]);
             return;
         }
 
@@ -218,6 +317,11 @@ static NSArray<NSDictionary *> *SCIClients(void) {
         completion(nil, SCILocalized(@"dl_why_no_data"));
         return;
     }
+
+    // Cleared per lookup, so the report shows one round rather than a history. Three
+    // presses on one video printed the same two failures three times over, which reads
+    // as a retry loop when it is nothing of the kind.
+    [SCIYTDiagnostics clearStreamAttempts];
 
     // Every path out of -ask: that does not already hop to the main queue arrives here on
     // a background one, and the caller puts up UI.

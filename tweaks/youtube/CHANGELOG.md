@@ -3,6 +3,28 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.7.3
+
+- **Asking for the video id was fixed in 0.7.2 and it worked** — the request now goes out
+  for the video actually on screen. YouTube refused it anyway, with two different errors,
+  and 0.7.2 reported only the numbers: `HTTP 403` and `HTTP 400`.
+- **The report now shows what the server said**, not just the status. YouTube explains a
+  refusal in the reply, and throwing that away meant a report that said the wall was hit
+  without saying which wall.
+- The request was also missing headers YouTube expects. It declared which client it was
+  in the body but not in the headers, and the server checks both — which is what an
+  `HTTP 400` on an otherwise well-formed request means.
+- **Two more client identities to fall back on**, both embedded-player ones. Those tend to
+  outlive the rest, because a page embedding a video has to be served something. The two
+  in 0.7.2 came from a tweak whose build predates whatever changed at YouTube's end.
+- The report lists one round of attempts instead of every press stacked up.
+
+**Being straight about this:** downloading from YouTube is an arms race, and this release
+is a move in it, not a settlement. If these four are refused too, the report will now say
+precisely why — and the answer may be that this route is closed and the one worth taking
+is YouTube's own download machinery, which is already on the device and already knows how
+to fetch these streams.
+
 ## v0.7.2
 
 - Fixes the build of 0.7.1, which never shipped: the diagnostics header promised three
