@@ -120,40 +120,40 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.7.2",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• Fixes the build of 0.7.1, which never shipped: the diagnostics header promised three things the code behind it did not have.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "v0.7.1",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **The download was asking YouTube about the wrong video.**\n• The cause: YouTube builds a video object for each clip it *preloads*, not only the one on screen, so \"the last one made\" is not \"the one playing\".\n• The diagnostics page prints both ids when they disagree, so this cannot hide again.\n• And it now lists every attempt to fetch formats — which client was asked, and what it answered.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.7.0",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
           "markdown": "• **Downloading works.**\n• The reason it did not work before is worth writing down.\n• So it asks YouTube directly instead, the same way every working YouTube downloader does: a fresh request for the video's formats, made as one of the clients that is…\n• **What that means for privacy, plainly:**\n• When YouTube refuses a video — private, age restricted, blocked in your country — the message now says which, in YouTube's own words rather than a guess.\n• No extra weight.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.6.1",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **Holding the video works now.**\n• **The \"nothing to save\" message was misleading, and this is the important part.**\n• So the message now names the wall that blocks the formats that would otherwise work, not the one that happens to affect the most of them.\n• The diagnostics page now also opens up what is nested inside each stream, which is the one place a link could still be hiding.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.6.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **Hold the video to save it.**\n• **Audio on its own.**\n• **\"Nothing to download\" now says why.**\n• Fixes, all found reading the 0.5.0 code rather than on a device: - Every download that had to merge audio left **both source files behind** — tens of megabytes each, per…\n• **Next:**",
           "useSpacing": true
         },
         {
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.7.0"
+          "text": "0.7.2"
         },
         {
           "class": "DepictionTableTextView",
