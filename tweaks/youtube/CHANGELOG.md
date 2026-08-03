@@ -3,6 +3,24 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.19.0
+
+- **Turn the phone and the video fills the screen.** It used to shrink into the middle of a
+  black field, because the screen rotated and the layout did not. Landscape is now its own
+  layout: picture edge to edge, controls floating over it.
+- **The controls get out of the way.** They fade after a few seconds of watching and come
+  back with a tap — and they stay put while paused, because a paused screen with no
+  controls looks broken.
+- **Double tap either side to jump ten seconds**, and there are ten-second buttons either
+  side of play as well.
+- **Picture in picture.** Send the video to a floating window and carry on using the phone.
+- **Saved songs have a cover now.** It comes from the video's own picture, and the same one
+  fills the player behind it, blurred — so a song looks like a song and not an empty file.
+- **Next and previous are back on the lock screen.** Last release quietly replaced them with
+  15-second jumps: iPhone shows one pair or the other and never both, and claiming the jumps
+  took the other two away. Track buttons are the default now, and the jumps are a setting.
+- The lock screen also says where you are in the queue.
+
 ## v0.18.1
 
 - **The mark on the Downloads tab should appear now.** It was being written onto the wrong

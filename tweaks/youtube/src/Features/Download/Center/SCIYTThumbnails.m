@@ -33,6 +33,36 @@
     [[NSFileManager defaultManager] removeItemAtURL:[self fileFor:job] error:nil];
 }
 
+/// A saved song's cover, fetched from YouTube's own still for that video.
+///
+/// A sound file has no picture inside it, so an audio row used to be a music-note glyph and
+/// the player behind it was flat black. The video it came from has a cover and we kept its
+/// id, so there is one to fetch -- and once fetched it is the same cached file every other
+/// row uses, so the list, the player and the lock screen all get it at once.
++ (void)fetchCoverFor:(SCIYTJob *)job completion:(void (^)(UIImage *))completion {
+    if (!job.videoID.length || [self cached:job]) return;
+
+    // Two sizes, in order. Not every video has a maximum-resolution still -- older and
+    // lower-quality uploads simply do not -- and asking for one that is not there returns a
+    // placeholder rather than an error, so the smaller one is the safe second try.
+    NSArray<NSString *> *names = @[@"maxresdefault", @"hqdefault"];
+
+    for (NSString *name in names) {
+        NSString *text = [NSString stringWithFormat:@"https://i.ytimg.com/vi/%@/%@.jpg",
+                          job.videoID, name];
+        NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:text]];
+        UIImage *image = data.length ? [UIImage imageWithData:data] : nil;
+
+        // YouTube answers a missing still with a small grey placeholder rather than a 404,
+        // so the size is the test: a real cover is never 120 across.
+        if (image.size.width < 200) continue;
+
+        [data writeToURL:[self fileFor:job] atomically:YES];
+        dispatch_async(dispatch_get_main_queue(), ^{ completion(image); });
+        return;
+    }
+}
+
 + (void)prepare:(SCIYTJob *)job completion:(void (^)(UIImage *))completion {
     NSURL *source = [job fileURL];
     if (!source) return;
@@ -51,6 +81,9 @@
             if (seconds > 0) job.duration = seconds;
 
             if (job.kind == SCIYTJobKindAudio || [asset tracksWithMediaType:AVMediaTypeVideo].count == 0) {
+                // No picture inside, so the cover comes from where the sound came from.
+                [self fetchCoverFor:job completion:completion];
+
                 if (seconds > 0) {
                     dispatch_async(dispatch_get_main_queue(), ^{ completion(nil); });
                 }

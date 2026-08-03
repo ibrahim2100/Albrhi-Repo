@@ -1,49 +1,62 @@
 #import "SCIYTPlayer.h"
 #import "SCIYTThumbnails.h"
+#import "SCIYTIcon.h"
 #import "../../../SCILog.h"
+#import "../../../Prefs.h"
 #import "../../../Localization/SCILocalize.h"
 #import <AVFoundation/AVFoundation.h>
+#import <AVKit/AVKit.h>
 #import <MediaPlayer/MediaPlayer.h>
 
 static UIColor *SCIAccent(void) {
     return [UIColor colorWithRed:1.0 green:0.0 blue:0.13 alpha:1.0];
 }
 
-@interface SCIYTPlayer ()
+/// How long the controls stay up once you stop touching them.
+static const NSTimeInterval kSCIChromeLinger = 3.5;
+
+/// How far a double tap moves you, in seconds. Ten, which is what every player that has
+/// this gesture uses -- a number people already know without being told.
+static const double kSCINudge = 10;
+
+@interface SCIYTPlayer () <AVPictureInPictureControllerDelegate>
 @property (nonatomic, strong) NSArray<SCIYTJob *> *jobs;
 @property (nonatomic) NSUInteger index;
 
 @property (nonatomic, strong) AVPlayer *player;
 @property (nonatomic, strong) AVPlayerLayer *layer;
+@property (nonatomic, strong) AVPictureInPictureController *pip;
 @property (nonatomic, strong) id ticker;
 
 @property (nonatomic, strong) UIView *stage;
+@property (nonatomic, strong) UIImageView *backdrop;
+@property (nonatomic, strong) UIVisualEffectView *blur;
 @property (nonatomic, strong) UIImageView *artwork;
+@property (nonatomic, strong) UIView *chrome;
+@property (nonatomic, strong) CAGradientLayer *scrim;
+
 @property (nonatomic, strong) UILabel *name;
+@property (nonatomic, strong) UILabel *subtitle;
 @property (nonatomic, strong) UILabel *elapsed;
 @property (nonatomic, strong) UILabel *remaining;
 @property (nonatomic, strong) UISlider *scrubber;
 @property (nonatomic, strong) UIButton *playPause;
-@property (nonatomic) BOOL scrubbing;
+@property (nonatomic, strong) UIButton *pipButton;
+@property (nonatomic, strong) UIButton *close;
 
-/// What -addTargetWithHandler: gave back.
-///
-/// A block target has no target to name later, so the only way to take it off again is the
-/// token it returned. Without these two the next and previous handlers stay on the shared
-/// command centre for the life of the app.
+@property (nonatomic, strong) NSLayoutConstraint *stageBottomToChrome;
+@property (nonatomic, strong) NSLayoutConstraint *stageBottomToView;
+
+@property (nonatomic) BOOL scrubbing;
+@property (nonatomic) BOOL chromeHidden;
+@property (nonatomic, strong) NSTimer *linger;
+
 @property (nonatomic, strong) id nextToken;
 @property (nonatomic, strong) id previousToken;
 @property (nonatomic, strong) id positionToken;
 @property (nonatomic, strong) id forwardToken;
 @property (nonatomic, strong) id backwardToken;
 @property (nonatomic) BOOL torndown;
-
-/// Whether the lock screen has been told how long this one runs.
-///
-/// It cannot be told at the moment playback starts, which is when everything else is
-/// published: a player item that has only just been handed a file answers "indefinite"
-/// until it has read the header. A duration of indefinite is not a shorter bar, it is no
-/// bar at all -- which is why the lock screen showed a title and no counter.
 @property (nonatomic) BOOL publishedLength;
 @end
 
@@ -63,21 +76,34 @@ static UIColor *SCIAccent(void) {
     [presenter presentViewController:player animated:YES completion:nil];
 }
 
+/// Turns with the phone, unlike the sheet it was presented from.
+///
+/// The video used to shrink the moment you rotated: the screen went landscape, the layout
+/// did not, and a picture sized for a column ended up in the middle of a wide black field.
+/// Allowing every orientation is half of it -- the other half is that the layout changes
+/// shape, further down.
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations {
+    return UIInterfaceOrientationMaskAllButUpsideDown;
+}
+
+- (BOOL)prefersStatusBarHidden { return self.chromeHidden; }
+- (BOOL)prefersHomeIndicatorAutoHidden { return self.chromeHidden; }
+- (UIStatusBarStyle)preferredStatusBarStyle { return UIStatusBarStyleLightContent; }
+
 // MARK: - Building it
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor blackColor];
 
-    // Playback, and active. Without this a saved video plays through the silent switch
-    // the way a notification does, and stops the moment the phone locks.
     NSError *audioError = nil;
     [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:&audioError];
     [[AVAudioSession sharedInstance] setActive:YES error:&audioError];
     if (audioError) SCILogV(@"player: audio session — %@", audioError.localizedDescription);
 
     [self buildStage];
-    [self buildControls];
+    [self buildChrome];
+    [self buildGestures];
     [self wireRemote];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -95,18 +121,6 @@ static UIColor *SCIAccent(void) {
 
 - (void)viewDidDisappear:(BOOL)animated {
     [super viewDidDisappear:animated];
-
-    // Teardown happens here and not in -dealloc, because -dealloc cannot be reached.
-    //
-    // MPRemoteCommandCenter is one object for the whole process and it holds its targets
-    // strongly, so registering with it makes this controller immortal: closing the player
-    // released the last reference anyone else held and the command centre kept it anyway.
-    // Everything -dealloc was written to undo was therefore never undone. The player went
-    // on existing with its file open and its observers live, and the lock screen's next
-    // button still reached it -- so opening the Centre a second time left two players
-    // listening and one tap skipped two tracks.
-    //
-    // Being covered by another screen is not leaving, so only a real dismissal counts.
     if (self.isBeingDismissed || self.movingFromParentViewController) [self teardown];
 }
 
@@ -118,6 +132,9 @@ static UIColor *SCIAccent(void) {
     if (self.torndown) return;
     self.torndown = YES;
 
+    [self.linger invalidate];
+    self.linger = nil;
+
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (self.ticker) {
@@ -126,6 +143,7 @@ static UIColor *SCIAccent(void) {
     }
 
     [self.player pause];
+    self.pip = nil;
     self.layer.player = nil;
 
     MPRemoteCommandCenter *centre = [MPRemoteCommandCenter sharedCommandCenter];
@@ -139,36 +157,76 @@ static UIColor *SCIAccent(void) {
 
     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = nil;
 
-    // Handed back so whatever was playing before -- YouTube itself, usually -- is allowed
-    // to resume. Left active, this tweak keeps the audio route after its own player is gone.
     [[AVAudioSession sharedInstance] setActive:NO
                                    withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
                                          error:nil];
 }
 
-/// Where the picture goes, or the artwork when there is no picture.
+/// The picture, and what stands in for it when there is none.
+///
+/// A song gets its own cover blown up and blurred behind it. It is the one thing that makes
+/// an audio screen look like a player rather than a file open in a viewer, and it costs one
+/// image that is already on disk.
 - (void)buildStage {
+    self.backdrop = [[UIImageView alloc] init];
+    self.backdrop.contentMode = UIViewContentModeScaleAspectFill;
+    self.backdrop.clipsToBounds = YES;
+    self.backdrop.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:self.backdrop];
+
+    self.blur = [[UIVisualEffectView alloc]
+        initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemUltraThinMaterialDark]];
+    self.blur.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:self.blur];
+
     self.stage = [[UIView alloc] init];
-    self.stage.backgroundColor = [UIColor blackColor];
+    self.stage.backgroundColor = [UIColor clearColor];
     self.stage.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:self.stage];
 
     self.artwork = [[UIImageView alloc] init];
-    self.artwork.contentMode = UIViewContentModeScaleAspectFit;
-    self.artwork.tintColor = SCIAccent();
+    self.artwork.contentMode = UIViewContentModeScaleAspectFill;
+    self.artwork.clipsToBounds = YES;
+    self.artwork.layer.cornerRadius = 14;
+    self.artwork.layer.cornerCurve = kCACornerCurveContinuous;
+
+    // A cover sitting on a blur of itself needs an edge or it dissolves into its own
+    // background. A hairline and a soft drop is what lifts it off.
+    self.artwork.layer.borderWidth = 0.5;
+    self.artwork.layer.borderColor = [UIColor colorWithWhite:1 alpha:0.18].CGColor;
+    self.artwork.layer.shadowColor = [UIColor blackColor].CGColor;
+    self.artwork.layer.shadowOpacity = 0.45;
+    self.artwork.layer.shadowRadius = 24;
+    self.artwork.layer.shadowOffset = CGSizeMake(0, 12);
     self.artwork.translatesAutoresizingMaskIntoConstraints = NO;
     [self.stage addSubview:self.artwork];
 
     [NSLayoutConstraint activateConstraints:@[
-        [self.stage.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
+        [self.backdrop.topAnchor constraintEqualToAnchor:self.view.topAnchor],
+        [self.backdrop.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
+        [self.backdrop.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [self.backdrop.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+
+        [self.blur.topAnchor constraintEqualToAnchor:self.view.topAnchor],
+        [self.blur.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
+        [self.blur.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [self.blur.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+
+        [self.stage.topAnchor constraintEqualToAnchor:self.view.topAnchor],
         [self.stage.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
         [self.stage.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
 
         [self.artwork.centerXAnchor constraintEqualToAnchor:self.stage.centerXAnchor],
         [self.artwork.centerYAnchor constraintEqualToAnchor:self.stage.centerYAnchor],
-        [self.artwork.widthAnchor constraintEqualToAnchor:self.stage.widthAnchor multiplier:0.7],
-        [self.artwork.heightAnchor constraintEqualToAnchor:self.artwork.widthAnchor]
+        [self.artwork.widthAnchor constraintLessThanOrEqualToAnchor:self.stage.widthAnchor multiplier:0.78],
+        [self.artwork.heightAnchor constraintLessThanOrEqualToAnchor:self.stage.heightAnchor multiplier:0.78],
+        [self.artwork.widthAnchor constraintEqualToAnchor:self.artwork.heightAnchor]
     ]];
+
+    // Both kept, one active at a time. Rotating changes which -- in landscape the picture
+    // takes the whole screen and the controls float over it, which is what a video wants
+    // and what the old fixed layout could not do.
+    self.stageBottomToView = [self.stage.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor];
 
     self.layer = [AVPlayerLayer layer];
     self.layer.videoGravity = AVLayerVideoGravityResizeAspect;
@@ -178,26 +236,57 @@ static UIColor *SCIAccent(void) {
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
 
-    // The one layer here that has no constraints, because a CALayer has none. It is set
-    // from the view that owns it and from nothing else.
     self.layer.frame = self.stage.bounds;
+    self.scrim.frame = self.chrome.bounds;
+    [self applyShape];
 }
 
-/// The controls, in one stack.
-///
-/// A stack view rather than a row of siblings pinned to each other: the panel this project
-/// rebuilt three times died in CoreAutoLayout, and the lesson was that a container which
-/// spaces its own children cannot be given an unsatisfiable set of constraints.
-- (void)buildControls {
+/// Which of the two layouts applies, decided from the shape of the screen.
+- (void)applyShape {
+    BOOL wide = self.view.bounds.size.width > self.view.bounds.size.height;
+
+    if (wide == self.stageBottomToView.isActive) return;
+
+    self.stageBottomToChrome.active = !wide;
+    self.stageBottomToView.active = wide;
+
+    // Over the video, the controls need something behind them or white text lands on a
+    // white frame. In portrait they sit on their own ground and need nothing.
+    self.scrim.hidden = !wide;
+    self.chrome.backgroundColor = [UIColor clearColor];
+}
+
+- (void)buildChrome {
+    self.chrome = [[UIView alloc] init];
+    self.chrome.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:self.chrome];
+
+    self.scrim = [CAGradientLayer layer];
+    self.scrim.colors = @[(id)[UIColor clearColor].CGColor,
+                          (id)[UIColor colorWithWhite:0 alpha:0.75].CGColor];
+    self.scrim.hidden = YES;
+    [self.chrome.layer insertSublayer:self.scrim atIndex:0];
+
     self.name = [[UILabel alloc] init];
-    self.name.font = [UIFont systemFontOfSize:17 weight:UIFontWeightSemibold];
+    self.name.font = [UIFont systemFontOfSize:19 weight:UIFontWeightBold];
     self.name.textColor = [UIColor whiteColor];
     self.name.textAlignment = NSTextAlignmentCenter;
     self.name.numberOfLines = 2;
 
+    self.subtitle = [[UILabel alloc] init];
+    self.subtitle.font = [UIFont systemFontOfSize:13 weight:UIFontWeightMedium];
+    self.subtitle.textColor = [UIColor colorWithWhite:1 alpha:0.55];
+    self.subtitle.textAlignment = NSTextAlignmentCenter;
+
     self.scrubber = [[UISlider alloc] init];
     self.scrubber.minimumTrackTintColor = SCIAccent();
-    self.scrubber.maximumTrackTintColor = [UIColor colorWithWhite:1 alpha:0.25];
+    self.scrubber.maximumTrackTintColor = [UIColor colorWithWhite:1 alpha:0.22];
+
+    // A smaller thumb than the system default, which is sized for a volume slider and looks
+    // clumsy on a timeline. Grown while dragging so the finger has something to hold.
+    [self.scrubber setThumbImage:[self thumbOfSize:12] forState:UIControlStateNormal];
+    [self.scrubber setThumbImage:[self thumbOfSize:20] forState:UIControlStateHighlighted];
+
     [self.scrubber addTarget:self action:@selector(scrubStarted)
             forControlEvents:UIControlEventTouchDown];
     [self.scrubber addTarget:self action:@selector(scrubEnded)
@@ -210,44 +299,97 @@ static UIColor *SCIAccent(void) {
     times.axis = UILayoutConstraintAxisHorizontal;
     times.distribution = UIStackViewDistributionFillEqually;
 
-    UIButton *previous = [self control:@"backward.end.fill" size:26 action:@selector(previous)];
-    self.playPause = [self control:@"pause.fill" size:40 action:@selector(togglePlay)];
-    UIButton *next = [self control:@"forward.end.fill" size:26 action:@selector(next)];
+    UIButton *back = [self control:@"gobackward.10" size:24 action:@selector(nudgeBack)];
+    UIButton *previous = [self control:@"backward.end.fill" size:22 action:@selector(previous)];
+    self.playPause = [self control:@"pause.circle.fill" size:56 action:@selector(togglePlay)];
+    UIButton *next = [self control:@"forward.end.fill" size:22 action:@selector(next)];
+    UIButton *ahead = [self control:@"goforward.10" size:24 action:@selector(nudgeAhead)];
 
-    UIStackView *transport =
-        [[UIStackView alloc] initWithArrangedSubviews:@[previous, self.playPause, next]];
+    UIStackView *transport = [[UIStackView alloc] initWithArrangedSubviews:
+        @[previous, back, self.playPause, ahead, next]];
     transport.axis = UILayoutConstraintAxisHorizontal;
-    transport.distribution = UIStackViewDistributionFillEqually;
+    transport.distribution = UIStackViewDistributionEqualCentering;
     transport.alignment = UIStackViewAlignmentCenter;
 
-    UIStackView *stack =
-        [[UIStackView alloc] initWithArrangedSubviews:@[self.name, self.scrubber, times, transport]];
+    UIStackView *stack = [[UIStackView alloc] initWithArrangedSubviews:
+        @[self.name, self.subtitle, self.scrubber, times, transport]];
     stack.axis = UILayoutConstraintAxisVertical;
-    stack.spacing = 10;
+    stack.spacing = 8;
+    [stack setCustomSpacing:18 afterView:self.subtitle];
+    [stack setCustomSpacing:14 afterView:times];
     stack.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:stack];
+    [self.chrome addSubview:stack];
 
-    UIButton *close = [self control:@"xmark.circle.fill" size:28 action:@selector(close)];
-    close.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:close];
+    self.close = [self control:@"chevron.down" size:18 action:@selector(close)];
+    self.close.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:self.close];
+
+    self.pipButton = [self control:@"pip.enter" size:18 action:@selector(enterPiP)];
+    self.pipButton.translatesAutoresizingMaskIntoConstraints = NO;
+    self.pipButton.hidden = YES;
+    [self.view addSubview:self.pipButton];
+
+    self.stageBottomToChrome =
+        [self.stage.bottomAnchor constraintEqualToAnchor:self.chrome.topAnchor constant:-8];
+    self.stageBottomToChrome.active = YES;
 
     [NSLayoutConstraint activateConstraints:@[
-        [stack.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:24],
-        [stack.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-24],
-        [stack.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-24],
-        [self.stage.bottomAnchor constraintEqualToAnchor:stack.topAnchor constant:-16],
+        [self.chrome.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [self.chrome.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [self.chrome.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
 
-        [close.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:8],
-        [close.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-16],
-        [close.widthAnchor constraintEqualToConstant:40],
-        [close.heightAnchor constraintEqualToConstant:40]
+        [stack.topAnchor constraintEqualToAnchor:self.chrome.topAnchor constant:14],
+        [stack.leadingAnchor constraintEqualToAnchor:self.chrome.leadingAnchor constant:26],
+        [stack.trailingAnchor constraintEqualToAnchor:self.chrome.trailingAnchor constant:-26],
+        [stack.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-18],
+
+        [self.close.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:6],
+        [self.close.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:14],
+        [self.close.widthAnchor constraintEqualToConstant:44],
+        [self.close.heightAnchor constraintEqualToConstant:44],
+
+        [self.pipButton.centerYAnchor constraintEqualToAnchor:self.close.centerYAnchor],
+        [self.pipButton.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-14],
+        [self.pipButton.widthAnchor constraintEqualToConstant:44],
+        [self.pipButton.heightAnchor constraintEqualToConstant:44]
     ]];
+}
+
+/// Tap anywhere to show or hide; double tap a side to jump.
+///
+/// The single tap waits on the double, or every jump would flash the controls on its way.
+- (void)buildGestures {
+    UITapGestureRecognizer *once =
+        [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(toggleChrome)];
+
+    UITapGestureRecognizer *twice =
+        [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(doubleTapped:)];
+    twice.numberOfTapsRequired = 2;
+
+    [once requireGestureRecognizerToFail:twice];
+
+    [self.stage addGestureRecognizer:once];
+    [self.stage addGestureRecognizer:twice];
+    self.stage.userInteractionEnabled = YES;
+}
+
+- (UIImage *)thumbOfSize:(CGFloat)size {
+    UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat preferredFormat];
+    format.opaque = NO;
+
+    UIGraphicsImageRenderer *renderer =
+        [[UIGraphicsImageRenderer alloc] initWithSize:CGSizeMake(size, size) format:format];
+
+    return [renderer imageWithActions:^(__unused UIGraphicsImageRendererContext *context) {
+        [[UIColor whiteColor] setFill];
+        [[UIBezierPath bezierPathWithOvalInRect:CGRectMake(0, 0, size, size)] fill];
+    }];
 }
 
 - (UILabel *)timeLabel:(NSTextAlignment)alignment {
     UILabel *label = [[UILabel alloc] init];
-    label.font = [UIFont monospacedDigitSystemFontOfSize:12 weight:UIFontWeightRegular];
-    label.textColor = [UIColor colorWithWhite:1 alpha:0.6];
+    label.font = [UIFont monospacedDigitSystemFontOfSize:12 weight:UIFontWeightMedium];
+    label.textColor = [UIColor colorWithWhite:1 alpha:0.55];
     label.textAlignment = alignment;
     label.text = @"--:--";
     return label;
@@ -264,6 +406,61 @@ static UIColor *SCIAccent(void) {
     return button;
 }
 
+// MARK: - Showing and hiding
+
+- (void)toggleChrome {
+    [self setChromeHidden:!self.chromeHidden animated:YES];
+}
+
+- (void)setChromeHidden:(BOOL)hidden animated:(BOOL)animated {
+    _chromeHidden = hidden;
+
+    void (^apply)(void) = ^{
+        CGFloat alpha = hidden ? 0 : 1;
+        self.chrome.alpha = alpha;
+        self.close.alpha = alpha;
+        self.pipButton.alpha = alpha;
+    };
+
+    if (animated) {
+        [UIView animateWithDuration:0.25 animations:apply];
+    } else {
+        apply();
+    }
+
+    [self setNeedsStatusBarAppearanceUpdate];
+    [self setNeedsUpdateOfHomeIndicatorAutoHidden];
+    [self restartLinger];
+}
+
+/// Hides the controls again after a while, but only while something is playing.
+///
+/// Paused, they stay: a paused screen with no controls looks broken, and the reason to hide
+/// them is to see the picture move.
+- (void)restartLinger {
+    [self.linger invalidate];
+    self.linger = nil;
+
+    if (self.chromeHidden || self.player.rate == 0) return;
+    if ([self current].kind != SCIYTJobKindVideo) return;
+
+    __weak __typeof(self) weakSelf = self;
+    self.linger = [NSTimer scheduledTimerWithTimeInterval:kSCIChromeLinger
+                                                  repeats:NO
+                                                    block:^(__unused NSTimer *timer) {
+        [weakSelf setChromeHidden:YES animated:YES];
+    }];
+}
+
+- (void)doubleTapped:(UITapGestureRecognizer *)tap {
+    CGPoint at = [tap locationInView:self.stage];
+    BOOL ahead = at.x > CGRectGetMidX(self.stage.bounds);
+    [self skipBy:ahead ? kSCINudge : -kSCINudge];
+}
+
+- (void)nudgeBack { [self skipBy:-kSCINudge]; }
+- (void)nudgeAhead { [self skipBy:kSCINudge]; }
+
 // MARK: - The queue
 
 - (SCIYTJob *)current {
@@ -274,8 +471,6 @@ static UIColor *SCIAccent(void) {
     SCIYTJob *job = [self current];
     NSURL *file = [job fileURL];
 
-    // A row whose file went missing is skipped rather than played as silence. It can
-    // happen: the folder is open to the Files app on purpose.
     if (!file) {
         if (self.index + 1 < self.jobs.count) { self.index++; [self load]; return; }
         [self close];
@@ -286,12 +481,6 @@ static UIColor *SCIAccent(void) {
 
     self.player = [AVPlayer playerWithURL:file];
 
-    // Watched on *this* item, and re-registered for each one.
-    //
-    // Observing the notification with a nil object is the obvious way to write it and it
-    // is wrong inside another app: the notification is posted for every item that ends
-    // anywhere in the process, so a YouTube video finishing in the background would skip
-    // our queue forward. The item is the object; nothing else may speak for it.
     [[NSNotificationCenter defaultCenter] removeObserver:self
                                                     name:AVPlayerItemDidPlayToEndTimeNotification
                                                   object:nil];
@@ -299,25 +488,34 @@ static UIColor *SCIAccent(void) {
                                              selector:@selector(reachedEnd)
                                                  name:AVPlayerItemDidPlayToEndTimeNotification
                                                object:self.player.currentItem];
-    self.layer.player = (job.kind == SCIYTJobKindVideo) ? self.player : nil;
+
+    BOOL isVideo = (job.kind == SCIYTJobKindVideo);
+    self.layer.player = isVideo ? self.player : nil;
 
     UIImage *still = [SCIYTThumbnails cached:job];
-    self.artwork.image = still ?: [UIImage systemImageNamed:@"music.note"];
-    self.artwork.hidden = (job.kind == SCIYTJobKindVideo);
+    self.artwork.image = still;
+    self.artwork.hidden = isVideo || !still;
+    self.backdrop.image = still;
+    self.blur.hidden = isVideo;
+    self.backdrop.hidden = isVideo;
 
     self.name.text = job.title;
+    self.subtitle.text = job.quality;
     self.scrubber.value = 0;
-    self.publishedLength = NO;   // the next one's length is not this one's
+    self.publishedLength = NO;
+
+    [self preparePiP:isVideo];
 
     __weak __typeof(self) weakSelf = self;
     self.ticker = [self.player addPeriodicTimeObserverForInterval:CMTimeMake(1, 2)
-                                                             queue:dispatch_get_main_queue()
-                                                        usingBlock:^(CMTime time) {
+                                                            queue:dispatch_get_main_queue()
+                                                       usingBlock:^(__unused CMTime time) {
         [weakSelf tick];
     }];
 
     [self.player play];
     [self showPlaying:YES];
+    [self setChromeHidden:NO animated:NO];
     [self describeToLockScreen];
 }
 
@@ -328,10 +526,8 @@ static UIColor *SCIAccent(void) {
 }
 
 - (void)previous {
-    // Back to the start first, then to the previous one -- which is what every player
-    // does and what the button is reached for nine times out of ten.
     if (CMTimeGetSeconds(self.player.currentTime) > 3 || self.index == 0) {
-        [self.player seekToTime:kCMTimeZero];
+        [self seekTo:0];
         return;
     }
     self.index--;
@@ -345,12 +541,13 @@ static UIColor *SCIAccent(void) {
     if (playing) [self.player pause]; else [self.player play];
     [self showPlaying:!playing];
     [self describeToLockScreen];
+    [self restartLinger];
 }
 
 - (void)showPlaying:(BOOL)playing {
     UIImageSymbolConfiguration *weight =
-        [UIImageSymbolConfiguration configurationWithPointSize:40 weight:UIImageSymbolWeightMedium];
-    [self.playPause setImage:[UIImage systemImageNamed:(playing ? @"pause.fill" : @"play.fill")
+        [UIImageSymbolConfiguration configurationWithPointSize:56 weight:UIImageSymbolWeightMedium];
+    [self.playPause setImage:[UIImage systemImageNamed:(playing ? @"pause.circle.fill" : @"play.circle.fill")
                                      withConfiguration:weight]
                     forState:UIControlStateNormal];
 }
@@ -360,9 +557,42 @@ static UIColor *SCIAccent(void) {
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
+// MARK: - Picture in picture
+
+- (void)preparePiP:(BOOL)isVideo {
+    if (!isVideo || ![AVPictureInPictureController isPictureInPictureSupported]) {
+        self.pip = nil;
+        self.pipButton.hidden = YES;
+        return;
+    }
+
+    self.pip = [[AVPictureInPictureController alloc] initWithPlayerLayer:self.layer];
+    self.pip.delegate = self;
+    self.pipButton.hidden = NO;
+}
+
+- (void)enterPiP {
+    if (self.pip.isPictureInPictureActive) {
+        [self.pip stopPictureInPicture];
+        return;
+    }
+    [self.pip startPictureInPicture];
+}
+
+/// Put back the way it was found.
+///
+/// Without this the player is left dismissed underneath the little window, and closing the
+/// window leaves nothing to go back to.
+- (void)pictureInPictureControllerWillStopPictureInPicture:(__unused AVPictureInPictureController *)controller {
+    [self setChromeHidden:NO animated:NO];
+}
+
 // MARK: - The scrubber
 
-- (void)scrubStarted { self.scrubbing = YES; }
+- (void)scrubStarted {
+    self.scrubbing = YES;
+    [self.linger invalidate];
+}
 
 - (void)scrubEnded {
     self.scrubbing = NO;
@@ -371,13 +601,9 @@ static UIColor *SCIAccent(void) {
     if (!isfinite(length) || length <= 0) return;
 
     [self seekTo:self.scrubber.value * length];
+    [self restartLinger];
 }
 
-/// Moves to a point, and tells the lock screen where it now is.
-///
-/// Both remote seeks come through here rather than calling -seekToTime: themselves: the
-/// now-playing entry has to be rewritten after a jump or the counter carries on from where
-/// it was, and one place to forget that is better than three.
 - (void)seekTo:(double)seconds {
     double length = CMTimeGetSeconds(self.player.currentItem.duration);
     if (!isfinite(length) || length <= 0) return;
@@ -402,11 +628,10 @@ static UIColor *SCIAccent(void) {
     double length = CMTimeGetSeconds(self.player.currentItem.duration);
     if (!isfinite(length) || length <= 0) return;
 
-    // The length arrives late, and the lock screen was told everything else before it did.
-    // Publishing once here is what turns a bare title into a counter with a scrubber.
     if (!self.publishedLength) {
         self.publishedLength = YES;
         [self describeToLockScreen];
+        [self restartLinger];
     }
 
     if (self.scrubbing) return;
@@ -418,13 +643,10 @@ static UIColor *SCIAccent(void) {
 
 // MARK: - Off the screen
 
-/// The layer is emptied, not the player.
-///
-/// iOS stops playback through a layer that is not being drawn, so a video would fall
-/// silent the moment the phone locked -- which is exactly the thing someone saving a
-/// video to listen to does not want. Handing the layer back on return puts the picture
-/// where the sound already is.
 - (void)wentAway {
+    // Picture in picture is the one case where the layer must keep its player: that little
+    // window *is* the layer, and handing it back an empty one closes it.
+    if (self.pip.isPictureInPictureActive) return;
     if ([self current].kind == SCIYTJobKindVideo) self.layer.player = nil;
 }
 
@@ -439,18 +661,20 @@ static UIColor *SCIAccent(void) {
 
     centre.playCommand.enabled = YES;
     centre.pauseCommand.enabled = YES;
-    centre.nextTrackCommand.enabled = YES;
-    centre.previousTrackCommand.enabled = YES;
-
-    // The three that make the counter a control rather than a readout.
-    //
-    // A now-playing entry with a duration draws a scrubber, but dragging it does nothing
-    // unless this command is claimed -- iOS asks whoever is playing to move, and with no
-    // one listening the thumb springs back. The skip pair is what the lock screen offers
-    // instead of next/previous when both are claimed, so both are.
     centre.changePlaybackPositionCommand.enabled = YES;
-    centre.skipForwardCommand.enabled = YES;
-    centre.skipBackwardCommand.enabled = YES;
+
+    // Next and previous, or fifteen seconds -- never both, because iOS will not show both.
+    //
+    // Claiming the skip pair *replaces* next and previous on the lock screen, which is what
+    // 0.15.0 did without meaning to: it added the skips and quietly took away the two
+    // buttons that move between saved videos. Track buttons are the default now and the
+    // jumps are the setting, which is the way round it should always have been.
+    BOOL jumps = SCIPrefEnabled(SCIPrefLockScreenSkip);
+
+    centre.nextTrackCommand.enabled = !jumps;
+    centre.previousTrackCommand.enabled = !jumps;
+    centre.skipForwardCommand.enabled = jumps;
+    centre.skipBackwardCommand.enabled = jumps;
     centre.skipForwardCommand.preferredIntervals = @[@15];
     centre.skipBackwardCommand.preferredIntervals = @[@15];
 
@@ -467,41 +691,39 @@ static UIColor *SCIAccent(void) {
             return MPRemoteCommandHandlerStatusSuccess;
         }];
 
-    self.forwardToken = [centre.skipForwardCommand
-        addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
-            MPSkipIntervalCommandEvent *skip = (MPSkipIntervalCommandEvent *)event;
-            [weakSelf skipBy:skip.interval];
-            return MPRemoteCommandHandlerStatusSuccess;
-        }];
-
-    self.backwardToken = [centre.skipBackwardCommand
-        addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
-            MPSkipIntervalCommandEvent *skip = (MPSkipIntervalCommandEvent *)event;
-            [weakSelf skipBy:-skip.interval];
-            return MPRemoteCommandHandlerStatusSuccess;
-        }];
-
     self.nextToken = [centre.nextTrackCommand
-        addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
+        addTargetWithHandler:^MPRemoteCommandHandlerStatus(__unused MPRemoteCommandEvent *event) {
             [weakSelf next];
             return MPRemoteCommandHandlerStatusSuccess;
         }];
 
     self.previousToken = [centre.previousTrackCommand
-        addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
+        addTargetWithHandler:^MPRemoteCommandHandlerStatus(__unused MPRemoteCommandEvent *event) {
             [weakSelf previous];
+            return MPRemoteCommandHandlerStatusSuccess;
+        }];
+
+    self.forwardToken = [centre.skipForwardCommand
+        addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
+            [weakSelf skipBy:((MPSkipIntervalCommandEvent *)event).interval];
+            return MPRemoteCommandHandlerStatusSuccess;
+        }];
+
+    self.backwardToken = [centre.skipBackwardCommand
+        addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
+            [weakSelf skipBy:-((MPSkipIntervalCommandEvent *)event).interval];
             return MPRemoteCommandHandlerStatusSuccess;
         }];
 }
 
-- (MPRemoteCommandHandlerStatus)remotePlay:(MPRemoteCommandEvent *)event {
+- (MPRemoteCommandHandlerStatus)remotePlay:(__unused MPRemoteCommandEvent *)event {
     [self.player play];
     [self showPlaying:YES];
     [self describeToLockScreen];
     return MPRemoteCommandHandlerStatusSuccess;
 }
 
-- (MPRemoteCommandHandlerStatus)remotePause:(MPRemoteCommandEvent *)event {
+- (MPRemoteCommandHandlerStatus)remotePause:(__unused MPRemoteCommandEvent *)event {
     [self.player pause];
     [self showPlaying:NO];
     [self describeToLockScreen];
@@ -516,15 +738,16 @@ static UIColor *SCIAccent(void) {
     now[MPMediaItemPropertyTitle] = job.title;
     now[MPMediaItemPropertyArtist] = SCILocalized(@"panel_title");
     now[MPNowPlayingInfoPropertyElapsedPlaybackTime] = @(CMTimeGetSeconds(self.player.currentTime));
-
-    // The rate is what makes the counter count. iOS does not poll: it takes the elapsed
-    // time once and moves it forward at whatever rate was declared, so a paused entry that
-    // claims rate 1 keeps counting and a playing one that omits it stands still.
     now[MPNowPlayingInfoPropertyPlaybackRate] = @(self.player.rate);
     now[MPNowPlayingInfoPropertyDefaultPlaybackRate] = @1;
     now[MPNowPlayingInfoPropertyMediaType] =
         @(job.kind == SCIYTJobKindAudio ? MPNowPlayingInfoMediaTypeAudio
                                         : MPNowPlayingInfoMediaTypeVideo);
+
+    // Where it sits in the queue, which is what turns two arrows into something you can
+    // steer by -- "3 of 12" tells you whether pressing next is worth it.
+    now[MPNowPlayingInfoPropertyPlaybackQueueIndex] = @(self.index);
+    now[MPNowPlayingInfoPropertyPlaybackQueueCount] = @(self.jobs.count);
 
     double length = CMTimeGetSeconds(self.player.currentItem.duration);
     if (isfinite(length) && length > 0) now[MPMediaItemPropertyPlaybackDuration] = @(length);
@@ -533,7 +756,7 @@ static UIColor *SCIAccent(void) {
     if (still) {
         now[MPMediaItemPropertyArtwork] =
             [[MPMediaItemArtwork alloc] initWithBoundsSize:still.size
-                                            requestHandler:^UIImage *(CGSize size) { return still; }];
+                                            requestHandler:^UIImage *(__unused CGSize size) { return still; }];
     }
 
     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = now;

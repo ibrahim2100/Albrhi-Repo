@@ -22,6 +22,13 @@
 #define SCIPrefAutoPhotos       @"auto_save_photos"
 #define SCIPrefTabButton        @"tab_download_button"
 
+/// Which pair of buttons the lock screen gets.
+///
+/// Off means next and previous, which is the default because a queue you cannot move
+/// through is not a queue. iOS shows one pair or the other and never both, so this is a
+/// choice and not two switches.
+#define SCIPrefLockScreenSkip   @"lock_screen_skip"
+
 /// Quality.
 ///
 /// The two caps are resolutions, not menu positions -- 1080 means 1080, and 0 means leave

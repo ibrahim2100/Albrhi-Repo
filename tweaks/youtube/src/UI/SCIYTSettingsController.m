@@ -178,6 +178,10 @@ static NSString *SCIQualityLabel(NSInteger cap);
                    detail:SCILocalized(@"set_auto_photos_note")
                    symbol:@"photo.on.rectangle"
                   prefKey:SCIPrefAutoPhotos],
+        [SCIRow switchRow:SCILocalized(@"set_lock_skip")
+                   detail:SCILocalized(@"set_lock_skip_note")
+                   symbol:@"lock.iphone"
+                  prefKey:SCIPrefLockScreenSkip],
     ];
 
     // Two sections: the switch that turns it on, and the categories it governs. Split

@@ -23,6 +23,6 @@ $(TWEAK_NAME)_FILES = $(shell find src -type f \( -iname \*.x -o -iname \*.xm -o
 # cannot be given a "next" -- there is no supported way into its transport bar -- and a
 # list of saved videos you cannot move through is a file opener. The player is built on
 # AVPlayerLayer instead, which is AVFoundation, already linked for the downloads.
-$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore AVFoundation MediaPlayer CoreMedia Photos Network
+$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore AVFoundation MediaPlayer CoreMedia Photos Network AVKit
 
 include $(ROOT)/shared/tweak.mk
