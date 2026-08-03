@@ -3,6 +3,18 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.27.1
+
+- **Ad cards on Home should go, and the ad picture with them.** The same marker turns up on
+  Home and in Shorts, so it is one thing being removed in both places rather than two.
+- The previous attempt at this never once worked — it was reading the wrong thing entirely,
+  while the ad sat on screen perfectly visible. It now reads the label the view carries
+  itself, which was there all along.
+- **Diagnostics can finally answer the wrong-Short question.** Tapping save wrote down what
+  it tried to save, and the next swipe erased it before you could ever read it, so every
+  report came back without the one line that mattered. Tap save on a Short, open Settings,
+  Diagnostics, and send the "Last Shorts save attempt" section.
+
 ## v0.27.0
 
 - **The ad picture in Shorts is hidden.** Refusing the ad page was not enough — it gets built
