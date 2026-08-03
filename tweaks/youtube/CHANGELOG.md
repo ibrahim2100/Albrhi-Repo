@@ -3,6 +3,20 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.23.0
+
+- **A save button in Shorts**, in the column with like and share. Shorts has no long press
+  to spare — the whole screen is already a scrubber and a swipe — so there was no way at
+  all to save one before this.
+- **Songs play again.** Last release put the cover inside the sound file, and replaced the
+  file the moment the writing reported success — which says the work ran, not that what came
+  out can be read. A song now has to open and play before it is allowed to replace anything.
+  **A song already broken by 0.22.0 stays broken: delete it and save it again.**
+- **The lock screen stops coming and going.** Its entry was written when playback started
+  and never put back if something overwrote it in between. It is written again every time
+  you leave the app.
+- Songs no longer get the processing meant for film dialogue, which was audible on music.
+
 ## v0.22.0
 
 - **Saved videos keep playing with the screen off, and when you leave the app.** They were
