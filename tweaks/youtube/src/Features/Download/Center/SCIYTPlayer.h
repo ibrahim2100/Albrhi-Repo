@@ -10,6 +10,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// Posted whenever what is playing, or whether it is playing, changes.
+extern NSNotificationName const SCIYTPlaybackDidChangeNotification;
+
 ///
 /// The player for saved downloads. One screen, both kinds.
 ///
@@ -36,6 +39,43 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)presentFrom:(UIViewController *)presenter
                jobs:(NSArray<SCIYTJob *> *)jobs
               start:(NSUInteger)index;
+
+///
+/// There is one of these, and closing it does not end it.
+///
+/// It used to be built per tap and torn down on dismissal, which made "close the player"
+/// and "stop the music" the same action -- so browsing the list meant silence. The instance
+/// outlives the screen now: dismissing hides it, and what carries on playing is what the
+/// mini bar at the bottom of the Centre is showing.
+///
+/// It is ended by -stop, and by nothing else. That is what the mini bar's close button
+/// does, and it is the only place the audio session is handed back.
+///
++ (nullable SCIYTPlayer *)current;
+
+/// Whether something is loaded and worth showing a mini bar for.
++ (BOOL)isActive;
+
+/// What is playing, or nil.
++ (nullable SCIYTJob *)nowPlaying;
+
+/// Whether it is playing rather than paused.
++ (BOOL)isPlaying;
+
+/// Play or pause, from outside. For the mini bar.
++ (void)toggle;
+
+/// Ends playback and lets everything go.
++ (void)stop;
+
+/// How far through, from 0 to 1, or 0 when that is not known yet.
+///
+/// A number rather than the AVPlayer itself. The mini bar needs one fact and handing it the
+/// player to get that fact would make every private thing on this class its business too.
++ (double)progress;
+
+/// Brings the full screen back, from the mini bar.
++ (void)reopenFrom:(UIViewController *)presenter;
 
 @end
 

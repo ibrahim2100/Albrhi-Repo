@@ -22,6 +22,9 @@ static const NSTimeInterval kSCIChromeLinger = 3.5;
 static const double kSCINudge = 10;
 
 @interface SCIYTPlayer () <AVPictureInPictureControllerDelegate>
+- (void)load;
+- (void)togglePlay;
+- (void)teardown;
 @property (nonatomic, strong) NSArray<SCIYTJob *> *jobs;
 @property (nonatomic) NSUInteger index;
 
@@ -81,6 +84,12 @@ static const double kSCIResumeFloor = 10;
 /// Offering to resume something with twenty seconds left is offering to watch the credits.
 static const double kSCIResumeCeiling = 20;
 
+NSNotificationName const SCIYTPlaybackDidChangeNotification = @"SCIYTPlaybackDidChange";
+
+/// The one player. Held here rather than by whoever presented it, because what keeps it
+/// alive has to outlive the screen that opened it.
+static SCIYTPlayer *sciCurrent = nil;
+
 @implementation SCIYTPlayer
 
 + (void)presentFrom:(UIViewController *)presenter
@@ -89,10 +98,56 @@ static const double kSCIResumeCeiling = 20;
 
     if (!presenter || index >= jobs.count) return;
 
-    SCIYTPlayer *player = [[SCIYTPlayer alloc] init];
+    // The same instance every time. A player built per tap made closing the screen and
+    // stopping the music one action, so browsing the list meant silence.
+    SCIYTPlayer *player = sciCurrent;
+    if (!player) {
+        player = [[SCIYTPlayer alloc] init];
+        player.modalPresentationStyle = UIModalPresentationFullScreen;
+        sciCurrent = player;
+    }
+
+    BOOL sameRow = [player.jobs isEqualToArray:jobs] && player.index == index && player.player;
+
     player.jobs = jobs;
-    player.index = index;
-    player.modalPresentationStyle = UIModalPresentationFullScreen;
+    if (!sameRow) player.index = index;
+
+    if (player.presentingViewController) return;
+    [presenter presentViewController:player animated:YES completion:^{
+        // Loaded after it is on screen, and only when it is not already playing this row --
+        // reopening from the mini bar must not start the song over.
+        if (!sameRow) [player load];
+    }];
+}
+
++ (SCIYTPlayer *)current { return sciCurrent; }
++ (BOOL)isActive { return sciCurrent.player != nil; }
++ (SCIYTJob *)nowPlaying { return [sciCurrent current]; }
++ (BOOL)isPlaying { return sciCurrent.player.rate > 0; }
+
++ (void)toggle { [sciCurrent togglePlay]; }
+
++ (void)stop {
+    SCIYTPlayer *player = sciCurrent;
+    sciCurrent = nil;
+
+    [player teardown];
+    [[NSNotificationCenter defaultCenter]
+        postNotificationName:SCIYTPlaybackDidChangeNotification object:nil];
+}
+
++ (double)progress {
+    SCIYTPlayer *player = sciCurrent;
+    double at = CMTimeGetSeconds(player.player.currentTime);
+    double length = CMTimeGetSeconds(player.player.currentItem.duration);
+    if (!isfinite(length) || length <= 0 || !isfinite(at)) return 0;
+
+    return MIN(MAX(at / length, 0), 1);
+}
+
++ (void)reopenFrom:(UIViewController *)presenter {
+    SCIYTPlayer *player = sciCurrent;
+    if (!player || !presenter || player.presentingViewController) return;
 
     [presenter presentViewController:player animated:YES completion:nil];
 }
@@ -148,12 +203,21 @@ static const double kSCIResumeCeiling = 20;
                                                  name:UIApplicationWillEnterForegroundNotification
                                                object:nil];
 
-    [self load];
+    // Not loaded here. Presentation does it, and only when the row being opened is not the
+    // one already playing -- otherwise reopening from the mini bar restarts the song.
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
     [super viewDidDisappear:animated];
-    if (self.isBeingDismissed || self.movingFromParentViewController) [self teardown];
+
+    // Deliberately no teardown. Closing the screen is not stopping the music -- that is
+    // +stop, which the mini bar's close button calls and nothing else does. The remote
+    // commands and the now-playing entry stay exactly where they are, because the lock
+    // screen should keep working while the screen is shut.
+    if (self.isBeingDismissed || self.movingFromParentViewController) {
+        [[NSNotificationCenter defaultCenter]
+            postNotificationName:SCIYTPlaybackDidChangeNotification object:nil];
+    }
 }
 
 - (void)dealloc {
@@ -662,6 +726,12 @@ static const double kSCIResumeCeiling = 20;
 
 // MARK: - The queue
 
+/// Tells whatever is showing a mini bar that something changed under it.
+- (void)announce {
+    [[NSNotificationCenter defaultCenter]
+        postNotificationName:SCIYTPlaybackDidChangeNotification object:nil];
+}
+
 - (SCIYTJob *)current {
     return (self.index < self.jobs.count) ? self.jobs[self.index] : nil;
 }
@@ -732,6 +802,7 @@ static const double kSCIResumeCeiling = 20;
     [self showPlaying:YES];
     [self setChromeHidden:NO animated:NO];
     [self describeToLockScreen];
+    [self announce];
 }
 
 - (void)next {
@@ -774,6 +845,7 @@ static const double kSCIResumeCeiling = 20;
     [self showPlaying:!playing];
     [self describeToLockScreen];
     [self restartLinger];
+    [self announce];
 }
 
 - (void)showPlaying:(BOOL)playing {
