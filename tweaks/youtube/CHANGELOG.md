@@ -3,6 +3,17 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.17.0
+
+- **A quality ceiling, separately for Wi-Fi and for mobile data.** Set mobile to 480p and
+  a video on the road stays at 480p, without touching what you get at home. It is a
+  ceiling and not a fixed quality — YouTube still drops lower on its own when the
+  connection cannot keep up, because the choosing is still YouTube's.
+- The tweak notices which connection you are on as it changes, so nothing has to be
+  switched by hand when you leave the house.
+- **The full quality list is back**, if you want it: every resolution when you tap
+  quality, instead of the two-line shortcut newer builds show.
+
 ## v0.16.0
 
 - **The Downloads button is a real tab now**, beside the others, instead of a red circle

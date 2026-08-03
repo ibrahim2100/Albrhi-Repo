@@ -22,6 +22,16 @@
 #define SCIPrefAutoPhotos       @"auto_save_photos"
 #define SCIPrefTabButton        @"tab_download_button"
 
+/// Quality.
+///
+/// The two caps are resolutions, not menu positions -- 1080 means 1080, and 0 means leave
+/// it alone. A stored index would be a number whose meaning lives in whatever order the
+/// picker happened to list things in, and reordering the list would silently change
+/// everyone's setting.
+#define SCIPrefClassicQuality   @"classic_quality_menu"
+#define SCIPrefCapWiFi          @"quality_cap_wifi"
+#define SCIPrefCapCellular      @"quality_cap_cellular"
+
 /// SponsorBlock. One key for the feature, one per category.
 ///
 /// Per-category rather than a single switch, because these are not the same request of
@@ -48,4 +58,10 @@
 /// this has a handful, and measuring before adding that machinery is the rule here.
 static inline BOOL SCIPrefEnabled(NSString *key) {
     return [[NSUserDefaults standardUserDefaults] boolForKey:key];
+}
+
+/// For the settings that are a number rather than a switch. Absent reads as 0, which is
+/// what every one of them uses to mean "do nothing".
+static inline NSInteger SCIPrefNumber(NSString *key) {
+    return [[NSUserDefaults standardUserDefaults] integerForKey:key];
 }

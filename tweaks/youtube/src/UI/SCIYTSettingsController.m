@@ -102,6 +102,12 @@ typedef NS_ENUM(NSInteger, SCIRowKind) {
     [self buildSections];
 }
 
+// Declared here, defined further down beside the picker they belong to. Objective-C methods
+// may be called before they appear in the same @implementation; plain C functions may not,
+// and -buildSections uses both of these to label the rows.
+static NSArray<NSNumber *> *SCIQualityCaps(void);
+static NSString *SCIQualityLabel(NSInteger cap);
+
 - (void)buildSections {
     __weak __typeof(self) weakSelf = self;
 
@@ -116,6 +122,30 @@ typedef NS_ENUM(NSInteger, SCIRowKind) {
                    detail:SCILocalized(@"hide_paid_promotion_note")
                    symbol:@"megaphone.fill"
                   prefKey:SCIPrefHidePaidPromo],
+    ];
+
+    // Quality. Two ceilings and a switch.
+    //
+    // The caps are their own rows rather than one "data saver" switch because the two
+    // connections are not one decision: a phone on home Wi-Fi and the same phone on a
+    // metered plan abroad want different answers, and a single switch makes you choose
+    // which of the two to be wrong about.
+    SCISection *quality = [[SCISection alloc] init];
+    quality.title = SCILocalized(@"section_quality");
+    quality.footer = SCILocalized(@"set_cap_note");
+    quality.rows = @[
+        [SCIRow disclosureRow:SCILocalized(@"set_cap_wifi")
+                       detail:SCIQualityLabel(SCIPrefNumber(SCIPrefCapWiFi))
+                       symbol:@"wifi"
+                       action:^{ [weakSelf pickCapFor:SCIPrefCapWiFi]; }],
+        [SCIRow disclosureRow:SCILocalized(@"set_cap_cellular")
+                       detail:SCIQualityLabel(SCIPrefNumber(SCIPrefCapCellular))
+                       symbol:@"antenna.radiowaves.left.and.right"
+                       action:^{ [weakSelf pickCapFor:SCIPrefCapCellular]; }],
+        [SCIRow switchRow:SCILocalized(@"set_classic_quality")
+                   detail:SCILocalized(@"set_classic_quality_note")
+                   symbol:@"list.bullet"
+                  prefKey:SCIPrefClassicQuality],
     ];
 
     SCISection *player = [[SCISection alloc] init];
@@ -235,7 +265,55 @@ typedef NS_ENUM(NSInteger, SCIRowKind) {
     // undiscoverable, which is the trade it makes.
     general.footer = SCILocalized(@"panel_subtitle");
 
-    self.sections = @[downloads, ads, player, sponsor, categories, general];
+    self.sections = @[downloads, quality, ads, player, sponsor, categories, general];
+}
+
+/// The ceilings offered, highest first, with "no limit" as the default.
+///
+/// Real resolutions, not menu positions: the stored value is 1080 rather than "the third
+/// one down", so reordering this list can never quietly change what someone chose.
+static NSArray<NSNumber *> *SCIQualityCaps(void) {
+    return @[@0, @2160, @1440, @1080, @720, @480, @360, @144];
+}
+
+static NSString *SCIQualityLabel(NSInteger cap) {
+    if (cap <= 0) return SCILocalized(@"quality_auto");
+    return [NSString stringWithFormat:SCILocalized(@"quality_cap_format"), (long)cap];
+}
+
+- (void)pickCapFor:(NSString *)key {
+    UIAlertController *sheet =
+        [UIAlertController alertControllerWithTitle:nil
+                                            message:SCILocalized(@"set_cap_note")
+                                     preferredStyle:UIAlertControllerStyleActionSheet];
+
+    __weak __typeof(self) weakSelf = self;
+    for (NSNumber *cap in SCIQualityCaps()) {
+        UIAlertAction *choice =
+            [UIAlertAction actionWithTitle:SCIQualityLabel(cap.integerValue)
+                                     style:UIAlertActionStyleDefault
+                                   handler:^(__unused UIAlertAction *action) {
+                [[NSUserDefaults standardUserDefaults] setInteger:cap.integerValue forKey:key];
+
+                // Rebuilt, not just reloaded: the row's subtitle is the chosen value, and
+                // it is made when the section is made.
+                [weakSelf buildSections];
+                [weakSelf.tableView reloadData];
+            }];
+        [sheet addAction:choice];
+    }
+
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
+                                              style:UIAlertActionStyleCancel
+                                            handler:nil]];
+
+    // Required on iPad, and harmless on a phone. Without it the sheet has nothing to point
+    // at and UIKit raises rather than guessing.
+    sheet.popoverPresentationController.sourceView = self.view;
+    sheet.popoverPresentationController.sourceRect =
+        CGRectMake(CGRectGetMidX(self.view.bounds), CGRectGetMidY(self.view.bounds), 0, 0);
+
+    [self presentViewController:sheet animated:YES completion:nil];
 }
 
 ///

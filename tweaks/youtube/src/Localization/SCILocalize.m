@@ -134,6 +134,14 @@ static void SCIBuildTables(void) {
         @"dl_saved": @"Saved to Photos.",
 
         // The Download Centre.
+        @"section_quality": @"Quality",
+        @"set_classic_quality": @"Full quality list",
+        @"set_classic_quality_note": @"Show every resolution when you tap quality, instead of the two-line shortcut.",
+        @"set_cap_wifi": @"Highest on Wi-Fi",
+        @"set_cap_cellular": @"Highest on mobile data",
+        @"set_cap_note": @"A ceiling, not a fixed quality. YouTube still drops lower when the connection cannot keep up.",
+        @"quality_auto": @"No limit",
+        @"quality_cap_format": @"Up to %ldp",
         @"dl_centre_title": @"Downloads",
         @"dl_centre_empty": @"Nothing saved yet",
         @"dl_centre_empty_hint": @"Hold a video to save it. What you save stays here — it does not go to Photos unless you send it.",
@@ -303,6 +311,14 @@ static void SCIBuildTables(void) {
         @"dl_saved": @"حُفظ في الصور.",
 
         // مركز التحميلات.
+        @"section_quality": @"الجودة",
+        @"set_classic_quality": @"قائمة الجودة الكاملة",
+        @"set_classic_quality_note": @"إظهار كل الدقّات عند الضغط على الجودة، بدل الاختصار ذي السطرين.",
+        @"set_cap_wifi": @"الأعلى على الواي فاي",
+        @"set_cap_cellular": @"الأعلى على بيانات الجوال",
+        @"set_cap_note": @"سقف لا جودة ثابتة. يوتيوب ينزل أقلّ إن لم يتحمّل الاتصال.",
+        @"quality_auto": @"بلا حدّ",
+        @"quality_cap_format": @"حتى %ldp",
         @"dl_centre_title": @"التحميلات",
         @"dl_centre_empty": @"لا شيء محفوظ بعد",
         @"dl_centre_empty_hint": @"اضغط مطوّلًا على الفيديو لحفظه. ما تحفظه يبقى هنا — ولا يذهب إلى الصور إلا إذا أرسلته.",

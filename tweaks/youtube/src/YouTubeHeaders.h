@@ -261,3 +261,17 @@
 @interface YTModularPlayerBarView : UIView
 - (double)totalTime;
 @end
+
+//
+// Quality. Both are model-layer, which is the layer this project prefers to hook: a
+// format list and a constraint object are not views and do not get renamed for a redesign.
+//
+// The constraint is typed `id` on purpose. What goes in it is an
+// MLResolutionCappedFormatConstraint built at runtime, and naming that class in a header
+// would make this file fail to compile on a build that dropped it, for no gain -- nothing
+// here calls anything on the object, it is only handed back.
+//
+
+@interface MLHAMPlayerItem : NSObject
+@property (nonatomic, strong) id videoFormatConstraint;
+@end
