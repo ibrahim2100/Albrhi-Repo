@@ -3,6 +3,17 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.20.2
+
+- **The feed is back.** Last release widened what counts as an advertisement and it went too
+  far — it was dropping ordinary videos along with the sponsored ones. That change is undone
+  entirely; ad hiding is back to exactly what it was in 0.20.0, which worked.
+- Sponsored rows on Home are therefore still there. They will be dealt with properly, from
+  what the app actually reports rather than from a list written by hand.
+- Diagnostics now really does show how much of the feed was checked and dropped. That line
+  was supposed to ship last release and did not, which is why a change to what gets hidden
+  went out with no way to see what it hid.
+
 ## v0.20.1
 
 - **Sponsored rows on Home should go now.** The list of what counts as an advertisement was

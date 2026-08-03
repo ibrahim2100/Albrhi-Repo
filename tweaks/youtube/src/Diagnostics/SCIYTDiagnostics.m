@@ -385,6 +385,11 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     // button -- or on none -- this is the line that says why.
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_tab"), [self tabState]];
 
+    // What the feed filter saw. 0.20.1 shipped a wider ad list and this line to judge it by,
+    // and the line never got written -- so the release changed what is hidden and removed
+    // the only way to tell what it hid.
+    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_feed"), [self feedState]];
+
     [out appendFormat:@"%@\n", SCILocalized(@"diag_counters")];
 
     // Said plainly when the feature is off, because the probe lives behind the same switch.
