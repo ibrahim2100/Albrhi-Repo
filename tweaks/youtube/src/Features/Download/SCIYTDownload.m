@@ -451,7 +451,21 @@ static NSString *sciRequestedVideoID = nil;
 
     BOOL captureIsOurs = !disagrees;
 
-    NSString *manifest = captureIsOurs ? [SCIYTPlayerStreams hlsManifestURL] : nil;
+    // The named video's own playlist first, whenever one was asked for.
+    //
+    // This replaces three releases of trying to work out whether the latest capture happened
+    // to belong to the right clip. It never had to be worked out -- the captures are filed
+    // by video id now, so the right one can simply be fetched. Detecting a mismatch was
+    // solving the harder version of an easier problem.
+    NSString *manifest = requested.length
+        ? [SCIYTPlayerStreams hlsManifestURLForVideo:requested] : nil;
+
+    if (manifest.length) {
+        [SCIYTDiagnostics recordStreamAttempt:
+            [NSString stringWithFormat:@"hls: playlist filed under %@", requested]];
+    } else {
+        manifest = captureIsOurs ? [SCIYTPlayerStreams hlsManifestURL] : nil;
+    }
 
     if (!captureIsOurs) {
         [SCIYTDiagnostics recordStreamAttempt:

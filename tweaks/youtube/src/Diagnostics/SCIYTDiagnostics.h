@@ -34,6 +34,12 @@
 /// is for, and not necessarily the one playing or the last MLVideo built.
 + (NSString *)responseVideoID;
 
+/// The stream object captured for one particular video, or nil.
+///
+/// Keyed rather than latest-only, because in Shorts the newest capture belongs to the clip
+/// being preloaded and the one wanted is the capture before it.
++ (id)streamingDataForVideoID:(NSString *)videoID;
+
 /// The video the player actually activated, which is not always the last MLVideo made.
 ///
 /// A report showed SponsorBlock working on VTBoGy0EynQ while this page reported

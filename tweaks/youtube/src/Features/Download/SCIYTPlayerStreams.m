@@ -120,6 +120,17 @@ static void SCITrace(NSString *step, id value) {
     return sciTrace.length ? [sciTrace copy] : nil;
 }
 
++ (NSString *)hlsManifestURLForVideo:(NSString *)videoID {
+    // Straight to the capture filed under that id, with no walk and no guessing about which
+    // of several sources is current. This is the whole point of filing them by name: the
+    // question "is this capture for the video I want" becomes "give me the capture for the
+    // video I want", which has an answer.
+    id streamingData = [SCIYTDiagnostics streamingDataForVideoID:videoID];
+    if (!streamingData) return nil;
+
+    return SCIGetString(streamingData, @"hlsManifestURL");
+}
+
 + (NSString *)hlsManifestURL {
     // Walk first if nothing has yet, so holding the video works before the settings
     // screen has ever been opened.

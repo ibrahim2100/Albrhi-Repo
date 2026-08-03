@@ -3,6 +3,14 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.29.0
+
+- **Saving a Short saves the one on screen.** The tweak now keeps the stream details of the
+  last few videos instead of only the newest, and looks up the one you asked for by name.
+  Shorts loads the next clip while you are still watching the current one, so the newest
+  details have always belonged to the wrong clip — four releases went into trying to detect
+  that, when the answer was simply to keep both and ask for the right one.
+
 ## v0.28.1
 
 - **Fixes 0.28.0, which broke saving in Shorts completely.** That release added a check that

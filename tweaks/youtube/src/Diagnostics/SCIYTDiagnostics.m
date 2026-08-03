@@ -63,6 +63,10 @@ static NSArray<NSDictionary *> *SCIAuditTable(void) {
 // pin far more than this page is worth.
 static id sciLastResponse = nil;
 static id sciLastStreamingData = nil;
+
+/// The last few videos' stream objects, by video id. See -recordVideo: for why.
+static NSMutableDictionary<NSString *, id> *sciStreamsByVideo = nil;
+static NSMutableArray<NSString *> *sciStreamsOrder = nil;
 static NSString *sciLastVideoID = nil;
 static NSString *sciLastVideoTitle = nil;
 
@@ -344,6 +348,31 @@ static NSString *sciResponseVideoID = nil;
 
     if ([video respondsToSelector:@selector(streamingData)]) {
         sciLastStreamingData = [(MLVideo *)video streamingData];
+
+        // Kept per video, not just the newest.
+        //
+        // "Which video is this capture for" turned out to be unanswerable from the capture
+        // itself -- two readings of the response's own id came back empty -- and it is the
+        // wrong question anyway. MLVideo carries an ID that has never failed to read, so the
+        // streams can simply be filed under it and looked up by name later.
+        //
+        // That is what Shorts needs. The clip playing had its streams captured when it
+        // became current; the next one's arrived afterwards and took the single slot. Both
+        // are here, and asking for one by id gets the right one.
+        if (sciLastVideoID.length && sciLastStreamingData) {
+            if (!sciStreamsByVideo) sciStreamsByVideo = [NSMutableDictionary dictionary];
+
+            // Bounded, and the oldest goes first. This holds YouTube's stream objects, so an
+            // unbounded map would pin every video of the session.
+            if (sciStreamsByVideo.count >= 6 && !sciStreamsByVideo[sciLastVideoID]) {
+                [sciStreamsOrder removeObjectAtIndex:0];
+                [sciStreamsByVideo removeObjectForKey:sciStreamsOrder.firstObject ?: @""];
+            }
+
+            if (!sciStreamsOrder) sciStreamsOrder = [NSMutableArray array];
+            if (!sciStreamsByVideo[sciLastVideoID]) [sciStreamsOrder addObject:sciLastVideoID];
+            sciStreamsByVideo[sciLastVideoID] = sciLastStreamingData;
+        }
     }
 
     // The title, for naming the file a download produces. Best effort and never
@@ -392,6 +421,10 @@ static NSString *sciResponseVideoID = nil;
 }
 
 + (id)lastStreamingData { return sciLastStreamingData; }
+
++ (id)streamingDataForVideoID:(NSString *)videoID {
+    return videoID.length ? sciStreamsByVideo[videoID] : nil;
+}
 + (id)lastPlayerResponse { return sciLastResponse; }
 + (NSString *)lastVideoID { return sciLastVideoID; }
 

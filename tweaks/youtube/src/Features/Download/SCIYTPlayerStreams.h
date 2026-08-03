@@ -72,6 +72,13 @@
 ///
 /// It is also where every working tweak ends up: YTLite reads this exact field and hands
 /// it to a bundled FFmpeg, nineteen of its twenty megabytes.
+/// The playlist for one named video, from the capture filed under that id.
+///
+/// Shorts needs this and nothing else does. The unnamed version below returns whatever was
+/// captured last, which during Shorts is the clip being preloaded rather than the one on
+/// screen -- three releases went into trying to detect that instead of avoiding it.
++ (NSString *)hlsManifestURLForVideo:(NSString *)videoID;
+
 + (NSString *)hlsManifestURL;
 
 /// One field of a format object, by selector or by key.
