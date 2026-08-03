@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.22.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **Saved videos keep playing with the screen off, and when you leave the app.**\n• Playback also resumes properly after a phone call or an alarm, instead of staying silent.\n• **The cover is written into the song itself now.**\n• Nothing is re-encoded to do that — the sound is copied across untouched and only the tags are rewritten — and the original is only replaced once the new file is complete.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.21.1",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.20.2",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **The feed is back.**\n• Sponsored rows on Home are therefore still there.\n• Diagnostics now really does show how much of the feed was checked and dropped.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.21.1"
+          "text": "0.22.0"
         },
         {
           "class": "DepictionTableTextView",
