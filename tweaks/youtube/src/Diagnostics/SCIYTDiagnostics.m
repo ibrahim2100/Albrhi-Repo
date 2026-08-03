@@ -287,24 +287,45 @@ static NSString *sciResponseVideoID = nil;
     sciLastResponse = response;
     sciResponseVideoID = nil;
 
-    // Read off the message tree rather than by field name. Every YTI* class is a GPBMessage
-    // and answers -description with its whole contents; a field name would be one more thing
-    // that can change between builds, and this file already reads protobufs this way.
+    // Asked properly first, and only then read out of the text.
+    //
+    // The first version of this did the text alone, looking for `video_id: "`, and came back
+    // empty every time -- the report said `playlist ?`. That made the guard downstream treat
+    // every capture as somebody else's and refuse every download, which is worse than the
+    // bug it was written for. Writing a guard on a value I had never once seen produced is
+    // the whole of that mistake.
     @try {
-        NSString *text = [response description];
-        NSRange key = [text rangeOfString:@"video_id: \""];
+        id details = [response valueForKey:@"videoDetails"];
+        id identifier = details ? [details valueForKey:@"videoId"] : nil;
 
-        if (key.location != NSNotFound) {
-            NSUInteger from = key.location + key.length;
-            NSRange end = [text rangeOfString:@"\""
-                                      options:0
-                                        range:NSMakeRange(from, text.length - from)];
-            if (end.location != NSNotFound) {
-                sciResponseVideoID = [text substringWithRange:
-                    NSMakeRange(from, end.location - from)];
-            }
+        if ([identifier isKindOfClass:[NSString class]] && [identifier length]) {
+            sciResponseVideoID = [identifier copy];
         }
     } @catch (__unused NSException *exception) { }
+
+    // Both spellings, because a GPBMessage prints proto field names and the accessor uses
+    // the camel-cased one -- and which of the two a description carries is not something to
+    // be confident about without looking.
+    if (!sciResponseVideoID) {
+        @try {
+            NSString *text = [response description];
+
+            for (NSString *key in @[@"video_id: \"", @"videoId: \""]) {
+                NSRange found = [text rangeOfString:key];
+                if (found.location == NSNotFound) continue;
+
+                NSUInteger from = found.location + found.length;
+                NSRange end = [text rangeOfString:@"\""
+                                          options:0
+                                            range:NSMakeRange(from, text.length - from)];
+                if (end.location == NSNotFound) continue;
+
+                sciResponseVideoID = [text substringWithRange:
+                    NSMakeRange(from, end.location - from)];
+                break;
+            }
+        } @catch (__unused NSException *exception) { }
+    }
 
     SCILogV(@"captured player response %@ for %@", [response class], sciResponseVideoID);
 }

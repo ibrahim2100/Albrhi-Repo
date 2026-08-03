@@ -3,6 +3,16 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.28.1
+
+- **Fixes 0.28.0, which broke saving in Shorts completely.** That release added a check that
+  compares the video you asked for against the video the tweak has details for — and the
+  second of those never got read, so the check decided every time that it had the wrong
+  video and refused everything.
+- It now only refuses when it can actually see a disagreement. If it cannot tell, it carries
+  on the way it did before, because the wrong video is a bad download and no video is no
+  feature at all.
+
 ## v0.28.0
 
 - **Saving a Short saves the Short you are watching.** The report you sent had the answer in

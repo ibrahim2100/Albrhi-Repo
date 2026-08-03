@@ -424,7 +424,32 @@ static NSString *sciRequestedVideoID = nil;
     // ever wrong there.
     NSString *requested = sciRequestedVideoID;
     NSString *owner = [SCIYTDiagnostics responseVideoID];
-    BOOL captureIsOurs = !requested.length || (owner.length && [requested isEqualToString:owner]);
+
+    // An unknown owner means "cannot tell", and cannot-tell must not mean no.
+    //
+    // 0.28.0 wrote this as `owner.length && equal`, so a nil owner made every capture
+    // somebody else's and refused every download -- the report came back with `playlist ?`
+    // and four failed API clients. That is worse than the bug it was guarding against: the
+    // wrong video is a bad download, no video is no feature.
+    //
+    // The guard only fires on a positive disagreement now: an owner that is known and is
+    // not the video asked for. Unknown falls through to the announced id, which is what
+    // 0.25.1 compared against and what worked everywhere outside Shorts.
+    //
+    // The rule I broke: a check written on a value never once seen produced is a guess
+    // wearing a guard's clothes. This one is now written so that being wrong about the
+    // value costs the check, not the feature.
+    BOOL disagrees = NO;
+    if (requested.length) {
+        if (owner.length) {
+            disagrees = ![requested isEqualToString:owner];
+        } else {
+            NSString *announced = [SCIYTDiagnostics activeVideoID];
+            disagrees = announced.length && ![requested isEqualToString:announced];
+        }
+    }
+
+    BOOL captureIsOurs = !disagrees;
 
     NSString *manifest = captureIsOurs ? [SCIYTPlayerStreams hlsManifestURL] : nil;
 
