@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.23.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **A save button in Shorts**\n• **Songs play again.**\n• **The lock screen stops coming and going.**\n• Songs no longer get the processing meant for film dialogue, which was audible on music.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.22.0",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.21.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **Two videos no longer play at once.**\n• That is also why sound sometimes stopped when the phone locked: with two players running, the one being managed in the background was not always the one you were…\n• **Rename anything you have saved.**\n• **A welcome screen on the first launch**",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.22.0"
+          "text": "0.23.0"
         },
         {
           "class": "DepictionTableTextView",
