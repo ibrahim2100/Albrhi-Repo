@@ -3,6 +3,7 @@
 #import "../YouTubeHeaders.h"
 #import "../Tweak.h"
 #import "../SCILog.h"
+#import "../Prefs.h"
 #import "../Localization/SCILocalize.h"
 #import "../Features/Download/SCIYTDownload.h"
 #import <objc/runtime.h>
@@ -148,6 +149,26 @@ static NSMutableOrderedSet<NSString *> *sciCounterNodes = nil;
 
 + (NSArray<NSString *> *)counterNodes {
     return [sciCounterNodes array] ?: @[];
+}
+
+/// The last thing the Downloads tab did, in order, kept short.
+///
+/// Ordered rather than latest-only: attaching and drawing are two separate steps that fail
+/// for different reasons, and "the icon did not appear" needs both answers at once -- was a
+/// tab built, and did anything take the picture.
+static NSMutableOrderedSet<NSString *> *sciTabStates = nil;
+
++ (void)recordTabState:(NSString *)state {
+    if (!state.length) return;
+    if (!sciTabStates) sciTabStates = [NSMutableOrderedSet orderedSet];
+    if (sciTabStates.count >= 5) return;
+
+    [sciTabStates addObject:state];
+}
+
++ (NSString *)tabState {
+    if (!sciTabStates.count) return SCILocalized(@"diag_tab_none");
+    return [[sciTabStates array] componentsJoinedByString:@"\n  "];
 }
 
 + (void)recordPlayerResponse:(id)response {
@@ -346,11 +367,24 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     // Which counter buttons were seen and what each said before anything was written into
     // it. The dislike node is picked out by its text, so when the number lands on the wrong
     // button -- or on none -- this is the line that says why.
+    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_tab"), [self tabState]];
+
     [out appendFormat:@"%@\n", SCILocalized(@"diag_counters")];
-    for (NSString *text in [self counterNodes]) {
-        [out appendFormat:@"  \"%@\"\n", text];
+
+    // Said plainly when the feature is off, because the probe lives behind the same switch.
+    // 0.18.0 printed "nothing asked yet" whether the hook had failed or the switch was
+    // simply not on, which are opposite problems wearing one sentence.
+    if (!SCIPrefEnabled(SCIPrefDislikes)) {
+        [out appendFormat:@"  %@\n\n", SCILocalized(@"diag_counters_off")];
+    } else {
+        for (NSString *text in [self counterNodes]) {
+            [out appendFormat:@"  \"%@\"\n", text];
+        }
+        if (![self counterNodes].count) {
+            [out appendFormat:@"  %@\n", SCILocalized(@"diag_counters_none")];
+        }
+        [out appendFormat:@"  %@\n\n", [SCIYTDislikes lastState]];
     }
-    [out appendFormat:@"  %@\n\n", [SCIYTDislikes lastState]];
 
     [out appendFormat:@"%@\n", SCILocalized(@"diag_video")];
 

@@ -6,6 +6,7 @@
 #import "../../../SCILog.h"
 #import "../../../Prefs.h"
 #import "../../../Localization/SCILocalize.h"
+#import "../../../Diagnostics/SCIYTDiagnostics.h"
 
 ///
 /// The way into the Download Centre, as one of YouTube's own tabs.
@@ -43,6 +44,10 @@ static NSString *const kSCIPivotIdentifier = @"albrhi.downloads.pivot";
 
 /// Whether a real tab was built. The floating button stands down when one was.
 static BOOL sciNativeTabAttached = NO;
+
+/// Marks the one item view showing our tab. Item views are reused between tabs, so this
+/// belongs on the view and not in a variable.
+static char kSCIIsOurItemView;
 
 static UIColor *SCIAccent(void) {
     return [UIColor colorWithRed:1.0 green:0.0 blue:0.13 alpha:1.0];
@@ -83,31 +88,53 @@ static id SCIMakePivotItem(void) {
     return wrapper;
 }
 
-/// Puts our symbol into the item view YouTube built.
-static void SCIPaintIcon(UIView *view) {
-    if (!view) return;
+/// Puts our mark into the item view YouTube built.
+///
+/// **The button, not the first image view.** The first version of this walked for a
+/// UIImageView and set its image, and the tab came up blank. A pivot tab is drawn by a
+/// YTQTMButton -- the controller has a -YTQTMButtonFromPivotBarItemView: to fetch one, so
+/// the button is what holds the picture -- and a UIButton's own image view either does not
+/// exist until it has an image or is overwritten by the button on its next layout. Setting
+/// it through the button is what sticks, and it also lets the selected state be set, which
+/// the image view alone could not do.
+///
+/// Returns whether anything was found to paint, so the report can say which.
+static BOOL SCIPaintIcon(UIView *view) {
+    if (!view) return NO;
 
-    // Ours, drawn, not an SF Symbol. Apple's glyphs carry Apple's weight, and beside five
-    // tabs drawn to a different rule the odd one out is the one you see. The label under it
-    // is YouTube's, from the renderer's title.
-    UIImage *symbol = [SCIYTIcon downloadMarkOfSize:24 filled:NO];
-    if (!symbol) return;
+    UIImage *mark = [SCIYTIcon downloadMarkOfSize:24 filled:NO];
+    UIImage *filled = [SCIYTIcon downloadMarkOfSize:24 filled:YES];
+    if (!mark) return NO;
 
-    // The first image view in the subtree, which is where the tab's icon lives. Searched
-    // rather than named: the item view's internals are not part of any contract, and a
-    // wrong name here should cost the icon and nothing else.
     NSMutableArray<UIView *> *queue = [NSMutableArray arrayWithObject:view];
+    UIImageView *fallback = nil;
+
     while (queue.count) {
         UIView *next = queue.firstObject;
         [queue removeObjectAtIndex:0];
 
-        if ([next isKindOfClass:[UIImageView class]]) {
-            ((UIImageView *)next).image = symbol;
-            ((UIImageView *)next).tintColor = SCIAccent();
-            return;
+        if ([next isKindOfClass:[UIButton class]]) {
+            UIButton *button = (UIButton *)next;
+            [button setImage:mark forState:UIControlStateNormal];
+            [button setImage:filled forState:UIControlStateSelected];
+            [button setImage:filled forState:UIControlStateHighlighted];
+            button.tintColor = SCIAccent();
+            return YES;
         }
+
+        // Remembered but not used yet: a button deeper in the tree is the better answer,
+        // and taking the first image view would stop the search before finding it.
+        if (!fallback && [next isKindOfClass:[UIImageView class]]) fallback = (UIImageView *)next;
+
         [queue addObjectsFromArray:next.subviews];
     }
+
+    if (fallback) {
+        fallback.image = mark;
+        fallback.tintColor = SCIAccent();
+        return YES;
+    }
+    return NO;
 }
 
 
@@ -137,15 +164,30 @@ static void SCIPaintIcon(UIView *view) {
         // The bar holds six item views and no more. Five tabs is the usual shape, so ours
         // is the sixth and it fits -- but a build that already fills all six gets left
         // alone rather than handed a seventh that has nowhere to be drawn.
-        if (!already && items && items.count < 6) {
+        if (already) {
+            // Nothing to say. This runs on every style change and a report that repeats
+            // itself is one nobody reads to the end of.
+        } else if (!items) {
+            [SCIYTDiagnostics recordTabState:@"the bar has no items array"];
+        } else if (items.count >= 6) {
+            [SCIYTDiagnostics recordTabState:
+                [NSString stringWithFormat:@"the bar is already full (%lu tabs)",
+                    (unsigned long)items.count]];
+        } else {
             id wrapper = SCIMakePivotItem();
-            if (wrapper) {
+            if (!wrapper) {
+                [SCIYTDiagnostics recordTabState:@"the pivot bar classes are not on this build"];
+            } else {
                 [items addObject:wrapper];
                 sciNativeTabAttached = YES;
+                [SCIYTDiagnostics recordTabState:
+                    [NSString stringWithFormat:@"item added, now %lu tabs",
+                        (unsigned long)items.count]];
             }
         }
     } @catch (NSException *exception) {
-        SCILogV(@"tab: could not add the item — %@", exception.reason);
+        [SCIYTDiagnostics recordTabState:
+            [NSString stringWithFormat:@"refused: %@", exception.reason ?: @"?"]];
     }
 
     %orig;
@@ -163,7 +205,31 @@ static void SCIPaintIcon(UIView *view) {
 
     // Cast because inside a %hook, self is the hooked class, which Logos only
     // forward-declares -- it has no way to know it descends from UIView.
-    if (SCIIsOurRenderer(renderer)) SCIPaintIcon((UIView *)self);
+    // Marked on the view itself rather than remembered in a variable. YTPivotBarItemView
+    // has a -setRenderer: and no -renderer, so on the next layout pass there is no way to
+    // ask the view what it is showing -- and item views are reused, so one global "ours"
+    // flag would paint whichever tab inherited the view next.
+    objc_setAssociatedObject(self, &kSCIIsOurItemView,
+                             SCIIsOurRenderer(renderer) ? @YES : nil,
+                             OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+    if (!SCIIsOurRenderer(renderer)) return;
+
+    [SCIYTDiagnostics recordTabState:
+        SCIPaintIcon((UIView *)self) ? @"tab built, mark painted"
+                                     : @"tab built, nothing found to paint"];
+}
+
+/// Painted again on layout, because once is not enough.
+///
+/// -setRenderer: can arrive before the button exists -- the tab's insides are built lazily
+/// -- and the button reloads its own image when its state changes. A tab that came up blank
+/// and stayed blank is what this is for; it is idempotent, so running on every pass costs a
+/// cache lookup.
+- (void)layoutSubviews {
+    %orig;
+
+    if (objc_getAssociatedObject(self, &kSCIIsOurItemView)) SCIPaintIcon((UIView *)self);
 }
 
 %end

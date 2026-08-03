@@ -3,6 +3,20 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.18.1
+
+- **The mark on the Downloads tab should appear now.** It was being written onto the wrong
+  thing: a tab is drawn by a button, and the picture was being handed to an image view the
+  button either had not made yet or replaced on its next pass. It goes to the button now,
+  which also lets the tab fill in when it is the open one.
+- It is also drawn again on each layout, so a tab that came up blank the first time fills
+  itself in rather than staying blank until the app restarts.
+- **Diagnostics now has a Downloads tab section.** Last release could not tell you whether
+  a tab had even been built, which made "the icon did not appear" unanswerable. It now says
+  what happened at each step.
+- Diagnostics also says plainly when dislike counts are simply switched off, instead of the
+  same sentence it shows when they are on and not working.
+
 ## v0.18.0
 
 - **Dislike counts are back**, if you turn them on. YouTube stopped publishing that number

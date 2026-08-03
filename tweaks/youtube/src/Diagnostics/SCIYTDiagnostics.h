@@ -83,6 +83,13 @@
 + (void)recordCounterNode:(NSString *)text;
 + (NSArray<NSString *> *)counterNodes;
 
+/// What happened when the Downloads tab tried to attach, and then to draw itself.
+///
+/// 0.18.0 reported nothing about the tab at all, so "the icon did not appear" had no
+/// answer in the report -- it could not even say whether a tab was built.
++ (void)recordTabState:(NSString *)state;
++ (NSString *)tabState;
+
 /// The whole report as text: what the file holds and the copy button copies.
 + (NSString *)report;
 
