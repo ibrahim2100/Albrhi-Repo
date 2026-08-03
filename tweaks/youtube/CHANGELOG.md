@@ -3,6 +3,16 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.14.1
+
+- **The player now really closes.** It was staying alive after you shut it, holding its
+  file open and still listening to the lock screen buttons. Open the Centre a second time
+  and two players were listening at once: one press of next skipped two.
+- Closing it also hands the sound back, so whatever was playing before — YouTube itself,
+  usually — is allowed to carry on instead of being left muted.
+- **A download landing at the same moment you swipe one away no longer crashes.** Rare,
+  but it was a crash and not a glitch, and it got more likely the more you had saved.
+
 ## v0.14.0
 
 - **A real player, not a file opener.** Previous, play, next, a scrubber and both times —

@@ -131,9 +131,11 @@ NSNotificationName const SCIYTLibraryDidChangeNotification = @"SCIYTLibraryDidCh
 
     void (^onDone)(NSURL *, NSString *) = ^(NSURL *file, NSString *failure) {
         if (!file) {
-            job.state = SCIYTJobStateFailed;
-            job.failure = failure ?: SCILocalized(@"dl_failed");
-            [self changed];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                job.state = SCIYTJobStateFailed;
+                job.failure = failure ?: SCILocalized(@"dl_failed");
+                [self changed];
+            });
             return;
         }
         [self adopt:file for:job];
@@ -150,6 +152,18 @@ NSNotificationName const SCIYTLibraryDidChangeNotification = @"SCIYTLibraryDidCh
 
 /// Moves a finished file into the library folder under a name a person can read.
 - (void)adopt:(NSURL *)file for:(SCIYTJob *)job {
+    // Brought onto the main thread first, because the list is edited there.
+    //
+    // A download does not finish on any one queue -- some paths end on a URLSession queue
+    // and some on an export handler -- and -save walks the whole store. A swipe to delete
+    // removes from that same store on the main thread, so a download landing at the moment
+    // someone deletes a row is a mutation during enumeration, from two threads, which is a
+    // crash and not a glitch. Everything that touches the store now happens in one place.
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{ [self adopt:file for:job]; });
+        return;
+    }
+
     NSString *extension = file.pathExtension.length ? file.pathExtension : @"mp4";
 
     // The characters a file name cannot hold, taken out rather than escaped. A title is
@@ -248,9 +262,13 @@ NSNotificationName const SCIYTLibraryDidChangeNotification = @"SCIYTLibraryDidCh
             // Ours is not deleted. That is the difference: Photos gets a copy, and the
             // original stays where the user can still reach it.
             if (success) {
-                job.exported = YES;
-                [self save];
-                [self changed];
+                // Photos answers on its own queue, and -save walks the store. Same reason
+                // as -adopt:for: -- the store has one thread.
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    job.exported = YES;
+                    [self save];
+                    [self changed];
+                });
             } else {
                 SCILogV(@"library: Photos refused it — %@", error.localizedDescription);
             }

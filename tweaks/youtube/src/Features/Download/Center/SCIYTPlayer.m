@@ -25,6 +25,15 @@ static UIColor *SCIAccent(void) {
 @property (nonatomic, strong) UISlider *scrubber;
 @property (nonatomic, strong) UIButton *playPause;
 @property (nonatomic) BOOL scrubbing;
+
+/// What -addTargetWithHandler: gave back.
+///
+/// A block target has no target to name later, so the only way to take it off again is the
+/// token it returned. Without these two the next and previous handlers stay on the shared
+/// command centre for the life of the app.
+@property (nonatomic, strong) id nextToken;
+@property (nonatomic, strong) id previousToken;
+@property (nonatomic) BOOL torndown;
 @end
 
 @implementation SCIYTPlayer
@@ -73,16 +82,54 @@ static UIColor *SCIAccent(void) {
     [self load];
 }
 
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    if (self.ticker) [self.player removeTimeObserver:self.ticker];
-    [self.player pause];
+- (void)viewDidDisappear:(BOOL)animated {
+    [super viewDidDisappear:animated];
 
-    [[MPRemoteCommandCenter sharedCommandCenter].playCommand removeTarget:self];
-    [[MPRemoteCommandCenter sharedCommandCenter].pauseCommand removeTarget:self];
-    [[MPRemoteCommandCenter sharedCommandCenter].nextTrackCommand removeTarget:self];
-    [[MPRemoteCommandCenter sharedCommandCenter].previousTrackCommand removeTarget:self];
+    // Teardown happens here and not in -dealloc, because -dealloc cannot be reached.
+    //
+    // MPRemoteCommandCenter is one object for the whole process and it holds its targets
+    // strongly, so registering with it makes this controller immortal: closing the player
+    // released the last reference anyone else held and the command centre kept it anyway.
+    // Everything -dealloc was written to undo was therefore never undone. The player went
+    // on existing with its file open and its observers live, and the lock screen's next
+    // button still reached it -- so opening the Centre a second time left two players
+    // listening and one tap skipped two tracks.
+    //
+    // Being covered by another screen is not leaving, so only a real dismissal counts.
+    if (self.isBeingDismissed || self.movingFromParentViewController) [self teardown];
+}
+
+- (void)dealloc {
+    [self teardown];
+}
+
+- (void)teardown {
+    if (self.torndown) return;
+    self.torndown = YES;
+
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    if (self.ticker) {
+        [self.player removeTimeObserver:self.ticker];
+        self.ticker = nil;
+    }
+
+    [self.player pause];
+    self.layer.player = nil;
+
+    MPRemoteCommandCenter *centre = [MPRemoteCommandCenter sharedCommandCenter];
+    [centre.playCommand removeTarget:self];
+    [centre.pauseCommand removeTarget:self];
+    if (self.nextToken) { [centre.nextTrackCommand removeTarget:self.nextToken]; self.nextToken = nil; }
+    if (self.previousToken) { [centre.previousTrackCommand removeTarget:self.previousToken]; self.previousToken = nil; }
+
     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = nil;
+
+    // Handed back so whatever was playing before -- YouTube itself, usually -- is allowed
+    // to resume. Left active, this tweak keeps the audio route after its own player is gone.
+    [[AVAudioSession sharedInstance] setActive:NO
+                                   withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
+                                         error:nil];
 }
 
 /// Where the picture goes, or the artwork when there is no picture.
@@ -357,14 +404,17 @@ static UIColor *SCIAccent(void) {
     [centre.playCommand addTarget:self action:@selector(remotePlay:)];
     [centre.pauseCommand addTarget:self action:@selector(remotePause:)];
 
-    [centre.nextTrackCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
-        [weakSelf next];
-        return MPRemoteCommandHandlerStatusSuccess;
-    }];
-    [centre.previousTrackCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
-        [weakSelf previous];
-        return MPRemoteCommandHandlerStatusSuccess;
-    }];
+    self.nextToken = [centre.nextTrackCommand
+        addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
+            [weakSelf next];
+            return MPRemoteCommandHandlerStatusSuccess;
+        }];
+
+    self.previousToken = [centre.previousTrackCommand
+        addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
+            [weakSelf previous];
+            return MPRemoteCommandHandlerStatusSuccess;
+        }];
 }
 
 - (MPRemoteCommandHandlerStatus)remotePlay:(MPRemoteCommandEvent *)event {
