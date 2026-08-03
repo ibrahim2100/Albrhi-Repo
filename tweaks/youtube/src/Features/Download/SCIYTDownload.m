@@ -406,7 +406,25 @@ static NSString *sciRequestedVideoID = nil;
     // address -- through the media layer, the nested format, the player response and four
     // InnerTube clients. The playlist that lists them does, and that is where every tweak
     // whose downloading works ends up.
-    NSString *manifest = [SCIYTPlayerStreams hlsManifestURL];
+    // ...but only when it is the playlist for the video being asked for.
+    //
+    // This is captured from the live player, so it belongs to whatever YouTube is playing.
+    // On a normal video that is the video. In Shorts it is routinely the clip queued below,
+    // because the next one is prepared while you are still watching this one -- and 0.25.0
+    // passing the right id changed nothing, since this branch is taken before the id is ever
+    // read. Naming the video was necessary and not sufficient; this is the other half.
+    NSString *requested = sciRequestedVideoID;
+    NSString *live = [SCIYTDiagnostics activeVideoID];
+    BOOL captureIsOurs = !requested.length || (live.length && [requested isEqualToString:live]);
+
+    NSString *manifest = captureIsOurs ? [SCIYTPlayerStreams hlsManifestURL] : nil;
+
+    if (!captureIsOurs) {
+        [SCIYTDiagnostics recordStreamAttempt:
+            [NSString stringWithFormat:@"hls: captured playlist is %@, wanted %@ — asking instead",
+             live ?: @"?", requested]];
+    }
+
     if (manifest.length) {
         [SCIYTDiagnostics recordStreamAttempt:
             [NSString stringWithFormat:@"hls: manifest found (%lu chars)",
@@ -423,7 +441,9 @@ static NSString *sciRequestedVideoID = nil;
     NSArray<SCIYTFormat *> *local = nil;
 
     @try {
-        local = [self formatsFromPlayer];
+        // Skipped for the same reason the captured playlist is: this reads the live player,
+        // so what it finds belongs to whatever is playing rather than to what was asked for.
+        if (captureIsOurs) local = [self formatsFromPlayer];
     } @catch (NSException *exception) {
         [SCIYTDiagnostics recordStreamAttempt:
             [NSString stringWithFormat:@"player: threw â€” %@: %@",
@@ -477,7 +497,21 @@ static NSString *sciRequestedVideoID = nil;
                                completion:^(NSDictionary *streamingData, NSString *failure) {
         NSArray<SCIYTFormat *> *formats = [self formatsFromStreamingData:streamingData];
 
+        // The response carries the playlist for the video that was asked for, and the
+        // playlist is the only route that works on this build -- so it is preferred over the
+        // format list, exactly as the captured one is above. Reading it costs one key and it
+        // was there the whole time.
+        NSString *apiManifest = streamingData[@"hlsManifestUrl"];
+
         done(^{
+            if (apiManifest.length) {
+                [SCIYTDiagnostics recordStreamAttempt:
+                    [NSString stringWithFormat:@"hls: playlist from the API (%lu chars)",
+                     (unsigned long)apiManifest.length]];
+                [self presentHLSFrom:presenter manifest:apiManifest];
+                return;
+            }
+
             if (!formats.count) {
                 // The server's own sentence when it gave one -- private, age-gated,
                 // blocked here -- and our tally when it did not.

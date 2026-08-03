@@ -3,6 +3,14 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.25.1
+
+- **Saving a Short really does save the one you are watching now.** Last release made the
+  button name the right clip, and it changed nothing, because everything downstream took
+  what the player was holding — and in Shorts that is the clip queued below. When the video
+  asked for is not the one playing, the tweak now goes and fetches that video's own details
+  instead of reading what happens to be loaded.
+
 ## v0.25.0
 
 - **Saving a Short now saves the one you are watching.** It was saving the next one down.
