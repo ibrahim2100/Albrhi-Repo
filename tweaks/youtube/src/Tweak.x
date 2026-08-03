@@ -93,6 +93,7 @@ NSString *SCIVersionString = @"v0.22.0";  // AlbrhiYT
         // Centre that does not exist. Saving to Photos automatically is off, which is
         // the whole point of having somewhere else to put a download.
         SCIPrefTabButton: @YES,
+        SCIPrefShortsButton: @YES,
         SCIPrefAutoPhotos: @NO,
 
         // SponsorBlock on, and its three least arguable categories with it: a paid

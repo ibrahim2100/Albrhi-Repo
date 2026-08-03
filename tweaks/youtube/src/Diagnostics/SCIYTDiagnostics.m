@@ -182,6 +182,18 @@ static NSUInteger sciFeedDropped = 0;
         (unsigned long)sciFeedSeen, (unsigned long)sciFeedDropped];
 }
 
+/// Latest only. This runs on every layout pass of the Shorts overlay, so a growing list
+/// would be a log file inside a report.
+static NSString *sciShortsButton = nil;
+
++ (void)recordShortsButton:(NSString *)state {
+    if (state.length) sciShortsButton = [state copy];
+}
+
++ (NSString *)shortsButtonState {
+    return sciShortsButton ?: SCILocalized(@"diag_shorts_none");
+}
+
 + (NSString *)tabState {
     if (!sciTabStates.count) return SCILocalized(@"diag_tab_none");
     return [[sciTabStates array] componentsJoinedByString:@"\n  "];
@@ -389,6 +401,8 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     // and the line never got written -- so the release changed what is hidden and removed
     // the only way to tell what it hid.
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_feed"), [self feedState]];
+
+    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts"), [self shortsButtonState]];
 
     [out appendFormat:@"%@\n", SCILocalized(@"diag_counters")];
 

@@ -90,6 +90,10 @@
 + (void)recordTabState:(NSString *)state;
 + (NSString *)tabState;
 
+/// What the Shorts save button did, or why there is none.
++ (void)recordShortsButton:(NSString *)state;
++ (NSString *)shortsButtonState;
+
 /// How much of the feed this run saw, and how much of it was dropped as promoted.
 + (void)recordFeedSections:(NSUInteger)seen dropped:(NSUInteger)dropped;
 + (NSString *)feedState;

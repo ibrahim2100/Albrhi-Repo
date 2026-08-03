@@ -65,6 +65,29 @@ static AVMutableMetadataItem *SCITag(NSString *key, id value) {
                 return;
             }
 
+            // Played before it is trusted.
+            //
+            // 0.22.0 replaced the song the moment the export said it had finished, and a
+            // song that had played once then never played again -- which is what a report
+            // described exactly. "Completed" means the export ran, not that what came out
+            // is readable, and this is the one operation in the tweak that destroys the
+            // original to produce its result.
+            //
+            // So the new file is opened and asked the two questions that matter: is there
+            // sound in it, and does it know how long it is. A file failing either is thrown
+            // away and the song is left exactly as it was.
+            AVURLAsset *check = [AVURLAsset URLAssetWithURL:output options:nil];
+            BOOL playable = [check tracksWithMediaType:AVMediaTypeAudio].count > 0
+                         && CMTIME_IS_NUMERIC(check.duration)
+                         && CMTimeGetSeconds(check.duration) > 0;
+
+            if (!playable) {
+                SCILogV(@"artwork: the tagged copy would not play — keeping the original");
+                [[NSFileManager defaultManager] removeItemAtURL:output error:nil];
+                finish(NO);
+                return;
+            }
+
             // Swapped only once the new file exists and is complete. Replacing in place
             // would mean a failure halfway through leaves the song destroyed to gain it a
             // picture, which is a terrible trade.

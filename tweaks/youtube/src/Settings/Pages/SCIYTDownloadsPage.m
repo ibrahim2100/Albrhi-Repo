@@ -28,6 +28,10 @@
                        detail:nil
                        symbol:@"square.grid.2x2"
                       prefKey:SCIPrefTabButton],
+            [SCIRow switchRow:SCILocalized(@"set_shorts_button")
+                       detail:SCILocalized(@"set_shorts_button_note")
+                       symbol:@"play.rectangle.on.rectangle"
+                      prefKey:SCIPrefShortsButton],
             [SCIRow switchRow:SCILocalized(@"set_auto_photos")
                        detail:SCILocalized(@"set_auto_photos_note")
                        symbol:@"photo.on.rectangle"

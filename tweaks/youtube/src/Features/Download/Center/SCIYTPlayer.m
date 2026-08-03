@@ -889,6 +889,12 @@ static const double kSCIResumeCeiling = 20;
     // the screen locked.
     [self claimAudio];
 
+    // And said again here, because leaving is exactly when the lock screen is about to be
+    // read. It was published when playback started and when the length first arrived, and
+    // if anything overwrote the entry in between -- YouTube's own player being paused, for
+    // one -- nothing put it back. That is the "sometimes it shows and sometimes it does not".
+    [self describeToLockScreen];
+
     // Picture in picture is the one case where the layer must keep its player: that little
     // window *is* the layer, and handing it back an empty one closes it.
     if (self.pip.isPictureInPictureActive) return;
@@ -900,8 +906,14 @@ static const double kSCIResumeCeiling = 20;
     AVAudioSession *session = [AVAudioSession sharedInstance];
     NSError *error = nil;
 
+    // The mode follows what is playing. MoviePlayback applies processing meant for film
+    // dialogue, which is the wrong treatment for a song and audible on one.
+    AVAudioSessionMode mode = ([self current].kind == SCIYTJobKindAudio)
+        ? AVAudioSessionModeDefault
+        : AVAudioSessionModeMoviePlayback;
+
     [session setCategory:AVAudioSessionCategoryPlayback
-                    mode:AVAudioSessionModeMoviePlayback
+                    mode:mode
                  options:0
                    error:&error];
     if (error) SCILogV(@"player: category refused — %@", error.localizedDescription);

@@ -22,6 +22,12 @@
 #define SCIPrefAutoPhotos       @"auto_save_photos"
 #define SCIPrefTabButton        @"tab_download_button"
 
+/// A save button in the Shorts action bar, beside like and share.
+///
+/// On by default, unlike most additions: Shorts has no long press to spare, so without this
+/// there is no way at all to save one, and a feature nobody can reach is not a choice.
+#define SCIPrefShortsButton     @"shorts_download_button"
+
 /// Which pair of buttons the lock screen gets.
 ///
 /// Off means next and previous, which is the default because a queue you cannot move
