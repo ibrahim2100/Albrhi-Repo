@@ -292,3 +292,15 @@
 @property (nonatomic, readonly) UIView *view;
 @property (nonatomic, strong) id element;
 @end
+
+
+//
+// The Shorts clip an overlay was built for.
+//
+// Only -videoId is used, and only to answer "which clip is this button on". Shorts builds
+// the next clip's overlay while the current one is still playing, so the last video YouTube
+// announced is routinely the one below -- and that is what got downloaded before this.
+//
+@interface YTReelModel : NSObject
+- (NSString *)videoId;
+@end

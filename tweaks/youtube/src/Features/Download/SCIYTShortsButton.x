@@ -7,6 +7,7 @@
 #import "../../Prefs.h"
 #import "../../Localization/SCILocalize.h"
 #import "../../Diagnostics/SCIYTDiagnostics.h"
+#import "../../YouTubeHeaders.h"
 
 ///
 /// A save button in Shorts, in the column with like, comment and share.
@@ -19,14 +20,23 @@
 /// **The hook is -layoutActionBar, and nothing about where the button goes is written down
 /// as a number.** The action bar is found by measuring the overlay's own subviews: the
 /// narrow column standing against the trailing edge is the one, and our button is placed
-/// under the bottom of it. A hard-coded offset works on the phone it was tuned on and is
-/// wrong on every other size, and this project has no second phone to check against.
+/// just above it. A hard-coded offset works on the phone it was tuned on and is wrong on
+/// every other size, and this project has no second phone to check against.
 ///
 /// What was found goes into the diagnostics report either way, so "no button in Shorts" is
 /// answerable without another release to find out.
 ///
 
 static char kSCIShortsButton;
+
+/// The clip each overlay is actually drawing.
+///
+/// **Not the "currently playing" id.** Shorts builds the next clip's overlay while you are
+/// still watching this one, so whatever was announced last is routinely the one below --
+/// which is exactly what got downloaded. The overlay is handed its own model when it is
+/// built, and that model is the only thing that knows which clip this particular button
+/// belongs to.
+static char kSCIShortsModel;
 
 /// The action bar, by shape rather than by class name.
 ///
@@ -54,6 +64,20 @@ static UIView *SCIFindActionBar(UIView *overlay) {
 }
 
 %hook YTReelWatchPlaybackOverlayView
+
+- (instancetype)initWithFrame:(CGRect)frame
+                    reelModel:(id)reelModel
+             ghostViewManager:(id)ghostViewManager
+              parentResponder:(id)parentResponder {
+    id overlay = %orig;
+
+    // Kept weakly: the overlay does not own its model and must not start.
+    if (overlay && reelModel) {
+        objc_setAssociatedObject(overlay, &kSCIShortsModel, reelModel,
+                                 OBJC_ASSOCIATION_ASSIGN);
+    }
+    return overlay;
+}
 
 - (void)layoutActionBar {
     %orig;
@@ -88,14 +112,18 @@ static UIView *SCIFindActionBar(UIView *overlay) {
         button.layer.shadowOffset = CGSizeZero;
 
         [button addTarget:[SCIYTShortsSaver class]
-                   action:@selector(save)
+                   action:@selector(saveFrom:)
          forControlEvents:UIControlEventTouchUpInside];
 
         [overlay addSubview:button];
         objc_setAssociatedObject(self, &kSCIShortsButton, button, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
+        // The button carries its overlay so the tap can find the right model. Weak, because
+        // the overlay already owns the button.
+        objc_setAssociatedObject(button, &kSCIShortsModel, overlay, OBJC_ASSOCIATION_ASSIGN);
+
         [SCIYTDiagnostics recordShortsButton:
-            bar ? @"added under the action bar" : @"added, no action bar found — placed by edge"];
+            bar ? @"added above the action bar" : @"added, no action bar found — placed by edge"];
     }
 
     // Frames, never constraints. The layout engine took this tweak down in 0.1.1 and again
@@ -104,20 +132,21 @@ static UIView *SCIFindActionBar(UIView *overlay) {
     CGFloat side = 44;
     CGFloat inset = 12;
 
-    // Under the column when the column was found, and against the trailing edge when it was
-    // not. 0.23.0 returned early instead, so a shape this did not recognise meant no button
-    // at all -- and the report said so to nobody, because nobody looks at a report for a
-    // button they were never told to expect. A button in roughly the right place is worth
-    // more than a correct refusal.
+    // In the column when it was found, and against the trailing edge when it was not. 0.23.0
+    // returned early instead, so a shape this did not recognise meant no button at all -- and
+    // the report said so to nobody, because nobody opens a report for a button they were
+    // never told to expect. A button roughly in the right place beats a correct refusal.
     CGFloat x = bar ? CGRectGetMidX(bar.frame) - side / 2
                     : overlay.bounds.size.width - side - inset;
-    CGFloat y = bar ? CGRectGetMaxY(bar.frame) + 8
-                    : overlay.bounds.size.height * 0.72;
 
-    // Kept on screen whichever way it was placed. A column ending near the bottom would
-    // otherwise push it off, which looks exactly like not being added.
+    // Above the column, not below it. Below put it in among the caption and the channel
+    // name, and low enough on some screens to be under the tab bar entirely.
+    CGFloat y = bar ? CGRectGetMinY(bar.frame) - side - 8
+                    : overlay.bounds.size.height * 0.42;
+
+    // Kept on screen whichever way it was placed.
     CGFloat lowest = overlay.bounds.size.height - side - inset;
-    button.frame = CGRectMake(x, MIN(y, lowest), side, side);
+    button.frame = CGRectMake(x, MIN(MAX(y, inset), lowest), side, side);
 
     // Brought to the front each pass: the overlay re-adds its own views on layout and ours
     // would end up behind them.
@@ -128,13 +157,23 @@ static UIView *SCIFindActionBar(UIView *overlay) {
 
 
 ///
-/// The target. A class object rather than the overlay itself, so the button holds no
-/// reference to a view that is recycled between one Short and the next -- Shorts reuses its
-/// overlays, and a target pointing at the wrong one saves the wrong video.
+/// The target.
+///
+/// A class object rather than the overlay, so the button holds no strong reference to a view
+/// Shorts recycles. Which clip to save comes from the button's own overlay instead -- see
+/// kSCIShortsModel above for why the "currently playing" id is the wrong answer here.
 ///
 @implementation SCIYTShortsSaver
 
-+ (void)save {
++ (void)saveFrom:(UIButton *)button {
+    UIView *overlay = objc_getAssociatedObject(button, &kSCIShortsModel);
+    id model = overlay ? objc_getAssociatedObject(overlay, &kSCIShortsModel) : nil;
+
+    NSString *videoID = nil;
+    if ([model respondsToSelector:@selector(videoId)]) {
+        videoID = ((YTReelModel *)model).videoId;
+    }
+
     UIWindow *window = nil;
     for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
         if (![scene isKindOfClass:[UIWindowScene class]]) continue;
@@ -149,11 +188,14 @@ static UIView *SCIFindActionBar(UIView *overlay) {
     while (top.presentedViewController) top = top.presentedViewController;
     if (!top) return;
 
-    SCILogV(@"shorts: save %@", [SCIYTDiagnostics activeVideoID]);
+    SCILogV(@"shorts: save %@ (announced was %@)", videoID, [SCIYTDiagnostics activeVideoID]);
+    [SCIYTDiagnostics recordShortsButton:
+        [NSString stringWithFormat:@"saving %@, announced %@",
+            videoID ?: @"?", [SCIYTDiagnostics activeVideoID] ?: @"?"]];
 
     // The same sheet the long press opens on a normal video. One download path, which is the
     // rule this project has kept since the Instagram side had four of them.
-    [SCIYTDownload presentFrom:top];
+    [SCIYTDownload presentFrom:top videoID:videoID];
 }
 
 @end

@@ -367,7 +367,26 @@ static NSInteger sciUnplayable = 0;
 
 #pragma mark - Choosing
 
+/// Which video the caller insisted on, if any. Cleared as soon as it has been read.
+///
+/// A one-shot rather than a parameter threaded through eight methods: this is read twice,
+/// both times within the same run of one sheet, and widening every signature between here
+/// and there to carry it would touch far more code than the fix is worth.
+static NSString *sciRequestedVideoID = nil;
+
++ (void)presentFrom:(UIViewController *)presenter videoID:(NSString *)videoID {
+    sciRequestedVideoID = [videoID copy];
+    [self beginFrom:presenter];
+}
+
 + (void)presentFrom:(UIViewController *)presenter {
+    // Cleared, not left. Without this a long press on an ordinary video would inherit
+    // whichever Short was saved last -- the one-shot outliving its one shot.
+    sciRequestedVideoID = nil;
+    [self beginFrom:presenter];
+}
+
++ (void)beginFrom:(UIViewController *)presenter {
     if (!presenter) return;
 
     // The activated video first, and the last MLVideo only as a fallback.
@@ -420,7 +439,11 @@ static NSInteger sciUnplayable = 0;
         return;
     }
 
-    NSString *videoID = [SCIYTDiagnostics activeVideoID] ?: [SCIYTDiagnostics lastVideoID];
+    // What the caller named wins. Shorts names it, because what this tweak knows as
+    // "playing" follows YouTube's announcements and those run ahead into the preloaded clip.
+    NSString *videoID = sciRequestedVideoID
+        ?: [SCIYTDiagnostics activeVideoID]
+        ?: [SCIYTDiagnostics lastVideoID];
     if (!videoID.length) {
         [self showMessage:SCILocalized(@"dl_why_no_data") from:presenter];
         return;
@@ -519,7 +542,8 @@ static NSInteger sciUnplayable = 0;
                 [[SCIYTLibrary shared] startVariant:variant
                                                 kind:kind
                                                title:title
-                                             videoID:[SCIYTDiagnostics activeVideoID]];
+                                             videoID:sciRequestedVideoID
+                                                     ?: [SCIYTDiagnostics activeVideoID]];
 
                 // And that is the end of it here. The download is a row in the centre
                 // now, so the app is handed straight back -- watching something while a

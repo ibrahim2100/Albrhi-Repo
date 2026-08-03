@@ -33,6 +33,13 @@ NS_ASSUME_NONNULL_BEGIN
 /// Asks which quality, then downloads, merges if it must, and saves to Photos.
 + (void)presentFrom:(UIViewController *)presenter;
 
+/// The same, for a video the caller can name.
+///
+/// Shorts needs this: what the tweak knows as "playing" follows YouTube's announcements, and
+/// those run ahead into the clip being preloaded. The Shorts button reads the id off the
+/// overlay it is drawn on and says so here. Passing nil is the same as the method above.
++ (void)presentFrom:(UIViewController *)presenter videoID:(NSString *)videoID;
+
 /// A line for the diagnostics page: how many formats were found and whether any of
 /// them carried a fetchable link.
 + (NSString *)diagnosticsSummary;

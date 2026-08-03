@@ -76,6 +76,9 @@ static const double kSCINudge = 10;
 
 /// Whether the audio session is already ours, so it is not taken twice.
 @property (nonatomic) BOOL claimed;
+
+/// Half-seconds since the lock screen entry was last written.
+@property (nonatomic) NSInteger sinceAnnounced;
 @end
 
 /// Where playback stopped is written down as it moves, not only on the way out.
@@ -970,6 +973,18 @@ static SCIYTPlayer *sciCurrent = nil;
     }
 
     if (self.scrubbing) return;
+
+    // Said again about every two seconds while playing.
+    //
+    // The entry is not ours alone: YouTube writes to the same now-playing centre, and our
+    // own player pauses YouTube's, which is exactly the sort of moment its media stack tidies
+    // up after itself and clears what it finds there. Publishing at the start and on leaving
+    // was still losing races. Four writes a minute of a small dictionary is not a cost worth
+    // protecting against, and a lock screen that is simply absent is unanswerable.
+    if (++self.sinceAnnounced >= 4) {
+        self.sinceAnnounced = 0;
+        [self describeToLockScreen];
+    }
 
     self.scrubber.value = (float)(at / length);
     self.elapsed.text = [SCIYTThumbnails clock:at];

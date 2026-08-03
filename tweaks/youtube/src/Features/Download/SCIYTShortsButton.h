@@ -11,9 +11,13 @@
 //  Copyright (C) Ibrahim Ismail AL-Rahn. GPLv3.
 //
 
-#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 @interface SCIYTShortsSaver : NSObject
-/// Opens the save sheet for the Short on screen.
-+ (void)save;
+/// Opens the save sheet for the Short this button belongs to.
+///
+/// Takes the button rather than nothing, because which clip to save is answered by the
+/// overlay the button is sitting on -- not by whichever clip YouTube last announced, which
+/// during Shorts is routinely the one queued below.
++ (void)saveFrom:(UIButton *)button;
 @end

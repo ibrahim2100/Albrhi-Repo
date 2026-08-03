@@ -3,6 +3,16 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.25.0
+
+- **Saving a Short now saves the one you are watching.** It was saving the next one down.
+  Shorts builds the following clip while you are still on the current one, so "what is
+  playing" had already moved on — the button now asks the clip it is actually drawn on.
+- **The save button sits above the like column**, instead of below it among the caption.
+- **The lock screen controls stay put for music.** They are written again every couple of
+  seconds while something plays, because YouTube writes to the same place and clears it when
+  it thinks nothing is playing — which, since our player pauses YouTube's, it does.
+
 ## v0.24.1
 
 - **Sound keeps playing with the screen off again**, and its controls come back on the lock
