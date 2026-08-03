@@ -341,6 +341,73 @@ for path in SRC:
             report('block %s in %s calls itself — ARC rejects the retain cycle; '
                    'use a method that calls itself instead' % (name, path))
 
+# 12. A method or property that collides with one UIKit already puts on the class.
+#
+#     Two builds died on this and the compiler's message names neither cause clearly.
+#     A property called `close` on a view controller made -close its getter, and the
+#     method of the same name was rejected for "returning the wrong type". A method
+#     called -rename: resolved to UIResponder's -rename:, which is iOS 16 only, and
+#     failed the availability check on a deployment target of 15.
+#
+#     Neither is findable by looking at the file: the colliding name is inherited, so
+#     nothing in the source mentions it. That is exactly what a check is for.
+#
+#     The list is deliberately short -- the editing and responder-chain selectors a
+#     feature is actually tempted to reuse. A long list of every UIKit selector would
+#     fire on ordinary names and get switched off, which is worse than no rule.
+UIKIT_TAKEN = {
+    'rename:', 'close:', 'cut:', 'copy:', 'paste:', 'delete:', 'select:', 'selectAll:',
+    'find:', 'print:', 'undo:', 'redo:', 'share:', 'duplicate:', 'move:', 'export:',
+    'toggleBoldface:', 'increaseSize:', 'decreaseSize:', 'pasteAndMatchStyle:',
+}
+
+#     Scoped to the @implementation of a class that really is a UIKit subclass. The first
+#     write of this rule scanned every declaration in any file that merely *contained* one,
+#     and immediately cried wolf twice on the Instagram side -- a `title` on a presets
+#     object, a `window` on a banner's owner, neither of them view controllers. That is the
+#     same over-matching rule 8 was tightened for, made again.
+for path in SRC:
+    text = open(path, encoding='utf-8').read()
+
+    header = path[:-2] + '.h' if path.endswith('.m') else None
+    declarations = text
+    if header and os.path.exists(header):
+        declarations += open(header, encoding='utf-8').read()
+
+    uikit = set(re.findall(r'@interface\s+(\w+)\s*:\s*UI\w+', declarations))
+    if not uikit:
+        continue
+
+    for block in re.finditer(r'@implementation\s+(\w+)(.*?)@end', text, re.S):
+        if block.group(1) not in uikit:
+            continue
+
+        for match in re.finditer(r'^-\s*\([^)]*\)\s*(\w+:)', block.group(2), re.M):
+            selector = match.group(1)
+
+            # Only the one-argument form. -share:from: is a different selector from
+            # -share: and collides with nothing.
+            after = block.group(2)[match.end():match.end() + 120]
+            if re.match(r'\s*\([^)]*\)\s*\w+\s+\w+:', after):
+                continue
+
+            if selector in UIKIT_TAKEN:
+                report('-%s in %s is a name UIKit already defines on this class — '
+                       'rename it' % (selector, path))
+
+#     And the other half of the same failure: a property whose name is also a method in the
+#     same file. That one needs no knowledge of UIKit at all -- `close` as a property made
+#     -close its getter, and the compiler rejected the real -close for returning void.
+for path in SRC:
+    text = open(path, encoding='utf-8').read()
+
+    properties = set(re.findall(r'@property[^;]*?[\s*](\w+);', text))
+    methods = set(re.findall(r'^-\s*\([^)]*\)\s*(\w+)\s*[{;]', text, re.M))
+
+    for name in sorted(properties & methods):
+        report('%s in %s is both a property and a method — the method becomes the '
+               'property\'s getter and will not compile' % (name, path))
+
 # 9. Quoted imports that resolve to nothing.
 #
 # Moving the sources one level deeper broke four files that reached the shared

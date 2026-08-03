@@ -230,7 +230,7 @@ static UIColor *SCIAccent(void) {
                                               handler:^(UIContextualAction *action,
                                                         UIView *source,
                                                         void (^done)(BOOL)) {
-        [self rename:job];
+        [self askToRename:job];
         done(YES);
     }];
     rename.backgroundColor = [UIColor systemGrayColor];
@@ -242,7 +242,7 @@ static UIColor *SCIAccent(void) {
         : [UISwipeActionsConfiguration configurationWithActions:@[remove, rename, photos, share]];
 }
 
-- (void)rename:(SCIYTJob *)job {
+- (void)askToRename:(SCIYTJob *)job {
     UIAlertController *ask =
         [UIAlertController alertControllerWithTitle:SCILocalized(@"dl_rename")
                                             message:nil

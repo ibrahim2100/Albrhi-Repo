@@ -3,6 +3,12 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.21.1
+
+- Fixes 0.21.0, which did not build. Renaming worked; the method that offered it happened to
+  share a name with one iPhone already defines, and on this version of iOS that is not
+  allowed.
+
 ## v0.21.0
 
 - **Two videos no longer play at once.** Opening something from Downloads now stops whatever
