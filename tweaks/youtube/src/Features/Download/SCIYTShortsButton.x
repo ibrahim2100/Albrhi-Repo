@@ -189,7 +189,7 @@ static UIView *SCIFindActionBar(UIView *overlay) {
     if (!top) return;
 
     SCILogV(@"shorts: save %@ (announced was %@)", videoID, [SCIYTDiagnostics activeVideoID]);
-    [SCIYTDiagnostics recordShortsButton:
+    [SCIYTDiagnostics recordShortsSave:
         [NSString stringWithFormat:@"saving %@, announced %@, overlay %@, model %@",
             videoID ?: @"?", [SCIYTDiagnostics activeVideoID] ?: @"?",
             overlay ? @"found" : @"missing", model ? NSStringFromClass([model class]) : @"missing"]];

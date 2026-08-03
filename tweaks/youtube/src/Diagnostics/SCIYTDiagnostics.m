@@ -202,6 +202,27 @@ static NSString *sciShortsButton = nil;
     if (state.length) sciShortsButton = [state copy];
 }
 
+/// The last save actually attempted, kept apart from the placement line above.
+///
+/// They shared one slot and placement won every time. Placement is written whenever an
+/// overlay is built, which is on every clip you swipe to -- so tapping save wrote the one
+/// line that mattered and the next swipe erased it. The report I asked for could never have
+/// contained it.
+///
+/// This is 0.10.2 again: a record wiped by the activity it was measuring, in a different
+/// file, after the lesson had been written down. A status and an event do not belong in one
+/// variable, because the status is always the more recent of the two.
+static NSString *sciShortsSave = nil;
+
++ (void)recordShortsSave:(NSString *)detail {
+    if (detail.length) sciShortsSave = [detail copy];
+    [self writeReportToFile];
+}
+
++ (NSString *)shortsSaveState {
+    return sciShortsSave ?: SCILocalized(@"diag_shorts_save_none");
+}
+
 /// Bounded and de-duplicated: the same file failing twice is one fact.
 static NSMutableOrderedSet<NSString *> *sciPlaybackFailures = nil;
 
@@ -454,6 +475,8 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_feed"), [self feedState]];
 
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts"), [self shortsButtonState]];
+
+    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts_save"), [self shortsSaveState]];
 
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts_ads"), [self shortsAdState]];
 

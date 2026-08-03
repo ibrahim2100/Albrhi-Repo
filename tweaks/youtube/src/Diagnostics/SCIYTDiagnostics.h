@@ -94,6 +94,11 @@
 + (void)recordShortsButton:(NSString *)state;
 + (NSString *)shortsButtonState;
 
+/// What the last tap on that button actually tried to save. Its own slot: the line above is
+/// rewritten on every clip and buried this every time.
++ (void)recordShortsSave:(NSString *)detail;
++ (NSString *)shortsSaveState;
+
 /// Why a saved file would not open, straight from AVFoundation.
 + (void)recordPlaybackFailure:(NSString *)detail;
 + (NSString *)playbackFailures;
