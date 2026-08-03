@@ -120,40 +120,40 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.21.1",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• Fixes 0.21.0, which did not build.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "v0.21.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **Two videos no longer play at once.**\n• That is also why sound sometimes stopped when the phone locked: with two players running, the one being managed in the background was not always the one you were…\n• **Rename anything you have saved.**\n• **A welcome screen on the first launch**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.20.2",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
           "markdown": "• **The feed is back.**\n• Sponsored rows on Home are therefore still there.\n• Diagnostics now really does show how much of the feed was checked and dropped.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.20.1",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **Sponsored rows on Home should go now.**\n• If any still get through, Settings → Diagnostics now says how much of the feed was checked and how much was dropped.\n• Fixes the release itself failing to publish.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.20.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **The Download Centre is a page now, not a window.**\n• **Video and sound are a switch at the top**\n• Opening it from settings still opens a panel, since there is nothing behind it to be part of — but it is the same page, so the two can no longer drift apart.",
           "useSpacing": true
         },
         {
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.20.2"
+          "text": "0.21.1"
         },
         {
           "class": "DepictionTableTextView",
