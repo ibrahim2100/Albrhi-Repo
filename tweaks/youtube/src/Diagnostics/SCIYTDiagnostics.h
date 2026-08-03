@@ -40,6 +40,13 @@
 /// being preloaded and the one wanted is the capture before it.
 + (id)streamingDataForVideoID:(NSString *)videoID;
 
+/// A player response filed under the video it belongs to.
+///
+/// Shorts is the reason this exists: it never builds an MLVideo, so nothing else in the
+/// tweak ever learns which clip a capture is for.
++ (void)recordResponse:(id)response forVideo:(NSString *)videoID;
++ (id)responseForVideoID:(NSString *)videoID;
+
 /// The video the player actually activated, which is not always the last MLVideo made.
 ///
 /// A report showed SponsorBlock working on VTBoGy0EynQ while this page reported

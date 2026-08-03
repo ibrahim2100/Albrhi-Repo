@@ -303,6 +303,11 @@
 //
 @interface YTReelModel : NSObject
 - (NSString *)videoId;
+
+/// Where the clip is handed its own player response. Hooked to file that response under the
+/// id above -- the one point in Shorts where the response and the video it belongs to are
+/// both in hand, which is what five earlier attempts were each trying to reconstruct.
+- (void)didReceiveResponse:(id)response;
 @end
 
 

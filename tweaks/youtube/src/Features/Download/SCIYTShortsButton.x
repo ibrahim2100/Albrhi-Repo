@@ -63,6 +63,34 @@ static UIView *SCIFindActionBar(UIView *overlay) {
     return best;
 }
 
+///
+/// The clip's own response, filed under the clip's own id.
+///
+/// This is the only place in Shorts where both facts are available at once. Shorts never
+/// builds an MLVideo -- two reports running showed the same stale streams id while the clip
+/// on screen changed underneath it -- so every other capture in the tweak belongs to some
+/// ordinary video watched earlier, or to whichever clip was preloaded last.
+///
+/// YTReelModel is handed its response here and answers -videoId for itself. Nothing has to
+/// be inferred, matched or detected, which is what the previous five attempts were all doing.
+///
+%hook YTReelModel
+
+- (void)didReceiveResponse:(id)response {
+    %orig;
+
+    if (!response) return;
+
+    NSString *videoID = ((YTReelModel *)self).videoId;
+    if (!videoID.length) return;
+
+    [SCIYTDiagnostics recordResponse:response forVideo:videoID];
+    SCILogV(@"shorts: filed a response for %@", videoID);
+}
+
+%end
+
+
 %hook YTReelWatchPlaybackOverlayView
 
 - (instancetype)initWithFrame:(CGRect)frame

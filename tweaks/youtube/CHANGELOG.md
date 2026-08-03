@@ -3,6 +3,14 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.29.1
+
+- **Saving a Short takes its details from the Short itself.** Last release stored the details
+  of recent videos so the right one could be looked up — and in Shorts there were never any
+  to store, because Shorts does not build the object every other part of the tweak reads. It
+  now takes them from the clip's own data, which knows both what it is and which video it is.
+- **Ads: 8 hidden in one sitting**, so that part is working.
+
 ## v0.29.0
 
 - **Saving a Short saves the one on screen.** The tweak now keeps the stream details of the

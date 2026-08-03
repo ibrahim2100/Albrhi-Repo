@@ -67,6 +67,16 @@ static id sciLastStreamingData = nil;
 /// The last few videos' stream objects, by video id. See -recordVideo: for why.
 static NSMutableDictionary<NSString *, id> *sciStreamsByVideo = nil;
 static NSMutableArray<NSString *> *sciStreamsOrder = nil;
+
+/// Player responses filed by video id, from the object that owns the clip.
+///
+/// Shorts never produces an MLVideo -- two reports running showed the same stale streams id
+/// while the clip changed underneath it -- so the keyed stream store added in 0.29.0 is
+/// always empty there. YTReelModel is handed its own response and knows its own videoId, so
+/// this is the one place in Shorts where both facts are available at once and neither has to
+/// be inferred.
+static NSMutableDictionary<NSString *, id> *sciResponsesByVideo = nil;
+static NSMutableArray<NSString *> *sciResponsesOrder = nil;
 static NSString *sciLastVideoID = nil;
 static NSString *sciLastVideoTitle = nil;
 
@@ -424,6 +434,30 @@ static NSString *sciResponseVideoID = nil;
 
 + (id)streamingDataForVideoID:(NSString *)videoID {
     return videoID.length ? sciStreamsByVideo[videoID] : nil;
+}
+
++ (void)recordResponse:(id)response forVideo:(NSString *)videoID {
+    if (!response || !videoID.length) return;
+
+    if (!sciResponsesByVideo) sciResponsesByVideo = [NSMutableDictionary dictionary];
+    if (!sciResponsesOrder) sciResponsesOrder = [NSMutableArray array];
+
+    // Bounded and oldest-first, like the stream store: these are YouTube's own message
+    // objects and an unbounded map would pin every clip swiped past in a session.
+    if (sciResponsesByVideo.count >= 6 && !sciResponsesByVideo[videoID]) {
+        NSString *oldest = sciResponsesOrder.firstObject;
+        if (oldest) {
+            [sciResponsesByVideo removeObjectForKey:oldest];
+            [sciResponsesOrder removeObjectAtIndex:0];
+        }
+    }
+
+    if (!sciResponsesByVideo[videoID]) [sciResponsesOrder addObject:videoID];
+    sciResponsesByVideo[videoID] = response;
+}
+
++ (id)responseForVideoID:(NSString *)videoID {
+    return videoID.length ? sciResponsesByVideo[videoID] : nil;
 }
 + (id)lastPlayerResponse { return sciLastResponse; }
 + (NSString *)lastVideoID { return sciLastVideoID; }

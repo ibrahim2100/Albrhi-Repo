@@ -126,6 +126,15 @@ static void SCITrace(NSString *step, id value) {
     // question "is this capture for the video I want" becomes "give me the capture for the
     // video I want", which has an answer.
     id streamingData = [SCIYTDiagnostics streamingDataForVideoID:videoID];
+
+    // Then the response filed for that clip, which is the only one Shorts ever produces.
+    // 0.29.0 filed streams from MLVideo, and Shorts never builds one -- so that store is
+    // always empty there, which looked exactly like having nothing filed at all.
+    if (!streamingData) {
+        id response = [SCIYTDiagnostics responseForVideoID:videoID];
+        if (response) streamingData = SCIGet(response, @"streamingData");
+    }
+
     if (!streamingData) return nil;
 
     return SCIGetString(streamingData, @"hlsManifestURL");
