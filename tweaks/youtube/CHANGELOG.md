@@ -3,6 +3,15 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.16.0
+
+- **The Downloads button is a real tab now**, beside the others, instead of a red circle
+  floating on top of them. It has a label, it lights up when it is the open one, it takes
+  its share of the width, and it moves with the bar — because YouTube draws it, not us.
+  Nothing of ours sits on the bar any more.
+- If a future YouTube changes the tab bar enough that the tab cannot be added, the old
+  round button comes back on its own. The way in never disappears.
+
 ## v0.15.0
 
 - **The lock screen has the counter now, and it works.** It was showing the title and
