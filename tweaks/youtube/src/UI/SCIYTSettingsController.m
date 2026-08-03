@@ -1,4 +1,5 @@
 #import "SCIYTSettingsController.h"
+#import "../Settings/SCIYTSettingsRegistry.h"
 #import "../Tweak.h"
 #import "../SCILog.h"
 #import "../Prefs.h"
@@ -14,65 +15,6 @@
 static UIColor *SCIAccent(void) {
     return [UIColor colorWithRed:1.0 green:0.0 blue:0.13 alpha:1.0];
 }
-
-///
-/// One row. A plain object rather than a subclass per kind, because the difference
-/// between a switch row and a disclosure row is one field, not one class.
-///
-typedef NS_ENUM(NSInteger, SCIRowKind) {
-    SCIRowKindSwitch,
-    SCIRowKindDisclosure,
-};
-
-@interface SCIRow : NSObject
-@property (nonatomic, assign) SCIRowKind kind;
-@property (nonatomic, copy) NSString *title;
-@property (nonatomic, copy) NSString *detail;
-@property (nonatomic, copy) NSString *symbol;
-@property (nonatomic, copy) NSString *prefKey;      ///< switch rows only
-@property (nonatomic, copy) void (^action)(void);   ///< disclosure rows only
-@end
-
-@implementation SCIRow
-
-+ (instancetype)switchRow:(NSString *)title
-                   detail:(NSString *)detail
-                   symbol:(NSString *)symbol
-                  prefKey:(NSString *)prefKey {
-    SCIRow *row = [[SCIRow alloc] init];
-    row.kind = SCIRowKindSwitch;
-    row.title = title;
-    row.detail = detail;
-    row.symbol = symbol;
-    row.prefKey = prefKey;
-    return row;
-}
-
-+ (instancetype)disclosureRow:(NSString *)title
-                       detail:(NSString *)detail
-                       symbol:(NSString *)symbol
-                       action:(void (^)(void))action {
-    SCIRow *row = [[SCIRow alloc] init];
-    row.kind = SCIRowKindDisclosure;
-    row.title = title;
-    row.detail = detail;
-    row.symbol = symbol;
-    row.action = action;
-    return row;
-}
-
-@end
-
-
-@interface SCISection : NSObject
-@property (nonatomic, copy) NSString *title;
-@property (nonatomic, copy) NSString *footer;
-@property (nonatomic, strong) NSArray<SCIRow *> *rows;
-@end
-
-@implementation SCISection
-@end
-
 
 @interface SCIYTSettingsController ()
 @property (nonatomic, strong) NSArray<SCISection *> *sections;
@@ -102,226 +44,17 @@ typedef NS_ENUM(NSInteger, SCIRowKind) {
     [self buildSections];
 }
 
-// Declared here, defined further down beside the picker they belong to. Objective-C methods
-// may be called before they appear in the same @implementation; plain C functions may not,
-// and -buildSections uses both of these to label the rows.
-static NSArray<NSNumber *> *SCIQualityCaps(void);
-static NSString *SCIQualityLabel(NSInteger cap);
-
 - (void)buildSections {
-    __weak __typeof(self) weakSelf = self;
-
-    SCISection *ads = [[SCISection alloc] init];
-    ads.title = SCILocalized(@"section_ads");
-    ads.rows = @[
-        [SCIRow switchRow:SCILocalized(@"hide_ads")
-                   detail:SCILocalized(@"hide_ads_note")
-                   symbol:@"hand.raised.fill"
-                  prefKey:SCIPrefHideAds],
-        [SCIRow switchRow:SCILocalized(@"hide_paid_promotion")
-                   detail:SCILocalized(@"hide_paid_promotion_note")
-                   symbol:@"megaphone.fill"
-                  prefKey:SCIPrefHidePaidPromo],
-    ];
-
-    // Quality. Two ceilings and a switch.
-    //
-    // The caps are their own rows rather than one "data saver" switch because the two
-    // connections are not one decision: a phone on home Wi-Fi and the same phone on a
-    // metered plan abroad want different answers, and a single switch makes you choose
-    // which of the two to be wrong about.
-    SCISection *quality = [[SCISection alloc] init];
-    quality.title = SCILocalized(@"section_quality");
-    quality.footer = SCILocalized(@"set_cap_note");
-    quality.rows = @[
-        [SCIRow disclosureRow:SCILocalized(@"set_cap_wifi")
-                       detail:SCIQualityLabel(SCIPrefNumber(SCIPrefCapWiFi))
-                       symbol:@"wifi"
-                       action:^{ [weakSelf pickCapFor:SCIPrefCapWiFi]; }],
-        [SCIRow disclosureRow:SCILocalized(@"set_cap_cellular")
-                       detail:SCIQualityLabel(SCIPrefNumber(SCIPrefCapCellular))
-                       symbol:@"antenna.radiowaves.left.and.right"
-                       action:^{ [weakSelf pickCapFor:SCIPrefCapCellular]; }],
-        [SCIRow switchRow:SCILocalized(@"set_classic_quality")
-                   detail:SCILocalized(@"set_classic_quality_note")
-                   symbol:@"list.bullet"
-                  prefKey:SCIPrefClassicQuality],
-        [SCIRow switchRow:SCILocalized(@"set_dislikes")
-                   detail:SCILocalized(@"set_dislikes_note")
-                   symbol:@"hand.thumbsdown"
-                  prefKey:SCIPrefDislikes],
-    ];
-
-    SCISection *player = [[SCISection alloc] init];
-    player.title = SCILocalized(@"section_player");
-    player.rows = @[
-        [SCIRow switchRow:SCILocalized(@"background_playback")
-                   detail:SCILocalized(@"background_playback_note")
-                   symbol:@"speaker.wave.2.fill"
-                  prefKey:SCIPrefBackgroundPlay],
-    ];
-
-    // Downloads. The centre itself is the first row rather than a setting, because it is
-    // the thing someone opening this screen after saving a video came looking for.
-    SCISection *downloads = [[SCISection alloc] init];
-    downloads.title = SCILocalized(@"set_downloads_title");
-    downloads.rows = @[
-        [SCIRow disclosureRow:SCILocalized(@"set_open_centre")
-                       detail:nil
-                       symbol:@"arrow.down.circle.fill"
-                       action:^{ [SCIYTDownloadCenter present]; }],
-        [SCIRow switchRow:SCILocalized(@"set_tab_button")
-                   detail:nil
-                   symbol:@"square.grid.2x2"
-                  prefKey:SCIPrefTabButton],
-        [SCIRow switchRow:SCILocalized(@"set_auto_photos")
-                   detail:SCILocalized(@"set_auto_photos_note")
-                   symbol:@"photo.on.rectangle"
-                  prefKey:SCIPrefAutoPhotos],
-        [SCIRow switchRow:SCILocalized(@"set_lock_skip")
-                   detail:SCILocalized(@"set_lock_skip_note")
-                   symbol:@"lock.iphone"
-                  prefKey:SCIPrefLockScreenSkip],
-    ];
-
-    // Two sections: the switch that turns it on, and the categories it governs. Split
-    // because "skip sponsored parts" is one decision and "which parts count" is eight
-    // more, and a single list of nine switches reads as nine equal choices.
-    SCISection *sponsor = [[SCISection alloc] init];
-    sponsor.title = SCILocalized(@"section_sponsorblock");
-    sponsor.rows = @[
-        [SCIRow switchRow:SCILocalized(@"sponsorblock")
-                   detail:SCILocalized(@"sponsorblock_note")
-                   symbol:@"forward.end.fill"
-                  prefKey:SCIPrefSponsorBlock],
-        [SCIRow switchRow:SCILocalized(@"sponsorblock_notice")
-                   detail:SCILocalized(@"sponsorblock_notice_note")
-                   symbol:@"bubble.left.fill"
-                  prefKey:SCIPrefSBNotice],
-        [SCIRow switchRow:SCILocalized(@"sponsorblock_markers")
-                   detail:SCILocalized(@"sponsorblock_markers_note")
-                   symbol:@"paintpalette.fill"
-                  prefKey:SCIPrefSBMarkers],
-    ];
-
-    SCISection *categories = [[SCISection alloc] init];
-    categories.title = SCILocalized(@"sb_categories");
-    categories.rows = @[
-        [SCIRow switchRow:SCILocalized(@"sb_sponsor")
-                   detail:SCILocalized(@"sb_sponsor_note")
-                   symbol:@"dollarsign.circle.fill"
-                  prefKey:SCIPrefSBSponsor],
-        [SCIRow switchRow:SCILocalized(@"sb_selfpromo")
-                   detail:SCILocalized(@"sb_selfpromo_note")
-                   symbol:@"person.crop.circle.fill"
-                  prefKey:SCIPrefSBSelfPromo],
-        [SCIRow switchRow:SCILocalized(@"sb_interaction")
-                   detail:SCILocalized(@"sb_interaction_note")
-                   symbol:@"hand.thumbsup.fill"
-                  prefKey:SCIPrefSBInteraction],
-        [SCIRow switchRow:SCILocalized(@"sb_intro")
-                   detail:SCILocalized(@"sb_intro_note")
-                   symbol:@"film.fill"
-                  prefKey:SCIPrefSBIntro],
-        [SCIRow switchRow:SCILocalized(@"sb_outro")
-                   detail:SCILocalized(@"sb_outro_note")
-                   symbol:@"rectangle.stack.fill"
-                  prefKey:SCIPrefSBOutro],
-        [SCIRow switchRow:SCILocalized(@"sb_preview")
-                   detail:SCILocalized(@"sb_preview_note")
-                   symbol:@"text.bubble.fill"
-                  prefKey:SCIPrefSBPreview],
-        [SCIRow switchRow:SCILocalized(@"sb_filler")
-                   detail:SCILocalized(@"sb_filler_note")
-                   symbol:@"scissors"
-                  prefKey:SCIPrefSBFiller],
-        [SCIRow switchRow:SCILocalized(@"sb_music_offtopic")
-                   detail:SCILocalized(@"sb_music_offtopic_note")
-                   symbol:@"music.note"
-                  prefKey:SCIPrefSBMusicOffTopic],
-    ];
-    // Where the data comes from, its licence, and what does and does not leave the
-    // phone. The attribution is a condition of CC BY-NC-SA; the privacy sentence is
-    // there because a feature that talks to a server should say so where it is switched
-    // on, not in a changelog.
-    categories.footer = SCILocalized(@"sb_credit");
-
-    SCISection *general = [[SCISection alloc] init];
-    general.title = SCILocalized(@"section_general");
-    general.rows = @[
-        [SCIRow switchRow:SCILocalized(@"block_update_nag")
-                   detail:SCILocalized(@"block_update_nag_note")
-                   symbol:@"bell.slash.fill"
-                  prefKey:SCIPrefBlockUpdateNag],
-        [SCIRow switchRow:SCILocalized(@"verbose_logging")
-                   detail:SCILocalized(@"verbose_logging_note")
-                   symbol:@"text.alignleft"
-                  prefKey:SCIPrefVerboseLogging],
-        [SCIRow disclosureRow:SCILocalized(@"dl_row")
-                       detail:SCILocalized(@"dl_row_note")
-                       symbol:@"arrow.down.circle.fill"
-                       action:^{ [SCIYTDownload presentFrom:weakSelf]; }],
-        [SCIRow disclosureRow:SCILocalized(@"diagnostics")
-                       detail:SCILocalized(@"diagnostics_note")
-                       symbol:@"stethoscope"
-                       action:^{
-            [weakSelf openDiagnostics];
-        }],
-    ];
-
-    // How to get back here. A two-finger long press is safe and reliable and completely
-    // undiscoverable, which is the trade it makes.
-    general.footer = SCILocalized(@"panel_subtitle");
-
-    self.sections = @[downloads, quality, ads, player, sponsor, categories, general];
+    // Composed rather than built. Every section lives in its own file under Settings/Pages
+    // and registers itself in +load; nothing here knows what those are, which is the point.
+    // Adding a feature means adding a file, and deleting one means deleting a file.
+    self.sections = [SCIYTSettingsRegistry composedSectionsFor:self];
 }
 
-/// The ceilings offered, highest first, with "no limit" as the default.
-///
-/// Real resolutions, not menu positions: the stored value is 1080 rather than "the third
-/// one down", so reordering this list can never quietly change what someone chose.
-static NSArray<NSNumber *> *SCIQualityCaps(void) {
-    return @[@0, @2160, @1440, @1080, @720, @480, @360, @144];
-}
-
-static NSString *SCIQualityLabel(NSInteger cap) {
-    if (cap <= 0) return SCILocalized(@"quality_auto");
-    return [NSString stringWithFormat:SCILocalized(@"quality_cap_format"), (long)cap];
-}
-
-- (void)pickCapFor:(NSString *)key {
-    UIAlertController *sheet =
-        [UIAlertController alertControllerWithTitle:nil
-                                            message:SCILocalized(@"set_cap_note")
-                                     preferredStyle:UIAlertControllerStyleActionSheet];
-
-    __weak __typeof(self) weakSelf = self;
-    for (NSNumber *cap in SCIQualityCaps()) {
-        UIAlertAction *choice =
-            [UIAlertAction actionWithTitle:SCIQualityLabel(cap.integerValue)
-                                     style:UIAlertActionStyleDefault
-                                   handler:^(__unused UIAlertAction *action) {
-                [[NSUserDefaults standardUserDefaults] setInteger:cap.integerValue forKey:key];
-
-                // Rebuilt, not just reloaded: the row's subtitle is the chosen value, and
-                // it is made when the section is made.
-                [weakSelf buildSections];
-                [weakSelf.tableView reloadData];
-            }];
-        [sheet addAction:choice];
-    }
-
-    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
-                                              style:UIAlertActionStyleCancel
-                                            handler:nil]];
-
-    // Required on iPad, and harmless on a phone. Without it the sheet has nothing to point
-    // at and UIKit raises rather than guessing.
-    sheet.popoverPresentationController.sourceView = self.view;
-    sheet.popoverPresentationController.sourceRect =
-        CGRectMake(CGRectGetMidX(self.view.bounds), CGRectGetMidY(self.view.bounds), 0, 0);
-
-    [self presentViewController:sheet animated:YES completion:nil];
+/// Rebuilt and redrawn. Called by a page whose row shows a value it has just changed.
+- (void)reloadSettings {
+    [self buildSections];
+    [self.tableView reloadData];
 }
 
 ///
@@ -469,41 +202,6 @@ static NSString *SCIQualityLabel(NSInteger cap) {
     SCILogV(@"settings: %@ = %@", key, toggle.isOn ? @"on" : @"off");
 }
 
-- (void)openDiagnostics {
-    // Wrapped for the same reason the panel itself is: this page reads objects
-    // YouTube gave us and prints them, and it went unguarded while the panel around
-    // it was protected. The report is still on disk either way, which is the point
-    // of writing it there.
-    UIViewController *page = nil;
-
-    @try {
-        page = [SCIYTDiagnostics viewController];
-    } @catch (NSException *exception) {
-        [SCIYTDiagnostics recordPanelFailure:
-            [NSString stringWithFormat:@"diagnostics page: %@", exception.reason]];
-        SCILogV(@"diagnostics page could not be built: %@", exception.reason);
-    }
-
-    if (!page) {
-        // Says where the report is rather than failing silently — the file is the
-        // way out when the page is not.
-        NSString *path = [SCIYTDiagnostics writeReportToFile];
-
-        UIAlertController *alert = [UIAlertController
-            alertControllerWithTitle:SCILocalized(@"diag_title")
-                             message:[NSString stringWithFormat:SCILocalized(@"diag_page_failed"),
-                                      path ?: @"Documents/AlbrhiYT-report.txt"]
-                      preferredStyle:UIAlertControllerStyleAlert];
-
-        [alert addAction:[UIAlertAction actionWithTitle:SCILocalized(@"ok")
-                                                  style:UIAlertActionStyleDefault
-                                                handler:nil]];
-        [self presentViewController:alert animated:YES completion:nil];
-        return;
-    }
-
-    [self.navigationController pushViewController:page animated:YES];
-}
 
 - (void)close {
     [self dismissViewControllerAnimated:YES completion:nil];
