@@ -120,40 +120,40 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.19.1",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **It remembers where you stopped.**\n• **Playback speed**\n• **A sleep timer**\n• **AirPlay**\n• Fixes 0.19.0, which did not build.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "v0.19.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **Turn the phone and the video fills the screen.**\n• **The controls get out of the way.**\n• **Double tap either side to jump ten seconds**\n• **Picture in picture.**\n• **Saved songs have a cover now.**\n• **Next and previous are back on the lock screen.**\n• The lock screen also says where you are in the queue.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.18.1",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
           "markdown": "• **The mark on the Downloads tab should appear now.**\n• It is also drawn again on each layout, so a tab that came up blank the first time fills itself in rather than staying blank until the app restarts.\n• **Diagnostics now has a Downloads tab section.**\n• Diagnostics also says plainly when dislike counts are simply switched off, instead of the same sentence it shows when they are on and not working.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.18.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **Dislike counts are back**\n• **Nothing about what you watch is sent.**\n• **The Downloads tab has its own mark now**\n• If the number does not appear on the right button, Settings → Diagnostics now lists every like and dislike button it found and what each one said.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.17.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **A quality ceiling, separately for Wi-Fi and for mobile data.**\n• The tweak notices which connection you are on as it changes, so nothing has to be switched by hand when you leave the house.\n• **The full quality list is back**",
           "useSpacing": true
         },
         {
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.18.1"
+          "text": "0.19.1"
         },
         {
           "class": "DepictionTableTextView",
