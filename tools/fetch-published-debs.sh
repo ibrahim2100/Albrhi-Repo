@@ -84,6 +84,41 @@ fi
 counts="${staging}/counts"
 : > "$counts"
 
+# Downloads a release's .deb assets, retrying a failure that is not "there are none".
+#
+# Distinguishing the two is the point. A release with no .deb is ordinary -- a dylib-only
+# one -- and must be skipped without fuss. A request that failed is not ordinary, and
+# treating it as an empty release removes a published version from the source.
+#
+# The test is the listing: if the release has assets matching the pattern, a download that
+# came back empty was a failure and is worth another go.
+fetch_debs() {
+    local tag="$1" dir="$2" attempt
+
+    for attempt in 1 2 3; do
+        if gh release download "$tag" --repo "$REPO" \
+                --pattern '*.deb' --dir "$dir" --clobber 2>/dev/null; then
+            return 0
+        fi
+
+        # Does it actually have one? If not, there is nothing to retry for.
+        if ! gh release view "$tag" --repo "$REPO" --json assets \
+                --jq '.assets[].name' 2>/dev/null | grep -q '\.deb$'; then
+            return 1
+        fi
+
+        if [ "$attempt" = 3 ]; then
+            echo "::error::${tag} lists .deb assets but they could not be downloaded."
+            return 1
+        fi
+
+        echo "::warning::${tag} has .deb assets but the download failed (attempt ${attempt}) — retrying."
+        sleep $((attempt * 10))
+    done
+
+    return 1
+}
+
 taken_for() {
     awk -v key="$1" '$1 == key { print $2; found = 1 } END { if (!found) print 0 }' "$counts"
 }
@@ -101,8 +136,14 @@ for tag in $tags; do
 
     # A release with no .deb -- a dylib-only one, say -- must not count against the
     # limit, or it would push a real one out of the index.
-    if ! gh release download "$tag" --repo "$REPO" \
-            --pattern '*.deb' --dir "$dir" --clobber 2>/dev/null; then
+    #
+    # Retried first, because those two outcomes look identical here and are not.
+    # `gh release download` exits non-zero both when a release genuinely has no matching
+    # asset and when the request failed, and the asset endpoint really does return HTTP 500
+    # on its own account -- it did, on a release that was present and intact. Taking that at
+    # face value quietly drops a published version out of the index, which is the one failure
+    # this whole script exists to prevent.
+    if ! fetch_debs "$tag" "$dir"; then
         echo "No .deb in ${tag} — skipping."
         continue
     fi

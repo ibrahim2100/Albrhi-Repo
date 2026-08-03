@@ -317,10 +317,30 @@ jobs:
 
                 # The published assets for this version are byte-identical to what a
                 # rebuild would produce, so the repo can be refreshed without one.
-                gh release download "v${ALBRHI_VERSION}" \
-                  --repo "${{ github.repository }}" \
-                  --dir "$TWEAK_DIR/packages" \
-                  --clobber
+                #
+                # Retried, because this failed once on `HTTP 500` from the asset endpoint --
+                # GitHub's own error, on a release that was present and intact. gh does not
+                # retry a 500, so one bad second on their side failed a run that had nothing
+                # wrong with it, and left the source unpublished until someone noticed.
+                #
+                # Three tries with a widening gap. If all three fail it really is down, and
+                # failing then is correct.
+                for attempt in 1 2 3; do
+                  if gh release download "v${ALBRHI_VERSION}" \
+                       --repo "${{ github.repository }}" \
+                       --dir "$TWEAK_DIR/packages" \
+                       --clobber; then
+                    break
+                  fi
+
+                  if [ "$attempt" = 3 ]; then
+                    echo "::error::Could not download the published assets for v${ALBRHI_VERSION} after 3 tries."
+                    exit 1
+                  fi
+
+                  echo "::warning::Download failed (attempt ${attempt}) — retrying."
+                  sleep $((attempt * 15))
+                done
 
                 ls -la "$TWEAK_DIR/packages"
 
