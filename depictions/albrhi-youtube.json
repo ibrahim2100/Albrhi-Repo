@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.18.1",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **The mark on the Downloads tab should appear now.**\n• It is also drawn again on each layout, so a tab that came up blank the first time fills itself in rather than staying blank until the app restarts.\n• **Diagnostics now has a Downloads tab section.**\n• Diagnostics also says plainly when dislike counts are simply switched off, instead of the same sentence it shows when they are on and not working.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.18.0",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.16.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **The Downloads button is a real tab now**\n• If a future YouTube changes the tab bar enough that the tab cannot be added, the old round button comes back on its own.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.18.0"
+          "text": "0.18.1"
         },
         {
           "class": "DepictionTableTextView",
