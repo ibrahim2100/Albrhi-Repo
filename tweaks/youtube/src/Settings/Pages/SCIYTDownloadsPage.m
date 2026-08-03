@@ -36,6 +36,10 @@
                        detail:SCILocalized(@"set_auto_photos_note")
                        symbol:@"photo.on.rectangle"
                       prefKey:SCIPrefAutoPhotos],
+            [SCIRow switchRow:SCILocalized(@"set_embed_artwork")
+                       detail:SCILocalized(@"set_embed_artwork_note")
+                       symbol:@"music.note.list"
+                      prefKey:SCIPrefEmbedArtwork],
             [SCIRow switchRow:SCILocalized(@"set_lock_skip")
                        detail:SCILocalized(@"set_lock_skip_note")
                        symbol:@"lock.iphone"

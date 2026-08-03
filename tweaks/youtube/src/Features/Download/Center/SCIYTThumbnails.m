@@ -1,6 +1,7 @@
 #import "SCIYTThumbnails.h"
 #import "SCIYTLibrary.h"
 #import "SCIYTArtwork.h"
+#import "../../../Prefs.h"
 #import "../../../SCILog.h"
 #import <AVFoundation/AVFoundation.h>
 
@@ -60,10 +61,10 @@
 
         [data writeToURL:[self fileFor:job] atomically:YES];
 
-        // Into the file as well as beside it. Everything on screen reads the copy kept here,
-        // but nothing outside this app can -- so the song is tagged too, once, now that
-        // there is finally a picture to tag it with.
-        [SCIYTArtwork embedInto:job completion:nil];
+        // Into the file as well as beside it, but only when asked. Everything on screen reads
+        // the copy kept here and needs nothing written into the song; tagging the song helps
+        // only once it leaves this app, and it is the one operation that can lose it.
+        if (SCIPrefEnabled(SCIPrefEmbedArtwork)) [SCIYTArtwork embedInto:job completion:nil];
 
         dispatch_async(dispatch_get_main_queue(), ^{ completion(image); });
         return;

@@ -94,6 +94,10 @@
 + (void)recordShortsButton:(NSString *)state;
 + (NSString *)shortsButtonState;
 
+/// Why a saved file would not open, straight from AVFoundation.
++ (void)recordPlaybackFailure:(NSString *)detail;
++ (NSString *)playbackFailures;
+
 /// How much of the feed this run saw, and how much of it was dropped as promoted.
 + (void)recordFeedSections:(NSUInteger)seen dropped:(NSUInteger)dropped;
 + (NSString *)feedState;

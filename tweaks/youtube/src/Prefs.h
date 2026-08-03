@@ -28,6 +28,15 @@
 /// there is no way at all to save one, and a feature nobody can reach is not a choice.
 #define SCIPrefShortsButton     @"shorts_download_button"
 
+/// Writing the cover into the sound file itself.
+///
+/// **Off, and that is a retreat.** It shipped on in 0.22.0 and rewrote every saved song to
+/// tag it -- unverified -- and left a library that would not play. 0.23.0 stopped it
+/// producing broken files, but the trade was already wrong: what it buys is a picture when
+/// a song is sent to someone else, and what it risks is the song. Anything that replaces a
+/// file the user cannot get back again has to be asked for.
+#define SCIPrefEmbedArtwork     @"embed_artwork"
+
 /// Which pair of buttons the lock screen gets.
 ///
 /// Off means next and previous, which is the default because a queue you cannot move

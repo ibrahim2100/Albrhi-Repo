@@ -190,6 +190,23 @@ static NSString *sciShortsButton = nil;
     if (state.length) sciShortsButton = [state copy];
 }
 
+/// Bounded and de-duplicated: the same file failing twice is one fact.
+static NSMutableOrderedSet<NSString *> *sciPlaybackFailures = nil;
+
++ (void)recordPlaybackFailure:(NSString *)detail {
+    if (!detail.length) return;
+    if (!sciPlaybackFailures) sciPlaybackFailures = [NSMutableOrderedSet orderedSet];
+    if (sciPlaybackFailures.count >= 6) return;
+
+    [sciPlaybackFailures addObject:detail];
+    [self writeReportToFile];
+}
+
++ (NSString *)playbackFailures {
+    if (!sciPlaybackFailures.count) return SCILocalized(@"diag_playback_none");
+    return [[sciPlaybackFailures array] componentsJoinedByString:@"\n  "];
+}
+
 + (NSString *)shortsButtonState {
     return sciShortsButton ?: SCILocalized(@"diag_shorts_none");
 }
@@ -403,6 +420,11 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_feed"), [self feedState]];
 
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts"), [self shortsButtonState]];
+
+    // Why a saved file would not open. This is the one thing looking at the tweak's own code
+    // can never answer: the file is on disk and AVFoundation is the only witness to what is
+    // wrong with it.
+    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_playback"), [self playbackFailures]];
 
     [out appendFormat:@"%@\n", SCILocalized(@"diag_counters")];
 

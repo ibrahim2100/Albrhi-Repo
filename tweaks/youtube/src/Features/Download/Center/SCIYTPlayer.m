@@ -3,6 +3,7 @@
 #import "SCIYTLibrary.h"
 #import "SCIYTIcon.h"
 #import "SCIYTHostPlayer.h"
+#import "../../../Diagnostics/SCIYTDiagnostics.h"
 #import "../../../SCILog.h"
 #import "../../../Prefs.h"
 #import "../../../Localization/SCILocalize.h"
@@ -69,6 +70,9 @@ static const double kSCINudge = 10;
 @property (nonatomic, strong) NSTimer *sleeper;
 @property (nonatomic) float speed;
 @property (nonatomic) BOOL sleepAtEnd;
+
+/// Half-seconds spent with a file that will not say how long it is.
+@property (nonatomic) NSInteger blindTicks;
 @end
 
 /// Where playback stopped is written down as it moves, not only on the way out.
@@ -779,6 +783,7 @@ static SCIYTPlayer *sciCurrent = nil;
     self.subtitle.text = job.quality;
     self.scrubber.value = 0;
     self.publishedLength = NO;
+    self.blindTicks = 0;
 
     [self preparePiP:isVideo];
 
@@ -931,7 +936,28 @@ static SCIYTPlayer *sciCurrent = nil;
 - (void)tick {
     double at = CMTimeGetSeconds(self.player.currentTime);
     double length = CMTimeGetSeconds(self.player.currentItem.duration);
-    if (!isfinite(length) || length <= 0) return;
+
+    if (!isfinite(length) || length <= 0) {
+        // A length that never becomes a number is a file iOS cannot read, and on screen it
+        // is an endless "--:--" that says nothing about why. After three seconds it is not
+        // slow loading, so the reason is written down once -- with whatever AVFoundation
+        // said, which is the part no amount of looking at the tweak would reveal.
+        if (++self.blindTicks == 6) {
+            AVPlayerItem *item = self.player.currentItem;
+            NSString *reason = item.error.localizedDescription;
+
+            [SCIYTDiagnostics recordPlaybackFailure:
+                [NSString stringWithFormat:@"%@ — status %ld, %@",
+                    [self current].fileName ?: @"?",
+                    (long)item.status,
+                    reason ?: @"no error given"]];
+
+            self.name.text = SCILocalized(@"player_unreadable");
+        }
+        return;
+    }
+
+    self.blindTicks = 0;
 
     if (!self.publishedLength) {
         self.publishedLength = YES;

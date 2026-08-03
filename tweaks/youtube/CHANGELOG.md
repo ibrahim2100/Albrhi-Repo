@@ -3,6 +3,22 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.24.0
+
+- **Writing the cover into saved songs is off now.** It shipped switched on and rewrote every
+  song you had in order to tag it, and a rewrite that goes wrong loses the song. What it buys
+  is a picture when you send a song to someone else. That is not worth the song, so it is a
+  setting you turn on, not something the tweak does to your library on its own.
+- **A song that will not open now says so** instead of sitting at "--:--" forever, and
+  Settings, Diagnostics lists exactly what iPhone said was wrong with the file. That is the
+  one thing no amount of looking at the tweak can answer.
+- **A mini player along the bottom of the Centre.** Sound carries on while you look through
+  your downloads, and tapping the strip puts the full screen back where it was. Closing the
+  player used to stop the music, because they were the same thing.
+
+**If your saved songs stopped playing:** they were damaged by 0.22.0 and cannot be repaired
+— delete them and save them again. Fresh saves are not touched by anything now.
+
 ## v0.23.0
 
 - **A save button in Shorts**, in the column with like and share. Shorts has no long press
