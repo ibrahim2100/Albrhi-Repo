@@ -45,16 +45,19 @@
 
 
 ///
-/// The ad itself, at the layer that draws it.
+/// The ad itself, at the view that draws it.
 ///
-/// Refusing the ad page controller was not enough: a Shorts advertisement came through
-/// anyway and reported itself, again with FLEX, as
+/// Refusing the ad page controller was not enough -- the page is built whatever its
+/// controller answers -- and refusing the node was not either: the first attempt matched on
+/// the node's -description and never fired once, with the ad still on screen and hidden = 0.
 ///
-///   <ELMContainerNode: eml.ad_image>  frame (0 137; 390 488)
+/// FLEX then showed the answer plainly. The view carries
 ///
-/// -- most of the screen. So the page is built regardless of what its controller answers,
-/// and the picture is drawn by an Elements node inside it. That is the layer to refuse at,
-/// and it is the same layer the Home feed's `eml.feed_ad_metadata` lives on.
+///   accessibilityIdentifier = eml.ad_image
+///
+/// which is a string property on a UIView, and the same identifier turns up on Home as well
+/// as in Shorts. Reading a property beats being right about how a private class formats its
+/// description.
 ///
 /// **Matched against a short list of identifiers read off a screen, never off the binary.**
 /// Both entries were measured. This deliberately does not match on `ad` or `promoted` or
@@ -74,33 +77,35 @@ static NSArray<NSString *> *SCIAdNodeIdentifiers(void) {
     return identifiers;
 }
 
-%hook ELMContainerNode
+%hook _ASDisplayView
 
-- (void)didEnterVisibleState {
+- (void)didMoveToWindow {
     %orig;
 
     if (!SCIPrefEnabled(SCIPrefHideAds)) return;
 
-    NSString *text = nil;
-    @try {
-        text = [self description];
-    } @catch (__unused NSException *exception) {
-        return;
-    }
-    if (!text.length) return;
+    // The view's own accessibility identifier, not the node's description.
+    //
+    // FLEX reported an ad card on Home carrying `accessibilityIdentifier = eml.ad_image`
+    // outright, which is a plain string property on a plain UIView. The previous attempt
+    // parsed -description off the node and it never fired -- the ad was still on screen with
+    // hidden = 0 -- so whatever that hook was reading, it was not this. One property is worth
+    // more than a description that has to be right about a private class's formatting.
+    UIView *view = (UIView *)self;
+    NSString *identifier = view.accessibilityIdentifier;
+    if (!identifier.length) return;
 
-    for (NSString *identifier in SCIAdNodeIdentifiers()) {
-        if (![text containsString:identifier]) continue;
+    for (NSString *known in SCIAdNodeIdentifiers()) {
+        if (![identifier isEqualToString:known]) continue;
 
-        // Hidden and made transparent, not resized. A node's size belongs to the layout that
-        // placed it, and fighting that from here is how a feed ends up with overlapping rows;
-        // an invisible node still occupies its space, which is a gap rather than an ad.
-        ((ELMContainerNode *)self).hidden = YES;
-        ((ELMContainerNode *)self).alpha = 0;
+        // Exact, not contained. This runs on every AsyncDisplayKit view the app puts in a
+        // window, which is most of what you see, so it is the one place in this tweak where
+        // a loose match would blank the app rather than a feed.
+        view.hidden = YES;
 
         [SCIYTDiagnostics recordShortsAd:
-            [NSString stringWithFormat:@"hid a node matching %@", identifier]];
-        SCILogV(@"ads: hid an ELM node matching %@", identifier);
+            [NSString stringWithFormat:@"hid a view identified as %@", known]];
+        SCILogV(@"ads: hid a view identified as %@", known);
         return;
     }
 }

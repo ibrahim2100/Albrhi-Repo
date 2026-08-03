@@ -96,9 +96,14 @@ static NSArray<NSString *> *SCIPromotedIdentifiers(void) {
             // 0.20.1 caught real videos instead.
             @"feed_ad_metadata",
 
-            // Outright ad slots.
+            // The picture in an ad card, measured the same way. Written out in full rather
+            // than as "ad_image": a bare substring would also match load_image and any other
+            // word ending in "ad", and this test runs against a section's whole description.
+            @"eml.ad_image",
+
+            // Outright ad slots. (feed_ad_metadata is above, with the note on how it was
+            // found; it was in this group too and the duplicate is gone.)
             @"brand_promo",
-            @"feed_ad_metadata",
             @"statement_banner",
             @"text_search_ad",
 
