@@ -456,6 +456,26 @@ static NSString *sciResponseVideoID = nil;
     sciResponsesByVideo[videoID] = response;
 }
 
+/// The last few things the Shorts model handed over, in order and de-duplicated.
+///
+/// Ordered rather than latest-only: whether this fires at all, and whether it fires before
+/// the model knows its own id, are different faults that look identical from outside.
+static NSMutableOrderedSet<NSString *> *sciShortsResponses = nil;
+
++ (void)recordShortsResponse:(NSString *)detail {
+    if (!detail.length) return;
+    if (!sciShortsResponses) sciShortsResponses = [NSMutableOrderedSet orderedSet];
+    if (sciShortsResponses.count >= 5) return;
+
+    [sciShortsResponses addObject:detail];
+    [self writeReportToFile];
+}
+
++ (NSString *)shortsResponseState {
+    if (!sciShortsResponses.count) return SCILocalized(@"diag_shorts_resp_none");
+    return [[sciShortsResponses array] componentsJoinedByString:@"\n  "];
+}
+
 + (id)responseForVideoID:(NSString *)videoID {
     return videoID.length ? sciResponsesByVideo[videoID] : nil;
 }
@@ -599,6 +619,8 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts"), [self shortsButtonState]];
 
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts_save"), [self shortsSaveState]];
+
+    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts_resp"), [self shortsResponseState]];
 
     // All three at once, because the download bug was exactly these disagreeing and no
     // report ever showed more than two of them.

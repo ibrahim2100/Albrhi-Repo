@@ -132,7 +132,24 @@ static void SCITrace(NSString *step, id value) {
     // always empty there, which looked exactly like having nothing filed at all.
     if (!streamingData) {
         id response = [SCIYTDiagnostics responseForVideoID:videoID];
-        if (response) streamingData = SCIGet(response, @"streamingData");
+
+        // Three depths, because what -didReceiveResponse: hands over is a *watch* response
+        // for a reel item, not a player response. A watch response wraps one, so asking it
+        // for streamingData directly gets nothing -- which is indistinguishable from nothing
+        // having been filed, and is why 0.29.1 looked like it had not fired at all.
+        //
+        // Named rather than searched: these are the two field names a player response is
+        // reached by, and a general walk over an unknown message tree is how a diagnostics
+        // page turns into a crash.
+        for (NSArray<NSString *> *path in @[@[@"streamingData"],
+                                            @[@"playerResponse", @"streamingData"],
+                                            @[@"reelPlayerResponse", @"streamingData"]]) {
+            id node = response;
+            for (NSString *step in path) {
+                node = node ? SCIGet(node, step) : nil;
+            }
+            if (node) { streamingData = node; break; }
+        }
     }
 
     if (!streamingData) return nil;

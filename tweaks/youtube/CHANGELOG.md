@@ -3,6 +3,16 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.29.2
+
+- **Another attempt at the wrong Short, and a way to tell whether it worked.** What Shorts
+  hands over is a wrapper around the video's details rather than the details themselves, so
+  the tweak was looking one level too shallow and finding nothing — which looked exactly the
+  same as never having looked. It now checks the places that wrapper keeps them.
+- If it is still wrong, Settings, Diagnostics now has a "What the Shorts model handed over"
+  section that says precisely what arrived and what shape it was in. That answers it either
+  way, which the last report could not.
+
 ## v0.29.1
 
 - **Saving a Short takes its details from the Short itself.** Last release stored the details

@@ -82,6 +82,27 @@ static UIView *SCIFindActionBar(UIView *overlay) {
     if (!response) return;
 
     NSString *videoID = ((YTReelModel *)self).videoId;
+
+    // Recorded before anything is decided, and recorded when it fails.
+    //
+    // 0.29.1 filed responses here and the report showed nothing had ever been filed -- but
+    // it could not say which of three things went wrong: the hook not attaching at all, the
+    // model not knowing its id yet, or the response not being the shape the lookup expects.
+    // Those are three different fixes, and choosing between them by reasoning is exactly
+    // what the last six releases did.
+    NSString *shape = @"?";
+    @try {
+        id streams = [response valueForKey:@"streamingData"];
+        shape = streams ? @"has streamingData" : @"no streamingData";
+    } @catch (__unused NSException *exception) {
+        shape = @"no streamingData key";
+    }
+
+    [SCIYTDiagnostics recordShortsResponse:
+        [NSString stringWithFormat:@"%@ for %@ — %@",
+            NSStringFromClass([response class]),
+            videoID.length ? videoID : @"(no id yet)", shape]];
+
     if (!videoID.length) return;
 
     [SCIYTDiagnostics recordResponse:response forVideo:videoID];

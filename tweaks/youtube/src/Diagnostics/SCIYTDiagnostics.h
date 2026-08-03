@@ -47,6 +47,13 @@
 + (void)recordResponse:(id)response forVideo:(NSString *)videoID;
 + (id)responseForVideoID:(NSString *)videoID;
 
+/// What -didReceiveResponse: actually handed over, whether or not it could be used.
+///
+/// Kept because "nothing was filed" has three causes that need three different fixes, and
+/// the report could not tell them apart.
++ (void)recordShortsResponse:(NSString *)detail;
++ (NSString *)shortsResponseState;
+
 /// The video the player actually activated, which is not always the last MLVideo made.
 ///
 /// A report showed SponsorBlock working on VTBoGy0EynQ while this page reported
