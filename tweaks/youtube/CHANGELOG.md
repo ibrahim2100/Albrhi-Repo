@@ -3,6 +3,18 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.15.0
+
+- **The lock screen has the counter now, and it works.** It was showing the title and
+  nothing else. The length was being sent the instant playback began, and at that instant
+  the file has not been read far enough to know how long it is — so nothing was sent, and
+  no length means no bar at all rather than a short one. It is sent as soon as it is known.
+- **Drag it to move.** The scrubber on the lock screen and in Control Centre now seeks,
+  instead of springing back where it was.
+- **Fifteen seconds forward and back**, on the lock screen, from headphones, and from the
+  car.
+- The counter also keeps proper time when you pause, instead of carrying on without you.
+
 ## v0.14.1
 
 - **The player now really closes.** It was staying alive after you shut it, holding its

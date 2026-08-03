@@ -33,7 +33,18 @@ static UIColor *SCIAccent(void) {
 /// command centre for the life of the app.
 @property (nonatomic, strong) id nextToken;
 @property (nonatomic, strong) id previousToken;
+@property (nonatomic, strong) id positionToken;
+@property (nonatomic, strong) id forwardToken;
+@property (nonatomic, strong) id backwardToken;
 @property (nonatomic) BOOL torndown;
+
+/// Whether the lock screen has been told how long this one runs.
+///
+/// It cannot be told at the moment playback starts, which is when everything else is
+/// published: a player item that has only just been handed a file answers "indefinite"
+/// until it has read the header. A duration of indefinite is not a shorter bar, it is no
+/// bar at all -- which is why the lock screen showed a title and no counter.
+@property (nonatomic) BOOL publishedLength;
 @end
 
 @implementation SCIYTPlayer
@@ -122,6 +133,9 @@ static UIColor *SCIAccent(void) {
     [centre.pauseCommand removeTarget:self];
     if (self.nextToken) { [centre.nextTrackCommand removeTarget:self.nextToken]; self.nextToken = nil; }
     if (self.previousToken) { [centre.previousTrackCommand removeTarget:self.previousToken]; self.previousToken = nil; }
+    if (self.positionToken) { [centre.changePlaybackPositionCommand removeTarget:self.positionToken]; self.positionToken = nil; }
+    if (self.forwardToken) { [centre.skipForwardCommand removeTarget:self.forwardToken]; self.forwardToken = nil; }
+    if (self.backwardToken) { [centre.skipBackwardCommand removeTarget:self.backwardToken]; self.backwardToken = nil; }
 
     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = nil;
 
@@ -293,6 +307,7 @@ static UIColor *SCIAccent(void) {
 
     self.name.text = job.title;
     self.scrubber.value = 0;
+    self.publishedLength = NO;   // the next one's length is not this one's
 
     __weak __typeof(self) weakSelf = self;
     self.ticker = [self.player addPeriodicTimeObserverForInterval:CMTimeMake(1, 2)
@@ -355,18 +370,46 @@ static UIColor *SCIAccent(void) {
     double length = CMTimeGetSeconds(self.player.currentItem.duration);
     if (!isfinite(length) || length <= 0) return;
 
-    [self.player seekToTime:CMTimeMakeWithSeconds(self.scrubber.value * length, 600)
-             toleranceBefore:kCMTimeZero
-              toleranceAfter:kCMTimeZero];
-    [self describeToLockScreen];
+    [self seekTo:self.scrubber.value * length];
+}
+
+/// Moves to a point, and tells the lock screen where it now is.
+///
+/// Both remote seeks come through here rather than calling -seekToTime: themselves: the
+/// now-playing entry has to be rewritten after a jump or the counter carries on from where
+/// it was, and one place to forget that is better than three.
+- (void)seekTo:(double)seconds {
+    double length = CMTimeGetSeconds(self.player.currentItem.duration);
+    if (!isfinite(length) || length <= 0) return;
+
+    double target = MIN(MAX(seconds, 0), length);
+
+    __weak __typeof(self) weakSelf = self;
+    [self.player seekToTime:CMTimeMakeWithSeconds(target, 600)
+            toleranceBefore:kCMTimeZero
+             toleranceAfter:kCMTimeZero
+          completionHandler:^(BOOL finished) {
+        if (finished) [weakSelf describeToLockScreen];
+    }];
+}
+
+- (void)skipBy:(double)seconds {
+    [self seekTo:CMTimeGetSeconds(self.player.currentTime) + seconds];
 }
 
 - (void)tick {
-    if (self.scrubbing) return;
-
     double at = CMTimeGetSeconds(self.player.currentTime);
     double length = CMTimeGetSeconds(self.player.currentItem.duration);
     if (!isfinite(length) || length <= 0) return;
+
+    // The length arrives late, and the lock screen was told everything else before it did.
+    // Publishing once here is what turns a bare title into a counter with a scrubber.
+    if (!self.publishedLength) {
+        self.publishedLength = YES;
+        [self describeToLockScreen];
+    }
+
+    if (self.scrubbing) return;
 
     self.scrubber.value = (float)(at / length);
     self.elapsed.text = [SCIYTThumbnails clock:at];
@@ -399,10 +442,44 @@ static UIColor *SCIAccent(void) {
     centre.nextTrackCommand.enabled = YES;
     centre.previousTrackCommand.enabled = YES;
 
+    // The three that make the counter a control rather than a readout.
+    //
+    // A now-playing entry with a duration draws a scrubber, but dragging it does nothing
+    // unless this command is claimed -- iOS asks whoever is playing to move, and with no
+    // one listening the thumb springs back. The skip pair is what the lock screen offers
+    // instead of next/previous when both are claimed, so both are.
+    centre.changePlaybackPositionCommand.enabled = YES;
+    centre.skipForwardCommand.enabled = YES;
+    centre.skipBackwardCommand.enabled = YES;
+    centre.skipForwardCommand.preferredIntervals = @[@15];
+    centre.skipBackwardCommand.preferredIntervals = @[@15];
+
     __weak __typeof(self) weakSelf = self;
 
     [centre.playCommand addTarget:self action:@selector(remotePlay:)];
     [centre.pauseCommand addTarget:self action:@selector(remotePause:)];
+
+    self.positionToken = [centre.changePlaybackPositionCommand
+        addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
+            MPChangePlaybackPositionCommandEvent *moved =
+                (MPChangePlaybackPositionCommandEvent *)event;
+            [weakSelf seekTo:moved.positionTime];
+            return MPRemoteCommandHandlerStatusSuccess;
+        }];
+
+    self.forwardToken = [centre.skipForwardCommand
+        addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
+            MPSkipIntervalCommandEvent *skip = (MPSkipIntervalCommandEvent *)event;
+            [weakSelf skipBy:skip.interval];
+            return MPRemoteCommandHandlerStatusSuccess;
+        }];
+
+    self.backwardToken = [centre.skipBackwardCommand
+        addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
+            MPSkipIntervalCommandEvent *skip = (MPSkipIntervalCommandEvent *)event;
+            [weakSelf skipBy:-skip.interval];
+            return MPRemoteCommandHandlerStatusSuccess;
+        }];
 
     self.nextToken = [centre.nextTrackCommand
         addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
@@ -439,7 +516,15 @@ static UIColor *SCIAccent(void) {
     now[MPMediaItemPropertyTitle] = job.title;
     now[MPMediaItemPropertyArtist] = SCILocalized(@"panel_title");
     now[MPNowPlayingInfoPropertyElapsedPlaybackTime] = @(CMTimeGetSeconds(self.player.currentTime));
+
+    // The rate is what makes the counter count. iOS does not poll: it takes the elapsed
+    // time once and moves it forward at whatever rate was declared, so a paused entry that
+    // claims rate 1 keeps counting and a playing one that omits it stands still.
     now[MPNowPlayingInfoPropertyPlaybackRate] = @(self.player.rate);
+    now[MPNowPlayingInfoPropertyDefaultPlaybackRate] = @1;
+    now[MPNowPlayingInfoPropertyMediaType] =
+        @(job.kind == SCIYTJobKindAudio ? MPNowPlayingInfoMediaTypeAudio
+                                        : MPNowPlayingInfoMediaTypeVideo);
 
     double length = CMTimeGetSeconds(self.player.currentItem.duration);
     if (isfinite(length) && length > 0) now[MPMediaItemPropertyPlaybackDuration] = @(length);
