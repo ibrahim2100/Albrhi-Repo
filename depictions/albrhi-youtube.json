@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.28.1",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **Fixes 0.28.0, which broke saving in Shorts completely.**\n• It now only refuses when it can actually see a disagreement.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.28.0",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.27.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **The ad picture in Shorts is hidden.**\n• **Saving a Short no longer saves the wrong one silently.**\n• The message says what the tweak could and could not see, so the answer arrives with the complaint instead of needing another release to ask for it.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.28.0"
+          "text": "0.28.1"
         },
         {
           "class": "DepictionTableTextView",
