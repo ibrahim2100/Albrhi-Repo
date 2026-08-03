@@ -2,6 +2,7 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import "SCIYTDownloadCenter.h"
+#import "SCIYTIcon.h"
 #import "../../../SCILog.h"
 #import "../../../Prefs.h"
 #import "../../../Localization/SCILocalize.h"
@@ -86,11 +87,10 @@ static id SCIMakePivotItem(void) {
 static void SCIPaintIcon(UIView *view) {
     if (!view) return;
 
-    UIImageSymbolConfiguration *weight =
-        [UIImageSymbolConfiguration configurationWithPointSize:23
-                                                        weight:UIImageSymbolWeightRegular];
-    UIImage *symbol = [[UIImage systemImageNamed:@"arrow.down.circle" withConfiguration:weight]
-                       imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    // Ours, drawn, not an SF Symbol. Apple's glyphs carry Apple's weight, and beside five
+    // tabs drawn to a different rule the odd one out is the one you see. The label under it
+    // is YouTube's, from the renderer's title.
+    UIImage *symbol = [SCIYTIcon downloadMarkOfSize:24 filled:NO];
     if (!symbol) return;
 
     // The first image view in the subtree, which is where the tab's icon lives. Searched
@@ -210,11 +210,7 @@ static void SCIAddTabButton(UIViewController *controller) {
 
     UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
 
-    UIImageSymbolConfiguration *weight =
-        [UIImageSymbolConfiguration configurationWithPointSize:22
-                                                        weight:UIImageSymbolWeightRegular];
-    [button setImage:[UIImage systemImageNamed:@"arrow.down.circle.fill"
-                             withConfiguration:weight]
+    [button setImage:[SCIYTIcon downloadMarkOfSize:24 filled:YES]
             forState:UIControlStateNormal];
 
     button.tintColor = SCIAccent();

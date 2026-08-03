@@ -1,4 +1,5 @@
 #import "SCIYTDiagnostics.h"
+#import "../Features/Dislikes/SCIYTDislikes.h"
 #import "../YouTubeHeaders.h"
 #import "../Tweak.h"
 #import "../SCILog.h"
@@ -130,6 +131,23 @@ static NSString *sciMarkerBar = nil;
     if (!className.length) return;
     sciMarkerBar = [NSString stringWithFormat:SCILocalized(@"diag_markers_drawn"),
         className, (long)count];
+}
+
+/// What the counter nodes on screen said.
+///
+/// Bounded and de-duplicated: a list scrolls, the same two buttons are re-drawn many times,
+/// and a report that says "Like" four hundred times answers nothing.
+static NSMutableOrderedSet<NSString *> *sciCounterNodes = nil;
+
++ (void)recordCounterNode:(NSString *)text {
+    if (!sciCounterNodes) sciCounterNodes = [NSMutableOrderedSet orderedSet];
+    if (sciCounterNodes.count >= 8) return;
+
+    [sciCounterNodes addObject:text.length ? text : @"(empty)"];
+}
+
++ (NSArray<NSString *> *)counterNodes {
+    return [sciCounterNodes array] ?: @[];
 }
 
 + (void)recordPlayerResponse:(id)response {
@@ -324,6 +342,15 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     [out appendFormat:@"%@\n  %@\n  %@\n\n", SCILocalized(@"diag_sponsor"),
         sciSponsorState ?: SCILocalized(@"diag_sponsor_none"),
         sciMarkerBar ?: SCILocalized(@"diag_markers_none")];
+
+    // Which counter buttons were seen and what each said before anything was written into
+    // it. The dislike node is picked out by its text, so when the number lands on the wrong
+    // button -- or on none -- this is the line that says why.
+    [out appendFormat:@"%@\n", SCILocalized(@"diag_counters")];
+    for (NSString *text in [self counterNodes]) {
+        [out appendFormat:@"  \"%@\"\n", text];
+    }
+    [out appendFormat:@"  %@\n\n", [SCIYTDislikes lastState]];
 
     [out appendFormat:@"%@\n", SCILocalized(@"diag_video")];
 

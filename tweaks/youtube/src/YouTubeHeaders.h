@@ -275,3 +275,14 @@
 @interface MLHAMPlayerItem : NSObject
 @property (nonatomic, strong) id videoFormatConstraint;
 @end
+
+//
+// The like/dislike counter node.
+//
+// An ASDisplayNode, so the UIView only exists after -didLoad and -view is the way to it.
+// Declared because the hook reads that view; nothing else here is touched.
+//
+@interface YTRollingNumberNode : NSObject
+@property (nonatomic, readonly) UIView *view;
+@property (nonatomic, strong) id element;
+@end

@@ -146,6 +146,10 @@ static NSString *SCIQualityLabel(NSInteger cap);
                    detail:SCILocalized(@"set_classic_quality_note")
                    symbol:@"list.bullet"
                   prefKey:SCIPrefClassicQuality],
+        [SCIRow switchRow:SCILocalized(@"set_dislikes")
+                   detail:SCILocalized(@"set_dislikes_note")
+                   symbol:@"hand.thumbsdown"
+                  prefKey:SCIPrefDislikes],
     ];
 
     SCISection *player = [[SCISection alloc] init];

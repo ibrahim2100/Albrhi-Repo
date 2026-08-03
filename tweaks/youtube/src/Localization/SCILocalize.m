@@ -134,6 +134,9 @@ static void SCIBuildTables(void) {
         @"dl_saved": @"Saved to Photos.",
 
         // The Download Centre.
+        @"set_dislikes": @"Show dislike counts",
+        @"set_dislikes_note": @"YouTube stopped publishing this number in 2021. It comes from the Return YouTube Dislike archive, which is an estimate from what its users report — not YouTube's own figure. Nothing about what you watch is sent.",
+        @"diag_counters": @"Like and dislike buttons found",
         @"section_quality": @"Quality",
         @"set_classic_quality": @"Full quality list",
         @"set_classic_quality_note": @"Show every resolution when you tap quality, instead of the two-line shortcut.",
@@ -311,6 +314,9 @@ static void SCIBuildTables(void) {
         @"dl_saved": @"حُفظ في الصور.",
 
         // مركز التحميلات.
+        @"set_dislikes": @"إظهار عدد عدم الإعجاب",
+        @"set_dislikes_note": @"يوتيوب أوقف نشر هذا الرقم عام 2021. يأتي من أرشيف Return YouTube Dislike، وهو تقدير ممّا يبلّغ عنه مستخدموه — لا رقم يوتيوب نفسه. ولا يُرسَل شيء عمّا تشاهده.",
+        @"diag_counters": @"أزرار الإعجاب وعدمه الموجودة",
         @"section_quality": @"الجودة",
         @"set_classic_quality": @"قائمة الجودة الكاملة",
         @"set_classic_quality_note": @"إظهار كل الدقّات عند الضغط على الجودة، بدل الاختصار ذي السطرين.",

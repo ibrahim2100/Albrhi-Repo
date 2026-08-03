@@ -3,6 +3,19 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.18.0
+
+- **Dislike counts are back**, if you turn them on. YouTube stopped publishing that number
+  in 2021, so it comes from the Return YouTube Dislike archive — an estimate built from
+  what its users report, not YouTube's own figure. The setting says so, and it is off until
+  you ask for it, because a number from somewhere else is your choice to make.
+- **Nothing about what you watch is sent.** The tweak asks for a video's number and
+  receives it. It does not report your viewing and it does not submit votes.
+- **The Downloads tab has its own mark now**, drawn for this tweak rather than borrowed
+  from Apple's symbols, with the label underneath it the way the other tabs have.
+- If the number does not appear on the right button, Settings → Diagnostics now lists every
+  like and dislike button it found and what each one said. That is the answer, not a guess.
+
 ## v0.17.0
 
 - **A quality ceiling, separately for Wi-Fi and for mobile data.** Set mobile to 480p and
