@@ -3,6 +3,18 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.26.1
+
+- **Ads in Shorts no longer draw.** A Short that is an advertisement is a different kind of
+  page from a Short that is a video, which makes it easy to refuse — the tweak now says no
+  when that page asks to render.
+- Be clear about what that means: the ad does not appear, but its place in the feed is still
+  there and you swipe past it. Taking the slot out altogether means changing the list the
+  Shorts feed is built from, and that has not been measured yet — guessing at it is what
+  emptied the Home feed in 0.20.1.
+- Diagnostics counts how many were refused, so "Shorts still has ads" says whether they are
+  arriving some other way.
+
 ## v0.26.0
 
 - **Sponsored rows on Home should finally go.** Every previous attempt used names taken from

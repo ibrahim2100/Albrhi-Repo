@@ -101,6 +101,10 @@
 /// When the feed filter refused to run because it would have dropped too much.
 + (void)recordFeedBrake:(NSString *)detail;
 
+/// Whether an ad page in Shorts was seen, and refused.
++ (void)recordShortsAd:(NSString *)detail;
++ (NSString *)shortsAdState;
+
 /// How much of the feed this run saw, and how much of it was dropped as promoted.
 + (void)recordFeedSections:(NSUInteger)seen dropped:(NSUInteger)dropped;
 + (NSString *)feedState;

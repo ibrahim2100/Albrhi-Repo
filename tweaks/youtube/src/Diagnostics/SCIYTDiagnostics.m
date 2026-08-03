@@ -225,6 +225,22 @@ static NSMutableOrderedSet<NSString *> *sciPlaybackFailures = nil;
     return [[sciPlaybackFailures array] componentsJoinedByString:@"\n  "];
 }
 
+/// Counted rather than listed: the interesting facts are whether this class exists on this
+/// build at all and whether it is reached often, and a list of identical lines says neither.
+static NSUInteger sciShortsAdsRefused = 0;
+static NSString *sciShortsAdDetail = nil;
+
++ (void)recordShortsAd:(NSString *)detail {
+    sciShortsAdsRefused += 1;
+    if (detail.length) sciShortsAdDetail = [detail copy];
+}
+
++ (NSString *)shortsAdState {
+    if (!sciShortsAdsRefused) return SCILocalized(@"diag_shorts_ads_none");
+    return [NSString stringWithFormat:SCILocalized(@"diag_shorts_ads_count"),
+        (unsigned long)sciShortsAdsRefused, sciShortsAdDetail ?: @"?"];
+}
+
 + (NSString *)shortsButtonState {
     return sciShortsButton ?: SCILocalized(@"diag_shorts_none");
 }
@@ -438,6 +454,8 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_feed"), [self feedState]];
 
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts"), [self shortsButtonState]];
+
+    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts_ads"), [self shortsAdState]];
 
     // Why a saved file would not open. This is the one thing looking at the tweak's own code
     // can never answer: the file is on disk and AVFoundation is the only witness to what is
