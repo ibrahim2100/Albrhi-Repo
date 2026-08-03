@@ -1,6 +1,7 @@
 #import "../../YouTubeHeaders.h"
 #import "../../SCILog.h"
 #import "../../Prefs.h"
+#import "../../Diagnostics/SCIYTDiagnostics.h"
 
 ///
 /// Ads, removed at three different points, because they arrive by three different
@@ -112,6 +113,54 @@ static NSArray<NSString *> *SCIPromotedIdentifiers(void) {
 
             // Community posts promoted into the feed.
             @"post_shelf",
+
+            //
+            // The renderer names YouTube itself uses, read out of the 21.30.5 binary rather
+            // than guessed. Everything above this line was a hand-written list, and
+            // Sponsored rows kept appearing on the home feed because a hand-written list of
+            // layout names is a list of the ones somebody happened to think of.
+            //
+            // adSlotRenderer is the important one: feed advertisements are wrapped in it,
+            // whatever they contain, so it catches the kinds nobody has seen yet. The rest
+            // are named because a wrapper can be absent when the ad is inlined.
+            //
+            // These are safe to match as substrings in a way an English word is not. The
+            // description being searched contains video titles and channel names, so
+            // matching "sponsored" would drop a real video for being about sponsorship;
+            // a camelCase renderer key cannot appear in anything a person typed.
+            //
+            @"adSlotRenderer",
+            @"adSlotMetadata",
+            @"adLayoutMetadata",
+
+            // The home feed's own sponsored rows.
+            @"promotedSparklesTextHomeRenderer",
+            @"promotedSparklesTextCtdHomeRenderer",
+            @"promotedSparklesTextCtdHomeCompactFormRenderer",
+            @"promotedSparklesTextProductHomeRenderer",
+            @"videoMastheadAdRenderer",
+
+            // Promoted videos, in each shape the feed lays them out in.
+            @"promotedVideoRenderer",
+            @"promotedVideoInlineMutedRenderer",
+            @"compactPromotedVideoRenderer",
+            @"gridPromotedVideoRenderer",
+            @"compactPromotedItemRenderer",
+
+            // Banners and app installs.
+            @"promotedTextBannerRenderer",
+            @"compactPromotedBannerRenderer",
+            @"gridPromotedBannerRenderer",
+            @"promotedAppInstallRenderer",
+            @"promotedDiscoveryAppPromoCompactFormRenderer",
+
+            // Search results, which share the feed's plumbing.
+            @"promotedSparklesTextSearchRenderer",
+
+            // The Premium upsell bar. Not an advertisement for someone else, but it is
+            // still a paid message occupying a row of the feed.
+            @"mealbarPromoRenderer",
+            @"statementBannerRenderer",
         ];
     });
     return identifiers;
@@ -168,6 +217,13 @@ static BOOL SCISectionIsPromoted(id section) {
         SCILogV(@"ads: %lu of %lu sections kept",
                 (unsigned long)kept.count, (unsigned long)sections.count);
     }
+
+    // Counted so "Sponsored is still showing" has an answer. There are two completely
+    // different reasons for it and the same complaint covers both: this hook never running
+    // -- the feed being built somewhere else entirely -- or it running and not recognising
+    // what it saw. A total of zero says the first; a total with nothing dropped says the
+    // second, and the next step differs.
+    [SCIYTDiagnostics recordFeedSections:sections.count dropped:sections.count - kept.count];
 
     // Filtered on the way in, so the sections are never built into views at all --
     // as opposed to hiding cells afterwards, which leaves gaps in the feed where the

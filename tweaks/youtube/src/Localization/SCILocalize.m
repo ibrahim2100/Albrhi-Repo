@@ -134,6 +134,9 @@ static void SCIBuildTables(void) {
         @"dl_saved": @"Saved to Photos.",
 
         // The Download Centre.
+        @"diag_feed": @"Feed filtering",
+        @"diag_feed_none": @"No feed sections seen. Open Home and scroll once, then come back.",
+        @"diag_feed_counts": @"%lu sections seen, %lu dropped as promoted.",
         @"diag_tab": @"Downloads tab",
         @"diag_tab_none": @"Nothing yet. It attaches when the tab bar is first built.",
         @"diag_counters_off": @"Off. Turn on dislike counts in settings, play a video, then come back.",
@@ -325,6 +328,9 @@ static void SCIBuildTables(void) {
         @"dl_saved": @"حُفظ في الصور.",
 
         // مركز التحميلات.
+        @"diag_feed": @"ترشيح الصفحة الرئيسية",
+        @"diag_feed_none": @"لم تُرَ أقسام. افتح الرئيسية ومرّر مرّة، ثم عد.",
+        @"diag_feed_counts": @"%lu قسمًا شوهد، و%lu أُسقط كإعلان.",
         @"diag_tab": @"تبويب التحميلات",
         @"diag_tab_none": @"لا شيء بعد. يتعلّق عند أوّل بناء لشريط التبويب.",
         @"diag_counters_off": @"مطفأ. فعّل عدد عدم الإعجاب في الإعدادات، شغّل فيديو، ثم عد.",

@@ -166,6 +166,22 @@ static NSMutableOrderedSet<NSString *> *sciTabStates = nil;
     [sciTabStates addObject:state];
 }
 
+/// Running totals, not the last call: the feed is filled a page at a time, and the last
+/// page alone says nothing about whether the ads were caught.
+static NSUInteger sciFeedSeen = 0;
+static NSUInteger sciFeedDropped = 0;
+
++ (void)recordFeedSections:(NSUInteger)seen dropped:(NSUInteger)dropped {
+    sciFeedSeen += seen;
+    sciFeedDropped += dropped;
+}
+
++ (NSString *)feedState {
+    if (!sciFeedSeen) return SCILocalized(@"diag_feed_none");
+    return [NSString stringWithFormat:SCILocalized(@"diag_feed_counts"),
+        (unsigned long)sciFeedSeen, (unsigned long)sciFeedDropped];
+}
+
 + (NSString *)tabState {
     if (!sciTabStates.count) return SCILocalized(@"diag_tab_none");
     return [[sciTabStates array] componentsJoinedByString:@"\n  "];

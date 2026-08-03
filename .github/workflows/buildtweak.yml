@@ -454,7 +454,7 @@ jobs:
                 # it -- YouTube shipped an index missing its own release exactly
                 # that way, and this side had the same gap without having hit it.
                 chmod +x main/tools/fetch-published-debs.sh
-                ./main/tools/fetch-published-debs.sh published "${{ github.repository }}" 3 "$TWEAK_DIR/packages"
+                ./main/tools/fetch-published-debs.sh published "${{ github.repository }}" 3 "$TWEAK_DIR/packages" instagram
 
             - name: Publish APT repo to GitHub Pages
               if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')

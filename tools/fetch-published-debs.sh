@@ -49,6 +49,17 @@ KEEP="${3:-3}"
 # the collision guard in make-repo.sh stopped the release. One naming rule, one place.
 LOCAL_DIRS="${4:-}"
 
+# Which tweak this run is responsible for, as a directory name under tweaks/.
+#
+# A run is strict about its own tweak and forgiving about the others, and that asymmetry is
+# the whole point. The first version of this guard required every tweak's current version to
+# be present in every run, which made the two workflows fail each other: YouTube's run could
+# not see Instagram's release, Instagram's run could not see YouTube's, and both refused to
+# deploy. Neither was broken. The index simply stopped being published at all, which is a
+# worse failure than the stale index this was written to prevent -- a stale index serves an
+# old version, a guard that never passes serves nothing new ever again.
+OWNER_TWEAK="${5:-}"
+
 # How far back to look. Bounded, because every push rebuilds the index and walking
 # the entire release history each time would cost more the longer the project lives.
 SCAN=40
@@ -188,43 +199,83 @@ verify_versions() {
     printf '%s' "$missing"
 }
 
+#
+# Fetches one release by tag, rather than waiting for it to show up in the listing.
+#
+# This is the actual fix for the eventual consistency, and it took a failed deploy of both
+# tweaks to see it. The listing endpoint is what lags; a release asked for *by name* is
+# served as soon as it exists. Every version that has to be present is already known -- it
+# is written in the tweak's own control -- so there is no reason to go looking for it in a
+# list. The two tag shapes are the two this repository uses: Instagram tags vX.Y.Z and
+# YouTube tags youtube-vX.Y.Z, so the second one is tried when the first is not there.
+#
+fetch_by_tag() {
+    local tweak="$1" version="$2"
+    local dir="${staging}/direct-${tweak}-${version}"
+    mkdir -p "$dir"
+
+    local tag
+    for tag in "${tweak}-v${version}" "v${version}" "${version}"; do
+        if gh release download "$tag" --repo "$REPO" \
+                --pattern '*.deb' --dir "$dir" --clobber 2>/dev/null; then
+            echo "Fetched ${tag} directly."
+            break
+        fi
+    done
+
+    local deb package version_read arch
+    for deb in "$dir"/*.deb; do
+        [ -f "$deb" ] || continue
+        package=$(dpkg-deb -f "$deb" Package 2>/dev/null || true)
+        [ -n "$package" ] || continue
+        version_read=$(dpkg-deb -f "$deb" Version 2>/dev/null || echo "0")
+        arch=$(dpkg-deb -f "$deb" Architecture 2>/dev/null || echo "unknown")
+        cp -f "$deb" "${OUT_DIR}/${package}_${version_read}_${arch}.deb"
+    done
+}
+
 missing="$(verify_versions)"
 
 if [ -n "$missing" ]; then
-    echo "::warning::Missing from the gathered set:${missing} — the releases listing was"
-    echo "::warning::probably read before they appeared. Waiting and asking again."
-    sleep 20
+    echo "::warning::Missing from the listing:${missing} — asking for those releases by name."
 
-    # Only the releases are re-read; the local fold-in above already ran and its files
-    # are still in place.
-    tags=$(gh api "repos/${REPO}/releases?per_page=${SCAN}" \
-           --jq '.[] | select(.draft == false) | .tag_name' || true)
-
-    for tag in $tags; do
-        dir="${staging}/retry-${tag//\//_}"
-        mkdir -p "$dir"
-        gh release download "$tag" --repo "$REPO" \
-            --pattern '*.deb' --dir "$dir" --clobber 2>/dev/null || continue
-
-        for deb in "$dir"/*.deb; do
-            [ -f "$deb" ] || continue
-            package=$(dpkg-deb -f "$deb" Package 2>/dev/null || true)
-            [ -n "$package" ] || continue
-            version=$(dpkg-deb -f "$deb" Version 2>/dev/null || echo "0")
-            arch=$(dpkg-deb -f "$deb" Architecture 2>/dev/null || echo "unknown")
-
-            target="${OUT_DIR}/${package}_${version}_${arch}.deb"
-            [ -f "$target" ] || cp -f "$deb" "$target"
-        done
+    for control in "$(dirname "$0")"/../tweaks/*/control; do
+        [ -f "$control" ] || continue
+        tweak=$(basename "$(dirname "$control")")
+        version=$(awk -F': *' '/^Version:/ {print $2; exit}' "$control")
+        [ -n "$version" ] || continue
+        fetch_by_tag "$tweak" "$version"
     done
 
     missing="$(verify_versions)"
 fi
 
 if [ -n "$missing" ]; then
-    echo "::error::The index would be published without:${missing}"
-    echo "::error::Refusing to deploy a source that serves an older version than the release."
-    exit 1
+    # Strict about this run's own tweak: if the version this run just built is not in the
+    # set, the run itself is wrong and publishing would serve something older than what it
+    # released.
+    for entry in $missing; do
+        # The list alternates package and version. Told apart by the first character, not by
+        # counting dots -- com.albrhi.tweak has two dots as surely as 3.8.2 does, and the
+        # pattern that seemed to distinguish them skipped every entry instead.
+        case "$entry" in
+            [0-9]*) continue ;;
+        esac
+
+        if [ -n "$OWNER_TWEAK" ] && \
+           grep -q "^Package: ${entry}$" "$(dirname "$0")/../tweaks/${OWNER_TWEAK}/control" 2>/dev/null; then
+            echo "::error::This run's own package is missing from the index: ${entry}"
+            echo "::error::Refusing to publish a source older than the release this run made."
+            exit 1
+        fi
+    done
+
+    # Another tweak's newest release is not visible yet. Warned, not failed -- that tweak's
+    # own workflow is what guarantees its version lands, and it rebuilds this same index
+    # from the same releases when it runs. Failing here would only mean neither ever
+    # publishes.
+    echo "::warning::Publishing without:${missing}"
+    echo "::warning::That tweak's own workflow will put it in when it next runs."
 fi
 
 echo

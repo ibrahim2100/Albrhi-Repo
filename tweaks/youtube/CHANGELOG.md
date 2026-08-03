@@ -3,6 +3,17 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.20.1
+
+- **Sponsored rows on Home should go now.** The list of what counts as an advertisement was
+  written by hand, so it only ever covered the kinds someone had thought of. It is taken
+  from YouTube's own build this time — including the wrapper every feed advertisement
+  arrives in, which catches the kinds nobody has seen yet.
+- If any still get through, Settings → Diagnostics now says how much of the feed was checked
+  and how much was dropped. That tells apart "it never looked" from "it looked and did not
+  recognise it", which are different problems with the same complaint.
+- Fixes the release itself failing to publish.
+
 ## v0.20.0
 
 - **The Download Centre is a page now, not a window.** Tapping the tab changes what is on

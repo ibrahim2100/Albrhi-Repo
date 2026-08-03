@@ -90,6 +90,10 @@
 + (void)recordTabState:(NSString *)state;
 + (NSString *)tabState;
 
+/// How much of the feed this run saw, and how much of it was dropped as promoted.
++ (void)recordFeedSections:(NSUInteger)seen dropped:(NSUInteger)dropped;
++ (NSString *)feedState;
+
 /// The whole report as text: what the file holds and the copy button copies.
 + (NSString *)report;
 

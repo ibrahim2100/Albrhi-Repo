@@ -290,7 +290,7 @@ jobs:
                 # in here under the build's own filename, and the collision guard
                 # correctly refused two files carrying one identity.
                 chmod +x main/tools/fetch-published-debs.sh
-                ./main/tools/fetch-published-debs.sh published "${{ github.repository }}" 3 "$TWEAK_DIR/packages"
+                ./main/tools/fetch-published-debs.sh published "${{ github.repository }}" 3 "$TWEAK_DIR/packages" youtube
 
             # Both workflows deploy, and that is not redundancy -- it is what makes
             # the order they run in irrelevant.
