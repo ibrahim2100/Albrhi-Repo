@@ -176,10 +176,22 @@ static NSUInteger sciFeedDropped = 0;
     sciFeedDropped += dropped;
 }
 
+/// Latest only, and appended to the feed line rather than given a section of its own --
+/// it is a fact about that filter, and a reader looking at the counts is the reader who
+/// needs to know the filter stood down.
+static NSString *sciFeedBrake = nil;
+
 + (NSString *)feedState {
     if (!sciFeedSeen) return SCILocalized(@"diag_feed_none");
-    return [NSString stringWithFormat:SCILocalized(@"diag_feed_counts"),
+
+    NSString *counts = [NSString stringWithFormat:SCILocalized(@"diag_feed_counts"),
         (unsigned long)sciFeedSeen, (unsigned long)sciFeedDropped];
+
+    // The brake belongs on the same line as the counts. Read on its own, "0 dropped" says
+    // the filter recognised nothing -- which is a different problem from the filter standing
+    // down because it recognised far too much, and they need different fixes.
+    if (!sciFeedBrake.length) return counts;
+    return [NSString stringWithFormat:@"%@\n  %@", counts, sciFeedBrake];
 }
 
 /// Latest only. This runs on every layout pass of the Shorts overlay, so a growing list
@@ -199,6 +211,12 @@ static NSMutableOrderedSet<NSString *> *sciPlaybackFailures = nil;
     if (sciPlaybackFailures.count >= 6) return;
 
     [sciPlaybackFailures addObject:detail];
+    [self writeReportToFile];
+}
+
++ (void)recordFeedBrake:(NSString *)detail {
+    if (!detail.length) return;
+    sciFeedBrake = [detail copy];
     [self writeReportToFile];
 }
 

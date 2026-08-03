@@ -98,6 +98,9 @@
 + (void)recordPlaybackFailure:(NSString *)detail;
 + (NSString *)playbackFailures;
 
+/// When the feed filter refused to run because it would have dropped too much.
++ (void)recordFeedBrake:(NSString *)detail;
+
 /// How much of the feed this run saw, and how much of it was dropped as promoted.
 + (void)recordFeedSections:(NSUInteger)seen dropped:(NSUInteger)dropped;
 + (NSString *)feedState;

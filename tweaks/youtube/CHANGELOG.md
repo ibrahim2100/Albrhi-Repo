@@ -3,6 +3,18 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.26.0
+
+- **Sponsored rows on Home should finally go.** Every previous attempt used names taken from
+  the app's own code, and none of them matched what is actually on screen. This one was
+  identified by pointing at a real Sponsored row on a real phone and asking what it was.
+- **And a brake, so this cannot empty your feed again.** If the filter would remove more than
+  a third of the page in one go, it stops and removes nothing — because that is not an ad
+  filter, that is a mistake, and it is exactly what happened in 0.20.1. Ads getting through
+  is a complaint; a blank Home is a broken app.
+- Diagnostics says when the brake stopped it, so "no ads gone" tells you which of the two
+  problems you have.
+
 ## v0.25.1
 
 - **Saving a Short really does save the one you are watching now.** Last release made the

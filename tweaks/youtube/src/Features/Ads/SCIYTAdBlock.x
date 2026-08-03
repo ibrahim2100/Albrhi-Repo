@@ -86,6 +86,16 @@ static NSArray<NSString *> *SCIPromotedIdentifiers(void) {
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         identifiers = @[
+            // Measured on the device, not guessed and not read out of the binary.
+            //
+            // A Sponsored row on Home was selected with FLEX and reported itself as an
+            // ELMContainerNode carrying the element `eml.feed_ad_metadata`. That is the
+            // first identifier here that came from looking at the thing itself while it was
+            // on screen -- the list below it was written from names, which is why it caught
+            // nothing across sixty-seven sections, and why widening it from the binary in
+            // 0.20.1 caught real videos instead.
+            @"feed_ad_metadata",
+
             // Outright ad slots.
             @"brand_promo",
             @"feed_ad_metadata",
@@ -164,6 +174,28 @@ static BOOL SCISectionIsPromoted(id section) {
         if (!SCISectionIsPromoted(section)) {
             [kept addObject:section];
         }
+    }
+
+    // The brake.
+    //
+    // 0.20.1 widened this list and emptied the home feed: the test is a substring match
+    // against a section's whole description, and a section's description contains its
+    // items -- so a marker that identifies an advertisement *inside* a shelf condemns the
+    // shelf and every real video in it. It took a device report to notice, and by then it
+    // was released.
+    //
+    // An identifier that is wrong in that way does not drop a few sections, it drops most
+    // of them. So a batch that loses more than a third is not filtering, it is failing, and
+    // the whole batch is put back. Ads getting through is a complaint; a blank feed is a
+    // broken app, and this is the difference between the two costing a message and costing
+    // a release.
+    if (sections.count >= 4 && kept.count * 3 < sections.count * 2) {
+        [SCIYTDiagnostics recordFeedSections:sections.count dropped:0];
+        [SCIYTDiagnostics recordFeedBrake:
+            [NSString stringWithFormat:@"refused to drop %lu of %lu — that is not an ad filter",
+             (unsigned long)(sections.count - kept.count), (unsigned long)sections.count]];
+        %orig;
+        return;
     }
 
     if (kept.count != sections.count) {
