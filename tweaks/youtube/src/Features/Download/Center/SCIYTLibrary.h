@@ -53,6 +53,14 @@ extern NSNotificationName const SCIYTLibraryDidChangeNotification;
 /// Deletes the file and the row.
 - (void)remove:(SCIYTJob *)job;
 
+/// Writes the list to disk.
+///
+/// Public because the player edits a job without going through this class: it records where
+/// playback stopped, on the job itself, and that has to survive the app being killed. Call
+/// it on the main thread -- it walks the store, which has one thread for the reason set out
+/// in -adopt:for:.
+- (void)save;
+
 /// Copies a finished download into Photos, leaving ours where it is.
 - (void)export:(SCIYTJob *)job completion:(void (^)(BOOL ok, NSString *_Nullable detail))completion;
 

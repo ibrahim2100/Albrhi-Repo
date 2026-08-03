@@ -63,6 +63,13 @@ typedef NS_ENUM(NSInteger, SCIYTJobState) {
 /// assets on the main thread to draw itself, and a raw AAC file has to be read through
 /// before it will say.
 @property (nonatomic) double duration;
+
+/// Where playback had reached when it was last left, in seconds.
+///
+/// Kept per file rather than per session, so closing the app and coming back a day later
+/// still offers the place you stopped. Zero means the start, which is also what a file that
+/// was watched to the end resets to -- finishing something is not the same as pausing in it.
+@property (nonatomic) double position;
 @property (nonatomic, copy) NSDate *createdAt;
 @property (nonatomic, copy, nullable) NSString *failure;
 

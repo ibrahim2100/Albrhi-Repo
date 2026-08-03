@@ -3,6 +3,17 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.19.1
+
+- **It remembers where you stopped.** Open something again and it carries on from where you
+  left it — including after the app has been closed for days. Not for the first few seconds
+  or the last few: those are not places anyone stopped in the middle of.
+- **Playback speed**, from 0.75× to 2×.
+- **A sleep timer** — five minutes to an hour, or simply when the current one ends. The moon
+  fills in while it is set, so you can see at a glance whether one is.
+- **AirPlay**, from the player itself.
+- Fixes 0.19.0, which did not build.
+
 ## v0.19.0
 
 - **Turn the phone and the video fills the screen.** It used to shrink into the middle of a

@@ -1,5 +1,6 @@
 #import "SCIYTPlayer.h"
 #import "SCIYTThumbnails.h"
+#import "SCIYTLibrary.h"
 #import "SCIYTIcon.h"
 #import "../../../SCILog.h"
 #import "../../../Prefs.h"
@@ -42,7 +43,7 @@ static const double kSCINudge = 10;
 @property (nonatomic, strong) UISlider *scrubber;
 @property (nonatomic, strong) UIButton *playPause;
 @property (nonatomic, strong) UIButton *pipButton;
-@property (nonatomic, strong) UIButton *close;
+@property (nonatomic, strong) UIButton *closeButton;
 
 @property (nonatomic, strong) NSLayoutConstraint *stageBottomToChrome;
 @property (nonatomic, strong) NSLayoutConstraint *stageBottomToView;
@@ -58,7 +59,26 @@ static const double kSCINudge = 10;
 @property (nonatomic, strong) id backwardToken;
 @property (nonatomic) BOOL torndown;
 @property (nonatomic) BOOL publishedLength;
+
+@property (nonatomic, strong) UIButton *speedButton;
+@property (nonatomic, strong) UIButton *sleepButton;
+@property (nonatomic, strong) NSTimer *sleeper;
+@property (nonatomic) float speed;
+@property (nonatomic) BOOL sleepAtEnd;
 @end
+
+/// Where playback stopped is written down as it moves, not only on the way out.
+///
+/// -viewDidDisappear: is not reached when the app is killed from the switcher or jetsammed,
+/// and those are exactly the times someone stops watching. Twice a second is far too often
+/// for a disk write, so the position lives on the job as it plays and is committed on the
+/// events that matter: pausing, leaving, changing track, closing.
+static const double kSCIResumeFloor = 10;
+
+/// How near the end still counts as finished.
+///
+/// Offering to resume something with twenty seconds left is offering to watch the credits.
+static const double kSCIResumeCeiling = 20;
 
 @implementation SCIYTPlayer
 
@@ -320,14 +340,33 @@ static const double kSCINudge = 10;
     stack.translatesAutoresizingMaskIntoConstraints = NO;
     [self.chrome addSubview:stack];
 
-    self.close = [self control:@"chevron.down" size:18 action:@selector(close)];
-    self.close.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:self.close];
+    self.closeButton = [self control:@"chevron.down" size:18 action:@selector(close)];
+    self.closeButton.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:self.closeButton];
 
     self.pipButton = [self control:@"pip.enter" size:18 action:@selector(enterPiP)];
     self.pipButton.translatesAutoresizingMaskIntoConstraints = NO;
     self.pipButton.hidden = YES;
     [self.view addSubview:self.pipButton];
+
+    // The second row: speed, where the sound is going, and the sleep timer. Below the
+    // transport rather than beside it, because these are settings for the listening and the
+    // five above are the listening itself -- one row of eight would flatten that difference.
+    self.speed = 1;
+    self.speedButton = [self textControl:@"1×" action:@selector(pickSpeed)];
+    self.sleepButton = [self control:@"moon.zzz" size:17 action:@selector(pickSleep)];
+
+    AVRoutePickerView *route = [[AVRoutePickerView alloc] init];
+    route.activeTintColor = SCIAccent();
+    route.tintColor = [UIColor colorWithWhite:1 alpha:0.75];
+
+    UIStackView *extras = [[UIStackView alloc] initWithArrangedSubviews:
+        @[self.speedButton, route, self.sleepButton]];
+    extras.axis = UILayoutConstraintAxisHorizontal;
+    extras.distribution = UIStackViewDistributionEqualCentering;
+    extras.alignment = UIStackViewAlignmentCenter;
+    [stack addArrangedSubview:extras];
+    [stack setCustomSpacing:16 afterView:transport];
 
     self.stageBottomToChrome =
         [self.stage.bottomAnchor constraintEqualToAnchor:self.chrome.topAnchor constant:-8];
@@ -343,12 +382,12 @@ static const double kSCINudge = 10;
         [stack.trailingAnchor constraintEqualToAnchor:self.chrome.trailingAnchor constant:-26],
         [stack.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-18],
 
-        [self.close.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:6],
-        [self.close.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:14],
-        [self.close.widthAnchor constraintEqualToConstant:44],
-        [self.close.heightAnchor constraintEqualToConstant:44],
+        [self.closeButton.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:6],
+        [self.closeButton.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:14],
+        [self.closeButton.widthAnchor constraintEqualToConstant:44],
+        [self.closeButton.heightAnchor constraintEqualToConstant:44],
 
-        [self.pipButton.centerYAnchor constraintEqualToAnchor:self.close.centerYAnchor],
+        [self.pipButton.centerYAnchor constraintEqualToAnchor:self.closeButton.centerYAnchor],
         [self.pipButton.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-14],
         [self.pipButton.widthAnchor constraintEqualToConstant:44],
         [self.pipButton.heightAnchor constraintEqualToConstant:44]
@@ -386,6 +425,17 @@ static const double kSCINudge = 10;
     }];
 }
 
+/// A control that is a word rather than a glyph. Speed has no symbol that reads at a
+/// glance, and "1.5×" is its own icon.
+- (UIButton *)textControl:(NSString *)text action:(SEL)action {
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
+    [button setTitle:text forState:UIControlStateNormal];
+    button.titleLabel.font = [UIFont monospacedDigitSystemFontOfSize:15 weight:UIFontWeightSemibold];
+    [button setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [button addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
+    return button;
+}
+
 - (UILabel *)timeLabel:(NSTextAlignment)alignment {
     UILabel *label = [[UILabel alloc] init];
     label.font = [UIFont monospacedDigitSystemFontOfSize:12 weight:UIFontWeightMedium];
@@ -418,7 +468,7 @@ static const double kSCINudge = 10;
     void (^apply)(void) = ^{
         CGFloat alpha = hidden ? 0 : 1;
         self.chrome.alpha = alpha;
-        self.close.alpha = alpha;
+        self.closeButton.alpha = alpha;
         self.pipButton.alpha = alpha;
     };
 
@@ -452,6 +502,143 @@ static const double kSCINudge = 10;
     }];
 }
 
+// MARK: - Speed, and stopping on its own
+
+- (void)pickSpeed {
+    UIAlertController *sheet =
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"player_speed")
+                                            message:nil
+                                     preferredStyle:UIAlertControllerStyleActionSheet];
+
+    __weak __typeof(self) weakSelf = self;
+    for (NSNumber *rate in @[@0.75, @1.0, @1.25, @1.5, @1.75, @2.0]) {
+        NSString *label = [NSString stringWithFormat:@"%@×",
+            [@(rate.floatValue) stringValue]];
+
+        [sheet addAction:[UIAlertAction actionWithTitle:label
+                                                  style:UIAlertActionStyleDefault
+                                                handler:^(__unused UIAlertAction *action) {
+            [weakSelf applySpeed:rate.floatValue];
+        }]];
+    }
+
+    [self offer:sheet from:self.speedButton];
+}
+
+- (void)applySpeed:(float)rate {
+    self.speed = rate;
+    [self.speedButton setTitle:[NSString stringWithFormat:@"%@×", [@(rate) stringValue]]
+                      forState:UIControlStateNormal];
+
+    // Only while playing. Setting a rate on a paused player starts it, which is not what
+    // choosing a speed asks for.
+    if (self.player.rate > 0) self.player.rate = rate;
+    [self describeToLockScreen];
+    [self restartLinger];
+}
+
+- (void)pickSleep {
+    UIAlertController *sheet =
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"player_sleep")
+                                            message:nil
+                                     preferredStyle:UIAlertControllerStyleActionSheet];
+
+    __weak __typeof(self) weakSelf = self;
+
+    if (self.sleeper || self.sleepAtEnd) {
+        [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"player_sleep_off")
+                                                  style:UIAlertActionStyleDestructive
+                                                handler:^(__unused UIAlertAction *action) {
+            [weakSelf cancelSleep];
+        }]];
+    }
+
+    for (NSNumber *minutes in @[@5, @15, @30, @45, @60]) {
+        NSString *label = [NSString stringWithFormat:SCILocalized(@"player_sleep_minutes"),
+            (long)minutes.integerValue];
+
+        [sheet addAction:[UIAlertAction actionWithTitle:label
+                                                  style:UIAlertActionStyleDefault
+                                                handler:^(__unused UIAlertAction *action) {
+            [weakSelf sleepIn:minutes.integerValue * 60];
+        }]];
+    }
+
+    // The one everybody actually wants for a song, and the one a clock cannot express.
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"player_sleep_end")
+                                              style:UIAlertActionStyleDefault
+                                            handler:^(__unused UIAlertAction *action) {
+        [weakSelf cancelSleep];
+        weakSelf.sleepAtEnd = YES;
+        [weakSelf markSleep:YES];
+    }]];
+
+    [self offer:sheet from:self.sleepButton];
+}
+
+- (void)sleepIn:(NSTimeInterval)seconds {
+    [self cancelSleep];
+
+    __weak __typeof(self) weakSelf = self;
+    self.sleeper = [NSTimer scheduledTimerWithTimeInterval:seconds
+                                                   repeats:NO
+                                                     block:^(__unused NSTimer *timer) {
+        [weakSelf.player pause];
+        [weakSelf showPlaying:NO];
+        [weakSelf describeToLockScreen];
+        [weakSelf cancelSleep];
+    }];
+
+    [self markSleep:YES];
+}
+
+- (void)cancelSleep {
+    [self.sleeper invalidate];
+    self.sleeper = nil;
+    self.sleepAtEnd = NO;
+    [self markSleep:NO];
+}
+
+/// The moon fills in while a timer is set, so it is visible at a glance whether one is.
+- (void)markSleep:(BOOL)armed {
+    UIImageSymbolConfiguration *weight =
+        [UIImageSymbolConfiguration configurationWithPointSize:17 weight:UIImageSymbolWeightMedium];
+    [self.sleepButton setImage:[UIImage systemImageNamed:(armed ? @"moon.zzz.fill" : @"moon.zzz")
+                                       withConfiguration:weight]
+                      forState:UIControlStateNormal];
+    self.sleepButton.tintColor = armed ? SCIAccent() : [UIColor whiteColor];
+}
+
+/// Presents a sheet, anchored so iPad has something to point at.
+- (void)offer:(UIAlertController *)sheet from:(UIView *)anchor {
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
+                                              style:UIAlertActionStyleCancel
+                                            handler:nil]];
+
+    sheet.popoverPresentationController.sourceView = anchor ?: self.view;
+    sheet.popoverPresentationController.sourceRect = anchor ? anchor.bounds : self.view.bounds;
+
+    [self presentViewController:sheet animated:YES completion:nil];
+}
+
+// MARK: - Where you stopped
+
+/// Writes the position down, for this file, now.
+- (void)rememberPosition {
+    SCIYTJob *job = [self current];
+    if (!job) return;
+
+    double at = CMTimeGetSeconds(self.player.currentTime);
+    double length = CMTimeGetSeconds(self.player.currentItem.duration);
+    if (!isfinite(at) || !isfinite(length) || length <= 0) return;
+
+    // Only somewhere worth returning to. The first few seconds are not a place you left
+    // off, and the last few are the end -- both would offer to resume something nobody
+    // stopped in the middle of.
+    job.position = (at > kSCIResumeFloor && at < length - kSCIResumeCeiling) ? at : 0;
+    [[SCIYTLibrary shared] save];
+}
+
 - (void)doubleTapped:(UITapGestureRecognizer *)tap {
     CGPoint at = [tap locationInView:self.stage];
     BOOL ahead = at.x > CGRectGetMidX(self.stage.bounds);
@@ -476,6 +663,9 @@ static const double kSCINudge = 10;
         [self close];
         return;
     }
+
+    // The one being left, before it is replaced.
+    if (self.player) [self rememberPosition];
 
     if (self.ticker) { [self.player removeTimeObserver:self.ticker]; self.ticker = nil; }
 
@@ -513,7 +703,16 @@ static const double kSCINudge = 10;
         [weakSelf tick];
     }];
 
+    // Back where it was left, if it was left anywhere worth returning to. Done before
+    // playing rather than after, so it does not start at the beginning and jump.
+    if (job.position > kSCIResumeFloor) {
+        [self.player seekToTime:CMTimeMakeWithSeconds(job.position, 600)
+                toleranceBefore:kCMTimeZero
+                 toleranceAfter:kCMTimeZero];
+    }
+
     [self.player play];
+    self.player.rate = self.speed;
     [self showPlaying:YES];
     [self setChromeHidden:NO animated:NO];
     [self describeToLockScreen];
@@ -534,11 +733,28 @@ static const double kSCINudge = 10;
     [self load];
 }
 
-- (void)reachedEnd { [self next]; }
+- (void)reachedEnd {
+    // Watched to the end, so there is nothing to come back to.
+    [self current].position = 0;
+    [[SCIYTLibrary shared] save];
+
+    if (self.sleepAtEnd) {
+        [self cancelSleep];
+        [self showPlaying:NO];
+        [self describeToLockScreen];
+        return;
+    }
+    [self next];
+}
 
 - (void)togglePlay {
     BOOL playing = (self.player.rate > 0);
-    if (playing) [self.player pause]; else [self.player play];
+    if (playing) {
+        [self.player pause];
+        [self rememberPosition];
+    } else {
+        self.player.rate = self.speed;
+    }
     [self showPlaying:!playing];
     [self describeToLockScreen];
     [self restartLinger];
@@ -553,6 +769,7 @@ static const double kSCINudge = 10;
 }
 
 - (void)close {
+    [self rememberPosition];
     [self.player pause];
     [self dismissViewControllerAnimated:YES completion:nil];
 }
@@ -644,6 +861,8 @@ static const double kSCINudge = 10;
 // MARK: - Off the screen
 
 - (void)wentAway {
+    [self rememberPosition];
+
     // Picture in picture is the one case where the layer must keep its player: that little
     // window *is* the layer, and handing it back an empty one closes it.
     if (self.pip.isPictureInPictureActive) return;

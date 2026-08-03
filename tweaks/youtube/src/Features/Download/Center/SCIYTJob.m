@@ -67,6 +67,7 @@
     self.kind       = [coder decodeIntegerForKey:@"kind"];
     self.bytes      = [coder decodeInt64ForKey:@"bytes"];
     self.duration   = [coder decodeDoubleForKey:@"duration"];
+    self.position   = [coder decodeDoubleForKey:@"position"];
     self.exported   = [coder decodeBoolForKey:@"exported"];
 
     // Always Done. Only finished jobs are written out, and a decoder that trusted a
@@ -88,6 +89,7 @@
     [coder encodeInteger:self.kind forKey:@"kind"];
     [coder encodeInt64:self.bytes forKey:@"bytes"];
     [coder encodeDouble:self.duration forKey:@"duration"];
+    [coder encodeDouble:self.position forKey:@"position"];
     [coder encodeBool:self.exported forKey:@"exported"];
 }
 
