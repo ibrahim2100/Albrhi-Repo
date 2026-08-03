@@ -304,3 +304,19 @@
 @interface YTReelModel : NSObject
 - (NSString *)videoId;
 @end
+
+
+//
+// An Elements node -- the layer YouTube renders both feed rows and Shorts overlays with.
+//
+// Declared only so an ad node can be collapsed. Both of the identifiers acted on were read
+// off a real screen with FLEX rather than out of this binary: `eml.feed_ad_metadata` on Home
+// and `eml.ad_image` in Shorts. Nothing here guesses at a name.
+//
+// The two properties are ASDisplayNode's, which this descends from. Declared rather than
+// imported because the tweak has no AsyncDisplayKit headers and needs exactly two fields.
+//
+@interface ELMContainerNode : NSObject
+@property (atomic, assign, getter=isHidden) BOOL hidden;
+@property (atomic, assign) CGFloat alpha;
+@end

@@ -126,6 +126,7 @@ static void SCIBuildTables(void) {
 
         @"dl_row": @"Save this video",
         @"dl_row_note": @"Downloads the video you are watching to Photos, at the quality you pick.",
+        @"dl_shorts_unknown": @"Could not tell which Short this is, so nothing was saved — saving the wrong one is worse. Overlay found: %@. Model: %@. Please send this from Settings, Diagnostics.",
         @"dl_title": @"Save video",
         @"dl_choose_quality": @"Which quality?",
         @"dl_with_audio": @" (fetches audio too)",
@@ -337,6 +338,7 @@ static void SCIBuildTables(void) {
 
         @"dl_row": @"احفظ هذا الفيديو",
         @"dl_row_note": @"ينزّل الفيديو الذي تشاهده إلى الصور، بالجودة التي تختارها.",
+        @"dl_shorts_unknown": @"تعذّر تحديد أيّ شورت هذا، فلم يُحفظ شيء — حفظ الخطأ أسوأ. الطبقة: %@. النموذج: %@. أرسل هذا من الإعدادات ثم التشخيص.",
         @"dl_title": @"حفظ الفيديو",
         @"dl_choose_quality": @"أي جودة؟",
         @"dl_with_audio": @" (يجلب الصوت أيضًا)",

@@ -3,6 +3,18 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.27.0
+
+- **The ad picture in Shorts is hidden.** Refusing the ad page was not enough — it gets built
+  anyway — so the picture itself is refused where it is drawn. Its place stays and you swipe
+  past it, but there is nothing in it.
+- **Saving a Short no longer saves the wrong one silently.** It still gets it wrong sometimes,
+  and until that is fixed it will now say so and save nothing rather than quietly hand you a
+  different video. A wrong file that looks like a success is why this has taken three
+  attempts — you only find out when you open it.
+- The message says what the tweak could and could not see, so the answer arrives with the
+  complaint instead of needing another release to ask for it.
+
 ## v0.26.1
 
 - **Ads in Shorts no longer draw.** A Short that is an advertisement is a different kind of

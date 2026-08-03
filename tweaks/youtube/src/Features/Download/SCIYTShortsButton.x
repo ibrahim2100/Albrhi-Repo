@@ -190,8 +190,34 @@ static UIView *SCIFindActionBar(UIView *overlay) {
 
     SCILogV(@"shorts: save %@ (announced was %@)", videoID, [SCIYTDiagnostics activeVideoID]);
     [SCIYTDiagnostics recordShortsButton:
-        [NSString stringWithFormat:@"saving %@, announced %@",
-            videoID ?: @"?", [SCIYTDiagnostics activeVideoID] ?: @"?"]];
+        [NSString stringWithFormat:@"saving %@, announced %@, overlay %@, model %@",
+            videoID ?: @"?", [SCIYTDiagnostics activeVideoID] ?: @"?",
+            overlay ? @"found" : @"missing", model ? NSStringFromClass([model class]) : @"missing"]];
+
+    // Refuses rather than falling back.
+    //
+    // Without this the sheet opens anyway and everything downstream reaches for whatever is
+    // playing -- which in Shorts is the clip queued below, so the wrong video is saved with
+    // no sign that anything went wrong. That is the failure being reported, and it has now
+    // survived two fixes precisely because it is silent: a download that succeeds on the
+    // wrong thing looks like a working feature until you open the file.
+    //
+    // Saying so is worth more than guessing. The message carries what was found so the
+    // answer arrives with the complaint instead of needing another release to ask.
+    if (!videoID.length) {
+        UIAlertController *alert = [UIAlertController
+            alertControllerWithTitle:SCILocalized(@"dl_title")
+                             message:[NSString stringWithFormat:SCILocalized(@"dl_shorts_unknown"),
+                                      overlay ? @"yes" : @"no",
+                                      model ? NSStringFromClass([model class]) : @"none"]
+                      preferredStyle:UIAlertControllerStyleAlert];
+
+        [alert addAction:[UIAlertAction actionWithTitle:SCILocalized(@"ok")
+                                                  style:UIAlertActionStyleDefault
+                                                handler:nil]];
+        [top presentViewController:alert animated:YES completion:nil];
+        return;
+    }
 
     // The same sheet the long press opens on a normal video. One download path, which is the
     // rule this project has kept since the Instagram side had four of them.

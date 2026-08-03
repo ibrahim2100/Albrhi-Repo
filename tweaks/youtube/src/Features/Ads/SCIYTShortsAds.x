@@ -2,6 +2,7 @@
 #import "../../SCILog.h"
 #import "../../Prefs.h"
 #import "../../Diagnostics/SCIYTDiagnostics.h"
+#import "../../YouTubeHeaders.h"
 
 ///
 /// Ads in Shorts.
@@ -38,6 +39,70 @@
     [SCIYTDiagnostics recordShortsAd:@"refused to render an ad page"];
     SCILogV(@"ads: refused a Shorts ad");
     return NO;
+}
+
+%end
+
+
+///
+/// The ad itself, at the layer that draws it.
+///
+/// Refusing the ad page controller was not enough: a Shorts advertisement came through
+/// anyway and reported itself, again with FLEX, as
+///
+///   <ELMContainerNode: eml.ad_image>  frame (0 137; 390 488)
+///
+/// -- most of the screen. So the page is built regardless of what its controller answers,
+/// and the picture is drawn by an Elements node inside it. That is the layer to refuse at,
+/// and it is the same layer the Home feed's `eml.feed_ad_metadata` lives on.
+///
+/// **Matched against a short list of identifiers read off a screen, never off the binary.**
+/// Both entries were measured. This deliberately does not match on `ad` or `promoted` or
+/// anything shaped like them: this runs on every node the app renders, and a loose match
+/// here would blank real content everywhere at once -- the 0.20.1 failure with a far larger
+/// blast radius.
+///
+static NSArray<NSString *> *SCIAdNodeIdentifiers(void) {
+    static NSArray *identifiers = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        identifiers = @[
+            @"eml.ad_image",
+            @"eml.feed_ad_metadata",
+        ];
+    });
+    return identifiers;
+}
+
+%hook ELMContainerNode
+
+- (void)didEnterVisibleState {
+    %orig;
+
+    if (!SCIPrefEnabled(SCIPrefHideAds)) return;
+
+    NSString *text = nil;
+    @try {
+        text = [self description];
+    } @catch (__unused NSException *exception) {
+        return;
+    }
+    if (!text.length) return;
+
+    for (NSString *identifier in SCIAdNodeIdentifiers()) {
+        if (![text containsString:identifier]) continue;
+
+        // Hidden and made transparent, not resized. A node's size belongs to the layout that
+        // placed it, and fighting that from here is how a feed ends up with overlapping rows;
+        // an invisible node still occupies its space, which is a gap rather than an ad.
+        ((ELMContainerNode *)self).hidden = YES;
+        ((ELMContainerNode *)self).alpha = 0;
+
+        [SCIYTDiagnostics recordShortsAd:
+            [NSString stringWithFormat:@"hid a node matching %@", identifier]];
+        SCILogV(@"ads: hid an ELM node matching %@", identifier);
+        return;
+    }
 }
 
 %end
