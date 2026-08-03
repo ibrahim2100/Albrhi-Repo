@@ -73,6 +73,9 @@ static const double kSCINudge = 10;
 
 /// Half-seconds spent with a file that will not say how long it is.
 @property (nonatomic) NSInteger blindTicks;
+
+/// Whether the audio session is already ours, so it is not taken twice.
+@property (nonatomic) BOOL claimed;
 @end
 
 /// Where playback stopped is written down as it moves, not only on the way out.
@@ -257,6 +260,7 @@ static SCIYTPlayer *sciCurrent = nil;
 
     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = nil;
 
+    self.claimed = NO;
     [[AVAudioSession sharedInstance] setActive:NO
                                    withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
                                          error:nil];
@@ -1004,21 +1008,32 @@ static SCIYTPlayer *sciCurrent = nil;
     AVAudioSession *session = [AVAudioSession sharedInstance];
     NSError *error = nil;
 
-    // The mode follows what is playing. MoviePlayback applies processing meant for film
-    // dialogue, which is the wrong treatment for a song and audible on one.
-    AVAudioSessionMode mode = ([self current].kind == SCIYTJobKindAudio)
-        ? AVAudioSessionModeDefault
-        : AVAudioSessionModeMoviePlayback;
-
+    // One mode for both, and MoviePlayback because that is the one demonstrably working.
+    //
+    // 0.23.0 split this: MoviePlayback for video, Default for sound, on the reasoning that
+    // processing meant for film dialogue is wrong for music. The reasoning is fine and the
+    // result was not -- video kept playing with the screen off and sound stopped, and the
+    // mode was the only thing this code did differently between the two. A difference I
+    // introduced, present in exactly the broken case and absent from the working one, is
+    // the thing to remove before looking anywhere else.
+    //
+    // Changed back rather than kept and worked around: a tidier sound profile is not worth
+    // sound that stops.
     [session setCategory:AVAudioSessionCategoryPlayback
-                    mode:mode
+                    mode:AVAudioSessionModeMoviePlayback
                  options:0
                    error:&error];
     if (error) SCILogV(@"player: category refused — %@", error.localizedDescription);
 
-    error = nil;
-    [session setActive:YES error:&error];
-    if (error) SCILogV(@"player: session refused — %@", error.localizedDescription);
+    // Only when it is not already ours. Re-activating a live session is not free -- it can
+    // interrupt what is playing through it -- and -wentAway is reached twice on the way to
+    // the background, once for resigning active and once for entering it.
+    if (session.isOtherAudioPlaying || !self.claimed) {
+        error = nil;
+        [session setActive:YES error:&error];
+        if (error) SCILogV(@"player: session refused — %@", error.localizedDescription);
+        self.claimed = (error == nil);
+    }
 }
 
 - (void)interrupted:(NSNotification *)note {

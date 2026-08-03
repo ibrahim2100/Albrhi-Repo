@@ -61,12 +61,9 @@ static UIView *SCIFindActionBar(UIView *overlay) {
     if (!SCIPrefEnabled(SCIPrefShortsButton)) return;
 
     UIView *overlay = (UIView *)self;
-    UIView *bar = SCIFindActionBar(overlay);
+    if (overlay.bounds.size.width <= 0) return;
 
-    if (!bar) {
-        [SCIYTDiagnostics recordShortsButton:@"no action bar column found in the overlay"];
-        return;
-    }
+    UIView *bar = SCIFindActionBar(overlay);
 
     UIButton *button = objc_getAssociatedObject(self, &kSCIShortsButton);
 
@@ -97,16 +94,30 @@ static UIView *SCIFindActionBar(UIView *overlay) {
         [overlay addSubview:button];
         objc_setAssociatedObject(self, &kSCIShortsButton, button, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
-        [SCIYTDiagnostics recordShortsButton:@"button added under the action bar"];
+        [SCIYTDiagnostics recordShortsButton:
+            bar ? @"added under the action bar" : @"added, no action bar found — placed by edge"];
     }
 
     // Frames, never constraints. The layout engine took this tweak down in 0.1.1 and again
     // in 0.1.3, and a rectangle placed under a rectangle needs no help from it -- especially
     // inside a -layoutSubviews that is already running.
     CGFloat side = 44;
-    button.frame = CGRectMake(CGRectGetMidX(bar.frame) - side / 2,
-                              CGRectGetMaxY(bar.frame) + 8,
-                              side, side);
+    CGFloat inset = 12;
+
+    // Under the column when the column was found, and against the trailing edge when it was
+    // not. 0.23.0 returned early instead, so a shape this did not recognise meant no button
+    // at all -- and the report said so to nobody, because nobody looks at a report for a
+    // button they were never told to expect. A button in roughly the right place is worth
+    // more than a correct refusal.
+    CGFloat x = bar ? CGRectGetMidX(bar.frame) - side / 2
+                    : overlay.bounds.size.width - side - inset;
+    CGFloat y = bar ? CGRectGetMaxY(bar.frame) + 8
+                    : overlay.bounds.size.height * 0.72;
+
+    // Kept on screen whichever way it was placed. A column ending near the bottom would
+    // otherwise push it off, which looks exactly like not being added.
+    CGFloat lowest = overlay.bounds.size.height - side - inset;
+    button.frame = CGRectMake(x, MIN(y, lowest), side, side);
 
     // Brought to the front each pass: the overlay re-adds its own views on layout and ours
     // would end up behind them.

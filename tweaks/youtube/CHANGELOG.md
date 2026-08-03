@@ -3,6 +3,16 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.24.1
+
+- **Sound keeps playing with the screen off again**, and its controls come back on the lock
+  screen. Video was fine and sound was not, and the only thing this tweak did differently
+  between them was a sound profile added two releases ago. It is gone; both are treated the
+  same way, which is the way that worked.
+- **The Shorts save button appears even when the layout is not one the tweak recognises.** It
+  was placing itself under the like column and giving up entirely if it could not find one.
+  It now falls back to the edge, which is roughly right, instead of not appearing at all.
+
 ## v0.24.0
 
 - **Writing the cover into saved songs is off now.** It shipped switched on and rewrote every
