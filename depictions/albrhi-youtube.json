@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.17.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **A quality ceiling, separately for Wi-Fi and for mobile data.**\n• The tweak notices which connection you are on as it changes, so nothing has to be switched by hand when you leave the house.\n• **The full quality list is back**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.16.0",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.14.1",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **The player now really closes.**\n• Closing it also hands the sound back, so whatever was playing before — YouTube itself, usually — is allowed to carry on instead of being left muted.\n• **A download landing at the same moment you swipe one away no longer crashes.**",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.16.0"
+          "text": "0.17.0"
         },
         {
           "class": "DepictionTableTextView",
