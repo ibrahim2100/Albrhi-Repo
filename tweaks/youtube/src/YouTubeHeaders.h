@@ -212,6 +212,12 @@
 - (double)currentVideoMediaTime;
 - (void)seekToTime:(double)time;
 
+/// Both verified present on 21.30.5. -pause is how our own player stops this one: two
+/// players inside one process are not arbitrated by the audio session, so one has to be
+/// told, and without that both played at once.
+- (void)pause;
+- (void)play;
+
 /// The two below are *leads*, taken from iSponsorBlock, which is tested on this same
 /// 21.x line and reads both off this class. They are declared so the code compiles and
 /// called only behind -respondsToSelector:, because a lead that is wrong here is an

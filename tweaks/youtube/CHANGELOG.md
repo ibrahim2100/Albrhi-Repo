@@ -3,6 +3,18 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.21.0
+
+- **Two videos no longer play at once.** Opening something from Downloads now stops whatever
+  YouTube was playing. They are both inside the same app, and an iPhone only sorts this out
+  between separate apps — so YouTube's player had to be told, and was not.
+- That is also why sound sometimes stopped when the phone locked: with two players running,
+  the one being managed in the background was not always the one you were listening to.
+- **Rename anything you have saved.** Swipe a row. The file is renamed on disk too, so it
+  arrives with that name when you share it or send it to Photos.
+- **A welcome screen on the first launch**, saying where saved videos go and how to reach
+  the settings. Once, and never again.
+
 ## v0.20.2
 
 - **The feed is back.** Last release widened what counts as an advertisement and it went too

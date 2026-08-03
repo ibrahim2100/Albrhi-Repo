@@ -2,6 +2,7 @@
 #import "SCIYTThumbnails.h"
 #import "SCIYTLibrary.h"
 #import "SCIYTIcon.h"
+#import "SCIYTHostPlayer.h"
 #import "../../../SCILog.h"
 #import "../../../Prefs.h"
 #import "../../../Localization/SCILocalize.h"
@@ -663,6 +664,10 @@ static const double kSCIResumeCeiling = 20;
         [self close];
         return;
     }
+
+    // YouTube's own player, stopped before ours starts. Same process, so the audio session
+    // will not do this for us and both would play at once.
+    [SCIYTHostPlayer pauseHost];
 
     // The one being left, before it is replaced.
     if (self.player) [self rememberPosition];

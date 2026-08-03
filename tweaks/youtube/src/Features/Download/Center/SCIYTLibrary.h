@@ -61,6 +61,13 @@ extern NSNotificationName const SCIYTLibraryDidChangeNotification;
 /// in -adopt:for:.
 - (void)save;
 
+/// Gives a saved item a new name, on disk and in the list.
+///
+/// The extension is kept whatever is typed: a saved video renamed to something without one
+/// stops being openable by anything, and nobody typing a title is thinking about that.
+/// Answers NO if the name is empty or a file of that name is already there.
+- (BOOL)rename:(SCIYTJob *)job to:(NSString *)title;
+
 /// Copies a finished download into Photos, leaving ours where it is.
 - (void)export:(SCIYTJob *)job completion:(void (^)(BOOL ok, NSString *_Nullable detail))completion;
 

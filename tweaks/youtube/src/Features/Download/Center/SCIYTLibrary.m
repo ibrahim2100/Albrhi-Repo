@@ -218,6 +218,51 @@ NSNotificationName const SCIYTLibraryDidChangeNotification = @"SCIYTLibraryDidCh
 
 // MARK: - Afterwards
 
+- (BOOL)rename:(SCIYTJob *)job to:(NSString *)title {
+    NSURL *from = [job fileURL];
+    if (!from || !title.length) return NO;
+
+    // Cleaned the same way -adopt:for: cleans a title, because it is the same problem: this
+    // becomes a file name, and a file name cannot hold a slash whoever typed it.
+    NSMutableCharacterSet *illegal =
+        [NSMutableCharacterSet characterSetWithCharactersInString:@"/\?%*|\"<>:"];
+    [illegal formUnionWithCharacterSet:[NSCharacterSet controlCharacterSet]];
+    [illegal formUnionWithCharacterSet:[NSCharacterSet newlineCharacterSet]];
+
+    NSString *safe = [[title componentsSeparatedByCharactersInSet:illegal]
+                      componentsJoinedByString:@" "];
+    safe = [safe stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    if (!safe.length) return NO;
+    if (safe.length > 80) safe = [safe substringToIndex:80];
+
+    NSString *extension = from.pathExtension.length ? from.pathExtension : @"mp4";
+    NSString *name = [safe stringByAppendingPathExtension:extension];
+    NSURL *to = [[SCIYTLibrary folder] URLByAppendingPathComponent:name];
+
+    if ([name isEqualToString:job.fileName]) {
+        // The name on disk is unchanged, but the title shown may not be -- someone can edit
+        // punctuation this strips. Recorded rather than refused.
+        job.title = safe;
+        [self save];
+        [self changed];
+        return YES;
+    }
+
+    if ([[NSFileManager defaultManager] fileExistsAtPath:to.path]) return NO;
+
+    NSError *error = nil;
+    if (![[NSFileManager defaultManager] moveItemAtURL:from toURL:to error:&error]) {
+        SCILogV(@"library: could not rename — %@", error.localizedDescription);
+        return NO;
+    }
+
+    job.fileName = name;
+    job.title = safe;
+    [self save];
+    [self changed];
+    return YES;
+}
+
 - (void)remove:(SCIYTJob *)job {
     NSURL *file = [job fileURL];
     if (file) [[NSFileManager defaultManager] removeItemAtURL:file error:nil];

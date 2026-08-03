@@ -1,10 +1,11 @@
 #import "YouTubeHeaders.h"
 #import "Tweak.h"
+#import "UI/SCIYTWelcome.h"
 #import "SCILog.h"
 #import "Prefs.h"
 #import "Diagnostics/SCIYTDiagnostics.h"
 
-NSString *SCIVersionString = @"v0.20.2";  // AlbrhiYT
+NSString *SCIVersionString = @"v0.21.0";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.
@@ -125,6 +126,10 @@ NSString *SCIVersionString = @"v0.20.2";  // AlbrhiYT
     // and means "is it even in there" is never a question again.
     NSLog(@"[AlbrhiYT] %@ loaded into %@", SCIVersionString,
           [[NSBundle mainBundle] bundleIdentifier]);
+
+    // Said once, on the first launch after installing. Deliberately after everything else
+    // in here: a greeting must never be the reason a hook did not get installed.
+    [SCIYTWelcome showIfFirstRun];
 
     // Written once at launch and refreshed whenever a video is captured, so the
     // report is retrievable from the app's container even if no hook attached.

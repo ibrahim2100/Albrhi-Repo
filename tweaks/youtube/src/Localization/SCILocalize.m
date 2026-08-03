@@ -134,6 +134,11 @@ static void SCIBuildTables(void) {
         @"dl_saved": @"Saved to Photos.",
 
         // The Download Centre.
+        @"dl_rename": @"Rename",
+        @"dl_rename_failed": @"That name is already taken, or it is empty.",
+        @"welcome_title": @"Albrhi for YouTube",
+        @"welcome_body": @"Hold any video to save it. What you save lives in Downloads, beside Home and You — it does not go to Photos unless you send it there. Hold two fingers anywhere to open settings.",
+        @"welcome_go": @"Start",
         @"diag_feed": @"Feed filtering",
         @"diag_feed_none": @"No feed sections seen. Open Home and scroll once, then come back.",
         @"diag_feed_counts": @"%lu sections seen, %lu dropped as promoted.",
@@ -328,6 +333,11 @@ static void SCIBuildTables(void) {
         @"dl_saved": @"حُفظ في الصور.",
 
         // مركز التحميلات.
+        @"dl_rename": @"إعادة تسمية",
+        @"dl_rename_failed": @"الاسم مستخدم بالفعل، أو فارغ.",
+        @"welcome_title": @"البرهي لليوتيوب",
+        @"welcome_body": @"اضغط مطوّلًا على أيّ فيديو لحفظه. ما تحفظه يعيش في «التحميلات» بجانب الرئيسية وحسابك — ولا يذهب إلى الصور إلا إذا أرسلته. اضغط بإصبعين في أيّ مكان لفتح الإعدادات.",
+        @"welcome_go": @"ابدأ",
         @"diag_feed": @"ترشيح الصفحة الرئيسية",
         @"diag_feed_none": @"لم تُرَ أقسام. افتح الرئيسية ومرّر مرّة، ثم عد.",
         @"diag_feed_counts": @"%lu قسمًا شوهد، و%lu أُسقط كإعلان.",

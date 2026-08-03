@@ -224,11 +224,56 @@ static UIColor *SCIAccent(void) {
     }];
     photos.backgroundColor = SCIAccent();
 
+    UIContextualAction *rename =
+        [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal
+                                                title:SCILocalized(@"dl_rename")
+                                              handler:^(UIContextualAction *action,
+                                                        UIView *source,
+                                                        void (^done)(BOOL)) {
+        [self rename:job];
+        done(YES);
+    }];
+    rename.backgroundColor = [UIColor systemGrayColor];
+
     // Sound has no place in Photos, so that action is not offered for it at all rather
     // than offered and then refused.
     return (self.kind == SCIYTJobKindAudio)
-        ? [UISwipeActionsConfiguration configurationWithActions:@[remove, share]]
-        : [UISwipeActionsConfiguration configurationWithActions:@[remove, photos, share]];
+        ? [UISwipeActionsConfiguration configurationWithActions:@[remove, rename, share]]
+        : [UISwipeActionsConfiguration configurationWithActions:@[remove, rename, photos, share]];
+}
+
+- (void)rename:(SCIYTJob *)job {
+    UIAlertController *ask =
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"dl_rename")
+                                            message:nil
+                                     preferredStyle:UIAlertControllerStyleAlert];
+
+    [ask addTextFieldWithConfigurationHandler:^(UITextField *field) {
+        field.text = job.title;
+        field.clearButtonMode = UITextFieldViewModeWhileEditing;
+
+        // Selected rather than left with the caret at the end. Renaming usually means
+        // replacing, and making someone hold backspace through a YouTube title is a small
+        // cruelty.
+        field.selectedTextRange = [field textRangeFromPosition:field.beginningOfDocument
+                                                    toPosition:field.endOfDocument];
+    }];
+
+    __weak __typeof(self) weakSelf = self;
+    [ask addAction:[UIAlertAction actionWithTitle:SCILocalized(@"ok")
+                                            style:UIAlertActionStyleDefault
+                                          handler:^(__unused UIAlertAction *action) {
+        NSString *typed = ask.textFields.firstObject.text;
+        if (![[SCIYTLibrary shared] rename:job to:typed]) {
+            [weakSelf say:SCILocalized(@"dl_rename_failed")];
+        }
+    }]];
+
+    [ask addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
+                                            style:UIAlertActionStyleCancel
+                                          handler:nil]];
+
+    [self presentViewController:ask animated:YES completion:nil];
 }
 
 - (void)share:(SCIYTJob *)job from:(UIView *)source {
