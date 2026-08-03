@@ -1,12 +1,9 @@
 #import "SCIYTDownloadCenter.h"
 #import "SCIYTDownloadList.h"
+#import "SCIYTCentrePage.h"
 #import "SCIYTLibrary.h"
 #import "../../../SCILog.h"
 #import "../../../Localization/SCILocalize.h"
-
-static UIColor *SCIAccent(void) {
-    return [UIColor colorWithRed:1.0 green:0.0 blue:0.13 alpha:1.0];
-}
 
 @implementation SCIYTDownloadCenter
 
@@ -34,42 +31,72 @@ static UIColor *SCIAccent(void) {
     }
 }
 
-/// Video and sound, each with its own tab.
+/// The page as YouTube's own tabs have it: in the content area, under the bar.
 ///
-/// A real tab bar rather than a filter above one list: they are two different things to
-/// look at, and a row sized to hold a still is the wrong row for a song. Each list is in
-/// its own navigation controller so each keeps its own title and its own Done button --
-/// one shared bar would put the wrong title over whichever tab was open.
+/// Held so tapping away can take it down again, weakly -- YouTube owns it once it is a
+/// child, and a strong reference here would outlive the screen it belongs to.
+static __weak UIViewController *sciAttached = nil;
+
++ (BOOL)showInsidePivotBar:(UIViewController *)bar {
+    if (!bar.view.superview) return NO;
+
+    // The bar's own superview is the container both it and the content live in, so a page
+    // added there is a sibling of the bar rather than something on top of it. Found this
+    // way rather than by naming YouTube's container class: the arrangement is what matters
+    // and it is visible from the bar, whereas the class name is a guess that would have to
+    // be re-checked every release.
+    UIView *container = bar.view.superview;
+
+    UIViewController *host = bar.parentViewController;
+    if (!host) return NO;
+
+    [self removeFromPivotBar];
+
+    SCIYTCentrePage *page = [[SCIYTCentrePage alloc] initWithDismissButton:NO];
+    UINavigationController *wrapped =
+        [[UINavigationController alloc] initWithRootViewController:page];
+
+    [host addChildViewController:wrapped];
+    wrapped.view.translatesAutoresizingMaskIntoConstraints = NO;
+
+    // Below the bar in the stacking order, so the bar keeps its place on top and its
+    // shadow falls the right way.
+    [container insertSubview:wrapped.view belowSubview:bar.view];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [wrapped.view.topAnchor constraintEqualToAnchor:container.topAnchor],
+        [wrapped.view.leadingAnchor constraintEqualToAnchor:container.leadingAnchor],
+        [wrapped.view.trailingAnchor constraintEqualToAnchor:container.trailingAnchor],
+        [wrapped.view.bottomAnchor constraintEqualToAnchor:bar.view.topAnchor]
+    ]];
+
+    [wrapped didMoveToParentViewController:host];
+    sciAttached = wrapped;
+    return YES;
+}
+
++ (void)removeFromPivotBar {
+    UIViewController *page = sciAttached;
+    if (!page) return;
+
+    [page willMoveToParentViewController:nil];
+    [page.view removeFromSuperview];
+    [page removeFromParentViewController];
+    sciAttached = nil;
+}
+
++ (BOOL)isInsidePivotBar { return sciAttached != nil; }
+
 + (UIViewController *)build {
-    UITabBarController *tabs = [[UITabBarController alloc] init];
-    tabs.modalPresentationStyle = UIModalPresentationPageSheet;
-    tabs.tabBar.tintColor = SCIAccent();
+    // The same page the tab shows, with a way out added. One screen in two places rather
+    // than two screens that drift apart -- the tab bar version and the settings version
+    // were separate before, and only one of them ever got looked at.
+    SCIYTCentrePage *page = [[SCIYTCentrePage alloc] initWithDismissButton:YES];
 
-    NSMutableArray<UIViewController *> *pages = [NSMutableArray array];
-    for (NSNumber *kind in @[@(SCIYTJobKindVideo), @(SCIYTJobKindAudio)]) {
-        SCIYTDownloadList *list =
-            [[SCIYTDownloadList alloc] initWithKind:(SCIYTJobKind)kind.integerValue];
-
-        UINavigationController *page =
-            [[UINavigationController alloc] initWithRootViewController:list];
-        page.tabBarItem = list.tabBarItem;
-
-        // Done belongs to the list and dismisses the list.
-        //
-        // Not a category on UIViewController, which was the first shape of this and a
-        // bad one: a category adds its method to *every* view controller in YouTube's
-        // process, and a name that collides with one of theirs replaces it silently.
-        // UIKit already forwards a dismissal up from a presented controller to whatever
-        // presented it, so the list asking to be dismissed closes the whole sheet.
-        list.navigationItem.rightBarButtonItem =
-            [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone
-                                                           target:list
-                                                           action:@selector(close)];
-        [pages addObject:page];
-    }
-
-    tabs.viewControllers = pages;
-    return tabs;
+    UINavigationController *wrapped =
+        [[UINavigationController alloc] initWithRootViewController:page];
+    wrapped.modalPresentationStyle = UIModalPresentationPageSheet;
+    return wrapped;
 }
 
 @end

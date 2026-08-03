@@ -26,6 +26,19 @@ NS_ASSUME_NONNULL_BEGIN
 /// fail to open rather than take YouTube with it.
 + (void)present;
 
+
+/// Puts the page into YouTube's own content area, under the tab bar.
+///
+/// This is what makes it feel like Home or You rather than a window over them: the bar
+/// stays, the tab stays lit, and only the content changes. Answers NO if the bar is not
+/// arranged the way this expects, in which case the caller should fall back to presenting.
++ (BOOL)showInsidePivotBar:(UIViewController *)bar;
+
+/// Takes it down again, when another tab is chosen.
++ (void)removeFromPivotBar;
+
++ (BOOL)isInsidePivotBar;
+
 @end
 
 NS_ASSUME_NONNULL_END

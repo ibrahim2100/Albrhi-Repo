@@ -3,6 +3,18 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.20.0
+
+- **The Download Centre is a page now, not a window.** Tapping the tab changes what is on
+  screen and leaves everything else where it was: the tab bar stays, the Downloads tab
+  lights up like any other, and tapping Home or You takes you straight back. It opened as a
+  panel sliding up over the whole app before, which is why it felt bolted on — because it
+  was.
+- **Video and sound are a switch at the top**, in the title bar, instead of a second row of
+  tabs sitting just above YouTube's own. One page with two views of it.
+- Opening it from settings still opens a panel, since there is nothing behind it to be part
+  of — but it is the same page, so the two can no longer drift apart.
+
 ## v0.19.1
 
 - **It remembers where you stopped.** Open something again and it carries on from where you

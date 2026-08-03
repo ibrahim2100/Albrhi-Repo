@@ -237,10 +237,20 @@ static BOOL SCIPaintIcon(UIView *view) {
 
 #pragma mark - The tap
 
+/// Declared because the hook calls it on self. Inside a %hook, self is the hooked class and
+/// Logos only forward-declares it, so a selector sent to self needs to be visible from here.
+@interface YTPivotBarViewController : UIViewController
+- (void)selectItemWithPivotIdentifier:(NSString *)identifier;
+@end
+
 %hook YTPivotBarViewController
 
 - (void)didTapItemWithRenderer:(id)renderer {
     if (!SCIIsOurRenderer(renderer)) {
+        // Leaving. The page comes down first so YouTube's own tab is not laid out behind
+        // ours -- and it is taken down whether or not it was up, which costs nothing and
+        // means there is no state to get wrong.
+        [SCIYTDownloadCenter removeFromPivotBar];
         %orig;
         return;
     }
@@ -249,6 +259,24 @@ static BOOL SCIPaintIcon(UIView *view) {
     // resolve, and asking it to navigate to a page that does not exist is how a tab bar
     // ends up on a blank screen it cannot leave.
     SCILogV(@"tab: download centre");
+
+    // In the content area, under the bar, the way Home and You are. Presenting it slid the
+    // whole screen up over YouTube and covered the tab bar, which read as something bolted
+    // on -- because a modal is exactly that.
+    if ([SCIYTDownloadCenter showInsidePivotBar:self]) {
+        [SCIYTDiagnostics recordTabState:@"page shown in the content area"];
+
+        // So the tab lights up like any other. Without this the bar still shows whichever
+        // tab was open before, and the page underneath belongs to nothing.
+        if ([self respondsToSelector:@selector(selectItemWithPivotIdentifier:)]) {
+            [self selectItemWithPivotIdentifier:kSCIPivotIdentifier];
+        }
+        return;
+    }
+
+    // Only if the bar is not arranged the way that expects. A window over the app is worse
+    // than a page in it, and better than no way in at all.
+    [SCIYTDiagnostics recordTabState:@"content area not reachable, presented instead"];
     [SCIYTDownloadCenter present];
 }
 
