@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.18.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **Dislike counts are back**\n• **Nothing about what you watch is sent.**\n• **The Downloads tab has its own mark now**\n• If the number does not appear on the right button, Settings → Diagnostics now lists every like and dislike button it found and what each one said.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.17.0",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.15.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **The lock screen has the counter now, and it works.**\n• **Drag it to move.**\n• **Fifteen seconds forward and back**\n• The counter also keeps proper time when you pause, instead of carrying on without you.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.17.0"
+          "text": "0.18.0"
         },
         {
           "class": "DepictionTableTextView",
