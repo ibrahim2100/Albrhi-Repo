@@ -1,5 +1,6 @@
 #import "SCIYTThumbnails.h"
 #import "SCIYTLibrary.h"
+#import "SCIYTArtwork.h"
 #import "../../../SCILog.h"
 #import <AVFoundation/AVFoundation.h>
 
@@ -58,6 +59,12 @@
         if (image.size.width < 200) continue;
 
         [data writeToURL:[self fileFor:job] atomically:YES];
+
+        // Into the file as well as beside it. Everything on screen reads the copy kept here,
+        // but nothing outside this app can -- so the song is tagged too, once, now that
+        // there is finally a picture to tag it with.
+        [SCIYTArtwork embedInto:job completion:nil];
+
         dispatch_async(dispatch_get_main_queue(), ^{ completion(image); });
         return;
     }

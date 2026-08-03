@@ -117,10 +117,7 @@ static const double kSCIResumeCeiling = 20;
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor blackColor];
 
-    NSError *audioError = nil;
-    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:&audioError];
-    [[AVAudioSession sharedInstance] setActive:YES error:&audioError];
-    if (audioError) SCILogV(@"player: audio session — %@", audioError.localizedDescription);
+    [self claimAudio];
 
     [self buildStage];
     [self buildChrome];
@@ -130,6 +127,20 @@ static const double kSCIResumeCeiling = 20;
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(wentAway)
                                                  name:UIApplicationDidEnterBackgroundNotification
+                                               object:nil];
+
+    // Earlier than DidEnterBackground, which is already too late to be detaching a layer.
+    // By the time that arrives iOS has decided whether this player may keep going.
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(wentAway)
+                                                 name:UIApplicationWillResignActiveNotification
+                                               object:nil];
+
+    // An interruption is a call, an alarm, another app taking the session. iOS does not
+    // resume anyone automatically; whoever wants to carry on has to ask.
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(interrupted:)
+                                                 name:AVAudioSessionInterruptionNotification
                                                object:nil];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -868,10 +879,50 @@ static const double kSCIResumeCeiling = 20;
 - (void)wentAway {
     [self rememberPosition];
 
+    // Claimed again on the way out, every time.
+    //
+    // The session belongs to YouTube and YouTube manages it constantly -- and our own
+    // player pauses YouTube's when it starts, so from the app's point of view nothing is
+    // playing and there is no reason to keep a Playback session alive. Setting the category
+    // once in -viewDidLoad is therefore not a setting, it is a request that gets overruled
+    // the moment the app decides it is idle. This is why a saved video stopped the instant
+    // the screen locked.
+    [self claimAudio];
+
     // Picture in picture is the one case where the layer must keep its player: that little
     // window *is* the layer, and handing it back an empty one closes it.
     if (self.pip.isPictureInPictureActive) return;
     if ([self current].kind == SCIYTJobKindVideo) self.layer.player = nil;
+}
+
+/// Takes the audio session, or says why not.
+- (void)claimAudio {
+    AVAudioSession *session = [AVAudioSession sharedInstance];
+    NSError *error = nil;
+
+    [session setCategory:AVAudioSessionCategoryPlayback
+                    mode:AVAudioSessionModeMoviePlayback
+                 options:0
+                   error:&error];
+    if (error) SCILogV(@"player: category refused — %@", error.localizedDescription);
+
+    error = nil;
+    [session setActive:YES error:&error];
+    if (error) SCILogV(@"player: session refused — %@", error.localizedDescription);
+}
+
+- (void)interrupted:(NSNotification *)note {
+    NSUInteger kind = [note.userInfo[AVAudioSessionInterruptionTypeKey] unsignedIntegerValue];
+    if (kind != AVAudioSessionInterruptionTypeEnded) return;
+
+    NSUInteger options = [note.userInfo[AVAudioSessionInterruptionOptionKey] unsignedIntegerValue];
+    if (!(options & AVAudioSessionInterruptionOptionShouldResume)) return;
+
+    [self claimAudio];
+    [self.player play];
+    self.player.rate = self.speed;
+    [self showPlaying:YES];
+    [self describeToLockScreen];
 }
 
 - (void)cameBack {

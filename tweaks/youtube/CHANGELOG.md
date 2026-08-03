@@ -3,6 +3,20 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.22.0
+
+- **Saved videos keep playing with the screen off, and when you leave the app.** They were
+  stopping the moment you locked the phone. The tweak asked for the sound once, when the
+  player opened, and YouTube takes it back as soon as it decides nothing is playing — which,
+  since our player pauses YouTube's, is immediately. It is asked for again every time you
+  leave, which is when it matters.
+- Playback also resumes properly after a phone call or an alarm, instead of staying silent.
+- **The cover is written into the song itself now.** It showed everywhere inside the tweak
+  before but was not part of the file, so sending a song to someone, or opening it on a
+  computer, gave them something nameless. The title goes in with it.
+- Nothing is re-encoded to do that — the sound is copied across untouched and only the tags
+  are rewritten — and the original is only replaced once the new file is complete.
+
 ## v0.21.1
 
 - Fixes 0.21.0, which did not build. Renaming worked; the method that offered it happened to
