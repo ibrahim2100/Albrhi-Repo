@@ -3,6 +3,16 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.28.0
+
+- **Saving a Short saves the Short you are watching.** The report you sent had the answer in
+  it: the button was reading the right video all along, and the download was checking that
+  against the wrong thing — so it compared two numbers that agreed, concluded everything was
+  fine, and fetched a third video's details. It now checks against the one that actually
+  decides what gets downloaded.
+- Diagnostics shows all three of those at once now. They are the same number on an ordinary
+  video and different in Shorts, which is why this only ever went wrong there.
+
 ## v0.27.1
 
 - **Ad cards on Home should go, and the ad picture with them.** The same marker turns up on

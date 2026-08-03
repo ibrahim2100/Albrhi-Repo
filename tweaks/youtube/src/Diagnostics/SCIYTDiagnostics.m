@@ -271,11 +271,45 @@ static NSString *sciShortsAdDetail = nil;
     return [[sciTabStates array] componentsJoinedByString:@"\n  "];
 }
 
+/// Which video the captured response is for.
+///
+/// This is the id that matters for downloading and it was the one nobody wrote down. The
+/// HLS playlist the downloader uses comes out of sciLastResponse, and until now the only
+/// ids kept were the MLVideo's and the announced one -- two different things, neither of
+/// them this. So the guard added in 0.25.1 compared the video being asked for against an id
+/// that had nothing to do with the playlist it was guarding, agreed with itself, and handed
+/// over the wrong video's playlist. In Shorts all three ids differ routinely, which is why
+/// it was wrong there every time and fine everywhere else.
+static NSString *sciResponseVideoID = nil;
+
 + (void)recordPlayerResponse:(id)response {
     if (!response) return;
     sciLastResponse = response;
-    SCILogV(@"captured player response %@", [response class]);
+    sciResponseVideoID = nil;
+
+    // Read off the message tree rather than by field name. Every YTI* class is a GPBMessage
+    // and answers -description with its whole contents; a field name would be one more thing
+    // that can change between builds, and this file already reads protobufs this way.
+    @try {
+        NSString *text = [response description];
+        NSRange key = [text rangeOfString:@"video_id: \""];
+
+        if (key.location != NSNotFound) {
+            NSUInteger from = key.location + key.length;
+            NSRange end = [text rangeOfString:@"\""
+                                      options:0
+                                        range:NSMakeRange(from, text.length - from)];
+            if (end.location != NSNotFound) {
+                sciResponseVideoID = [text substringWithRange:
+                    NSMakeRange(from, end.location - from)];
+            }
+        }
+    } @catch (__unused NSException *exception) { }
+
+    SCILogV(@"captured player response %@ for %@", [response class], sciResponseVideoID);
 }
+
++ (NSString *)responseVideoID { return sciResponseVideoID; }
 
 + (void)recordVideo:(id)video {
     if (!video) return;
@@ -477,6 +511,12 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts"), [self shortsButtonState]];
 
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts_save"), [self shortsSaveState]];
+
+    // All three at once, because the download bug was exactly these disagreeing and no
+    // report ever showed more than two of them.
+    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_ids"),
+        [NSString stringWithFormat:SCILocalized(@"diag_ids_line"),
+            sciLastVideoID ?: @"?", sciActiveVideoID ?: @"?", sciResponseVideoID ?: @"?"]];
 
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts_ads"), [self shortsAdState]];
 

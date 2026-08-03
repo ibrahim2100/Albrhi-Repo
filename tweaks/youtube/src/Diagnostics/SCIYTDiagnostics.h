@@ -30,6 +30,10 @@
 + (id)lastPlayerResponse;
 + (NSString *)lastVideoID;
 
+/// The video the captured player response belongs to -- which is the video its HLS playlist
+/// is for, and not necessarily the one playing or the last MLVideo built.
++ (NSString *)responseVideoID;
+
 /// The video the player actually activated, which is not always the last MLVideo made.
 ///
 /// A report showed SponsorBlock working on VTBoGy0EynQ while this page reported

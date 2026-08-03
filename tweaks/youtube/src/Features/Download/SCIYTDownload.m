@@ -413,16 +413,25 @@ static NSString *sciRequestedVideoID = nil;
     // because the next one is prepared while you are still watching this one -- and 0.25.0
     // passing the right id changed nothing, since this branch is taken before the id is ever
     // read. Naming the video was necessary and not sufficient; this is the other half.
+    // Compared against the video the captured *response* is for, which is the video whose
+    // playlist this is. Not the announced one, and not the last MLVideo built.
+    //
+    // 0.25.1 compared against the announced id and that is why it did nothing. In Shorts
+    // those three ids differ routinely -- a device report showed the announced id and the
+    // overlay's id agreeing perfectly on KMBaTpD5KiM while the captured response was still
+    // HIEcjnGa004 -- so the check agreed with itself and handed over another video's
+    // playlist. Everywhere outside Shorts the three coincide, which is why this was only
+    // ever wrong there.
     NSString *requested = sciRequestedVideoID;
-    NSString *live = [SCIYTDiagnostics activeVideoID];
-    BOOL captureIsOurs = !requested.length || (live.length && [requested isEqualToString:live]);
+    NSString *owner = [SCIYTDiagnostics responseVideoID];
+    BOOL captureIsOurs = !requested.length || (owner.length && [requested isEqualToString:owner]);
 
     NSString *manifest = captureIsOurs ? [SCIYTPlayerStreams hlsManifestURL] : nil;
 
     if (!captureIsOurs) {
         [SCIYTDiagnostics recordStreamAttempt:
-            [NSString stringWithFormat:@"hls: captured playlist is %@, wanted %@ — asking instead",
-             live ?: @"?", requested]];
+            [NSString stringWithFormat:@"hls: captured playlist is for %@, wanted %@ — asking instead",
+             owner ?: @"unknown", requested]];
     }
 
     if (manifest.length) {
