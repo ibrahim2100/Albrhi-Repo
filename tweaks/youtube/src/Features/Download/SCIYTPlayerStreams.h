@@ -79,6 +79,13 @@
 /// screen -- three releases went into trying to detect that instead of avoiding it.
 + (NSString *)hlsManifestURLForVideo:(NSString *)videoID;
 
+/// Whether a playlist address really serves a given video.
+///
+/// The two are named differently -- an address uses the docid, which is the same eight bytes
+/// the eleven-character id encodes -- so this converts before comparing. Verified against a
+/// real pair from a device before being relied on, which 0.30.2 was not.
++ (BOOL)manifest:(NSString *)manifest isForVideo:(NSString *)videoID;
+
 + (NSString *)hlsManifestURL;
 
 /// One field of a format object, by selector or by key.

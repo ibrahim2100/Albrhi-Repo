@@ -185,6 +185,47 @@ static NSString *SCIManifestVideoTag(NSString *manifest) {
     return nil;
 }
 
+/// The docid a googlevideo address uses, derived from the eleven-character video id.
+///
+/// These are the same number in two encodings: the id is base64url of the eight bytes the
+/// address writes as hex. Verified against a real pair before this was written --
+/// HFmvRFDssUo decodes to 1c59af4450ecb14a, which is exactly the id the device reported in
+/// that playlist's address, while the neighbouring clip's decodes to something else.
+///
+/// 0.30.2 compared the two forms directly and refused every address there is. The lesson
+/// there was not "do not check" but "do not check against a value you have not seen", so
+/// this is the same check written after seeing both sides of it.
+static NSString *SCIDocIDForVideo(NSString *videoID) {
+    if (videoID.length != 11) return nil;
+
+    NSString *padded = [videoID stringByAppendingString:@"="];
+    NSData *raw = [[NSData alloc] initWithBase64EncodedString:
+        [[padded stringByReplacingOccurrencesOfString:@"-" withString:@"+"]
+                 stringByReplacingOccurrencesOfString:@"_" withString:@"/"]
+                                                     options:0];
+    if (raw.length != 8) return nil;
+
+    const uint8_t *bytes = raw.bytes;
+    NSMutableString *hex = [NSMutableString stringWithCapacity:16];
+    for (NSUInteger i = 0; i < 8; i++) [hex appendFormat:@"%02x", bytes[i]];
+    return hex;
+}
+
+/// Whether an address really serves the video asked for.
+static BOOL SCIManifestIsForVideo(NSString *manifest, NSString *videoID) {
+    NSString *tag = SCIManifestVideoTag(manifest);
+    NSString *want = SCIDocIDForVideo(videoID);
+    if (!tag.length || !want.length) return NO;
+
+    // The segment carries a suffix on some shapes -- 1c59af4450ecb14a.2 -- so this is a
+    // prefix test rather than equality.
+    return [tag.lowercaseString hasPrefix:want];
+}
+
++ (BOOL)manifest:(NSString *)manifest isForVideo:(NSString *)videoID {
+    return SCIManifestIsForVideo(manifest, videoID);
+}
+
 + (NSString *)hlsManifestURLForVideo:(NSString *)videoID {
     // Straight to the capture filed under that id, with no walk and no guessing about which
     // of several sources is current. This is the whole point of filing them by name: the

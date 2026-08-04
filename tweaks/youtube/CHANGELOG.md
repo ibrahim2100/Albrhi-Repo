@@ -3,6 +3,14 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.30.4
+
+- **Saving a Short is getting the right clip.** The report you sent carried the proof: the
+  name inside the address it fetched works out to exactly the Short on screen, and not to
+  the one below it. So the part that has been wrong for nine releases is now right.
+- The tweak can check that for itself now, and says so in Diagnostics either way. It never
+  refuses on it — that mistake cost a release — it only prefers a link it can confirm.
+
 ## v0.30.3
 
 - **Fixes 0.30.2, which stopped Shorts saving anything at all.** That release refused any
