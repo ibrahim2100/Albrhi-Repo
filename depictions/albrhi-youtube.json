@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v1.4.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **Every song now colours its own screen.**\n• **The cover breathes.**\n• **Saved songs show their covers in the list**\n• **The row that is playing is marked**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v1.3.0",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v1.1.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **A download no longer starts over because one piece failed.**\n• An address that has expired still fails immediately, because asking again three times just makes the same mistake more slowly.\n• If it does fail, the message says which piece and how many had already arrived, instead of \"the download failed\".",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.3.0"
+          "text": "1.4.0"
         },
         {
           "class": "DepictionTableTextView",
