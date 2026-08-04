@@ -40,6 +40,18 @@ NS_ASSUME_NONNULL_BEGIN
 /// out from the background this same palette produced.
 + (UIColor *)accentFor:(nullable UIImage *)image;
 
+/// A square cover, built from a picture that is not square.
+///
+/// YouTube's stills are 16:9 and the lock screen's artwork slot is a square, so handing it
+/// one directly gets it letterboxed — a wide strip with black above and below, which is what
+/// every saved song and video has looked like there.
+///
+/// This fills the square with the picture's own colours and sets the picture on top of them,
+/// whole and uncropped. Cropping to square was the other option and it is worse: a thumbnail
+/// is composed for its own shape, and taking the middle third of one routinely removes the
+/// face, the title, or whatever the picture was of.
++ (nullable UIImage *)squareArtwork:(nullable UIImage *)image side:(CGFloat)side;
+
 @end
 
 NS_ASSUME_NONNULL_END

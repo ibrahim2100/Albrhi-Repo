@@ -3,6 +3,15 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.6.0
+
+- **The picture on the lock screen is square now**, instead of a wide strip with black above
+  and below it. YouTube's thumbnails are widescreen and that slot is a square, so every saved
+  song and video has been letterboxed there since the beginning.
+- The space around it is filled with the picture's own colours rather than black, and the
+  picture itself is left whole — nothing is cropped away, because a thumbnail is composed for
+  its own shape and taking the middle of one usually removes the point of it.
+
 ## v1.5.1
 
 - **Dropping the player down to the mini bar no longer stops the sound.** The arrow was

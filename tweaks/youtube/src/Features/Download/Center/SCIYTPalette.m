@@ -114,6 +114,76 @@ static void SCIRead(UIImage *image,
     return @[top, bottom];
 }
 
++ (UIImage *)squareArtwork:(UIImage *)image side:(CGFloat)side {
+    if (!image || side <= 0) return image;
+
+    // Already square enough. A cover that is within a few per cent of square is left alone
+    // rather than redrawn onto a ground it does not need.
+    CGFloat ratio = image.size.width / MAX(image.size.height, 1);
+    if (ratio > 0.95 && ratio < 1.05) return image;
+
+    NSArray<UIColor *> *pair = [self backgroundFor:image];
+
+    UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat preferredFormat];
+    format.opaque = YES;
+
+    UIGraphicsImageRenderer *renderer =
+        [[UIGraphicsImageRenderer alloc] initWithSize:CGSizeMake(side, side) format:format];
+
+    return [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+        CGContextRef ctx = context.CGContext;
+
+        // The ground, from the picture's own colours -- so the bars that used to be black are
+        // now the album's colour, and the whole tile reads as one object.
+        CGColorSpaceRef space = CGColorSpaceCreateDeviceRGB();
+        CGFloat stops[2] = {0, 1};
+        NSArray *colors = @[(id)pair.firstObject.CGColor, (id)pair.lastObject.CGColor];
+        CGGradientRef gradient =
+            CGGradientCreateWithColors(space, (__bridge CFArrayRef)colors, stops);
+
+        CGContextDrawLinearGradient(ctx, gradient,
+                                    CGPointMake(0, 0), CGPointMake(0, side), 0);
+        CGGradientRelease(gradient);
+        CGColorSpaceRelease(space);
+
+        // The picture, whole, centred, and inset a little so it sits *on* the ground rather
+        // than butting against its edges.
+        CGFloat inset = side * 0.06;
+        CGFloat room = side - (inset * 2);
+        CGFloat scale = MIN(room / image.size.width, room / image.size.height);
+        CGSize drawn = CGSizeMake(image.size.width * scale, image.size.height * scale);
+
+        CGRect frame = CGRectMake((side - drawn.width) / 2,
+                                  (side - drawn.height) / 2,
+                                  drawn.width, drawn.height);
+
+        // A soft edge under it, which is what separates the picture from a ground made of
+        // the same colours as the picture.
+        // Saved and restored around the clip.
+        //
+        // -addClip narrows the context permanently, and a shadow set outside a saved state
+        // applies to everything drawn afterwards. Nothing is drawn after this today, which
+        // is exactly the kind of "correct until someone adds a line" that is worth two calls
+        // to avoid.
+        CGContextSaveGState(ctx);
+
+        CGContextSetShadowWithColor(ctx, CGSizeMake(0, side * 0.012), side * 0.03,
+                                    [UIColor colorWithWhite:0 alpha:0.5].CGColor);
+
+        UIBezierPath *rounded = [UIBezierPath bezierPathWithRoundedRect:frame
+                                                          cornerRadius:side * 0.035];
+
+        // The layer is what makes one shadow for the rounded picture rather than a shadow
+        // per drawing operation inside it.
+        CGContextBeginTransparencyLayer(ctx, NULL);
+        [rounded addClip];
+        [image drawInRect:frame];
+        CGContextEndTransparencyLayer(ctx);
+
+        CGContextRestoreGState(ctx);
+    }];
+}
+
 + (UIColor *)accentFor:(UIImage *)image {
     CGFloat h, s, b, vh, vs, vb;
     SCIRead(image, &h, &s, &b, &vh, &vs, &vb);

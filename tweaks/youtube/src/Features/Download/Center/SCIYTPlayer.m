@@ -1268,9 +1268,24 @@ static SCIYTPlayer *sciCurrent = nil;
 
     UIImage *still = [SCIYTThumbnails cached:job];
     if (still) {
+        // Square, and drawn at whatever size is asked for.
+        //
+        // The old version declared the still's own bounds and then returned the same picture
+        // whatever was requested -- so a 16:9 thumbnail went into a square slot and came back
+        // letterboxed, with black above and below, at every size iOS asked for. That is what
+        // every saved song looked like on the lock screen.
+        //
+        // The handler is called on iOS's schedule and more than once, so the result is built
+        // once here rather than redrawn per request: the lock screen, Control Centre and the
+        // car all ask, and drawing a gradient three times for one track is work nobody sees.
+        CGFloat side = MAX(still.size.width, still.size.height);
+        UIImage *square = [SCIYTPalette squareArtwork:still side:side];
+
         now[MPMediaItemPropertyArtwork] =
-            [[MPMediaItemArtwork alloc] initWithBoundsSize:still.size
-                                            requestHandler:^UIImage *(__unused CGSize size) { return still; }];
+            [[MPMediaItemArtwork alloc] initWithBoundsSize:square.size
+                                            requestHandler:^UIImage *(__unused CGSize size) {
+                return square;
+            }];
     }
 
     [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = now;
