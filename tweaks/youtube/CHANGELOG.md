@@ -3,6 +3,17 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.30.0
+
+- **The wrong-Short download, from the answer rather than from guesswork.** The last release
+  added a line to the report saying exactly what Shorts hands over, and it turned out to be
+  a kind of message whose contents cannot be looked up anywhere — not in the app, not in its
+  code. So instead of asking it for a field by name, the tweak now finds the video's address
+  inside it by recognising the address itself.
+- That is the seventh attempt at this, and the first one built on a measurement instead of
+  an argument. It is also the first that could not have been made before now: the previous
+  release existed to produce the fact this one needed.
+
 ## v0.29.2
 
 - **Another attempt at the wrong Short, and a way to tell whether it worked.** What Shorts

@@ -120,6 +120,47 @@ static void SCITrace(NSString *step, id value) {
     return sciTrace.length ? [sciTrace copy] : nil;
 }
 
+/// The first HLS playlist address in a block of text.
+///
+/// Used on a message whose fields cannot be named. YTIReelItemWatchResponse -- which is what
+/// Shorts hands over -- has zero compiled accessors and answers no key called streamingData;
+/// its shape lives entirely in a runtime descriptor, so there is nothing to read off the
+/// binary and nothing to guess from. Three named paths were tried and all three missed.
+///
+/// But a GPBMessage prints its whole tree, and a playlist address is unmistakable in it. So
+/// the address is found by what it is rather than by where it sits, which is the one
+/// approach that does not depend on a field name nobody can look up.
+static NSString *SCIFindManifestInText(NSString *text) {
+    if (!text.length) return nil;
+
+    NSCharacterSet *stop = [NSCharacterSet characterSetWithCharactersInString:@"\" \n\t\\"];
+    NSUInteger at = 0;
+
+    while (at < text.length) {
+        NSRange start = [text rangeOfString:@"https://"
+                                    options:0
+                                      range:NSMakeRange(at, text.length - at)];
+        if (start.location == NSNotFound) return nil;
+
+        NSRange tail = NSMakeRange(start.location, text.length - start.location);
+        NSRange end = [text rangeOfCharacterFromSet:stop options:0 range:tail];
+        NSUInteger finish = (end.location == NSNotFound) ? text.length : end.location;
+
+        NSString *candidate = [text substringWithRange:
+            NSMakeRange(start.location, finish - start.location)];
+
+        if ([candidate containsString:@".m3u8"] || [candidate containsString:@"/manifest/hls"]) {
+            return candidate;
+        }
+
+        // Always forward by at least the prefix, or a match at the very end of the string
+        // would sit still and spin.
+        at = MAX(finish, start.location + 8);
+    }
+
+    return nil;
+}
+
 + (NSString *)hlsManifestURLForVideo:(NSString *)videoID {
     // Straight to the capture filed under that id, with no walk and no guessing about which
     // of several sources is current. This is the whole point of filing them by name: the
@@ -149,6 +190,23 @@ static void SCITrace(NSString *step, id value) {
                 node = node ? SCIGet(node, step) : nil;
             }
             if (node) { streamingData = node; break; }
+        }
+
+        // And if none of them matched, read the address out of the message itself.
+        //
+        // The report named the class and said it has no streamingData key at all, so there
+        // is no deeper path to try -- only a shape nobody can enumerate. The text always
+        // contains the address if the response carries one.
+        if (!streamingData && response) {
+            @try {
+                NSString *found = SCIFindManifestInText([response description]);
+                if (found.length) {
+                    [SCIYTDiagnostics recordShortsResponse:
+                        [NSString stringWithFormat:@"read a playlist out of the text for %@",
+                            videoID]];
+                    return found;
+                }
+            } @catch (__unused NSException *exception) { }
         }
     }
 
