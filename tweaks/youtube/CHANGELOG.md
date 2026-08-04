@@ -3,6 +3,16 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.30.2
+
+- **The address is now checked against the video it is meant to be for.** Every release so far
+  has reasoned about *which* set of details to use; the last one reported picking the right
+  set and still produced the wrong file. So the tweak now reads the video's name out of the
+  address itself and refuses it if it belongs to something else.
+- If it refuses, it says so and saves nothing. That is deliberate: a file that is quietly the
+  wrong video is why this has taken eight tries to pin down — it looks like success until you
+  open it.
+
 ## v0.30.1
 
 - **The wrong-Short download.** The details of the right clip were being found and then asked

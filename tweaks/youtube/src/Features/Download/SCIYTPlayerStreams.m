@@ -201,10 +201,16 @@ static NSString *SCIFindManifestInText(NSString *text) {
             @try {
                 NSString *found = SCIFindManifestInText([response description]);
                 if (found.length) {
+                    // Checked exactly like the other path. This one takes the first playlist
+                    // address in a whole message tree, so it is the likeliest of the two to
+                    // pick up something belonging to a neighbouring clip.
+                    BOOL namesTheVideo = [found containsString:videoID];
+
                     [SCIYTDiagnostics recordShortsResponse:
-                        [NSString stringWithFormat:@"read a playlist out of the text for %@",
-                            videoID]];
-                    return found;
+                        [NSString stringWithFormat:@"text playlist for %@ — url %@ it",
+                            videoID, namesTheVideo ? @"names" : @"does NOT name"]];
+
+                    if (namesTheVideo) return found;
                 }
             } @catch (__unused NSException *exception) { }
         }
@@ -227,11 +233,30 @@ static NSString *SCIFindManifestInText(NSString *text) {
     // this one.
     for (NSString *name in @[@"hlsManifestURL", @"HLSMasterPlaylistURL"]) {
         NSString *found = SCIGetString(streamingData, name);
-        if (found.length) {
-            [SCIYTDiagnostics recordShortsResponse:
-                [NSString stringWithFormat:@"%@ answered for %@", name, videoID]];
-            return found;
-        }
+        if (!found.length) continue;
+
+        // The address is checked against the video it is supposed to be for.
+        //
+        // Everything up to here reported success and the wrong file still arrived, so the
+        // fault is no longer in which object was chosen -- it is that the object chosen
+        // holds an address for something else. A YouTube playlist URL carries the video id
+        // in its path, so this is answerable from the string itself rather than from another
+        // round of reasoning about capture order.
+        //
+        // Seven releases were spent trusting a path because it looked correct. This one
+        // checks the thing it produced.
+        BOOL namesTheVideo = [found containsString:videoID];
+
+        [SCIYTDiagnostics recordShortsResponse:
+            [NSString stringWithFormat:@"%@ answered for %@ — url %@ it",
+                name, videoID, namesTheVideo ? @"names" : @"does NOT name"]];
+
+        if (namesTheVideo) return found;
+
+        // Refused rather than used. A playlist that names a different video is exactly the
+        // wrong download being reported as a success, which is the failure that has survived
+        // seven attempts precisely because it looks like working.
+        return nil;
     }
 
     return nil;

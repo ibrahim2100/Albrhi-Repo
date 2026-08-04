@@ -465,6 +465,18 @@ static NSString *sciRequestedVideoID = nil;
             [NSString stringWithFormat:@"hls: playlist filed under %@", requested]];
     } else {
         manifest = captureIsOurs ? [SCIYTPlayerStreams hlsManifestURL] : nil;
+
+        // The live capture is checked the same way, and for the same reason.
+        //
+        // A playlist address carries its video id, so when a particular video was asked for
+        // this can simply be read rather than inferred from whichever capture looked current.
+        // Every guard before this one reasoned about ordering; this one looks at the answer.
+        if (manifest.length && requested.length && ![manifest containsString:requested]) {
+            [SCIYTDiagnostics recordStreamAttempt:
+                [NSString stringWithFormat:@"hls: the live playlist does not name %@ — refused",
+                    requested]];
+            manifest = nil;
+        }
     }
 
     if (!captureIsOurs) {
