@@ -177,6 +177,14 @@ static NSString *SCIAttribute(NSString *line, NSString *name) {
 /// Kept so the failure can say it. "The pieces do not join" fits all three shapes a
 /// playlist can have and distinguishes none of them, and the report that did carry the
 /// distinction was being cleared mid-download by YouTube re-announcing the video.
+/// How many times one part is asked for before the download gives up.
+///
+/// Three, and the reason is arithmetic rather than taste. A playlist here runs to ninety-odd
+/// parts, so at a 1-in-200 chance of any single request failing -- ordinary for mobile data
+/// -- a download with no retry fails better than a third of the time, and the whole of it is
+/// thrown away when it does. Three attempts takes that to roughly one in a million.
+static const NSUInteger kSCIPartAttempts = 3;
+
 static NSString *sciLastShape = nil;
 
 /// A failure sentence with the playlist's shape under it.
@@ -727,6 +735,7 @@ static NSString *SCIWithShape(NSString *message) {
              joined:joined
               total:queue.count
                done:0
+            attempt:0
            progress:progress
          completion:completion];
 }
@@ -736,6 +745,7 @@ static NSString *SCIWithShape(NSString *message) {
            joined:(NSURL *)joined
             total:(NSUInteger)total
              done:(NSUInteger)done
+          attempt:(NSUInteger)attempt
          progress:(void (^)(double))progress
        completion:(void (^)(NSURL *, NSString *))completion {
 
@@ -745,17 +755,58 @@ static NSString *SCIWithShape(NSString *message) {
         return;
     }
 
+    // Read, not taken. It is only removed once its bytes are safely written, so a part
+    // that fails is still at the head of the queue for the next attempt.
     NSString *address = queue.firstObject;
-    [queue removeObjectAtIndex:0];
 
     [[[self session] dataTaskWithURL:[NSURL URLWithString:address]
                    completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-        if (!data || error) {
+        NSInteger status = [response isKindOfClass:[NSHTTPURLResponse class]]
+            ? ((NSHTTPURLResponse *)response).statusCode : 0;
+
+        // A refusal is not a hiccup.
+        //
+        // 4xx means the address is wrong or has expired, and asking again three times just
+        // makes the same mistake more slowly. Anything else -- a dropped connection, a
+        // timeout, a 5xx -- is worth another go.
+        BOOL worthRetrying = (status < 400 || status >= 500);
+
+        if ((!data.length || error) && worthRetrying && attempt < kSCIPartAttempts) {
+            // Backing off, because retrying a congested connection instantly is how a
+            // struggling download becomes a hammering one.
+            double pause = 0.5 * (double)(attempt + 1);
+
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(pause * NSEC_PER_SEC)),
+                           dispatch_get_main_queue(), ^{
+                [self writeNext:queue
+                         handle:handle
+                         joined:joined
+                          total:total
+                           done:done
+                        attempt:attempt + 1
+                       progress:progress
+                     completion:completion];
+            });
+            return;
+        }
+
+        if (!data.length || error) {
             [handle closeFile];
             [[NSFileManager defaultManager] removeItemAtURL:joined error:nil];
+
+            // Says which part and how many were already in hand, because "the download
+            // failed" on part 60 of 94 and on part 1 of 94 are not the same event.
+            [SCIYTDiagnostics recordStreamAttempt:
+                [NSString stringWithFormat:@"hls: part %lu of %lu failed after %lu tries — %@",
+                    (unsigned long)(done + 1), (unsigned long)total,
+                    (unsigned long)(attempt + 1),
+                    error.localizedDescription ?: [NSString stringWithFormat:@"HTTP %ld", (long)status]]];
+
             completion(nil, error.localizedDescription ?: SCILocalized(@"dl_failed"));
             return;
         }
+
+        [queue removeObjectAtIndex:0];
 
         @try {
             [handle writeData:data];
@@ -777,6 +828,7 @@ static NSString *SCIWithShape(NSString *message) {
                  joined:joined
                   total:total
                    done:written
+                attempt:0
                progress:progress
              completion:completion];
     }] resume];

@@ -3,6 +3,17 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.1.0
+
+- **A download no longer starts over because one piece failed.** A video arrives in ninety-odd
+  pieces, and a single one that timed out threw away everything already fetched — on mobile
+  data that is most of the reason a save fails at all. Each piece is now asked for up to three
+  times, with a pause between, and only what is genuinely refused gives up.
+- An address that has expired still fails immediately, because asking again three times just
+  makes the same mistake more slowly.
+- If it does fail, the message says which piece and how many had already arrived, instead of
+  "the download failed".
+
 ## v1.0.0
 
 The first release that is not a work in progress.
