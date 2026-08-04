@@ -3,6 +3,19 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.5.0
+
+- **The Download Centre is redrawn.** Every row is a card carrying its own artwork, tinted a
+  shade of that artwork's own colour, so a list of saves reads as a shelf of things rather
+  than a settings screen with pictures in it.
+- **Videos and songs finally look like what they are.** A video keeps its 16:9 still with the
+  length printed on the corner, the way a thumbnail is everywhere else; a song shows its
+  square cover. Neither is squeezed into the other's frame any more.
+- **Progress runs the full width of the row** while something downloads, instead of a short
+  stub on the right where nobody looks.
+- Rows press in when you touch them, the row that is playing is marked, and the page sits on
+  a single lit surface rather than a grey table on a darker grey.
+
 ## v1.4.1
 
 - **Tabs work again after visiting Downloads.** Opening the Centre and then tapping You, or

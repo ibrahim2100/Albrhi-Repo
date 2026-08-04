@@ -14,6 +14,7 @@
 @property (nonatomic) BOOL dismissable;
 @property (nonatomic, strong) SCIYTMiniPlayer *mini;
 @property (nonatomic, strong) NSLayoutConstraint *miniHeight;
+@property (nonatomic, strong) CAGradientLayer *ground;
 @end
 
 @implementation SCIYTCentrePage
@@ -29,7 +30,20 @@
     [super viewDidLoad];
 
     self.title = SCILocalized(@"dl_centre_title");
-    self.view.backgroundColor = [UIColor colorWithWhite:0.05 alpha:1.0];
+    self.view.backgroundColor = [UIColor blackColor];
+
+    // One surface, lit from the top.
+    //
+    // A flat near-black behind an inset-grouped table was two greys with a gap between them,
+    // and it read as a settings screen with pictures in it. A single graded ground with the
+    // cards floating on it is the shape this actually is: a shelf of things, not a form.
+    CAGradientLayer *ground = [CAGradientLayer layer];
+    ground.colors = @[(id)[UIColor colorWithWhite:0.13 alpha:1].CGColor,
+                      (id)[UIColor colorWithWhite:0.04 alpha:1].CGColor];
+    ground.startPoint = CGPointMake(0.5, 0);
+    ground.endPoint = CGPointMake(0.5, 0.65);
+    [self.view.layer insertSublayer:ground atIndex:0];
+    self.ground = ground;
 
     self.lists = @[[[SCIYTDownloadList alloc] initWithKind:SCIYTJobKindVideo],
                    [[SCIYTDownloadList alloc] initWithKind:SCIYTJobKindAudio]];
@@ -92,6 +106,11 @@
     BOOL playing = [SCIYTPlayer isActive];
     self.miniHeight.constant = playing ? 62 : 0;
     [self inset:playing ? 62 : 0];
+}
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    self.ground.frame = self.view.bounds;
 }
 
 - (void)inset:(CGFloat)bottom {

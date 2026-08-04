@@ -3,6 +3,7 @@
 #import "SCIYTLibrary.h"
 #import "SCIYTPlayer.h"
 #import "SCIYTThumbnails.h"
+#import "SCIYTRowCell.h"
 #import "../../../SCILog.h"
 #import "../../../Prefs.h"
 #import "../../../Localization/SCILocalize.h"
@@ -33,7 +34,15 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    self.tableView.rowHeight = (self.kind == SCIYTJobKindVideo) ? 88 : 60;
+    // Plain, not inset-grouped, and with nothing drawn between rows.
+    //
+    // The grouping chrome was doing the job the cards now do, and doing both is a box inside
+    // a box. Separators go for the same reason: a card already says where one thing ends.
+    self.tableView.rowHeight = [SCIYTRowCell heightForKind:self.kind];
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    self.tableView.backgroundColor = [UIColor clearColor];
+    self.tableView.showsVerticalScrollIndicator = NO;
+    self.tableView.contentInset = UIEdgeInsetsMake(6, 0, 24, 0);
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(reload)
@@ -72,110 +81,46 @@
     return (NSInteger)MAX(self.rows.count, (NSUInteger)1);
 }
 
-- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
-    if (!self.rows.count) return nil;
-
-    long long bytes = 0;
-    for (SCIYTJob *job in self.rows) bytes += job.bytes;
-
-    NSString *size = [NSByteCountFormatter stringFromByteCount:bytes
-                                                    countStyle:NSByteCountFormatterCountStyleFile];
-    return [NSString stringWithFormat:SCILocalized(@"dl_centre_footer"),
-            (unsigned long)self.rows.count, size];
-}
-
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle
-                                                   reuseIdentifier:nil];
+    if (!self.rows.count) return [self emptyCell];
 
-    if (!self.rows.count) {
-        cell.textLabel.text = SCILocalized(@"dl_centre_empty");
-        cell.textLabel.textColor = [UIColor secondaryLabelColor];
-        cell.detailTextLabel.text = SCILocalized(@"dl_centre_empty_hint");
-        cell.detailTextLabel.numberOfLines = 0;
-        cell.selectionStyle = UITableViewCellSelectionStyleNone;
-        return cell;
+    SCIYTRowCell *cell = [tableView dequeueReusableCellWithIdentifier:@"row"];
+    if (!cell) {
+        cell = [[SCIYTRowCell alloc] initWithStyle:UITableViewCellStyleDefault
+                                   reuseIdentifier:@"row"];
     }
 
     SCIYTJob *job = self.rows[(NSUInteger)indexPath.row];
-
-    cell.textLabel.text = job.title;
-    cell.textLabel.numberOfLines = 2;
-    cell.detailTextLabel.textColor = (job.state == SCIYTJobStateFailed)
-        ? [UIColor systemRedColor] : [UIColor secondaryLabelColor];
-
-    // The length goes in front of the size, because it is what someone is looking for
-    // when they are choosing between two saved things.
-    NSString *status = [job statusLine];
-    cell.detailTextLabel.text = (job.state == SCIYTJobStateDone && job.duration > 0)
-        ? [NSString stringWithFormat:@"%@ · %@", [SCIYTThumbnails clock:job.duration], status]
-        : status;
-
-    if (self.kind == SCIYTJobKindVideo) {
-        UIImage *still = [SCIYTThumbnails cached:job];
-        cell.imageView.image = still ?: [UIImage systemImageNamed:@"film"];
-        cell.imageView.contentMode = UIViewContentModeScaleAspectFill;
-        cell.imageView.clipsToBounds = YES;
-        cell.imageView.layer.cornerRadius = 6;
-        if (!still) cell.imageView.tintColor = SCIAccent();
-    } else {
-        // A song gets its cover, exactly as a video gets its still.
-        //
-        // A music-note glyph in a grey circle was what forty saved songs all looked like, and
-        // a list where every row is identical is a list you have to read rather than scan.
-        // The cover is already on disk -- it is fetched when the song is saved -- so this was
-        // only ever a matter of asking for it.
-        UIImage *cover = [SCIYTThumbnails cached:job];
-        cell.imageView.image = cover ?: [UIImage systemImageNamed:@"music.note"];
-        cell.imageView.contentMode = UIViewContentModeScaleAspectFill;
-        cell.imageView.clipsToBounds = YES;
-
-        // Rounder than a video's, because that is the shape the ear expects: album art is
-        // square with soft corners, a video still is a rectangle with sharp ones, and the
-        // difference tells you which list you are in without a label.
-        cell.imageView.layer.cornerRadius = 10;
-        cell.imageView.layer.cornerCurve = kCACornerCurveContinuous;
-        if (!cover) cell.imageView.tintColor = SCIAccent();
-    }
-
-    // What is playing right now, marked.
-    //
-    // The mini bar says what is playing; the list says nothing, so scrolling it while
-    // something plays gives no way to find the row you are listening to. A tinted title and
-    // a small mark cost nothing and answer that at a glance.
-    BOOL isPlaying = [[SCIYTPlayer nowPlaying] isEqual:job];
-    cell.textLabel.textColor = isPlaying ? SCIAccent() : [UIColor labelColor];
-    cell.accessoryView = isPlaying ? [self playingMark] : nil;
-
-    if (job.state == SCIYTJobStateWorking) {
-        UIProgressView *bar = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleDefault];
-        bar.progressTintColor = SCIAccent();
-        bar.progress = (float)job.progress;
-        bar.frame = CGRectMake(0, 0, 60, 2);
-        cell.accessoryView = bar;
-        cell.selectionStyle = UITableViewCellSelectionStyleNone;
-    } else if (job.state == SCIYTJobStateDone) {
-        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-    } else {
-        cell.imageView.image = [UIImage systemImageNamed:@"exclamationmark.triangle"];
-        cell.imageView.tintColor = [UIColor systemRedColor];
-    }
+    [cell fillWith:job
+           artwork:[SCIYTThumbnails cached:job]
+           playing:[[SCIYTPlayer nowPlaying] isEqual:job]];
 
     return cell;
 }
 
-/// A still is 16:9 and a table would letterbox it into a square. Sized here, where the
-/// cell's own layout has already run and the frame can simply be set.
-- (void)tableView:(UITableView *)tableView
-   willDisplayCell:(UITableViewCell *)cell
- forRowAtIndexPath:(NSIndexPath *)indexPath {
+/// The row shown when there is nothing saved.
+///
+/// A cell rather than a background view, because a table with one centred label in it and a
+/// table with rows in it should not be two different screens -- the switch at the top stays
+/// where it is, and only the contents change.
+- (UITableViewCell *)emptyCell {
+    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle
+                                                   reuseIdentifier:nil];
+    cell.backgroundColor = [UIColor clearColor];
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
 
-    if (self.kind != SCIYTJobKindVideo || !cell.imageView.image) return;
+    cell.imageView.image = [UIImage systemImageNamed:
+        self.kind == SCIYTJobKindVideo ? @"film.stack" : @"music.note.list"];
+    cell.imageView.tintColor = [UIColor colorWithWhite:1 alpha:0.25];
 
-    CGFloat height = 60;
-    CGFloat width = height * 16.0 / 9.0;
-    cell.imageView.frame = CGRectMake(12, (cell.contentView.bounds.size.height - height) / 2,
-                                      width, height);
+    cell.textLabel.text = SCILocalized(@"dl_centre_empty");
+    cell.textLabel.textColor = [UIColor colorWithWhite:1 alpha:0.7];
+    cell.textLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightSemibold];
+
+    cell.detailTextLabel.text = SCILocalized(@"dl_centre_empty_hint");
+    cell.detailTextLabel.textColor = [UIColor colorWithWhite:1 alpha:0.4];
+    cell.detailTextLabel.numberOfLines = 0;
+    return cell;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -290,25 +235,6 @@
 ///
 /// Named rather than generic: "Delete this?" beside a list of forty saves is a question
 /// nobody can answer confidently. The title is in the message.
-/// The little mark on the row that is playing.
-///
-/// Three bars, the middle one taller, drawn rather than an SF Symbol -- the equaliser glyphs
-/// Apple ships are all animated-looking without animating, which reads as broken. Static and
-/// deliberate is better than still and pretending.
-- (UIView *)playingMark {
-    UIView *mark = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 16, 14)];
-
-    CGFloat heights[3] = {8, 14, 10};
-    for (int i = 0; i < 3; i++) {
-        UIView *bar = [[UIView alloc] initWithFrame:
-            CGRectMake(i * 6, (14 - heights[i]) / 2, 3, heights[i])];
-        bar.backgroundColor = SCIAccent();
-        bar.layer.cornerRadius = 1.5;
-        [mark addSubview:bar];
-    }
-    return mark;
-}
-
 - (void)confirmDelete:(SCIYTJob *)job then:(void (^)(void))go {
     UIAlertController *ask = [UIAlertController
         alertControllerWithTitle:SCILocalized(@"dl_delete_title")
