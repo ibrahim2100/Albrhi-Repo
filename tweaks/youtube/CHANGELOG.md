@@ -3,6 +3,15 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.5.1
+
+- **Dropping the player down to the mini bar no longer stops the sound.** The arrow was
+  pausing on its way out, so it handed you a bar that was already silent and the only way on
+  was to press play again. It now takes the screen away and leaves playback exactly as it
+  was — mid-word, if that is where you were.
+- The mini bar also keeps its play button honest when playback is changed from the lock
+  screen, headphones or a car, which it could not hear before.
+
 ## v1.5.0
 
 - **The Download Centre is redrawn.** Every row is a card carrying its own artwork, tinted a

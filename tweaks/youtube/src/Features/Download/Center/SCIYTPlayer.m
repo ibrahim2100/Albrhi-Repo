@@ -944,10 +944,22 @@ static SCIYTPlayer *sciCurrent = nil;
                     forState:UIControlStateNormal];
 }
 
+/// Puts the screen away and leaves the sound where it was.
+///
+/// This paused, and that was right when closing the player was the same act as stopping it.
+/// Since the player started outliving its screen it has been wrong, and wrong in a way that
+/// contradicted the comment ten lines below it: closing is not stopping, +stop is stopping.
+/// So the chevron dropped you into a mini bar that was already silent, and the only way on
+/// was to press play again — which is a handover that does not hand anything over.
+///
+/// Nothing here touches playback at all now. The position is written down because the app
+/// may not survive to write it later, the bar is told to refresh, and the screen goes away
+/// from over the top of something that never stopped.
 - (void)close {
     [self rememberPosition];
-    [self.player pause];
-    [self dismissViewControllerAnimated:YES completion:nil];
+    [self dismissViewControllerAnimated:YES completion:^{
+        [self announce];
+    }];
 }
 
 // MARK: - Picture in picture

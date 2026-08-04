@@ -151,6 +151,12 @@
                                      withConfiguration:weight]
                     forState:UIControlStateNormal];
 
+    // The glyph is refreshed on every tick as well as on every notification.
+    //
+    // The notification covers what this tweak does; it does not cover the lock screen, the
+    // headphones, or the car — those reach the player directly and the bar would sit showing
+    // a pause icon over something that stopped a minute ago. A comparison twice a second is
+    // nothing, and it makes the bar right rather than usually right.
     if (!self.tick) {
         // Twice a second, like the full screen's. A hairline moving smoothly is worth more
         // here than it costs, and it stops the moment the bar goes away.
@@ -165,6 +171,14 @@
 
 - (void)advance {
     self.progressWidth.constant = self.bounds.size.width * [SCIYTPlayer progress];
+
+    // And the glyph, in case playback was changed from somewhere this bar cannot hear.
+    BOOL playing = [SCIYTPlayer isPlaying];
+    UIImageSymbolConfiguration *weight =
+        [UIImageSymbolConfiguration configurationWithPointSize:16 weight:UIImageSymbolWeightSemibold];
+    [self.playPause setImage:[UIImage systemImageNamed:(playing ? @"pause.fill" : @"play.fill")
+                                     withConfiguration:weight]
+                    forState:UIControlStateNormal];
 }
 
 // MARK: - What it does
