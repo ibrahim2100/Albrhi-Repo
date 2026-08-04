@@ -119,9 +119,33 @@
         cell.imageView.layer.cornerRadius = 6;
         if (!still) cell.imageView.tintColor = SCIAccent();
     } else {
-        cell.imageView.image = [UIImage systemImageNamed:@"music.note"];
-        cell.imageView.tintColor = SCIAccent();
+        // A song gets its cover, exactly as a video gets its still.
+        //
+        // A music-note glyph in a grey circle was what forty saved songs all looked like, and
+        // a list where every row is identical is a list you have to read rather than scan.
+        // The cover is already on disk -- it is fetched when the song is saved -- so this was
+        // only ever a matter of asking for it.
+        UIImage *cover = [SCIYTThumbnails cached:job];
+        cell.imageView.image = cover ?: [UIImage systemImageNamed:@"music.note"];
+        cell.imageView.contentMode = UIViewContentModeScaleAspectFill;
+        cell.imageView.clipsToBounds = YES;
+
+        // Rounder than a video's, because that is the shape the ear expects: album art is
+        // square with soft corners, a video still is a rectangle with sharp ones, and the
+        // difference tells you which list you are in without a label.
+        cell.imageView.layer.cornerRadius = 10;
+        cell.imageView.layer.cornerCurve = kCACornerCurveContinuous;
+        if (!cover) cell.imageView.tintColor = SCIAccent();
     }
+
+    // What is playing right now, marked.
+    //
+    // The mini bar says what is playing; the list says nothing, so scrolling it while
+    // something plays gives no way to find the row you are listening to. A tinted title and
+    // a small mark cost nothing and answer that at a glance.
+    BOOL isPlaying = [[SCIYTPlayer nowPlaying] isEqual:job];
+    cell.textLabel.textColor = isPlaying ? SCIAccent() : [UIColor labelColor];
+    cell.accessoryView = isPlaying ? [self playingMark] : nil;
 
     if (job.state == SCIYTJobStateWorking) {
         UIProgressView *bar = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleDefault];
@@ -266,6 +290,25 @@
 ///
 /// Named rather than generic: "Delete this?" beside a list of forty saves is a question
 /// nobody can answer confidently. The title is in the message.
+/// The little mark on the row that is playing.
+///
+/// Three bars, the middle one taller, drawn rather than an SF Symbol -- the equaliser glyphs
+/// Apple ships are all animated-looking without animating, which reads as broken. Static and
+/// deliberate is better than still and pretending.
+- (UIView *)playingMark {
+    UIView *mark = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 16, 14)];
+
+    CGFloat heights[3] = {8, 14, 10};
+    for (int i = 0; i < 3; i++) {
+        UIView *bar = [[UIView alloc] initWithFrame:
+            CGRectMake(i * 6, (14 - heights[i]) / 2, 3, heights[i])];
+        bar.backgroundColor = SCIAccent();
+        bar.layer.cornerRadius = 1.5;
+        [mark addSubview:bar];
+    }
+    return mark;
+}
+
 - (void)confirmDelete:(SCIYTJob *)job then:(void (^)(void))go {
     UIAlertController *ask = [UIAlertController
         alertControllerWithTitle:SCILocalized(@"dl_delete_title")

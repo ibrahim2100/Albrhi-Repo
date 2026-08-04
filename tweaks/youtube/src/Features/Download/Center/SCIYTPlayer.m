@@ -3,6 +3,7 @@
 #import "SCIYTThumbnails.h"
 #import "SCIYTLibrary.h"
 #import "SCIYTIcon.h"
+#import "SCIYTPalette.h"
 #import "SCIYTHostPlayer.h"
 #import "../../../Diagnostics/SCIYTDiagnostics.h"
 #import "../../../SCILog.h"
@@ -38,6 +39,10 @@ static const double kSCINudge = 10;
 @property (nonatomic, strong) UIImageView *artwork;
 @property (nonatomic, strong) UIView *chrome;
 @property (nonatomic, strong) CAGradientLayer *scrim;
+
+/// The song's own colours, behind everything.
+@property (nonatomic, strong) CAGradientLayer *wash;
+@property (nonatomic, strong) UIColor *accent;
 
 @property (nonatomic, strong) UILabel *name;
 @property (nonatomic, strong) UILabel *subtitle;
@@ -284,6 +289,18 @@ static SCIYTPlayer *sciCurrent = nil;
     self.blur.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:self.blur];
 
+    // The song's colour, over the blurred cover and under everything else.
+    //
+    // A blur of the artwork alone is what the first version did and it is muddy: enlarged
+    // and softened, most covers become a brownish smear that looks the same whatever is
+    // playing. Reading the cover's actual colours and laying a gradient of *those* on top
+    // keeps the identity -- a red album gives a red screen -- while giving the text a
+    // surface with a predictable brightness to sit on.
+    self.wash = [CAGradientLayer layer];
+    self.wash.startPoint = CGPointMake(0.5, 0);
+    self.wash.endPoint = CGPointMake(0.5, 1);
+    [self.view.layer insertSublayer:self.wash above:self.blur.layer];
+
     self.stage = [[UIView alloc] init];
     self.stage.backgroundColor = [UIColor clearColor];
     self.stage.translatesAutoresizingMaskIntoConstraints = NO;
@@ -338,11 +355,67 @@ static SCIYTPlayer *sciCurrent = nil;
     [self.stage.layer addSublayer:self.layer];
 }
 
+/// Takes the screen's colours from the cover, and cross-fades to them.
+///
+/// Off the main thread, because reading a picture is work and this runs on every track
+/// change; back on it to touch anything drawn. The fade is half a second -- long enough to
+/// read as one thing becoming another, short enough that skipping through a list does not
+/// feel like waiting for the room lights.
+- (void)dressForCover:(UIImage *)cover {
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        NSArray<UIColor *> *pair = [SCIYTPalette backgroundFor:cover];
+        UIColor *accent = [SCIYTPalette accentFor:cover];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.accent = accent;
+
+            CABasicAnimation *fade = [CABasicAnimation animationWithKeyPath:@"colors"];
+            fade.duration = 0.5;
+            fade.timingFunction =
+                [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+            [self.wash addAnimation:fade forKey:@"wash"];
+
+            self.wash.colors = @[(id)pair.firstObject.CGColor, (id)pair.lastObject.CGColor];
+
+            [UIView animateWithDuration:0.5 animations:^{
+                self.scrubber.minimumTrackTintColor = accent;
+                self.playPause.tintColor = accent;
+
+                // The cover throws its own colour onto the screen behind it, which is the
+                // detail that makes artwork look lit rather than pasted on.
+                self.artwork.layer.shadowColor = accent.CGColor;
+                self.artwork.layer.shadowOpacity = 0.55;
+            }];
+        });
+    });
+}
+
+/// The cover grows a little while it plays and settles back when paused.
+///
+/// Small on purpose -- four per cent. A record that visibly pumps is a gimmick; one that is
+/// slightly larger while playing is something you feel rather than notice, and it means the
+/// screen answers the play button even when the artwork is all you are looking at.
+- (void)breathe:(BOOL)playing {
+    if ([self current].kind != SCIYTJobKindAudio) return;
+
+    [UIView animateWithDuration:0.45
+                          delay:0
+         usingSpringWithDamping:0.75
+          initialSpringVelocity:0
+                        options:UIViewAnimationOptionBeginFromCurrentState |
+                                UIViewAnimationOptionAllowUserInteraction
+                     animations:^{
+        self.artwork.transform = playing ? CGAffineTransformIdentity
+                                         : CGAffineTransformMakeScale(0.96, 0.96);
+    } completion:nil];
+}
+
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
 
     self.layer.frame = self.stage.bounds;
     self.scrim.frame = self.chrome.bounds;
+    self.wash.frame = self.view.bounds;
     [self applyShape];
 }
 
@@ -783,6 +856,9 @@ static SCIYTPlayer *sciCurrent = nil;
     self.backdrop.image = still;
     self.blur.hidden = isVideo;
     self.backdrop.hidden = isVideo;
+    self.wash.hidden = isVideo;
+
+    if (!isVideo) [self dressForCover:still];
 
     self.name.text = job.title;
     self.subtitle.text = job.quality;
@@ -859,6 +935,8 @@ static SCIYTPlayer *sciCurrent = nil;
 }
 
 - (void)showPlaying:(BOOL)playing {
+    [self breathe:playing];
+
     UIImageSymbolConfiguration *weight =
         [UIImageSymbolConfiguration configurationWithPointSize:56 weight:UIImageSymbolWeightMedium];
     [self.playPause setImage:[UIImage systemImageNamed:(playing ? @"pause.circle.fill" : @"play.circle.fill")

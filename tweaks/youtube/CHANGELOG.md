@@ -3,6 +3,20 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.4.0
+
+- **Every song now colours its own screen.** The background is read out of the cover itself —
+  a red album gives a red screen, a blue one a blue screen — and it fades from one to the next
+  as the track changes. The scrubber and the play button take their colour from the same
+  place, and the cover casts that colour behind it, so the artwork looks lit rather than
+  pasted on.
+- **The cover breathes.** It settles back a little when paused and returns when playing —
+  four per cent, enough to feel and not enough to notice.
+- **Saved songs show their covers in the list**, instead of forty identical music notes, with
+  rounder corners than a video's still so you can tell the two lists apart at a glance.
+- **The row that is playing is marked**, so scrolling a long list while listening tells you
+  where you are.
+
 ## v1.3.0
 
 - **Downloads are several times faster.** A video arrives in ninety-odd pieces, and they were
