@@ -229,18 +229,18 @@ Name: Albrhi for YouTube (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-youtube.json
 
 Package: com.albrhi.youtube
-Version: 1.5.0
+Version: 1.6.0
 Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 576
 Depends: mobilesubstrate
 Conflicts: com.albrhi.youtube.roothide
 Replaces: com.albrhi.youtube.roothide
-Filename: debs/com.albrhi.youtube_1.5.0_iphoneos-arm64.deb
-Size: 149926
-MD5sum: 72121a0cc79fc5e13c06e20cd900246d
-SHA1: 9b4aa424cf53bf0a769718f875c2834549a95b6f
-SHA256: 7ce711df86cb906bbc52ec9909132095bf463389d9bb41d17fbda04285ff219a
+Filename: debs/com.albrhi.youtube_1.6.0_iphoneos-arm64.deb
+Size: 150718
+MD5sum: e5fdc6432d35deea88d2d916088fcd91
+SHA1: c514a2c5f7710749b1f776d2a7e981a68e0d2b41
+SHA256: 42dd2371b55e5fa02fedaf1d360ee90ac226778b5b57d7d34ad5690f475177f7
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download videos, no ads, skip the sponsored parts, background playback — in Arabic or English.
@@ -291,18 +291,18 @@ Name: Albrhi for YouTube (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-youtube.json
 
 Package: com.albrhi.youtube
-Version: 1.5.1
+Version: 1.7.0
 Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 576
 Depends: mobilesubstrate
 Conflicts: com.albrhi.youtube.roothide
 Replaces: com.albrhi.youtube.roothide
-Filename: debs/com.albrhi.youtube_1.5.1_iphoneos-arm64.deb
-Size: 149922
-MD5sum: c4051a13d8fbf6cd3036927f20986953
-SHA1: 9464bec01faef9f2ec1047ca375d3921e2ecf0f7
-SHA256: b9e6e11013beebe61c3d286d3b2dc99c8a9585786cef2e0661cb7e5a0fcae0ec
+Filename: debs/com.albrhi.youtube_1.7.0_iphoneos-arm64.deb
+Size: 152928
+MD5sum: 0620f12f9410b129a9bde529e931fc18
+SHA1: 7b250275f56b74e0b6b985fcc79731706037c5ee
+SHA256: cb429c6660935e460fd28c1c016a96cedde47931cb99476ae5f3bd4cf7576f0f
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download videos, no ads, skip the sponsored parts, background playback — in Arabic or English.
@@ -415,18 +415,18 @@ Name: Albrhi for YouTube (roothide)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-youtube.json
 
 Package: com.albrhi.youtube.roothide
-Version: 1.5.0
+Version: 1.6.0
 Architecture: iphoneos-arm64e
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 576
 Depends: mobilesubstrate
 Conflicts: com.albrhi.youtube
 Replaces: com.albrhi.youtube
-Filename: debs/com.albrhi.youtube.roothide_1.5.0_iphoneos-arm64e.deb
-Size: 149752
-MD5sum: be21fed91754bd96fd3e5699a9ab32c7
-SHA1: 4ccc8e41829cc84af85ec1a651a237e9bcce6cd3
-SHA256: bfb7e43cfbd611ccb79ec1b1726ce7c7ade307a9b61782bca22ebad2fbd93bc4
+Filename: debs/com.albrhi.youtube.roothide_1.6.0_iphoneos-arm64e.deb
+Size: 150728
+MD5sum: f811a8241236d2164da0314c25c8744e
+SHA1: 63d8b398fa0e4fbe196ae22c9ded95cf499bb19c
+SHA256: be766322773c1e722ffa4c74cad96dbaf516a7aa956d5428720dea7cc322dc73
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download videos, no ads, skip the sponsored parts, background playback — in Arabic or English.
@@ -477,18 +477,18 @@ Name: Albrhi for YouTube (roothide)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-youtube.json
 
 Package: com.albrhi.youtube.roothide
-Version: 1.5.1
+Version: 1.7.0
 Architecture: iphoneos-arm64e
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 576
 Depends: mobilesubstrate
 Conflicts: com.albrhi.youtube
 Replaces: com.albrhi.youtube
-Filename: debs/com.albrhi.youtube.roothide_1.5.1_iphoneos-arm64e.deb
-Size: 150978
-MD5sum: 5f1b8e8150f22cb36eaa83933f55d8b4
-SHA1: 07aa7127c74318074946b8997a802e0733631bcd
-SHA256: acc741450785e23fec24aaac2de01ac233ad4851304735bf11ea137164a42f84
+Filename: debs/com.albrhi.youtube.roothide_1.7.0_iphoneos-arm64e.deb
+Size: 152774
+MD5sum: 17a1ac9607aae5108433bb2fa7386355
+SHA1: da81aed8a468dba72ecb80238ab6b6c8ec1f7320
+SHA256: 4eb671f716c65c853e585300ce1cc8e49dcb726d920843f1cba220bcdc5e01da
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download videos, no ads, skip the sponsored parts, background playback — in Arabic or English.
