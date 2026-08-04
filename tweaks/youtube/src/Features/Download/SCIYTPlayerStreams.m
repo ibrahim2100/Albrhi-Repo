@@ -212,7 +212,29 @@ static NSString *SCIFindManifestInText(NSString *text) {
 
     if (!streamingData) return nil;
 
-    return SCIGetString(streamingData, @"hlsManifestURL");
+    // Both names, because there are two different classes of streaming data here and they
+    // do not agree on what the field is called.
+    //
+    // This is what six releases were actually stuck on. The keyed store holds MLStreamingData
+    // -- the media layer's object, taken from MLVideo -- and its playlist field is
+    // HLSMasterPlaylistURL. Only the player response's YTIStreamingData calls it
+    // hlsManifestURL, and that is the only name this method asked for. So the right object
+    // was being found and then asked the wrong question, and answered nil, which looks
+    // exactly like not having found it.
+    //
+    // The proof was thirty lines further down this same file, where the walk has read
+    // HLSMasterPlaylistURL off MLStreamingData since 0.9.1. I did not need the device for
+    // this one.
+    for (NSString *name in @[@"hlsManifestURL", @"HLSMasterPlaylistURL"]) {
+        NSString *found = SCIGetString(streamingData, name);
+        if (found.length) {
+            [SCIYTDiagnostics recordShortsResponse:
+                [NSString stringWithFormat:@"%@ answered for %@", name, videoID]];
+            return found;
+        }
+    }
+
+    return nil;
 }
 
 + (NSString *)hlsManifestURL {

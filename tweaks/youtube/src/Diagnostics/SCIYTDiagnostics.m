@@ -374,12 +374,22 @@ static NSString *sciResponseVideoID = nil;
 
             // Bounded, and the oldest goes first. This holds YouTube's stream objects, so an
             // unbounded map would pin every video of the session.
+            if (!sciStreamsOrder) sciStreamsOrder = [NSMutableArray array];
+
+            // The oldest key, read before it is removed from the order.
+            //
+            // The first version took index 0 out of the order and then deleted the key of
+            // whatever had become first -- so it evicted the second-oldest and left the
+            // oldest in the dictionary with nothing tracking it, which grows without bound.
+            // It also touched the order array before creating it.
             if (sciStreamsByVideo.count >= 6 && !sciStreamsByVideo[sciLastVideoID]) {
-                [sciStreamsOrder removeObjectAtIndex:0];
-                [sciStreamsByVideo removeObjectForKey:sciStreamsOrder.firstObject ?: @""];
+                NSString *oldest = sciStreamsOrder.firstObject;
+                if (oldest) {
+                    [sciStreamsByVideo removeObjectForKey:oldest];
+                    [sciStreamsOrder removeObjectAtIndex:0];
+                }
             }
 
-            if (!sciStreamsOrder) sciStreamsOrder = [NSMutableArray array];
             if (!sciStreamsByVideo[sciLastVideoID]) [sciStreamsOrder addObject:sciLastVideoID];
             sciStreamsByVideo[sciLastVideoID] = sciLastStreamingData;
         }

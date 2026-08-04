@@ -3,6 +3,14 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.30.1
+
+- **The wrong-Short download.** The details of the right clip were being found and then asked
+  for the address under a name they do not use — two parts of YouTube call the same thing by
+  two different names, and this was only ever asking for one of them. So the lookup kept
+  coming back empty, which looks exactly like having found nothing at all.
+- That was in our own file the whole time, thirty lines below the code that got it wrong.
+
 ## v0.30.0
 
 - **The wrong-Short download, from the answer rather than from guesswork.** The last release
