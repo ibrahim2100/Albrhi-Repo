@@ -15,14 +15,6 @@
 + (void)recordPlayerResponse:(id)response;
 + (void)recordVideo:(id)video;
 
-/// What the last video handed over, for anything that needs the streams rather than a
-/// report of them — the downloader, in practice.
-///
-/// Exposed here rather than captured a second time: these hooks already run for the
-/// report, and a second set watching the same two classes would be two things to keep
-/// in step for no gain.
-+ (id)lastStreamingData;
-
 /// The player response captured from the overlay — a YTIPlayerResponse, and a third
 /// place the formats might carry links. Held since 0.1.0 for the report, and never read
 /// by the downloader until it turned out that which streaming data you ask is the whole
@@ -48,8 +40,9 @@
 
 /// A player response filed under the video it belongs to.
 ///
-/// Shorts is the reason this exists: it never builds an MLVideo, so nothing else in the
-/// tweak ever learns which clip a capture is for.
+/// A second source for a clip whose streams have not been filed yet -- the first Short of a
+/// session, in practice. The claim this once carried, that Shorts never builds an MLVideo,
+/// was wrong: it builds one a clip ahead, and the store was failing for another reason.
 + (void)recordResponse:(id)response forVideo:(NSString *)videoID;
 + (id)responseForVideoID:(NSString *)videoID;
 

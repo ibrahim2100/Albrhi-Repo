@@ -1,11 +1,9 @@
 #import "SCIYTChoiceSheet.h"
+#import "../../../Tweak.h"
 #import "../../../SCILog.h"
 #import "../../../Localization/SCILocalize.h"
 
 /// YouTube's red, which is also this tweak's accent everywhere else.
-static UIColor *SCIAccent(void) {
-    return [UIColor colorWithRed:1.0 green:0.0 blue:0.13 alpha:1.0];
-}
 
 @interface SCIYTChoiceSheet () <UITableViewDataSource, UITableViewDelegate>
 @property (nonatomic, strong) NSArray<SCIHLSVariant *> *variants;

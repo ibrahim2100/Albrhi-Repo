@@ -1,4 +1,5 @@
 #import "SCIYTPlayer.h"
+#import "../../../Tweak.h"
 #import "SCIYTThumbnails.h"
 #import "SCIYTLibrary.h"
 #import "SCIYTIcon.h"
@@ -11,9 +12,6 @@
 #import <AVKit/AVKit.h>
 #import <MediaPlayer/MediaPlayer.h>
 
-static UIColor *SCIAccent(void) {
-    return [UIColor colorWithRed:1.0 green:0.0 blue:0.13 alpha:1.0];
-}
 
 /// How long the controls stay up once you stop touching them.
 static const NSTimeInterval kSCIChromeLinger = 3.5;

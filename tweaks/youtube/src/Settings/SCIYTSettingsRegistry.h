@@ -55,10 +55,6 @@ typedef NSArray<SCISection *> * _Nonnull (^SCIYTSectionsBuilder)(SCIYTSettingsHo
 /// Every registered page's sections, in order.
 + (NSArray<SCISection *> *)composedSectionsFor:(SCIYTSettingsHostController *)host;
 
-/// How many pages registered. For the diagnostics report -- a settings screen that comes up
-/// short is otherwise indistinguishable from one whose features are all switched off.
-+ (NSUInteger)pageCount;
-
 @end
 
 NS_ASSUME_NONNULL_END

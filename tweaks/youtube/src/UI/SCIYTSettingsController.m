@@ -12,9 +12,6 @@
 /// YouTube's red. Written out rather than read from YTCommonColorPalette: one colour is
 /// not worth a dependency on a class whose shape has not been verified, and unverified
 /// dependencies are what the last three releases were about.
-static UIColor *SCIAccent(void) {
-    return [UIColor colorWithRed:1.0 green:0.0 blue:0.13 alpha:1.0];
-}
 
 @interface SCIYTSettingsController ()
 @property (nonatomic, strong) NSArray<SCISection *> *sections;

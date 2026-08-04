@@ -41,6 +41,5 @@ static NSMutableArray<NSDictionary *> *sciPages = nil;
     return sections;
 }
 
-+ (NSUInteger)pageCount { return sciPages.count; }
 
 @end

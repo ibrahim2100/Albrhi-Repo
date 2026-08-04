@@ -1,0 +1,49 @@
+#import "../SCIYTSettingsRegistry.h"
+#import "../../Tweak.h"
+#import "../../Localization/SCILocalize.h"
+
+///
+/// Who made this, under what licence, and what it borrows.
+///
+/// Last section on the screen, and the only one that is not a setting. It is here because
+/// the licence requires it and because a tweak that talks to two outside services should
+/// say so somewhere a user can find without being told where to look.
+///
+/// The SponsorBlock and Return YouTube Dislike credits already appear beside the switches
+/// that turn those features on, which is the more useful place for them -- this repeats the
+/// attribution rather than replacing it, since a credit only shown to people who scrolled
+/// to a particular switch is not really published.
+///
+@interface SCIYTAboutPage : NSObject
+@end
+
+@implementation SCIYTAboutPage
+
++ (void)load {
+    [SCIYTSettingsRegistry registerSectionsWithOrder:95
+                                             builder:^NSArray<SCISection *> *(__unused SCIYTSettingsHostController *host) {
+        SCISection *about = [[SCISection alloc] init];
+        about.title = SCILocalized(@"about_title");
+        about.rows = @[
+            [SCIRow disclosureRow:SCILocalized(@"about_author")
+                           detail:SCILocalized(@"about_author_note")
+                           symbol:@"person.fill"
+                           action:^{ }],
+            [SCIRow disclosureRow:SCILocalized(@"about_version")
+                           detail:SCIVersionString
+                           symbol:@"number"
+                           action:^{ }],
+            [SCIRow disclosureRow:SCILocalized(@"about_licence")
+                           detail:SCILocalized(@"about_licence_note")
+                           symbol:@"doc.text"
+                           action:^{ }],
+        ];
+
+        // The source, because GPLv3 requires it to be offered and because a tweak asking for
+        // this much trust should be readable by whoever wants to read it.
+        about.footer = SCILocalized(@"about_footer");
+        return @[about];
+    }];
+}
+
+@end

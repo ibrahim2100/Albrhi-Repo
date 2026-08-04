@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#import "../../../Tweak.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import "SCIYTDownloadCenter.h"
@@ -49,9 +50,6 @@ static BOOL sciNativeTabAttached = NO;
 /// belongs on the view and not in a variable.
 static char kSCIIsOurItemView;
 
-static UIColor *SCIAccent(void) {
-    return [UIColor colorWithRed:1.0 green:0.0 blue:0.13 alpha:1.0];
-}
 
 /// Whether a pivot item renderer is the one we added.
 static BOOL SCIIsOurRenderer(id renderer) {

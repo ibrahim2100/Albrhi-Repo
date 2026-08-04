@@ -18,7 +18,4 @@
 /// asks for.
 + (void)pauseHost;
 
-/// Whether a playing YouTube player has been seen at all. For the report.
-+ (BOOL)isHostKnown;
-
 @end

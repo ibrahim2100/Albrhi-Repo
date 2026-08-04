@@ -85,7 +85,6 @@ static __weak UIViewController *sciAttached = nil;
     sciAttached = nil;
 }
 
-+ (BOOL)isInsidePivotBar { return sciAttached != nil; }
 
 + (UIViewController *)build {
     // The same page the tab shows, with a way out added. One screen in two places rather

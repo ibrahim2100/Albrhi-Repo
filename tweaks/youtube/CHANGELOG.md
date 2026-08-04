@@ -3,6 +3,14 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.31.1
+
+- **An About section**, at the bottom of the settings: who made it, which version, the
+  licence, and what it borrows from others. Some of that the licence requires; the rest is
+  there because a tweak that talks to outside services should say so where you can find it.
+- Housekeeping with no visible effect: four unused methods removed, and the accent colour
+  written out in eight separate files reduced to one.
+
 ## v0.31.0
 
 - **A saved Short is named after itself.** The right clip was being fetched — that is proved

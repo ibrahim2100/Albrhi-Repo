@@ -40,7 +40,6 @@ static __weak YTPlayerViewController *sciHostPlayer = nil;
     SCILogV(@"host: paused YouTube's player");
 }
 
-+ (BOOL)isHostKnown { return sciHostPlayer != nil; }
 
 @end
 

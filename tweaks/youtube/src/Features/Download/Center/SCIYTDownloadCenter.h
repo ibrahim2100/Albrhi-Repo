@@ -37,8 +37,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// Takes it down again, when another tab is chosen.
 + (void)removeFromPivotBar;
 
-+ (BOOL)isInsidePivotBar;
-
 @end
 
 NS_ASSUME_NONNULL_END

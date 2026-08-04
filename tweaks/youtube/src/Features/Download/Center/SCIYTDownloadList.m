@@ -1,13 +1,11 @@
 #import "SCIYTDownloadList.h"
+#import "../../../Tweak.h"
 #import "SCIYTLibrary.h"
 #import "SCIYTPlayer.h"
 #import "SCIYTThumbnails.h"
 #import "../../../SCILog.h"
 #import "../../../Localization/SCILocalize.h"
 
-static UIColor *SCIAccent(void) {
-    return [UIColor colorWithRed:1.0 green:0.0 blue:0.13 alpha:1.0];
-}
 
 @interface SCIYTDownloadList ()
 @property (nonatomic) SCIYTJobKind kind;

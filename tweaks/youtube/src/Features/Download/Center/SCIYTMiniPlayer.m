@@ -1,12 +1,10 @@
 #import "SCIYTMiniPlayer.h"
+#import "../../../Tweak.h"
 #import "SCIYTPlayer.h"
 #import "SCIYTJob.h"
 #import "SCIYTThumbnails.h"
 #import "../../../Localization/SCILocalize.h"
 
-static UIColor *SCIAccent(void) {
-    return [UIColor colorWithRed:1.0 green:0.0 blue:0.13 alpha:1.0];
-}
 
 @interface SCIYTMiniPlayer ()
 @property (nonatomic, strong) UIVisualEffectView *backing;

@@ -463,7 +463,6 @@ static NSString *sciResponseVideoID = nil;
     return YES;
 }
 
-+ (id)lastStreamingData { return sciLastStreamingData; }
 
 + (NSString *)titleForVideoID:(NSString *)videoID {
     return videoID.length ? sciTitlesByVideo[videoID] : nil;

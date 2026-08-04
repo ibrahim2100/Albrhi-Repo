@@ -9,9 +9,6 @@
 /// this again for something worth mentioning without anyone having to invent a second key.
 static NSString *const kSCIWelcomeShown = @"welcome_shown_version";
 
-static UIColor *SCIAccent(void) {
-    return [UIColor colorWithRed:1.0 green:0.0 blue:0.13 alpha:1.0];
-}
 
 @implementation SCIYTWelcome
 

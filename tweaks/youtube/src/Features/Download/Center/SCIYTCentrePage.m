@@ -1,13 +1,11 @@
 #import "SCIYTCentrePage.h"
+#import "../../../Tweak.h"
 #import "SCIYTDownloadList.h"
 #import "SCIYTMiniPlayer.h"
 #import "SCIYTPlayer.h"
 #import "SCIYTJob.h"
 #import "../../../Localization/SCILocalize.h"
 
-static UIColor *SCIAccent(void) {
-    return [UIColor colorWithRed:1.0 green:0.0 blue:0.13 alpha:1.0];
-}
 
 @interface SCIYTCentrePage ()
 @property (nonatomic, strong) NSArray<SCIYTDownloadList *> *lists;
