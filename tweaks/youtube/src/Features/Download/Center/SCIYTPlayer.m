@@ -961,6 +961,17 @@ static SCIYTPlayer *sciCurrent = nil;
 
     self.pip = [[AVPictureInPictureController alloc] initWithPlayerLayer:self.layer];
     self.pip.delegate = self;
+
+    // Only from the button, and said explicitly rather than left to the default.
+    //
+    // iOS will start picture in picture by itself the moment a playing video's app goes to
+    // the background, and it was doing exactly that -- leaving a video put it in a floating
+    // window nobody asked for. The default for this is meant to be off; relying on that was
+    // clearly wrong, and a property this consequential should not be inferred from
+    // documentation when one line states it.
+    if (@available(iOS 14.2, *)) {
+        self.pip.canStartPictureInPictureAutomaticallyFromInline = NO;
+    }
     self.pipButton.hidden = NO;
 }
 

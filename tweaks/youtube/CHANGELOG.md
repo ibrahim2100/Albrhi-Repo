@@ -3,6 +3,16 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.4.1
+
+- **Tabs work again after visiting Downloads.** Opening the Centre and then tapping You, or
+  Shorts, or anything else, was taking you to Home instead — every time. The tab bar was left
+  holding our tab's name as the one it had open, and since that names no page it knows, it had
+  nowhere to move *from* and fell back to its default. It is handed its own answer back before
+  it is asked to move.
+- **Picture in picture only starts when you press the button.** Leaving a video was putting it
+  in a floating window on its own.
+
 ## v1.4.0
 
 - **Every song now colours its own screen.** The background is read out of the cover itself —

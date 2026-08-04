@@ -50,6 +50,18 @@ static BOOL sciNativeTabAttached = NO;
 /// belongs on the view and not in a variable.
 static char kSCIIsOurItemView;
 
+/// Which of YouTube's own tabs was open before ours took over.
+///
+/// Kept because telling the bar our identifier is selected leaves it holding a name it has
+/// no page for. YouTube works out the next transition from whatever it thinks is currently
+/// selected, and an identifier it does not recognise gives it nothing to transition *from*
+/// -- so it falls back to its default, which is Home. Every tab tapped after visiting the
+/// Centre opened Home, whichever tab was tapped.
+///
+/// So its own answer is put back before it is asked to move, and the pair it computes from
+/// is one it knows.
+static NSString *sciPivotBeforeOurs = nil;
+
 
 /// Whether a pivot item renderer is the one we added.
 static BOOL SCIIsOurRenderer(id renderer) {
@@ -249,6 +261,21 @@ static BOOL SCIPaintIcon(UIView *view) {
         // ours -- and it is taken down whether or not it was up, which costs nothing and
         // means there is no state to get wrong.
         [SCIYTDownloadCenter removeFromPivotBar];
+
+        // And the bar is handed back its own answer before it is asked to move.
+        //
+        // %orig works out the transition from what it believes is selected, and what it
+        // believed was our identifier -- which names no page it has. Given nothing to
+        // transition from it went to its default, so every tab tapped after a visit to the
+        // Centre opened Home. Restoring first means the pair it computes from is one it
+        // knows, and the tab actually tapped is where it goes.
+        if (sciPivotBeforeOurs) {
+            @try {
+                [self setValue:sciPivotBeforeOurs forKey:@"selectedPivotIdentifier"];
+            } @catch (__unused NSException *exception) { }
+            sciPivotBeforeOurs = nil;
+        }
+
         %orig;
         return;
     }
@@ -263,6 +290,18 @@ static BOOL SCIPaintIcon(UIView *view) {
     // on -- because a modal is exactly that.
     if ([SCIYTDownloadCenter showInsidePivotBar:self]) {
         [SCIYTDiagnostics recordTabState:@"page shown in the content area"];
+
+        // Remembered before it is overwritten, and only the first time -- tapping our own
+        // tab twice must not record our own identifier as the one to go back to.
+        if (!sciPivotBeforeOurs) {
+            @try {
+                NSString *current = [self valueForKey:@"selectedPivotIdentifier"];
+                if ([current isKindOfClass:[NSString class]] &&
+                    ![current isEqualToString:kSCIPivotIdentifier]) {
+                    sciPivotBeforeOurs = [current copy];
+                }
+            } @catch (__unused NSException *exception) { }
+        }
 
         // So the tab lights up like any other. Without this the bar still shows whichever
         // tab was open before, and the page underneath belongs to nothing.
