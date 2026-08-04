@@ -3,6 +3,21 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.0.0
+
+The first release that is not a work in progress.
+
+- **Dislike counts are gone.** They never once worked: the buttons on this build are not
+  drawn the way that feature needed, every report said so, and it was carrying an outside
+  service's data and licence for a number that never appeared on screen. Removed entirely —
+  the code, the setting, the network calls and the credit.
+- **The tweak is lighter.** Four unused methods removed, the accent colour written out in
+  eight files reduced to one, sixteen unused pieces of text deleted, and the busiest hook in
+  the tweak — the one that runs every time the progress bar lays itself out — now asks
+  whether the feature is on before doing anything at all.
+- **An About section** with the licence and the credits.
+- Nothing you use has changed. This is the same tweak with less in it.
+
 ## v0.31.1
 
 - **An About section**, at the bottom of the settings: who made it, which version, the

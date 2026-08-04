@@ -6,13 +6,12 @@
 /// Who made this, under what licence, and what it borrows.
 ///
 /// Last section on the screen, and the only one that is not a setting. It is here because
-/// the licence requires it and because a tweak that talks to two outside services should
+/// the licence requires it and because a tweak that talks to an outside service should
 /// say so somewhere a user can find without being told where to look.
 ///
-/// The SponsorBlock and Return YouTube Dislike credits already appear beside the switches
-/// that turn those features on, which is the more useful place for them -- this repeats the
-/// attribution rather than replacing it, since a credit only shown to people who scrolled
-/// to a particular switch is not really published.
+/// The SponsorBlock credit also appears beside the switch that turns it on, which is the
+/// more useful place for it -- this repeats the attribution rather than replacing it, since
+/// a credit shown only to people who scrolled to one particular switch is not published.
 ///
 @interface SCIYTAboutPage : NSObject
 @end

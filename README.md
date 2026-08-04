@@ -10,6 +10,7 @@
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B-lightgrey.svg)]()
 [![Rootless](https://img.shields.io/badge/rootless-supported-success.svg)](#-compatibility)
 [![Instagram](https://img.shields.io/badge/Instagram-3.8.2-orange.svg)](tweaks/instagram/CHANGELOG.md)
+[![YouTube](https://img.shields.io/badge/YouTube-1.0.0-red.svg)](tweaks/youtube/CHANGELOG.md)
 [![Based on](https://img.shields.io/badge/based%20on-SCInsta-lightblue.svg)](https://github.com/SoCuul/SCInsta)
 
 <br/>
@@ -82,7 +83,7 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 | Tweak | App | Status |
 |---|---|---|
 | **Albrhi for Instagram** | Instagram | **Released** — `com.albrhi.tweak` |
-| **Albrhi for YouTube** | YouTube | **Released** — `com.albrhi.youtube`: video downloads, no ads, SponsorBlock, background playback |
+| **Albrhi for YouTube** | YouTube | **1.0.0** — `com.albrhi.youtube`: downloads with their own player, no ads, SponsorBlock, background playback |
 
 Each tweak is a self-contained project under `tweaks/`, with its own sources, package identity and
 version number. They are **separate packages that never meet at runtime**: an injection filter binds
@@ -146,8 +147,12 @@ actually attached at runtime, with one-tap issue reporting.
 ## ▶️ Albrhi for YouTube
 
 ### 💾 Save a video
-**Hold the video**, or open the panel, and the qualities appear — pick one and it goes to
-Photos with a percentage while it works.
+**Hold the video** and the qualities appear — pick one, and it lands in the Download Centre
+with a percentage while it works. **Shorts get a save button** of their own, beside like and
+share, because Shorts has no long press to spare.
+
+Video or audio, your choice. Sound is saved as a proper `.m4a` with the cover art from the
+video, so it arrives somewhere else looking like a song rather than an untitled file.
 
 Getting there took nine releases of measuring, and the finding is worth stating: on this
 build **every individual quality arrives without a download address**, through the media
@@ -164,6 +169,22 @@ quality, and the tweak stays small.
 
 Qualities iOS cannot play are filtered out *before* they are offered, and a failure names
 which of the three things went wrong rather than one sentence for all of them.
+
+### 📁 The Download Centre
+A **tab of its own**, beside Home and You — not a panel over the app. YouTube draws that tab
+itself, so it has a real label, a real selected state, and its share of the width.
+
+Inside: everything you have saved, in video and audio, with a player written for the job.
+Landscape fills the screen, the controls fade while you watch and come back with a tap, and
+double-tapping either side jumps ten seconds. **Picture in picture**, playback speed, a sleep
+timer, AirPlay, and it remembers where you stopped — days later, across restarts.
+
+A **mini bar** along the bottom keeps the sound going while you look through the rest, and
+tapping it puts the full screen back where it was. The lock screen gets the title, the artwork,
+a scrubber you can drag, and next and previous that move through your own list.
+
+Rename anything you have saved, share it, or send it to Photos — the tweak keeps it and does
+not decide for you where it should live.
 
 ### 🚫 No ads
 Stopped at three points, because they arrive by three routes and blocking one does nothing about
@@ -182,7 +203,14 @@ the first four characters of the video's fingerprint, so the server cannot tell 
 watching. Nothing is requested at all when the feature is off.
 
 ### 🎧 Background playback
-Audio keeps going when you leave the app or lock the screen.
+Audio keeps going when you leave the app or lock the screen — YouTube's own video, and anything
+saved.
+
+### 📶 A quality ceiling
+Separately for Wi-Fi and for mobile data. Set mobile to 480p and a video on the road stays at
+480p without touching what you get at home. It is a ceiling, not a fixed quality: YouTube still
+drops lower on its own when the connection cannot keep up. The full quality list is available
+too, instead of the two-line shortcut newer builds show.
 
 ### 🤫 Quieter
 Silence the prompt to update — updating replaces the app and removes the tweak. And optionally hide

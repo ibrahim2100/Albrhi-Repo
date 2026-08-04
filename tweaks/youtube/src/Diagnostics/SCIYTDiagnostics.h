@@ -99,13 +99,6 @@
 /// hooked and only one of them exists in any given build -- this reports which.
 + (void)recordMarkerBar:(NSString *)className count:(NSInteger)count;
 
-/// What a like/dislike counter node said it held, before anything was written into it.
-///
-/// Which node is the dislike one is decided from its text, so the text is exactly what has
-/// to be visible when it turns out to have picked the wrong one.
-+ (void)recordCounterNode:(NSString *)text;
-+ (NSArray<NSString *> *)counterNodes;
-
 /// What happened when the Downloads tab tried to attach, and then to draw itself.
 ///
 /// 0.18.0 reported nothing about the tab at all, so "the icon did not appear" had no

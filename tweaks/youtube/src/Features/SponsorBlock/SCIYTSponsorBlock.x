@@ -328,6 +328,15 @@ static void SCIDrawMarkers(UIView *bar, double barTotalTime) {
 
 - (void)layoutSubviews {
     %orig;
+
+    // Asked before anything else is done.
+    //
+    // This is the hottest hook in the tweak: a progress bar lays itself out continuously
+    // while a video plays. The pref was checked inside SCIDrawMarkers, which meant entering
+    // an exception scope and sending two messages on every pass merely to discover the
+    // feature was switched off. Two dictionary reads instead, and nothing else.
+    if (!SCIPrefEnabled(SCIPrefSponsorBlock) || !SCIPrefEnabled(SCIPrefSBMarkers)) return;
+
     @try {
         double total = [self respondsToSelector:@selector(totalTime)] ? self.totalTime : 0;
         SCIDrawMarkers(self, total);
@@ -345,6 +354,15 @@ static void SCIDrawMarkers(UIView *bar, double barTotalTime) {
 
 - (void)layoutSubviews {
     %orig;
+
+    // Asked before anything else is done.
+    //
+    // This is the hottest hook in the tweak: a progress bar lays itself out continuously
+    // while a video plays. The pref was checked inside SCIDrawMarkers, which meant entering
+    // an exception scope and sending two messages on every pass merely to discover the
+    // feature was switched off. Two dictionary reads instead, and nothing else.
+    if (!SCIPrefEnabled(SCIPrefSponsorBlock) || !SCIPrefEnabled(SCIPrefSBMarkers)) return;
+
     @try {
         double total = [self respondsToSelector:@selector(totalTime)] ? self.totalTime : 0;
         SCIDrawMarkers(self, total);
@@ -359,6 +377,15 @@ static void SCIDrawMarkers(UIView *bar, double barTotalTime) {
 
 - (void)layoutSubviews {
     %orig;
+
+    // Asked before anything else is done.
+    //
+    // This is the hottest hook in the tweak: a progress bar lays itself out continuously
+    // while a video plays. The pref was checked inside SCIDrawMarkers, which meant entering
+    // an exception scope and sending two messages on every pass merely to discover the
+    // feature was switched off. Two dictionary reads instead, and nothing else.
+    if (!SCIPrefEnabled(SCIPrefSponsorBlock) || !SCIPrefEnabled(SCIPrefSBMarkers)) return;
+
     @try {
         double total = [self respondsToSelector:@selector(totalTime)] ? self.totalTime : 0;
         SCIDrawMarkers(self, total);

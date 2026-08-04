@@ -54,12 +54,6 @@
 #define SCIPrefCapWiFi          @"quality_cap_wifi"
 #define SCIPrefCapCellular      @"quality_cap_cellular"
 
-/// The dislike count, which is not YouTube's own figure and is off until asked for.
-///
-/// It comes from a third party, so it is a request the user makes rather than something
-/// the tweak decides on their behalf -- and the row that turns it on says where the number
-/// comes from.
-#define SCIPrefDislikes         @"return_dislikes"
 
 /// SponsorBlock. One key for the feature, one per category.
 ///

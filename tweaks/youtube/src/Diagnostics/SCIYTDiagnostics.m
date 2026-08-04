@@ -1,5 +1,4 @@
 #import "SCIYTDiagnostics.h"
-#import "../Features/Dislikes/SCIYTDislikes.h"
 #import "../YouTubeHeaders.h"
 #import "../Tweak.h"
 #import "../SCILog.h"
@@ -152,23 +151,6 @@ static NSString *sciMarkerBar = nil;
     if (!className.length) return;
     sciMarkerBar = [NSString stringWithFormat:SCILocalized(@"diag_markers_drawn"),
         className, (long)count];
-}
-
-/// What the counter nodes on screen said.
-///
-/// Bounded and de-duplicated: a list scrolls, the same two buttons are re-drawn many times,
-/// and a report that says "Like" four hundred times answers nothing.
-static NSMutableOrderedSet<NSString *> *sciCounterNodes = nil;
-
-+ (void)recordCounterNode:(NSString *)text {
-    if (!sciCounterNodes) sciCounterNodes = [NSMutableOrderedSet orderedSet];
-    if (sciCounterNodes.count >= 8) return;
-
-    [sciCounterNodes addObject:text.length ? text : @"(empty)"];
-}
-
-+ (NSArray<NSString *> *)counterNodes {
-    return [sciCounterNodes array] ?: @[];
 }
 
 /// The last thing the Downloads tab did, in order, kept short.
@@ -643,7 +625,6 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
         sciMarkerBar ?: SCILocalized(@"diag_markers_none")];
 
     // Which counter buttons were seen and what each said before anything was written into
-    // it. The dislike node is picked out by its text, so when the number lands on the wrong
     // button -- or on none -- this is the line that says why.
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_tab"), [self tabState]];
 
@@ -670,23 +651,6 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     // can never answer: the file is on disk and AVFoundation is the only witness to what is
     // wrong with it.
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_playback"), [self playbackFailures]];
-
-    [out appendFormat:@"%@\n", SCILocalized(@"diag_counters")];
-
-    // Said plainly when the feature is off, because the probe lives behind the same switch.
-    // 0.18.0 printed "nothing asked yet" whether the hook had failed or the switch was
-    // simply not on, which are opposite problems wearing one sentence.
-    if (!SCIPrefEnabled(SCIPrefDislikes)) {
-        [out appendFormat:@"  %@\n\n", SCILocalized(@"diag_counters_off")];
-    } else {
-        for (NSString *text in [self counterNodes]) {
-            [out appendFormat:@"  \"%@\"\n", text];
-        }
-        if (![self counterNodes].count) {
-            [out appendFormat:@"  %@\n", SCILocalized(@"diag_counters_none")];
-        }
-        [out appendFormat:@"  %@\n\n", [SCIYTDislikes lastState]];
-    }
 
     [out appendFormat:@"%@\n", SCILocalized(@"diag_video")];
 

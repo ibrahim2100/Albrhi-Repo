@@ -3,7 +3,7 @@
 #import "../../Localization/SCILocalize.h"
 
 ///
-/// Quality: two ceilings, the full picker, and the dislike count.
+/// Quality: two ceilings and the full picker.
 ///
 /// The caps are their own rows rather than one "data saver" switch because the two
 /// connections are not one decision: a phone on home Wi-Fi and the same phone on a metered
@@ -85,10 +85,6 @@ static void SCIAskForCap(SCIYTSettingsHostController *host, NSString *key) {
                        detail:SCILocalized(@"set_classic_quality_note")
                        symbol:@"list.bullet"
                       prefKey:SCIPrefClassicQuality],
-            [SCIRow switchRow:SCILocalized(@"set_dislikes")
-                       detail:SCILocalized(@"set_dislikes_note")
-                       symbol:@"hand.thumbsdown"
-                      prefKey:SCIPrefDislikes],
         ];
         return @[quality];
     }];
