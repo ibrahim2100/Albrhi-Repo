@@ -40,6 +40,12 @@
 /// being preloaded and the one wanted is the capture before it.
 + (id)streamingDataForVideoID:(NSString *)videoID;
 
+/// The title captured for one particular video.
+///
+/// Keyed for the same reason the streams are: the newest title belongs to the clip being
+/// preloaded, so naming a saved Short after it gives the right video the wrong name.
++ (NSString *)titleForVideoID:(NSString *)videoID;
+
 /// A player response filed under the video it belongs to.
 ///
 /// Shorts is the reason this exists: it never builds an MLVideo, so nothing else in the

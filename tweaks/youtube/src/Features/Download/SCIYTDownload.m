@@ -630,7 +630,13 @@ static NSString *sciRequestedVideoID = nil;
             // replaces was eight rows reading "1080p", "720p" and so on, with no way to
             // ask for the sound alone and nothing to tell one row from another at a
             // glance -- and it looked like a system warning rather than a choice.
-            NSString *title = [SCIYTDiagnostics lastVideoTitle];
+            // The title of the video asked for, not of whichever was captured last.
+            //
+            // In Shorts those differ every time, and the download was fetching the right
+            // clip and labelling it with the next one's name -- which is exactly what
+            // "it saved the wrong video" looks like from the Download Centre.
+            NSString *title = [SCIYTDiagnostics titleForVideoID:sciRequestedVideoID]
+                ?: [SCIYTDiagnostics lastVideoTitle];
             [SCIYTChoiceSheet presentFrom:presenter
                                  variants:variants
                                     title:title

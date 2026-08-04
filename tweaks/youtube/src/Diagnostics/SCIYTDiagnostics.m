@@ -70,15 +70,21 @@ static NSMutableArray<NSString *> *sciStreamsOrder = nil;
 
 /// Player responses filed by video id, from the object that owns the clip.
 ///
-/// Shorts never produces an MLVideo -- two reports running showed the same stale streams id
-/// while the clip changed underneath it -- so the keyed stream store added in 0.29.0 is
-/// always empty there. YTReelModel is handed its own response and knows its own videoId, so
-/// this is the one place in Shorts where both facts are available at once and neither has to
-/// be inferred.
+/// **The reasoning that put this here was wrong, and it is kept because it still helps.**
+/// 0.29.1 concluded Shorts never produces an MLVideo, from two reports showing the same
+/// stale streams id while the clip changed. It does produce one; it simply runs a clip
+/// ahead, and the keyed stream store was failing for an unrelated reason -- it was asking
+/// MLStreamingData for a field only the player response has, fixed in 0.30.1.
+///
+/// This remains a second source for a clip the stream store has not filed yet, which is a
+/// real case on the first Short of a session.
 static NSMutableDictionary<NSString *, id> *sciResponsesByVideo = nil;
 static NSMutableArray<NSString *> *sciResponsesOrder = nil;
 static NSString *sciLastVideoID = nil;
 static NSString *sciLastVideoTitle = nil;
+
+/// Titles by video id. See -recordVideo: for why the newest one is the wrong one in Shorts.
+static NSMutableDictionary<NSString *, NSString *> *sciTitlesByVideo = nil;
 
 // The settings groups, as text, captured the moment the screen asked for them.
 // Text and not the objects: the report needs the numbers and the names, and holding
@@ -406,6 +412,23 @@ static NSString *sciResponseVideoID = nil;
             sciLastVideoTitle = [author isKindOfClass:[NSString class]] && author.length
                 ? [NSString stringWithFormat:@"%@ - %@", author, title]
                 : [title copy];
+
+            // Filed by video id as well as kept as "the latest".
+            //
+            // The latest is the wrong one in Shorts, for the same reason the streams were:
+            // MLVideo runs a clip ahead. A download was fetching the right video's playlist
+            // -- proved from the address's own id -- and then naming the file after whatever
+            // MLVideo was newest, so the saved clip arrived under the neighbouring clip's
+            // title. Right bytes, wrong name, and from the outside those look identical.
+            if (sciLastVideoID.length) {
+                if (!sciTitlesByVideo) sciTitlesByVideo = [NSMutableDictionary dictionary];
+
+                // Bounded like the others, and titles are small enough that six is generous.
+                if (sciTitlesByVideo.count >= 12 && !sciTitlesByVideo[sciLastVideoID]) {
+                    [sciTitlesByVideo removeAllObjects];
+                }
+                sciTitlesByVideo[sciLastVideoID] = sciLastVideoTitle;
+            }
         }
     } @catch (__unused NSException *exception) {}
 
@@ -441,6 +464,10 @@ static NSString *sciResponseVideoID = nil;
 }
 
 + (id)lastStreamingData { return sciLastStreamingData; }
+
++ (NSString *)titleForVideoID:(NSString *)videoID {
+    return videoID.length ? sciTitlesByVideo[videoID] : nil;
+}
 
 + (id)streamingDataForVideoID:(NSString *)videoID {
     return videoID.length ? sciStreamsByVideo[videoID] : nil;

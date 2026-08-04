@@ -3,6 +3,15 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.31.0
+
+- **A saved Short is named after itself.** The right clip was being fetched — that is proved
+  from the link it used — and then filed under the *next* clip's title, so the Download
+  Centre showed the wrong video's name on the right video's file. From the outside those
+  look the same, which is why this took so long to separate.
+- If a Short you saved has the wrong name, the file itself is very likely the right one.
+  Play it and see. New saves get the correct name.
+
 ## v0.30.4
 
 - **Saving a Short is getting the right clip.** The report you sent carried the proof: the
