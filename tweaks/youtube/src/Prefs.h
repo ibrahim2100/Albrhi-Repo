@@ -37,6 +37,13 @@
 /// file the user cannot get back again has to be asked for.
 #define SCIPrefEmbedArtwork     @"embed_artwork"
 
+/// Removing a save from the Centre once it has reached Photos.
+///
+/// Off. Photos is where a video goes to be kept and the Centre is where it goes to be
+/// played, and deciding for someone that they wanted only one of those is not this tweak's
+/// call -- particularly when the removal cannot be undone.
+#define SCIPrefTidyAfterPhotos  @"tidy_after_photos"
+
 /// Which pair of buttons the lock screen gets.
 ///
 /// Off means next and previous, which is the default because a queue you cannot move

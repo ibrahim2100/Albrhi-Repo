@@ -53,7 +53,48 @@ NSNotificationName const SCIYTLibraryDidChangeNotification = @"SCIYTLibraryDidCh
 
 // MARK: - Persistence
 
+/// Clears scratch files an interrupted download left behind.
+///
+/// Every download writes its joined parts into the temporary directory before the finished
+/// file is moved into place. A download the app did not survive leaves that behind, and iOS
+/// empties the temporary directory on its own schedule rather than promptly -- which on a
+/// phone that has saved a few long videos is hundreds of megabytes sitting where nobody
+/// will look for it.
+///
+/// Only our own scratch names, and only ones older than an hour, so a download running
+/// right now is never touched.
+- (void)clearScratch {
+    NSFileManager *manager = [NSFileManager defaultManager];
+    NSURL *temp = [NSURL fileURLWithPath:NSTemporaryDirectory()];
+
+    NSArray<NSURL *> *entries =
+        [manager contentsOfDirectoryAtURL:temp
+               includingPropertiesForKeys:@[NSURLContentModificationDateKey]
+                                  options:NSDirectoryEnumerationSkipsHiddenFiles
+                                    error:nil];
+
+    NSDate *cutoff = [NSDate dateWithTimeIntervalSinceNow:-3600];
+    unsigned long long freed = 0;
+
+    for (NSURL *entry in entries) {
+        NSString *extension = entry.pathExtension.lowercaseString;
+        if (![@[@"ts", @"aac", @"m4a", @"mp4", @"raw"] containsObject:extension]) continue;
+
+        NSDate *modified = nil;
+        [entry getResourceValue:&modified forKey:NSURLContentModificationDateKey error:nil];
+        if (modified && [modified compare:cutoff] == NSOrderedDescending) continue;
+
+        NSNumber *size = nil;
+        [entry getResourceValue:&size forKey:NSURLFileSizeKey error:nil];
+        if ([manager removeItemAtURL:entry error:nil]) freed += size.unsignedLongLongValue;
+    }
+
+    if (freed) SCILogV(@"library: cleared %llu bytes of scratch", freed);
+}
+
 - (void)load {
+    [self clearScratch];
+
     NSData *data = [NSData dataWithContentsOfURL:[SCIYTLibrary indexFile]];
     if (!data.length) return;
 
@@ -261,6 +302,23 @@ NSNotificationName const SCIYTLibraryDidChangeNotification = @"SCIYTLibraryDidCh
     [self save];
     [self changed];
     return YES;
+}
+
+- (SCIYTJob *)existingJobForVideo:(NSString *)videoID kind:(SCIYTJobKind)kind {
+    if (!videoID.length) return nil;
+
+    for (SCIYTJob *job in self.store) {
+        // Finished only. A failed attempt is not a copy, and one still running is handled
+        // by the caller as a different question -- "it is already downloading" and "you
+        // already have it" want different sentences.
+        if (job.state != SCIYTJobStateDone) continue;
+        if (job.kind != kind) continue;
+        if (![job.videoID isEqualToString:videoID]) continue;
+        if (![job fileURL]) continue;
+
+        return job;
+    }
+    return nil;
 }
 
 - (void)remove:(SCIYTJob *)job {

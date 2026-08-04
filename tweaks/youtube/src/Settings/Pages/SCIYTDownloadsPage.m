@@ -36,6 +36,10 @@
                        detail:SCILocalized(@"set_auto_photos_note")
                        symbol:@"photo.on.rectangle"
                       prefKey:SCIPrefAutoPhotos],
+            [SCIRow switchRow:SCILocalized(@"set_tidy_photos")
+                       detail:SCILocalized(@"set_tidy_photos_note")
+                       symbol:@"tray.and.arrow.up"
+                      prefKey:SCIPrefTidyAfterPhotos],
             [SCIRow switchRow:SCILocalized(@"set_embed_artwork")
                        detail:SCILocalized(@"set_embed_artwork_note")
                        symbol:@"music.note.list"

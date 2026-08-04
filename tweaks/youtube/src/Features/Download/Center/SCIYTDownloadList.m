@@ -4,6 +4,7 @@
 #import "SCIYTPlayer.h"
 #import "SCIYTThumbnails.h"
 #import "../../../SCILog.h"
+#import "../../../Prefs.h"
 #import "../../../Localization/SCILocalize.h"
 
 
@@ -189,8 +190,13 @@
                                               handler:^(UIContextualAction *action,
                                                         UIView *source,
                                                         void (^done)(BOOL)) {
-        [SCIYTThumbnails forget:job];
-        [[SCIYTLibrary shared] remove:job];
+        // Asked first. A swipe is easy to make by accident on a list you are scrolling,
+        // and what it destroys took minutes to fetch and cannot be recovered -- the file is
+        // gone from the device, not moved to a bin.
+        [self confirmDelete:job then:^{
+            [SCIYTThumbnails forget:job];
+            [[SCIYTLibrary shared] remove:job];
+        }];
         done(YES);
     }];
 
@@ -216,7 +222,23 @@
                                                         UIView *source,
                                                         void (^done)(BOOL)) {
         [[SCIYTLibrary shared] export:job completion:^(BOOL ok, NSString *detail) {
-            [self say:ok ? SCILocalized(@"dl_saved") : (detail ?: SCILocalized(@"dl_failed"))];
+            if (!ok) {
+                [self say:detail ?: SCILocalized(@"dl_failed")];
+                return;
+            }
+
+            // Kept in both places unless asked otherwise. Photos is where a video goes to
+            // be kept; the Centre is where it goes to be played -- and deciding for someone
+            // that they wanted only one of those is not this tweak's call. The switch is
+            // there for anyone who does not want two copies of everything.
+            if (!SCIPrefEnabled(SCIPrefTidyAfterPhotos)) {
+                [self say:SCILocalized(@"dl_saved")];
+                return;
+            }
+
+            [SCIYTThumbnails forget:job];
+            [[SCIYTLibrary shared] remove:job];
+            [self say:SCILocalized(@"dl_saved_and_removed")];
         }];
         done(YES);
     }];
@@ -238,6 +260,30 @@
     return (self.kind == SCIYTJobKindAudio)
         ? [UISwipeActionsConfiguration configurationWithActions:@[remove, rename, share]]
         : [UISwipeActionsConfiguration configurationWithActions:@[remove, rename, photos, share]];
+}
+
+/// Asks before destroying something, and says what.
+///
+/// Named rather than generic: "Delete this?" beside a list of forty saves is a question
+/// nobody can answer confidently. The title is in the message.
+- (void)confirmDelete:(SCIYTJob *)job then:(void (^)(void))go {
+    UIAlertController *ask = [UIAlertController
+        alertControllerWithTitle:SCILocalized(@"dl_delete_title")
+                         message:[NSString stringWithFormat:SCILocalized(@"dl_delete_body"),
+                                  job.title ?: @""]
+                  preferredStyle:UIAlertControllerStyleAlert];
+
+    [ask addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
+                                            style:UIAlertActionStyleCancel
+                                          handler:nil]];
+
+    [ask addAction:[UIAlertAction actionWithTitle:SCILocalized(@"delete")
+                                            style:UIAlertActionStyleDestructive
+                                          handler:^(__unused UIAlertAction *action) {
+        if (go) go();
+    }]];
+
+    [self presentViewController:ask animated:YES completion:nil];
 }
 
 - (void)askToRename:(SCIYTJob *)job {

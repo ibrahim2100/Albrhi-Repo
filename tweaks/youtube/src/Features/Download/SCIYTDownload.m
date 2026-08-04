@@ -641,11 +641,24 @@ static NSString *sciRequestedVideoID = nil;
                                  variants:variants
                                     title:title
                                    chosen:^(SCIHLSVariant *variant, SCIYTJobKind kind) {
+                NSString *chosenID = sciRequestedVideoID ?: [SCIYTDiagnostics activeVideoID];
+
+                // Already here? Say so rather than fetching it again.
+                //
+                // Ninety parts is minutes of waiting and a second copy of the same file, and
+                // the person asking has no way of knowing it is already saved -- the list is
+                // a different screen. Only a finished save of the same kind counts: a video
+                // and its audio are two different things to want.
+                SCIYTJob *existing = [[SCIYTLibrary shared] existingJobForVideo:chosenID kind:kind];
+                if (existing) {
+                    [self showMessage:SCILocalized(@"dl_already_have") from:presenter];
+                    return;
+                }
+
                 [[SCIYTLibrary shared] startVariant:variant
                                                 kind:kind
                                                title:title
-                                             videoID:sciRequestedVideoID
-                                                     ?: [SCIYTDiagnostics activeVideoID]];
+                                             videoID:chosenID];
 
                 // And that is the end of it here. The download is a row in the centre
                 // now, so the app is handed straight back -- watching something while a

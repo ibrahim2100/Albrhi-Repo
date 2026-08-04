@@ -50,8 +50,19 @@ extern NSNotificationName const SCIYTLibraryDidChangeNotification;
                      title:(nullable NSString *)title
                    videoID:(nullable NSString *)videoID;
 
+/// A finished save of this video, if there is one.
+///
+/// Checked before a download starts. Fetching ninety parts of something already on the
+/// device is minutes of waiting and a second copy of the same file, and the person asking
+/// has no way to know it is already there -- the list is somewhere else.
+- (nullable SCIYTJob *)existingJobForVideo:(nullable NSString *)videoID
+                                      kind:(SCIYTJobKind)kind;
+
 /// Deletes the file and the row.
 - (void)remove:(SCIYTJob *)job;
+
+/// Clears scratch files an interrupted download left in the temporary directory.
+- (void)clearScratch;
 
 /// Writes the list to disk.
 ///

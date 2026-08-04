@@ -3,6 +3,21 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.2.0
+
+- **Deleting a save now asks first**, and names what it is about to delete. A swipe is easy
+  to make by accident on a list you are scrolling, and what it destroys took minutes to fetch
+  and does not go to a bin.
+- **Optionally remove a video from here once Photos has it.** Off by default — a video sent to
+  Photos still stays in the Centre, because that is where it plays. Turn it on if you would
+  rather not keep two copies.
+- **Saving something you already have just says so**, instead of fetching all of it again and
+  leaving you with a second copy. Video and audio count separately.
+- **Leftovers are cleared.** A download the app did not survive left its working file behind,
+  and iOS empties that folder on its own unhurried schedule — which after a few long videos is
+  hundreds of megabytes nobody can see. They are removed at launch, and only ones older than
+  an hour, so a download running right now is never touched.
+
 ## v1.1.0
 
 - **A download no longer starts over because one piece failed.** A video arrives in ninety-odd
