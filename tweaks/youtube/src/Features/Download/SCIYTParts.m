@@ -3,13 +3,12 @@
 #import "../../Localization/SCILocalize.h"
 #import "../../Diagnostics/SCIYTDiagnostics.h"
 
-/// How many parts are in flight at once.
+/// How many parts the system is asked to run at once.
 ///
 /// Four, and the number is a compromise rather than a maximum. Google serves these happily
 /// enough in parallel, but a phone on a weak connection sharing its bandwidth four ways makes
-/// each individual part slower and more likely to time out -- and a timeout costs a retry,
-/// which costs more than the parallelism saved. Four is the point where the round trips stop
-/// dominating without the transfers starting to fight each other.
+/// each individual part slower and likelier to time out -- and a timeout costs a retry, which
+/// costs more than the parallelism saved.
 static const NSUInteger kSCIParallel = 4;
 
 /// How many times one part is asked for before the run gives up.
@@ -20,19 +19,18 @@ static const NSUInteger kSCIAttempts = 3;
 /// One run's state.
 ///
 /// A class rather than captured variables, because several callbacks touch this at once and
-/// they need to be looking at the same thing. Every field is read and written on one serial
-/// queue, which is what makes "several at a time" safe to reason about at all.
+/// they must be looking at the same thing. Every field is read and written on one serial
+/// queue, which is what makes "several at a time" safe to reason about.
 ///
 @interface SCIYTPartsRun : NSObject
+@property (nonatomic, copy) NSString *identifier;
 @property (nonatomic, strong) NSArray<NSString *> *addresses;
 @property (nonatomic, strong) NSURL *folder;
-@property (nonatomic, strong) NSMutableArray<NSURL *> *files;   ///< indexed like addresses
-@property (nonatomic, strong) dispatch_queue_t lock;
+@property (nonatomic, strong) NSMutableArray *files;        ///< indexed like addresses
+@property (nonatomic, strong) NSMutableDictionary<NSNumber *, NSNumber *> *attempts;
 
-@property (nonatomic) NSUInteger nextIndex;    ///< the next address to hand out
 @property (nonatomic) NSUInteger completed;
-@property (nonatomic) NSUInteger inFlight;
-@property (nonatomic) BOOL finished;           ///< the completion has been called
+@property (nonatomic) BOOL finished;
 
 @property (nonatomic, copy) void (^progress)(double);
 @property (nonatomic, copy) void (^completion)(NSArray<NSURL *> *, NSURL *, NSString *);
@@ -42,22 +40,74 @@ static const NSUInteger kSCIAttempts = 3;
 @end
 
 
+@interface SCIYTParts () <NSURLSessionDownloadDelegate>
+@end
+
+
 @implementation SCIYTParts
 
+/// The runs in flight, by identifier, and the queue that owns them.
+static NSMutableDictionary<NSString *, SCIYTPartsRun *> *sciRuns = nil;
+static dispatch_queue_t sciLock = nil;
+
++ (void)initialize {
+    if (self != [SCIYTParts class]) return;
+    sciRuns = [NSMutableDictionary dictionary];
+    sciLock = dispatch_queue_create("com.albrhi.youtube.parts", DISPATCH_QUEUE_SERIAL);
+}
+
++ (instancetype)shared {
+    static SCIYTParts *shared = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{ shared = [[SCIYTParts alloc] init]; });
+    return shared;
+}
+
+///
+/// A background session, which is the whole point of this file's second draft.
+///
+/// The first used an ordinary session and completion blocks, and an ordinary session belongs
+/// to the app: leave YouTube, lock the phone, or take a call, and iOS suspends the process
+/// and every transfer with it. A ninety-part video therefore required standing in the app
+/// watching a progress bar, which is not what having a download manager is for.
+///
+/// A background session is run by the system instead. The transfers continue while YouTube is
+/// suspended, and the app is woken to be told about them. That is the entire difference, and
+/// it costs three things:
+///
+///   * download tasks rather than data tasks, since a background session supports no others;
+///   * a delegate rather than completion blocks, for the same reason;
+///   * every task enqueued at once, because the system schedules them and knows better than
+///     a hand-rolled loop does what the radio and the battery can afford.
+///
+/// **What it does not do is survive the app being killed.** iOS would relaunch YouTube to
+/// deliver the events, and the run this object is holding would be gone -- so a part arriving
+/// for a run nobody remembers is discarded and the scratch sweep clears up after it. Carrying
+/// the state on disk to survive that is a real piece of work with a real chance of leaving a
+/// half-written video looking finished, and the case it buys -- force-quitting the app you
+/// are downloading in -- is not the one anybody complained about.
+///
 + (NSURLSession *)session {
     static NSURLSession *session = nil;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         NSURLSessionConfiguration *configuration =
-            [NSURLSessionConfiguration defaultSessionConfiguration];
+            [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:
+                @"com.albrhi.youtube.downloads"];
 
-        // Enough for the parts in flight and no more. Left at the default, iOS would happily
-        // open far more than four to one host if anything ever asked it to.
+        // Enough for the parts in flight and no more.
         configuration.HTTPMaximumConnectionsPerHost = kSCIParallel;
-        configuration.timeoutIntervalForRequest = 30;
-        configuration.requestCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
+        configuration.timeoutIntervalForRequest = 60;
 
-        session = [NSURLSession sessionWithConfiguration:configuration];
+        // Not discretionary: this was asked for by a person who is watching a progress bar,
+        // not a sync that can wait for a charger and Wi-Fi. Left at the default, iOS would
+        // feel free to hold the whole thing until it judged the moment convenient.
+        configuration.discretionary = NO;
+        configuration.sessionSendsLaunchEvents = YES;
+
+        session = [NSURLSession sessionWithConfiguration:configuration
+                                                delegate:[self shared]
+                                           delegateQueue:nil];
     });
     return session;
 }
@@ -71,8 +121,9 @@ static const NSUInteger kSCIAttempts = 3;
         return;
     }
 
+    NSString *identifier = [[NSUUID UUID] UUIDString];
     NSURL *folder = [NSURL fileURLWithPath:
-        [NSTemporaryDirectory() stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]]];
+        [NSTemporaryDirectory() stringByAppendingPathComponent:identifier]];
 
     NSError *error = nil;
     [[NSFileManager defaultManager] createDirectoryAtURL:folder
@@ -85,128 +136,168 @@ static const NSUInteger kSCIAttempts = 3;
     }
 
     SCIYTPartsRun *run = [[SCIYTPartsRun alloc] init];
+    run.identifier = identifier;
     run.addresses = addresses;
     run.folder = folder;
     run.files = [NSMutableArray arrayWithCapacity:addresses.count];
-    run.lock = dispatch_queue_create("com.albrhi.youtube.parts", DISPATCH_QUEUE_SERIAL);
+    run.attempts = [NSMutableDictionary dictionary];
     run.progress = progress;
     run.completion = completion;
 
     // Filled with placeholders so a part can be written at its own index whenever it lands.
     // This is the ordering guarantee in one line: the slot is decided before the request is
     // made, so arrival order cannot reach it.
-    for (NSUInteger i = 0; i < addresses.count; i++) [run.files addObject:(id)[NSNull null]];
+    for (NSUInteger i = 0; i < addresses.count; i++) [run.files addObject:[NSNull null]];
 
-    SCILogV(@"parts: fetching %lu, %lu at a time",
-            (unsigned long)addresses.count, (unsigned long)kSCIParallel);
+    dispatch_async(sciLock, ^{
+        sciRuns[identifier] = run;
 
-    dispatch_async(run.lock, ^{
-        for (NSUInteger i = 0; i < MIN(kSCIParallel, addresses.count); i++) {
-            [self startNext:run];
+        for (NSUInteger i = 0; i < addresses.count; i++) {
+            [self startPart:i of:run];
         }
     });
+
+    SCILogV(@"parts: %lu queued in the background session", (unsigned long)addresses.count);
 }
 
-/// Hands out the next address, if there is one. Called on the run's queue.
-+ (void)startNext:(SCIYTPartsRun *)run {
-    if (run.finished || run.nextIndex >= run.addresses.count) return;
-
-    NSUInteger index = run.nextIndex;
-    run.nextIndex += 1;
-    run.inFlight += 1;
-
-    [self fetchOne:run index:index attempt:0];
-}
-
-+ (void)fetchOne:(SCIYTPartsRun *)run index:(NSUInteger)index attempt:(NSUInteger)attempt {
+/// Queues one part. Called on the run's queue.
++ (void)startPart:(NSUInteger)index of:(SCIYTPartsRun *)run {
     NSURL *url = [NSURL URLWithString:run.addresses[index]];
-    if (!url) {
-        dispatch_async(run.lock, ^{ [self failRun:run with:SCILocalized(@"dl_failed")]; });
-        return;
-    }
+    if (!url) { [self failRun:run with:SCILocalized(@"dl_failed")]; return; }
 
-    [[[self session] dataTaskWithURL:url
-                   completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-        NSInteger status = [response isKindOfClass:[NSHTTPURLResponse class]]
-            ? ((NSHTTPURLResponse *)response).statusCode : 0;
+    NSURLSessionDownloadTask *task = [[self session] downloadTaskWithURL:url];
 
-        // A refusal is not a hiccup: 4xx means the address is wrong or has expired, and
-        // asking again three times makes the same mistake more slowly. Anything else is
-        // worth another go.
-        BOOL worthRetrying = (status < 400 || status >= 500);
-
-        if ((!data.length || error) && worthRetrying && attempt < kSCIAttempts - 1) {
-            double pause = 0.5 * (double)(attempt + 1);
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(pause * NSEC_PER_SEC)),
-                           run.lock, ^{
-                if (!run.finished) [self fetchOne:run index:index attempt:attempt + 1];
-            });
-            return;
-        }
-
-        if (!data.length || error) {
-            dispatch_async(run.lock, ^{
-                [SCIYTDiagnostics recordStreamAttempt:
-                    [NSString stringWithFormat:@"parts: %lu of %lu failed after %lu tries — %@",
-                        (unsigned long)(index + 1), (unsigned long)run.addresses.count,
-                        (unsigned long)kSCIAttempts,
-                        error.localizedDescription
-                            ?: [NSString stringWithFormat:@"HTTP %ld", (long)status]]];
-
-                [self failRun:run with:error.localizedDescription ?: SCILocalized(@"dl_failed")];
-            });
-            return;
-        }
-
-        // Named for its index, zero padded so the join can sort as text and get numbers.
-        // Without the padding, part 10 sorts before part 9 and the video is silently wrong.
-        NSURL *file = [run.folder URLByAppendingPathComponent:
-            [NSString stringWithFormat:@"%06lu.part", (unsigned long)index]];
-
-        if (![data writeToURL:file atomically:YES]) {
-            dispatch_async(run.lock, ^{
-                [self failRun:run with:SCILocalized(@"dl_ts_write_failed")];
-            });
-            return;
-        }
-
-        dispatch_async(run.lock, ^{
-            if (run.finished) return;
-
-            run.files[index] = file;
-            run.completed += 1;
-            run.inFlight -= 1;
-
-            if (run.progress) {
-                double fraction = (double)run.completed / (double)run.addresses.count;
-                dispatch_async(dispatch_get_main_queue(), ^{ run.progress(fraction); });
-            }
-
-            if (run.completed == run.addresses.count) {
-                run.finished = YES;
-                NSArray<NSURL *> *ordered = [run.files copy];
-                NSURL *folder = run.folder;
-                void (^done)(NSArray<NSURL *> *, NSURL *, NSString *) = run.completion;
-
-                dispatch_async(dispatch_get_main_queue(), ^{ done(ordered, folder, nil); });
-                return;
-            }
-
-            [self startNext:run];
-        });
-    }] resume];
+    // The run and the slot, on the task itself. A background session hands its tasks back
+    // through a delegate with no context of ours attached, so the only way to know what a
+    // finished file is *for* is to have written it on the task when it was made.
+    task.taskDescription = [NSString stringWithFormat:@"%@|%lu",
+                            run.identifier, (unsigned long)index];
+    [task resume];
 }
 
-/// Ends the run once, and clears up. Called on the run's queue.
+/// Reads the run and slot back off a task.
++ (SCIYTPartsRun *)runForTask:(NSURLSessionTask *)task index:(NSUInteger *)indexOut {
+    NSArray<NSString *> *parts = [task.taskDescription componentsSeparatedByString:@"|"];
+    if (parts.count != 2) return nil;
+
+    *indexOut = (NSUInteger)[parts[1] integerValue];
+    return sciRuns[parts[0]];
+}
+
+/// Ends a run once, and clears up. Called on the run's queue.
 + (void)failRun:(SCIYTPartsRun *)run with:(NSString *)message {
-    if (run.finished) return;
+    if (!run || run.finished) return;
     run.finished = YES;
 
+    [sciRuns removeObjectForKey:run.identifier];
     [[NSFileManager defaultManager] removeItemAtURL:run.folder error:nil];
 
     void (^done)(NSArray<NSURL *> *, NSURL *, NSString *) = run.completion;
-    dispatch_async(dispatch_get_main_queue(), ^{ done(nil, nil, message); });
+    if (done) dispatch_async(dispatch_get_main_queue(), ^{ done(nil, nil, message); });
 }
+
+// MARK: - What the session tells us
+
+- (void)URLSession:(NSURLSession *)session
+      downloadTask:(NSURLSessionDownloadTask *)task
+didFinishDownloadingToURL:(NSURL *)location {
+
+    // Moved here and not later. The file at this URL is deleted the moment this method
+    // returns, which is the one rule of this delegate and the one that is easy to miss.
+    NSError *error = nil;
+    NSURL *staged = [location URLByAppendingPathExtension:@"staged"];
+    [[NSFileManager defaultManager] moveItemAtURL:location toURL:staged error:&error];
+    if (error) return;
+
+    dispatch_async(sciLock, ^{
+        NSUInteger index = 0;
+        SCIYTPartsRun *run = [SCIYTParts runForTask:task index:&index];
+
+        // A part for a run nobody remembers -- the app was killed and relaunched to be told
+        // about it. Nothing sensible can be done with one part of a video whose other
+        // ninety are gone, so it goes, and the sweep clears the folder it belonged to.
+        if (!run || run.finished || index >= run.addresses.count) {
+            [[NSFileManager defaultManager] removeItemAtURL:staged error:nil];
+            return;
+        }
+
+        NSURL *file = [run.folder URLByAppendingPathComponent:
+            [NSString stringWithFormat:@"%06lu.part", (unsigned long)index]];
+
+        // Zero padded, because part 10 sorts before part 9 as text and the join reads names.
+        [[NSFileManager defaultManager] removeItemAtURL:file error:nil];
+
+        NSError *moveError = nil;
+        [[NSFileManager defaultManager] moveItemAtURL:staged toURL:file error:&moveError];
+        if (moveError) {
+            [SCIYTParts failRun:run with:SCILocalized(@"dl_ts_write_failed")];
+            return;
+        }
+
+        if ([run.files[index] isKindOfClass:[NSNull class]]) {
+            run.files[index] = file;
+            run.completed += 1;
+        }
+
+        if (run.progress) {
+            double fraction = (double)run.completed / (double)run.addresses.count;
+            dispatch_async(dispatch_get_main_queue(), ^{ run.progress(fraction); });
+        }
+
+        if (run.completed < run.addresses.count) return;
+
+        run.finished = YES;
+        [sciRuns removeObjectForKey:run.identifier];
+
+        NSArray<NSURL *> *ordered = [run.files copy];
+        NSURL *folder = run.folder;
+        void (^done)(NSArray<NSURL *> *, NSURL *, NSString *) = run.completion;
+
+        if (done) dispatch_async(dispatch_get_main_queue(), ^{ done(ordered, folder, nil); });
+    });
+}
+
+- (void)URLSession:(NSURLSession *)session
+              task:(NSURLSessionTask *)task
+didCompleteWithError:(NSError *)error {
+
+    if (!error) return;   // the success path is handled above
+
+    NSInteger status = [task.response isKindOfClass:[NSHTTPURLResponse class]]
+        ? ((NSHTTPURLResponse *)task.response).statusCode : 0;
+
+    dispatch_async(sciLock, ^{
+        NSUInteger index = 0;
+        SCIYTPartsRun *run = [SCIYTParts runForTask:task index:&index];
+        if (!run || run.finished || index >= run.addresses.count) return;
+
+        NSUInteger tried = [run.attempts[@(index)] unsignedIntegerValue] + 1;
+        run.attempts[@(index)] = @(tried);
+
+        // A refusal is not a hiccup: 4xx means the address is wrong or has expired, and
+        // asking again three times makes the same mistake more slowly.
+        BOOL worthRetrying = (status < 400 || status >= 500);
+
+        if (worthRetrying && tried < kSCIAttempts) {
+            double pause = 0.5 * (double)tried;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(pause * NSEC_PER_SEC)),
+                           sciLock, ^{
+                if (!run.finished) [SCIYTParts startPart:index of:run];
+            });
+            return;
+        }
+
+        [SCIYTDiagnostics recordStreamAttempt:
+            [NSString stringWithFormat:@"parts: %lu of %lu failed after %lu tries — %@",
+                (unsigned long)(index + 1), (unsigned long)run.addresses.count,
+                (unsigned long)tried,
+                error.localizedDescription ?: [NSString stringWithFormat:@"HTTP %ld", (long)status]]];
+
+        [SCIYTParts failRun:run with:error.localizedDescription ?: SCILocalized(@"dl_failed")];
+    });
+}
+
+// MARK: - Joining
 
 + (NSURL *)join:(NSArray<NSURL *> *)ordered
       extension:(NSString *)extension
@@ -226,8 +317,10 @@ static const NSUInteger kSCIAttempts = 3;
 
     BOOL ok = YES;
     for (NSURL *file in ordered) {
-        // Mapped rather than read: one part at a time is a few megabytes, and mapping lets
-        // the system page it rather than the process holding it.
+        if (![file isKindOfClass:[NSURL class]]) { ok = NO; break; }
+
+        // Mapped rather than read: one part is a few megabytes, and mapping lets the system
+        // page it rather than the process holding it.
         NSData *part = [NSData dataWithContentsOfURL:file
                                              options:NSDataReadingMappedIfSafe
                                                error:nil];

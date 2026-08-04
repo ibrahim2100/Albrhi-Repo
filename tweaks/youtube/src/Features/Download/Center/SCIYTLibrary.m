@@ -1,8 +1,10 @@
 #import "SCIYTLibrary.h"
+#import "SCIYTNotice.h"
 #import "../../../SCILog.h"
 #import "../../../Prefs.h"
 #import "../../../Localization/SCILocalize.h"
 #import "../../../Diagnostics/SCIYTDiagnostics.h"
+#import <UIKit/UIKit.h>
 #import <Photos/Photos.h>
 
 NSNotificationName const SCIYTLibraryDidChangeNotification = @"SCIYTLibraryDidChange";
@@ -176,10 +178,36 @@ NSNotificationName const SCIYTLibraryDidChangeNotification = @"SCIYTLibraryDidCh
                 job.state = SCIYTJobStateFailed;
                 job.failure = failure ?: SCILocalized(@"dl_failed");
                 [self changed];
+                [SCIYTNotice announceFailed:job reason:failure];
             });
             return;
         }
+
+        // The app is asked to stay awake for the joining and unwrapping.
+        //
+        // The parts arrive through a background session, so they land whether YouTube is in
+        // front or not -- and the work that turns ninety parts into one video is ours, in
+        // this process, and would be suspended halfway through with the app in the
+        // background. That is a video left as a folder of fragments and a row stuck at
+        // ninety-nine per cent.
+        //
+        // Thirty seconds is roughly what iOS grants, which is ample: the joining is a file
+        // copy, not a re-encode. The task is ended on both paths, because leaking one is how
+        // an app gets killed for holding a background assertion it forgot about.
+        UIApplication *app = [UIApplication sharedApplication];
+        __block UIBackgroundTaskIdentifier hold =
+            [app beginBackgroundTaskWithExpirationHandler:^{
+                [app endBackgroundTask:hold];
+                hold = UIBackgroundTaskInvalid;
+            }];
+
         [self adopt:file for:job];
+        [SCIYTNotice announceFinished:job];
+
+        if (hold != UIBackgroundTaskInvalid) {
+            [app endBackgroundTask:hold];
+            hold = UIBackgroundTaskInvalid;
+        }
     };
 
     if (kind == SCIYTJobKindAudio) {

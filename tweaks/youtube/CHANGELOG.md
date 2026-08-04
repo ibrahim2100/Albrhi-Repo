@@ -3,6 +3,18 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.7.0
+
+- **Downloads carry on when you leave YouTube.** Until now a save only progressed while you
+  were standing in the app watching it — switch apps, take a call, or lock the phone and it
+  froze until you came back. The fetching is handed to the system now, so it keeps going with
+  YouTube closed.
+- **A notification tells you when one finishes**, since the moment it does is now a moment
+  nobody is watching. Only when you are outside the app — inside it, the row already says so.
+  Permission is asked for the first time there is something to tell you, not at launch.
+- If YouTube is force-quit from the app switcher mid-download, that download is lost and the
+  row says so. Surviving that is a different piece of work and this does not pretend to.
+
 ## v1.6.0
 
 - **The picture on the lock screen is square now**, instead of a wide strip with black above

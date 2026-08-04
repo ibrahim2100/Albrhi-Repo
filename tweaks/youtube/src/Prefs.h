@@ -44,6 +44,12 @@
 /// call -- particularly when the removal cannot be undone.
 #define SCIPrefTidyAfterPhotos  @"tidy_after_photos"
 
+/// A notification when a save finishes while you are elsewhere.
+///
+/// On. Transfers now continue with the app closed, so the moment a download ends is a moment
+/// nobody is watching -- and a result delivered to an empty room is not a result.
+#define SCIPrefFinishNotice     @"finish_notice"
+
 /// Which pair of buttons the lock screen gets.
 ///
 /// Off means next and previous, which is the default because a queue you cannot move

@@ -36,6 +36,10 @@
                        detail:SCILocalized(@"set_auto_photos_note")
                        symbol:@"photo.on.rectangle"
                       prefKey:SCIPrefAutoPhotos],
+            [SCIRow switchRow:SCILocalized(@"set_finish_notice")
+                       detail:SCILocalized(@"set_finish_notice_note")
+                       symbol:@"bell.badge"
+                      prefKey:SCIPrefFinishNotice],
             [SCIRow switchRow:SCILocalized(@"set_tidy_photos")
                        detail:SCILocalized(@"set_tidy_photos_note")
                        symbol:@"tray.and.arrow.up"
