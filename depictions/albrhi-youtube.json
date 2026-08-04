@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v1.7.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **Downloads carry on when you leave YouTube.**\n• **A notification tells you when one finishes**\n• If YouTube is force-quit from the app switcher mid-download, that download is lost and the row says so.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v1.6.0",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v1.5.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **The Download Centre is redrawn.**\n• **Videos and songs finally look like what they are.**\n• **Progress runs the full width of the row**\n• Rows press in when you touch them, the row that is playing is marked, and the page sits on a single lit surface rather than a grey table on a darker grey.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.6.0"
+          "text": "1.7.0"
         },
         {
           "class": "DepictionTableTextView",
