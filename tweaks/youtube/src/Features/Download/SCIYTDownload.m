@@ -466,16 +466,15 @@ static NSString *sciRequestedVideoID = nil;
     } else {
         manifest = captureIsOurs ? [SCIYTPlayerStreams hlsManifestURL] : nil;
 
-        // The live capture is checked the same way, and for the same reason.
+        // Not refused on the same test any more.
         //
-        // A playlist address carries its video id, so when a particular video was asked for
-        // this can simply be read rather than inferred from whichever capture looked current.
-        // Every guard before this one reasoned about ordering; this one looks at the answer.
-        if (manifest.length && requested.length && ![manifest containsString:requested]) {
+        // 0.30.2 dropped any address that did not contain the eleven-character id, which is
+        // every address there is: googlevideo names a video by its docid, a different
+        // encoding of the same number. The result was no download at all rather than an
+        // occasionally wrong one, which is the worse of the two.
+        if (manifest.length && requested.length) {
             [SCIYTDiagnostics recordStreamAttempt:
-                [NSString stringWithFormat:@"hls: the live playlist does not name %@ — refused",
-                    requested]];
-            manifest = nil;
+                [NSString stringWithFormat:@"hls: live playlist used for %@", requested]];
         }
     }
 

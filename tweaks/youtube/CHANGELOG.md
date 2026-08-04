@@ -3,6 +3,17 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v0.30.3
+
+- **Fixes 0.30.2, which stopped Shorts saving anything at all.** That release refused any
+  address that did not contain the video's id — and no address does. YouTube names a video
+  one way when you ask for it and another way inside these links, so the check threw away
+  every correct answer along with the wrong ones.
+- Saving works again. It may still give you the neighbouring clip; that is the older problem,
+  not a new one, and nothing here pretends otherwise.
+- The report now prints the name the link itself uses, beside the one asked for. Those two
+  side by side settle whether the link is the right video's, which is the last unknown left.
+
 ## v0.30.2
 
 - **The address is now checked against the video it is meant to be for.** Every release so far

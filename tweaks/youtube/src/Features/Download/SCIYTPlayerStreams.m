@@ -161,6 +161,30 @@ static NSString *SCIFindManifestInText(NSString *text) {
     return nil;
 }
 
+/// Whatever a googlevideo address calls the video it serves.
+///
+/// The path is a run of key/value pairs -- .../hls_variant/expire/1785.../id/<tag>/itag/...
+/// -- so the segment after "id" is the video's own name in whichever encoding these
+/// addresses use. Reported rather than interpreted: putting it beside the eleven-character
+/// id in the report is what turns "are these the same video" from an assumption into
+/// something readable.
+static NSString *SCIManifestVideoTag(NSString *manifest) {
+    if (!manifest.length) return nil;
+
+    NSArray<NSString *> *parts = [manifest componentsSeparatedByString:@"/"];
+    for (NSUInteger i = 0; i + 1 < parts.count; i++) {
+        if ([parts[i] isEqualToString:@"id"]) return parts[i + 1];
+    }
+
+    // Older shapes carry it as a query parameter instead.
+    NSURLComponents *components = [NSURLComponents componentsWithString:manifest];
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"id"]) return item.value;
+    }
+
+    return nil;
+}
+
 + (NSString *)hlsManifestURLForVideo:(NSString *)videoID {
     // Straight to the capture filed under that id, with no walk and no guessing about which
     // of several sources is current. This is the whole point of filing them by name: the
@@ -204,13 +228,11 @@ static NSString *SCIFindManifestInText(NSString *text) {
                     // Checked exactly like the other path. This one takes the first playlist
                     // address in a whole message tree, so it is the likeliest of the two to
                     // pick up something belonging to a neighbouring clip.
-                    BOOL namesTheVideo = [found containsString:videoID];
-
                     [SCIYTDiagnostics recordShortsResponse:
-                        [NSString stringWithFormat:@"text playlist for %@ — url %@ it",
-                            videoID, namesTheVideo ? @"names" : @"does NOT name"]];
+                        [NSString stringWithFormat:@"text playlist for %@ — url id %@",
+                            videoID, SCIManifestVideoTag(found) ?: @"(none in url)"]];
 
-                    if (namesTheVideo) return found;
+                    return found;
                 }
             } @catch (__unused NSException *exception) { }
         }
@@ -245,18 +267,26 @@ static NSString *SCIFindManifestInText(NSString *text) {
         //
         // Seven releases were spent trusting a path because it looked correct. This one
         // checks the thing it produced.
-        BOOL namesTheVideo = [found containsString:videoID];
-
+        // Reported, not enforced.
+        //
+        // 0.30.2 refused any address that did not contain the eleven-character video id, and
+        // that refused every address there is -- no download at all. The assumption was never
+        // checked: a googlevideo address identifies a video by its docid, which is a
+        // different encoding of the same number, so a perfectly correct playlist does not
+        // contain the id in the form used to ask for it.
+        //
+        // This is 0.28.0's mistake exactly -- a check resting on a value I had never seen
+        // produced -- and the rule from that release applies here as it did there: write it
+        // so being wrong about the value costs the check, not the feature.
+        //
+        // What goes in the report is the address's own id segment beside the id asked for.
+        // Whether those two describe the same video is then a fact rather than a guess, and
+        // it is the last one this problem needs.
         [SCIYTDiagnostics recordShortsResponse:
-            [NSString stringWithFormat:@"%@ answered for %@ — url %@ it",
-                name, videoID, namesTheVideo ? @"names" : @"does NOT name"]];
+            [NSString stringWithFormat:@"%@ for %@ — url id %@",
+                name, videoID, SCIManifestVideoTag(found) ?: @"(none in url)"]];
 
-        if (namesTheVideo) return found;
-
-        // Refused rather than used. A playlist that names a different video is exactly the
-        // wrong download being reported as a success, which is the failure that has survived
-        // seven attempts precisely because it looks like working.
-        return nil;
+        return found;
     }
 
     return nil;
