@@ -3,6 +3,7 @@
 #import "../../Localization/SCILocalize.h"
 #import "../../Diagnostics/SCIYTDiagnostics.h"
 #import "SCIYTTransport.h"
+#import "SCIYTParts.h"
 #import <AVFoundation/AVFoundation.h>
 
 @implementation SCIHLSVariant
@@ -177,14 +178,6 @@ static NSString *SCIAttribute(NSString *line, NSString *name) {
 /// Kept so the failure can say it. "The pieces do not join" fits all three shapes a
 /// playlist can have and distinguishes none of them, and the report that did carry the
 /// distinction was being cleared mid-download by YouTube re-announcing the video.
-/// How many times one part is asked for before the download gives up.
-///
-/// Three, and the reason is arithmetic rather than taste. A playlist here runs to ninety-odd
-/// parts, so at a 1-in-200 chance of any single request failing -- ordinary for mobile data
-/// -- a download with no retry fails better than a third of the time, and the whole of it is
-/// thrown away when it does. Three attempts takes that to roughly one in a million.
-static const NSUInteger kSCIPartAttempts = 3;
-
 static NSString *sciLastShape = nil;
 
 /// A failure sentence with the playlist's shape under it.
@@ -706,132 +699,38 @@ static NSString *SCIWithShape(NSString *message) {
             progress:(void (^)(double))progress
           completion:(void (^)(NSURL *, NSString *))completion {
 
-    NSString *name = [[[NSUUID UUID] UUIDString] stringByAppendingPathExtension:@"mp4"];
-    NSURL *joined = [NSURL fileURLWithPath:
-        [NSTemporaryDirectory() stringByAppendingPathComponent:name]];
+    NSMutableArray<NSString *> *addresses = [NSMutableArray array];
+    if (initSegment) [addresses addObject:initSegment];
+    [addresses addObjectsFromArray:segments];
 
-    [[NSFileManager defaultManager] createFileAtPath:joined.path contents:nil attributes:nil];
-    NSFileHandle *handle = [NSFileHandle fileHandleForWritingToURL:joined error:nil];
-    if (!handle) {
-        completion(nil, SCILocalized(@"dl_failed"));
-        return;
-    }
-
-    NSMutableArray<NSString *> *queue = [NSMutableArray array];
-    if (initSegment) [queue addObject:initSegment];
-    [queue addObjectsFromArray:segments];
-
-    // A method calling itself, not a block calling itself.
+    // Fetched several at a time, and joined by index afterwards.
     //
-    // The obvious way to write this is a __block block that invokes its own variable at
-    // the end, and ARC rejects it outright: the block captures itself strongly and can
-    // never be released. The usual dodge is a weak copy of it, which trades a leak for a
-    // block that may be gone by the time the next part arrives.
+    // This was one part at a time appended to a single handle, and correct for exactly that
+    // reason: sequential arrival meant sequential order, with nothing to reassemble. It was
+    // also ninety round trips end to end, and on a phone the latency rather than the
+    // bandwidth is most of that wait.
     //
-    // A method has neither problem. The remaining work is an argument rather than a
-    // capture, so there is nothing to retain and nothing to keep alive.
-    [self writeNext:queue
-             handle:handle
-             joined:joined
-              total:queue.count
-               done:0
-            attempt:0
-           progress:progress
-         completion:completion];
-}
+    // SCIYTParts keeps the ordering guarantee without the queue -- each part's slot is
+    // decided before its request is made, so nothing about arrival order can reach the file.
+    // Its header sets out why that distinction earns a class of its own.
+    [SCIYTParts fetch:addresses
+             progress:progress
+           completion:^(NSArray<NSURL *> *ordered, NSURL *folder, NSString *error) {
+        if (!ordered.count) {
+            completion(nil, error ?: SCILocalized(@"dl_failed"));
+            return;
+        }
 
-+ (void)writeNext:(NSMutableArray<NSString *> *)queue
-           handle:(NSFileHandle *)handle
-           joined:(NSURL *)joined
-            total:(NSUInteger)total
-             done:(NSUInteger)done
-          attempt:(NSUInteger)attempt
-         progress:(void (^)(double))progress
-       completion:(void (^)(NSURL *, NSString *))completion {
+        // Named .mp4 whatever is inside it, exactly as before: the next step reads the bytes
+        // rather than the name, and renames the file if it turns out to be something else.
+        NSURL *joined = [SCIYTParts join:ordered extension:@"mp4" folder:folder];
+        if (!joined) {
+            completion(nil, SCILocalized(@"dl_ts_write_failed"));
+            return;
+        }
 
-    if (!queue.count) {
-        [handle closeFile];
         [self exportJoined:joined completion:completion];
-        return;
-    }
-
-    // Read, not taken. It is only removed once its bytes are safely written, so a part
-    // that fails is still at the head of the queue for the next attempt.
-    NSString *address = queue.firstObject;
-
-    [[[self session] dataTaskWithURL:[NSURL URLWithString:address]
-                   completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-        NSInteger status = [response isKindOfClass:[NSHTTPURLResponse class]]
-            ? ((NSHTTPURLResponse *)response).statusCode : 0;
-
-        // A refusal is not a hiccup.
-        //
-        // 4xx means the address is wrong or has expired, and asking again three times just
-        // makes the same mistake more slowly. Anything else -- a dropped connection, a
-        // timeout, a 5xx -- is worth another go.
-        BOOL worthRetrying = (status < 400 || status >= 500);
-
-        if ((!data.length || error) && worthRetrying && attempt < kSCIPartAttempts) {
-            // Backing off, because retrying a congested connection instantly is how a
-            // struggling download becomes a hammering one.
-            double pause = 0.5 * (double)(attempt + 1);
-
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(pause * NSEC_PER_SEC)),
-                           dispatch_get_main_queue(), ^{
-                [self writeNext:queue
-                         handle:handle
-                         joined:joined
-                          total:total
-                           done:done
-                        attempt:attempt + 1
-                       progress:progress
-                     completion:completion];
-            });
-            return;
-        }
-
-        if (!data.length || error) {
-            [handle closeFile];
-            [[NSFileManager defaultManager] removeItemAtURL:joined error:nil];
-
-            // Says which part and how many were already in hand, because "the download
-            // failed" on part 60 of 94 and on part 1 of 94 are not the same event.
-            [SCIYTDiagnostics recordStreamAttempt:
-                [NSString stringWithFormat:@"hls: part %lu of %lu failed after %lu tries — %@",
-                    (unsigned long)(done + 1), (unsigned long)total,
-                    (unsigned long)(attempt + 1),
-                    error.localizedDescription ?: [NSString stringWithFormat:@"HTTP %ld", (long)status]]];
-
-            completion(nil, error.localizedDescription ?: SCILocalized(@"dl_failed"));
-            return;
-        }
-
-        [queue removeObjectAtIndex:0];
-
-        @try {
-            [handle writeData:data];
-        } @catch (NSException *exception) {
-            [handle closeFile];
-            [[NSFileManager defaultManager] removeItemAtURL:joined error:nil];
-            completion(nil, exception.reason ?: SCILocalized(@"dl_failed"));
-            return;
-        }
-
-        NSUInteger written = done + 1;
-        if (progress && total) {
-            double fraction = (double)written / (double)total;
-            dispatch_async(dispatch_get_main_queue(), ^{ progress(fraction); });
-        }
-
-        [self writeNext:queue
-                 handle:handle
-                 joined:joined
-                  total:total
-                   done:written
-                attempt:0
-               progress:progress
-             completion:completion];
-    }] resume];
+    }];
 }
 
 /// Rewrites the joined parts as a normal .mp4.

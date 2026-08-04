@@ -3,6 +3,17 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.3.0
+
+- **Downloads are several times faster.** A video arrives in ninety-odd pieces, and they were
+  being fetched strictly one after another — so most of the wait was not the video coming
+  down, it was ninety separate trips to Google, each one waiting for the last to finish. Four
+  are now in flight at once.
+- The order cannot go wrong. Each piece is written under its own number the moment it is
+  asked for, and the video is assembled by those numbers rather than by what arrived first —
+  so there is no arrangement of arrivals that can produce a scrambled file.
+- Each piece still gets its three attempts, and a failure still names which one.
+
 ## v1.2.0
 
 - **Deleting a save now asks first**, and names what it is about to delete. A swipe is easy
