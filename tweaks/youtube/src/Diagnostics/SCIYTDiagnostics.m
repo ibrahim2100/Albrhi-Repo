@@ -273,6 +273,12 @@ static BOOL sciSabrReloadClass = NO;
 static BOOL sciSabrOnesieClass = NO;
 static NSUInteger sciSabrForced = 0;
 
+/// The video the counts above were taken on.
+///
+/// Without it, a report that was never re-measured is indistinguishable from one where the
+/// setting was tried and refused — which is what happened, twice.
+static NSString *sciSabrVideo = nil;
+
 /// One line per gate rather than one total.
 ///
 /// The 1.8.0 report said the gates were consulted four times and named only the last of
@@ -303,6 +309,14 @@ static NSMutableDictionary<NSString *, NSNumber *> *sciSabrAnswers = nil;
         sciSabrCounts[gate] = @(sciSabrCounts[gate].unsignedIntegerValue + 1);
         sciSabrAnswers[gate] = @(original);
         if (forced) sciSabrForced += 1;
+
+        // Which playback these counts belong to.
+        //
+        // Two reports arrived identical down to the cpn, and the counts alone could not say
+        // whether the setting had been tried and refused or the video had simply not been
+        // played again. A number that has not moved and a number that was never taken look
+        // the same; the video id tells them apart.
+        sciSabrVideo = [sciLastVideoID copy];
     }
 }
 
@@ -312,6 +326,16 @@ static NSMutableDictionary<NSString *, NSNumber *> *sciSabrAnswers = nil;
     [out appendFormat:SCILocalized(@"diag_sabr_classes"),
         sciSabrReloadClass ? @"yes" : @"no",
         sciSabrOnesieClass ? @"yes" : @"no"];
+
+    // The setting's own state, said out loud.
+    //
+    // "forced 0" has two readings -- the switch is off, or the switch is on and the gate was
+    // never reached -- and a diagnostic that cannot distinguish its own two explanations is
+    // not measuring anything. This is the one line that makes the rest of the section
+    // readable, and it was missing.
+    [out appendFormat:@"\n  "];
+    [out appendFormat:SCILocalized(@"diag_sabr_switch"),
+        SCIPrefEnabled(SCIPrefBypassSABR) ? SCILocalized(@"diag_on") : SCILocalized(@"diag_off")];
 
     // Typed, and not `NSDictionary *`. A bare one subscripts to `id`, and `id` has no
     // -unsignedLongValue to find -- which is a compile error rather than a wrong number, so
@@ -344,6 +368,11 @@ static NSMutableDictionary<NSString *, NSNumber *> *sciSabrAnswers = nil;
 
     [out appendFormat:@"\n  "];
     [out appendFormat:SCILocalized(@"diag_sabr_forced"), (unsigned long)sciSabrForced];
+
+    if (sciSabrVideo.length) {
+        [out appendFormat:@"\n  "];
+        [out appendFormat:SCILocalized(@"diag_sabr_video"), sciSabrVideo];
+    }
     return out;
 }
 

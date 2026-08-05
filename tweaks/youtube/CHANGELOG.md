@@ -3,6 +3,13 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.10.2
+
+- Diagnostics now says whether the "Ask for plain streams" switch is on, and which
+  video the reading was taken on. Two reports came back the same and there was no way
+  to tell whether the switch had been tried or the video had simply not been played
+  again — a report that cannot answer that is not telling you anything.
+
 ## v1.10.1
 
 - Fixes the build. 1.10.0 did not compile: one line asked a value for a number without

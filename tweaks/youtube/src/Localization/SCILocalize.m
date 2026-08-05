@@ -177,6 +177,10 @@ static void SCIBuildTables(void) {
         @"diag_sabr_never": @"Neither gate was consulted. Forcing them would change nothing.",
         @"diag_sabr_gate": @"%@ — asked %lu times, YouTube said %@",
         @"diag_sabr_forced": @"forced by us: %lu",
+        @"diag_sabr_switch": @"the setting is %@",
+        @"diag_sabr_video": @"measured while playing %@",
+        @"diag_on": @"ON",
+        @"diag_off": @"OFF",
 
         @"section_experimental": @"Experimental",
         @"bypass_sabr": @"Ask for plain streams",
@@ -488,6 +492,10 @@ static void SCIBuildTables(void) {
         @"diag_sabr_never": @"لم يُسأل أيّ من البوّابتين. فرضهما لن يُغيّر شيئاً.",
         @"diag_sabr_gate": @"%@ — سُئلت %lu مرّة، وجواب يوتيوب %@",
         @"diag_sabr_forced": @"فرضناها: %lu",
+        @"diag_sabr_switch": @"حالة المفتاح: %@",
+        @"diag_sabr_video": @"قيست أثناء تشغيل %@",
+        @"diag_on": @"مُشغَّل",
+        @"diag_off": @"مُطفأ",
 
         @"section_experimental": @"تحت التجربة",
         @"bypass_sabr": @"اطلب بثّاً عاديّاً",
