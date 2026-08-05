@@ -167,18 +167,18 @@ Name: Albrhi for Instagram (roothide)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
 Package: com.albrhi.youtube
-Version: 1.12.0
+Version: 1.12.1
 Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 644
 Depends: mobilesubstrate
 Conflicts: com.albrhi.youtube.roothide
 Replaces: com.albrhi.youtube.roothide
-Filename: debs/com.albrhi.youtube_1.12.0_iphoneos-arm64.deb
-Size: 165192
-MD5sum: 0503f0905cf44160b24d60ee9810d963
-SHA1: 6fabc282777e732aab14cc2f53dfd2f53359d36a
-SHA256: 42c4d07514d9827a47211d9cc2f5fcd0be498f2770820235894cf3715c6faa35
+Filename: debs/com.albrhi.youtube_1.12.1_iphoneos-arm64.deb
+Size: 165312
+MD5sum: 720f8386b090ca0a17e73e52d333dfa8
+SHA1: 6626b5bb2963d047ff6936cecb7be69f3eed15c8
+SHA256: 5edf5117288acfa7d1adfd331e71ede84316726176ba23a0e4063d1dd8e353d5
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download videos, no ads, skip the sponsored parts, background playback — in Arabic or English.
@@ -353,18 +353,18 @@ Name: Albrhi for YouTube (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-youtube.json
 
 Package: com.albrhi.youtube.roothide
-Version: 1.12.0
+Version: 1.12.1
 Architecture: iphoneos-arm64e
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 644
 Depends: mobilesubstrate
 Conflicts: com.albrhi.youtube
 Replaces: com.albrhi.youtube
-Filename: debs/com.albrhi.youtube.roothide_1.12.0_iphoneos-arm64e.deb
-Size: 165168
-MD5sum: a72d0df4126e6c5b6cd2d2458b99514a
-SHA1: 54e927c2242878909d0ce315b9c7d97c5c265085
-SHA256: c1d353994ede2809a5ad3051f63aa9e2611f6a7883ba70be5fac273ce4f8f0d7
+Filename: debs/com.albrhi.youtube.roothide_1.12.1_iphoneos-arm64e.deb
+Size: 165340
+MD5sum: 60c46ec32d59b7f5ad664b83ea887c81
+SHA1: f9a78ecc7fad0d80dfa6bcf306e2123505918f97
+SHA256: c22667b809a708a1f27f659c37651c9bfed86b78e10a17b9c7fbf2681c225b53
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download videos, no ads, skip the sponsored parts, background playback — in Arabic or English.
