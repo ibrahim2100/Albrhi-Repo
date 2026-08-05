@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v1.9.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **The video can always go the way you want it in fullscreen.**\n• **A screen darker than iOS lets you go.**\n• **And it can turn itself on at night.**\n• The direction and the dimming both follow YTweaks by fosterbarnes, GPLv3, credited in About.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v1.8.0",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v1.6.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **The picture on the lock screen is square now**\n• The space around it is filled with the picture's own colours rather than black, and the picture itself is left whole — nothing is cropped away, because a thumbnail is…",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.8.0"
+          "text": "1.9.0"
         },
         {
           "class": "DepictionTableTextView",
