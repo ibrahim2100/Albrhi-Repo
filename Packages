@@ -1,80 +1,68 @@
 Package: com.albrhi.tweak
-Version: 3.8.2
+Version: 4.0.0
 Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 1588
 Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak.roothide
 Replaces: com.albrhi.tweak.roothide
-Filename: debs/com.albrhi.tweak_3.8.2_iphoneos-arm64.deb
-Size: 472336
-MD5sum: 981963b396509df49f82280d2d064a9e
-SHA1: e7d6f82385b1880ab0eebd4c1788470aef20dad7
-SHA256: 3267e8435447da5b183214d872eda12961185451b9208abb51b7c361100af8a3
+Filename: debs/com.albrhi.tweak_4.0.0_iphoneos-arm64.deb
+Size: 473016
+MD5sum: da0c9da87544092089d7cf04926032d3
+SHA1: d1675afe890713b1de1a80d2082d07489c11588d
+SHA256: 55624493759edf1ea8b24b78c6b589d45e5a34da07f5fe5b3f4048eac828a077
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
  .
- Albrhi puts a download button where Instagram should have put one, strips the feed
- back to the people you actually follow, and stops the app reporting what you watch.
- Everything lives in a settings panel that looks like it shipped with the app.
+ Albrhi adds a download button to Instagram, clears the clutter out of your feed, and
+ lets you watch without the app reporting it. Everything is in one settings panel.
  .
  ▍DOWNLOADS
- A native download button sits in the action row of every post and reel, beside the
- save icon. One tap grabs the highest quality available and writes it straight to
- Photos — optionally into its own album.
+ A download button in the action row of every post and reel, next to the save icon.
+ One tap saves the best quality straight to Photos, or to its own album.
  .
- Stories and view-once DMs get their own button. Reels can be saved as video or as
- the original audio track. Profile pictures download in full HD on a long press.
+ Stories and view-once messages have their own button. Reels can be saved as video or
+ as just the audio. Profile pictures save in full size on a long press.
  .
  ▍DOWNLOAD CENTER
- A real queue behind it all: pause, resume, retry and cancel, several transfers at
- once, and downloads that keep running after you leave the app. Duplicate links are
- detected, finished files are cleared once they reach Photos, and a searchable
- history records everything you have saved.
+ A proper queue: pause, resume, retry and cancel, several downloads at once, and they
+ keep going after you leave the app. Repeated links are spotted, finished files are
+ tidied away once they reach Photos, and a searchable history keeps track.
  .
  ▍A QUIETER FEED
- Remove ads, sponsored posts, suggested posts, suggested accounts, suggested reels,
+ Turn off ads, sponsored posts, suggested posts, suggested accounts, suggested reels,
  Threads posts, Meta AI, the friends map, trending searches and the explore grid.
- Hide the stories tray — or the entire feed.
+ Hide the stories tray, or the whole feed.
  .
  ▍PRIVACY
- Watch stories without sending a seen receipt, and decide per story when to send one.
- View-once photos and videos stay unseen until you tap the eye button on that exact
- message. Hide the typing indicator and disable screenshot detection.
+ Watch stories without telling the person who posted it, and choose per story when to
+ tell them. View-once photos and videos stay unseen until you tap the eye button on
+ that message. Hide the typing indicator and turn off screenshot detection.
  .
  ▍REELS
- Tap to pause or mute instead of liking. Keep the progress scrubber visible. Stop
- reels unmuting themselves. Hide the header and the blend button.
+ Tap to pause or mute instead of liking. Keep the progress bar visible. Stop reels
+ unmuting themselves. Hide the header and the blend button.
  .
  ▍CONFIRMATIONS
- An optional prompt before liking, following, reposting, calling, commenting or
- sending a voice message — so a mis-tap never turns into a notification.
+ An optional "are you sure" before liking, following, reposting, calling, commenting
+ or sending a voice message, so a mis-tap does not become a notification.
  .
- ▍BUILT TO FIT IN
- Full Arabic and English with automatic right-to-left layout. SF Symbols, a
- customisable accent colour, dark mode, and a settings panel opened by holding the
- menu button on your profile. Includes a diagnostics page that reports what the
- tweak actually sees on your build and files a bug report in one tap.
+ ▍ARABIC AND ENGLISH
+ Full Arabic and English, with the layout flipping automatically. Choose your own
+ accent colour, dark mode included. Open the settings by holding the menu button on
+ your profile.
  .
- ▍TESTED ON
- Instagram 410.1.0. Not chosen for any principled reason — that is simply the newest
- build the developer's phone will still accept. The phone has served with honour and
- is now retired to a life of testing tweaks.
+ There is also a diagnostics page. If something does not work, it shows what the tweak
+ can actually see on your phone, and sends a report in one tap.
  .
- Newer Instagram versions will most likely work: nothing here depends on a version
- number, and the tweak looks up what it needs at runtime. But "most likely" is doing
- real work in that sentence, and honesty costs nothing.
+ ▍INSTAGRAM VERSIONS
+ Tested on Instagram 410, 439 and 441. Nothing here is tied to a version number — the
+ tweak looks for what it needs while the app runs, so other versions should work too.
  .
- ▍BETA
- This is a pre-release. Features are tested but your Instagram build may differ from
- ours — if something misbehaves, Settings › Diagnostics writes the report for you,
- Instagram version included, so we stop guessing and start fixing.
- .
- Developed by Ibrahim Ismail AL-Rahn. An educational and corrective derivative of
- SCInsta by SoCuul, rebuilt with AI assistance to improve code quality, design,
- performance and user experience. Free and open source under the GNU GPL v3, with
- original authorship fully credited and preserved.
+ Developed by Ibrahim Ismail AL-Rahn. Based on SCInsta by SoCuul, rebuilt with AI
+ assistance to improve code quality, design, performance and user experience. Free and
+ open source under the GNU GPL v3, with original authorship credited and preserved.
 Tag: role::enduser
 Author: Ibrahim Ismail AL-Rahn (based on SCInsta by SoCuul, GPLv3)
 Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
@@ -83,82 +71,70 @@ Name: Albrhi for Instagram (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
 Package: com.albrhi.tweak.roothide
-Version: 3.8.2
+Version: 4.0.0
 Architecture: iphoneos-arm64e
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 1588
 Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak
 Replaces: com.albrhi.tweak
-Filename: debs/com.albrhi.tweak.roothide_3.8.2_iphoneos-arm64e.deb
-Size: 472272
-MD5sum: d6319526c236a37a6dde312964c76aba
-SHA1: 654954d1502f0d6cf5f97d617f27ff2ad02c4434
-SHA256: 5605fc1aa9b729bb8ec9e2de462e12b601734886b6c0dc478105822cab0e65fc
+Filename: debs/com.albrhi.tweak.roothide_4.0.0_iphoneos-arm64e.deb
+Size: 473060
+MD5sum: cad37bbc0302078a962ab4e668db7035
+SHA1: d85624e5909e97fdd49edbeeb5613df0b4c14c04
+SHA256: c377bee64b857291025c6760e377c7fd050d92cfa52275632acd00a68a45a203
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
  .
- Albrhi puts a download button where Instagram should have put one, strips the feed
- back to the people you actually follow, and stops the app reporting what you watch.
- Everything lives in a settings panel that looks like it shipped with the app.
+ Albrhi adds a download button to Instagram, clears the clutter out of your feed, and
+ lets you watch without the app reporting it. Everything is in one settings panel.
  .
  ▍DOWNLOADS
- A native download button sits in the action row of every post and reel, beside the
- save icon. One tap grabs the highest quality available and writes it straight to
- Photos — optionally into its own album.
+ A download button in the action row of every post and reel, next to the save icon.
+ One tap saves the best quality straight to Photos, or to its own album.
  .
- Stories and view-once DMs get their own button. Reels can be saved as video or as
- the original audio track. Profile pictures download in full HD on a long press.
+ Stories and view-once messages have their own button. Reels can be saved as video or
+ as just the audio. Profile pictures save in full size on a long press.
  .
  ▍DOWNLOAD CENTER
- A real queue behind it all: pause, resume, retry and cancel, several transfers at
- once, and downloads that keep running after you leave the app. Duplicate links are
- detected, finished files are cleared once they reach Photos, and a searchable
- history records everything you have saved.
+ A proper queue: pause, resume, retry and cancel, several downloads at once, and they
+ keep going after you leave the app. Repeated links are spotted, finished files are
+ tidied away once they reach Photos, and a searchable history keeps track.
  .
  ▍A QUIETER FEED
- Remove ads, sponsored posts, suggested posts, suggested accounts, suggested reels,
+ Turn off ads, sponsored posts, suggested posts, suggested accounts, suggested reels,
  Threads posts, Meta AI, the friends map, trending searches and the explore grid.
- Hide the stories tray — or the entire feed.
+ Hide the stories tray, or the whole feed.
  .
  ▍PRIVACY
- Watch stories without sending a seen receipt, and decide per story when to send one.
- View-once photos and videos stay unseen until you tap the eye button on that exact
- message. Hide the typing indicator and disable screenshot detection.
+ Watch stories without telling the person who posted it, and choose per story when to
+ tell them. View-once photos and videos stay unseen until you tap the eye button on
+ that message. Hide the typing indicator and turn off screenshot detection.
  .
  ▍REELS
- Tap to pause or mute instead of liking. Keep the progress scrubber visible. Stop
- reels unmuting themselves. Hide the header and the blend button.
+ Tap to pause or mute instead of liking. Keep the progress bar visible. Stop reels
+ unmuting themselves. Hide the header and the blend button.
  .
  ▍CONFIRMATIONS
- An optional prompt before liking, following, reposting, calling, commenting or
- sending a voice message — so a mis-tap never turns into a notification.
+ An optional "are you sure" before liking, following, reposting, calling, commenting
+ or sending a voice message, so a mis-tap does not become a notification.
  .
- ▍BUILT TO FIT IN
- Full Arabic and English with automatic right-to-left layout. SF Symbols, a
- customisable accent colour, dark mode, and a settings panel opened by holding the
- menu button on your profile. Includes a diagnostics page that reports what the
- tweak actually sees on your build and files a bug report in one tap.
+ ▍ARABIC AND ENGLISH
+ Full Arabic and English, with the layout flipping automatically. Choose your own
+ accent colour, dark mode included. Open the settings by holding the menu button on
+ your profile.
  .
- ▍TESTED ON
- Instagram 410.1.0. Not chosen for any principled reason — that is simply the newest
- build the developer's phone will still accept. The phone has served with honour and
- is now retired to a life of testing tweaks.
+ There is also a diagnostics page. If something does not work, it shows what the tweak
+ can actually see on your phone, and sends a report in one tap.
  .
- Newer Instagram versions will most likely work: nothing here depends on a version
- number, and the tweak looks up what it needs at runtime. But "most likely" is doing
- real work in that sentence, and honesty costs nothing.
+ ▍INSTAGRAM VERSIONS
+ Tested on Instagram 410, 439 and 441. Nothing here is tied to a version number — the
+ tweak looks for what it needs while the app runs, so other versions should work too.
  .
- ▍BETA
- This is a pre-release. Features are tested but your Instagram build may differ from
- ours — if something misbehaves, Settings › Diagnostics writes the report for you,
- Instagram version included, so we stop guessing and start fixing.
- .
- Developed by Ibrahim Ismail AL-Rahn. An educational and corrective derivative of
- SCInsta by SoCuul, rebuilt with AI assistance to improve code quality, design,
- performance and user experience. Free and open source under the GNU GPL v3, with
- original authorship fully credited and preserved.
+ Developed by Ibrahim Ismail AL-Rahn. Based on SCInsta by SoCuul, rebuilt with AI
+ assistance to improve code quality, design, performance and user experience. Free and
+ open source under the GNU GPL v3, with original authorship credited and preserved.
 Tag: role::enduser
 Author: Ibrahim Ismail AL-Rahn (based on SCInsta by SoCuul, GPLv3)
 Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
@@ -167,18 +143,18 @@ Name: Albrhi for Instagram (roothide)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
 Package: com.albrhi.youtube
-Version: 1.12.1
+Version: 1.12.2
 Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 644
 Depends: mobilesubstrate
 Conflicts: com.albrhi.youtube.roothide
 Replaces: com.albrhi.youtube.roothide
-Filename: debs/com.albrhi.youtube_1.12.1_iphoneos-arm64.deb
-Size: 165312
-MD5sum: 720f8386b090ca0a17e73e52d333dfa8
-SHA1: 6626b5bb2963d047ff6936cecb7be69f3eed15c8
-SHA256: 5edf5117288acfa7d1adfd331e71ede84316726176ba23a0e4063d1dd8e353d5
+Filename: debs/com.albrhi.youtube_1.12.2_iphoneos-arm64.deb
+Size: 165940
+MD5sum: 5f7af523b5546cc396b3c3000af747f9
+SHA1: 4f6d8f443a020d648182a3877c464d867c8716d1
+SHA256: 4e4da2ece8e6dc93bf495c35374900e79b00e23760c2b52f466bb7804c11d0cf
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download videos, no ads, skip the sponsored parts, background playback — in Arabic or English.
@@ -353,18 +329,18 @@ Name: Albrhi for YouTube (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-youtube.json
 
 Package: com.albrhi.youtube.roothide
-Version: 1.12.1
+Version: 1.12.2
 Architecture: iphoneos-arm64e
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 644
 Depends: mobilesubstrate
 Conflicts: com.albrhi.youtube
 Replaces: com.albrhi.youtube
-Filename: debs/com.albrhi.youtube.roothide_1.12.1_iphoneos-arm64e.deb
-Size: 165340
-MD5sum: 60c46ec32d59b7f5ad664b83ea887c81
-SHA1: f9a78ecc7fad0d80dfa6bcf306e2123505918f97
-SHA256: c22667b809a708a1f27f659c37651c9bfed86b78e10a17b9c7fbf2681c225b53
+Filename: debs/com.albrhi.youtube.roothide_1.12.2_iphoneos-arm64e.deb
+Size: 166072
+MD5sum: 7fb15e0e1fceb70f584bfca43ad31178
+SHA1: bbde000ac20cc8ba87fbe33d4f83bd859a36e376
+SHA256: 8e9a41d568bac44d296265a1003852e4e208ef5f9b44220cfe2102f7710d05ce
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Download videos, no ads, skip the sponsored parts, background playback — in Arabic or English.

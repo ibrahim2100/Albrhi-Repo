@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v4.0.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **Instagram 441 is supported.**\n• **Watching stories quietly is more dependable.**\n• **Diagnostics now says whether that is switched on.**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v3.8.2",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v3.8.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **Settings search understands what you meant.**",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "3.8.2"
+          "text": "4.0.0"
         },
         {
           "class": "DepictionTableTextView",
