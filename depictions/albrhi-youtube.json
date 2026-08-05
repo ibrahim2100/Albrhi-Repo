@@ -120,40 +120,40 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v1.10.1",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• Fixes the build.\n• The checks that run before every build now catch that particular mistake in a second rather than five minutes into a compile.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "v1.10.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **The settings are a short list now.**\n• Nothing was removed and nothing moved between categories.\n• Diagnostics now names each streaming gate separately instead of adding them up.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v1.9.0",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
           "markdown": "• **The video can always go the way you want it in fullscreen.**\n• **A screen darker than iOS lets you go.**\n• **And it can turn itself on at night.**\n• The direction and the dimming both follow YTweaks by fosterbarnes, GPLv3, credited in About.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v1.8.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **You choose how far a double tap jumps.**\n• **Speeds above 2× in the speed menu**\n• **A new Interface page for hiding parts of YouTube.**\n• Nothing here hides anything after it is drawn.\n• **A first look at why saving is slow.**",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v1.7.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **Downloads carry on when you leave YouTube.**\n• **A notification tells you when one finishes**\n• If YouTube is force-quit from the app switcher mid-download, that download is lost and the row says so.",
           "useSpacing": true
         },
         {
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.9.0"
+          "text": "1.10.1"
         },
         {
           "class": "DepictionTableTextView",
