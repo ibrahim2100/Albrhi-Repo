@@ -4,8 +4,9 @@
 #import "SCILog.h"
 #import "Prefs.h"
 #import "Diagnostics/SCIYTDiagnostics.h"
+#import "Features/Display/SCIYTDimmer.h"
 
-NSString *SCIVersionString = @"v1.8.0";  // AlbrhiYT
+NSString *SCIVersionString = @"v1.9.0";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.
@@ -141,6 +142,22 @@ NSString *SCIVersionString = @"v1.8.0";  // AlbrhiYT
         SCIPrefHideCastButton: @NO,
         SCIPrefHideSearchButton: @NO,
         SCIPrefHideSharePromo: @NO,
+
+        // Fullscreen direction: off, meaning YouTube keeps deciding from how the phone is
+        // held. Forcing a side for everybody would be wrong for anybody who holds it the
+        // other way, which is half of everybody.
+        SCIPrefFullscreenButton: @0,
+        SCIPrefFullscreenSwipe: @0,
+
+        // Dimming off, at a level that is dark without being unusable, from ten at night
+        // until seven. The times are registered even though the schedule is off, so the two
+        // rows show real times on a fresh install rather than midnight to midnight -- which
+        // would read as a range of no length and is the one value that means nothing.
+        SCIPrefDimEnabled: @NO,
+        SCIPrefDimLevel: @40,
+        SCIPrefNightSchedule: @NO,
+        SCIPrefNightStart: @1320,   // 22:00
+        SCIPrefNightEnd: @420,      // 07:00
     }];
 
     // Unconditional, and the only line here that is.
@@ -150,6 +167,11 @@ NSString *SCIVersionString = @"v1.8.0";  // AlbrhiYT
     // and means "is it even in there" is never a question again.
     NSLog(@"[AlbrhiYT] %@ loaded into %@", SCIVersionString,
           [[NSBundle mainBundle] bundleIdentifier]);
+
+    // Watches the clock and the brightness settings from here on. Cheap when the feature is
+    // off -- one observer and a timer with a minute of tolerance, and no window at all until
+    // there is something to dim.
+    [SCIYTDimmer start];
 
     // Said once, on the first launch after installing. Deliberately after everything else
     // in here: a greeting must never be the reason a hook did not get installed.

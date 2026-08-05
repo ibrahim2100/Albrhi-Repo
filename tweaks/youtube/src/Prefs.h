@@ -99,6 +99,26 @@
 #define SCIPrefHideSharePromo   @"hide_share_promo"
 
 
+/// Which way round the video goes when it fills the screen.
+///
+/// 0 off, 1 left, 2 right, 3 portrait — and the button and the swipe are separate keys
+/// because they are separate habits. The button is deliberate; the swipe is often not.
+#define SCIPrefFullscreenButton @"fullscreen_button_direction"
+#define SCIPrefFullscreenSwipe  @"fullscreen_swipe_direction"
+
+/// Screen dimming below what iOS allows, and the hours it applies.
+///
+/// The level is a percentage and the two times are minutes since midnight — numbers with
+/// meanings of their own, so no picker's ordering can change what somebody chose. The end
+/// being earlier than the start is not an error: that is a range across midnight, which is
+/// what a night schedule usually is.
+#define SCIPrefDimEnabled       @"fake_brightness"
+#define SCIPrefDimLevel         @"fake_brightness_level"
+#define SCIPrefNightSchedule    @"night_schedule"
+#define SCIPrefNightStart       @"night_start_minute"
+#define SCIPrefNightEnd         @"night_end_minute"
+
+
 /// SponsorBlock. One key for the feature, one per category.
 ///
 /// Per-category rather than a single switch, because these are not the same request of

@@ -3,6 +3,24 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.9.0
+
+- **The video can always go the way you want it in fullscreen.** YouTube decides which way
+  round from how you are holding the phone, which is wrong every time you are lying on your
+  side. Under Screen you can set a side, and it goes there whatever the phone thinks. The
+  button and the swipe are set separately — the button is on purpose, the swipe often is not.
+- **A screen darker than iOS lets you go.** For a dark room, where even the lowest brightness
+  is too much. It lays a dark layer over the screen rather than turning the backlight down —
+  there is no way to go below the system minimum — so on an OLED phone it looks the same and
+  on an LCD the picture dims. Touch works straight through it, and it never reaches black.
+- **And it can turn itself on at night.** Set an hour to start and an hour to stop, and it
+  leaves the screen alone outside them. Across midnight works — ten at night until seven is
+  the setting it starts with.
+- The direction and the dimming both follow YTweaks by fosterbarnes, GPLv3, credited in
+  About. The code is our own, and the fullscreen part reaches the app a different way: the
+  two places YTweaks hooks no longer exist in this YouTube, and the pair that replaced them
+  do.
+
 ## v1.8.0
 
 - **You choose how far a double tap jumps.** YouTube fixes it at ten seconds, which is too
