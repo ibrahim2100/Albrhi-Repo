@@ -120,12 +120,12 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
-          "title": "v4.0.0",
+          "title": "v4.1.2",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **Instagram 441 is supported.**\n• **Watching stories quietly is more dependable.**\n• **Diagnostics now says whether that is switched on.**",
+          "markdown": "• Fixes the build again.\n• The checks now catch this one too.",
           "useSpacing": true
         },
         {
@@ -134,12 +134,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v3.8.2",
+          "title": "v4.1.1",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **Nothing changed in the app.**\n• If anything at all behaves differently from 3.8.1, that is a bug and not a change.",
+          "markdown": "• Fixes the build.\n• The checks that run before every build now catch that particular mistake in a second, instead of five minutes into a compile.",
           "useSpacing": true
         },
         {
@@ -148,12 +148,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v3.8.1",
+          "title": "v4.1.0",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **Downloads survive losing signal.**",
+          "markdown": "• **Twenty-six features work again.**\n• Among them: hiding suggested accounts and suggested chats, clearing recent searches, hiding the stories tray, hiding Meta AI, note colours, the friends map, saving DM…\n• One more was broken and nobody knew: the note colour palette had been off since 439 for the same reason.\n• The tweak now finds these parts by name while the app runs instead of expecting them in a fixed place, so a future Instagram update is far less likely to switch features…",
           "useSpacing": true
         },
         {
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "4.0.0"
+          "text": "4.1.2"
         },
         {
           "class": "DepictionTableTextView",
