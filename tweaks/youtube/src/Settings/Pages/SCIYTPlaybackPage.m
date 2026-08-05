@@ -82,20 +82,17 @@ static void SCIAskForSeek(SCIYTSettingsHostController *host) {
                       prefKey:SCIPrefExtraSpeeds],
         ];
 
-        // Its own section, with the warning as the footer rather than as the row's subtitle.
-        // A subtitle is read after the switch has been reached for; a footer is read while
-        // deciding whether to reach for it, and this is a switch that can cost playback.
-        SCISection *experiment = [[SCISection alloc] init];
-        experiment.title = SCILocalized(@"section_experimental");
-        experiment.footer = SCILocalized(@"bypass_sabr_footer");
-        experiment.rows = @[
-            [SCIRow switchRow:SCILocalized(@"bypass_sabr")
-                       detail:SCILocalized(@"bypass_sabr_note")
-                       symbol:@"flask"
-                      prefKey:SCIPrefBypassSABR],
-        ];
-
-        return @[player, experiment];
+        // The experimental section is gone, and deliberately not left switched off.
+        //
+        // "Ask for plain streams" was measured to the end on 21.30.5: the getter forced, then
+        // the stored value written through the class's own setter until the getter answered
+        // YES on its own. Every one of the twenty-two formats still came back with an empty
+        // ?cpn= URL, and the HLS manifest -- the one thing the downloader actually uses --
+        // stopped arriving. No gain, and a real loss.
+        //
+        // A switch that provably does nothing is a switch that lies, so it is not shipped
+        // dark. See CLAUDE.md before considering it again.
+        return @[player];
     }];
 }
 

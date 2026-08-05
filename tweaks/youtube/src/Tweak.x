@@ -6,7 +6,7 @@
 #import "Diagnostics/SCIYTDiagnostics.h"
 #import "Features/Display/SCIYTDimmer.h"
 
-NSString *SCIVersionString = @"v1.11.0";  // AlbrhiYT
+NSString *SCIVersionString = @"v1.12.0";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.
@@ -125,11 +125,6 @@ NSString *SCIVersionString = @"v1.11.0";  // AlbrhiYT
         // on a fresh install instead of reading a key nobody wrote.
         SCIPrefSeekSeconds: @0,
         SCIPrefExtraSpeeds: @NO,
-
-        // Off, and this is the one switch here that is off because we do not yet know what
-        // it does. Until a report says YouTube's SABR gates are consulted at all, the hooks
-        // behind this only count -- see Features/Playback/SCIYTSabr.x.
-        SCIPrefBypassSABR: @NO,
 
         // Every one of the hide switches. Each removes a part of YouTube that works, and a
         // tweak that decides for everybody which parts of an app are worth having is a tweak

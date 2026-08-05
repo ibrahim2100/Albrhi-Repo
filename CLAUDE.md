@@ -46,6 +46,27 @@ reported `raw → parsed → deduped` counts separately.
 `IGVideo` for photo posts. Check that a thing can actually do its job, not that it
 is non-null — see `hasPlayableVideo:` in `SCIMediaDownloader.m`.
 
+**SABR cannot be turned off from inside the app. This was measured to the end — do not
+try again without new evidence.** Every format on YouTube 21.30.5 answers with an empty
+`?cpn=` URL, because the client asks a server-side controller for byte ranges instead of
+fetching files. The binary carries two gates that look like the answer, and neither is:
+
+- `MLPlayerReloadContext -disableSABR` is **never consulted on a first load**. It belongs
+  to the reload path.
+- `MLOnesieRequestContext -bypassOnesie` *is* consulted, three to four times per playback.
+  Forcing the getter changed nothing. That proved less than it appeared — code reading the
+  ivar directly never passes through a getter hook — so the stored value was then written
+  through the class's own `-setBypassOnesie:` until the getter answered YES on its own
+  account. Twenty-two formats, still no URLs. **And the HLS manifest stopped arriving**,
+  which is the one thing the downloader actually uses.
+
+The metadata settles it: `content_length`, `init_range` and `index_range` all arrive
+complete and the URL alone is withheld. That is a server-side decision about which clients
+get plain files. Download sites get URLs because they ask as a television or an old web
+player — clients Google has not migrated — which means impersonating a different client,
+signed requests, and the `n`-signature, from inside the official app while signed in to a
+real account. The counting hooks stay in `SCIYTSabr.x`; the switch was removed in 1.12.0.
+
 **Run scripts before shipping them.** Three CI failures in a row came from shell
 one-liners that were never executed once locally. `tools/check.py` and a stubbed
 run of `tools/make-repo.sh` cost seconds.

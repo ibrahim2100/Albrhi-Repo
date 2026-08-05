@@ -78,15 +78,6 @@
 /// change to a screen nobody asked us to touch.
 #define SCIPrefExtraSpeeds      @"extra_speeds"
 
-/// Asking the player not to use SABR.
-///
-/// **Off, and it stays off until a report says the gates are even consulted.** SABR is the
-/// piecewise protocol that leaves every format without a URL; this asks YouTube's own two
-/// switches to decline it. Whether the server honours the request is not knowable from here,
-/// and forcing it could as easily cost playback as gain a download link — so with this off
-/// the hooks only count, and the diagnostics page reports what they counted.
-#define SCIPrefBypassSABR       @"bypass_sabr"
-
 /// Parts of YouTube's own screen that can be answered away. All off: removing pieces of
 /// somebody else's app is a choice, and choosing it for everyone is not this tweak's call.
 #define SCIPrefHideAmbient      @"hide_ambient_glow"

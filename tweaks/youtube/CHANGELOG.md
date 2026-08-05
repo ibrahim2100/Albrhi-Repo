@@ -3,6 +3,13 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.12.0
+
+- Removes "Ask for plain streams" from the player settings. It was tried every way it
+  could be tried and it never once made a difference to what YouTube sent — and while
+  it was on, saving worked less well than with it off. A switch that does nothing is
+  worse than no switch, so it is gone rather than left turned off.
+
 ## v1.11.0
 
 - Fixes the app getting stuck on one page. After playing something from Downloads,

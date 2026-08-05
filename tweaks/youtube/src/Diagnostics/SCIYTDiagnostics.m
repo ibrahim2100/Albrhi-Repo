@@ -327,15 +327,9 @@ static NSMutableDictionary<NSString *, NSNumber *> *sciSabrAnswers = nil;
         sciSabrReloadClass ? @"yes" : @"no",
         sciSabrOnesieClass ? @"yes" : @"no"];
 
-    // The setting's own state, said out loud.
-    //
-    // "forced 0" has two readings -- the switch is off, or the switch is on and the gate was
-    // never reached -- and a diagnostic that cannot distinguish its own two explanations is
-    // not measuring anything. This is the one line that makes the rest of the section
-    // readable, and it was missing.
-    [out appendFormat:@"\n  "];
-    [out appendFormat:SCILocalized(@"diag_sabr_switch"),
-        SCIPrefEnabled(SCIPrefBypassSABR) ? SCILocalized(@"diag_on") : SCILocalized(@"diag_off")];
+    // There is no setting to report any more. The counts stay: they cost nothing, and if a
+    // future YouTube consults these gates differently the report will say so without anyone
+    // having to remember to go and look.
 
     // Typed, and not `NSDictionary *`. A bare one subscripts to `id`, and `id` has no
     // -unsignedLongValue to find -- which is a compile error rather than a wrong number, so

@@ -177,15 +177,8 @@ static void SCIBuildTables(void) {
         @"diag_sabr_never": @"Neither gate was consulted. Forcing them would change nothing.",
         @"diag_sabr_gate": @"%@ — asked %lu times, YouTube said %@",
         @"diag_sabr_forced": @"forced by us: %lu",
-        @"diag_sabr_switch": @"the setting is %@",
         @"diag_sabr_video": @"measured while playing %@",
-        @"diag_on": @"ON",
-        @"diag_off": @"OFF",
 
-        @"section_experimental": @"Experimental",
-        @"bypass_sabr": @"Ask for plain streams",
-        @"bypass_sabr_note": @"Tells the player not to use YouTube's piecewise streaming.",
-        @"bypass_sabr_footer": @"YouTube sends video in pieces rather than as files, which is why saving takes so long. This asks it not to. It may do nothing, and it may stop videos playing — turn it off again if it does. Diagnostics shows whether YouTube even asked the question.",
 
         @"seek_seconds": @"Double-tap jump",
         @"seek_seconds_format": @"%ld seconds",
@@ -492,15 +485,8 @@ static void SCIBuildTables(void) {
         @"diag_sabr_never": @"لم يُسأل أيّ من البوّابتين. فرضهما لن يُغيّر شيئاً.",
         @"diag_sabr_gate": @"%@ — سُئلت %lu مرّة، وجواب يوتيوب %@",
         @"diag_sabr_forced": @"فرضناها: %lu",
-        @"diag_sabr_switch": @"حالة المفتاح: %@",
         @"diag_sabr_video": @"قيست أثناء تشغيل %@",
-        @"diag_on": @"مُشغَّل",
-        @"diag_off": @"مُطفأ",
 
-        @"section_experimental": @"تحت التجربة",
-        @"bypass_sabr": @"اطلب بثّاً عاديّاً",
-        @"bypass_sabr_note": @"يطلب من المشغّل ألّا يستخدم بثّ يوتيوب المُقطَّع.",
-        @"bypass_sabr_footer": @"يوتيوب يُرسل الفيديو قطعاً لا ملفّاً، ولهذا يطول الحفظ. هذا يطلب منه ألّا يفعل. قد لا يُغيّر شيئاً، وقد يُوقف تشغيل الفيديو — أطفئه إن حصل. صفحة التشخيص تُبيّن إن كان يوتيوب سأل السؤال أصلاً.",
 
         @"seek_seconds": @"قفزة النقر المزدوج",
         @"seek_seconds_format": @"%ld ثانية",
