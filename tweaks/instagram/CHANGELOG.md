@@ -4,6 +4,14 @@
 Other versions should work too — the tweak looks for what it needs while the app runs
 rather than expecting a particular version number.
 
+## v4.1.2
+
+- Fixes the build again. 4.1.1 compiled but would not link, for a different reason
+  than 4.1.0 failed. Neither reached anyone.
+- The checks now catch this one too. Three build failures in a row came from the same
+  change, and each time the check that would have caught it in a second did not exist
+  yet. It does now.
+
 ## v4.1.1
 
 - Fixes the build. 4.1.0 did not compile, so it never reached anyone — three of the

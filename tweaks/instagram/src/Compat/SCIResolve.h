@@ -30,6 +30,18 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// The tweak has .x files and .xm files, and the second kind compiles as Objective-C++.
+// C++ mangles function names by their argument types, so a .xm asks the linker for
+// SCIResolveClass(NSString*) while SCIResolve.m -- plain Objective-C -- exports plain
+// _SCIResolveClass. Nothing complains until the link, and then it complains about four
+// files at once and none of them is the one to change.
+//
+// Methods never have this problem, which is why it has not come up before: every other
+// shared piece of this tweak is a class.
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// The runtime class for a plain Objective-C class name, whichever form this build has.
 ///
 /// Tries the name as given first, so an older build costs one runtime lookup and no scan.
@@ -48,5 +60,9 @@ Class _Nullable SCIResolveClass(NSString *name);
 /// and never fired" are different problems with different fixes, and a report that cannot
 /// separate them sends everybody looking in the wrong place.
 NSString *_Nullable SCIResolvedNameFor(NSString *name);
+
+#ifdef __cplusplus
+}
+#endif
 
 NS_ASSUME_NONNULL_END

@@ -451,6 +451,51 @@ for path in SRC:
                    'is id and dot syntax will not compile; cast self to its own type'
                    % (hit, block.group(1), path))
 
+# 15. A plain C function shared with an Objective-C++ file, without extern "C".
+#
+#     .x compiles as Objective-C and .xm as Objective-C++, and C++ mangles a function name
+#     by its argument types. So a .xm asks the linker for SCIResolveClass(NSString*) while
+#     the .m that defines it exports plain _SCIResolveClass. Nothing complains until the
+#     link, and then the error names every .xm that used it and not the header that needs
+#     changing.
+#
+#     Methods are unaffected, which is why this took until the fifteenth rule to appear:
+#     every other shared piece of this project is a class.
+#
+#     Only headers declaring a bare function are considered, and only when a .xm or .mm
+#     actually imports them. A header used solely from .x files links perfectly well and
+#     reporting it would be noise.
+FUNCTION_DECL = re.compile(
+    r'^\s*(?!static\b)(?!typedef\b)[A-Za-z_][\w \t*_]*?\b(\w+)\s*\([^;{]*\)\s*;', re.M)
+
+cplusplus_users = set()
+for path in SRC:
+    if not path.endswith(('.xm', '.mm')):
+        continue
+    for quoted in re.findall(r'#import\s+"([^"]+)"', open(path, encoding='utf-8').read()):
+        cplusplus_users.add(os.path.basename(quoted))
+
+for path in HDR:
+    if os.path.basename(path) not in cplusplus_users:
+        continue
+
+    text = open(path, encoding='utf-8').read()
+    if 'extern "C"' in text:
+        continue
+
+    # Inside an @interface these are method declarations, not functions.
+    outside = re.sub(r'@interface.*?@end', '', text, flags=re.S)
+
+    for match in FUNCTION_DECL.finditer(outside):
+        name = match.group(1)
+        # A prototype has parentheses; a variable declaration does not reach here.
+        if name in ('if', 'while', 'for', 'switch', 'return', 'sizeof'):
+            continue
+        report('%s in %s is a C function shared with an Objective-C++ file and the header '
+               'has no extern "C" — the .xm will ask for a mangled name and fail at link'
+               % (name, path))
+        break
+
 # 13. An untyped collection, subscripted for a property.
 #
 #     `NSDictionary *counts = [typed copy];` throws the element type away, so `counts[k]`
