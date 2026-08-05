@@ -120,6 +120,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v1.8.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **You choose how far a double tap jumps.**\n• **Speeds above 2× in the speed menu**\n• **A new Interface page for hiding parts of YouTube.**\n• Nothing here hides anything after it is drawn.\n• **A first look at why saving is slow.**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v1.7.0",
           "useBoldText": true
         },
@@ -145,20 +159,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v1.5.1",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **Dropping the player down to the mini bar no longer stops the sound.**\n• The mini bar also keeps its play button honest when playback is changed from the lock screen, headphones or a car, which it could not hear before.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -169,7 +169,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.7.0"
+          "text": "1.8.0"
         },
         {
           "class": "DepictionTableTextView",
