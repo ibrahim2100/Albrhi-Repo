@@ -313,8 +313,11 @@ static NSMutableDictionary<NSString *, NSNumber *> *sciSabrAnswers = nil;
         sciSabrReloadClass ? @"yes" : @"no",
         sciSabrOnesieClass ? @"yes" : @"no"];
 
-    NSDictionary *counts = nil;
-    NSDictionary *answers = nil;
+    // Typed, and not `NSDictionary *`. A bare one subscripts to `id`, and `id` has no
+    // -unsignedLongValue to find -- which is a compile error rather than a wrong number, so
+    // it cost a build and nothing else, but it cost a build.
+    NSDictionary<NSString *, NSNumber *> *counts = nil;
+    NSDictionary<NSString *, NSNumber *> *answers = nil;
 
     if (sciSabrCounts) {
         @synchronized (sciSabrCounts) {

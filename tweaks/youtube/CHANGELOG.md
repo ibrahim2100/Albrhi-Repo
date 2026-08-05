@@ -3,6 +3,14 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.10.1
+
+- Fixes the build. 1.10.0 did not compile: one line asked a value for a number without
+  having said what kind of values it held. Nothing about the release was wrong on the
+  phone, because it never reached one.
+- The checks that run before every build now catch that particular mistake in a second
+  rather than five minutes into a compile.
+
 ## v1.10.0
 
 - **The settings are a short list now.** They had become one long scroll of nine headings,

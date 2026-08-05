@@ -408,6 +408,37 @@ for path in SRC:
         report('%s in %s is both a property and a method — the method becomes the '
                'property\'s getter and will not compile' % (name, path))
 
+# 13. An untyped collection, subscripted for a property.
+#
+#     `NSDictionary *counts = [typed copy];` throws the element type away, so `counts[k]`
+#     is `id`, and `id` has no -unsignedLongValue to find. It reads as ordinary code and
+#     the mistake is in the *declaration*, several lines above the error the compiler
+#     reports — which is why it went out in a commit and cost a build.
+#
+#     Not a wrong answer, only a failed compile. It is here because failing in a second
+#     is the difference this file exists to make.
+#
+#     Only a bare declaration counts: with `NSDictionary<NSString *, NSNumber *> *` the
+#     subscript is typed and there is nothing to report. Across both tweaks this fired
+#     exactly once, on the line that caused it, and nowhere else.
+UNTYPED_DECL = re.compile(r'\bNS(?:Mutable)?(?:Dictionary|Array)\s*\*\s*(\w+)\s*[=;]')
+
+for path in SRC:
+    untyped = set()
+
+    for n, line in enumerate(open(path, encoding='utf-8').read().split('\n'), 1):
+        for match in UNTYPED_DECL.finditer(line):
+            # A generic parameter sits between the class name and the star, so its
+            # absence in that span is exactly what "bare" means.
+            if '<' not in line[:match.start(1)].rsplit('NS', 1)[-1]:
+                untyped.add(match.group(1))
+
+        for name in untyped:
+            if re.search(r'\b%s\[[^\]]+\]\.\w' % re.escape(name), line):
+                report('%s at %s:%d is subscripted for a property but declared without '
+                       'its element type — the subscript is id and will not compile'
+                       % (name, path, n))
+
 # 9. Quoted imports that resolve to nothing.
 #
 # Moving the sources one level deeper broke four files that reached the shared
