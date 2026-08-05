@@ -4,6 +4,13 @@
 Other versions should work too — the tweak looks for what it needs while the app runs
 rather than expecting a particular version number.
 
+## v4.1.1
+
+- Fixes the build. 4.1.0 did not compile, so it never reached anyone — three of the
+  files changed in it needed one more adjustment that the rest did not.
+- The checks that run before every build now catch that particular mistake in a
+  second, instead of five minutes into a compile.
+
 ## v4.1.0
 
 - **Twenty-six features work again.** Instagram 439 rewrote a large part of the app in

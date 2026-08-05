@@ -68,12 +68,12 @@ threadSubscriptionService:(id)threadSubscriptionService {
     // The viewer mounts its media/overlay after appearing, which can bury our
     // button — (re)add it and keep it on top on every layout pass.
     [self sciAddDMSaveButton];
-    UIView *button = [self.view viewWithTag:kSCIDMSaveButtonTag];
-    if (button) [self.view bringSubviewToFront:button];
+    UIView *button = [((IGDirectMediaViewerViewController *)self).view viewWithTag:kSCIDMSaveButtonTag];
+    if (button) [((IGDirectMediaViewerViewController *)self).view bringSubviewToFront:button];
 }
 
 %new - (void)sciAddDMSaveButton {
-    if ([self.view viewWithTag:kSCIDMSaveButtonTag]) return;
+    if ([((IGDirectMediaViewerViewController *)self).view viewWithTag:kSCIDMSaveButtonTag]) return;
 
     UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
     button.tag = kSCIDMSaveButtonTag;
@@ -89,11 +89,11 @@ threadSubscriptionService:(id)threadSubscriptionService {
 
     [button addTarget:self action:@selector(sciSaveDMMedia:) forControlEvents:UIControlEventTouchUpInside];
 
-    [self.view addSubview:button];
+    [((IGDirectMediaViewerViewController *)self).view addSubview:button];
 
     [NSLayoutConstraint activateConstraints:@[
-        [button.trailingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.trailingAnchor constant:-18.0],
-        [button.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-24.0],
+        [button.trailingAnchor constraintEqualToAnchor:((IGDirectMediaViewerViewController *)self).view.safeAreaLayoutGuide.trailingAnchor constant:-18.0],
+        [button.bottomAnchor constraintEqualToAnchor:((IGDirectMediaViewerViewController *)self).view.safeAreaLayoutGuide.bottomAnchor constant:-24.0],
         [button.widthAnchor constraintEqualToConstant:44.0],
         [button.heightAnchor constraintEqualToConstant:44.0]
     ]];

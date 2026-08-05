@@ -416,6 +416,41 @@ for path in SRC:
         report('%s in %s is both a property and a method — the method becomes the '
                'property\'s getter and will not compile' % (name, path))
 
+# 14. `self.property` inside a %group whose class is bound at load.
+#
+#     `%init(Group, Class = expr)` names the class at runtime, so Logos has nothing to type
+#     `self` against and emits plain `id`. Dot syntax on `id` then fails to resolve, and the
+#     error clang reports — "property 'view' not found on object of type
+#     '__unsafe_unretained id const'" — points at the use rather than at the %init that
+#     caused it, several hundred lines away in another part of the file.
+#
+#     This cost a CI build the first time twenty-five hooks were converted: three files
+#     touched a property on self, and only the first of them got as far as being compiled.
+#     The fix is a cast to the class's own declared type, which also restores the %property
+#     accessors Logos adds.
+#
+#     Scoped to runtime-bound groups only. A group initialised plainly with %init(Group)
+#     keeps its compile-time class and its dot syntax, and reporting those would be the
+#     over-matching that rules 8 and 12 were both tightened for.
+for path in SRC:
+    text = open(path, encoding='utf-8').read()
+
+    bound = set(re.findall(r'%init\(\s*(\w+)\s*,[^)]*=', text))
+    if not bound:
+        continue
+
+    for block in re.finditer(r'^%group[ \t]+(\w+)[ \t]*$(.*?)^%end[ \t]*$', text, re.M | re.S):
+        if block.group(1) not in bound:
+            continue
+
+        # A cast already in front of self is exactly the fix, so it is not a finding.
+        body = re.sub(r'\(\s*\w+\s*\*\s*\)\s*self\b', 'CAST', block.group(2))
+
+        for hit in sorted(set(re.findall(r'\bself\.(\w+)', body))):
+            report('self.%s in group %s of %s — the group binds its class at load, so self '
+                   'is id and dot syntax will not compile; cast self to its own type'
+                   % (hit, block.group(1), path))
+
 # 13. An untyped collection, subscripted for a property.
 #
 #     `NSDictionary *counts = [typed copy];` throws the element type away, so `counts[k]`

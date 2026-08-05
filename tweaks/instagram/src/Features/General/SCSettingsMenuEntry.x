@@ -19,7 +19,7 @@ static BOOL SCIHasGestureNamed(UIView *view, NSString *name) {
 - (void)didMoveToWindow {
     %orig;
 
-    if ([self.accessibilityIdentifier isEqualToString:@"profile-more-button"]) {
+    if ([((IGBadgedNavigationButton *)self).accessibilityIdentifier isEqualToString:@"profile-more-button"]) {
         [self addLongPressGestureRecognizer];
     }
 
@@ -35,7 +35,7 @@ static BOOL SCIHasGestureNamed(UIView *view, NSString *name) {
     longPress.name = SCISettingsGestureName;
     longPress.minimumPressDuration = 0.8;
 
-    for (UIGestureRecognizer *existing in self.gestureRecognizers) {
+    for (UIGestureRecognizer *existing in ((IGBadgedNavigationButton *)self).gestureRecognizers) {
         [existing requireGestureRecognizerToFail:longPress];
     }
 

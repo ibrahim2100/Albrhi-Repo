@@ -71,11 +71,11 @@ static char targetStaticRef[] = "target";
     __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         __strong typeof(weakSelf) self = weakSelf;
-        if (!self || !self.window) {
+        if (!self || !((IGDirectNotesBubbleEditorColorPaletteView *)self).window) {
             return;
         }
 
-        UIView *container = self.superview ?: self.window;
+        UIView *container = ((IGDirectNotesBubbleEditorColorPaletteView *)self).superview ?: ((IGDirectNotesBubbleEditorColorPaletteView *)self).window;
         if (!container) {
             return;
         }
@@ -149,7 +149,7 @@ static char targetStaticRef[] = "target";
             [alert addAction:[UIAlertAction actionWithTitle:@"OK"
                                                       style:UIAlertActionStyleDefault
                                                     handler:^(UIAlertAction *action) {
-                self.emojiText = alert.textFields[0].text;
+                ((IGDirectNotesBubbleEditorColorPaletteView *)self).emojiText = alert.textFields[0].text;
                 [self applySCICustomTheme:@"Emoji"];
             }]];
             
@@ -178,7 +178,7 @@ static char targetStaticRef[] = "target";
         // Manual frame with side padding
         CGFloat bottomMargin = 15.0;
         
-        CGRect viewFrame = [self convertRect:self.bounds toView:container];
+        CGRect viewFrame = [self convertRect:((IGDirectNotesBubbleEditorColorPaletteView *)self).bounds toView:container];
         CGFloat y = CGRectGetMinY(viewFrame) - maxHeight - bottomMargin;
         CGFloat width = container.bounds.size.width - stack.spacing * 2;
 
@@ -206,10 +206,10 @@ static char targetStaticRef[] = "target";
 
     // Show last picked color for type
     if ([target isEqualToString:@"Background"]) {
-        colorPickerController.selectedColor = self.backgroundColor;
+        colorPickerController.selectedColor = ((IGDirectNotesBubbleEditorColorPaletteView *)self).backgroundColor;
     }
     else if ([target isEqualToString:@"Text"]) {
-        colorPickerController.selectedColor = self.textColor;
+        colorPickerController.selectedColor = ((IGDirectNotesBubbleEditorColorPaletteView *)self).textColor;
     }
     
     UIViewController *presentingVC = [SCIUtils nearestViewControllerForView:self];
@@ -239,10 +239,10 @@ static char targetStaticRef[] = "target";
     
     // Update saved color target
     if ([target isEqualToString:@"Background"]) {
-        self.backgroundColor = color;
+        ((IGDirectNotesBubbleEditorColorPaletteView *)self).backgroundColor = color;
     }
     else if ([target isEqualToString:@"Text"]) {
-        self.textColor = color;
+        ((IGDirectNotesBubbleEditorColorPaletteView *)self).textColor = color;
     }
 
     [self applySCICustomTheme:target];
@@ -269,15 +269,15 @@ static char targetStaticRef[] = "target";
 
     // Update saved color target
     if ([target isEqualToString:@"Background"]) {
-        [model setValue:self.backgroundColor forKey:@"backgroundColor"];
+        [model setValue:((IGDirectNotesBubbleEditorColorPaletteView *)self).backgroundColor forKey:@"backgroundColor"];
     }
     else if ([target isEqualToString:@"Text"]) {
-        [model setValue:self.textColor forKey:@"textColor"];
-        [model setValue:self.textColor forKey:@"secondaryTextColor"];  
+        [model setValue:((IGDirectNotesBubbleEditorColorPaletteView *)self).textColor forKey:@"textColor"];
+        [model setValue:((IGDirectNotesBubbleEditorColorPaletteView *)self).textColor forKey:@"secondaryTextColor"];  
     }
 
     // Always set emoji to prevent it being overwritten
-    [model setValue:self.emojiText forKey:@"customEmoji"];  
+    [model setValue:((IGDirectNotesBubbleEditorColorPaletteView *)self).emojiText forKey:@"customEmoji"];  
 
     //SCILog(@"Updated note theme model: %@", model);
 
