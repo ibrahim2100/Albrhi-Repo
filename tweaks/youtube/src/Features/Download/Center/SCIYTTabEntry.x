@@ -245,6 +245,50 @@ static BOOL SCIPaintIcon(UIView *view) {
 %end
 
 
+#pragma mark - What is actually in the content area
+
+///
+/// Reports the container's subviews after a tab change, and exists because three fixes for
+/// one symptom were three guesses.
+///
+/// What is known now and was not before: the selection moves correctly. The bar reported
+/// FEwhat_to_watch, then FEshorts, then FEsubscriptions, and we wrote nothing into any of
+/// them. So the tab YouTube thinks is chosen is the tab that was tapped, and the thing that
+/// does not follow is the content — which is a different fault from every one so far.
+///
+/// Two explanations remain and they need opposite fixes, so guessing between them is worth
+/// nothing: either something of ours is still in the container covering YouTube's page, or
+/// YouTube's own content is not being swapped at all. A list of what is in the container,
+/// in order, with sizes, separates them in one reading. Ours would be named; a stale page of
+/// YouTube's own would not.
+///
+/// Taken a runloop turn late, deliberately: at the moment of the tap the swap has not
+/// happened yet, and a snapshot from before the event is a snapshot of the wrong thing.
+///
+static void SCIReportContentStack(UIViewController *bar) {
+    UIView *container = bar.view.superview;
+    if (!container) {
+        [SCIYTDiagnostics recordTabState:@"content: the bar has no container"];
+        return;
+    }
+
+    NSMutableString *out = [NSMutableString stringWithString:@"content now:"];
+    NSUInteger index = 0;
+
+    for (UIView *view in container.subviews) {
+        CGRect frame = view.frame;
+        [out appendFormat:@"\n      [%lu] %@ %@%@%.0f×%.0f",
+            (unsigned long)index++,
+            NSStringFromClass([view class]),
+            view.hidden ? @"hidden " : @"",
+            view.alpha < 0.99 ? @"faded " : @"",
+            frame.size.width, frame.size.height];
+    }
+
+    [SCIYTDiagnostics recordTabState:out];
+}
+
+
 #pragma mark - The tap
 
 /// Declared because the hook calls it on self. Inside a %hook, self is the hooked class and
@@ -330,6 +374,12 @@ static BOOL SCIPaintIcon(UIView *view) {
         sciPivotBeforeOurs = nil;
 
         %orig;
+
+        // Weak, because this outlives the call by a runloop turn and the bar is YouTube's.
+        __weak UIViewController *weakBar = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (weakBar) SCIReportContentStack(weakBar);
+        });
         return;
     }
 

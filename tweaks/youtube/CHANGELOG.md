@@ -3,6 +3,14 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.12.2
+
+- Adds a line to Diagnostics that lists what is actually on screen after you change
+  tabs. The page-sticking fault has now had three fixes and it is still there, and
+  the last report showed that the parts already suspected are working correctly. This
+  release changes no behaviour — it asks the phone the one question that separates
+  the two remaining explanations, so the next fix is not another guess.
+
 ## v1.12.1
 
 - Really fixes the app getting stuck on one page. The last attempt fixed a different
