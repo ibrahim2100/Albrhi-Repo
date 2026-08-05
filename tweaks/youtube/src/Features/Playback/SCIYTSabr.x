@@ -56,7 +56,55 @@
 %end
 
 
+/// Declared so the setter can be called on a value the hook below already holds.
+@interface MLOnesieRequestContext : NSObject
+- (void)setBypassOnesie:(BOOL)bypassOnesie;
+@end
+
 %hook MLOnesieRequestContext
+
+/// Writing the value, not just answering for it.
+///
+/// Forcing the getter was measured on 21.30.5 and changed nothing: the setting was on, the
+/// gate was forced four times in one playback, and all twenty formats came back with the
+/// same empty `?cpn=` URL they always had. That result is real, but it proves something
+/// narrower than it looks — that *this getter's answer* does not decide the request. Code
+/// inside the object reading its own instance variable never went through the hook at all.
+///
+/// So this writes the stored value through the class's own setter, right after it is built.
+/// If the request is assembled from the ivar, this reaches it and the getter hook never
+/// could. If nothing changes again, the two together rule out the client end of it and what
+/// is left is the server, which no hook here can argue with.
+///
+/// The initialiser is named in full rather than caught by a shorter one, because it is the
+/// only one this class has that builds a configured context, and its `visibility` and
+/// `isPrefetch` arguments are an int and a BOOL among twelve objects — a signature that has
+/// to be exact or the arguments arrive shifted.
+- (id)initWithConfig:(id)config
+                 CPN:(id)cpn
+             videoID:(id)videoID
+        QOEController:(id)qoeController
+ viewportSizeProvider:(id)viewportSizeProvider
+        latencyLogger:(id)latencyLogger
+           visibility:(int)visibility
+       stickySettings:(id)stickySettings
+watchEndpointUstreamerConfig:(id)watchEndpointUstreamerConfig
+           isPrefetch:(BOOL)isPrefetch
+ reloadPlaybackParams:(id)reloadPlaybackParams
+           audioTrack:(id)audioTrack
+defaultActiveSourceVideoID:(id)defaultActiveSourceVideoID
+        startTimeSecs:(id)startTimeSecs {
+    id context = %orig;
+
+    if (context && SCIPrefEnabled(SCIPrefBypassSABR)) {
+        [context setBypassOnesie:YES];
+        [SCIYTDiagnostics recordSabrGate:@"MLOnesieRequestContext.setBypassOnesie:"
+                                original:NO
+                                  forced:YES];
+    }
+
+    return context;
+}
 
 /// The request shape that carries a SABR response.
 ///

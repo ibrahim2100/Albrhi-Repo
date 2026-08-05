@@ -255,6 +255,25 @@ static BOOL SCIPaintIcon(UIView *view) {
 
 %hook YTPivotBarViewController
 
+/// The one place every route through the bar passes.
+///
+/// Taking the page down only on a tap was the mistake, and it read as correct because a tap
+/// is how a person leaves a tab. It is not how the *app* leaves one. A modal being dismissed
+/// restores a selection, a notification opens a tab, YouTube's own code calls
+/// -selectItemWithPivotIdentifier: — none of those is a tap, and after any of them our page
+/// was still sitting in the content area, on top, while YouTube swapped its pages underneath
+/// it. Every tab then showed the same thing, which is exactly what it looked like.
+///
+/// So the page comes down whenever the bar stops saying our name, whoever said so. A tap is
+/// now one caller of this rather than the only one that works.
+- (void)setSelectedPivotIdentifier:(NSString *)identifier {
+    %orig;
+
+    if (![identifier isEqualToString:kSCIPivotIdentifier]) {
+        [SCIYTDownloadCenter removeFromPivotBar];
+    }
+}
+
 - (void)didTapItemWithRenderer:(id)renderer {
     if (!SCIIsOurRenderer(renderer)) {
         // Leaving. The page comes down first so YouTube's own tab is not laid out behind

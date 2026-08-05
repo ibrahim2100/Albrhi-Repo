@@ -3,6 +3,15 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.11.0
+
+- Fixes the app getting stuck on one page. After playing something from Downloads,
+  every tab you tapped showed the same screen. The Downloads page was staying in
+  place while YouTube changed its pages behind it, so nothing you tapped could be
+  seen. It now steps aside whatever takes you away from it, not only a tab tap.
+- One more attempt at asking YouTube for plain video files, from a different angle.
+  If it does nothing again the switch will be removed rather than left there.
+
 ## v1.10.2
 
 - Diagnostics now says whether the "Ask for plain streams" switch is on, and which

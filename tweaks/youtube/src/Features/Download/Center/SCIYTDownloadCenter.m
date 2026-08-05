@@ -37,6 +37,18 @@
 /// child, and a strong reference here would outlive the screen it belongs to.
 static __weak UIViewController *sciAttached = nil;
 
+/// And the view separately, which is not the same thing.
+///
+/// A child view controller is retained by its parent; its view is retained by its superview.
+/// Those are two different owners and they can let go at different times — if YouTube drops
+/// the child while the view is still a subview, the controller deallocates, the weak pointer
+/// above becomes nil, and the view is left on screen with nothing able to reach it. YouTube
+/// then swaps tabs underneath it and every page looks the same, because the one on top never
+/// moved.
+///
+/// That is the shape of "it sticks on one page", and one weak pointer more is the whole fix.
+static __weak UIView *sciAttachedView = nil;
+
 + (BOOL)showInsidePivotBar:(UIViewController *)bar {
     if (!bar.view.superview) return NO;
 
@@ -72,17 +84,26 @@ static __weak UIViewController *sciAttached = nil;
 
     [wrapped didMoveToParentViewController:host];
     sciAttached = wrapped;
+    sciAttachedView = wrapped.view;
     return YES;
 }
 
 + (void)removeFromPivotBar {
     UIViewController *page = sciAttached;
-    if (!page) return;
 
-    [page willMoveToParentViewController:nil];
-    [page.view removeFromSuperview];
-    [page removeFromParentViewController];
+    if (page) {
+        [page willMoveToParentViewController:nil];
+        [page.view removeFromSuperview];
+        [page removeFromParentViewController];
+    }
+
+    // Even when the controller is gone. This is not belt and braces: the view outlives its
+    // controller whenever the parent lets go first, and that leftover is the only thing that
+    // can be on top of every YouTube page at once.
+    [sciAttachedView removeFromSuperview];
+
     sciAttached = nil;
+    sciAttachedView = nil;
 }
 
 
