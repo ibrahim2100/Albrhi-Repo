@@ -271,6 +271,22 @@ static BOOL SCIPaintIcon(UIView *view) {
 
     if (![identifier isEqualToString:kSCIPivotIdentifier]) {
         [SCIYTDownloadCenter removeFromPivotBar];
+
+        // And the remembered tab is forgotten here, which is the part 1.11.0 missed.
+        //
+        // It was only ever cleared on the way out through a tap. Leave the Centre any other
+        // way -- and playing something is exactly that, the full player is a modal and
+        // dismissing it restores a selection -- and it survived, holding the name of a tab
+        // from a visit that had already ended.
+        //
+        // The next tap then wrote that stale name into the selection before %orig, so
+        // YouTube computed its move from a tab you were no longer on. When the stale name
+        // happened to be the tab you tapped, it saw no move to make and did nothing: the
+        // content stayed on whichever page you were last in, whatever you tapped. That is
+        // the "it sticks on Home, or on You, depending where I was" exactly.
+        //
+        // Cleared at the same point the page comes down, so the two can no longer disagree.
+        sciPivotBeforeOurs = nil;
     }
 }
 
@@ -288,12 +304,30 @@ static BOOL SCIPaintIcon(UIView *view) {
         // transition from it went to its default, so every tab tapped after a visit to the
         // Centre opened Home. Restoring first means the pair it computes from is one it
         // knows, and the tab actually tapped is where it goes.
-        if (sciPivotBeforeOurs) {
+        // Only while the bar actually believes ours is the selected tab.
+        //
+        // That condition is the whole correctness of this, and leaving it implicit is what
+        // went wrong: restoring is repairing an answer we broke, so if we did not break it
+        // there is nothing to repair and writing anything is inventing a transition YouTube
+        // did not ask for. Checked rather than assumed, because "we remembered a tab" and
+        // "we are on our tab" stopped being the same thing the moment anything but a tap
+        // could take the page down.
+        NSString *believed = nil;
+        @try {
+            believed = [self valueForKey:@"selectedPivotIdentifier"];
+        } @catch (__unused NSException *exception) { }
+
+        if (sciPivotBeforeOurs && [believed isEqualToString:kSCIPivotIdentifier]) {
             @try {
                 [self setValue:sciPivotBeforeOurs forKey:@"selectedPivotIdentifier"];
             } @catch (__unused NSException *exception) { }
-            sciPivotBeforeOurs = nil;
         }
+
+        [SCIYTDiagnostics recordTabState:
+            [NSString stringWithFormat:@"leaving: bar said %@, we remembered %@",
+                believed ?: @"nothing", sciPivotBeforeOurs ?: @"nothing"]];
+
+        sciPivotBeforeOurs = nil;
 
         %orig;
         return;

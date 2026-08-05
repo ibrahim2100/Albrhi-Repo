@@ -3,6 +3,16 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.12.1
+
+- Really fixes the app getting stuck on one page. The last attempt fixed a different
+  fault with the same symptom and left this one behind. After playing something from
+  Downloads, the tweak was still holding the name of the tab you had been on before
+  opening Downloads, and handing it back to YouTube on your next tap — so YouTube
+  worked out where to go from a tab you had already left, and when that happened to
+  be the tab you tapped it decided there was nowhere to go. It now forgets that name
+  the moment the Downloads page closes, however it closes.
+
 ## v1.12.0
 
 - Removes "Ask for plain streams" from the player settings. It was tried every way it
