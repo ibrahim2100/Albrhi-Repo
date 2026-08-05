@@ -1,4 +1,7 @@
 #import "../../Utils.h"
+#import "../../Compat/SCIResolve.h"
+
+%group SCIgIGDirectNotesTrayRowCell
 
 %hook IGDirectNotesTrayRowCell
 - (id)listAdapterObjects {
@@ -31,3 +34,10 @@
     return [filteredObjs copy];
 }
 %end
+
+%end
+
+%ctor {
+    Class directNotesTrayRowCell = SCIResolveClass(@"IGDirectNotesTrayRowCell");
+    if (directNotesTrayRowCell) %init(SCIgIGDirectNotesTrayRowCell, IGDirectNotesTrayRowCell = directNotesTrayRowCell);
+}

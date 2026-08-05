@@ -6,6 +6,7 @@
 #import "../../Localization/SCILocalize.h"
 #import "../../Settings/SCIDiagnosticsViewController.h"
 #import "../../Features/General/SCIDateFormat.h"
+#import "../../Compat/SCIResolve.h"
 
 ///
 /// Inline download button
@@ -590,7 +591,10 @@ static void sci_swiftReelsPressed(id self, __unused SEL _cmd, UIButton *sender) 
 
 %ctor {
     @autoreleasepool {
-        Class bar = objc_getClass("_TtC26IGSundialViewerVerticalUFI26IGSundialViewerVerticalUFI");
+        // Resolved rather than spelled out: the numbers in a Swift runtime name are the
+        // lengths of its module and class, so a literal is right only for the build it was
+        // copied from. Moving the class to another module breaks it with no error at all.
+        Class bar = SCIResolveClass(@"IGSundialViewerVerticalUFI");
         if (!bar) return;
 
         class_addMethod(bar, @selector(sciInlineDownloadPressed:), (IMP)sci_swiftReelsPressed, "v@:@");

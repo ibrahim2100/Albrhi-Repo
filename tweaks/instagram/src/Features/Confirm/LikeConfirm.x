@@ -1,4 +1,5 @@
 #import "../../Utils.h"
+#import "../../Compat/SCIResolve.h"
 
 ///////////////////////////////////////////////////////////
 
@@ -34,6 +35,8 @@
     }
 }
 %end
+%group SCIgIGVideoPlayerOverlayContainerView
+
 %hook IGVideoPlayerOverlayContainerView
 - (void)_handleDoubleTapGesture:(id)arg1 {
     if ([SCIUtils getBoolPref:@"like_confirm"]) {
@@ -46,6 +49,9 @@
     }
 }
 %end
+
+%end
+
 
 // Liking reels
 %hook IGSundialViewerVideoCell
@@ -192,6 +198,8 @@
 %end
 
 // Liking stories
+%group SCIgIGStoryFullscreenDefaultFooterView
+
 %hook IGStoryFullscreenDefaultFooterView
 - (void)_handleLikeTapped {
     if ([SCIUtils getBoolPref:@"like_confirm"]) {
@@ -258,6 +266,9 @@
 }
 %end
 
+%end
+
+
 // DM like button (seems to be hidden)
 %hook IGDirectThreadViewController
 - (void)_didTapLikeButton {
@@ -271,3 +282,15 @@
     }
 }
 %end
+
+%ctor {
+    // The hooks outside the groups below. Logos writes this call itself for
+    // a file with no %ctor -- and stops the moment there is one, so leaving
+    // it out would silence every hook this file did not need to convert.
+    %init;
+
+    Class videoPlayerOverlayContainerView = SCIResolveClass(@"IGVideoPlayerOverlayContainerView");
+    if (videoPlayerOverlayContainerView) %init(SCIgIGVideoPlayerOverlayContainerView, IGVideoPlayerOverlayContainerView = videoPlayerOverlayContainerView);
+    Class storyFullscreenDefaultFooterView = SCIResolveClass(@"IGStoryFullscreenDefaultFooterView");
+    if (storyFullscreenDefaultFooterView) %init(SCIgIGStoryFullscreenDefaultFooterView, IGStoryFullscreenDefaultFooterView = storyFullscreenDefaultFooterView);
+}

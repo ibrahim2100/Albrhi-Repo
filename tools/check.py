@@ -79,9 +79,17 @@ for name in sorted(declared):
         report('duplicate @interface %s in %s' % (name, ', '.join(sorted(set(places)))))
 
 # 2. Brace balance and %hook/%end pairing.
+#
+#    %group and %subclass close with %end too, and counting only %hook made the rule
+#    report a broken file the moment the first group was written -- a false alarm, on
+#    correct code, from a rule that had simply never seen valid syntax the project had
+#    not used yet. Every opener is counted now.
+#
+#    The pairing still means something: an %end without an opener, or an opener left
+#    unclosed, is the failure this catches, and both still fail.
 for path in SRC:
     text = open(path, encoding='utf-8').read()
-    hooks = len(re.findall(r'^%hook', text, re.M))
+    hooks = len(re.findall(r'^%(hook|group|subclass)\b', text, re.M))
     ends = len(re.findall(r'^%end', text, re.M))
     depth, first_negative, line = 0, None, 1
     for ch in text:

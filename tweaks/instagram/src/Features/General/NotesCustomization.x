@@ -1,6 +1,9 @@
 #import "../../Utils.h"
+#import "../../Compat/SCIResolve.h"
 
 static char targetStaticRef[] = "target";
+
+%group SCIgIGDirectNotesCreationView
 
 %hook IGDirectNotesCreationView
 - (id)initWithViewModel:(id)model
@@ -43,8 +46,13 @@ static char targetStaticRef[] = "target";
 }
 %end
 
+%end
+
+
 // Demangled name: IGDirectNotesUISwift.IGDirectNotesBubbleEditorColorPaletteView
-%hook _TtC20IGDirectNotesUISwift41IGDirectNotesBubbleEditorColorPaletteView
+%group SCIgIGDirectNotesBubbleEditorColorPaletteView
+
+%hook IGDirectNotesBubbleEditorColorPaletteView
 %property (nonatomic, copy) UIColor *backgroundColor;
 %property (nonatomic, copy) UIColor *textColor;
 %property (nonatomic, copy) NSString *emojiText;
@@ -224,7 +232,7 @@ static char targetStaticRef[] = "target";
                         didSelectColor:(UIColor *)color
                           continuously:(BOOL)continuously
 {
-    _TtC20IGDirectNotesUISwift41IGDirectNotesBubbleEditorColorPaletteView *bubbleEditorVC = [SCIUtils nearestViewControllerForView:self];
+    IGDirectNotesBubbleEditorColorPaletteView *bubbleEditorVC = [SCIUtils nearestViewControllerForView:self];
     
     NSString *target = objc_getAssociatedObject(bubbleEditorVC, &targetStaticRef);
     if (!target) return;
@@ -291,3 +299,23 @@ static char targetStaticRef[] = "target";
     }];
 }
 %end
+
+%end
+
+
+%ctor {
+    // The hooks outside the groups below. Logos writes this call itself for
+    // a file with no %ctor -- and stops the moment there is one, so leaving
+    // it out would silence every hook this file did not need to convert.
+    %init;
+
+    // Was hooked by its Swift runtime name written out in full. That name carried the
+    // module IGDirectNotesUISwift, and Instagram 439 moved the class to
+    // IGNotesBubbleCreationSwift -- so the literal stopped matching and this feature has
+    // been off ever since, with nothing to show for it. Proved against the 441 binary.
+    Class bubblePalette = SCIResolveClass(@"IGDirectNotesBubbleEditorColorPaletteView");
+    if (bubblePalette) %init(SCIgIGDirectNotesBubbleEditorColorPaletteView, IGDirectNotesBubbleEditorColorPaletteView = bubblePalette);
+
+    Class directNotesCreationView = SCIResolveClass(@"IGDirectNotesCreationView");
+    if (directNotesCreationView) %init(SCIgIGDirectNotesCreationView, IGDirectNotesCreationView = directNotesCreationView);
+}

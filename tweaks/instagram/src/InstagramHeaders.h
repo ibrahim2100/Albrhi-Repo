@@ -527,7 +527,7 @@
 - (void)notesBubbleEditorViewControllerDidUpdateWithCustomThemeCreationModel:(id)model;
 @end
 
-@interface _TtC20IGDirectNotesUISwift41IGDirectNotesBubbleEditorColorPaletteView : UIView
+@interface IGDirectNotesBubbleEditorColorPaletteView : UIView
 @property (nonatomic, copy) UIColor *backgroundColor; // new
 @property (nonatomic, copy) UIColor *textColor; // new
 @property (nonatomic, copy) NSString *emojiText; // new

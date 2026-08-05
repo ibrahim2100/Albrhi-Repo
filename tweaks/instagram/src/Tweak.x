@@ -5,6 +5,7 @@
 #import "Onboarding/SCIWhatsNewViewController.h"
 #import "Features/General/SCIUpdateChecker.h"
 #import "Downloader/Queue/SCIDownloadQueue.h"
+#import "Compat/SCIResolve.h"
 
 ///////////////////////////////////////////////////////////
 
@@ -18,7 +19,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v4.0.0";  // Albrhi
+NSString *SCIVersionString = @"v4.1.0";  // Albrhi
 
 // Variables that work across features
 
@@ -242,6 +243,8 @@ shouldPersistLastBugReportId:(id)arg6
 }
 %end
 
+%group SCIgIGDirectMediaViewerViewController
+
 %hook IGDirectMediaViewerViewController
 - (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 {
     SCREENSHOT_GUARD_VOID();
@@ -252,6 +255,9 @@ shouldPersistLastBugReportId:(id)arg6
     %orig;
 }
 %end
+
+%end
+
 
 %hook IGStoryViewerViewController
 - (void)screenshotObserverDidSeeScreenshotTaken:(id)arg1 {
@@ -444,6 +450,8 @@ shouldPersistLastBugReportId:(id)arg6
 %end
 
 // Direct suggested chats (inbox view)
+%group SCIgIGDirectInboxListAdapterDataSource
+
 %hook IGDirectInboxListAdapterDataSource
 - (id)objectsForListAdapter:(id)arg1 {
     NSArray *originalObjs = %orig();
@@ -513,7 +521,12 @@ shouldPersistLastBugReportId:(id)arg6
 }
 %end
 
+%end
+
+
 // Explore page results
+%group SCIgIGSearchListKitDataSource
+
 %hook IGSearchListKitDataSource
 - (id)objectsForListAdapter:(id)arg1 {
     NSArray *originalObjs = %orig();
@@ -603,7 +616,12 @@ shouldPersistLastBugReportId:(id)arg6
 }
 %end
 
+%end
+
+
 // Story tray
+%group SCIgIGMainStoryTrayDataSource
+
 %hook IGMainStoryTrayDataSource
 - (id)allItemsForTrayUsingCachedValue:(BOOL)cached {
     NSArray *originalObjs = %orig(cached);
@@ -644,6 +662,9 @@ shouldPersistLastBugReportId:(id)arg6
     return [filteredObjs copy];
 }
 %end
+
+%end
+
 
 // Story tray expanded footer (Suggested accounts to follow)
 %hook IGStoryTraySectionController
@@ -819,3 +840,19 @@ shouldPersistLastBugReportId:(id)arg6
     return %orig;
 }
 %end
+
+%ctor {
+    // The hooks outside the groups below. Logos writes this call itself for
+    // a file with no %ctor -- and stops the moment there is one, so leaving
+    // it out would silence every hook this file did not need to convert.
+    %init;
+
+    Class directMediaViewerViewController = SCIResolveClass(@"IGDirectMediaViewerViewController");
+    if (directMediaViewerViewController) %init(SCIgIGDirectMediaViewerViewController, IGDirectMediaViewerViewController = directMediaViewerViewController);
+    Class directInboxListAdapterDataSource = SCIResolveClass(@"IGDirectInboxListAdapterDataSource");
+    if (directInboxListAdapterDataSource) %init(SCIgIGDirectInboxListAdapterDataSource, IGDirectInboxListAdapterDataSource = directInboxListAdapterDataSource);
+    Class searchListKitDataSource = SCIResolveClass(@"IGSearchListKitDataSource");
+    if (searchListKitDataSource) %init(SCIgIGSearchListKitDataSource, IGSearchListKitDataSource = searchListKitDataSource);
+    Class mainStoryTrayDataSource = SCIResolveClass(@"IGMainStoryTrayDataSource");
+    if (mainStoryTrayDataSource) %init(SCIgIGMainStoryTrayDataSource, IGMainStoryTrayDataSource = mainStoryTrayDataSource);
+}

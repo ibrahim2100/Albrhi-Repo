@@ -3,6 +3,7 @@
 #import "../../Localization/SCILocalize.h"
 #import "../../Downloader/SCIMediaDownloader.h"
 #import <objc/runtime.h>
+#import "../../Compat/SCIResolve.h"
 
 ///
 /// Save button for DM photos & videos.
@@ -19,6 +20,8 @@
 static const void *kSCIDMPhotoKey = &kSCIDMPhotoKey;
 static const void *kSCIDMVideoKey = &kSCIDMVideoKey;
 static const NSInteger kSCIDMSaveButtonTag = 0x5D115A;
+
+%group SCIgIGDirectMediaViewerViewController
 
 %hook IGDirectMediaViewerViewController
 
@@ -124,3 +127,10 @@ threadSubscriptionService:(id)threadSubscriptionService {
 }
 
 %end
+
+%end
+
+%ctor {
+    Class directMediaViewerViewController = SCIResolveClass(@"IGDirectMediaViewerViewController");
+    if (directMediaViewerViewController) %init(SCIgIGDirectMediaViewerViewController, IGDirectMediaViewerViewController = directMediaViewerViewController);
+}

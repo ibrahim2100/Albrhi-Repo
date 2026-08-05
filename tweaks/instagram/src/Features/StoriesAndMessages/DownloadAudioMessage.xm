@@ -6,6 +6,7 @@
 
 #import <substrate.h>
 #import <objc/runtime.h>
+#import "../../Compat/SCIResolve.h"
 
 ///
 /// Saves a voice message — beta.
@@ -80,8 +81,7 @@ static NSTimeInterval sciLastAskedAt = 0;
 
 @end
 
-static NSString *const kMenuClass =
-    @"_TtC32IGDirectMessageMenuConfiguration32IGDirectMessageMenuConfiguration";
+static NSString *const kMenuClass = @"IGDirectMessageMenuConfiguration";
 
 /// Reads a property by name only when the object actually answers to it.
 static id SCIValue(id object, NSString *name) {
@@ -168,7 +168,9 @@ static NSURL *SCIAudioURLForMessage(id message) {
         // The class name is Swift-mangled, so it cannot be written as a plain
         // %hook target. Registering it by name also means a build that renames it
         // costs this one feature and nothing else.
-        Class menu = objc_getClass([kMenuClass UTF8String]);
+        // Through the resolver, not objc_getClass: kMenuClass is the plain name now, and
+        // this class is Swift on 439 and later, so a direct lookup finds nothing there.
+        Class menu = SCIResolveClass(kMenuClass);
         if (menu) %init(_ungrouped, IGDirectMessageMenuConfiguration = menu);
     }
 }

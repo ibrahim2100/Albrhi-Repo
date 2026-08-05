@@ -1,6 +1,7 @@
 #import "../../InstagramHeaders.h"
 #import "../../Settings/SCISettingsViewController.h"
 #import "../../SCILog.h"
+#import "../../Compat/SCIResolve.h"
 
 static NSString *const SCISettingsGestureName = @"com.albrhi.settings.longpress";
 
@@ -12,6 +13,8 @@ static BOOL SCIHasGestureNamed(UIView *view, NSString *name) {
 }
 
 // Show SCInsta tweak settings by holding on the settings/more icon under profile for ~1 second
+%group SCIgIGBadgedNavigationButton
+
 %hook IGBadgedNavigationButton
 - (void)didMoveToWindow {
     %orig;
@@ -47,6 +50,9 @@ static BOOL SCIHasGestureNamed(UIView *view, NSString *name) {
 }
 %end
 
+%end
+
+
 // Quick access to tweak settings by holding on home tab button
 %hook IGTabBarButton
 - (void)didMoveToSuperview {
@@ -76,3 +82,13 @@ static BOOL SCIHasGestureNamed(UIView *view, NSString *name) {
     [SCIUtils showSettingsVC:[self window]];
 }
 %end
+
+%ctor {
+    // The hooks outside the groups below. Logos writes this call itself for
+    // a file with no %ctor -- and stops the moment there is one, so leaving
+    // it out would silence every hook this file did not need to convert.
+    %init;
+
+    Class badgedNavigationButton = SCIResolveClass(@"IGBadgedNavigationButton");
+    if (badgedNavigationButton) %init(SCIgIGBadgedNavigationButton, IGBadgedNavigationButton = badgedNavigationButton);
+}

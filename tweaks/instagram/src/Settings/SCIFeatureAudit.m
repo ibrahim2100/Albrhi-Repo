@@ -2,6 +2,7 @@
 #import "../Localization/SCILocalize.h"
 
 #import <objc/runtime.h>
+#import "../Compat/SCIResolve.h"
 
 @implementation SCIFeatureAuditResult
 @end
@@ -13,7 +14,10 @@
 /// class_getInstanceMethod walks superclasses, so a method a class inherits still
 /// counts, which is the same test the hooks themselves make before installing.
 static BOOL SCITargetExists(NSString *className, NSString *selectorName) {
-    Class cls = NSClassFromString(className);
+    // The audit reports whether a feature's class is present, so it has to look the same
+    // way the features themselves do. NSClassFromString alone would report every
+    // Swift-rewritten class as missing and the audit would be wrong about working code.
+    Class cls = SCIResolveClass(className);
     if (!cls) return NO;
     if (!selectorName.length) return YES;
 
@@ -63,7 +67,7 @@ static SCIFeatureAuditResult *SCICheckAny(NSString *feature, NSArray<NSArray<NSS
     [results addObject:SCICheckAny(SCILocalized(@"audit_inline_button"), @[
         @[@"IGUFIInteractionCountsView", @"layoutSubviews"],
         @[@"IGSundialViewerVerticalUFI", @"layoutSubviews"],
-        @[@"_TtC26IGSundialViewerVerticalUFI26IGSundialViewerVerticalUFI", @"layoutSubviews"],
+        @[@"IGSundialViewerVerticalUFI", @"layoutSubviews"],
         @[@"IGUFIButtonBarView", @"layoutSubviews"]
     ])];
 

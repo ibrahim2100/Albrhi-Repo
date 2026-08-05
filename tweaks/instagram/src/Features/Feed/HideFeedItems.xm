@@ -1,5 +1,6 @@
 #import "../../Utils.h"
 #import "../../InstagramHeaders.h"
+#import "../../Compat/SCIResolve.h"
 
 static NSArray *removeItemsInList(NSArray *list, BOOL isFeed) {
     NSArray *originalObjs = list;
@@ -133,12 +134,19 @@ static NSArray *removeItemsInList(NSArray *list, BOOL isFeed) {
     return filteredObjs;
 }
 %end
+%group SCIgIGSundialFeedDataSource
+
 %hook IGSundialFeedDataSource
 - (NSArray *)objectsForListAdapter:(id)arg1 {
     NSArray *originalObjs = %orig(arg1);
     return removeItemsInList(originalObjs, NO);
 }
 %end
+
+%end
+
+%group SCIgIGContextualFeedViewController
+
 %hook IGContextualFeedViewController
 - (NSArray *)objectsForListAdapter:(id)arg1 {
     if ([SCIUtils getBoolPref:@"hide_ads"]) {
@@ -149,6 +157,9 @@ static NSArray *removeItemsInList(NSArray *list, BOOL isFeed) {
     return %orig;
 }
 %end
+
+%end
+
 %hook IGVideoFeedViewController
 - (NSArray *)objectsForListAdapter:(id)arg1 {
     if ([SCIUtils getBoolPref:@"hide_ads"]) {
@@ -159,6 +170,8 @@ static NSArray *removeItemsInList(NSArray *list, BOOL isFeed) {
     return %orig;
 }
 %end
+%group SCIgIGChainingFeedViewController
+
 %hook IGChainingFeedViewController
 - (NSArray *)objectsForListAdapter:(id)arg1 {
     if ([SCIUtils getBoolPref:@"hide_ads"]) {
@@ -169,6 +182,9 @@ static NSArray *removeItemsInList(NSArray *list, BOOL isFeed) {
     return %orig;
 }
 %end
+
+%end
+
 %hook IGStoryAdPool
 - (id)initWithUserSession:(id)arg1 {
     if ([SCIUtils getBoolPref:@"hide_ads"]) {
@@ -180,6 +196,8 @@ static NSArray *removeItemsInList(NSArray *list, BOOL isFeed) {
     return %orig;
 }
 %end
+%group SCIgIGStoryAdsManager
+
 %hook IGStoryAdsManager
 - (id)initWithUserSession:(id)arg1 storyViewerLoggingContext:(id)arg2 storyFullscreenSectionLoggingContext:(id)arg3 viewController:(id)arg4 {
     if ([SCIUtils getBoolPref:@"hide_ads"]) {
@@ -191,6 +209,9 @@ static NSArray *removeItemsInList(NSArray *list, BOOL isFeed) {
     return %orig;
 }
 %end
+
+%end
+
 %hook IGStoryAdsFetcher
 - (id)initWithUserSession:(id)arg1 delegate:(id)arg2 {
     if ([SCIUtils getBoolPref:@"hide_ads"]) {
@@ -255,6 +276,8 @@ static NSArray *removeItemsInList(NSArray *list, BOOL isFeed) {
 }
 %end
 // "Sponsored" posts on discover/search page
+%group SCIgIGExploreListKitDataSource
+
 %hook IGExploreListKitDataSource
 - (NSArray *)objectsForListAdapter:(id)arg1 {
     if ([SCIUtils getBoolPref:@"hide_ads"]) {
@@ -265,6 +288,9 @@ static NSArray *removeItemsInList(NSArray *list, BOOL isFeed) {
     return %orig;
 }
 %end
+
+%end
+
 // Demangled name: IGExploreViewControllerSwift.IGExploreListKitDataSource
 %hook _TtC28IGExploreViewControllerSwift26IGExploreListKitDataSource
 - (NSArray *)objectsForListAdapter:(id)arg1 {
@@ -332,3 +358,21 @@ static NSArray *removeItemsInList(NSArray *list, BOOL isFeed) {
     return;
 }
 %end
+
+%ctor {
+    // The hooks outside the groups below. Logos writes this call itself for
+    // a file with no %ctor -- and stops the moment there is one, so leaving
+    // it out would silence every hook this file did not need to convert.
+    %init;
+
+    Class sundialFeedDataSource = SCIResolveClass(@"IGSundialFeedDataSource");
+    if (sundialFeedDataSource) %init(SCIgIGSundialFeedDataSource, IGSundialFeedDataSource = sundialFeedDataSource);
+    Class contextualFeedViewController = SCIResolveClass(@"IGContextualFeedViewController");
+    if (contextualFeedViewController) %init(SCIgIGContextualFeedViewController, IGContextualFeedViewController = contextualFeedViewController);
+    Class chainingFeedViewController = SCIResolveClass(@"IGChainingFeedViewController");
+    if (chainingFeedViewController) %init(SCIgIGChainingFeedViewController, IGChainingFeedViewController = chainingFeedViewController);
+    Class storyAdsManager = SCIResolveClass(@"IGStoryAdsManager");
+    if (storyAdsManager) %init(SCIgIGStoryAdsManager, IGStoryAdsManager = storyAdsManager);
+    Class exploreListKitDataSource = SCIResolveClass(@"IGExploreListKitDataSource");
+    if (exploreListKitDataSource) %init(SCIgIGExploreListKitDataSource, IGExploreListKitDataSource = exploreListKitDataSource);
+}

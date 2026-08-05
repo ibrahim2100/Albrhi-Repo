@@ -4,6 +4,21 @@
 Other versions should work too — the tweak looks for what it needs while the app runs
 rather than expecting a particular version number.
 
+## v4.1.0
+
+- **Twenty-six features work again.** Instagram 439 rewrote a large part of the app in
+  another language. Nothing was renamed and nothing was removed, but the tweak could
+  no longer find those parts, so the features attached to them quietly stopped. There
+  was no error and no crash — they simply did nothing, on 439 and on 441.
+- Among them: hiding suggested accounts and suggested chats, clearing recent searches,
+  hiding the stories tray, hiding Meta AI, note colours, the friends map, saving DM
+  media, the settings shortcut, and confirmation prompts on likes.
+- One more was broken and nobody knew: the note colour palette had been off since 439
+  for the same reason.
+- The tweak now finds these parts by name while the app runs instead of expecting them
+  in a fixed place, so a future Instagram update is far less likely to switch features
+  off without anyone noticing.
+
 ## v4.0.0
 
 **The first stable release.** No longer a beta.

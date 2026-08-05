@@ -1,5 +1,6 @@
 #import "../../Utils.h"
 #import "../../InstagramHeaders.h"
+#import "../../Compat/SCIResolve.h"
 
 // "Welcome to instagram" suggested users in feed
 %hook IGSuggestedUnitViewModel
@@ -13,6 +14,8 @@
     return %orig;
 }
 %end
+%group SCIgIGSuggestionsUnitViewModel
+
 %hook IGSuggestionsUnitViewModel
 - (id)initWithAYMFModel:(id)arg1 headerViewModel:(id)arg2 {
     if ([SCIUtils getBoolPref:@"no_suggested_users"]) {
@@ -25,7 +28,12 @@
 } 
 %end
 
+%end
+
+
 // Suggested users in profile header
+%group SCIgIGProfileHeaderView
+
 %hook IGProfileHeaderView
 - (id)objectsForListAdapter:(id)arg1 {
     NSArray *originalObjs = %orig();
@@ -51,6 +59,9 @@
     return [filteredObjs copy];
 }
 %end
+
+%end
+
 
 // Notifications/activity feed
 %hook IGActivityFeedViewController
@@ -261,3 +272,15 @@
     return %orig(arg1, rows, allActions, overflowActions, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
 }
 %end
+
+%ctor {
+    // The hooks outside the groups below. Logos writes this call itself for
+    // a file with no %ctor -- and stops the moment there is one, so leaving
+    // it out would silence every hook this file did not need to convert.
+    %init;
+
+    Class suggestionsUnitViewModel = SCIResolveClass(@"IGSuggestionsUnitViewModel");
+    if (suggestionsUnitViewModel) %init(SCIgIGSuggestionsUnitViewModel, IGSuggestionsUnitViewModel = suggestionsUnitViewModel);
+    Class profileHeaderView = SCIResolveClass(@"IGProfileHeaderView");
+    if (profileHeaderView) %init(SCIgIGProfileHeaderView, IGProfileHeaderView = profileHeaderView);
+}

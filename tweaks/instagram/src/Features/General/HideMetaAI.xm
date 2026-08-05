@@ -1,5 +1,6 @@
 #import "../../Utils.h"
 #import "../../InstagramHeaders.h"
+#import "../../Compat/SCIResolve.h"
 
 // Direct
 
@@ -80,6 +81,8 @@
 %end
 
 // Suggested AI chats in direct inbox header
+%group SCIgIGDirectInboxNavigationHeaderView
+
 %hook IGDirectInboxNavigationHeaderView
 - (id)initWithFrame:(CGRect)arg1
               title:(id)arg2
@@ -102,6 +105,9 @@
     return %orig(arg1, arg2, arg3, [config copy], arg5, arg6);
 }
 %end
+
+%end
+
 
 // Meta AI "imagine" in media picker
 %hook IGDirectMediaPickerViewController
@@ -133,6 +139,8 @@
 %end
 
 // Write with meta ai in message composer
+%group SCIgIGDirectComposer
+
 %hook IGDirectComposer
 - (id)initWithLayoutSpecProvider:(id)arg1
         userLauncherSetProviding:(id)arg2
@@ -177,6 +185,9 @@
     return [config copy];
 }
 %end
+
+%end
+
 
 // Direct sticker tray picker view
 %hook IGStickerTrayListAdapterDataSource
@@ -297,11 +308,16 @@
 %end
 
 // "Click to summarize" pill under DM navigation bar
+%group SCIgIGDirectThreadViewMetaAISummaryFeatureController
+
 %hook IGDirectThreadViewMetaAISummaryFeatureController
 - (id)initWithUserSession:(id)arg1 mutableStateProvider:(id)arg2 threadViewControllerFeatureDelegate:(id)arg3 presentingViewController:(id)arg4 {
     return nil;
 }
 %end
+
+%end
+
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -402,11 +418,16 @@
 %end
 
 // AI generated fonts in text entry
+%group SCIgIGCreationTextToolView
+
 %hook IGCreationTextToolView
 - (id)initWithMenuConfiguration:(unsigned long long)configuration userSession:(id)session creationEntryPoint:(long long)point isAIFontsEnabled:(_Bool)enabled genAINuxManager:(id)manager showFontBadge:(_Bool)badge {
     return %orig(configuration, session, point, [SCIUtils getBoolPref:@"hide_meta_ai"] ? false : enabled, manager, badge);
 }
 %end
+
+%end
+
 
 // Text rewrite in text entry
 %hook IGStoryTextMentionLocationPickerView
@@ -578,3 +599,19 @@
     return [filteredObjs copy];
 }
 %end
+
+%ctor {
+    // The hooks outside the groups below. Logos writes this call itself for
+    // a file with no %ctor -- and stops the moment there is one, so leaving
+    // it out would silence every hook this file did not need to convert.
+    %init;
+
+    Class directInboxNavigationHeaderView = SCIResolveClass(@"IGDirectInboxNavigationHeaderView");
+    if (directInboxNavigationHeaderView) %init(SCIgIGDirectInboxNavigationHeaderView, IGDirectInboxNavigationHeaderView = directInboxNavigationHeaderView);
+    Class directComposer = SCIResolveClass(@"IGDirectComposer");
+    if (directComposer) %init(SCIgIGDirectComposer, IGDirectComposer = directComposer);
+    Class directThreadViewMetaAISummaryFeatureController = SCIResolveClass(@"IGDirectThreadViewMetaAISummaryFeatureController");
+    if (directThreadViewMetaAISummaryFeatureController) %init(SCIgIGDirectThreadViewMetaAISummaryFeatureController, IGDirectThreadViewMetaAISummaryFeatureController = directThreadViewMetaAISummaryFeatureController);
+    Class creationTextToolView = SCIResolveClass(@"IGCreationTextToolView");
+    if (creationTextToolView) %init(SCIgIGCreationTextToolView, IGCreationTextToolView = creationTextToolView);
+}

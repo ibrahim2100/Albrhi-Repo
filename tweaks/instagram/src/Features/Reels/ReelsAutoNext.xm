@@ -6,6 +6,7 @@
 #import "../../SCILog.h"
 #import "../../Localization/SCILocalize.h"
 #import "../../Settings/SCIDiagnosticsViewController.h"
+#import "../../Compat/SCIResolve.h"
 
 ///
 /// Auto-advance to the next reel — across Instagram versions.
@@ -89,7 +90,7 @@ static BOOL sci_shouldAutoScrollToObject(id self, SEL _cmd, id object, NSUIntege
 %ctor {
     @autoreleasepool {
         Class feed = objc_getClass("IGSundialFeedViewController");
-        Class engine = objc_getClass("_TtC19IGSundialAutoScroll19IGSundialAutoScroll");
+        Class engine = SCIResolveClass(@"IGSundialAutoScroll");
 
         // Enabled/should gates → YES.
         SCIForceGate(feed, @"isAutoAdvanceEnabled", YES);
@@ -392,7 +393,9 @@ static void sci_overlayProgress(id self, SEL _cmd, double progress, double remai
 
         SEL progress = NSSelectorFromString(@"updateProgressIndicatorWithProgress:remainingDuration:elapsedDuration:totalDuration:");
 
-        for (NSString *name in @[@"_TtC30IGSundialViewerControlsOverlay34IGSundialViewerControlsOverlayView",
+        // Plain names on both. SCIResolveClass finds the Swift one under whatever module
+        // holds it, and answers the ordinary one directly.
+        for (NSString *name in @[@"IGSundialViewerControlsOverlayView",
                                  @"IGSundialViewerCarouselCell"]) {
             if (sProgressHookCount >= SCI_MAX_PROGRESS_HOOKS) break;
 
