@@ -60,8 +60,11 @@ static void SCIAskForSeek(SCIYTSettingsHostController *host) {
 @implementation SCIYTPlaybackPage
 
 + (void)load {
-    [SCIYTSettingsRegistry registerSectionsWithOrder:40
-                                             builder:^NSArray<SCISection *> *(SCIYTSettingsHostController *host) {
+    [SCIYTSettingsRegistry registerPageWithOrder:40
+                                        title:SCILocalized(@"page_playback")
+                                       detail:SCILocalized(@"page_playback_note")
+                                       symbol:@"play.circle.fill"
+                                      builder:^NSArray<SCISection *> *(SCIYTSettingsHostController *host) {
         SCISection *player = [[SCISection alloc] init];
         player.title = SCILocalized(@"section_player");
         player.rows = @[

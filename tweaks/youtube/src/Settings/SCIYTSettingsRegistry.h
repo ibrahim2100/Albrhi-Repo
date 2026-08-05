@@ -9,9 +9,16 @@
 //  same file, which is where merge conflicts come from and, worse, where a feature that was
 //  deleted leaves its rows behind because nobody remembered they were there.
 //
-//  A page registers in +load and owns its own file. Delete the file and the section is gone
-//  -- no other file mentions it. This mirrors what the Instagram side of this repository has
+//  A page registers in +load and owns its own file. Delete the file and the page is gone --
+//  no other file mentions it. This mirrors what the Instagram side of this repository has
 //  done since 3.x, deliberately: the two tweaks should be the same project to read.
+//
+//  **A page is now a screen of its own.** It began as a heading on one long scroll, which
+//  worked while there were four of them and stopped working at nine: everything was on one
+//  page, so nothing was findable, and the answer to "where is that setting" was to scroll
+//  and hope. The registration carries a name and an icon now, the first screen is a list of
+//  those names, and each opens its own. Nothing about how a page builds its rows changed --
+//  only where they are shown.
 //
 //  Copyright (C) Ibrahim Ismail AL-Rahn. GPLv3.
 //
@@ -43,17 +50,39 @@ typedef UIViewController<SCIYTSettingsHost> SCIYTSettingsHostController;
 /// current one rather than the one that was current at launch.
 typedef NSArray<SCISection *> * _Nonnull (^SCIYTSectionsBuilder)(SCIYTSettingsHostController *host);
 
+
+/// One registered page: what it is called on the first screen, and what it puts on its own.
+@interface SCIYTPage : NSObject
+@property (nonatomic, assign) NSInteger order;
+@property (nonatomic, copy) NSString *title;
+@property (nonatomic, copy, nullable) NSString *detail;
+@property (nonatomic, copy, nullable) NSString *symbol;
+@property (nonatomic, copy) SCIYTSectionsBuilder builder;
+
+/// This page's sections, built for a given screen.
+///
+/// The guard lives here rather than in the caller: the settings screen has been the crash
+/// site twice in this project's history, and both times one page that could not build itself
+/// took every other page with it. A page that throws costs its own rows and nothing else.
+- (NSArray<SCISection *> *)sectionsFor:(SCIYTSettingsHostController *)host;
+@end
+
+
 @interface SCIYTSettingsRegistry : NSObject
 
-/// Adds sections to the settings screen.
+/// Adds a page to the settings screen.
 ///
 /// @param order Ascending, and gaps are deliberate: pages are registered in whatever order
 ///        +load happens to run them, which is not defined, so the number is the only thing
 ///        that decides what appears above what.
-+ (void)registerSectionsWithOrder:(NSInteger)order builder:(SCIYTSectionsBuilder)builder;
++ (void)registerPageWithOrder:(NSInteger)order
+                        title:(NSString *)title
+                       detail:(nullable NSString *)detail
+                       symbol:(nullable NSString *)symbol
+                      builder:(SCIYTSectionsBuilder)builder;
 
-/// Every registered page's sections, in order.
-+ (NSArray<SCISection *> *)composedSectionsFor:(SCIYTSettingsHostController *)host;
+/// Every registered page, in order.
++ (NSArray<SCIYTPage *> *)pages;
 
 @end
 

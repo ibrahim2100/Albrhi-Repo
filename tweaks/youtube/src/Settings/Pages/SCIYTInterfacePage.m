@@ -20,8 +20,11 @@
 @implementation SCIYTInterfacePage
 
 + (void)load {
-    [SCIYTSettingsRegistry registerSectionsWithOrder:35
-                                             builder:^NSArray<SCISection *> *(__unused SCIYTSettingsHostController *host) {
+    [SCIYTSettingsRegistry registerPageWithOrder:35
+                                        title:SCILocalized(@"page_interface")
+                                       detail:SCILocalized(@"page_interface_note")
+                                       symbol:@"eye.slash"
+                                      builder:^NSArray<SCISection *> *(__unused SCIYTSettingsHostController *host) {
         SCISection *player = [[SCISection alloc] init];
         player.title = SCILocalized(@"section_hide_player");
         player.rows = @[

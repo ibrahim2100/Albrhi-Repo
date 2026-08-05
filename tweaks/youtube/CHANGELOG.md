@@ -3,6 +3,18 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.10.0
+
+- **The settings are a short list now.** They had become one long scroll of nine headings,
+  and finding anything meant scrolling past everything. The first screen is nine names —
+  Downloads, Quality, Ads, Hide things, Player, Screen, SponsorBlock, General, About — and
+  each opens its own page. Every setting is exactly where it was, one tap further in.
+- Nothing was removed and nothing moved between categories.
+- Diagnostics now names each streaming gate separately instead of adding them up. The last
+  report said they were asked four times and named only one of them, which left it unclear
+  whether that meant both gates or one of them four times — and those need different
+  answers.
+
 ## v1.9.0
 
 - **The video can always go the way you want it in fullscreen.** YouTube decides which way

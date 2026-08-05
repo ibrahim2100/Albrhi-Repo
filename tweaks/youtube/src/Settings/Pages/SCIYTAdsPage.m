@@ -8,8 +8,11 @@
 @implementation SCIYTAdsPage
 
 + (void)load {
-    [SCIYTSettingsRegistry registerSectionsWithOrder:30
-                                             builder:^NSArray<SCISection *> *(__unused SCIYTSettingsHostController *host) {
+    [SCIYTSettingsRegistry registerPageWithOrder:30
+                                        title:SCILocalized(@"page_ads")
+                                       detail:SCILocalized(@"page_ads_note")
+                                       symbol:@"hand.raised.fill"
+                                      builder:^NSArray<SCISection *> *(__unused SCIYTSettingsHostController *host) {
         SCISection *ads = [[SCISection alloc] init];
         ads.title = SCILocalized(@"section_ads");
         ads.rows = @[

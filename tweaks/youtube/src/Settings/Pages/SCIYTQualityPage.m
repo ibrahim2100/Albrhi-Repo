@@ -67,8 +67,11 @@ static void SCIAskForCap(SCIYTSettingsHostController *host, NSString *key) {
 @implementation SCIYTQualityPage
 
 + (void)load {
-    [SCIYTSettingsRegistry registerSectionsWithOrder:20
-                                             builder:^NSArray<SCISection *> *(SCIYTSettingsHostController *host) {
+    [SCIYTSettingsRegistry registerPageWithOrder:20
+                                        title:SCILocalized(@"page_quality")
+                                       detail:SCILocalized(@"page_quality_note")
+                                       symbol:@"sparkles.tv"
+                                      builder:^NSArray<SCISection *> *(SCIYTSettingsHostController *host) {
         SCISection *quality = [[SCISection alloc] init];
         quality.title = SCILocalized(@"section_quality");
         quality.footer = SCILocalized(@"set_cap_note");

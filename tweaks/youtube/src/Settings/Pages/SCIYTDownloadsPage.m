@@ -15,8 +15,11 @@
 @implementation SCIYTDownloadsPage
 
 + (void)load {
-    [SCIYTSettingsRegistry registerSectionsWithOrder:10
-                                             builder:^NSArray<SCISection *> *(__unused SCIYTSettingsHostController *host) {
+    [SCIYTSettingsRegistry registerPageWithOrder:10
+                                        title:SCILocalized(@"page_downloads")
+                                       detail:SCILocalized(@"page_downloads_note")
+                                       symbol:@"arrow.down.circle.fill"
+                                      builder:^NSArray<SCISection *> *(__unused SCIYTSettingsHostController *host) {
         SCISection *downloads = [[SCISection alloc] init];
         downloads.title = SCILocalized(@"set_downloads_title");
         downloads.rows = @[

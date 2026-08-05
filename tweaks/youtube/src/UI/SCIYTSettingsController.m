@@ -1,66 +1,73 @@
 #import "SCIYTSettingsController.h"
+#import "SCIYTSubpageController.h"
 #import "../Settings/SCIYTSettingsRegistry.h"
 #import "../Tweak.h"
 #import "../SCILog.h"
-#import "../Prefs.h"
 #import "../Localization/SCILocalize.h"
 #import "../Diagnostics/SCIYTDiagnostics.h"
-#import "../Features/Download/SCIYTDownload.h"
-#import "../Features/Download/Center/SCIYTDownloadCenter.h"
-#import <objc/runtime.h>
-
-/// YouTube's red. Written out rather than read from YTCommonColorPalette: one colour is
-/// not worth a dependency on a class whose shape has not been verified, and unverified
-/// dependencies are what the last three releases were about.
-
-@interface SCIYTSettingsController ()
-@property (nonatomic, strong) NSArray<SCISection *> *sections;
-@end
 
 @implementation SCIYTSettingsController
-
-- (instancetype)init {
-    // Inset-grouped: the same shape as the settings panel on this repository's
-    // Instagram side, so the two tweaks read as one project.
-    return [super initWithStyle:UITableViewStyleInsetGrouped];
-}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
 
     self.title = SCILocalized(@"panel_title");
-    self.tableView.backgroundColor = [UIColor colorWithWhite:0.05 alpha:1.0];
-    self.tableView.separatorColor = [UIColor colorWithWhite:1.0 alpha:0.08];
     self.tableView.tableHeaderView = [self identityHeader];
 
     self.navigationItem.leftBarButtonItem =
         [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemClose
                                                       target:self
                                                       action:@selector(close)];
-
-    [self buildSections];
 }
 
+///
+/// One row per registered page, and no settings at all.
+///
+/// This screen held every section of every feature, which worked at four pages and stopped
+/// working at nine: the answer to "where is that setting" became scrolling, and a setting
+/// that has to be scrolled for is a setting nobody finds twice. Nothing here knows what any
+/// page contains -- only what it is called.
+///
 - (void)buildSections {
-    // Composed rather than built. Every section lives in its own file under Settings/Pages
-    // and registers itself in +load; nothing here knows what those are, which is the point.
-    // Adding a feature means adding a file, and deleting one means deleting a file.
-    self.sections = [SCIYTSettingsRegistry composedSectionsFor:self];
+    NSMutableArray<SCIRow *> *rows = [NSMutableArray array];
+
+    // Weak, and this is not decoration. The rows are held by this controller, a row holds
+    // its block, and a block capturing self strongly would close the loop -- the settings
+    // screen would never be released, and neither would the pages it built.
+    __weak __typeof(self) weakSelf = self;
+
+    for (SCIYTPage *page in [SCIYTSettingsRegistry pages]) {
+        // The page is captured, not its index: a block reading `pages[i]` at tap time would
+        // read whatever the array holds then, which is a different page the moment anything
+        // else registers one.
+        [rows addObject:[SCIRow disclosureRow:page.title
+                                       detail:page.detail
+                                       symbol:page.symbol
+                                       action:^{ [weakSelf openPage:page]; }]];
+    }
+
+    SCISection *index = [[SCISection alloc] init];
+    index.rows = rows;
+    index.footer = SCILocalized(@"panel_subtitle");
+
+    self.sections = @[index];
 }
 
-/// Rebuilt and redrawn. Called by a page whose row shows a value it has just changed.
-- (void)reloadSettings {
-    [self buildSections];
-    [self.tableView reloadData];
+- (void)openPage:(SCIYTPage *)page {
+    SCIYTSubpageController *screen = [[SCIYTSubpageController alloc] initWithPage:page];
+
+    // Pushed rather than presented, so the way back is the one iOS already put there and
+    // every screen after this inherits it for free.
+    [self.navigationController pushViewController:screen animated:YES];
 }
 
 ///
 /// The identity card, and it reports its own health.
 ///
-/// The badge reads the runtime, not a constant: if the classes the features hook are
-/// not there, it says so here, at the top, before anything else is read. Every earlier
-/// version put that answer somewhere the user had to go looking for -- and in 0.1.0 it
-/// was behind the very thing that had failed.
+/// The badge reads the runtime, not a constant: if the classes the features hook are not
+/// there, it says so here, at the top, before anything else is read. Every earlier version
+/// put that answer somewhere the user had to go looking for -- and in 0.1.0 it was behind
+/// the very thing that had failed.
 ///
 - (UIView *)identityHeader {
     UIView *host = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 0, 108)];
@@ -72,9 +79,9 @@
     card.layer.cornerRadius = 16;
     card.layer.cornerCurve = kCACornerCurveContinuous;
 
-    // Sized by the autoresizing mask rather than by constraints. A table header is laid
-    // out by the table, which sets its width and asks nothing else of it, so a mask is
-    // both sufficient and impossible to over-constrain.
+    // Sized by the autoresizing mask rather than by constraints. A table header is laid out
+    // by the table, which sets its width and asks nothing else of it, so a mask is both
+    // sufficient and impossible to over-constrain.
     card.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     [host addSubview:card];
 
@@ -115,91 +122,6 @@
     return host;
 }
 
-// MARK: - Table
-
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return self.sections.count;
-}
-
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return self.sections[section].rows.count;
-}
-
-- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    return self.sections[section].title;
-}
-
-/// Under the last section, so how to get back here is written down somewhere the user
-/// will actually be when they wonder. A two-finger long press is safe and reliable and
-/// completely undiscoverable, which is the trade it makes.
-- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
-    // Carried on the section rather than worked out here. Matching on a row count was
-    // the first version of this and it is the kind of thing that breaks the day a ninth
-    // category is added -- silently, by attaching the licence notice to the wrong list.
-    return self.sections[section].footer;
-}
-
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    SCIRow *row = self.sections[indexPath.section].rows[indexPath.row];
-
-    // Built fresh rather than dequeued. These are a handful of rows on a screen opened
-    // occasionally, and reuse is where a switch ends up wired to the wrong preference.
-    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle
-                                                  reuseIdentifier:nil];
-    cell.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.06];
-
-    cell.textLabel.text = row.title;
-    cell.textLabel.textColor = UIColor.whiteColor;
-    cell.textLabel.font = [UIFont systemFontOfSize:15];
-
-    cell.detailTextLabel.text = row.detail;
-    cell.detailTextLabel.textColor = [UIColor.whiteColor colorWithAlphaComponent:0.55];
-    cell.detailTextLabel.font = [UIFont systemFontOfSize:11.5];
-    cell.detailTextLabel.numberOfLines = 0;
-
-    cell.imageView.image = [UIImage systemImageNamed:row.symbol];
-    cell.imageView.tintColor = [UIColor.whiteColor colorWithAlphaComponent:0.55];
-
-    if (row.kind == SCIRowKindSwitch) {
-        UISwitch *toggle = [[UISwitch alloc] init];
-        toggle.onTintColor = SCIAccent();
-        toggle.on = SCIPrefEnabled(row.prefKey);
-
-        // The key travels with the control, so the handler cannot read one preference
-        // and write another.
-        objc_setAssociatedObject(toggle, @selector(prefKey), row.prefKey,
-                                 OBJC_ASSOCIATION_RETAIN);
-        [toggle addTarget:self
-                   action:@selector(toggled:)
-         forControlEvents:UIControlEventValueChanged];
-
-        cell.accessoryView = toggle;
-        cell.selectionStyle = UITableViewCellSelectionStyleNone;
-    } else {
-        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-    }
-
-    return cell;
-}
-
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    [tableView deselectRowAtIndexPath:indexPath animated:YES];
-
-    SCIRow *row = self.sections[indexPath.section].rows[indexPath.row];
-    if (row.action) row.action();
-}
-
-// MARK: - Actions
-
-- (void)toggled:(UISwitch *)toggle {
-    NSString *key = objc_getAssociatedObject(toggle, @selector(prefKey));
-    if (!key.length) return;
-
-    [[NSUserDefaults standardUserDefaults] setBool:toggle.isOn forKey:key];
-    SCILogV(@"settings: %@ = %@", key, toggle.isOn ? @"on" : @"off");
-}
-
-
 - (void)close {
     [self dismissViewControllerAnimated:YES completion:nil];
 }
@@ -236,9 +158,9 @@
     }
 
     // The guard stays even though a table view is far less likely to throw than the
-    // hand-built panel it replaces. It is not there because this code is expected to
-    // fail; it is there because a tweak whose job is to report what is happening must
-    // never be the reason the app stops.
+    // hand-built panel it replaces. It is not there because this code is expected to fail;
+    // it is there because a tweak whose job is to report what is happening must never be the
+    // reason the app stops.
     @try {
         SCIYTSettingsController *settings = [[SCIYTSettingsController alloc] init];
         UINavigationController *nav =
@@ -248,8 +170,8 @@
         nav.navigationBar.barStyle = UIBarStyleBlack;
         nav.navigationBar.tintColor = SCIAccent();
 
-        // Forced inside the guard, so a layout fault lands here rather than later
-        // inside UIKit's transition where it would be out of reach.
+        // Forced inside the guard, so a layout fault lands here rather than later inside
+        // UIKit's transition where it would be out of reach.
         (void)settings.view;
 
         [host presentViewController:nav animated:YES completion:nil];

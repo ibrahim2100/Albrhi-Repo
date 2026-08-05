@@ -14,8 +14,11 @@
 @implementation SCIYTSponsorPage
 
 + (void)load {
-    [SCIYTSettingsRegistry registerSectionsWithOrder:50
-                                             builder:^NSArray<SCISection *> *(__unused SCIYTSettingsHostController *host) {
+    [SCIYTSettingsRegistry registerPageWithOrder:50
+                                        title:SCILocalized(@"page_sponsor")
+                                       detail:SCILocalized(@"page_sponsor_note")
+                                       symbol:@"forward.end.fill"
+                                      builder:^NSArray<SCISection *> *(__unused SCIYTSettingsHostController *host) {
         SCISection *sponsor = [[SCISection alloc] init];
         sponsor.title = SCILocalized(@"section_sponsorblock");
         sponsor.rows = @[

@@ -19,8 +19,11 @@
 @implementation SCIYTAboutPage
 
 + (void)load {
-    [SCIYTSettingsRegistry registerSectionsWithOrder:95
-                                             builder:^NSArray<SCISection *> *(__unused SCIYTSettingsHostController *host) {
+    [SCIYTSettingsRegistry registerPageWithOrder:95
+                                        title:SCILocalized(@"page_about")
+                                       detail:SCILocalized(@"page_about_note")
+                                       symbol:@"info.circle.fill"
+                                      builder:^NSArray<SCISection *> *(__unused SCIYTSettingsHostController *host) {
         SCISection *about = [[SCISection alloc] init];
         about.title = SCILocalized(@"about_title");
         about.rows = @[

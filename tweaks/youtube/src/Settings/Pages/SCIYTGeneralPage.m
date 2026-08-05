@@ -56,8 +56,11 @@ static void SCIOpenDiagnostics(SCIYTSettingsHostController *host) {
 @implementation SCIYTGeneralPage
 
 + (void)load {
-    [SCIYTSettingsRegistry registerSectionsWithOrder:90
-                                             builder:^NSArray<SCISection *> *(SCIYTSettingsHostController *host) {
+    [SCIYTSettingsRegistry registerPageWithOrder:90
+                                        title:SCILocalized(@"page_general")
+                                       detail:SCILocalized(@"page_general_note")
+                                       symbol:@"gearshape.fill"
+                                      builder:^NSArray<SCISection *> *(SCIYTSettingsHostController *host) {
         SCISection *general = [[SCISection alloc] init];
         general.title = SCILocalized(@"section_general");
         general.rows = @[

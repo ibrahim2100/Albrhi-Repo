@@ -217,8 +217,11 @@ static void SCIAskForLevel(SCIYTSettingsHostController *host) {
 @implementation SCIYTDisplayPage
 
 + (void)load {
-    [SCIYTSettingsRegistry registerSectionsWithOrder:45
-                                             builder:^NSArray<SCISection *> *(SCIYTSettingsHostController *host) {
+    [SCIYTSettingsRegistry registerPageWithOrder:45
+                                        title:SCILocalized(@"page_display")
+                                       detail:SCILocalized(@"page_display_note")
+                                       symbol:@"iphone.gen3"
+                                      builder:^NSArray<SCISection *> *(SCIYTSettingsHostController *host) {
         SCISection *fullscreen = [[SCISection alloc] init];
         fullscreen.title = SCILocalized(@"section_fullscreen");
         fullscreen.footer = SCILocalized(@"fullscreen_footer");

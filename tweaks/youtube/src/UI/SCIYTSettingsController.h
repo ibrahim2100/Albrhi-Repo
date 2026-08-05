@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#import "SCIYTSectionsController.h"
 #import "../Settings/SCIYTSettingsRegistry.h"
 
 ///
@@ -17,7 +18,10 @@
 /// YouTube's settings. Two attempts at the latter established that announcing a
 /// settings category is a contract with tables this tweak has no access to.
 ///
-@interface SCIYTSettingsController : UITableViewController <SCIYTSettingsHost>
+/// **It holds no settings of its own.** Every one lives on a page, and this is the list of
+/// pages -- see SCIYTSectionsController for the table both screens are.
+///
+@interface SCIYTSettingsController : SCIYTSectionsController
 
 /// Presents it from whatever is on screen. Guarded: a settings screen that cannot be
 /// built must fail to open, not take YouTube down with it.

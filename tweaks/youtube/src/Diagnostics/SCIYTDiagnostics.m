@@ -271,10 +271,17 @@ static NSString *sciShortsAdDetail = nil;
 /// more than one line and a total.
 static BOOL sciSabrReloadClass = NO;
 static BOOL sciSabrOnesieClass = NO;
-static NSUInteger sciSabrConsulted = 0;
 static NSUInteger sciSabrForced = 0;
-static NSString *sciSabrLastGate = nil;
-static BOOL sciSabrLastOriginal = NO;
+
+/// One line per gate rather than one total.
+///
+/// The 1.8.0 report said the gates were consulted four times and named only the last of
+/// them, which left the question it was built to answer half open: two gates were counted
+/// together, so "consulted" could have meant both of them or one of them four times. Those
+/// need different next steps -- a gate nobody asks cannot be forced into mattering -- and a
+/// single counter cannot tell them apart.
+static NSMutableDictionary<NSString *, NSNumber *> *sciSabrCounts = nil;
+static NSMutableDictionary<NSString *, NSNumber *> *sciSabrAnswers = nil;
 
 + (void)recordSabrClasses:(BOOL)reloadContext onesie:(BOOL)onesie {
     sciSabrReloadClass = reloadContext;
@@ -282,31 +289,59 @@ static BOOL sciSabrLastOriginal = NO;
 }
 
 + (void)recordSabrGate:(NSString *)gate original:(BOOL)original forced:(BOOL)forced {
-    sciSabrConsulted += 1;
-    if (forced) sciSabrForced += 1;
-    sciSabrLastGate = [gate copy];
-    sciSabrLastOriginal = original;
+    if (!gate.length) return;
+
+    // Built here rather than in an +initialize: these are written from whichever thread the
+    // player happens to be reloading on, and the first of those may be the first call.
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        sciSabrCounts = [NSMutableDictionary dictionary];
+        sciSabrAnswers = [NSMutableDictionary dictionary];
+    });
+
+    @synchronized (sciSabrCounts) {
+        sciSabrCounts[gate] = @(sciSabrCounts[gate].unsignedIntegerValue + 1);
+        sciSabrAnswers[gate] = @(original);
+        if (forced) sciSabrForced += 1;
+    }
 }
 
 + (NSString *)sabrState {
-    NSString *present = [NSString stringWithFormat:SCILocalized(@"diag_sabr_classes"),
+    NSMutableString *out = [NSMutableString string];
+
+    [out appendFormat:SCILocalized(@"diag_sabr_classes"),
         sciSabrReloadClass ? @"yes" : @"no",
         sciSabrOnesieClass ? @"yes" : @"no"];
 
-    // The distinction the whole idea turns on. A gate that is never asked cannot be
-    // answered differently, and no amount of forcing changes that -- so this reads as a
-    // finished answer rather than as a blank waiting to be filled.
-    if (!sciSabrConsulted) {
-        return [NSString stringWithFormat:@"%@\n  %@", present,
-            SCILocalized(@"diag_sabr_never")];
+    NSDictionary *counts = nil;
+    NSDictionary *answers = nil;
+
+    if (sciSabrCounts) {
+        @synchronized (sciSabrCounts) {
+            counts = [sciSabrCounts copy];
+            answers = [sciSabrAnswers copy];
+        }
     }
 
-    return [NSString stringWithFormat:@"%@\n  %@", present,
-        [NSString stringWithFormat:SCILocalized(@"diag_sabr_count"),
-            (unsigned long)sciSabrConsulted,
-            (unsigned long)sciSabrForced,
-            sciSabrLastGate ?: @"?",
-            sciSabrLastOriginal ? @"YES" : @"NO"]];
+    // The distinction the whole idea turns on. A gate that is never asked cannot be answered
+    // differently, and no amount of forcing changes that -- so this reads as a finished
+    // answer rather than as a blank waiting to be filled.
+    if (!counts.count) {
+        [out appendFormat:@"\n  %@", SCILocalized(@"diag_sabr_never")];
+        return out;
+    }
+
+    for (NSString *gate in [counts.allKeys sortedArrayUsingSelector:@selector(compare:)]) {
+        [out appendFormat:@"\n  "];
+        [out appendFormat:SCILocalized(@"diag_sabr_gate"),
+            gate,
+            counts[gate].unsignedLongValue,
+            answers[gate].boolValue ? @"YES" : @"NO"];
+    }
+
+    [out appendFormat:@"\n  "];
+    [out appendFormat:SCILocalized(@"diag_sabr_forced"), (unsigned long)sciSabrForced];
+    return out;
 }
 
 + (NSString *)shortsButtonState {
