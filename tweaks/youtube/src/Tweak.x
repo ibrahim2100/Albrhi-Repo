@@ -5,7 +5,7 @@
 #import "Prefs.h"
 #import "Diagnostics/SCIYTDiagnostics.h"
 
-NSString *SCIVersionString = @"v1.7.0";  // AlbrhiYT
+NSString *SCIVersionString = @"v1.8.0";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.
@@ -118,6 +118,29 @@ NSString *SCIVersionString = @"v1.7.0";  // AlbrhiYT
         SCIPrefSBPreview: @NO,
         SCIPrefSBFiller: @NO,
         SCIPrefSBMusicOffTopic: @NO,
+
+        // Zero means "whatever YouTube does", which for the double-tap jump is ten seconds.
+        // Registered anyway rather than left absent, so the settings row has a value to show
+        // on a fresh install instead of reading a key nobody wrote.
+        SCIPrefSeekSeconds: @0,
+        SCIPrefExtraSpeeds: @NO,
+
+        // Off, and this is the one switch here that is off because we do not yet know what
+        // it does. Until a report says YouTube's SABR gates are consulted at all, the hooks
+        // behind this only count -- see Features/Playback/SCIYTSabr.x.
+        SCIPrefBypassSABR: @NO,
+
+        // Every one of the hide switches. Each removes a part of YouTube that works, and a
+        // tweak that decides for everybody which parts of an app are worth having is a tweak
+        // nobody agreed to install.
+        SCIPrefHideAmbient: @NO,
+        SCIPrefHideEndscreen: @NO,
+        SCIPrefHideInfoCards: @NO,
+        SCIPrefHideNotifyButton: @NO,
+        SCIPrefHideCreateButton: @NO,
+        SCIPrefHideCastButton: @NO,
+        SCIPrefHideSearchButton: @NO,
+        SCIPrefHideSharePromo: @NO,
     }];
 
     // Unconditional, and the only line here that is.

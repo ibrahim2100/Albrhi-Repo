@@ -130,6 +130,26 @@
 + (void)recordFeedSections:(NSUInteger)seen dropped:(NSUInteger)dropped;
 + (NSString *)feedState;
 
+/// Whether YouTube's own two SABR gates were consulted, and what was answered.
+///
+/// This is the whole of the SABR investigation until a report comes back. SABR is why every
+/// format in this build has no URL, and why downloading takes ninety requests and a demuxer
+/// instead of one GET. Two gates exist for it; whether they are ever read cannot be settled
+/// from the binary, and forcing something that is never read would change nothing while
+/// looking exactly like a fix.
+///
+/// So: with the setting off these count and nothing else, and this line says whether there
+/// is anything here worth pursuing at all.
++ (void)recordSabrGate:(NSString *)gate original:(BOOL)original forced:(BOOL)forced;
+
+/// Whether the two classes exist in this build, recorded at load.
+///
+/// Separate from the counts above, because "never consulted" and "not in this version" are
+/// different answers that need different next steps and a counter cannot tell them apart.
++ (void)recordSabrClasses:(BOOL)reloadContext onesie:(BOOL)onesie;
+
++ (NSString *)sabrState;
+
 /// The whole report as text: what the file holds and the copy button copies.
 + (NSString *)report;
 

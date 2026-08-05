@@ -3,6 +3,26 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.8.0
+
+- **You choose how far a double tap jumps.** YouTube fixes it at ten seconds, which is too
+  little for a lecture and too much for a song. Five up to a minute, under Player. The number
+  on the little bubble changes with it.
+- **Speeds above 2× in the speed menu** — 2.25×, 2.5×, 3× and 4×. Off until you turn it on.
+- **A new Interface page for hiding parts of YouTube.** The coloured glow behind the video,
+  the grid of suggestions that covers the last seconds, the pop-out cards in the middle, the
+  search, notifications, create and cast buttons at the top, and the promotion row in the
+  share sheet. Everything on that page is off until you switch it on: these are pieces of
+  YouTube that work, and which of them you want gone is your call and not ours.
+- Nothing here hides anything after it is drawn. Each switch answers the question YouTube
+  asks itself before building the thing, so it is never built — no gap left behind, and it
+  does not come back when the page reloads.
+- **A first look at why saving is slow.** YouTube sends video in pieces instead of as files,
+  which is the reason a save takes ninety requests. There is a switch under Player asking it
+  not to. It ships off, it may do nothing, and Diagnostics now says whether YouTube even
+  asked the question — which is the point of this release. If the answer is no, the idea ends
+  there and nothing that works was touched to find out.
+
 ## v1.7.0
 
 - **Downloads carry on when you leave YouTube.** Until now a save only progressed while you

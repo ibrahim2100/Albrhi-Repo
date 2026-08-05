@@ -316,3 +316,33 @@
 @property (atomic, assign, getter=isHidden) BOOL hidden;
 @property (atomic, assign) CGFloat alpha;
 @end
+
+
+//
+// One row of the playback speed menu: a label and a rate, and nothing else.
+//
+// The rate is a **float**. That is not a detail — it is read straight off the initialiser's
+// type encoding, `@28@0:8@16f24`, and passing a double here would put the argument in the
+// wrong register and hand YouTube a speed nobody chose.
+//
+@interface YTVarispeedSwitchControllerOption : NSObject
+- (instancetype)initWithTitle:(NSString *)title rate:(float)rate;
+@property (nonatomic, readonly) float rate;
+@end
+
+
+//
+// The controller behind that menu.
+//
+// Declared for two methods: the one that adds a row, and the one that clears the list before
+// it is rebuilt. Everything else about the menu — what a chosen rate does, how the sheet is
+// presented — stays YouTube's.
+//
+@interface YTVarispeedSwitchControllerImpl : NSObject
+- (void)addActionForOption:(YTVarispeedSwitchControllerOption *)option;
+- (void)reset;
+
+/// Added by this tweak, so a menu is given the extra rows once per rebuild rather than once
+/// per time it is opened.
+@property (nonatomic, assign) BOOL sciAddedExtraRates; // new
+@end

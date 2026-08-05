@@ -264,6 +264,51 @@ static NSString *sciShortsAdDetail = nil;
         (unsigned long)sciShortsAdsRefused, sciShortsAdDetail ?: @"?"];
 }
 
+/// The SABR investigation, in four numbers and two facts.
+///
+/// Counts and not a log: these gates are read on every reload and every request, and a
+/// hundred identical lines would push the rest of the report off the end while saying no
+/// more than one line and a total.
+static BOOL sciSabrReloadClass = NO;
+static BOOL sciSabrOnesieClass = NO;
+static NSUInteger sciSabrConsulted = 0;
+static NSUInteger sciSabrForced = 0;
+static NSString *sciSabrLastGate = nil;
+static BOOL sciSabrLastOriginal = NO;
+
++ (void)recordSabrClasses:(BOOL)reloadContext onesie:(BOOL)onesie {
+    sciSabrReloadClass = reloadContext;
+    sciSabrOnesieClass = onesie;
+}
+
++ (void)recordSabrGate:(NSString *)gate original:(BOOL)original forced:(BOOL)forced {
+    sciSabrConsulted += 1;
+    if (forced) sciSabrForced += 1;
+    sciSabrLastGate = [gate copy];
+    sciSabrLastOriginal = original;
+}
+
++ (NSString *)sabrState {
+    NSString *present = [NSString stringWithFormat:SCILocalized(@"diag_sabr_classes"),
+        sciSabrReloadClass ? @"yes" : @"no",
+        sciSabrOnesieClass ? @"yes" : @"no"];
+
+    // The distinction the whole idea turns on. A gate that is never asked cannot be
+    // answered differently, and no amount of forcing changes that -- so this reads as a
+    // finished answer rather than as a blank waiting to be filled.
+    if (!sciSabrConsulted) {
+        return [NSString stringWithFormat:@"%@\n  %@", present,
+            SCILocalized(@"diag_sabr_never")];
+    }
+
+    return [NSString stringWithFormat:@"%@\n  %@", present,
+        [NSString stringWithFormat:SCILocalized(@"diag_sabr_count"),
+            (unsigned long)sciSabrConsulted,
+            (unsigned long)sciSabrForced,
+            sciSabrLastGate ?: @"?",
+            sciSabrLastOriginal ? @"YES" : @"NO"]];
+}
+
 + (NSString *)shortsButtonState {
     return sciShortsButton ?: SCILocalized(@"diag_shorts_none");
 }
@@ -646,6 +691,11 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
             sciLastVideoID ?: @"?", sciActiveVideoID ?: @"?", sciResponseVideoID ?: @"?"]];
 
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts_ads"), [self shortsAdState]];
+
+    // Above the streams section on purpose: it says what was asked of the streaming protocol,
+    // and the section below says what came back. Read the other way round they are two
+    // unrelated facts.
+    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_sabr"), [self sabrState]];
 
     // Why a saved file would not open. This is the one thing looking at the tweak's own code
     // can never answer: the file is on disk and AVFoundation is the only witness to what is

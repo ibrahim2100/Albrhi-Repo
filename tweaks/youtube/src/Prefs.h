@@ -68,6 +68,37 @@
 #define SCIPrefCapCellular      @"quality_cap_cellular"
 
 
+/// How far a double tap jumps, in seconds. Zero means leave YouTube's own ten alone.
+///
+/// A number and not an index, for the reason the quality caps are: 30 means thirty seconds
+/// whatever order the picker happens to list things in.
+#define SCIPrefSeekSeconds      @"seek_seconds"
+
+/// Rates past 2× in the speed menu. Off — the menu is YouTube's and lengthening it is a
+/// change to a screen nobody asked us to touch.
+#define SCIPrefExtraSpeeds      @"extra_speeds"
+
+/// Asking the player not to use SABR.
+///
+/// **Off, and it stays off until a report says the gates are even consulted.** SABR is the
+/// piecewise protocol that leaves every format without a URL; this asks YouTube's own two
+/// switches to decline it. Whether the server honours the request is not knowable from here,
+/// and forcing it could as easily cost playback as gain a download link — so with this off
+/// the hooks only count, and the diagnostics page reports what they counted.
+#define SCIPrefBypassSABR       @"bypass_sabr"
+
+/// Parts of YouTube's own screen that can be answered away. All off: removing pieces of
+/// somebody else's app is a choice, and choosing it for everyone is not this tweak's call.
+#define SCIPrefHideAmbient      @"hide_ambient_glow"
+#define SCIPrefHideEndscreen    @"hide_endscreen"
+#define SCIPrefHideInfoCards    @"hide_info_cards"
+#define SCIPrefHideNotifyButton @"hide_notify_button"
+#define SCIPrefHideCreateButton @"hide_create_button"
+#define SCIPrefHideCastButton   @"hide_cast_button"
+#define SCIPrefHideSearchButton @"hide_search_button"
+#define SCIPrefHideSharePromo   @"hide_share_promo"
+
+
 /// SponsorBlock. One key for the feature, one per category.
 ///
 /// Per-category rather than a single switch, because these are not the same request of
