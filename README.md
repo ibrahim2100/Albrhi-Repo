@@ -9,8 +9,8 @@
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B-lightgrey.svg)]()
 [![Rootless](https://img.shields.io/badge/rootless-supported-success.svg)](#-compatibility)
-[![Instagram](https://img.shields.io/badge/Instagram-3.8.2-orange.svg)](tweaks/instagram/CHANGELOG.md)
-[![YouTube](https://img.shields.io/badge/YouTube-1.0.0-red.svg)](tweaks/youtube/CHANGELOG.md)
+[![Instagram](https://img.shields.io/badge/Instagram-4.0.0-orange.svg)](tweaks/instagram/CHANGELOG.md)
+[![YouTube](https://img.shields.io/badge/YouTube-1.12.2-red.svg)](tweaks/youtube/CHANGELOG.md)
 [![Based on](https://img.shields.io/badge/based%20on-SCInsta-lightblue.svg)](https://github.com/SoCuul/SCInsta)
 
 <br/>
@@ -82,8 +82,8 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 
 | Tweak | App | Status |
 |---|---|---|
-| **Albrhi for Instagram** | Instagram | **Released** — `com.albrhi.tweak` |
-| **Albrhi for YouTube** | YouTube | **1.0.0** — `com.albrhi.youtube`: downloads with their own player, no ads, SponsorBlock, background playback |
+| **Albrhi for Instagram** | Instagram | **4.0.0** — `com.albrhi.tweak`: downloads, a quieter feed, watching without a seen receipt |
+| **Albrhi for YouTube** | YouTube | **1.12.2** — `com.albrhi.youtube`: downloads with their own player, no ads, SponsorBlock, background playback |
 
 Each tweak is a self-contained project under `tweaks/`, with its own sources, package identity and
 version number. They are **separate packages that never meet at runtime**: an injection filter binds
@@ -104,9 +104,9 @@ script and the APT index — which is why installing one has nothing to do with 
 ### 📥 Downloads
 - One-tap **download button** in the post and reel action rows.
 - Posts, reels, stories, **whole albums** (choose one slide or all), DM media and **HD profile pictures**.
-- Always the best quality iOS can save — plus **on-device AV1 → 1080p transcoding** (decoded with
-  dav1d, re-encoded with VideoToolbox), so the qualities Instagram hides behind a format iOS
-  refuses are still yours. Nothing is uploaded anywhere.
+- Always the best quality your iPhone can save. Some of Instagram's higher qualities come in a
+  format iOS will not play; Albrhi converts those **on your phone** so you still get them.
+  Nothing is ever uploaded anywhere.
 - **Download Center** — queue, pause, resume, retry, background transfers and history.
 - Reel audio extraction · silent-video export · dedicated Photos album.
 
@@ -154,21 +154,13 @@ share, because Shorts has no long press to spare.
 Video or audio, your choice. Sound is saved as a proper `.m4a` with the cover art from the
 video, so it arrives somewhere else looking like a song rather than an untitled file.
 
-Getting there took nine releases of measuring, and the finding is worth stating: on this
-build **every individual quality arrives without a download address**, through the media
-layer, the format nested inside it, the player response and four ways of asking YouTube
-directly. What does have an address is the **playlist** that lists them — which is where
-every tweak whose downloading works ends up.
+YouTube no longer hands out a direct link for a video, so the tweak collects it in pieces
+and puts them back together on your phone. Most tweaks bundle a large media library to do
+that last step; Albrhi does it without one, so the download stays small and **nothing is
+re-encoded** — the quality you picked is the quality you get.
 
-The difference is what gets carried to finish the job. YouTube serves those parts as
-MPEG-TS, which iOS has never opened from a file, and the usual answer is to bundle FFmpeg
-— **between 2 and 19 MB** of media library. Albrhi bundles none: the picture inside is
-already H.264 and the sound already AAC, so the transport wrapper is unpacked in about
-600 lines and Apple's own writer builds the .mp4. Nothing is re-encoded, so nothing loses
-quality, and the tweak stays small.
-
-Qualities iOS cannot play are filtered out *before* they are offered, and a failure names
-which of the three things went wrong rather than one sentence for all of them.
+Qualities your iPhone cannot play are left out of the list rather than offered and then
+failing, and if something does go wrong the message says what.
 
 ### 📁 The Download Centre
 A **tab of its own**, beside Home and You — not a panel over the app. YouTube draws that tab
@@ -187,10 +179,9 @@ Rename anything you have saved, share it, or send it to Photos — the tweak kee
 not decide for you where it should live.
 
 ### 🚫 No ads
-Stopped at three points, because they arrive by three routes and blocking one does nothing about
-the others: the app **stops asking** for ads at all, promoted rows are dropped from the feed by the
-identifier YouTube's own servers attach to them, and the player refuses ads before a video, mid-video,
-and the kind **stitched into the stream itself**.
+Blocked in three places, because ads arrive three different ways: the app stops asking for them,
+promoted posts are dropped from the feed, and the player refuses ads before a video, in the middle
+of one, and the kind built into the video itself.
 
 ### ⏭️ Skip the sponsored parts
 Paid plugs, self-promotion and subscribe reminders are jumped over automatically, using segments
@@ -198,9 +189,9 @@ other viewers submitted to **SponsorBlock**. A short line names what was skipped
 and each segment is **coloured on the progress bar** so you can see what is coming. Eight categories,
 each with its own switch — intros, endcards, recaps and tangents are off until you turn them on.
 
-**Your video is never sent.** SponsorBlock offers two ways to ask; this uses the one that sends only
-the first four characters of the video's fingerprint, so the server cannot tell which video you are
-watching. Nothing is requested at all when the feature is off.
+**Which video you are watching is never sent.** SponsorBlock offers two ways of asking, and this
+uses the private one, so the server cannot tell what you are watching. Nothing is sent at all when
+the feature is off.
 
 ### 🎧 Background playback
 Audio keeps going when you leave the app or lock the screen — YouTube's own video, and anything
@@ -234,7 +225,7 @@ whether everything actually attached to *your* build. The report is also written
 |---|---|
 | **iOS** | 15.0 and later |
 | **Architecture** | `arm64` — runs on arm64 and arm64e devices |
-| **Instagram** | Built and tested on **410.1.0 and 439.0.0**, from one build *(not a ceiling — see below)* |
+| **Instagram** | Tested on **410, 439 and 441**, from one build *(other versions should work — see below)* |
 | **Jailbreaks** | Rootless (Dopamine, palera1n) · roothide · rootful (unc0ver, checkra1n) |
 | **Sideloading** | Supported via the bundled FLEXing sub-project |
 
@@ -243,16 +234,13 @@ whether everything actually attached to *your* build. The report is also written
 
 <br/>
 
-Albrhi is built and tested against **Instagram 410.1.0 and 439.0.0** — one build serves both. 410 is
-the newest release the developer's phone will still accept, and the phone is not taking questions;
-439 is kept alongside it precisely so version differences are measured in two real binaries instead
-of guessed at.
+Albrhi is tested against **Instagram 410, 439 and 441** — one build serves all three. Three versions
+are kept so that differences between them are checked against real apps rather than assumed.
 
-Nothing is pinned to a version number: every Instagram class the tweak touches is resolved at
-runtime, and anything it can't find is skipped rather than crashed into. Newer builds *should* be
-fine — which is exactly why there's a **Diagnostics** page. It reports your Instagram version and
-what actually attached, and files the whole thing as an issue in one tap. Reports from newer builds
-are genuinely useful.
+Nothing is tied to a version number. The tweak looks for the parts of Instagram it needs while the
+app is running, and anything it cannot find is skipped instead of crashing. Newer versions should
+be fine — and if one is not, the **Diagnostics** page shows what the tweak can actually see on your
+phone and sends a report in one tap.
 
 </details>
 

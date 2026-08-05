@@ -3,6 +3,7 @@
 #import "../../Utils.h"
 #import "../../InstagramHeaders.h"
 #import "../../Settings/SCIDiagnosticsViewController.h"
+#import "../../Compat/SCIResolve.h"
 
 ///
 /// Watches stories without telling their author.
@@ -23,7 +24,7 @@
 ///   IGStorySeenStateUploader -networker        both builds — the request has no
 ///                                             networker to go out on
 ///   IGStoryPendingSeenStateStore -_uploadSeenState:   the newer build's Swift store,
-///                                             hooked by mangled name
+///                                             found through SCIResolveClass
 ///
 /// Both were found by reading the class metadata out of the two tested binaries. The
 /// pending store keeps its queue either way, so nothing downstream is left holding a
@@ -96,9 +97,11 @@ static BOOL SCIShouldBlockSeenReceipt(void) {
 // MARK: - The newer build's Swift store
 
 // -_uploadSeenState: is where the newer build hands a batch of seen state off to be
-// sent. Swallowing it leaves the batch collected locally and unsent. Bound by
-// mangled name because Logos cannot name a Swift class, and skipped where the method
-// is absent rather than added as one nothing calls.
+// sent. Swallowing it leaves the batch collected locally and unsent — the ring still
+// greys out, which is the whole point of not emptying the seen state itself.
+//
+// Bound at runtime rather than by %hook because Logos cannot name a Swift class, and
+// skipped where the method is absent rather than added as one nothing calls.
 static void (*orig_uploadSeenState)(id, SEL, id);
 
 static void sci_uploadSeenState(id self, SEL _cmd, id seenState) {
@@ -113,11 +116,29 @@ static void sci_uploadSeenState(id self, SEL _cmd, id seenState) {
 
 %ctor {
     @autoreleasepool {
-        Class store = objc_getClass("_TtC26IGStoryPendingSeenStateKit28IGStoryPendingSeenStateStore");
+        // Resolved, not spelled out. The name here was
+        // "_TtC26IGStoryPendingSeenStateKit28IGStoryPendingSeenStateStore", which is correct
+        // for 439 and 441 and was verified against both -- but those numbers are the lengths
+        // of the module and class names, so the literal is only ever right for the build it
+        // was copied from. Move the class to another module and it stops matching, with no
+        // error and no crash: the receipt simply goes out again. SCIResolveClass searches for
+        // the class name in whatever module holds it.
+        Class store = SCIResolveClass(@"IGStoryPendingSeenStateStore");
         SEL upload = NSSelectorFromString(@"_uploadSeenState:");
 
+        BOOL attached = NO;
         if (store && class_getInstanceMethod(store, upload)) {
             MSHookMessageEx(store, upload, (IMP)sci_uploadSeenState, (IMP *)&orig_uploadSeenState);
+            attached = YES;
         }
+
+        // Said whether it worked or not, and this is the point of it.
+        //
+        // Before this, a report showing no interceptions had two readings -- the hook is not
+        // attached, or it is attached and the upload never came through it -- and those need
+        // opposite fixes. The same ambiguity in the YouTube tweak's SABR section cost three
+        // releases of guessing before the line that separated them was added.
+        [SCIDiagnostics recordStorySeenHookAttached:attached
+                                        resolvedTo:SCIResolvedNameFor(@"IGStoryPendingSeenStateStore")];
     }
 }

@@ -10,6 +10,7 @@ static NSMutableArray<NSString *> *_actionRowClasses = nil;
 static NSInteger _lastQualityCount = -1;
 static NSString *_lastVideoClass = nil;
 static NSInteger _storySeenIntercepts = 0;
+static NSString *_storySeenHook = nil;
 static NSString *_seenReplay = nil;
 static NSArray<NSString *> *_scanResults = nil;
 static NSArray<NSString *> *_timestampResults = nil;
@@ -241,6 +242,18 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
 
 + (void)recordStorySeenIntercept {
     _storySeenIntercepts += 1;
+}
+
++ (void)recordStorySeenHookAttached:(BOOL)attached resolvedTo:(NSString *)runtimeName {
+    if (attached && runtimeName.length) {
+        _storySeenHook = [runtimeName copy];
+    } else if (runtimeName.length) {
+        // The class is here and the method is not. A different failure from the class being
+        // absent, needing a different fix, so it is said differently.
+        _storySeenHook = [NSString stringWithFormat:@"%@ — no -_uploadSeenState:", runtimeName];
+    } else {
+        _storySeenHook = SCILocalized(@"diag_story_hook_missing");
+    }
 }
 
 // MARK: - Live hierarchy scan
@@ -550,7 +563,11 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
               @"ok": @(_seenReplay != nil)},
             @{@"title": SCILocalized(@"diag_story_intercepts"),
               @"detail": [NSString stringWithFormat:@"%ld", (long)_storySeenIntercepts],
-              @"ok": @(_storySeenIntercepts > 0)}
+              @"ok": @(_storySeenIntercepts > 0)},
+            @{@"title": SCILocalized(@"diag_story_hook"),
+              @"detail": _storySeenHook ?: @"—",
+              @"ok": @(_storySeenHook.length > 0 &&
+                       ![_storySeenHook isEqualToString:SCILocalized(@"diag_story_hook_missing")])}
         ]},
         @{@"header": SCILocalized(@"diag_section_env"), @"rows": @[
             @{@"title": @"Albrhi", @"detail": SCIVersionString, @"ok": @YES},

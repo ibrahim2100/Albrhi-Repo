@@ -1,7 +1,23 @@
 # Albrhi Changelog
 
-**Tested on Instagram 410.1.0 and 439.0.0.** Both are supported from this one build;
-newer versions are expected to work and you will be told if yours is untested.
+**Tested on Instagram 410, 439 and 441.** All three are supported from the same build.
+Other versions should work too — the tweak looks for what it needs while the app runs
+rather than expecting a particular version number.
+
+## v4.0.0
+
+**The first stable release.** No longer a beta.
+
+- **Instagram 441 is supported.** Checked feature by feature against 441 rather than
+  assumed: the parts that matter were compared against 410 and 439 as well, so nothing
+  was fixed for the new version by breaking it on the older ones.
+- **Watching stories quietly is more dependable.** The part of Instagram that reports
+  what you have seen was being found by a name that only matched the exact versions it
+  was written for. It is now looked up properly, so an Instagram update is far less
+  likely to switch this off without telling you.
+- **Diagnostics now says whether that is switched on.** Before, "nothing blocked" could
+  mean it was working and had nothing to block, or that it was not running at all.
+  Those needed opposite fixes and looked identical. The page now says which.
 
 ## v3.8.2
 

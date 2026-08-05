@@ -61,6 +61,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (void)recordStorySeenIntercept;
 
+/// Whether the newer build's Swift seen-state store was found and hooked, and under which
+/// runtime name.
+///
+/// Reported because "no interceptions" has two readings — not attached, or attached and
+/// never reached — and they need opposite fixes. Pass nil for `runtimeName` when nothing was
+/// found; the row then says so rather than showing a blank that reads as a bug.
++ (void)recordStorySeenHookAttached:(BOOL)attached resolvedTo:(nullable NSString *)runtimeName;
+
 /// Which suppressed delegate calls the mark-as-seen button managed to replay.
 /// A green tick with nothing replayed means the receipt never left the device.
 + (void)recordSeenReplayBegan:(BOOL)began ended:(BOOL)ended;
