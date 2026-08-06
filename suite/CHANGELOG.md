@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.0.10
+
+- The source updates properly now. It had started working already — the site was
+  serving an older Albrhi rather than none — but the build was still finishing when
+  the run checked, so a working publish was reported as a failure. The run now waits
+  for the build to actually finish before looking.
+
 ## v1.0.9
 
 - **Settings › Albrhi now really turns a tweak off.** The switch moved but the app

@@ -445,6 +445,39 @@ jobs:
                 # on that trigger, which is the whole reason a deploy step existed.
                 gh api -X POST "repos/${{ github.repository }}/pages/builds" --silent                   && echo "build requested"                   || echo "::warning::could not request a build; the push may still start one"
 
+            - name: Wait for the Pages build to finish
+              if: always() && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+              env:
+                GH_TOKEN: ${{ github.token }}
+              # The build was requested in the step above and takes a few minutes.
+              #
+              # The previous version slept for two minutes and then judged, which found
+              # the site still serving an older index and called that a failure -- when
+              # it was simply a build that had not finished. Asking GitHub whether the
+              # build is done is exact, where a sleep is a guess about how long it takes.
+              run: |
+                for ATTEMPT in $(seq 1 30); do
+                  STATUS=$(gh api "repos/${{ github.repository }}/pages/builds/latest"                       --jq '.status' 2>/dev/null || echo "unknown")
+
+                  case "$STATUS" in
+                    built)
+                      echo "Pages build finished"
+                      exit 0
+                      ;;
+                    errored)
+                      gh api "repos/${{ github.repository }}/pages/builds/latest"                           --jq '.error.message' 2>/dev/null || true
+                      echo "::error::the Pages build failed"
+                      exit 1
+                      ;;
+                    *)
+                      echo "attempt ${ATTEMPT}: ${STATUS}"
+                      sleep 10
+                      ;;
+                  esac
+                done
+
+                echo "::warning::the Pages build did not report finished in five minutes"
+
             - name: Check the source actually serves this version
               # The outcome, not the mechanism.
               #
@@ -460,13 +493,15 @@ jobs:
               # the step that can say so.
               if: always() && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
               run: |
-                URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/Packages"
-                echo "Asking $URL for com.albrhi ${SUITE_VERSION}"
+                BASE="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/Packages"
+                echo "Asking $BASE for com.albrhi ${SUITE_VERSION}"
 
                 # Pages can take a little while to serve a fresh deploy, so this waits
                 # rather than deciding on the first answer.
-                for ATTEMPT in 1 2 3 4 5 6; do
-                  BODY=$(curl -fsSL "$URL" 2>/dev/null || true)
+                for ATTEMPT in $(seq 1 12); do
+                  # A fresh query string each time: the Pages CDN can hand back the
+                  # copy it already had for a little while after a build finishes.
+                  BODY=$(curl -fsSL "${BASE}?t=$(date +%s)-${ATTEMPT}" 2>/dev/null || true)
 
                   if printf '%s' "$BODY" | grep -A5 '^Package: com.albrhi$' | grep -q "^Version: ${SUITE_VERSION}$"; then
                     echo "ok  the source is serving ${SUITE_VERSION}"
@@ -478,19 +513,18 @@ jobs:
                   sleep 20
                 done
 
-                echo "::error::the source is not serving ${SUITE_VERSION}"
+                echo "::error::the source is still not serving ${SUITE_VERSION}"
                 echo ""
-                echo "The release is published and gh-pages holds the finished index."
-                echo "What is missing is GitHub serving that branch."
+                echo "The release is published and gh-pages holds the finished index,"
+                echo "and the Pages build was requested and reported finished. If the"
+                echo "version above is an older Albrhi rather than nothing at all, the"
+                echo "site is updating and simply had not caught up when this ran --"
+                echo "check the URL again in a few minutes before treating it as broken."
                 echo ""
-                echo "This cannot be fixed from here: GITHUB_TOKEN may deploy to Pages"
-                echo "but may not change how Pages is configured, and the attempt above"
-                echo "was refused. It needs one change in the repository settings:"
+                echo "If it is serving nothing for com.albrhi, the source is not set to"
+                echo "the branch:"
                 echo ""
                 echo "  Settings -> Pages -> Build and deployment -> Source"
                 echo "      Deploy from a branch"
                 echo "      Branch: gh-pages    Folder: / (root)"
-                echo ""
-                echo "In that mode the push this run already made is what serves the"
-                echo "source, and there is no deployment to queue behind."
                 exit 1
