@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.0.8
+
+- The source updates again. The step that published it had been getting stuck every
+  run, holding the whole thing for as long as it was allowed to. It is gone, and the
+  package list is now served straight from the branch it was already being written
+  to — the simpler arrangement, with nothing to wait on.
+
 ## v1.0.7
 
 - Fixes the source not updating. Publishing now works with how the repository is
