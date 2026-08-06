@@ -69,6 +69,34 @@ INSTAGRAM_FEATURES = [
      'profile to open it.'),
 ]
 
+ALBRHI_FEATURES = [
+    ('Choose per app',
+     'Settings › Albrhi lists every app Albrhi patches, with a switch each. Turn one '
+     'off and Albrhi does nothing inside that app — without uninstalling anything, '
+     'and with your settings kept for when you turn it back on. Close and reopen the '
+     'app for a change to take effect.'),
+
+    ('Instagram',
+     'A download button in every post and reel, a Download Center with a real queue, '
+     'a feed without ads or suggestions, watching stories without telling anyone, '
+     'confirmations before a mis-tap becomes a notification, custom date formats and '
+     'an OLED theme.'),
+
+    ('YouTube',
+     'Downloads with their own player and a Download Centre tab beside Home and You, '
+     'no ads, SponsorBlock with coloured markers, playback that keeps going in the '
+     'background and on the lock screen, and a quality ceiling per connection.'),
+
+    ('One package',
+     'Everything in a single install, updated in one place. New Albrhi tweaks arrive '
+     'here and appear in the same list, so there is never a second thing to install.'),
+
+    ('Arabic and English',
+     'Throughout, with the layout flipping automatically, and a diagnostics page in '
+     'each tweak that reports what it can actually see on your build.'),
+]
+
+
 YOUTUBE_FEATURES = [
     ('No ads',
      'Stopped at three points, because ads arrive by three routes and blocking '
@@ -134,6 +162,34 @@ TWEAKS = {
                        'Instagram or Meta.',
         'disclaimer': '_Free and open source. Not affiliated with, endorsed by or '
                       'sponsored by Instagram or Meta Platforms._',
+    },
+    'albrhi': {
+        # The combined package: everything Albrhi makes, in one .deb, chosen per app
+        # from Settings. It takes the 'albrhi' slug because that is the URL control
+        # has always pointed at and the one already in people's package managers.
+        # The 'instagram' entry above is kept for building that page by hand and no
+        # longer describes what the source serves.
+        'slug': 'albrhi',
+        'title': 'Albrhi',
+        'accent': '#E8590C',
+        'features': ALBRHI_FEATURES,
+        'tagline': '**One tweak for Instagram and YouTube**, switched per app from '
+                   'Settings.\n\nInstall one thing and update one thing. Settings › '
+                   'Albrhi lists every app it patches with a switch each, so turning '
+                   'it off inside an app needs no uninstalling and loses no settings.',
+        'html_tagline': '<strong>One tweak for Instagram and YouTube</strong> — '
+                        'switched per app from Settings.',
+        'app': 'Instagram and YouTube',
+        'tested': 'Instagram 410, 439, 441 · YouTube 21.30.5',
+        'tested_note': 'Tested on Instagram **410, 439 and 441**, and YouTube '
+                       '**21.30.5**. Nothing here is pinned to a version number: the '
+                       'tweak looks for what it needs while the app runs, so other '
+                       'versions should work too.',
+        'rows': [('Instagram tweak based on', 'SCInsta by SoCuul')],
+        'footer_html': 'GPLv3 · Instagram tweak based on SCInsta by SoCuul · not '
+                       'affiliated with Instagram, Meta or Google.',
+        'disclaimer': '_Free and open source. Not affiliated with, endorsed by or '
+                      'sponsored by Instagram, Meta Platforms or Google._',
     },
     'youtube': {
         'slug': 'albrhi-youtube',

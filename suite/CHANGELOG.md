@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.0.6
+
+- The package page in Sileo now describes this package rather than the old separate
+  Instagram one, and is generated from this changelog so it cannot go stale.
+
 ## v1.0.5
 
 - The roothide package is now checked properly before it is built, by reading the
