@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# Removes the packages this one replaces, before it lands.
+#
+# Conflicts and Replaces in the control file are honoured when a package manager
+# installs from a source. They are not when a .deb is installed by hand -- dpkg is
+# handed one file and told to unpack it, and the old packages stay exactly where
+# they are. Both dylibs then sit in DynamicLibraries under two package names and
+# both get injected, which is the one outcome this change must not produce.
+#
+# So the removal is done here rather than declared and hoped for.
+#
+
+set -e
+
+OLD="com.albrhi.tweak com.albrhi.tweak.roothide \
+     com.albrhi.youtube com.albrhi.youtube.roothide \
+     com.albrhi.panel com.albrhi.panel.roothide"
+
+for PACKAGE in $OLD; do
+    if dpkg-query -W -f='${Status}' "$PACKAGE" 2>/dev/null | grep -q "install ok installed"; then
+        echo "Albrhi: removing $PACKAGE, which this package replaces"
+
+        # --force-depends because the old package may be depended on by nothing at
+        # all and dpkg still refuses on a half-configured tree; the files are about
+        # to be replaced by ours either way.
+        dpkg --remove --force-depends "$PACKAGE" || true
+    fi
+done
+
+exit 0

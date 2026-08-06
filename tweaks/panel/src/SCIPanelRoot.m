@@ -5,7 +5,7 @@
 #import "SCIPanelScan.h"
 #import "Localization/SCILocalize.h"
 
-NSString *SCIVersionString = @"v0.4.0";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.5.0";  // AlbrhiPanel
 
 ///
 /// Albrhi's own control panel, in the iOS Settings app.

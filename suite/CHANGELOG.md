@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.0.1
+
+- **Now really removes the old separate packages.** 1.0.0 declared that it replaced
+  them, which a package manager honours when installing from a source but which is
+  ignored when you install a .deb by hand — so both copies stayed and both were
+  loaded. It removes them itself now, however you install it.
+
 ## v1.0.0
 
 **Everything Albrhi makes, in one package.**

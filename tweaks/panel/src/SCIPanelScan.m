@@ -15,6 +15,7 @@
 @interface LSApplicationProxy : NSObject
 @property (nonatomic, readonly) NSString *applicationIdentifier;
 @property (nonatomic, readonly) NSString *localizedName;
+@property (nonatomic, readonly) NSString *bundleExecutable;
 @end
 
 @interface LSApplicationWorkspace : NSObject
@@ -51,19 +52,24 @@
 }
 
 /// bundle identifier -> the name the device shows for it.
-+ (NSDictionary<NSString *, NSString *> *)installedNames {
++ (void)readInstalled:(NSMutableDictionary<NSString *, NSString *> *)names
+           executables:(NSMutableDictionary<NSString *, NSString *> *)executables {
     Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
-    if (!workspaceClass) return @{};
+    if (!workspaceClass) return;
 
-    NSMutableDictionary *names = [NSMutableDictionary dictionary];
     for (LSApplicationProxy *proxy in [[workspaceClass defaultWorkspace] allInstalledApplications]) {
         NSString *identifier = proxy.applicationIdentifier;
-        if (identifier.length) {
-            names[identifier.lowercaseString] = proxy.localizedName.length
-                ? proxy.localizedName : identifier;
-        }
+        if (!identifier.length) continue;
+
+        names[identifier.lowercaseString] = proxy.localizedName.length
+            ? proxy.localizedName : identifier;
+
+        // So an Executables filter can be resolved to the app it means. Two apps can
+        // share an executable name; the first wins and the second keeps its own row
+        // through Bundles if it has one.
+        NSString *executable = proxy.bundleExecutable;
+        if (executable.length && !executables[executable]) executables[executable] = identifier;
     }
-    return names;
 }
 
 + (NSArray<SCIPanelEntry *> *)entries {
@@ -74,7 +80,10 @@
     NSArray<NSString *> *contents = [files contentsOfDirectoryAtPath:directory error:NULL];
     if (!contents.count) return @[];
 
-    NSDictionary<NSString *, NSString *> *names = [self installedNames];
+    NSMutableDictionary<NSString *, NSString *> *names = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, NSString *> *executableOwners = [NSMutableDictionary dictionary];
+    [self readInstalled:names executables:executableOwners];
+
     NSMutableArray<SCIPanelEntry *> *out = [NSMutableArray array];
 
     for (NSString *fileName in contents) {
@@ -102,7 +111,24 @@
         unsigned long long size =
             [[files attributesOfItemAtPath:dylib error:NULL] fileSize];
 
+        // Bundles is what both current filters use. Executables is read too, because a
+        // future Albrhi tweak written that way would otherwise produce no row at all --
+        // the app would simply not appear, with nothing to say why, which is exactly the
+        // silent-omission failure this project keeps having to fix.
+        NSMutableArray *targets = [NSMutableArray array];
         for (id candidate in filter[@"Bundles"]) {
+            if ([candidate isKindOfClass:[NSString class]]) [targets addObject:candidate];
+        }
+        for (id candidate in filter[@"Executables"]) {
+            if (![candidate isKindOfClass:[NSString class]]) continue;
+
+            // An executable name is not a bundle identifier, so the app it belongs to has
+            // to be found by asking the device rather than by matching the string.
+            NSString *identifier = executableOwners[candidate];
+            if (identifier && ![targets containsObject:identifier]) [targets addObject:identifier];
+        }
+
+        for (id candidate in targets) {
             if (![candidate isKindOfClass:[NSString class]]) continue;
 
             SCIPanelEntry *entry = [[SCIPanelEntry alloc] init];

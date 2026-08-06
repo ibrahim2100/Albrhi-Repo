@@ -72,6 +72,18 @@ echo "=== assembling"
 mkdir -p "${STAGE}/DEBIAN"
 cp "${SUITE_DIR}/control" "${STAGE}/DEBIAN/control"
 
+# Maintainer scripts, if the suite has any. The preinst removes the packages this
+# one replaces -- Conflicts alone is only honoured by a package manager installing
+# from a source, and a .deb installed by hand leaves the old ones in place with
+# both dylibs injected.
+for SCRIPT in preinst postinst prerm postrm; do
+    if [ -f "${SUITE_DIR}/DEBIAN/${SCRIPT}" ]; then
+        cp "${SUITE_DIR}/DEBIAN/${SCRIPT}" "${STAGE}/DEBIAN/${SCRIPT}"
+        chmod 755 "${STAGE}/DEBIAN/${SCRIPT}"
+        echo "  + ${SCRIPT}"
+    fi
+done
+
 # The roothide package needs its own identity for the same reason the individual
 # ones did: two packages with the same name, version and architecture cannot both
 # live in one APT source, and a manager offered the wrong one would install it.
