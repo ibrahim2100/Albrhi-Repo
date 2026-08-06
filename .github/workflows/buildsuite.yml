@@ -151,6 +151,21 @@ jobs:
                 fi
                 echo "ok  two packages"
 
+                # And what actually distinguishes them, printed rather than assumed.
+                #
+                # 1.0.2 produced a roothide package that installed as a rootless one, and
+                # the cause could be the control or it could be the paths. Guessing between
+                # the two has cost this project a release each time; this shows both.
+                for DEB in packages/*.deb; do
+                  echo ""
+                  echo "================================================================"
+                  echo "$DEB"
+                  echo "================================================================"
+                  dpkg-deb -f "$DEB"
+                  echo "--- paths"
+                  dpkg-deb -c "$DEB" | awk '{print $NF}' | sort
+                done
+
             - name: Upload both debs
               uses: actions/upload-artifact@v4
               with:

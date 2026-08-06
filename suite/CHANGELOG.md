@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.0.3
+
+- Fixes the roothide package installing as a rootless one. The combined package was
+  built with its own description, which threw away the details the build tool fills
+  in to say which kind of jailbreak a package is for.
+
 ## v1.0.2
 
 - Includes the Instagram fix that brings back the reels download button.

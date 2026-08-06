@@ -70,7 +70,31 @@ echo ""
 echo "=== assembling"
 
 mkdir -p "${STAGE}/DEBIAN"
-cp "${SUITE_DIR}/control" "${STAGE}/DEBIAN/control"
+
+# The control Theos itself wrote for this scheme, used as the base for anything this
+# project does not define.
+#
+# 1.0.2 replaced DEBIAN/control wholesale with suite/control, which threw away every
+# field Theos computes -- and for the roothide scheme those fields are how a package
+# manager is told what it is looking at. The roothide build then installed as a rootless
+# one, because as far as its control said, it was one.
+THEOS_CONTROL=""
+for TWEAK_PATH in "${ROOT}"/tweaks/*/; do
+    CANDIDATE="${TWEAK_PATH}/.theos/_/DEBIAN/control"
+    if [ -f "${CANDIDATE}" ]; then
+        THEOS_CONTROL="${CANDIDATE}"
+        break
+    fi
+done
+
+if [ -n "${THEOS_CONTROL}" ]; then
+    echo "scheme fields from ${THEOS_CONTROL#${ROOT}/} -- what Theos wrote:"
+    sed 's/^/    /' "${THEOS_CONTROL}"
+else
+    echo "::warning::no Theos-generated control found; using suite/control alone"
+fi
+
+python3 "${ROOT}/tools/merge-control.py" \n    "${SUITE_DIR}/control" "${THEOS_CONTROL}" "${STAGE}/DEBIAN/control"
 
 # Maintainer scripts, if the suite has any. The preinst removes the packages this
 # one replaces -- Conflicts alone is only honoured by a package manager installing
