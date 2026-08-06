@@ -1,0 +1,55 @@
+#!/bin/sh
+#
+# Makes the helper setuid root.
+#
+# The panel runs as mobile and a tweak's filter file is root-owned, so the one
+# write it performs happens in a separate binary that has to be able to become
+# root. Without this the helper installs as an ordinary program, every switch
+# fails, and nothing says why.
+#
+# The path is searched rather than assumed. Rootful puts it at /usr/libexec,
+# rootless under /var/jb, and roothide under a directory whose name differs on
+# every device -- so a single hard-coded path would be wrong on one jailbreak of
+# the three, and silently.
+#
+
+set -e
+
+HELPER_NAME=albrhipanelhelper
+FOUND=""
+
+for CANDIDATE in \
+    /usr/libexec/$HELPER_NAME \
+    /var/jb/usr/libexec/$HELPER_NAME \
+    /var/LIB/usr/libexec/$HELPER_NAME
+do
+    if [ -f "$CANDIDATE" ]; then
+        FOUND="$CANDIDATE"
+        break
+    fi
+done
+
+# roothide, whose prefix is generated per device. Searched only if the known
+# layouts missed, and only one level deep, so this cannot walk the whole disk.
+if [ -z "$FOUND" ]; then
+    for CANDIDATE in /var/containers/Bundle/Application/*/usr/libexec/$HELPER_NAME \
+                     /private/preboot/*/procursus/usr/libexec/$HELPER_NAME
+    do
+        if [ -f "$CANDIDATE" ]; then
+            FOUND="$CANDIDATE"
+            break
+        fi
+    done
+fi
+
+if [ -z "$FOUND" ]; then
+    echo "Albrhi Panel: helper not found — per-app switches will not work" >&2
+    exit 0
+fi
+
+chown root:wheel "$FOUND"
+chmod 4755 "$FOUND"
+
+echo "Albrhi Panel: helper ready at $FOUND"
+
+exit 0

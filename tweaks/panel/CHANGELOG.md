@@ -1,5 +1,23 @@
 # Albrhi Panel Changelog
 
+## v0.3.0
+
+**Real per-app control.** Tap a tweak, see the apps it loads into, and switch it on
+or off for each one. Switched off, the tweak is not loaded into that app at all —
+this is the filter itself changing, not a setting being ignored.
+
+- Works for **any** tweak on the device, not only Albrhi's.
+- Only apps the tweak actually names are listed, so a tweak for social apps does not
+  ask you about sixty apps it has nothing to do with.
+- An app you switch off stays on the list, so you can switch it back on.
+- The original list is copied aside before the first change is made.
+- Respring for a change to take effect.
+- If the switches are greyed out, the helper did not install correctly — reinstalling
+  Albrhi Panel usually fixes it, and the page says so instead of failing quietly.
+
+**Note:** reinstalling or updating a tweak restores its own list, so a change you
+made here goes back. That is the package doing its job, not a fault.
+
 ## v0.2.0
 
 **The switch.** 0.1.0 described your device and did nothing else.

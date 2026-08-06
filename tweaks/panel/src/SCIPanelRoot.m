@@ -5,7 +5,7 @@
 #import "SCIPanelScan.h"
 #import "Localization/SCILocalize.h"
 
-NSString *SCIVersionString = @"v0.2.0";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.3.0";  // AlbrhiPanel
 
 ///
 /// The screen Settings opens.
@@ -14,10 +14,13 @@ NSString *SCIVersionString = @"v0.2.0";  // AlbrhiPanel
 /// plist. The whole point of this panel is that its contents depend on what is on the
 /// device — a static plist could describe a fixed set of rows and this has none.
 ///
-/// **This screen still only reads.** The one thing the panel writes is the per-app switch,
-/// and that lives on the detail page in SCIPanelAppPage.m — nothing is moved, and no
-/// filter file is edited anywhere. Changing what gets *injected* needs root; changing what
-/// the injected code *does* does not, and that is the line this version stays on.
+/// **This screen reads; the pages it opens write.** Tapping an app leads to a switch that
+/// stands Albrhi's own features down inside it, and tapping a tweak leads to switches that
+/// change the filter file itself — which is what stops a dylib loading at all. The second
+/// kind needs root and goes through helper/main.m, the one part of this that has it.
+///
+/// Nothing is ever moved or deleted. The worst a switch can do is remove a bundle
+/// identifier from a list, and the original filter is copied aside before the first change.
 ///
 /// Copyright (C) Ibrahim Ismail AL-Rahn. GPLv3.
 ///
@@ -102,7 +105,22 @@ NSString *SCIVersionString = @"v0.2.0";  // AlbrhiPanel
         [specifiers addObject:[self noteRow:SCILocalized(@"tweaks_none")]];
     }
     for (SCIPanelTweak *tweak in tweaks) {
-        [specifiers addObject:[self valueRow:tweak.name value:[self reachOf:tweak apps:apps]]];
+        // Tappable, and this is the screen the panel exists for: pick a tweak, see the apps
+        // it loads into, switch it per app. A Classes-only filter gets no page, because
+        // there is no list of apps to show -- it loads wherever a class happens to exist.
+        BOOL hasApps = tweak.bundles.count > 0;
+
+        PSSpecifier *row =
+            [PSSpecifier preferenceSpecifierNamed:tweak.name
+                                           target:self
+                                              set:NULL
+                                              get:NULL
+                                           detail:hasApps ? NSClassFromString(@"SCIPanelTweakController") : Nil
+                                             cell:hasApps ? PSLinkCell : PSTitleValueCell
+                                             edit:Nil];
+        [row setProperty:[self reachOf:tweak apps:apps] forKey:@"value"];
+        [row setProperty:tweak.name forKey:@"sciTweakName"];
+        [specifiers addObject:row];
     }
 
     // ---- and what this version is honest about not doing

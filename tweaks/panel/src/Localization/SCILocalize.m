@@ -42,11 +42,18 @@ static void SCIBuildTables(void) {
         @"app_others_footer": @"Tweaks by other developers are listed but cannot be switched from here yet.",
         @"ok": @"OK",
 
+        @"tweak_apps_section": @"Apps",
+        @"tweak_apps_footer": @"Switching an app off stops this tweak loading into it at all. Respring for the change to take effect.",
+        @"tweak_no_apps": @"This tweak names no apps",
+        @"helper_missing": @"The helper is not installed correctly, so these switches cannot change anything. Reinstalling Albrhi Panel usually fixes it.",
+        @"change_failed": @"That change could not be made",
+        @"change_respring": @"Respring for this to take effect.",
+
         @"section_about": @"About",
         @"about_version": @"Version",
         @"about_author": @"Made by",
         @"about_author_name": @"Ibrahim Ismail AL-Rahn",
-        @"about_readonly_note": @"This version changes nothing. It reads what is on the device and shows it.",
+        @"about_readonly_note": @"Nothing is moved or deleted. A switch removes an app from a tweak's list, and the original list is kept so it can be put back.",
     };
 
     _arTable = @{
@@ -79,11 +86,18 @@ static void SCIBuildTables(void) {
         @"app_others_footer": @"أدوات المطوّرين الآخرين تُعرَض ولا يمكن تشغيلها من هنا بعد.",
         @"ok": @"حسناً",
 
+        @"tweak_apps_section": @"التطبيقات",
+        @"tweak_apps_footer": @"إطفاء تطبيق يمنع تحميل هذه الأداة فيه أصلاً. أعد تشغيل الواجهة ليسري المفعول.",
+        @"tweak_no_apps": @"هذه الأداة لا تُسمّي تطبيقات",
+        @"helper_missing": @"المساعد غير مثبَّت بشكل صحيح، فهذه المفاتيح لا تُغيّر شيئاً. إعادة تثبيت لوحة البرهي تُصلح ذلك عادةً.",
+        @"change_failed": @"تعذّر إجراء هذا التغيير",
+        @"change_respring": @"أعد تشغيل الواجهة ليسري المفعول.",
+
         @"section_about": @"عن اللوحة",
         @"about_version": @"الإصدار",
         @"about_author": @"تطوير",
         @"about_author_name": @"إبراهيم إسماعيل الرهن",
-        @"about_readonly_note": @"هذا الإصدار لا يُغيّر شيئاً. يقرأ ما على الجهاز ويعرضه.",
+        @"about_readonly_note": @"لا يُنقَل شيء ولا يُحذَف. المفتاح يُزيل تطبيقاً من قائمة الأداة، والقائمة الأصليّة محفوظة ليُعاد.",
     };
 }
 

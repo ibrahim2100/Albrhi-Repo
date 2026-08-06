@@ -1,6 +1,6 @@
 Package: com.albrhi.panel
 Name: Albrhi Panel (rootless)
-Version: 0.2.0
+Version: 0.3.0
 Architecture: iphoneos-arm64
 Description: See which tweaks are changing which apps, from Settings.
  .
@@ -10,6 +10,14 @@ Description: See which tweaks are changing which apps, from Settings.
  It adds a page to the iOS Settings app listing every app a tweak is changing, and every
  tweak on the device with the apps it reaches. The list is read from each tweak's own
  filter file, so it shows what is really loaded rather than what a package claims.
+ .
+ ▍TURN A TWEAK OFF FOR ONE APP
+ Tap any tweak to see the apps it loads into, and switch it off for the ones you do not
+ want it in. It is then not loaded into that app at all. Works for every tweak on the
+ device, not only this developer's. Respring for a change to take effect.
+ .
+ Nothing is moved or deleted, and the original list is kept so a change can be undone.
+ Reinstalling or updating a tweak restores its own list.
  .
  ▍TURN ALBRHI OFF FOR ONE APP
  Tap an app and switch Albrhi off inside it, without uninstalling anything. Your settings
