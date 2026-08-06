@@ -221,7 +221,16 @@ verify_versions() {
     # Relative to the script, not to the working directory: the workflow runs this
     # from the workspace with the repository checked out into main/, the same reason
     # extra-debs is reached that way above.
-    for control in "$(dirname "$0")"/../tweaks/*/control; do
+    # suite/control, not tweaks/*/control.
+    #
+    # The individual packages are no longer released on their own -- everything ships in
+    # one, and the tweaks' own versions are internal now. Asserting them here would fail
+    # every run looking for a release that is deliberately never made, and a red build on
+    # a correct source is how a check gets switched off.
+    #
+    # The older published releases are still gathered and still served, so anyone who has
+    # them can still see and roll back to them. They are simply not what must be present.
+    for control in "$(dirname "$0")"/../suite/control; do
         [ -f "$control" ] || continue
 
         local package version
@@ -280,13 +289,10 @@ missing="$(verify_versions)"
 if [ -n "$missing" ]; then
     echo "::warning::Missing from the listing:${missing} — asking for those releases by name."
 
-    for control in "$(dirname "$0")"/../tweaks/*/control; do
-        [ -f "$control" ] || continue
-        tweak=$(basename "$(dirname "$control")")
-        version=$(awk -F': *' '/^Version:/ {print $2; exit}' "$control")
-        [ -n "$version" ] || continue
-        fetch_by_tag "$tweak" "$version"
-    done
+    # The same one the check above names. fetch_by_tag tries "<name>-v<version>",
+    # "v<version>" and "<version>" in that order, and the suite's tag is the middle one.
+    version=$(awk -F': *' '/^Version:/ {print $2; exit}' "$(dirname "$0")/../suite/control")
+    [ -n "$version" ] && fetch_by_tag "albrhi" "$version"
 
     missing="$(verify_versions)"
 fi

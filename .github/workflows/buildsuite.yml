@@ -3,13 +3,19 @@ name: Build Albrhi (all tweaks, one package)
 #
 # Builds every tweak and puts them in one .deb, uploaded as an artifact.
 #
-# Build only. It publishes nothing and never touches gh-pages, for the same reason
-# the panel's workflow does not: the APT index is rebuilt from scratch by whichever
-# workflow writes it, and a fourth writer added before the thing it publishes has
-# been installed on a phone is how a working source gets broken by an experiment.
+# **This is the only workflow that publishes.** The combined package has been installed
+# on a device, removed the three it replaces, and worked -- so it now owns the release,
+# the APT index and the Pages deploy, and the three older workflows have been reduced to
+# manual builds that write nothing.
 #
-# When the combined package has been shown to install cleanly over the three it
-# replaces, this grows a release job and the other three lose theirs.
+# One publisher rather than three is the point. make-repo.sh wipes debs/ and rebuilds it
+# from what is published, so two workflows deploying gh-pages have to be sequenced by a
+# concurrency group and a gather that checks what it found -- an arrangement that has
+# already served an index a version behind a release once. With a single publisher the
+# race cannot happen at all.
+#
+# The albrhi-pages group is kept anyway. The old workflows can still be run by hand, and
+# a manual run must not be able to write the branch at the same time as this one.
 #
 
 on:
@@ -17,15 +23,43 @@ on:
         branches:
             - 'main'
         paths:
+            # Anything that changes what ends up in the package, which is now every
+            # tweak: they are not released separately any more, so a fix to one of
+            # them reaches people only through this.
             - 'suite/**'
-            - 'tools/make-suite.sh'
+            - 'tweaks/**'
+            - 'shared/**'
+            - 'tools/**'
+            - 'extra-debs/**'
             - '.github/workflows/buildsuite.yml'
     workflow_dispatch:
+        inputs:
+            force_rebuild:
+                description: 'Release even if this version was already released'
+                type: boolean
+                default: false
 
 jobs:
     build:
-        name: Build the combined package
+        name: Build, release and publish
         runs-on: macos-latest
+
+        # Shared with the older workflows, and never cancelled. They can still be run
+        # by hand, and two runs must not rebuild and deploy gh-pages at once --
+        # cancelling rather than queueing would drop an index update.
+        concurrency:
+            group: albrhi-pages
+            cancel-in-progress: false
+
+        # Required by actions/deploy-pages, which refuses to run without it.
+        environment:
+            name: github-pages
+            url: ${{ steps.deploy.outputs.page_url }}
+
+        permissions:
+            contents: write
+            pages: write
+            id-token: write
 
         steps:
             - name: Checkout
@@ -44,6 +78,26 @@ jobs:
                 V=$(awk -F': *' '/^Version:/ {print $2; exit}' main/suite/control)
                 echo "SUITE_VERSION=$V" >> $GITHUB_ENV
                 echo "Building Albrhi $V"
+
+            - name: Decide whether a release is needed
+              id: gate
+              # Asked of the remote rather than of a file: the tag is the only record
+              # of what has actually been published, and a version number in a control
+              # file says only what somebody intended.
+              run: |
+                cd main
+                if git ls-remote --exit-code --tags origin "refs/tags/v${SUITE_VERSION}" > /dev/null 2>&1; then
+                  if [ "${{ github.event.inputs.force_rebuild }}" = "true" ]; then
+                    echo "v${SUITE_VERSION} exists; forced"
+                    echo "release=true" >> $GITHUB_OUTPUT
+                  else
+                    echo "v${SUITE_VERSION} is already released — building, not releasing"
+                    echo "release=false" >> $GITHUB_OUTPUT
+                  fi
+                else
+                  echo "v${SUITE_VERSION} is new"
+                  echo "release=true" >> $GITHUB_OUTPUT
+                fi
 
             - name: Install build dependencies
               run: brew install ldid make dpkg
@@ -172,3 +226,180 @@ jobs:
                 name: Albrhi-${{ env.SUITE_VERSION }}
                 path: main/packages/*.deb
                 if-no-files-found: error
+
+            - name: Extract changelog for this version
+              if: steps.gate.outputs.release == 'true'
+              run: |
+                cd main
+                python3 tools/release-notes.py suite/CHANGELOG.md suite/control > /tmp/notes.md
+                echo '--- release notes'
+                cat /tmp/notes.md
+
+            - name: Publish release
+              if: steps.gate.outputs.release == 'true'
+              uses: softprops/action-gh-release@v2
+              with:
+                name: Albrhi ${{ env.SUITE_VERSION }}
+                tag_name: v${{ env.SUITE_VERSION }}
+                body_path: /tmp/notes.md
+                files: main/packages/*.deb
+                fail_on_unmatched_files: true
+
+            - name: Prepare added packages
+              if: github.ref == 'refs/heads/main'
+              env:
+                GH_TOKEN: ${{ github.token }}
+              run: |
+                cd main
+
+                # A control archive compressed with xz is unreadable in the browser
+                # tool, which has no LZMA decoder. Converting the container here --
+                # payload untouched -- means a package uploaded from a phone can be
+                # edited from a phone afterwards.
+                changed=0
+
+                for deb in extra-debs/*.deb; do
+                  [ -e "$deb" ] || continue
+
+                  if python3 tools/deb-edit.py normalize "$deb" | grep -q '^Converted'; then
+                    echo "Normalised $deb"
+                    changed=1
+                  fi
+
+                  # Several flavours of one tweak otherwise appear in Sileo under
+                  # identical names, and the wrong one gets installed. The label is
+                  # read from the architecture, so it is a fact, not a guess.
+                  if python3 tools/deb-edit.py label "$deb" | grep -q '^Labelled'; then
+                    echo "Labelled $deb"
+                    changed=1
+                  fi
+                done
+
+                if [ "$changed" -eq 0 ]; then
+                  echo "Nothing to prepare."
+                  exit 0
+                fi
+
+                git config user.name "github-actions[bot]"
+                git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                git add extra-debs
+
+                # [skip ci] matters: this commit lands on main, and without it the
+                # workflow would trigger itself again.
+                git commit -q -m "Prepare added packages: normalise and label [skip ci]"
+                git push -q "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" HEAD:main
+
+            - name: Gather every published package
+              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+              env:
+                GH_TOKEN: ${{ github.token }}
+              run: |
+                # The index is built from what is published, not from what this run
+                # compiled. That is what lets a second workflow in this repository
+                # rebuild the index without erasing this tweak from the source --
+                # make-repo.sh wipes debs/ on purpose, and an index built from one
+                # tweak's build output would take the other tweak down with it.
+                #
+                # It also keeps earlier versions installable: a build that turns out
+                # to be broken on a device has to be rollable back from Sileo rather
+                # than by hunting for an asset on the releases page.
+                #
+                # The fourth argument folds in this run's own build, under the same
+                # naming as everything else. The releases listing is eventually
+                # consistent, so a release published seconds ago may not appear in
+                # it -- YouTube shipped an index missing its own release exactly
+                # that way, and this side had the same gap without having hit it.
+                chmod +x main/tools/fetch-published-debs.sh
+                ./main/tools/fetch-published-debs.sh published "${{ github.repository }}" 3 "$TWEAK_DIR/packages" instagram
+
+            - name: Publish APT repo to GitHub Pages
+              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+              env:
+                GH_TOKEN: ${{ github.token }}
+              run: |
+                set -x
+                REPO_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+                REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+
+                rm -rf pages
+                mkdir pages
+                cd pages
+                git init -q
+                git remote add origin "$REMOTE"
+
+                # Ask whether the branch exists rather than inferring it from a failed
+                # clone: a failed clone can leave a partial directory behind, which is
+                # what broke the first attempt at this step.
+                if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+                  echo "gh-pages exists — fetching it."
+                  git fetch -q --depth 1 origin gh-pages
+                  git checkout -q -b gh-pages FETCH_HEAD
+                else
+                  echo "gh-pages does not exist — starting a fresh branch."
+                  git checkout -q -b gh-pages
+                fi
+
+                cd ..
+
+                chmod +x main/tools/make-repo.sh
+                ./main/tools/make-repo.sh published pages "$REPO_URL"
+
+                cp main/tools/repo-index.html pages/index.html
+
+                # The deb editor, usable from any device including a phone.
+                mkdir -p pages/deb-edit
+                cp main/tools/deb-edit.html pages/deb-edit/index.html
+
+                # Puts the tweak inside an Instagram IPA, entirely in the visitor's
+                # browser. Nothing is uploaded, so hosting the page carries none of
+                # the risk that hosting an IPA would.
+                mkdir -p pages/inject
+                cp main/tools/ipa-inject.html pages/inject/index.html
+
+                # Regenerated every run so the version and changelog shown on the
+                # package page always match what was actually built. The generator
+                # reads CHANGELOG.md relative to its own working directory, hence
+                # the cd; the output path is absolute so the cd cannot redirect it.
+                PAGES_DIR="$(pwd)/pages"
+                ( cd "$TWEAK_DIR" && python3 ../../tools/make-depiction.py "$PAGES_DIR" "$ALBRHI_VERSION" "$REPO_URL" )
+
+                ls -la pages/depictions
+
+                # Source icon, shown beside the repo name in Sileo and Zebra.
+                # Regenerated each run; drop tools/logo.png in to override it.
+                python3 main/tools/make-logo.py pages/CydiaIcon.png 512
+
+                # GitHub Pages skips files and folders beginning with an underscore
+                # unless this marker is present. Harmless here, and prevents a class
+                # of silent 404s.
+                touch pages/.nojekyll
+
+                cd pages
+                git config user.name "github-actions[bot]"
+                git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                git add -A
+
+                if git diff --cached --quiet; then
+                  echo "Repo index unchanged — nothing to push."
+                  exit 0
+                fi
+
+                git commit -q -m "Repo: Albrhi ${ALBRHI_VERSION}"
+                git push -q origin gh-pages
+
+                echo "Index committed to gh-pages; the deploy steps below publish it."
+
+            # The branch above stays the source of truth and stays readable. These
+            # steps only make the publish explicit: it succeeds or fails inside this
+            # run, with a log, instead of depending on a trigger that can stop
+            # firing without notice — which is exactly what happened.
+            - name: Upload the repo for Pages
+              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+              uses: actions/upload-pages-artifact@v3
+              with:
+                path: pages
+
+            - name: Deploy to Pages
+              id: deploy
+              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+              uses: actions/deploy-pages@v4

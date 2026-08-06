@@ -1,44 +1,20 @@
-name: Build and release Albrhi for YouTube
+name: Build Albrhi for YouTube (manual)
+
 
 #
-# Deliberately a second workflow rather than a second job inside the Instagram one.
+# **Manual only. This workflow no longer publishes anything.**
 #
-# The two tweaks have separate versions, separate tags and separate release assets,
-# and a failure in one must not hold back the other: a YouTube build that will not
-# compile should never be able to block an Instagram release, which is exactly what
-# would happen if both lived in one job.
+# Everything Albrhi makes now ships in one package, released by buildsuite.yml, which
+# also owns the APT index and the Pages deploy. Leaving this on a push trigger would
+# mean two workflows rebuilding the same index from scratch and racing for gh-pages --
+# the arrangement that once served a source a version behind its own release.
 #
-# The one thing they cannot help sharing is the APT index, and that is where the
-# hazard was. make-repo.sh wipes the published debs/ directory and rebuilds it on
-# purpose, so an index built from one tweak's build output would erase the other
-# tweak from the source. Both workflows therefore build the index from what is
-# *published* -- tools/fetch-published-debs.sh -- so either one produces a complete,
-# correct index, and both take the albrhi-pages concurrency group so they never write
-# to gh-pages at the same time.
-#
-# No standalone .dylib is published for YouTube yet: that build needs the Substrate
-# shim under Compat/, which this tweak does not carry, and shipping a dylib that
-# silently hooks nothing is worse than shipping none.
+# It is kept, rather than deleted, because building one tweak on its own is still the
+# fastest way to find out whether that tweak compiles. It produces a package and stops.
 #
 
 on:
-    push:
-        branches:
-            - 'main'
-        paths:
-            # Only when something that affects this tweak changed. The Instagram
-            # workflow rebuilds the index on every push regardless, so nothing is
-            # missed by staying quiet here.
-            - 'tweaks/youtube/**'
-            - 'shared/**'
-            - 'tools/**'
-            - '.github/workflows/buildyoutube.yml'
     workflow_dispatch:
-        inputs:
-            force_rebuild:
-                description: 'Rebuild even if this version was already released'
-                type: boolean
-                default: false
 
 env:
     TWEAK_DIR: main/tweaks/youtube
@@ -49,19 +25,10 @@ jobs:
         name: Build YouTube rootless + roothide
         runs-on: macos-latest
 
-        environment:
-            name: github-pages
-            url: ${{ steps.deploy.outputs.page_url }}
 
         permissions:
-            contents: write
-            pages: write
-            id-token: write
+            contents: read
 
-        # Shared with the Instagram workflow: see the note at the top of this file.
-        concurrency:
-            group: albrhi-pages
-            cancel-in-progress: false
 
         steps:
             - name: Checkout Main
@@ -241,166 +208,3 @@ jobs:
                   mv "$BUILT_DEB" "$TARGET"
                 fi
                 ls -la
-
-            - name: Extract changelog for this version
-              if: steps.release_check.outputs.needed == 'true'
-              run: |
-                awk -v ver="$YT_VERSION" '
-                  $0 ~ "^## v?" ver { found=1; next }
-                  found && /^## / { exit }
-                  found { print }
-                ' "$TWEAK_DIR/CHANGELOG.md" > release-notes.md
-
-                if [ ! -s release-notes.md ]; then
-                  echo "Albrhi for YouTube ${YT_VERSION}." > release-notes.md
-                fi
-
-                cat release-notes.md
-
-            - name: Publish release
-              if: steps.release_check.outputs.needed == 'true'
-              uses: softprops/action-gh-release@v2
-              with:
-                tag_name: ${{ env.TAG }}
-                name: Albrhi for YouTube ${{ env.YT_VERSION }}
-                body_path: release-notes.md
-                prerelease: true
-                files: |
-                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/com.albrhi.youtube_${{ env.YT_VERSION }}+rootless.deb
-                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/com.albrhi.youtube.roothide_${{ env.YT_VERSION }}.deb
-                fail_on_unmatched_files: true
-              env:
-                GITHUB_TOKEN: ${{ github.token }}
-
-            - name: Gather every published package
-              env:
-                GH_TOKEN: ${{ github.token }}
-              run: |
-                # Both tweaks, from the releases rather than from this run's output --
-                # the whole reason two workflows can share one source without one
-                # erasing the other. See the note at the top of this file.
-                #
-                # The fourth argument is this run's own build. Asking the API for
-                # "every published release" a minute after publishing one does not
-                # reliably include it -- 0.5.0 was published at 17:05:28 and the run
-                # that published it built an index stopping at 0.4.5 at 17:06:41.
-                #
-                # It goes through the script so it gets the same name as everything
-                # else. 0.6.0 failed to release because the first attempt copied it
-                # in here under the build's own filename, and the collision guard
-                # correctly refused two files carrying one identity.
-                chmod +x main/tools/fetch-published-debs.sh
-                ./main/tools/fetch-published-debs.sh published "${{ github.repository }}" 3 "$TWEAK_DIR/packages" youtube
-
-            # Both workflows deploy, and that is not redundancy -- it is what makes
-            # the order they run in irrelevant.
-            #
-            # A push that touches this tweak starts both. If Instagram's run gathers
-            # the published packages before this one has published its release, its
-            # index will not have YouTube in it; this run then publishes and deploys a
-            # complete one. In the other order, this run deploys a complete index and
-            # Instagram's run deploys the same complete index again. Either way the
-            # last deployment is correct, and neither has to know about the other
-            # beyond taking the same concurrency group.
-            #
-            # That holds only because the step above now also copies in this run's own
-            # packages. Without it, "complete" meant "as complete as the releases API
-            # had caught up to", and the release published seconds earlier was the one
-            # thing missing.
-            - name: Publish APT repo to GitHub Pages
-              env:
-                GH_TOKEN: ${{ github.token }}
-              run: |
-                REPO_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
-
-                rm -rf pages
-                mkdir pages
-
-                chmod +x main/tools/make-repo.sh
-                ./main/tools/make-repo.sh published pages "$REPO_URL"
-
-                cp main/tools/repo-index.html pages/index.html
-
-                mkdir -p pages/deb-edit
-                cp main/tools/deb-edit.html pages/deb-edit/index.html
-
-                mkdir -p pages/inject
-                cp main/tools/ipa-inject.html pages/inject/index.html
-
-                # Instagram's depiction is regenerated by its own workflow from its own
-                # changelog. Carried across untouched here rather than rebuilt: this
-                # workflow has no business deciding what Instagram's package page says,
-                # and dropping it would leave a dead link in Sileo.
-                #
-                # Cloned with the token because this step now pushes back to gh-pages as
-                # well -- see below.
-                PAGES_REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
-
-                if git ls-remote --exit-code --heads "$PAGES_REMOTE" gh-pages >/dev/null 2>&1; then
-                  git clone -q --depth 1 --branch gh-pages "$PAGES_REMOTE" previous-pages
-                  if [ -d previous-pages/depictions ]; then
-                    cp -R previous-pages/depictions pages/depictions
-                    echo "Carried over $(ls pages/depictions | wc -l) depiction files."
-                  fi
-                fi
-
-                # This tweak's own package page, written after the carry-over so it
-                # replaces its own two files and leaves Instagram's alone.
-                #
-                # Without it Sileo has nothing to render but the Description field, which
-                # is how 0.1 through 0.4 shipped: a wall of prose beside Instagram's
-                # tabbed page. The generator reads CHANGELOG.md relative to its working
-                # directory, hence the cd; the output path is absolute so the cd cannot
-                # redirect it.
-                PAGES_DIR="$(pwd)/pages"
-                ( cd "$TWEAK_DIR" && python3 ../../tools/make-depiction.py "$PAGES_DIR" "$YT_VERSION" "$REPO_URL" youtube )
-
-                ls -la pages/depictions
-
-                # And put it on gh-pages, which is the part 0.4.1 got wrong.
-                #
-                # This workflow only uploads a Pages artifact; the Instagram workflow
-                # builds its deployment *from the gh-pages branch*. So a page that only
-                # ever exists in this workflow's artifact survives exactly until the next
-                # Instagram release deploys over it -- which is how the YouTube depiction
-                # 404'd within a minute of being published, the two runs being a minute
-                # apart. Writing it to the branch makes gh-pages the one place both
-                # workflows agree on, which is what the index already does.
-                #
-                # They share the albrhi-pages concurrency group, so the two can never
-                # push here at once.
-                if [ -d previous-pages/.git ]; then
-                  mkdir -p previous-pages/depictions
-                  cp pages/depictions/albrhi-youtube.* previous-pages/depictions/
-
-                  (
-                    cd previous-pages
-                    git config user.name "github-actions[bot]"
-                    git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-                    git add depictions
-
-                    # Nothing to commit is the normal case on a run that changed no
-                    # copy, and must not fail the deploy.
-                    if git diff --cached --quiet; then
-                      echo "Depiction unchanged; nothing to push."
-                    else
-                      git commit -q -m "YouTube depiction for ${YT_VERSION}"
-                      git push -q origin gh-pages
-                      echo "Depiction written to gh-pages."
-                    fi
-                  )
-                fi
-
-                python3 main/tools/make-logo.py pages/CydiaIcon.png 512
-
-                touch pages/.nojekyll
-                ls -la pages
-
-            - name: Upload the repo for Pages
-              uses: actions/upload-pages-artifact@v3
-              with:
-                path: pages
-
-            - name: Deploy to Pages
-              id: deploy
-              uses: actions/deploy-pages@v4

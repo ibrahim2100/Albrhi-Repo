@@ -1,28 +1,18 @@
 name: Build Albrhi Panel
 
 #
-# Build only. This workflow publishes no release and never touches gh-pages.
+# **Manual only. This workflow no longer publishes anything.**
 #
-# That is the point of it, not a stage it has not reached yet. The APT index is
-# rebuilt from scratch by whichever workflow writes it, and the two shipping tweaks
-# already coordinate over that with a shared concurrency group and a gather step that
-# checks every package is present. Adding a third writer to that arrangement before
-# the thing it publishes has ever compiled is how a working source gets broken by an
-# experiment.
+# Everything Albrhi makes now ships in one package, released by buildsuite.yml, which
+# also owns the APT index and the Pages deploy. Leaving this on a push trigger would
+# mean two workflows rebuilding the same index from scratch and racing for gh-pages --
+# the arrangement that once served a source a version behind its own release.
 #
-# So this produces a .deb as an artifact, downloadable from the run. When the panel
-# has been installed on a real device and shown to describe it correctly, this grows
-# a release job modelled on buildyoutube.yml -- and not before.
+# It is kept, rather than deleted, because building one tweak on its own is still the
+# fastest way to find out whether that tweak compiles. It produces a package and stops.
 #
 
 on:
-    push:
-        branches:
-            - 'main'
-        paths:
-            - 'tweaks/panel/**'
-            - 'shared/bundle.mk'
-            - '.github/workflows/buildpanel.yml'
     workflow_dispatch:
 
 jobs:
