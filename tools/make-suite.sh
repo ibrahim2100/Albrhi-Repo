@@ -71,13 +71,19 @@ echo "=== assembling"
 
 mkdir -p "${STAGE}/DEBIAN"
 
-# The control Theos itself wrote for this scheme, used as the base for anything this
-# project does not define.
+# The control Theos itself wrote, used as the base for anything this project does not
+# define.
 #
-# 1.0.2 replaced DEBIAN/control wholesale with suite/control, which threw away every
-# field Theos computes -- and for the roothide scheme those fields are how a package
-# manager is told what it is looking at. The roothide build then installed as a rootless
-# one, because as far as its control said, it was one.
+# **This is not what makes a package roothide, and the first run proved it.** The theory
+# was that Theos writes a scheme field into control and replacing the file wholesale threw
+# it away. The run printed what Theos actually wrote, and beyond our own fields there are
+# exactly three: Architecture, Version and Installed-Size. No scheme marker exists.
+#
+# What distinguishes the two schemes is the *paths inside the package* -- a rootless .deb
+# carries /var/jb/... and a roothide one does not -- which is decided by Theos when it
+# stages, long before this script sees anything. Keeping the merge anyway, because
+# Installed-Size is worth having and overriding only what we own is the right shape; but
+# it is not the fix, and the paths printed at the end of the run are what will show it.
 THEOS_CONTROL=""
 for TWEAK_PATH in "${ROOT}"/tweaks/*/; do
     CANDIDATE="${TWEAK_PATH}/.theos/_/DEBIAN/control"
@@ -94,7 +100,7 @@ else
     echo "::warning::no Theos-generated control found; using suite/control alone"
 fi
 
-python3 "${ROOT}/tools/merge-control.py" \n    "${SUITE_DIR}/control" "${THEOS_CONTROL}" "${STAGE}/DEBIAN/control"
+python3 "${ROOT}/tools/merge-control.py" "${SUITE_DIR}/control" "${THEOS_CONTROL}" "${STAGE}/DEBIAN/control"
 
 # Maintainer scripts, if the suite has any. The preinst removes the packages this
 # one replaces -- Conflicts alone is only honoured by a package manager installing
@@ -135,6 +141,34 @@ grep -E '^(Package|Name|Version|Conflicts|Replaces):' "${STAGE}/DEBIAN/control"
 echo ""
 echo "contents:"
 find "${STAGE}" -type f -not -path '*/DEBIAN/*' | sed "s|${STAGE}/||" | sort
+
+# The paths are what make a package rootless or roothide, and nothing else does.
+#
+# A rootless package carries everything under var/jb; a roothide one does not, because
+# roothide's own prefix is decided on the device rather than baked into the .deb. 1.0.2
+# shipped a "roothide" package built from a rootless staging tree, and it installed as
+# rootless -- correctly, because that is what it was. Nothing checked, so nothing said so.
+#
+# Checked against the scheme that was asked for rather than reported afterwards: a wrong
+# package that reaches a phone costs an install and a respring to find out.
+echo ""
+ROOTLESS_PATHS=$(find "${STAGE}" -type f -not -path '*/DEBIAN/*' -path '*/var/jb/*' | wc -l | tr -d ' ')
+TOTAL_PATHS=$(find "${STAGE}" -type f -not -path '*/DEBIAN/*' | wc -l | tr -d ' ')
+
+echo "scheme check: ${ROOTLESS_PATHS} of ${TOTAL_PATHS} files are under var/jb"
+
+if [ "${SCHEME}" = "rootless" ] && [ "${ROOTLESS_PATHS}" = "0" ]; then
+    echo "::error::rootless was asked for and nothing is under var/jb — Theos staged the wrong scheme" >&2
+    exit 1
+fi
+
+if [ "${SCHEME}" = "roothide" ] && [ "${ROOTLESS_PATHS}" != "0" ]; then
+    echo "::error::roothide was asked for and ${ROOTLESS_PATHS} files are under var/jb — this is a rootless tree" >&2
+    echo "  THEOS was: ${THEOS:-unset}" >&2
+    exit 1
+fi
+
+echo "ok  the tree matches the ${SCHEME} scheme"
 
 # Ownership matters: a tweak file owned by anyone but root is one MobileSubstrate
 # refuses to load, and the failure is silent.

@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.0.4
+
+- Fixes the build, which 1.0.3 broke before it produced anything.
+- The roothide package is now checked to actually be one before it is built, instead
+  of being found out after installing it.
+
 ## v1.0.3
 
 - Fixes the roothide package installing as a rootless one. The combined package was
