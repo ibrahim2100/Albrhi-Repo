@@ -62,3 +62,7 @@ tweaks/*/src/**/wip.xm
 # Python bytecode from the tools scripts
 __pycache__/
 *.pyc
+
+# Staging tree for the combined package, rebuilt by tools/make-suite.sh
+.suite-stage/
+/packages/
