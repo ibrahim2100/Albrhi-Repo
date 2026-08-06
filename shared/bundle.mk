@@ -29,7 +29,17 @@ $(BUNDLE_NAME)_CFLAGS += -fobjc-arc \
 
 # Preferences owns the process this bundle is loaded into, and every class it
 # needs -- PSListController, PSSpecifier -- lives there.
+#
+# The search path is given explicitly. `_PRIVATE_FRAMEWORKS` alone got as far as
+# the linker and then "framework 'Preferences' not found": every source compiled,
+# so the classes and headers were fine, and only the directory holding the stub was
+# missing from the search path. Theos adds it for a tweak target and evidently not
+# for a bundle one, and rather than depend on which does what, the path is named.
+#
+# $(SYSROOT) rather than a version number: the SDK is chosen by CI and pinning
+# iPhoneOS16.2 here would break the day it changes.
 $(BUNDLE_NAME)_PRIVATE_FRAMEWORKS = Preferences
+$(BUNDLE_NAME)_LDFLAGS += -F$(SYSROOT)/System/Library/PrivateFrameworks
 $(BUNDLE_NAME)_FRAMEWORKS += UIKit Foundation CoreGraphics
 
 # Where a preference bundle has to land for Settings to find it. Under rootless

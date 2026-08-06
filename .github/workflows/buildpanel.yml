@@ -85,6 +85,19 @@ jobs:
               env:
                 THEOS: ${{ github.workspace }}/theos
 
+            - name: Check the SDK actually carries Preferences.framework
+              # The first build linked against a framework the linker could not find, and
+              # "not found" has two readings: the directory is missing from the search path,
+              # or the SDK does not ship the stub at all. Those need different fixes, and
+              # guessing between them costs a build each time. This says which.
+              run: |
+                SDK=$(ls -d $THEOS/sdks/*.sdk | head -n1)
+                echo "SDK: $SDK"
+                ls -la "$SDK/System/Library/PrivateFrameworks/Preferences.framework/" \
+                  || echo "::warning::Preferences.framework is not in this SDK"
+              env:
+                THEOS: ${{ github.workspace }}/theos
+
             - name: Build for rootless
               run: |
                 cd main
