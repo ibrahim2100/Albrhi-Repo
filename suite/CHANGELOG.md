@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.0.7
+
+- Fixes the source not updating. Publishing now works with how the repository is
+  actually set up instead of assuming one particular setting, so the package list
+  is refreshed either way, and the run checks the live source afterwards rather
+  than reporting that a step finished.
+
 ## v1.0.6
 
 - The package page in Sileo now describes this package rather than the old separate

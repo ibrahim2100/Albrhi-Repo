@@ -51,7 +51,10 @@ jobs:
             group: albrhi-pages
             cancel-in-progress: false
 
-        # Required by actions/deploy-pages, which refuses to run without it.
+        # Required by actions/deploy-pages, which refuses to run without it. Job
+        # level because that is the only level Actions has -- and it is not what has
+        # been holding these runs: they reach the deploy step, so nothing is gating
+        # the job before it starts.
         environment:
             name: github-pages
             url: ${{ steps.deploy.outputs.page_url }}
@@ -402,21 +405,59 @@ jobs:
             # steps only make the publish explicit: it succeeds or fails inside this
             # run, with a log, instead of depending on a trigger that can stop
             # firing without notice — which is exactly what happened.
-            - name: Upload the repo for Pages
+            - name: Ask how Pages is configured
+              id: pages
               if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+              env:
+                GH_TOKEN: ${{ github.token }}
+              # Because the two ways of publishing are not interchangeable and only one
+              # of them works at a time.
+              #
+              # A repository serves Pages either from a branch ("legacy") or from a
+              # workflow artifact ("workflow"). deploy-pages only works in the second;
+              # in the first it creates a deployment nothing ever picks up, which sits
+              # at deployment_queued forever. That is what has been happening, and it
+              # is a repository setting no file in this repository can see -- so it is
+              # asked for rather than assumed.
+              run: |
+                BUILD_TYPE=$(gh api "repos/${{ github.repository }}/pages"                     --jq '.build_type' 2>/dev/null || echo "none")
+                echo "Pages build_type: ${BUILD_TYPE}"
+                echo "build_type=${BUILD_TYPE}" >> $GITHUB_OUTPUT
+
+            - name: Upload the repo for Pages
+              if: |
+                steps.pages.outputs.build_type == 'workflow' &&
+                (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
               uses: actions/upload-pages-artifact@v3
               with:
                 path: pages
 
             - name: Deploy to Pages
               id: deploy
-              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
-              # Bounded, because this queued for over ten minutes once with no way to
-              # tell a slow deployment from a stuck one. A run that hangs here has
-              # already published the release and already pushed the branch, so the
-              # useful outcome is a failure with a log rather than an hour of polling.
+              if: |
+                steps.pages.outputs.build_type == 'workflow' &&
+                (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+              # Bounded, because this queued indefinitely before the step above existed
+              # to keep it from running in the mode where it cannot work.
               timeout-minutes: 10
               uses: actions/deploy-pages@v4
+
+            - name: Ask Pages to rebuild from the branch
+              if: |
+                steps.pages.outputs.build_type == 'legacy' &&
+                (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+              env:
+                GH_TOKEN: ${{ github.token }}
+              # The branch was pushed above; this asks for the build that serves it.
+              #
+              # GitHub normally builds a branch-served site on push, and the note in
+              # CLAUDE.md records that it stopped doing so for pushes made with
+              # GITHUB_TOKEN -- the branch updated while the site kept serving the
+              # previous release. Requesting the build explicitly removes the
+              # dependency on that trigger, which is the same reason the artifact
+              # deploy was added; this is simply the request that works in this mode.
+              run: |
+                gh api -X POST "repos/${{ github.repository }}/pages/builds" --silent                   && echo "build requested"                   || echo "::warning::could not request a Pages build; the push may still trigger one"
 
             - name: Check the source actually serves this version
               # The outcome, not the mechanism.
