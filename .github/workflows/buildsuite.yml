@@ -411,4 +411,45 @@ jobs:
             - name: Deploy to Pages
               id: deploy
               if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+              # Bounded, because this queued for over ten minutes once with no way to
+              # tell a slow deployment from a stuck one. A run that hangs here has
+              # already published the release and already pushed the branch, so the
+              # useful outcome is a failure with a log rather than an hour of polling.
+              timeout-minutes: 10
               uses: actions/deploy-pages@v4
+
+            - name: Check the source actually serves this version
+              # The outcome, not the mechanism.
+              #
+              # The index is published two ways -- the gh-pages branch is pushed above
+              # and the same tree is deployed as a Pages artifact -- and which of them
+              # the site is served from is a repository setting, not something this
+              # file can see. So neither is trusted: this asks the live URL whether it
+              # is serving the version that was just built.
+              #
+              # `always()` so it still runs when the deploy step failed or timed out.
+              # That is exactly when the answer matters: if the branch is what serves
+              # the site, the source is fine and the deploy was redundant, and this is
+              # the step that can say so.
+              if: always() && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+              run: |
+                URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/Packages"
+                echo "Asking $URL for com.albrhi ${SUITE_VERSION}"
+
+                # Pages can take a little while to serve a fresh deploy, so this waits
+                # rather than deciding on the first answer.
+                for ATTEMPT in 1 2 3 4 5 6; do
+                  BODY=$(curl -fsSL "$URL" 2>/dev/null || true)
+
+                  if printf '%s' "$BODY" | grep -A5 '^Package: com.albrhi$' | grep -q "^Version: ${SUITE_VERSION}$"; then
+                    echo "ok  the source is serving ${SUITE_VERSION}"
+                    exit 0
+                  fi
+
+                  SERVING=$(printf '%s' "$BODY" | grep -A5 '^Package: com.albrhi$' | grep '^Version:' | head -n1)
+                  echo "attempt ${ATTEMPT}: ${SERVING:-nothing for com.albrhi yet}"
+                  sleep 20
+                done
+
+                echo "::error::the source is not serving ${SUITE_VERSION} — the release is published but the index is behind"
+                exit 1
