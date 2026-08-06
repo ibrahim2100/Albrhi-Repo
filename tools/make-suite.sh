@@ -168,6 +168,44 @@ if [ "${SCHEME}" = "roothide" ] && [ "${ROOTLESS_PATHS}" != "0" ]; then
     exit 1
 fi
 
+# And the part that actually decides it, which paths alone do not.
+#
+# roothide's own documentation is explicit: a roothide binary links its dependencies
+# through "@loader_path/.jbroot/absolute/path", because the jailbreak root has a
+# different random name on every device and cannot be written into a binary. A rootless
+# binary links /var/jb/usr/lib/libsubstrate.dylib instead.
+#
+# So this reads the load commands rather than trusting the layout. A package whose paths
+# look right and whose dylibs still point at /var/jb is a rootless package wearing a
+# roothide name, which is what Sileo was refusing and what nothing here could see.
+if command -v otool > /dev/null; then
+    echo ""
+    echo "linkage:"
+    WRONG=0
+
+    while IFS= read -r DYLIB; do
+        LINKS=$(otool -L "${DYLIB}" 2>/dev/null | tail -n +2 | awk '{print $1}')
+        echo "  $(basename "${DYLIB}")"
+        echo "${LINKS}" | sed 's/^/      /'
+
+        if [ "${SCHEME}" = "roothide" ]; then
+            if echo "${LINKS}" | grep -q '^/var/jb/'; then
+                echo "::error::$(basename "${DYLIB}") links /var/jb — built for rootless, not roothide" >&2
+                WRONG=1
+            fi
+        fi
+    done <<EOF
+$(find "${STAGE}" -type f -name '*.dylib')
+EOF
+
+    if [ "${WRONG}" != "0" ]; then
+        echo "  THEOS was: ${THEOS:-unset}" >&2
+        exit 1
+    fi
+else
+    echo "::warning::otool not found — linkage not checked"
+fi
+
 echo "ok  the tree matches the ${SCHEME} scheme"
 
 # Ownership matters: a tweak file owned by anyone but root is one MobileSubstrate

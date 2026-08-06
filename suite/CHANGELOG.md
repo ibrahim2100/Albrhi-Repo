@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.0.5
+
+- The roothide package is now checked properly before it is built, by reading the
+  libraries each part links against rather than only where the files sit. A package
+  can look right and still be built the wrong way, and that is what Sileo was
+  refusing.
+
 ## v1.0.4
 
 - Fixes the build, which 1.0.3 broke before it produced anything.
