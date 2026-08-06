@@ -14,10 +14,10 @@ NSString *SCIVersionString = @"v0.2.0";  // AlbrhiPanel
 /// plist. The whole point of this panel is that its contents depend on what is on the
 /// device — a static plist could describe a fixed set of rows and this has none.
 ///
-/// **Everything here is read.** No specifier writes a preference, nothing is moved, and no
-/// filter is edited. That is the first release on purpose: the panel earns the right to
-/// change what loads where by first proving it can describe it correctly, on a real device,
-/// with a real jailbreak's paths.
+/// **This screen still only reads.** The one thing the panel writes is the per-app switch,
+/// and that lives on the detail page in SCIPanelAppPage.m — nothing is moved, and no
+/// filter file is edited anywhere. Changing what gets *injected* needs root; changing what
+/// the injected code *does* does not, and that is the line this version stays on.
 ///
 /// Copyright (C) Ibrahim Ismail AL-Rahn. GPLv3.
 ///

@@ -11,10 +11,13 @@ Description: See which tweaks are changing which apps, from Settings.
  tweak on the device with the apps it reaches. The list is read from each tweak's own
  filter file, so it shows what is really loaded rather than what a package claims.
  .
- ▍THIS VERSION READS ONLY
- It changes nothing, moves nothing and deletes nothing. Turning injection on and off per
- app, and importing tweaks from a file, come next — after this one has proved it describes
- your device correctly.
+ ▍TURN ALBRHI OFF FOR ONE APP
+ Tap an app and switch Albrhi off inside it, without uninstalling anything. Your settings
+ are kept and come back when you switch it on again. Close and reopen the app for the
+ change to take effect.
+ .
+ Tweaks by other developers are listed but cannot be switched from here yet — that needs a
+ part of the system this version does not touch. Nothing is ever moved or deleted.
  .
  Arabic and English.
  .
