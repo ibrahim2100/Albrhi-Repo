@@ -1,0 +1,102 @@
+name: Build Albrhi Panel
+
+#
+# Build only. This workflow publishes no release and never touches gh-pages.
+#
+# That is the point of it, not a stage it has not reached yet. The APT index is
+# rebuilt from scratch by whichever workflow writes it, and the two shipping tweaks
+# already coordinate over that with a shared concurrency group and a gather step that
+# checks every package is present. Adding a third writer to that arrangement before
+# the thing it publishes has ever compiled is how a working source gets broken by an
+# experiment.
+#
+# So this produces a .deb as an artifact, downloadable from the run. When the panel
+# has been installed on a real device and shown to describe it correctly, this grows
+# a release job modelled on buildyoutube.yml -- and not before.
+#
+
+on:
+    push:
+        branches:
+            - 'main'
+        paths:
+            - 'tweaks/panel/**'
+            - 'shared/bundle.mk'
+            - '.github/workflows/buildpanel.yml'
+    workflow_dispatch:
+
+jobs:
+    build:
+        name: Build the preference bundle
+        runs-on: macos-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                path: main
+                submodules: recursive
+
+            - name: Source checks
+              # Before Theos, so a typo fails in seconds rather than after a
+              # five-minute compile.
+              run: |
+                cd main
+                python3 tools/check.py
+
+            - name: Read the version
+              run: |
+                V=$(awk -F': *' '/^Version:/ {print $2; exit}' main/tweaks/panel/control)
+                echo "PANEL_VERSION=$V" >> $GITHUB_ENV
+                echo "Building Albrhi Panel $V"
+
+            - name: Install build dependencies
+              run: brew install ldid make dpkg
+
+            - name: Set PATH environment variable
+              run: echo "$(brew --prefix make)/libexec/gnubin" >> $GITHUB_PATH
+
+            - name: Setup Theos
+              uses: actions/checkout@v4
+              with:
+                repository: theos/theos
+                ref: master
+                path: ${{ github.workspace }}/theos
+                submodules: recursive
+
+            - name: SDK Caching
+              id: SDK
+              uses: actions/cache@v4
+              env:
+                cache-name: iPhoneOS16.2.sdk
+              with:
+                path: ${{ github.workspace }}/theos/sdks/
+                key: ${{ env.cache-name }}
+                restore-keys: ${{ env.cache-name }}
+
+            - name: Download iOS SDK
+              if: steps.SDK.outputs.cache-hit != 'true'
+              run: |
+                git clone --quiet -n --depth=1 --filter=tree:0 https://github.com/xybp888/iOS-SDKs/
+                cd iOS-SDKs
+                git sparse-checkout set --no-cone iPhoneOS16.2.sdk
+                git checkout
+                mv *.sdk $THEOS/sdks
+              env:
+                THEOS: ${{ github.workspace }}/theos
+
+            - name: Build for rootless
+              run: |
+                cd main
+                chmod +x build.sh
+                ./build.sh panel rootless
+                ls -la tweaks/panel/packages
+              env:
+                THEOS: ${{ github.workspace }}/theos
+
+            - name: Upload the deb
+              uses: actions/upload-artifact@v4
+              with:
+                name: AlbrhiPanel-${{ env.PANEL_VERSION }}-rootless
+                path: main/tweaks/panel/packages/*.deb
+                if-no-files-found: error

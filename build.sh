@@ -60,7 +60,15 @@ DISPLAY_NAME="$(field Name)"
 # The bundle the tweak attaches to, read from its own filter plist. Used only to
 # locate the decrypted IPA for a sideload build, and having it come from the
 # plist means the two can never disagree.
-BUNDLE_ID="$(sed -n 's/.*<string>\(com\.[A-Za-z0-9._-]*\)<\/string>.*/\1/p' "${TWEAK_DIR}"/*.plist | head -n1)"
+#
+# Not every package here has a filter plist: a preference bundle injects into
+# nothing and has none. The glob would then reach sed as a literal path, sed would
+# fail, and `set -e` would abort the whole script before a single file compiled --
+# over a value only the sideload mode ever reads.
+BUNDLE_ID=""
+if compgen -G "${TWEAK_DIR}/*.plist" > /dev/null; then
+    BUNDLE_ID="$(sed -n 's/.*<string>\(com\.[A-Za-z0-9._-]*\)<\/string>.*/\1/p' "${TWEAK_DIR}"/*.plist | head -n1)"
+fi
 
 cd "${TWEAK_DIR}"
 

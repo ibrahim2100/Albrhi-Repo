@@ -1,0 +1,28 @@
+Package: com.albrhi.panel
+Name: Albrhi Panel
+Version: 0.1.0
+Architecture: iphoneos-arm64
+Description: See which tweaks are changing which apps, from Settings.
+ .
+ Your package manager knows what is installed. Nothing on the phone tells you what is
+ actually running inside which app. Albrhi Panel does.
+ .
+ It adds a page to the iOS Settings app listing every app a tweak is changing, and every
+ tweak on the device with the apps it reaches. The list is read from each tweak's own
+ filter file, so it shows what is really loaded rather than what a package claims.
+ .
+ ▍THIS VERSION READS ONLY
+ It changes nothing, moves nothing and deletes nothing. Turning injection on and off per
+ app, and importing tweaks from a file, come next — after this one has proved it describes
+ your device correctly.
+ .
+ Arabic and English.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Author: Ibrahim Ismail AL-Rahn
+Section: Tweaks
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Depends: mobilesubstrate, preferenceloader
+Tag: role::enduser
