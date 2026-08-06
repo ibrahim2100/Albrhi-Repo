@@ -22,6 +22,12 @@ endif
 # JGProgressHUD backs the download progress UI and is not app-specific.
 $(TWEAK_NAME)_FILES += $(wildcard $(ROOT)/modules/JGProgressHUD/*.m)
 
+# The per-app switch Albrhi Panel writes. Shared rather than copied into each tweak:
+# both sides have to agree on the preference domain and the key exactly, and two
+# copies of that agreement drift into a switch that appears to work and changes
+# nothing.
+$(TWEAK_NAME)_FILES += $(ROOT)/shared/src/SCIPanelGate.m
+
 # The repository root on the include path, so shared code is imported by the path
 # it actually has -- "modules/JGProgressHUD/JGProgressHUD.h" -- rather than by
 # counting ../ from whichever source file happens to need it. Four files reached

@@ -34,6 +34,14 @@ static void SCIBuildTables(void) {
         @"targets_system": @"System",
         @"targets_by_class": @"Loads by class",
 
+        @"app_switch_section": @"Albrhi",
+        @"app_switch": @"Albrhi tweaks in this app",
+        @"app_switch_footer": @"Turns Albrhi's own features off inside this app. Your settings are kept and come back when you turn it on again.",
+        @"app_switch_restart": @"Close and reopen the app for this to take effect.",
+        @"app_tweaks_section": @"Loaded into this app",
+        @"app_others_footer": @"Tweaks by other developers are listed but cannot be switched from here yet.",
+        @"ok": @"OK",
+
         @"section_about": @"About",
         @"about_version": @"Version",
         @"about_author": @"Made by",
@@ -62,6 +70,14 @@ static void SCIBuildTables(void) {
         @"count_tweaks": @"%lu أدوات",
         @"targets_system": @"النظام",
         @"targets_by_class": @"تُحمَّل حسب الصنف",
+
+        @"app_switch_section": @"البرهي",
+        @"app_switch": @"أدوات البرهي في هذا التطبيق",
+        @"app_switch_footer": @"يُوقف مزايا البرهي داخل هذا التطبيق. إعداداتك محفوظة وتعود حين تُشغّله من جديد.",
+        @"app_switch_restart": @"أغلق التطبيق وافتحه ليسري المفعول.",
+        @"app_tweaks_section": @"مُحمَّل في هذا التطبيق",
+        @"app_others_footer": @"أدوات المطوّرين الآخرين تُعرَض ولا يمكن تشغيلها من هنا بعد.",
+        @"ok": @"حسناً",
 
         @"section_about": @"عن اللوحة",
         @"about_version": @"الإصدار",

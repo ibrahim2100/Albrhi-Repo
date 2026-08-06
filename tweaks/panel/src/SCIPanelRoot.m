@@ -5,7 +5,7 @@
 #import "SCIPanelScan.h"
 #import "Localization/SCILocalize.h"
 
-NSString *SCIVersionString = @"v0.1.0";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.2.0";  // AlbrhiPanel
 
 ///
 /// The screen Settings opens.
@@ -66,7 +66,25 @@ NSString *SCIVersionString = @"v0.1.0";  // AlbrhiPanel
         [specifiers addObject:[self noteRow:SCILocalized(@"apps_none")]];
     }
     for (SCIPanelApp *app in apps) {
-        [specifiers addObject:[self valueRow:app.name value:[self tweakCount:app.tweaks.count]]];
+        // A link rather than a label: this is the row that opens the switch, and 0.1.0
+        // shipped these as plain text with nothing to tap, which made the whole page a
+        // report about a device rather than a way to change it.
+        PSSpecifier *row =
+            [PSSpecifier preferenceSpecifierNamed:app.name
+                                           target:self
+                                              set:NULL
+                                              get:NULL
+                                           detail:NSClassFromString(@"SCIPanelAppController")
+                                             cell:PSLinkCell
+                                             edit:Nil];
+        [row setProperty:[self tweakCount:app.tweaks.count] forKey:@"value"];
+
+        // The identifier travels, not the object. The detail page looks the app up again
+        // when it opens, so a tweak installed or removed in between is reflected rather
+        // than remembered wrongly.
+        [row setProperty:app.bundleIdentifier forKey:@"sciBundleIdentifier"];
+
+        [specifiers addObject:row];
     }
 
     // ---- and the tweaks doing it

@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import "shared/src/SCIPanelGate.h"
 
 ///
 /// Every preference this tweak has, named once.
@@ -135,6 +136,12 @@
 /// this repository memoises the same call behind a lock because it has 227 call sites;
 /// this has a handful, and measuring before adding that machinery is the rule here.
 static inline BOOL SCIPrefEnabled(NSString *key) {
+    // Albrhi Panel's per-app switch, asked first. Every feature here reads its setting
+    // through this one function, so turning the app off in the panel stands all of them
+    // down at once -- the hooks stay installed and answer %orig, which is the only way to
+    // stop that cannot leave the app half-patched.
+    if (!SCIPanelAllowsThisApp()) return NO;
+
     return [[NSUserDefaults standardUserDefaults] boolForKey:key];
 }
 

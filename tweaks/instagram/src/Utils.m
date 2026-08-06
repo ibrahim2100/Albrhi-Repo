@@ -1,4 +1,5 @@
 #import "Utils.h"
+#import "shared/src/SCIPanelGate.h"
 #import <os/lock.h>
 #import "UI/SCIConfirmSheet.h"
 #import "Settings/SCIDiagnosticsViewController.h"
@@ -47,6 +48,14 @@ static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
 
 + (BOOL)getBoolPref:(NSString *)key {
     if (![key length]) return false;
+
+    // The panel's per-app switch, asked before anything else and before the cache.
+    //
+    // Every feature in this tweak reaches its setting through here -- 227 call sites --
+    // so one line disables all of them at once. Nothing is uninstalled and no hook is
+    // skipped: the hooks stay in place and answer %orig, which is the only way to stand
+    // down that cannot leave the app half-patched.
+    if (!SCIPanelAllowsThisApp()) return false;
 
     os_unfair_lock_lock(&sBoolPrefLock);
     NSNumber *cached = sBoolPrefCache[key];
