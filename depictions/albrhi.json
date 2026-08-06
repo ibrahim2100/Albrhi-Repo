@@ -9,7 +9,7 @@
       "views": [
         {
           "class": "DepictionMarkdownView",
-          "markdown": "**Download anything, hide the noise, browse invisibly** — in Arabic or English.\n\nAlbrhi puts a download button where Instagram should have put one, strips the feed back to the people you actually follow, and stops the app reporting what you watch.",
+          "markdown": "**One tweak for Instagram and YouTube**, switched per app from Settings.\n\nInstall one thing and update one thing. Settings › Albrhi lists every app it patches with a switch each, so turning it off inside an app needs no uninstalling and loses no settings.",
           "useSpacing": true
         },
         {
@@ -22,7 +22,7 @@
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "Tested on Instagram **410.1.0** — the newest build the developer's phone will still accept. Nothing here is pinned to a version number, so newer builds should work. If one misbehaves, Settings › Diagnostics writes the bug report for you.",
+          "markdown": "Tested on Instagram **410, 439 and 441**, and YouTube **21.30.5**. Nothing here is pinned to a version number: the tweak looks for what it needs while the app runs, so other versions should work too.",
           "useSpacing": true
         },
         {
@@ -30,12 +30,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "Downloads",
+          "title": "Choose per app",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "A native download button in the action row of every post and reel, beside the save icon. One tap takes the highest quality available straight to Photos. Stories and view-once DMs have their own button, and reels can be saved as video or as the original audio.",
+          "markdown": "Settings › Albrhi lists every app Albrhi patches, with a switch each. Turn one off and Albrhi does nothing inside that app — without uninstalling anything, and with your settings kept for when you turn it back on. Close and reopen the app for a change to take effect.",
           "useSpacing": true
         },
         {
@@ -44,12 +44,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "Download Center",
+          "title": "Instagram",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "A real queue: pause, resume, retry, several transfers at once, and downloads that keep running after you leave the app. Duplicates are detected, finished files are cleared once they reach Photos, and a searchable history records everything you saved.",
+          "markdown": "A download button in every post and reel, a Download Center with a real queue, a feed without ads or suggestions, watching stories without telling anyone, confirmations before a mis-tap becomes a notification, custom date formats and an OLED theme.",
           "useSpacing": true
         },
         {
@@ -58,12 +58,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "A quieter feed",
+          "title": "YouTube",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "Remove ads, sponsored and suggested posts, suggested accounts and reels, Threads posts, Meta AI, the friends map, trending searches and the explore grid. Hide the stories tray, or the entire feed.",
+          "markdown": "Downloads with their own player and a Download Centre tab beside Home and You, no ads, SponsorBlock with coloured markers, playback that keeps going in the background and on the lock screen, and a quality ceiling per connection.",
           "useSpacing": true
         },
         {
@@ -72,12 +72,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "Privacy",
+          "title": "One package",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "Watch stories without sending a seen receipt, and choose per story when to send one. View-once photos and videos stay unseen until you tap the eye button on that exact message. Hide the typing indicator and disable screenshot detection.",
+          "markdown": "Everything in a single install, updated in one place. New Albrhi tweaks arrive here and appear in the same list, so there is never a second thing to install.",
           "useSpacing": true
         },
         {
@@ -86,26 +86,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "Confirmations",
+          "title": "Arabic and English",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "An optional prompt before liking, following, reposting, calling, commenting or sending a voice message — so a mis-tap never turns into a notification.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 8
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "Built to fit in",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "Full Arabic and English with automatic right-to-left layout, SF Symbols, a customisable accent colour and dark mode. Hold the menu button on your profile to open it.",
+          "markdown": "Throughout, with the layout flipping automatically, and a diagnostics page in each tweak that reports what it can actually see on your build.",
           "useSpacing": true
         },
         {
@@ -120,12 +106,12 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
-          "title": "v4.1.3",
+          "title": "v1.0.6",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **Brings back the reels download button**\n• Nothing was wrong on Instagram 410, which is why this was not caught sooner.",
+          "markdown": "• The package page in Sileo now describes this package rather than the old separate Instagram one, and is generated from this changelog so it cannot go stale.",
           "useSpacing": true
         },
         {
@@ -134,12 +120,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v4.1.2",
+          "title": "v1.0.5",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• Fixes the build again.\n• The checks now catch this one too.",
+          "markdown": "• The roothide package is now checked properly before it is built, by reading the libraries each part links against rather than only where the files sit.",
           "useSpacing": true
         },
         {
@@ -148,12 +134,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v4.1.1",
+          "title": "v1.0.4",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• Fixes the build.\n• The checks that run before every build now catch that particular mistake in a second, instead of five minutes into a compile.",
+          "markdown": "• Fixes the build, which 1.0.3 broke before it produced anything.\n• The roothide package is now checked to actually be one before it is built, instead of being found out after installing it.",
           "useSpacing": true
         },
         {
@@ -169,7 +155,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "4.1.3"
+          "text": "1.0.6"
         },
         {
           "class": "DepictionTableTextView",
@@ -178,7 +164,7 @@
         },
         {
           "class": "DepictionTableTextView",
-          "title": "Based on",
+          "title": "Instagram tweak based on",
           "text": "SCInsta by SoCuul"
         },
         {
@@ -189,7 +175,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Tested on",
-          "text": "Instagram 410.1.0"
+          "text": "Instagram 410, 439, 441 · YouTube 21.30.5"
         },
         {
           "class": "DepictionSeparatorView"
@@ -223,7 +209,7 @@
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "_Free and open source. Not affiliated with, endorsed by or sponsored by Instagram or Meta Platforms._",
+          "markdown": "_Free and open source. Not affiliated with, endorsed by or sponsored by Instagram, Meta Platforms or Google._",
           "useSpacing": true
         }
       ]
