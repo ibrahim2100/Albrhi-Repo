@@ -1,4 +1,5 @@
 #import "SCIDiagnosticsViewController.h"
+#import "shared/src/SCIPanelGate.h"
 #import "SCIFeatureAudit.h"
 #import "../Utils.h"
 #import "../Localization/SCILocalize.h"
@@ -570,6 +571,14 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
                        ![_storySeenHook isEqualToString:SCILocalized(@"diag_story_hook_missing")])}
         ]},
         @{@"header": SCILocalized(@"diag_section_env"), @"rows": @[
+            // What the panel's switch is doing in this app, and how that was decided.
+            //
+            // "the switch does nothing" has several explanations that look identical from
+            // in here -- never written, written where this process cannot see it, or read
+            // correctly and set to on -- and they need different fixes.
+            @{@"title": SCILocalized(@"diag_panel_switch"),
+              @"detail": SCIPanelGateReport(),
+              @"ok": @YES},
             @{@"title": @"Albrhi", @"detail": SCIVersionString, @"ok": @YES},
             @{@"title": @"Instagram", @"detail": [SCIUtils IGVersionString], @"ok": @YES},
             @{@"title": @"iOS", @"detail": [[UIDevice currentDevice] systemVersion], @"ok": @YES}

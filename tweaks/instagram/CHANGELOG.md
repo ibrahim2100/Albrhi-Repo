@@ -4,6 +4,15 @@
 Other versions should work too — the tweak looks for what it needs while the app runs
 rather than expecting a particular version number.
 
+## v4.1.4
+
+- **The switch in Settings actually works now.** Turning Albrhi off for an app moved
+  the switch and changed nothing in the app: the tweak was asking the system for that
+  setting and, from inside a sandboxed app, being told there was none — which it read
+  as "leave everything on". It reads the setting itself now.
+- Diagnostics shows what the switch is set to and where that was read from, so if it
+  still does not take effect the page says why instead of leaving you guessing.
+
 ## v4.1.3
 
 - **Brings back the reels download button**, and the reels progress bar with it. Both

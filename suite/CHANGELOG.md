@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.0.9
+
+- **Settings › Albrhi now really turns a tweak off.** The switch moved but the app
+  carried on as before; the setting is read directly now. Close and reopen the app for
+  a change to take effect, as before.
+
 ## v1.0.8
 
 - The source updates again. The step that published it had been getting stuck every

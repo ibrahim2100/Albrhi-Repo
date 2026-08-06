@@ -3,6 +3,12 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.12.3
+
+- **The switch in Settings actually works now.** Same fix as the Instagram tweak: the
+  setting is read directly instead of being asked for through a system service that
+  answers a sandboxed app with nothing.
+
 ## v1.12.2
 
 - Adds a line to Diagnostics that lists what is actually on screen after you change

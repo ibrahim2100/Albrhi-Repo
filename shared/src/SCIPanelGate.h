@@ -39,6 +39,17 @@ extern "C" {
 /// than leaving anyone to wonder.
 BOOL SCIPanelAllowsThisApp(void);
 
+/// How that answer was arrived at, for a diagnostics page.
+///
+/// "The switch does nothing" has several explanations that look identical from the app —
+/// the preference was never written, or it was written where this process cannot see it,
+/// or it was read correctly and says on. They need different fixes, and the first version
+/// of this could not tell them apart, which is why the switch appeared to do nothing and
+/// nothing said why.
+///
+/// Returns something like "off (file: /var/mobile/…)" or "on (nothing written)".
+NSString *SCIPanelGateReport(void);
+
 #ifdef __cplusplus
 }
 #endif
