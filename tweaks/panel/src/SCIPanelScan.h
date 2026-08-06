@@ -2,16 +2,18 @@
 //  SCIPanelScan.h
 //  Albrhi Panel
 //
-//  What is installed, and what gets injected into it.
+//  Which of Albrhi's tweaks are installed, and which app each one belongs to.
 //
-//  Every jailbreak tweak on the device announces its targets in a plist beside its dylib:
-//  a Filter with Bundles, Executables or Classes. Those files are the only honest record of
-//  what loads where — a package manager knows what is *installed*, and nothing on the phone
-//  tells you what is *active in which app*. This reads them, reads the installed apps, and
-//  puts the two together.
+//  The panel is Albrhi's own control panel and nothing else. An earlier version listed every
+//  tweak on the device and offered to edit other developers' filter files through a root
+//  helper — which was a different product answering a question nobody asked. It was removed
+//  rather than left switched off: a setuid root binary shipped for a feature that is not
+//  wanted is pure risk with no return.
 //
-//  **Read-only, and deliberately so.** Nothing here writes, moves or deletes anything. The
-//  panel earns the right to change filters by first proving it can describe them correctly.
+//  What is left is the shape DLEasy has, for the same reason it has it: one developer's
+//  tweak, its settings in the iOS Settings app, and a switch per app it supports. Apps
+//  Albrhi does not touch are not listed, because a list of sixty apps to find the two that
+//  matter is not a list.
 //
 //  Copyright (C) Ibrahim Ismail AL-Rahn. GPLv3.
 //
@@ -20,33 +22,16 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/// One tweak's dylib and the filter beside it.
-@interface SCIPanelTweak : NSObject
-/// The dylib's file name without extension — "Albrhi", "DLEasy".
-@property (nonatomic, copy) NSString *name;
-@property (nonatomic, copy) NSString *dylibPath;
-@property (nonatomic, copy) NSString *filterPath;
-
-/// Straight out of the filter, lowercased for matching.
-@property (nonatomic, copy) NSArray<NSString *> *bundles;
-@property (nonatomic, copy) NSArray<NSString *> *executables;
-@property (nonatomic, copy) NSArray<NSString *> *classes;
-
-/// Bytes on disk, so the list can say which tweak is the heavy one.
-@property (nonatomic, assign) unsigned long long size;
-
-/// Whether this filter names SpringBoard or Preferences rather than an app.
-@property (nonatomic, readonly) BOOL targetsSystem;
-@end
-
-
-/// One installed application, and the tweaks whose filters name it.
-@interface SCIPanelApp : NSObject
+/// One Albrhi tweak, and the app it patches.
+@interface SCIPanelEntry : NSObject
+/// The dylib's file name without extension — "Albrhi", "AlbrhiYT".
+@property (nonatomic, copy) NSString *tweakName;
 @property (nonatomic, copy) NSString *bundleIdentifier;
-@property (nonatomic, copy) NSString *name;
-/// The executable's own name, which is what a Filter's Executables list matches on.
-@property (nonatomic, copy, nullable) NSString *executable;
-@property (nonatomic, strong) NSArray<SCIPanelTweak *> *tweaks;
+/// The app's own name as the device shows it, or the identifier when it is not installed.
+@property (nonatomic, copy) NSString *appName;
+/// Whether the app the tweak targets is actually on this device.
+@property (nonatomic, assign) BOOL appInstalled;
+@property (nonatomic, assign) unsigned long long size;
 @end
 
 
@@ -61,18 +46,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// from ourselves gives the prefix on all three without knowing which one we are on.
 + (NSString *)jailbreakPrefix;
 
-/// Every tweak with a filter plist, sorted by name. Empty when the directory is unreadable,
-/// which is an answer and not an error — a sideloaded device has no such directory at all.
-+ (NSArray<SCIPanelTweak *> *)installedTweaks;
-
-/// Every installed app that at least one tweak names, plus how many name it.
+/// Every Albrhi tweak installed, one entry per app it targets.
 ///
-/// Apps nothing targets are left out: a list of every app on the phone is a list nobody
-/// scrolls, and the question this page answers is "what is being changed".
-+ (NSArray<SCIPanelApp *> *)affectedApps;
-
-/// Every installed app, for the screen that has a search field.
-+ (NSArray<SCIPanelApp *> *)allApps;
+/// Read from each tweak's own filter file, so this reflects what is really on the device
+/// rather than what this panel was compiled expecting. A tweak added later needs no change
+/// here: install it and it appears.
++ (NSArray<SCIPanelEntry *> *)entries;
 
 @end
 

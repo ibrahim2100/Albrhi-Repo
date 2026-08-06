@@ -5,10 +5,10 @@
 # what is on the device, and it shows it. That is why this includes
 # shared/bundle.mk rather than shared/tweak.mk.
 #
-# It also builds one small root helper. Editing a tweak's filter file needs root
-# and a preference bundle runs as mobile, so the write happens in a separate
-# binary that does exactly one thing — see helper/main.m for why it is shaped the
-# way it is.
+# It ships no root helper. An earlier version did, to edit other developers'
+# filter files, and that was a different product answering a question nobody
+# asked — removed rather than left switched off, because a setuid root binary
+# shipped for an unwanted feature is pure risk with no return.
 #
 ROOT := ../..
 
@@ -39,21 +39,6 @@ $(BUNDLE_NAME)_FILES = $(shell find src -type f \( -iname \*.m -o -iname \*.mm \
 
 include $(ROOT)/shared/bundle.mk
 
-
-#
-# The helper. A separate instance in the same project, because it is a separate
-# binary with a separate privilege level -- and keeping it here means its source
-# sits beside the panel that calls it rather than in a project of its own that
-# nobody would remember to rebuild.
-#
-TOOL_NAME = albrhipanelhelper
-
-albrhipanelhelper_FILES = helper/main.m
-albrhipanelhelper_FRAMEWORKS = Foundation
-albrhipanelhelper_CFLAGS = -fobjc-arc
-albrhipanelhelper_INSTALL_PATH = /usr/libexec
-
-include $(THEOS_MAKE_PATH)/tool.mk
 
 # Settings has to be restarted to pick up a rebuilt bundle; it caches the ones
 # it has loaded and will keep showing the old one otherwise.

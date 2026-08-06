@@ -1,5 +1,24 @@
 # Albrhi Panel Changelog
 
+## v0.4.0
+
+**Rebuilt around what it is for.** The panel is Albrhi's own settings page and
+nothing else.
+
+- Every app Albrhi patches, with a switch each. Turn one off and Albrhi does nothing
+  in that app, without uninstalling anything.
+- Your settings are kept and come back when you turn it on again.
+- Close and reopen the app for a change to take effect.
+- An app you do not have installed is shown greyed rather than hidden, so it is
+  clear why nothing is happening.
+- The list is built from the tweaks actually installed, so a new Albrhi tweak shows
+  up here without this page being changed.
+
+**Removed:** listing other developers' tweaks, and the root helper that edited their
+filter files. That was a different tool answering a question nobody asked, and a
+setuid root program on your device for a feature nobody wanted is a risk with no
+return. It is gone rather than switched off.
+
 ## v0.3.0
 
 **Real per-app control.** Tap a tweak, see the apps it loads into, and switch it on

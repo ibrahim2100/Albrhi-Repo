@@ -5,22 +5,25 @@
 #import "SCIPanelScan.h"
 #import "Localization/SCILocalize.h"
 
-NSString *SCIVersionString = @"v0.3.0";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.4.0";  // AlbrhiPanel
 
 ///
-/// The screen Settings opens.
+/// Albrhi's own control panel, in the iOS Settings app.
 ///
-/// A PSListController, and its specifiers are built in code rather than loaded from a
-/// plist. The whole point of this panel is that its contents depend on what is on the
-/// device — a static plist could describe a fixed set of rows and this has none.
+/// One switch per app Albrhi patches, and nothing else on the screen. This is the shape
+/// DLEasy has and it is the right one: a tweak's settings belong somewhere you can reach
+/// without opening the app it changes.
 ///
-/// **This screen reads; the pages it opens write.** Tapping an app leads to a switch that
-/// stands Albrhi's own features down inside it, and tapping a tweak leads to switches that
-/// change the filter file itself — which is what stops a dylib loading at all. The second
-/// kind needs root and goes through helper/main.m, the one part of this that has it.
+/// **The switch does not stop the dylib loading; it stops it doing anything.** Changing what
+/// gets injected means editing a root-owned filter file, and a preference bundle runs as
+/// `mobile`. Every Albrhi tweak instead reads its settings through one function, that
+/// function asks this switch first, and with it off every feature answers %orig — the app
+/// behaves exactly as though the tweak were not installed.
 ///
-/// Nothing is ever moved or deleted. The worst a switch can do is remove a bundle
-/// identifier from a list, and the original filter is copied aside before the first change.
+/// Standing down that way rather than skipping hook installation is deliberate. Hooks are
+/// installed from a dozen constructors whose order is undefined, so a gate on installation
+/// would sometimes catch half of them and leave the app patched in part. Installed-but-inert
+/// has no such state.
 ///
 /// Copyright (C) Ibrahim Ismail AL-Rahn. GPLv3.
 ///
@@ -29,101 +32,60 @@ NSString *SCIVersionString = @"v0.3.0";  // AlbrhiPanel
 
 @implementation SCIPanelRootController
 
-/// Built once per appearance rather than cached for the life of the process.
+/// Named identically in shared/src/SCIPanelGate.m, which is the half that reads it. Two
+/// spellings of this string is a switch that appears to work and changes nothing.
+static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
+
+/// Rebuilt on every appearance rather than cached for the life of the process.
 ///
 /// Settings keeps a preference bundle loaded after its page is closed, so a cached list
-/// would still show a tweak that has since been uninstalled -- and being wrong about what
-/// is on the device is the one thing this panel cannot afford.
+/// would still show a tweak that has since been uninstalled.
 - (NSArray *)specifiers {
+    NSArray<SCIPanelEntry *> *entries = [SCIPanelScan entries];
     NSMutableArray *specifiers = [NSMutableArray array];
 
-    NSArray<SCIPanelTweak *> *tweaks = [SCIPanelScan installedTweaks];
-    NSArray<SCIPanelApp *> *apps = [SCIPanelScan affectedApps];
+    PSSpecifier *group = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"section_apps")
+                                                        target:self
+                                                           set:NULL
+                                                           get:NULL
+                                                        detail:Nil
+                                                          cell:PSGroupCell
+                                                          edit:Nil];
+    [group setProperty:SCILocalized(@"apps_footer") forKey:@"footerText"];
+    [specifiers addObject:group];
 
-    // ---- what the device looks like, in two numbers
-    PSSpecifier *summary = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"section_summary")
-                                                          target:self
-                                                             set:NULL
-                                                             get:NULL
-                                                          detail:Nil
-                                                            cell:PSGroupCell
-                                                            edit:Nil];
-    [specifiers addObject:summary];
-    [specifiers addObject:[self valueRow:SCILocalized(@"summary_apps")
-                                   value:[NSString stringWithFormat:@"%lu", (unsigned long)apps.count]]];
-    [specifiers addObject:[self valueRow:SCILocalized(@"summary_tweaks")
-                                   value:[NSString stringWithFormat:@"%lu", (unsigned long)tweaks.count]]];
-
-    // ---- the apps something is changing
-    PSSpecifier *appsGroup = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"section_apps")
-                                                            target:self
-                                                               set:NULL
-                                                               get:NULL
-                                                            detail:Nil
-                                                              cell:PSGroupCell
-                                                              edit:Nil];
-    [appsGroup setProperty:SCILocalized(@"apps_footer") forKey:@"footerText"];
-    [specifiers addObject:appsGroup];
-
-    if (!apps.count) {
-        [specifiers addObject:[self noteRow:SCILocalized(@"apps_none")]];
+    if (!entries.count) {
+        PSSpecifier *none = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"apps_none")
+                                                           target:self
+                                                              set:NULL
+                                                              get:NULL
+                                                           detail:Nil
+                                                             cell:PSTitleValueCell
+                                                             edit:Nil];
+        [specifiers addObject:none];
     }
-    for (SCIPanelApp *app in apps) {
-        // A link rather than a label: this is the row that opens the switch, and 0.1.0
-        // shipped these as plain text with nothing to tap, which made the whole page a
-        // report about a device rather than a way to change it.
-        PSSpecifier *row =
-            [PSSpecifier preferenceSpecifierNamed:app.name
-                                           target:self
-                                              set:NULL
-                                              get:NULL
-                                           detail:NSClassFromString(@"SCIPanelAppController")
-                                             cell:PSLinkCell
-                                             edit:Nil];
-        [row setProperty:[self tweakCount:app.tweaks.count] forKey:@"value"];
 
-        // The identifier travels, not the object. The detail page looks the app up again
-        // when it opens, so a tweak installed or removed in between is reflected rather
-        // than remembered wrongly.
-        [row setProperty:app.bundleIdentifier forKey:@"sciBundleIdentifier"];
+    for (SCIPanelEntry *entry in entries) {
+        PSSpecifier *row =
+            [PSSpecifier preferenceSpecifierNamed:entry.appName
+                                           target:self
+                                              set:@selector(setOn:forSpecifier:)
+                                              get:@selector(isOnForSpecifier:)
+                                           detail:Nil
+                                             cell:PSSwitchCell
+                                             edit:Nil];
+        [row setProperty:entry.bundleIdentifier forKey:@"sciBundleIdentifier"];
+
+        // An app that is not on the phone gets a switch that cannot be moved, and a
+        // subtitle saying why. Offering a live switch for an app you do not have is
+        // offering a control over nothing.
+        if (!entry.appInstalled) {
+            [row setProperty:@NO forKey:@"enabled"];
+        }
 
         [specifiers addObject:row];
     }
 
-    // ---- and the tweaks doing it
-    PSSpecifier *tweaksGroup = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"section_tweaks")
-                                                              target:self
-                                                                 set:NULL
-                                                                 get:NULL
-                                                              detail:Nil
-                                                                cell:PSGroupCell
-                                                                edit:Nil];
-    [tweaksGroup setProperty:SCILocalized(@"tweaks_footer") forKey:@"footerText"];
-    [specifiers addObject:tweaksGroup];
-
-    if (!tweaks.count) {
-        [specifiers addObject:[self noteRow:SCILocalized(@"tweaks_none")]];
-    }
-    for (SCIPanelTweak *tweak in tweaks) {
-        // Tappable, and this is the screen the panel exists for: pick a tweak, see the apps
-        // it loads into, switch it per app. A Classes-only filter gets no page, because
-        // there is no list of apps to show -- it loads wherever a class happens to exist.
-        BOOL hasApps = tweak.bundles.count > 0;
-
-        PSSpecifier *row =
-            [PSSpecifier preferenceSpecifierNamed:tweak.name
-                                           target:self
-                                              set:NULL
-                                              get:NULL
-                                           detail:hasApps ? NSClassFromString(@"SCIPanelTweakController") : Nil
-                                             cell:hasApps ? PSLinkCell : PSTitleValueCell
-                                             edit:Nil];
-        [row setProperty:[self reachOf:tweak apps:apps] forKey:@"value"];
-        [row setProperty:tweak.name forKey:@"sciTweakName"];
-        [specifiers addObject:row];
-    }
-
-    // ---- and what this version is honest about not doing
     PSSpecifier *about = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"section_about")
                                                         target:self
                                                            set:NULL
@@ -131,8 +93,9 @@ NSString *SCIVersionString = @"v0.3.0";  // AlbrhiPanel
                                                         detail:Nil
                                                           cell:PSGroupCell
                                                           edit:Nil];
-    [about setProperty:SCILocalized(@"about_readonly_note") forKey:@"footerText"];
+    [about setProperty:SCILocalized(@"about_note") forKey:@"footerText"];
     [specifiers addObject:about];
+
     [specifiers addObject:[self valueRow:SCILocalized(@"about_version") value:SCIVersionString]];
     [specifiers addObject:[self valueRow:SCILocalized(@"about_author")
                                    value:SCILocalized(@"about_author_name")]];
@@ -141,30 +104,6 @@ NSString *SCIVersionString = @"v0.3.0";  // AlbrhiPanel
     return _specifiers;
 }
 
-/// How many apps this tweak reaches, said the way a person would.
-- (NSString *)reachOf:(SCIPanelTweak *)tweak apps:(NSArray<SCIPanelApp *> *)apps {
-    if (tweak.classes.count && !tweak.bundles.count && !tweak.executables.count) {
-        return SCILocalized(@"targets_by_class");
-    }
-    if (tweak.targetsSystem && !tweak.executables.count) {
-        return SCILocalized(@"targets_system");
-    }
-
-    NSUInteger reached = 0;
-    for (SCIPanelApp *app in apps) {
-        if ([app.tweaks containsObject:tweak]) reached++;
-    }
-
-    if (reached == 1) return SCILocalized(@"count_one_app");
-    return [NSString stringWithFormat:SCILocalized(@"count_apps"), (unsigned long)reached];
-}
-
-- (NSString *)tweakCount:(NSUInteger)count {
-    if (count == 1) return SCILocalized(@"count_one_tweak");
-    return [NSString stringWithFormat:SCILocalized(@"count_tweaks"), (unsigned long)count];
-}
-
-/// A row with a value on the right and nothing to tap.
 - (PSSpecifier *)valueRow:(NSString *)title value:(NSString *)value {
     PSSpecifier *row = [PSSpecifier preferenceSpecifierNamed:title
                                                       target:self
@@ -177,16 +116,43 @@ NSString *SCIVersionString = @"v0.3.0";  // AlbrhiPanel
     return row;
 }
 
-/// A row that is a sentence rather than a setting.
-- (PSSpecifier *)noteRow:(NSString *)text {
-    PSSpecifier *row = [PSSpecifier preferenceSpecifierNamed:text
-                                                      target:self
-                                                         set:NULL
-                                                         get:NULL
-                                                      detail:Nil
-                                                        cell:PSTitleValueCell
-                                                        edit:Nil];
-    return row;
+- (NSString *)keyFor:(PSSpecifier *)specifier {
+    return [@"app_enabled_" stringByAppendingString:
+        [specifier propertyForKey:@"sciBundleIdentifier"]];
+}
+
+- (id)isOnForSpecifier:(PSSpecifier *)specifier {
+    CFPropertyListRef value = CFPreferencesCopyAppValue(
+        (__bridge CFStringRef)[self keyFor:specifier], (__bridge CFStringRef)kSCIPanelDomain);
+
+    // Never written means on. A device that has not opened this panel has every tweak it
+    // installed deliberately still working, which is the only safe reading of an absence.
+    if (!value) return @YES;
+
+    BOOL on = (CFGetTypeID(value) == CFBooleanGetTypeID())
+        ? CFBooleanGetValue((CFBooleanRef)value) : YES;
+    CFRelease(value);
+    return @(on);
+}
+
+- (void)setOn:(NSNumber *)value forSpecifier:(PSSpecifier *)specifier {
+    CFPreferencesSetAppValue((__bridge CFStringRef)[self keyFor:specifier],
+                             (__bridge CFPropertyListRef)@(value.boolValue),
+                             (__bridge CFStringRef)kSCIPanelDomain);
+
+    // Written through immediately. Left to its own schedule, cfprefsd can hold this long
+    // enough that relaunching the app -- exactly what someone does next -- reads the old
+    // value and the switch looks broken.
+    CFPreferencesAppSynchronize((__bridge CFStringRef)kSCIPanelDomain);
+
+    UIAlertController *note =
+        [UIAlertController alertControllerWithTitle:specifier.name
+                                            message:SCILocalized(@"switch_restart")
+                                     preferredStyle:UIAlertControllerStyleAlert];
+    [note addAction:[UIAlertAction actionWithTitle:SCILocalized(@"ok")
+                                             style:UIAlertActionStyleDefault
+                                           handler:nil]];
+    [self presentViewController:note animated:YES completion:nil];
 }
 
 - (void)viewDidLoad {
@@ -194,8 +160,6 @@ NSString *SCIVersionString = @"v0.3.0";  // AlbrhiPanel
     self.title = SCILocalized(@"panel_title");
 }
 
-/// Rebuilt every time the page is shown, because a tweak can be installed or removed while
-/// Settings is still open behind it.
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [self reloadSpecifiers];
