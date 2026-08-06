@@ -112,9 +112,42 @@ jobs:
               env:
                 THEOS: ${{ github.workspace }}/theos
 
-            - name: Upload the deb
+            - name: Setup roothide Theos
+              uses: actions/checkout@v4
+              with:
+                repository: roothide/theos
+                ref: master
+                path: ${{ github.workspace }}/theos-roothide
+                submodules: recursive
+
+            - name: Share the SDK with roothide Theos
+              # The same iPhoneOS16.2 SDK, because tweaks/panel/Makefile pins it by
+              # name and the roothide fork keeps its own sdks directory. Copied
+              # rather than downloaded twice.
+              run: |
+                mkdir -p "${{ github.workspace }}/theos-roothide/sdks"
+                cp -R "${{ github.workspace }}/theos/sdks/." "${{ github.workspace }}/theos-roothide/sdks/"
+                ls "${{ github.workspace }}/theos-roothide/sdks"
+
+            - name: Build for roothide
+              # build.sh swaps the package identity in control and restores it on
+              # exit, so the two flavours never collide in a package manager. It
+              # needs Conflicts and Replaces already present, which the panel's
+              # control now carries.
+              #
+              # Nothing in the source needs changing for roothide: the panel finds
+              # the jailbreak prefix by walking up from its own bundle path, which
+              # is exactly the case roothide breaks for anything that guesses.
+              run: |
+                cd main
+                ./build.sh panel roothide
+                ls -la tweaks/panel/packages
+              env:
+                THEOS: ${{ github.workspace }}/theos-roothide
+
+            - name: Upload both debs
               uses: actions/upload-artifact@v4
               with:
-                name: AlbrhiPanel-${{ env.PANEL_VERSION }}-rootless
+                name: AlbrhiPanel-${{ env.PANEL_VERSION }}
                 path: main/tweaks/panel/packages/*.deb
                 if-no-files-found: error

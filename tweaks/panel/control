@@ -1,5 +1,5 @@
 Package: com.albrhi.panel
-Name: Albrhi Panel
+Name: Albrhi Panel (rootless)
 Version: 0.1.0
 Architecture: iphoneos-arm64
 Description: See which tweaks are changing which apps, from Settings.
@@ -25,4 +25,6 @@ Author: Ibrahim Ismail AL-Rahn
 Section: Tweaks
 Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
 Depends: mobilesubstrate, preferenceloader
+Conflicts: com.albrhi.panel.roothide
+Replaces: com.albrhi.panel.roothide
 Tag: role::enduser
