@@ -7,7 +7,23 @@
 #
 ROOT := ../..
 
-TARGET := iphone:clang:latest:15.0
+# The SDK is pinned, and this is the one line that makes the bundle link.
+#
+# `latest` picks the newest SDK available, which on a CI runner is Xcode's own --
+# and Apple stopped shipping private-framework stubs, so that SDK has no
+# PrivateFrameworks directory at all. The linker said so exactly:
+#
+#   search path '.../iPhoneOS26.5.sdk/System/Library/PrivateFrameworks' not found
+#
+# The iPhoneOS16.2 SDK the workflow downloads does carry them, and Preferences is
+# a private framework. Naming the version is what points Theos at it.
+#
+# This couples the Makefile to the SDK the workflow fetches, and that is deliberate
+# rather than overlooked: if the two ever disagree Theos fails immediately saying
+# the SDK is missing, which is a better failure than linking against the wrong one.
+# The two shipping tweaks can stay on `latest` because neither needs a private
+# framework.
+TARGET := iphone:clang:16.2:15.0
 ARCHS = arm64 arm64e
 
 include $(THEOS)/makefiles/common.mk
