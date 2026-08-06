@@ -58,10 +58,61 @@ Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Filename: debs/com.albrhi_1.0.6_iphoneos-arm64.deb
-Size: 898524
-MD5sum: 85cce55a142ccb7d7c83e53eb2c4f942
-SHA1: 7dcda6eed3068aa6d9bb3c423c6cc9d5215912a8
-SHA256: 8538d4e3174a45b4e499e169329ed55feceed90d44463e4a4943d8e59dc620e1
+Size: 898530
+MD5sum: 3a43a81edb0ddb6d2a71c5727a265e9f
+SHA1: a410bc4daacf6b1530ed8eff70ff1451a5ac836c
+SHA256: 4dda699b483dcca23ebad1ab29af2297da1cb5c3796a7c11d0d4cb74b206fd1c
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: One tweak for Instagram and YouTube, switched per app from Settings.
+ .
+ Everything Albrhi makes, in a single package. Install this and you have the Instagram
+ tweak and the YouTube tweak; there is nothing else to download and one thing to update.
+ .
+ ▍CHOOSE FROM SETTINGS
+ Settings › Albrhi lists every app Albrhi patches, with a switch each. Turn one off and
+ Albrhi does nothing inside that app — no uninstalling, and your settings are kept for
+ when you turn it back on. Close and reopen the app for a change to take effect.
+ .
+ ▍INSTAGRAM
+ A download button in every post and reel, a Download Center with a real queue, a feed
+ without ads or suggestions, watching stories without telling anyone, and confirmations
+ before a mis-tap becomes a notification.
+ .
+ ▍YOUTUBE
+ Downloads with their own player and Download Centre tab, no ads, SponsorBlock, playback
+ that keeps going in the background, and a quality ceiling per connection.
+ .
+ ▍GROWING
+ New Albrhi tweaks arrive in this same package and appear in the same list, so there is
+ never a second thing to install.
+ .
+ Arabic and English throughout.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. The Instagram tweak is an educational and corrective
+ derivative of SCInsta by SoCuul, rebuilt with AI assistance to improve code quality,
+ design, performance and user experience. Free and open source under the GNU GPL v3, with
+ original authorship credited and preserved.
+Tag: role::enduser
+Author: Ibrahim Ismail AL-Rahn (Instagram tweak based on SCInsta by SoCuul, GPLv3)
+Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi (rootless)
+Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
+
+Package: com.albrhi
+Version: 1.0.7
+Architecture: iphoneos-arm64
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 1588
+Depends: mobilesubstrate, preferenceloader
+Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.panel, com.albrhi.panel.roothide
+Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.panel, com.albrhi.panel.roothide
+Filename: debs/com.albrhi_1.0.7_iphoneos-arm64.deb
+Size: 898534
+MD5sum: e4d36238ec1b27f6ebae9ca02a298cb5
+SHA1: 840ddbac1ce3d1ad6daf61639e81bfaf9b9e78e8
+SHA256: 60fc53fbbdf7498afe4eac0da756cafea082298a89f76e5d4defcaddf45554cd
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram and YouTube, switched per app from Settings.
@@ -161,9 +212,60 @@ Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Filename: debs/com.albrhi.roothide_1.0.6_iphoneos-arm64e.deb
 Size: 898290
-MD5sum: 43adce9301a96c060ce1e727afc648a2
-SHA1: 75933b58d007a3a3c38ffd3c2336b73311514037
-SHA256: e5a9a76a87ea0717acf207bfb9ca7572c584961cc8751a6562d30448baa67d67
+MD5sum: 5c484beac0c5c37f2324acb0e7f65430
+SHA1: 60c719cd683f7da8a1b3f1a7af3af7268564f512
+SHA256: bbd0ba105087225452ac723d847b3b0d301de549143f492984c8cfd06a7da17f
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: One tweak for Instagram and YouTube, switched per app from Settings.
+ .
+ Everything Albrhi makes, in a single package. Install this and you have the Instagram
+ tweak and the YouTube tweak; there is nothing else to download and one thing to update.
+ .
+ ▍CHOOSE FROM SETTINGS
+ Settings › Albrhi lists every app Albrhi patches, with a switch each. Turn one off and
+ Albrhi does nothing inside that app — no uninstalling, and your settings are kept for
+ when you turn it back on. Close and reopen the app for a change to take effect.
+ .
+ ▍INSTAGRAM
+ A download button in every post and reel, a Download Center with a real queue, a feed
+ without ads or suggestions, watching stories without telling anyone, and confirmations
+ before a mis-tap becomes a notification.
+ .
+ ▍YOUTUBE
+ Downloads with their own player and Download Centre tab, no ads, SponsorBlock, playback
+ that keeps going in the background, and a quality ceiling per connection.
+ .
+ ▍GROWING
+ New Albrhi tweaks arrive in this same package and appear in the same list, so there is
+ never a second thing to install.
+ .
+ Arabic and English throughout.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. The Instagram tweak is an educational and corrective
+ derivative of SCInsta by SoCuul, rebuilt with AI assistance to improve code quality,
+ design, performance and user experience. Free and open source under the GNU GPL v3, with
+ original authorship credited and preserved.
+Tag: role::enduser
+Author: Ibrahim Ismail AL-Rahn (Instagram tweak based on SCInsta by SoCuul, GPLv3)
+Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi (roothide)
+Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
+
+Package: com.albrhi.roothide
+Version: 1.0.7
+Architecture: iphoneos-arm64e
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 1588
+Depends: mobilesubstrate, preferenceloader
+Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.panel, com.albrhi.panel.roothide
+Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.panel, com.albrhi.panel.roothide
+Filename: debs/com.albrhi.roothide_1.0.7_iphoneos-arm64e.deb
+Size: 898296
+MD5sum: 2cac8b6d331735145e8a2b0ce6dbf8a9
+SHA1: 1b59454257f9def0957cff06ee2b6cc44c4ff01b
+SHA256: d537d92880a25da464e3822bed3203cb89d908aebee39f23bdef9ed3aa6ce686
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram and YouTube, switched per app from Settings.
