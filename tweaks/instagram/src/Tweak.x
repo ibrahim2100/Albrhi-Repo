@@ -19,7 +19,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v4.1.2";  // Albrhi
+NSString *SCIVersionString = @"v4.1.3";  // Albrhi
 
 // Variables that work across features
 

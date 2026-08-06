@@ -114,7 +114,44 @@ jobs:
                     echo "ok  $EXPECTED"
                 done
 
-            - name: Upload the deb
+            - name: Setup roothide Theos
+              uses: actions/checkout@v4
+              with:
+                repository: roothide/theos
+                ref: master
+                path: ${{ github.workspace }}/theos-roothide
+                submodules: recursive
+
+            - name: Share the SDK with roothide Theos
+              # The same iPhoneOS16.2 SDK: the panel's Makefile pins it by name and the
+              # roothide fork keeps its own sdks directory. Copied rather than fetched twice.
+              run: |
+                mkdir -p "${{ github.workspace }}/theos-roothide/sdks"
+                cp -R "${{ github.workspace }}/theos/sdks/." "${{ github.workspace }}/theos-roothide/sdks/"
+                ls "${{ github.workspace }}/theos-roothide/sdks"
+
+            - name: Build everything, roothide
+              run: |
+                cd main
+                ./tools/make-suite.sh roothide
+              env:
+                THEOS: ${{ github.workspace }}/theos-roothide
+
+            - name: Check both flavours were produced
+              # 1.0.0 shipped rootless only, because this step did not exist and nobody was
+              # counting. Two packages are expected; anything else is a failure, not a
+              # detail to notice later.
+              run: |
+                cd main
+                ls -la packages/
+                COUNT=$(ls packages/*.deb 2>/dev/null | wc -l | tr -d ' ')
+                if [ "$COUNT" != "2" ]; then
+                  echo "::error::expected a rootless and a roothide .deb, found $COUNT"
+                  exit 1
+                fi
+                echo "ok  two packages"
+
+            - name: Upload both debs
               uses: actions/upload-artifact@v4
               with:
                 name: Albrhi-${{ env.SUITE_VERSION }}

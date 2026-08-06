@@ -116,14 +116,17 @@ static void sci_uploadSeenState(id self, SEL _cmd, id seenState) {
 
 %ctor {
     @autoreleasepool {
-        // Resolved, not spelled out. The name here was
-        // "_TtC26IGStoryPendingSeenStateKit28IGStoryPendingSeenStateStore", which is correct
-        // for 439 and 441 and was verified against both -- but those numbers are the lengths
-        // of the module and class names, so the literal is only ever right for the build it
-        // was copied from. Move the class to another module and it stops matching, with no
-        // error and no crash: the receipt simply goes out again. SCIResolveClass searches for
-        // the class name in whatever module holds it.
-        Class store = SCIResolveClass(@"IGStoryPendingSeenStateStore");
+        // The known runtime name first, then a search if it stops matching.
+        //
+        // The literal is correct for 439 and 441 and was verified against both binaries, so
+        // it is kept and tried first -- an answer already in hand beats a search that might
+        // not find one. What the search adds is the build where the module moves: those
+        // numbers are the lengths of the module and class names, so the literal alone would
+        // stop matching with no error and no crash, and the receipt would quietly go out
+        // again. Replacing the literal *with* the search, rather than putting it in front,
+        // is what broke the reels download button.
+        Class store = SCIResolveClassWithHint(@"IGStoryPendingSeenStateStore",
+            @"_TtC26IGStoryPendingSeenStateKit28IGStoryPendingSeenStateStore");
         SEL upload = NSSelectorFromString(@"_uploadSeenState:");
 
         BOOL attached = NO;

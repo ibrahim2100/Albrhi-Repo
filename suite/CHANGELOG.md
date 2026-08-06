@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.0.2
+
+- Includes the Instagram fix that brings back the reels download button.
+- **Now really builds both flavours.** 1.0.0 and 1.0.1 produced a rootless package
+  only — the roothide one was never built, and nothing was counting.
+
 ## v1.0.1
 
 - **Now really removes the old separate packages.** 1.0.0 declared that it replaced

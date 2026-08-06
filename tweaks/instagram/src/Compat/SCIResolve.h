@@ -53,6 +53,21 @@ extern "C" {
 /// check, and skip.
 Class _Nullable SCIResolveClass(NSString *name);
 
+/// The same, with the Swift runtime name we already knew tried before the search.
+///
+/// **This exists because replacing a known-good literal with a search was a regression.**
+/// Binding by the exact mangled name worked; going through objc_copyClassList did not, and
+/// the reels download button disappeared on 439 and 441 with nothing logged. Whatever the
+/// reason — a class list taken during dyld's load that does not yet hold everything
+/// objc_getClass can still find by name — the lesson is the same: a search is a fallback,
+/// not a replacement for an answer already in hand.
+///
+/// Order is plain name, then hint, then search. The first two are exactly what the code did
+/// before this file existed, so a call site using a hint can only do better than it used to,
+/// never worse. The search then covers the build where the module moves and the hint stops
+/// matching, which is the whole reason for any of this.
+Class _Nullable SCIResolveClassWithHint(NSString *name, NSString *_Nullable runtimeName);
+
 /// What SCIResolveClass found, for the diagnostics page.
 ///
 /// `nil` means it was never asked. An empty string means it was asked and found nothing —

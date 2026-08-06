@@ -90,7 +90,8 @@ static BOOL sci_shouldAutoScrollToObject(id self, SEL _cmd, id object, NSUIntege
 %ctor {
     @autoreleasepool {
         Class feed = objc_getClass("IGSundialFeedViewController");
-        Class engine = SCIResolveClass(@"IGSundialAutoScroll");
+        Class engine = SCIResolveClassWithHint(@"IGSundialAutoScroll",
+            @"_TtC19IGSundialAutoScroll19IGSundialAutoScroll");
 
         // Enabled/should gates → YES.
         SCIForceGate(feed, @"isAutoAdvanceEnabled", YES);
@@ -393,13 +394,27 @@ static void sci_overlayProgress(id self, SEL _cmd, double progress, double remai
 
         SEL progress = NSSelectorFromString(@"updateProgressIndicatorWithProgress:remainingDuration:elapsedDuration:totalDuration:");
 
-        // Plain names on both. SCIResolveClass finds the Swift one under whatever module
-        // holds it, and answers the ordinary one directly.
-        for (NSString *name in @[@"IGSundialViewerControlsOverlayView",
-                                 @"IGSundialViewerCarouselCell"]) {
+        // Each name with the Swift runtime name we already knew for it, where there is one.
+        //
+        // This block was the worse half of the same mistake as the reels button: the array
+        // was changed from mangled names to plain ones and a comment was written saying the
+        // resolver would find them -- while the lookup below stayed objc_getClass. A plain
+        // name for a Swift class finds nothing, on any build, so the progress hook simply
+        // stopped attaching and said so nowhere. The comment described the change; the code
+        // did not have it.
+        NSArray<NSArray<NSString *> *> *candidates = @[
+            @[@"IGSundialViewerControlsOverlayView",
+              @"_TtC30IGSundialViewerControlsOverlay34IGSundialViewerControlsOverlayView"],
+            @[@"IGSundialViewerCarouselCell", @""],
+        ];
+
+        for (NSArray<NSString *> *candidate in candidates) {
             if (sProgressHookCount >= SCI_MAX_PROGRESS_HOOKS) break;
 
-            Class cls = objc_getClass(name.UTF8String);
+            NSString *name = candidate[0];
+            NSString *hint = candidate[1].length ? candidate[1] : nil;
+
+            Class cls = SCIResolveClassWithHint(name, hint);
             if (!cls || !class_getInstanceMethod(cls, progress)) continue;
 
             IMP previous = NULL;

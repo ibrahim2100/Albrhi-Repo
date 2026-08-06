@@ -4,6 +4,15 @@
 Other versions should work too — the tweak looks for what it needs while the app runs
 rather than expecting a particular version number.
 
+## v4.1.3
+
+- **Brings back the reels download button**, and the reels progress bar with it. Both
+  stopped working in 4.1.0 on the newer Instagram versions. The tweak was told to go
+  looking for a part of Instagram by name instead of using the address it already
+  had, and the search did not find it. It uses the address it has first now, and only
+  searches if that stops working one day.
+- Nothing was wrong on Instagram 410, which is why this was not caught sooner.
+
 ## v4.1.2
 
 - Fixes the build again. 4.1.1 compiled but would not link, for a different reason

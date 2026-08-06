@@ -313,7 +313,8 @@ static char targetStaticRef[] = "target";
     // module IGDirectNotesUISwift, and Instagram 439 moved the class to
     // IGNotesBubbleCreationSwift -- so the literal stopped matching and this feature has
     // been off ever since, with nothing to show for it. Proved against the 441 binary.
-    Class bubblePalette = SCIResolveClass(@"IGDirectNotesBubbleEditorColorPaletteView");
+    Class bubblePalette = SCIResolveClassWithHint(@"IGDirectNotesBubbleEditorColorPaletteView",
+            @"_TtC26IGNotesBubbleCreationSwift41IGDirectNotesBubbleEditorColorPaletteView");
     if (bubblePalette) %init(SCIgIGDirectNotesBubbleEditorColorPaletteView, IGDirectNotesBubbleEditorColorPaletteView = bubblePalette);
 
     Class directNotesCreationView = SCIResolveClass(@"IGDirectNotesCreationView");
