@@ -420,6 +420,12 @@ jobs:
               # one that breaks silently the next time the repository is recreated. The
               # call is idempotent -- it states the arrangement rather than toggling it.
               run: |
+                # Attempted, not relied on. GITHUB_TOKEN may deploy to Pages and may
+                # not reconfigure it -- the PUT below is refused on this repository, and
+                # the POST after it is refused too whenever Pages is in workflow mode,
+                # where branch builds do not exist. Both are left in because they cost
+                # nothing and succeed on a repository whose token does have the rights;
+                # the step after this one is what reports whether the source is right.
                 echo "Pointing Pages at the gh-pages branch"
                 gh api -X PUT "repos/${{ github.repository }}"                     --field has_pages=true --silent 2>/dev/null || true
 
@@ -472,5 +478,19 @@ jobs:
                   sleep 20
                 done
 
-                echo "::error::the source is not serving ${SUITE_VERSION} — the release is published but the index is behind"
+                echo "::error::the source is not serving ${SUITE_VERSION}"
+                echo ""
+                echo "The release is published and gh-pages holds the finished index."
+                echo "What is missing is GitHub serving that branch."
+                echo ""
+                echo "This cannot be fixed from here: GITHUB_TOKEN may deploy to Pages"
+                echo "but may not change how Pages is configured, and the attempt above"
+                echo "was refused. It needs one change in the repository settings:"
+                echo ""
+                echo "  Settings -> Pages -> Build and deployment -> Source"
+                echo "      Deploy from a branch"
+                echo "      Branch: gh-pages    Folder: / (root)"
+                echo ""
+                echo "In that mode the push this run already made is what serves the"
+                echo "source, and there is no deployment to queue behind."
                 exit 1
