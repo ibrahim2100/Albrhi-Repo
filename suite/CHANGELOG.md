@@ -1,5 +1,19 @@
 # Albrhi Changelog
 
+## v1.0.11
+
+**Settings › Albrhi has a face.** The Albrhi mark, the name and the version above the
+list, the same icon on the row itself, and each app shown with its own icon — Instagram
+and YouTube are now told apart before their names are read.
+
+**And a Versions section.** Every tweak states the app versions it was last verified
+against, and the page shows that beside the version actually on your phone: "410.1.0 ·
+tested" when they agree, "412.0.0 · tested on 410, 439, 441" when they do not. Nothing
+is switched off on a mismatch — a newer app usually works fine. It is there so that when
+something does break, the fact that explains it is already on screen.
+
+Includes Panel 0.6.0, Instagram 4.1.5 and YouTube 1.12.4.
+
 ## v1.0.10
 
 - The source updates properly now. It had started working already — the site was

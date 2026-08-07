@@ -443,6 +443,13 @@ far less surface area than a real compressor for a few-kilobyte archive.
   code here is working around something real and documented above.
 - Bump the version in the tweak's `control` **and** its `SCIVersionString` together, and add a changelog
   entry — the release notes and the Sileo depiction are generated from it.
+- **And bump `suite/control` as well, or nothing ships.** `com.albrhi` is what people
+  install, `make-suite.sh` rebuilds it from *every* tweak, and its version is its own —
+  a tweak going from 0.5.0 to 0.6.0 does not change it. `buildsuite.yml` asks the remote
+  whether `v${SUITE_VERSION}` is tagged and, finding it, prints "already released —
+  building, not releasing": the work is compiled and thrown away, no release, no update
+  offered, and a green run. Four version numbers move together, and the fourth is the
+  only one a device ever sees.
 
 ---
 
