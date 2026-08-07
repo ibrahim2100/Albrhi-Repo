@@ -101,18 +101,18 @@ Name: Albrhi (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
 Package: com.albrhi
-Version: 1.0.9
+Version: 1.0.12
 Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 1592
 Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.panel, com.albrhi.panel.roothide
-Filename: debs/com.albrhi_1.0.9_iphoneos-arm64.deb
-Size: 900188
-MD5sum: a420ea082e2834e058ee75b102ff3498
-SHA1: 56317aba3da87048559fd0113955460049e15a5b
-SHA256: 017fc6a4bf98343e219e17349c01e4cebb9817f708ce50f7fec734cfa1bcacc2
+Filename: debs/com.albrhi_1.0.12_iphoneos-arm64.deb
+Size: 921364
+MD5sum: 438470defc9e4f82519b1bada6044f07
+SHA1: 4a2e5cc73ded55c92bbf83bfc4b715116489a31f
+SHA256: d730ec2e233de9843d3c511612c092492995407efb56ba3b72d674cbaed12ce4
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram and YouTube, switched per app from Settings.
@@ -254,18 +254,18 @@ Name: Albrhi (roothide)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
 Package: com.albrhi.roothide
-Version: 1.0.9
+Version: 1.0.12
 Architecture: iphoneos-arm64e
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 1592
 Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.panel, com.albrhi.panel.roothide
-Filename: debs/com.albrhi.roothide_1.0.9_iphoneos-arm64e.deb
-Size: 899948
-MD5sum: 63e0576b185e7d295313deaec12727a4
-SHA1: 49957a8fae0ac73c4d88fafcfe8fd1009d3d8a36
-SHA256: 44b545f2538ac9c98339f949cee40b4b11bb555b2e04d1a38ea2f5c76ab37a25
+Filename: debs/com.albrhi.roothide_1.0.12_iphoneos-arm64e.deb
+Size: 921118
+MD5sum: 518aee27deacf83048b65571a44b0931
+SHA1: 7cd481b4c271a8c13294385b6b17261d7c861ed9
+SHA256: 67a77573eb29d40c3c52b9ad30300e5eee2d62815f157ca759f4199f8af039a2
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram and YouTube, switched per app from Settings.
