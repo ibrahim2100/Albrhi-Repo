@@ -16,6 +16,7 @@
 @property (nonatomic, readonly) NSString *applicationIdentifier;
 @property (nonatomic, readonly) NSString *localizedName;
 @property (nonatomic, readonly) NSString *bundleExecutable;
+@property (nonatomic, readonly) NSString *shortVersionString;
 @end
 
 @interface LSApplicationWorkspace : NSObject
@@ -23,8 +24,41 @@
 - (NSArray<LSApplicationProxy *> *)allInstalledApplications;
 @end
 
+/// How Settings itself draws an app's icon.
+///
+/// Private, and asked for by -respondsToSelector: rather than called on faith. A row with
+/// no picture is a smaller loss than a page that will not load, and this is the one call
+/// here that a future iOS could remove.
+@interface UIImage (SCIPanelIcons)
++ (UIImage *)_applicationIconImageForBundleIdentifier:(NSString *)identifier
+                                                format:(int)format
+                                                 scale:(CGFloat)scale;
+@end
+
 
 @implementation SCIPanelEntry
+
+/// A tweak can be verified against several versions, and the Instagram one is: 410, 439
+/// and 441 from a single build. So the declaration is a list, and a match is any entry.
+///
+/// Compared by prefix, on whole components. "441" has to match the "441.0.3" a phone
+/// reports, or every row would read as a mismatch and the section would be noise. But
+/// prefix alone would make "44" match "441", so the character after the match must be a
+/// dot or nothing.
+- (BOOL)runsTestedVersion {
+    if (!self.appVersion.length || !self.testedVersion.length) return NO;
+
+    for (NSString *raw in [self.testedVersion componentsSeparatedByString:@","]) {
+        NSString *tested = [raw stringByTrimmingCharactersInSet:
+            [NSCharacterSet whitespaceCharacterSet]];
+        if (!tested.length) continue;
+
+        if ([self.appVersion isEqualToString:tested]) return YES;
+        if ([self.appVersion hasPrefix:[tested stringByAppendingString:@"."]]) return YES;
+    }
+    return NO;
+}
+
 @end
 
 
@@ -51,9 +85,29 @@
     return prefix;
 }
 
+/// The icon the home screen uses for an app, at a size a settings row wants.
+///
+/// Format 2 is the 62-point artwork. Asked for at the screen's own scale so it is the
+/// image iOS already has rather than one scaled up from a smaller cache.
++ (UIImage *)iconFor:(NSString *)identifier {
+    if (!identifier.length) return nil;
+
+    SEL selector = @selector(_applicationIconImageForBundleIdentifier:format:scale:);
+    if (![UIImage respondsToSelector:selector]) return nil;
+
+    @try {
+        return [UIImage _applicationIconImageForBundleIdentifier:identifier
+                                                           format:2
+                                                            scale:[UIScreen mainScreen].scale];
+    } @catch (__unused NSException *exception) {
+        return nil;
+    }
+}
+
 /// bundle identifier -> the name the device shows for it.
 + (void)readInstalled:(NSMutableDictionary<NSString *, NSString *> *)names
-           executables:(NSMutableDictionary<NSString *, NSString *> *)executables {
+           executables:(NSMutableDictionary<NSString *, NSString *> *)executables
+              versions:(NSMutableDictionary<NSString *, NSString *> *)versions {
     Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
     if (!workspaceClass) return;
 
@@ -63,6 +117,9 @@
 
         names[identifier.lowercaseString] = proxy.localizedName.length
             ? proxy.localizedName : identifier;
+
+        NSString *version = proxy.shortVersionString;
+        if (version.length) versions[identifier.lowercaseString] = version;
 
         // So an Executables filter can be resolved to the app it means. Two apps can
         // share an executable name; the first wins and the second keeps its own row
@@ -82,7 +139,8 @@
 
     NSMutableDictionary<NSString *, NSString *> *names = [NSMutableDictionary dictionary];
     NSMutableDictionary<NSString *, NSString *> *executableOwners = [NSMutableDictionary dictionary];
-    [self readInstalled:names executables:executableOwners];
+    NSMutableDictionary<NSString *, NSString *> *versions = [NSMutableDictionary dictionary];
+    [self readInstalled:names executables:executableOwners versions:versions];
 
     NSMutableArray<SCIPanelEntry *> *out = [NSMutableArray array];
 
@@ -139,6 +197,18 @@
             NSString *known = names[[candidate lowercaseString]];
             entry.appInstalled = (known != nil);
             entry.appName = known ?: candidate;
+            entry.appVersion = versions[[candidate lowercaseString]];
+
+            // Declared by the tweak, in its own filter file, beside the app it names.
+            //
+            // Not a table in this panel. A hard-coded "Instagram 410.1.0, YouTube 21.30.5"
+            // here would be wrong the day a tweak is retested and nobody remembered to
+            // come back — and wrong in the direction that quietly misinforms. The tweak
+            // knows what it was built against; it is the only thing that does.
+            id declared = plist[@"SCITestedVersion"];
+            if ([declared isKindOfClass:[NSString class]]) entry.testedVersion = declared;
+
+            if (entry.appInstalled) entry.appIcon = [self iconFor:candidate];
 
             [out addObject:entry];
         }

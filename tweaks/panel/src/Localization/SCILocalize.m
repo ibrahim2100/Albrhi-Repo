@@ -14,7 +14,14 @@ static NSDictionary *_arTable = nil;
 static void SCIBuildTables(void) {
     _enTable = @{
         @"panel_title": @"Albrhi",
+        @"panel_tagline": @"One tweak for every app it supports, switched from here.",
         @"section_apps": @"Apps",
+        @"section_versions": @"Versions",
+        @"versions_footer": @"The app version each tweak was last verified against. A newer app usually still works — this is here so you can see the difference when something does not.",
+        @"versions_match": @"%@ · tested",
+        @"versions_differ": @"%@ · tested on %@",
+        @"versions_tested_only": @"tested on %@",
+        @"about_signature": @"Albrhi — made by Ibrahim Ismail AL-Rahn.\nFree and open source under the GNU GPL v3. The Instagram tweak is a derivative of SCInsta by SoCuul, whose authorship is credited and preserved.",
         @"apps_footer": @"Turn Albrhi off inside an app without uninstalling it. Your settings are kept and come back when you turn it on again.",
         @"apps_none": @"No Albrhi tweak is installed",
         @"switch_restart": @"Close and reopen the app for this to take effect.",
@@ -28,7 +35,14 @@ static void SCIBuildTables(void) {
 
     _arTable = @{
         @"panel_title": @"البرهي",
+        @"panel_tagline": @"أداة واحدة لكل تطبيق تدعمه، تتحكم بها من هنا.",
         @"section_apps": @"التطبيقات",
+        @"section_versions": @"الإصدارات",
+        @"versions_footer": @"إصدار التطبيق الذي جُرّبت عليه كل أداة آخر مرة. الإصدار الأحدث يعمل غالباً — وهذا القسم ليظهر لك الفرق حين لا يعمل.",
+        @"versions_match": @"%@ · مُجرَّب",
+        @"versions_differ": @"%@ · جُرِّب على %@",
+        @"versions_tested_only": @"جُرِّب على %@",
+        @"about_signature": @"البرهي — تطوير إبراهيم إسماعيل الرهن.\nحر ومفتوح المصدر تحت رخصة GNU GPL v3. أداة إنستغرام مشتقّة من SCInsta لـ SoCuul، ونسبتها إليه محفوظة ومذكورة.",
         @"apps_footer": @"أوقف البرهي داخل تطبيق بلا حذفه. إعداداتك محفوظة وتعود حين تُشغّله من جديد.",
         @"apps_none": @"لا توجد أداة برهي مثبَّتة",
         @"switch_restart": @"أغلق التطبيق وافتحه ليسري المفعول.",

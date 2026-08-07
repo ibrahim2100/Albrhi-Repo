@@ -3,6 +3,13 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.12.4
+
+- The tweak now states, in its own filter file, the YouTube version it was last verified
+  against. Albrhi Panel reads that and shows it beside the version on your phone, so a
+  mismatch is visible before it becomes a question.
+
+
 ## v1.12.3
 
 - **The switch in Settings actually works now.** Same fix as the Instagram tweak: the

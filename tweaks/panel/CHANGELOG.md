@@ -1,5 +1,36 @@
 # Albrhi Panel Changelog
 
+## v0.6.0
+
+**The page has a face now.** A header with the Albrhi mark, the name and the version
+sits above the list, and the row in Settings carries the same icon — so the page is
+recognisable from the moment you scroll past it rather than being an unlabelled list of
+switches.
+
+**Each app is shown with its own icon.** Instagram and YouTube are told apart before
+their names are read, which is the whole job of an icon in a list.
+
+**A Versions section.** Every tweak now declares, in its own filter file, the app
+versions it was last verified against — and this shows that beside the version actually
+on the phone. "410.1.0 · tested" when they agree, "412.0.0 · tested on 410, 439, 441"
+when they do not.
+
+Nothing is disabled on a mismatch and nothing here is pinned to a version number. A
+newer app usually works fine; this exists so that when something *does* break, the one
+fact that explains it is already on screen instead of taking a report to establish.
+
+The declaration lives with each tweak rather than in a table here, because the tweak is
+the only thing that knows what it was built against — a list in this panel would go
+stale the first time one was retested and nobody came back to update it.
+
+**The credit is at the bottom of the page**, with the licence and SoCuul's authorship of
+SCInsta, which is a condition of using it rather than a courtesy.
+
+## v0.5.0
+
+Released without a changelog entry. It is the release that fixed the switch being
+written correctly and read as nothing — see the suite's own notes for that.
+
 ## v0.4.0
 
 **Rebuilt around what it is for.** The panel is Albrhi's own settings page and

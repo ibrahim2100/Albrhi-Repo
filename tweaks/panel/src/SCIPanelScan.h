@@ -19,6 +19,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -32,6 +33,22 @@ NS_ASSUME_NONNULL_BEGIN
 /// Whether the app the tweak targets is actually on this device.
 @property (nonatomic, assign) BOOL appInstalled;
 @property (nonatomic, assign) unsigned long long size;
+
+/// The app's own icon, as the home screen draws it. Nil when the app is not installed.
+@property (nonatomic, strong, nullable) UIImage *appIcon;
+
+/// What version of the app is on this phone, and what version the tweak was built
+/// against. Either may be nil: the first when the app is not installed, the second when
+/// the tweak's filter file does not say.
+///
+/// Both are shown because the interesting fact is the *comparison*. "Tested on 410.1.0"
+/// alone tells nobody anything; "you have 412.0.0, tested on 410.1.0" is the answer to
+/// the question people actually arrive with, which is why something stopped working.
+@property (nonatomic, copy, nullable) NSString *appVersion;
+@property (nonatomic, copy, nullable) NSString *testedVersion;
+
+/// Whether the two match, once both are known.
+- (BOOL)runsTestedVersion;
 @end
 
 

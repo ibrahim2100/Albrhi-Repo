@@ -3,6 +3,12 @@
 
 <plist version="1.0">
 <dict>
+    <!-- The app version this tweak was last verified against. Read by Albrhi Panel
+         and shown beside the installed version, so a mismatch is visible before it
+         becomes a bug report. Substrate ignores keys it does not know. -->
+    <key>SCITestedVersion</key>
+    <string>410, 439, 441</string>
+
     <key>Filter</key>
     <dict>
         <key>Bundles</key>

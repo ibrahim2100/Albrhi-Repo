@@ -12,6 +12,13 @@
 		<string>SCIPanelRootController</string>
 		<key>isController</key>
 		<true/>
+
+		<!-- Resolved inside AlbrhiPanel.bundle, not by absolute path. The prefix differs
+		     between rootful, rootless and roothide -- and on roothide it is a different
+		     random directory on every device, so a written-out path is wrong by design. -->
+		<key>icon</key>
+		<string>AlbrhiIcon.png</string>
+
 		<key>label</key>
 		<string>Albrhi</string>
 	</dict>

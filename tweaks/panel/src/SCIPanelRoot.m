@@ -3,9 +3,10 @@
 #import <UIKit/UIKit.h>
 
 #import "SCIPanelScan.h"
+#import "SCIPanelHeader.h"
 #import "Localization/SCILocalize.h"
 
-NSString *SCIVersionString = @"v0.5.0";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.6.0";  // AlbrhiPanel
 
 ///
 /// Albrhi's own control panel, in the iOS Settings app.
@@ -76,15 +77,23 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
                                              edit:Nil];
         [row setProperty:entry.bundleIdentifier forKey:@"sciBundleIdentifier"];
 
-        // An app that is not on the phone gets a switch that cannot be moved, and a
-        // subtitle saying why. Offering a live switch for an app you do not have is
-        // offering a control over nothing.
+        // The app's own icon, so the list is scanned by eye rather than read.
+        //
+        // Two rows of text that differ by one word are two rows a person has to read;
+        // the Instagram glyph and the YouTube glyph are told apart before reading starts.
+        // Nil is fine and means no picture, never a blank space where one was promised.
+        if (entry.appIcon) [row setProperty:entry.appIcon forKey:@"iconImage"];
+
+        // An app that is not on the phone gets a switch that cannot be moved. Offering a
+        // live switch for an app you do not have is offering a control over nothing.
         if (!entry.appInstalled) {
             [row setProperty:@NO forKey:@"enabled"];
         }
 
         [specifiers addObject:row];
     }
+
+    [specifiers addObjectsFromArray:[self versionSpecifiersFor:entries]];
 
     PSSpecifier *about = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"section_about")
                                                         target:self
@@ -100,8 +109,75 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
     [specifiers addObject:[self valueRow:SCILocalized(@"about_author")
                                    value:SCILocalized(@"about_author_name")]];
 
+    // The name at the end, in the last footer, where a signature belongs.
+    //
+    // A value row already says who made it; this is the other thing — the licence and the
+    // credit SCInsta is owed, which is a condition of using it and not a courtesy. Both
+    // are in the package metadata too, and both being visible on the device matters more
+    // than either being tidy.
+    PSSpecifier *signature = [PSSpecifier preferenceSpecifierNamed:@""
+                                                            target:self
+                                                               set:NULL
+                                                               get:NULL
+                                                            detail:Nil
+                                                              cell:PSGroupCell
+                                                              edit:Nil];
+    [signature setProperty:SCILocalized(@"about_signature") forKey:@"footerText"];
+    [specifiers addObject:signature];
+
     _specifiers = specifiers;
     return _specifiers;
+}
+
+/// What each tweak was built against, beside what is on the phone.
+///
+/// The section exists because "it stopped working after an update" is the single most
+/// common thing anyone reports, and this is the page that can answer it without a report
+/// being written at all. A row reads "410.1.0 · tested" when they agree and
+/// "412.0.0 · tested on 410.1.0" when they do not.
+///
+/// Nothing is disabled on a mismatch. Nothing is pinned to a version number anywhere in
+/// this project and a newer app usually works fine; the point is to show the one fact
+/// that explains it when it does not.
+- (NSArray<PSSpecifier *> *)versionSpecifiersFor:(NSArray<SCIPanelEntry *> *)entries {
+    NSMutableArray<SCIPanelEntry *> *known = [NSMutableArray array];
+    for (SCIPanelEntry *entry in entries) {
+        if (entry.testedVersion.length || entry.appVersion.length) [known addObject:entry];
+    }
+    if (!known.count) return @[];
+
+    PSSpecifier *group = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"section_versions")
+                                                        target:self
+                                                           set:NULL
+                                                           get:NULL
+                                                        detail:Nil
+                                                          cell:PSGroupCell
+                                                          edit:Nil];
+    [group setProperty:SCILocalized(@"versions_footer") forKey:@"footerText"];
+
+    NSMutableArray<PSSpecifier *> *rows = [NSMutableArray arrayWithObject:group];
+
+    for (SCIPanelEntry *entry in known) {
+        NSString *value;
+
+        if (!entry.appVersion.length) {
+            // Not installed, so there is nothing to compare. The tested version is still
+            // worth stating: it is what this tweak is for.
+            value = [NSString stringWithFormat:SCILocalized(@"versions_tested_only"),
+                     entry.testedVersion ?: @"—"];
+        } else if (!entry.testedVersion.length) {
+            value = entry.appVersion;
+        } else if ([entry runsTestedVersion]) {
+            value = [NSString stringWithFormat:SCILocalized(@"versions_match"), entry.appVersion];
+        } else {
+            value = [NSString stringWithFormat:SCILocalized(@"versions_differ"),
+                     entry.appVersion, entry.testedVersion];
+        }
+
+        [rows addObject:[self valueRow:entry.appName value:value]];
+    }
+
+    return rows;
 }
 
 - (PSSpecifier *)valueRow:(NSString *)title value:(NSString *)value {
@@ -158,6 +234,28 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.title = SCILocalized(@"panel_title");
+}
+
+/// The header is fitted here rather than in -viewDidLoad.
+///
+/// A table header has to be given a frame, and the width to fit it to is the table's —
+/// which is not final until the view has been laid out. Fitting it in -viewDidLoad gives
+/// it the width of a view that has not been sized yet, and the header comes out either
+/// clipped or floating in the middle of the page.
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+
+    UITableView *table = self.table;
+    CGFloat width = table.bounds.size.width;
+    if (width <= 0) return;
+
+    // Rebuilt only when the width actually changed -- on rotation, on an iPad split.
+    // -viewDidLayoutSubviews runs constantly, and building a view on each pass would
+    // rebuild the header while the user is scrolling past it.
+    if (table.tableHeaderView && ABS(table.tableHeaderView.frame.size.width - width) < 0.5) return;
+
+    UIView *header = [SCIPanelHeader viewForWidth:width version:SCIVersionString];
+    if (header) table.tableHeaderView = header;
 }
 
 - (void)viewWillAppear:(BOOL)animated {

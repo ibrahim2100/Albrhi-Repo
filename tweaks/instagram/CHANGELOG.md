@@ -4,6 +4,13 @@
 Other versions should work too — the tweak looks for what it needs while the app runs
 rather than expecting a particular version number.
 
+## v4.1.5
+
+- The tweak now states, in its own filter file, which Instagram versions it was last
+  verified against — 410, 439 and 441. Albrhi Panel reads that and shows it beside the
+  version on your phone, so a mismatch is visible before it becomes a question.
+
+
 ## v4.1.4
 
 - **The switch in Settings actually works now.** Turning Albrhi off for an app moved
