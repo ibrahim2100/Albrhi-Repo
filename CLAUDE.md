@@ -11,10 +11,24 @@ code, comments and user-facing strings are English + Arabic.
 
 ## What this is
 
-An Instagram tweak for jailbroken and sideloaded iOS, derived from
-[SCInsta](https://github.com/SoCuul/SCInsta) by SoCuul under GPLv3. Original
-authorship is credited in-app, in the README and in the package metadata — that is a
-licence obligation, not a courtesy. Never remove it.
+Tweaks for jailbroken and sideloaded iOS. **Three of them**, and one package:
+
+| directory | package | what it patches |
+|---|---|---|
+| `tweaks/instagram` | `com.albrhi.tweak` | Instagram, tested on **410.1.0** |
+| `tweaks/youtube` | `com.albrhi.youtube` | YouTube, tested on **21.30.5** |
+| `tweaks/panel` | `com.albrhi.panel` | the Settings app — the per-app switches |
+| `suite/` | **`com.albrhi`** | all of the above, in one package |
+
+The Instagram tweak is derived from [SCInsta](https://github.com/SoCuul/SCInsta) by
+SoCuul under GPLv3. Original authorship is credited in-app, in the README and in the
+package metadata — that is a licence obligation, not a courtesy. Never remove it.
+
+**`com.albrhi` is what people install.** The individual packages are still built and
+still published, but the suite is the front door: one thing to install, one thing to
+update, and a new tweak arrives inside it rather than as a second download. It declares
+`Conflicts` and `Replaces` on all six individual identities (rootless and roothide) —
+and that is not enough on its own, see the ground rule below.
 
 The repository doubles as an **APT source**: it builds itself, publishes releases,
 and serves a Sileo/Zebra repo from GitHub Pages.
@@ -22,8 +36,8 @@ and serves a Sileo/Zebra repo from GitHub Pages.
 - Repo: `github.com/ibrahim2100/Albrhi-Repo`
 - Source: `https://ibrahim2100.github.io/Albrhi-Repo/`
 - Control panel: `…/deb-edit/`
-- Tested against **Instagram 410.1.0** — the newest build the developer's phone
-  accepts. Not a compatibility ceiling; nothing is pinned to a version number.
+- The tested versions above are the newest builds the developer's phone accepts. Not a
+  compatibility ceiling; nothing is pinned to a version number.
 
 ---
 
@@ -73,7 +87,46 @@ run of `tools/make-repo.sh` cost seconds.
 
 **Never write shell/Python heredocs containing `\n` inside string literals.** This
 corrupted source files three separate times — the escape becomes a real newline and
-Objective-C has no multi-line strings. Write a script file instead.
+Objective-C has no multi-line strings. Write a script file instead. **It happened a
+fourth time in 1.0.4**, in a commit that was fixing something else, by an author who had
+read this paragraph. Treat it as a thing to check for after writing a heredoc, not as a
+thing to remember while writing one.
+
+**`Conflicts` and `Replaces` are a request to a package manager, not to dpkg.** Sileo and
+Zebra honour them when installing from a source. `dpkg -i` on a downloaded file does not:
+it is handed one file and told to unpack it, and the old package stays exactly where it
+is — so both dylibs end up in `DynamicLibraries` under two package names and both get
+injected. `suite/DEBIAN/preinst` removes them itself for that reason. Declaring a
+relationship and hoping is not the same as performing it.
+
+**What makes a package roothide is its paths, not its control file.** A rootless `.deb`
+carries everything under `var/jb` and a roothide one does not, because roothide's prefix
+is decided on the device. Theos settles that when it *stages*, long before any packaging
+script runs — so 1.0.2 shipped a "roothide" package built from a rootless staging tree
+and it installed as rootless, because that is what it was. `make-suite.sh` now checks the
+staged tree against the scheme it was asked for and refuses a mismatch, naming which
+`THEOS` it used. Two releases were spent on a control-file theory that was never the bug.
+
+**Keep the fields a tool computed; override only your own.** `make-suite.sh` used to
+replace `DEBIAN/control` wholesale and threw away what Theos had written into it. The
+merge now wins field by field. The general direction matters more than this instance:
+discarding information you did not know you had is the failure mode, and it is silent.
+
+**A sandboxed app asking cfprefsd for another application's domain is answered with
+nothing, not with an error.** The panel writes the per-app switch from inside Settings;
+Instagram and YouTube read it from inside their own sandboxes and saw an absence — which
+this code deliberately reads as "on", so a device that never opened the panel keeps
+working. The switch moved and nothing happened. The plist is read directly now, with
+CFPreferences tried first because where the sandbox permits it it is cheaper and it sees
+a value written but not yet flushed. **The jailbreak prefix comes from `dladdr` on this
+code's own address** — the only way to get it right on roothide, where it is a different
+random directory on every device.
+
+**A sleep is a guess about how long something takes.** Three releases went into a Pages
+deploy that "hung", and each time the fix was to ask the thing itself instead: which mode
+Pages is in, whether the build is `built` or `errored`, whether the live URL is serving
+the version just built. Every time a sleep was replaced with a question, the answer came
+back immediately and was right. See the CI section for what that turned into.
 
 ---
 
@@ -107,9 +160,20 @@ tweaks/
         Queue/             background queue, history, Download Center UI
       Features/<Category>/ one file per feature
       Onboarding/          welcome / what's-new screen
+  youtube/                 Albrhi for YouTube — com.albrhi.youtube
+    src/Features/Download/   the HLS pipeline; Center/ is the library, player and tabs
+  panel/                   Albrhi Panel — com.albrhi.panel
+                           an Albrhi page in the Settings app, one switch per patched
+                           app. It writes; the tweaks read — and how they read it is a
+                           ground rule above, not a detail.
+suite/
+  control                  com.albrhi — the combined package everyone installs
+  DEBIAN/preinst           removes the individual packages, because dpkg will not
+  CHANGELOG.md             the suite's own notes and depiction
 shared/
   tweak.mk                 the Theos flags, modules and build modes every tweak shares
 build.sh                   ./build.sh <tweak> <mode> — reads the tweak's own control
+build-dev.sh               a local build that skips packaging
 tools/                     repo, depiction, logo, deb editing — see below
 modules/  vendor/          third-party code, shared across tweaks
 extra-debs/                drop third-party .deb files here to publish them
@@ -257,6 +321,42 @@ and the others still run.
 
 ## CI, releases and the repo
 
+**Five workflows, one per thing that ships.**
+
+| workflow | builds | tags |
+|---|---|---|
+| `buildtweak.yml` | Instagram | `v*` |
+| `buildyoutube.yml` | YouTube | `youtube-v*` |
+| `buildpanel.yml` | the Settings panel | its own namespace |
+| `buildsuite.yml` | **`com.albrhi`**, the combined package | `v${SUITE_VERSION}` |
+| `build-dav1d.yml` | the AV1 decoder Instagram links | on demand |
+
+Separate rather than one job per tweak, so a tweak that will not compile can never block
+another tweak's release. They share the `albrhi-pages` concurrency group so no two write
+`gh-pages` at once.
+
+### Publishing Pages: what three releases established
+
+**A repository serves Pages either from a branch or from a workflow artifact, and which
+one is a setting no file in the repository can read.** `deploy-pages` only works in the
+second; in the first it creates a deployment nothing ever picks up and polls
+`deployment_queued` forever. Two releases were spent trying to make it work before the
+third removed it — an APT source does not need it, since the `gh-pages` push above it
+already holds the finished index and serving that branch has no queue to sit in.
+
+`GITHUB_TOKEN` **may deploy to Pages and may not reconfigure it.** The run still asks the
+API to point Pages at `gh-pages` and to build, because both are idempotent and both work
+on a repository whose token has the rights — but nothing depends on them, and the failure
+message names the one setting a human has to change rather than the symptom.
+
+**What decides success is the live URL.** A step asks it whether the source is serving the
+version just built, with `always()`, because the case where that matters most is the one
+where the deploy failed. And it polls `/pages/builds/latest` until `built` rather than
+sleeping — a build still in progress and a build that will never finish look identical to
+a sleep, and 1.0.10 exists because one was reported as the other.
+
+### The per-tweak job
+
 `.github/workflows/buildtweak.yml`, one job:
 
 ```
@@ -348,9 +448,22 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-- **Working:** inline download button (posts + reels), Download Center queue, story
-  seen-receipt control, per-message mark-as-seen in DMs, follow-back badge, feed and
+Instagram **4.1.4** · YouTube **1.12.3** · Panel **0.5.0** · suite **1.0.10**.
+
+- **Working, Instagram:** inline download button (posts + reels), Download Center queue,
+  story seen-receipt control, per-message mark-as-seen in DMs, follow-back badge, feed and
   reels cleanup, confirmations, bilingual UI, diagnostics, auto-release, APT source.
+- **Working, YouTube:** downloads with their own Download Centre tab and player, ad
+  blocking at three layers, SponsorBlock with per-category switches and progress-bar
+  markers, background playback, diagnostics.
+- **Working, Panel:** Settings › Albrhi, one switch per patched app. Turning one off
+  leaves the package installed and the settings intact. The app must be reopened for a
+  change to take effect, and **how the tweak reads that switch is a ground rule above** —
+  it was written correctly and read nothing for a release.
+- **The reels download button broke in 4.1.0 and shipped broken.** Binding by the exact
+  Swift runtime name worked and was replaced with a search over `objc_copyClassList`;
+  inside a `%ctor` that search does not find what `objc_getClass` still finds by name. A
+  search is a fallback for when the name is unknown, never a replacement for a known one.
 - **Reels auto-advance** (`reels_auto_next`) works again, under Reels settings, on
   both 410 and 439 from one build. It was hidden for a long time because it never
   fired: the old hook forced `-autoScrollState` (a 410-only getter, gone in 439) and
