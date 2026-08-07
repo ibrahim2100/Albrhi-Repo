@@ -85,6 +85,53 @@
     return prefix;
 }
 
++ (NSString *)installedSuiteVersion {
+    NSString *prefix = [self jailbreakPrefix];
+
+    // Where each jailbreak keeps it. The prefixed path first, because that is where a
+    // rootless or roothide install puts it, and /var/lib last for a rootful device.
+    NSArray<NSString *> *candidates = @[
+        [prefix stringByAppendingPathComponent:@"Library/dpkg/status"],
+        [prefix stringByAppendingPathComponent:@"var/lib/dpkg/status"],
+        @"/var/lib/dpkg/status"
+    ];
+
+    // The combined package first and the panel's own second, so a device that installed
+    // the components separately still gets a true answer rather than none.
+    NSArray<NSString *> *wanted = @[@"com.albrhi", @"com.albrhi.panel"];
+
+    for (NSString *path in candidates) {
+        NSString *status = [NSString stringWithContentsOfFile:path
+                                                     encoding:NSUTF8StringEncoding
+                                                        error:NULL];
+        if (!status.length) continue;
+
+        for (NSString *package in wanted) {
+            // dpkg's status file is stanzas separated by a blank line, so the version
+            // belonging to a package is the first Version: after its Package: line and
+            // before the stanza ends. Scanning the whole file for "Version:" would return
+            // whichever package happened to come first.
+            NSRange found = [status rangeOfString:
+                [NSString stringWithFormat:@"\nPackage: %@\n", package]];
+            if (found.location == NSNotFound) continue;
+
+            NSString *rest = [status substringFromIndex:NSMaxRange(found)];
+            NSRange end = [rest rangeOfString:@"\n\n"];
+            if (end.location != NSNotFound) rest = [rest substringToIndex:end.location];
+
+            for (NSString *line in [rest componentsSeparatedByString:@"\n"]) {
+                if (![line hasPrefix:@"Version: "]) continue;
+
+                NSString *version = [[line substringFromIndex:9]
+                    stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+                if (version.length) return version;
+            }
+        }
+    }
+
+    return nil;
+}
+
 /// The icon the home screen uses for an app, at a size a settings row wants.
 ///
 /// Format 2 is the 62-point artwork. Asked for at the screen's own scale so it is the
@@ -118,8 +165,24 @@
         names[identifier.lowercaseString] = proxy.localizedName.length
             ? proxy.localizedName : identifier;
 
-        NSString *version = proxy.shortVersionString;
-        if (version.length) versions[identifier.lowercaseString] = version;
+        // Asked for by more than one name.
+        //
+        // shortVersionString is the marketing version and the one to show, and it is not
+        // always there -- a proxy for a sideloaded or system app can carry only the build
+        // number. Taking the first non-empty answer is the difference between a row that
+        // says 410.1.0 and a section that does not appear at all, which is what the first
+        // version of this did on the developer's own phone.
+        for (NSString *name in @[@"shortVersionString", @"bundleVersion", @"versionString"]) {
+            if (![proxy respondsToSelector:NSSelectorFromString(name)]) continue;
+
+            id answer = nil;
+            @try { answer = [proxy valueForKey:name]; } @catch (__unused NSException *e) { }
+
+            if ([answer isKindOfClass:[NSString class]] && [answer length]) {
+                versions[identifier.lowercaseString] = answer;
+                break;
+            }
+        }
 
         // So an Executables filter can be resolved to the app it means. Two apps can
         // share an executable name; the first wins and the second keeps its own row

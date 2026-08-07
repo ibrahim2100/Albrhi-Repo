@@ -1,5 +1,17 @@
 # Albrhi Changelog
 
+## v1.0.12
+
+**Settings › Albrhi: the blanks are filled in.** "Made by" and every other value on the
+page were empty, the version shown was the panel component's number rather than the
+Albrhi you installed, and the Versions section could vanish instead of admitting it did
+not know. All three are fixed.
+
+**And a Respring button**, at the bottom of the page, behind a confirmation.
+
+Includes Panel 0.6.1.
+
+
 ## v1.0.11
 
 **Settings › Albrhi has a face.** The Albrhi mark, the name and the version above the

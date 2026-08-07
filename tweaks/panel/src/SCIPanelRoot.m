@@ -5,8 +5,10 @@
 #import "SCIPanelScan.h"
 #import "SCIPanelHeader.h"
 #import "Localization/SCILocalize.h"
+#import <objc/message.h>
+#import <objc/runtime.h>
 
-NSString *SCIVersionString = @"v0.6.0";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.6.1";  // AlbrhiPanel
 
 ///
 /// Albrhi's own control panel, in the iOS Settings app.
@@ -36,6 +38,31 @@ NSString *SCIVersionString = @"v0.6.0";  // AlbrhiPanel
 /// Named identically in shared/src/SCIPanelGate.m, which is the half that reads it. Two
 /// spellings of this string is a switch that appears to work and changes nothing.
 static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
+
+/// What a button row does when it is tapped.
+///
+/// `specifier->action = @selector(...)` is the usual way to write this and it needs the
+/// ivar to be declared in whichever `PSSpecifier.h` the build happens to use — a header
+/// that lives outside this repository and that nothing here controls. Assuming the shape
+/// of a header nobody in this project owns is how the panel lost a build to a missing
+/// private framework already.
+///
+/// So it is asked for instead: the setter where iOS has one, the ivar by name where it
+/// does not, and nothing at all if neither is there — which is a button that does nothing
+/// rather than a page that will not compile.
+static void SCISetButtonAction(PSSpecifier *specifier, SEL action) {
+    SEL setter = NSSelectorFromString(@"setButtonAction:");
+    if ([specifier respondsToSelector:setter]) {
+        ((void (*)(id, SEL, SEL))objc_msgSend)(specifier, setter, action);
+        return;
+    }
+
+    Ivar ivar = class_getInstanceVariable([specifier class], "action");
+    if (!ivar) return;
+
+    SEL *slot = (SEL *)((uint8_t *)(__bridge void *)specifier + ivar_getOffset(ivar));
+    *slot = action;
+}
 
 /// Rebuilt on every appearance rather than cached for the life of the process.
 ///
@@ -105,9 +132,33 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
     [about setProperty:SCILocalized(@"about_note") forKey:@"footerText"];
     [specifiers addObject:about];
 
-    [specifiers addObject:[self valueRow:SCILocalized(@"about_version") value:SCIVersionString]];
+    [specifiers addObject:[self valueRow:SCILocalized(@"about_version")
+                                   value:[self displayedVersion]]];
     [specifiers addObject:[self valueRow:SCILocalized(@"about_author")
                                    value:SCILocalized(@"about_author_name")]];
+
+    // Respring, in its own group so a destructive-looking button is never a mis-tap away
+    // from a row that does nothing.
+    PSSpecifier *restartGroup = [PSSpecifier preferenceSpecifierNamed:@""
+                                                               target:self
+                                                                  set:NULL
+                                                                  get:NULL
+                                                               detail:Nil
+                                                                 cell:PSGroupCell
+                                                                 edit:Nil];
+    [restartGroup setProperty:SCILocalized(@"respring_note") forKey:@"footerText"];
+    [specifiers addObject:restartGroup];
+
+    PSSpecifier *respring = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"respring")
+                                                           target:self
+                                                              set:NULL
+                                                              get:NULL
+                                                           detail:Nil
+                                                             cell:PSButtonCell
+                                                             edit:Nil];
+    SCISetButtonAction(respring, @selector(confirmRespring));
+    [respring setProperty:@YES forKey:@"isDestructive"];
+    [specifiers addObject:respring];
 
     // The name at the end, in the last footer, where a signature belongs.
     //
@@ -140,9 +191,16 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
 /// this project and a newer app usually works fine; the point is to show the one fact
 /// that explains it when it does not.
 - (NSArray<PSSpecifier *> *)versionSpecifiersFor:(NSArray<SCIPanelEntry *> *)entries {
+    // Every installed app gets a row, even one where neither number could be read.
+    //
+    // The first version of this skipped an entry it knew nothing about, so a device where
+    // the version lookup failed showed no section at all — and "the section did not
+    // appear" is indistinguishable from "the feature was not installed". A row reading
+    // "not known" says which of the two it is, and that difference is the thing this
+    // project has spent whole releases learning to build in from the start.
     NSMutableArray<SCIPanelEntry *> *known = [NSMutableArray array];
     for (SCIPanelEntry *entry in entries) {
-        if (entry.testedVersion.length || entry.appVersion.length) [known addObject:entry];
+        if (entry.appInstalled || entry.testedVersion.length) [known addObject:entry];
     }
     if (!known.count) return @[];
 
@@ -160,11 +218,13 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
     for (SCIPanelEntry *entry in known) {
         NSString *value;
 
-        if (!entry.appVersion.length) {
-            // Not installed, so there is nothing to compare. The tested version is still
-            // worth stating: it is what this tweak is for.
+        if (!entry.appVersion.length && !entry.testedVersion.length) {
+            value = SCILocalized(@"versions_unknown");
+        } else if (!entry.appVersion.length) {
+            // Nothing to compare against. The tested version is still worth stating: it
+            // is what this tweak is for.
             value = [NSString stringWithFormat:SCILocalized(@"versions_tested_only"),
-                     entry.testedVersion ?: @"—"];
+                     entry.testedVersion];
         } else if (!entry.testedVersion.length) {
             value = entry.appVersion;
         } else if ([entry runsTestedVersion]) {
@@ -180,16 +240,115 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
     return rows;
 }
 
+/// A row showing a fixed value on the right.
+///
+/// **The getter is not optional, and that is what was wrong.** Setting the `value`
+/// property and passing `get:NULL` reads like it should work and produces a row with the
+/// title and an empty space — "Made by" with nobody's name after it. A PSTitleValueCell
+/// asks its specifier for a value through the get selector; with none there is nothing
+/// to ask and nothing is what it draws. Every value row on this page was blank for it.
 - (PSSpecifier *)valueRow:(NSString *)title value:(NSString *)value {
     PSSpecifier *row = [PSSpecifier preferenceSpecifierNamed:title
                                                       target:self
                                                          set:NULL
-                                                         get:NULL
+                                                         get:@selector(fixedValue:)
                                                       detail:Nil
                                                         cell:PSTitleValueCell
                                                         edit:Nil];
-    [row setProperty:value forKey:@"value"];
+    [row setProperty:(value ?: @"") forKey:@"value"];
     return row;
+}
+
+- (id)fixedValue:(PSSpecifier *)specifier {
+    return [specifier propertyForKey:@"value"] ?: @"";
+}
+
+/// The number to put in front of someone.
+///
+/// What dpkg says is installed, which is the combined package they chose. This bundle's
+/// own `SCIVersionString` only when nothing can be read — and then it is shown with the
+/// component's name attached, because "0.6.0" on its own is a number that matches nothing
+/// they have ever seen.
+- (NSString *)displayedVersion {
+    NSString *installed = [SCIPanelScan installedSuiteVersion];
+    if (installed.length) return installed;
+
+    return [NSString stringWithFormat:SCILocalized(@"about_version_panel"), SCIVersionString];
+}
+
+// MARK: - Respring
+
+- (void)confirmRespring {
+    UIAlertController *ask =
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"respring")
+                                            message:SCILocalized(@"respring_confirm")
+                                     preferredStyle:UIAlertControllerStyleAlert];
+
+    [ask addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
+                                            style:UIAlertActionStyleCancel
+                                          handler:nil]];
+
+    [ask addAction:[UIAlertAction actionWithTitle:SCILocalized(@"respring")
+                                            style:UIAlertActionStyleDestructive
+                                          handler:^(UIAlertAction *action) {
+        [self respring];
+    }]];
+
+    [self presentViewController:ask animated:YES completion:nil];
+}
+
+/// Asks the system to restart SpringBoard.
+///
+/// **Not `killall SpringBoard`.** This bundle runs as `mobile` inside Settings and has no
+/// business signalling another process even if it were permitted — the supported route is
+/// to ask FrontBoard for a relaunch, which is the same one the Settings app itself uses
+/// when a language changes.
+///
+/// Every class and selector here is looked up at runtime and checked. A respring button
+/// that does nothing is a disappointment; a preference bundle that throws while Settings
+/// is showing it is a Settings app that closes.
+- (void)respring {
+    Class actionClass = NSClassFromString(@"SBSRelaunchAction");
+    Class serviceClass = NSClassFromString(@"FBSSystemService");
+
+    SEL make = NSSelectorFromString(@"actionWithReason:options:targetURL:");
+    SEL shared = NSSelectorFromString(@"sharedService");
+    SEL send = NSSelectorFromString(@"sendActions:withResult:");
+
+    if (!actionClass || !serviceClass ||
+        ![actionClass respondsToSelector:make] || ![serviceClass respondsToSelector:shared]) {
+        [self sayRespringFailed];
+        return;
+    }
+
+    @try {
+        // Option 4 is RelaunchActionOptionsFadeToBlackTransition, which is what a respring
+        // looks like everywhere else on the system.
+        id action = ((id (*)(id, SEL, id, NSUInteger, id))objc_msgSend)(
+            actionClass, make, @"Albrhi", (NSUInteger)4, nil);
+
+        id service = ((id (*)(id, SEL))objc_msgSend)(serviceClass, shared);
+        if (!action || !service || ![service respondsToSelector:send]) {
+            [self sayRespringFailed];
+            return;
+        }
+
+        ((void (*)(id, SEL, id, id))objc_msgSend)(
+            service, send, [NSSet setWithObject:action], nil);
+    } @catch (__unused NSException *exception) {
+        [self sayRespringFailed];
+    }
+}
+
+- (void)sayRespringFailed {
+    UIAlertController *note =
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"respring")
+                                            message:SCILocalized(@"respring_failed")
+                                     preferredStyle:UIAlertControllerStyleAlert];
+    [note addAction:[UIAlertAction actionWithTitle:SCILocalized(@"ok")
+                                             style:UIAlertActionStyleDefault
+                                           handler:nil]];
+    [self presentViewController:note animated:YES completion:nil];
 }
 
 - (NSString *)keyFor:(PSSpecifier *)specifier {
@@ -254,7 +413,7 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
     // rebuild the header while the user is scrolling past it.
     if (table.tableHeaderView && ABS(table.tableHeaderView.frame.size.width - width) < 0.5) return;
 
-    UIView *header = [SCIPanelHeader viewForWidth:width version:SCIVersionString];
+    UIView *header = [SCIPanelHeader viewForWidth:width version:[self displayedVersion]];
     if (header) table.tableHeaderView = header;
 }
 

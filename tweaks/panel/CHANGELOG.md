@@ -1,5 +1,29 @@
 # Albrhi Panel Changelog
 
+## v0.6.1
+
+**Four things reported from a phone, all of them real.**
+
+**"Made by" was blank, and so was every other value on the page.** A row that shows a
+fixed value still has to be *asked* for it — the value was set and no getter was given,
+so Settings had nothing to ask and drew nothing. That is why the Versions rows looked
+empty too.
+
+**The version shown was the wrong number.** Someone who installed Albrhi 1.0.11 was
+being told "v0.6.0" — the panel component's own version, which nothing on the device or
+on the source ever called it. It now reads what dpkg records as installed, so the page
+quotes the number you would quote back.
+
+**The Versions section could disappear entirely.** It skipped any app whose version it
+could not read, so a failed lookup produced no section at all — indistinguishable from
+the feature not being there. Every installed app has a row now, reading "not known" when
+it is not known, and the version is asked for under more than one name before giving up.
+
+**A Respring button**, at the bottom, behind a confirmation. It asks the system for a
+relaunch the way Settings itself does rather than trying to signal SpringBoard, and if
+the device refuses it says so instead of appearing to do nothing.
+
+
 ## v0.6.0
 
 **The page has a face now.** A header with the Albrhi mark, the name and the version

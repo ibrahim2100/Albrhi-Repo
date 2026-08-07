@@ -70,6 +70,21 @@ NS_ASSUME_NONNULL_BEGIN
 /// here: install it and it appears.
 + (NSArray<SCIPanelEntry *> *)entries;
 
+/// The version of Albrhi that is actually installed, as the package manager records it.
+///
+/// **Not this bundle's own version, which is the wrong number to show.** Someone who
+/// installed Albrhi 1.0.11 was being told "v0.6.0" — the panel component's number, which
+/// nothing on their device or on the source ever named. The combined package is what
+/// they chose and what they would quote in a report, so it is what the page says.
+///
+/// Read from dpkg's status file rather than compiled in: a number baked at build time is
+/// right only until the next release forgets to change it, and this one is the record of
+/// what is on the phone rather than what a build intended.
+///
+/// Returns nil when nothing can be read — installed as a raw .dylib, or a status file
+/// somewhere this has not been taught to look.
++ (nullable NSString *)installedSuiteVersion;
+
 @end
 
 NS_ASSUME_NONNULL_END
