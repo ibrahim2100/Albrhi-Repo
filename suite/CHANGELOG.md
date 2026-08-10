@@ -1,5 +1,27 @@
 # Albrhi Changelog
 
+## v1.1.0
+
+**A third app: X.** Albrhi now patches X too, and it arrived the way this package was
+built to let things arrive — inside it. Nothing extra to install, and it is already in
+the list in Settings › Albrhi with its own switch.
+
+**What the X tweak does.** X decides what your app is allowed to show from one place: a
+list of switches every part of the app asks before doing anything. This tweak sits at
+that one place. It shows you every switch your copy of X really asked about while you
+were using it, what X answered, and how often it asked — and lets you answer any of them
+yourself.
+
+**Hold two fingers anywhere in X** to open it. There is a search box, a filter for the
+ones you changed, one button to undo all your answers, and a report you can save to the
+Files app.
+
+Nothing on that list is guessed. It is what your own phone saw, which is the point: what
+it reports is what decides which switches the next release turns on by name.
+
+Includes the X tweak 0.1.0.
+
+
 ## v1.0.12
 
 **Settings › Albrhi: the blanks are filled in.** "Made by" and every other value on the

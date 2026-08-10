@@ -1,10 +1,11 @@
 Package: com.albrhi
 Name: Albrhi (rootless)
-Version: 1.0.12
-Description: One tweak for Instagram and YouTube, switched per app from Settings.
+Version: 1.1.0
+Description: One tweak for Instagram, YouTube and X, switched per app from Settings.
  .
  Everything Albrhi makes, in a single package. Install this and you have the Instagram
- tweak and the YouTube tweak; there is nothing else to download and one thing to update.
+ tweak, the YouTube tweak and the X tweak; there is nothing else to download and one
+ thing to update.
  .
  ▍CHOOSE FROM SETTINGS
  Settings › Albrhi lists every app Albrhi patches, with a switch each. Turn one off and
@@ -19,6 +20,11 @@ Description: One tweak for Instagram and YouTube, switched per app from Settings
  ▍YOUTUBE
  Downloads with their own player and Download Centre tab, no ads, SponsorBlock, playback
  that keeps going in the background, and a quality ceiling per connection.
+ .
+ ▍X
+ See the switches X uses to decide what your app can do, and answer them yourself. The
+ list is whatever your own copy of X really asked about — nothing is guessed in advance.
+ Hold two fingers anywhere in X to open it.
  .
  ▍GROWING
  New Albrhi tweaks arrive in this same package and appear in the same list, so there is
@@ -38,6 +44,6 @@ Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
 Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
 SileoDepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 Depends: mobilesubstrate, preferenceloader
-Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.panel, com.albrhi.panel.roothide
-Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.panel, com.albrhi.panel.roothide
+Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.panel, com.albrhi.panel.roothide
+Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Tag: role::enduser

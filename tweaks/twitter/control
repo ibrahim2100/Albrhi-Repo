@@ -1,0 +1,48 @@
+Package: com.albrhi.twitter
+Name: Albrhi for Twitter (rootless)
+Version: 0.1.0
+Architecture: iphoneos-arm64
+Description: See and change the switches X uses to decide what your app can do — in Arabic or English.
+ .
+ X does not decide what to show you in the screens themselves. It asks one place —
+ its own list of switches — and every part of the app obeys the answer. This tweak sits
+ at that one place.
+ .
+ ▍WHAT IT SHOWS
+ Every switch the app asked about while you were using it, the answer it was given, and
+ how many times it asked. Nothing is guessed and nothing is written down in advance: the
+ list is whatever your copy of X actually looked up on your phone.
+ .
+ ▍WHAT IT CHANGES
+ Nothing, until you say so. Tap any switch and set it on or off, and X is given your
+ answer from then on. Tap again to hand the decision back.
+ .
+ ▍HOW TO OPEN IT
+ Hold two fingers anywhere in X.
+ .
+ ▍WHY THIS WAY
+ Other tweaks change a screen at a time, and stop working the day X renames that screen.
+ This one sits where X makes the decision, so it keeps working when the screens change.
+ .
+ TESTED ON X 12.15. Nothing is pinned to a version number: every class is looked up at
+ runtime and skipped if it is not there.
+ .
+ A first release, and a deliberately careful one — it reports far more than it changes.
+ What it learns on real phones decides what the next one turns on by name.
+ .
+ The switch layer was found from the published work of BandarHL (BHTwitter) and
+ TWIGalaxy, whose choice of where to hook this app is credited. No code is taken from
+ either; everything here is written for this project.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Author: Ibrahim Ismail AL-Rahn
+Section: Tweaks
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-twitter.html
+SileoDepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-twitter.json
+Depends: mobilesubstrate
+Conflicts: com.albrhi.twitter.roothide
+Replaces: com.albrhi.twitter.roothide
+Tag: role::enduser

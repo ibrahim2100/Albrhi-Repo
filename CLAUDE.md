@@ -11,12 +11,13 @@ code, comments and user-facing strings are English + Arabic.
 
 ## What this is
 
-Tweaks for jailbroken and sideloaded iOS. **Three of them**, and one package:
+Tweaks for jailbroken and sideloaded iOS. **Four of them**, and one package:
 
 | directory | package | what it patches |
 |---|---|---|
 | `tweaks/instagram` | `com.albrhi.tweak` | Instagram, tested on **410.1.0** |
 | `tweaks/youtube` | `com.albrhi.youtube` | YouTube, tested on **21.30.5** |
+| `tweaks/twitter` | `com.albrhi.twitter` | X / Twitter, tested on **12.15** |
 | `tweaks/panel` | `com.albrhi.panel` | the Settings app — the per-app switches |
 | `suite/` | **`com.albrhi`** | all of the above, in one package |
 
@@ -27,7 +28,7 @@ package metadata — that is a licence obligation, not a courtesy. Never remove 
 **`com.albrhi` is what people install.** The individual packages are still built and
 still published, but the suite is the front door: one thing to install, one thing to
 update, and a new tweak arrives inside it rather than as a second download. It declares
-`Conflicts` and `Replaces` on all six individual identities (rootless and roothide) —
+`Conflicts` and `Replaces` on all eight individual identities (rootless and roothide) —
 and that is not enough on its own, see the ground rule below.
 
 The repository doubles as an **APT source**: it builds itself, publishes releases,
@@ -80,6 +81,27 @@ get plain files. Download sites get URLs because they ask as a television or an 
 player — clients Google has not migrated — which means impersonating a different client,
 signed requests, and the `n`-signature, from inside the official app while signed in to a
 real account. The counting hooks stay in `SCIYTSabr.x`; the switch was removed in 1.12.0.
+
+**X's classes are not in X's binary, and a hook table built by scanning it is empty.**
+`com.atebits.Tweetie2` is 10,827 classes across 58 Mach-O images: the interface classes
+live in `T1Twitter.framework`, and `TFS*`/`TAE*`/`TFN*` in `TwitterSPMMigration` and
+`TwitterAppSPMMigration`. Reading only the executable finds none of them and concludes the
+build has no switch layer. `NSClassFromString` asks every loaded image, which is why the
+Twitter tweak binds that way and not by scanning.
+
+**And X answers its own feature questions in one place.** `-boolForKey:` on
+`TFSFeatureSwitches`, `TFSCachingFeatureSwitchProvider` and `TPSTwitterFeatureSwitches`
+(`B24@0:8@16` on all three) gates a large share of what the app does — so the tweak hooks
+the decision rather than the fifty-one views that read it, which is the same lesson
+Instagram's reels button cost twice. `-unsafePeekBoolForKey:` is hooked beside it: it is
+the same question asked without the cache, and missing it means one screen obeying an
+override while the screen beside it does not.
+
+**What each of those keys *means* is not knowable from the binary.** X carries thousands
+of lowercase underscored strings and only some are switches; the intersection with what
+BHTwitter and TWIGalaxy carry is 260 strings, most of them OpenSSL symbols and image
+names. So 0.1.0 ships the recorder, not a table: what real phones report is what decides
+which keys the next release names.
 
 **Run scripts before shipping them.** Three CI failures in a row came from shell
 one-liners that were never executed once locally. `tools/check.py` and a stubbed
@@ -162,6 +184,11 @@ tweaks/
       Onboarding/          welcome / what's-new screen
   youtube/                 Albrhi for YouTube — com.albrhi.youtube
     src/Features/Download/   the HLS pipeline; Center/ is the library, player and tabs
+  twitter/                 Albrhi for X — com.albrhi.twitter
+    src/Features/Switches/   the one place X decides what the app may do; the tweak
+                             records every question and lets the user answer any of them
+    src/Settings/            reached by a two-finger hold on X's own window, not by
+                             hooking one of X's screens
   panel/                   Albrhi Panel — com.albrhi.panel
                            an Albrhi page in the Settings app, one switch per patched
                            app. It writes; the tweaks read — and how they read it is a
@@ -321,12 +348,13 @@ and the others still run.
 
 ## CI, releases and the repo
 
-**Five workflows, one per thing that ships.**
+**Six workflows, one per thing that ships.**
 
 | workflow | builds | tags |
 |---|---|---|
 | `buildtweak.yml` | Instagram | `v*` |
 | `buildyoutube.yml` | YouTube | `youtube-v*` |
+| `buildtwitter.yml` | X | `twitter-v*` |
 | `buildpanel.yml` | the Settings panel | its own namespace |
 | `buildsuite.yml` | **`com.albrhi`**, the combined package | `v${SUITE_VERSION}` |
 | `build-dav1d.yml` | the AV1 decoder Instagram links | on demand |
@@ -455,7 +483,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.4** · YouTube **1.12.3** · Panel **0.5.0** · suite **1.0.10**.
+Instagram **4.1.5** · YouTube **1.12.4** · X **0.1.0** · Panel **0.6.1** · suite **1.1.0**.
 
 - **Working, Instagram:** inline download button (posts + reels), Download Center queue,
   story seen-receipt control, per-message mark-as-seen in DMs, follow-back badge, feed and

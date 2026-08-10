@@ -1,0 +1,95 @@
+//
+//  SCITWSwitches.h
+//  Albrhi for Twitter
+//
+//  The one place X decides what the app is allowed to do.
+//
+//  X does not scatter its feature decisions through its screens. Every part of the app
+//  asks a switch provider a yes/no question by name -- `-boolForKey:` -- and then obeys
+//  the answer. Three classes answer that question in 12.15, and between them they gate
+//  a large part of what the app shows.
+//
+//  **That is why this tweak starts here and not at a view.** A hook on a view stops
+//  working the day X renames the view, and this project has already paid for that lesson
+//  twice on Instagram. A hook on the decision keeps working while the screens move around
+//  above it, because the decision is what the screens are reading.
+//
+//  ## And why it reports before it changes
+//
+//  Nobody -- not this project, not the tweaks it was found from -- has a trustworthy list
+//  of what each key means. The app binary carries thousands of lowercase underscored
+//  strings and only some of them are switches; a table written from reading that binary is
+//  a table of guesses, and shipping guesses that silently change an app is exactly the
+//  failure this repository keeps writing rules about.
+//
+//  So the recorder is the feature. Every key the app really asked for on a real phone, the
+//  answer it was given, and how often it asked. What that list contains after a release
+//  decides what the next release turns on by name.
+//
+//  Copyright (C) Ibrahim Ismail AL-Rahn. GPLv3.
+//
+
+#import <Foundation/Foundation.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+/// What the user has decided about one key.
+typedef NS_ENUM(NSInteger, SCITWOverride) {
+    /// X's own answer is passed through untouched. The default for every key.
+    SCITWOverrideNone = 0,
+    SCITWOverrideOff  = 1,
+    SCITWOverrideOn   = 2,
+};
+
+/// One switch, as this device actually used it.
+@interface SCITWSwitchRecord : NSObject
+@property (nonatomic, copy) NSString *key;
+/// How many times the app asked. The interesting number: a key asked four hundred times
+/// during a scroll is load-bearing, and one asked once at launch is probably not.
+@property (nonatomic, assign) NSUInteger asked;
+/// What X itself last answered, before any override was applied. Kept separately from the
+/// override so the settings screen can show both -- "X says on, you say off" is a
+/// different situation from "X says off", and they look identical if only one is stored.
+@property (nonatomic, assign) BOOL appAnswer;
+/// Which of the provider classes was asked. Recorded because two of them can be asked the
+/// same key, and knowing which one answers in practice is what a future hook needs.
+@property (nonatomic, copy) NSString *provider;
+@end
+
+
+@interface SCITWSwitches : NSObject
+
+/// The hot path, called from `-boolForKey:` on every provider.
+///
+/// Records the question and returns whether to answer it differently. Written to be cheap:
+/// one lock, one dictionary lookup, one counter. It runs thousands of times during a
+/// scroll, so anything expensive here is felt as the app being slow rather than seen as a
+/// bug in this file.
+///
+/// Returns NO -- and leaves `answer` untouched -- unless the user set an override.
++ (BOOL)interceptKey:(NSString *)key
+           appAnswer:(BOOL)appAnswer
+            provider:(NSString *)provider
+              answer:(BOOL *)answer;
+
+/// Everything seen so far, most asked first.
++ (NSArray<SCITWSwitchRecord *> *)records;
+
+/// How many questions have been asked in total, across every key.
++ (NSUInteger)totalAsked;
+
++ (SCITWOverride)overrideForKey:(NSString *)key;
++ (void)setOverride:(SCITWOverride)override forKey:(NSString *)key;
+
+/// Every key the user has an opinion about. Survives a restart; the records do not, and
+/// deliberately -- a list of what X asked is only true of the session that observed it.
++ (NSDictionary<NSString *, NSNumber *> *)allOverrides;
++ (void)clearOverrides;
+
+/// Which provider classes were found and hooked, for the diagnostics page.
++ (void)noteProvider:(NSString *)name;
++ (NSArray<NSString *> *)attachedProviders;
+
+@end
+
+NS_ASSUME_NONNULL_END

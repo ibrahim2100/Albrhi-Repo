@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+
+<plist version="1.0">
+<dict>
+    <!-- The app version this tweak was last verified against. Read by Albrhi Panel
+         and shown beside the installed version, so a mismatch is visible before it
+         becomes a bug report. Substrate ignores keys it does not know. -->
+    <key>SCITestedVersion</key>
+    <string>12.15</string>
+
+    <key>Filter</key>
+    <dict>
+        <key>Bundles</key>
+        <array>
+            <!-- Twitter kept its original identifier through every rename. The app is
+                 called X, the process is called Twitter, and the bundle is still the
+                 one Tweetie 2 shipped with in 2010. -->
+            <string>com.atebits.Tweetie2</string>
+        </array>
+    </dict>
+</dict>
+</plist>
