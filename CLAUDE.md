@@ -100,8 +100,21 @@ override while the screen beside it does not.
 **What each of those keys *means* is not knowable from the binary.** X carries thousands
 of lowercase underscored strings and only some are switches; the intersection with what
 BHTwitter and TWIGalaxy carry is 260 strings, most of them OpenSSL symbols and image
-names. So 0.1.0 ships the recorder, not a table: what real phones report is what decides
-which keys the next release names.
+names. So 0.1.0 shipped the recorder, not a table — and **the device answered**: 341 keys
+over 345,902 questions on X 12.14, which is what 0.2.0's seventeen named features are built
+from. Every key in that table was observed being asked; what each one *means* is still read
+from its name, and the screen says so rather than implying more certainty than there is.
+
+**`app_attest_*` is not offered, rather than offered with a warning.** Those keys are how X
+proves to its servers that the device is unmodified. Switching them off is not a privacy
+setting — it is telling the server something it will not believe, on an account that can be
+locked for it. Four of them were in the report and none are in the table.
+
+**Named features and hand-set keys are two maps, not one.** The first version merged them,
+and turning a feature off then meant removing its keys — but only the ones no other enabled
+feature wanted, and only where the user had not since set one by hand. That bookkeeping is
+where the bugs live. Features contribute a map recomputed from scratch on every change; the
+hand-set map always wins; turning a feature off is a recompute, with nothing to get wrong.
 
 **Run scripts before shipping them.** Three CI failures in a row came from shell
 one-liners that were never executed once locally. `tools/check.py` and a stubbed
@@ -483,7 +496,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.5** · YouTube **1.12.4** · X **0.1.0** · Panel **0.6.1** · suite **1.1.0**.
+Instagram **4.1.5** · YouTube **1.12.4** · X **0.2.0** · Panel **0.6.1** · suite **1.2.0**.
 
 - **Working, Instagram:** inline download button (posts + reels), Download Center queue,
   story seen-receipt control, per-message mark-as-seen in DMs, follow-back badge, feed and

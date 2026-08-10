@@ -1,5 +1,22 @@
 # Albrhi Changelog
 
+## v1.2.0
+
+**The X tweak has its features.** Seventeen switches in plain language: hide ads, hide the
+Promote button, hide Grok, stop X translating by itself, hide Premium ads, send less about
+you, clean up the interface, hide view counts, hide Spaces, show sensitive posts directly,
+stop GIFs playing alone, pinch to zoom in the timeline, more gestures, more tabs, keep your
+likes private, open faster, and X's own speed work that it ships switched off.
+
+Each one sets a group of X's own switches at once and says what it does before you turn it
+on. The full list of switches is still there underneath, and your own answer always beats a
+feature.
+
+Nothing here was guessed: every switch a feature touches is one a real phone reported —
+341 of them over 345,902 questions on X 12.14.
+
+Includes the X tweak 0.2.0.
+
 ## v1.1.0
 
 **A third app: X.** Albrhi now patches X too, and it arrived the way this package was

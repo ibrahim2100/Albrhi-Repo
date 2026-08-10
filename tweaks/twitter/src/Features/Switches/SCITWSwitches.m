@@ -18,6 +18,7 @@
 static pthread_mutex_t _lock = PTHREAD_MUTEX_INITIALIZER;
 static NSMutableDictionary<NSString *, SCITWSwitchRecord *> *_records = nil;
 static NSMutableDictionary<NSString *, NSNumber *> *_overrides = nil;
+static NSDictionary<NSString *, NSNumber *> *_featureOverrides = nil;
 static NSMutableArray<NSString *> *_providers = nil;
 static NSUInteger _totalAsked = 0;
 
@@ -35,6 +36,7 @@ static const NSUInteger SCITWMaxKeys = 4000;
     _records = [NSMutableDictionary dictionary];
     _providers = [NSMutableArray array];
 
+    _featureOverrides = @{};
     _overrides = [NSMutableDictionary dictionary];
     NSDictionary *saved = [[NSUserDefaults standardUserDefaults] dictionaryForKey:SCIPrefOverrides];
 
@@ -70,7 +72,10 @@ static const NSUInteger SCITWMaxKeys = 4000;
     record.asked++;
     record.appAnswer = appAnswer;
 
-    NSNumber *override = _overrides[key];
+    // Hand-set first, then whatever the named features contribute. The order is the whole
+    // rule: the more specific instruction wins, and it is expressed here once rather than
+    // being reasoned about at each call site.
+    NSNumber *override = _overrides[key] ?: _featureOverrides[key];
     if (override) {
         decided = YES;
         if (answer) *answer = override.boolValue;
@@ -145,6 +150,21 @@ static const NSUInteger SCITWMaxKeys = 4000;
     pthread_mutex_unlock(&_lock);
 
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:SCIPrefOverrides];
+}
+
++ (void)setFeatureOverrides:(NSDictionary<NSString *, NSNumber *> *)overrides {
+    NSDictionary *snapshot = [overrides copy] ?: @{};
+
+    pthread_mutex_lock(&_lock);
+    _featureOverrides = snapshot;
+    pthread_mutex_unlock(&_lock);
+}
+
++ (NSDictionary<NSString *, NSNumber *> *)featureOverrides {
+    pthread_mutex_lock(&_lock);
+    NSDictionary *snapshot = _featureOverrides ?: @{};
+    pthread_mutex_unlock(&_lock);
+    return snapshot;
 }
 
 + (void)noteProvider:(NSString *)name {

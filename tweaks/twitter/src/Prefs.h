@@ -21,6 +21,14 @@
 /// key names come from X and there is no list of them to declare in advance.
 #define SCIPrefOverrides        @"switch_overrides"
 
+/// One preference per named feature, so each is a plain boolean somebody could set from
+/// anywhere -- rather than a second dictionary that only this code knows how to read.
+///
+/// The identifier after the prefix is fixed for life. Renaming one turns that feature off
+/// on every device that had it on, silently, which is the kind of change that arrives as
+/// "the update broke it" three weeks later.
+#define SCIPrefFeaturePrefix    @"feature_"
+
 /// There is deliberately no preference for the two-finger hold.
 ///
 /// It is the only way into this tweak's own screen, and a switch that can make the only

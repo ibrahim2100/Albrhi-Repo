@@ -2,10 +2,12 @@
 #import "Prefs.h"
 #import "Localization/SCILocalize.h"
 #import "Features/Switches/SCITWSwitches.h"
+#import "Features/Switches/SCITWFeatures.h"
 #import "Diagnostics/SCITWReport.h"
 
-static const NSInteger SCITWSectionStatus = 0;
-static const NSInteger SCITWSectionKeys   = 1;
+static const NSInteger SCITWSectionStatus   = 0;
+static const NSInteger SCITWSectionFeatures = 1;
+static const NSInteger SCITWSectionKeys     = 2;
 
 @interface SCITWSettings () <UISearchBarDelegate>
 @property (nonatomic, strong) NSArray<SCITWSwitchRecord *> *all;
@@ -170,20 +172,25 @@ static const NSInteger SCITWSectionKeys   = 1;
 #pragma mark - Table
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 2;
+    return 3;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == SCITWSectionStatus) return 4;
+    if (section == SCITWSectionFeatures) return [SCITWFeatures all].count;
     return self.shown.count ?: 1;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    return SCILocalized(section == SCITWSectionStatus ? @"section_status" : @"section_keys");
+    if (section == SCITWSectionStatus) return SCILocalized(@"section_status");
+    if (section == SCITWSectionFeatures) return SCILocalized(@"section_features");
+    return SCILocalized(@"section_keys");
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
-    return section == SCITWSectionKeys ? SCILocalized(@"keys_footer") : nil;
+    if (section == SCITWSectionFeatures) return SCILocalized(@"features_footer");
+    if (section == SCITWSectionKeys) return SCILocalized(@"keys_footer");
+    return nil;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView
@@ -196,6 +203,17 @@ static const NSInteger SCITWSectionKeys   = 1;
     if (indexPath.section == SCITWSectionStatus) {
         [self fillStatusCell:cell row:indexPath.row];
         return cell;
+    }
+
+    if (indexPath.section == SCITWSectionFeatures) {
+        // Its own cell, because a feature row is a title over an explanation and Value1
+        // puts the two side by side -- which truncates the explanation to nothing on a
+        // phone, and the explanation is the part that says what the switch costs.
+        UITableViewCell *row =
+            [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle
+                                   reuseIdentifier:nil];
+        [self fillFeatureCell:row row:indexPath.row];
+        return row;
     }
 
     if (!self.shown.count) {
@@ -216,19 +234,69 @@ static const NSInteger SCITWSectionKeys   = 1;
                                                        weight:UIFontWeightRegular];
     cell.textLabel.numberOfLines = 0;
 
-    NSString *state = override == SCITWOverrideNone
-        ? SCILocalized(record.appAnswer ? @"detail_app_on" : @"detail_app_off")
-        : SCILocalized(override == SCITWOverrideOn ? @"detail_you_on" : @"detail_you_off");
+    SCITWFeature *owner = override == SCITWOverrideNone
+        ? [SCITWFeatures featureOwningKey:record.key] : nil;
+
+    NSString *state;
+    if (override != SCITWOverrideNone) {
+        state = SCILocalized(override == SCITWOverrideOn ? @"detail_you_on" : @"detail_you_off");
+    } else if (owner) {
+        // Named, not just marked. "Something is overriding this" is the answer that sends
+        // somebody hunting through seventeen switches; naming the feature is one tap.
+        NSNumber *wanted = owner.keys[record.key];
+        state = [NSString stringWithFormat:SCILocalized(
+            wanted.boolValue ? @"detail_feature_on" : @"detail_feature_off"),
+            SCILocalized(owner.titleKey)];
+    } else {
+        state = SCILocalized(record.appAnswer ? @"detail_app_on" : @"detail_app_off");
+    }
 
     cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ · %@", state,
         [NSString stringWithFormat:SCILocalized(@"detail_asked"),
             (unsigned long)record.asked]];
-    cell.detailTextLabel.textColor = override == SCITWOverrideNone
-        ? [UIColor secondaryLabelColor] : [UIColor systemBlueColor];
+    cell.detailTextLabel.textColor = (override != SCITWOverrideNone)
+        ? [UIColor systemBlueColor]
+        : (owner ? [UIColor systemTealColor] : [UIColor secondaryLabelColor]);
 
     cell.selectionStyle = UITableViewCellSelectionStyleDefault;
     cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     return cell;
+}
+
+- (void)fillFeatureCell:(UITableViewCell *)cell row:(NSInteger)row {
+    SCITWFeature *feature = [SCITWFeatures all][row];
+
+    cell.textLabel.text = SCILocalized(feature.titleKey);
+    cell.detailTextLabel.text = SCILocalized(feature.noteKey);
+    cell.detailTextLabel.numberOfLines = 0;
+    cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+
+    // Marked, not hidden. Each of these removes a disclosure, changes what X is told about
+    // the device, or turns on something X shipped switched off -- and a row that looks
+    // exactly like "hide ads" is a row nobody reads before flipping.
+    if (feature.cautious) cell.textLabel.textColor = [UIColor systemOrangeColor];
+
+    UISwitch *toggle = [[UISwitch alloc] init];
+    toggle.on = [SCITWFeatures isOn:feature];
+    toggle.tag = row;
+    [toggle addTarget:self
+               action:@selector(featureToggled:)
+     forControlEvents:UIControlEventValueChanged];
+    cell.accessoryView = toggle;
+}
+
+- (void)featureToggled:(UISwitch *)toggle {
+    NSArray<SCITWFeature *> *features = [SCITWFeatures all];
+    if (toggle.tag < 0 || (NSUInteger)toggle.tag >= features.count) return;
+
+    [SCITWFeatures setOn:toggle.isOn feature:features[toggle.tag]];
+
+    // The keys section below shows which feature owns each row, so it is now stale. The
+    // features section is not reloaded: doing that mid-animation snaps the switch the user
+    // is still touching back to where it started and reads as the toggle not working.
+    [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:SCITWSectionKeys]
+                  withRowAnimation:UITableViewRowAnimationNone];
 }
 
 - (void)fillStatusCell:(UITableViewCell *)cell row:(NSInteger)row {
@@ -346,7 +414,15 @@ static const NSInteger SCITWSectionKeys   = 1;
                                                style:UIAlertActionStyleDestructive
                                              handler:^(UIAlertAction *action) {
         [SCITWSwitches clearOverrides];
-        [self reload];
+
+        // The features as well. The button says "undo all my answers", and leaving
+        // seventeen switches on while emptying the map they feed would leave the app
+        // changed and the screen claiming it was not.
+        for (SCITWFeature *feature in [SCITWFeatures all]) {
+            [SCITWFeatures setOn:NO feature:feature];
+        }
+
+        [self.tableView reloadData];
     }]];
 
     [self presentViewController:alert animated:YES completion:nil];

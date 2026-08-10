@@ -2,9 +2,10 @@
 #import "Prefs.h"
 #import "SCILog.h"
 #import "Features/Switches/SCITWSwitchHooks.h"
+#import "Features/Switches/SCITWFeatures.h"
 #import "Settings/SCITWGesture.h"
 
-NSString *SCIVersionString = @"v0.1.0";  // AlbrhiTW
+NSString *SCIVersionString = @"v0.2.0";  // AlbrhiTW
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written
@@ -39,6 +40,10 @@ NSString *SCIVersionString = @"v0.1.0";  // AlbrhiTW
     SCITWInstallGesture();
 
     if ([[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefSwitchLayer]) {
+        // Before the hooks, not after. X asks its first questions while the app is still
+        // launching, and a feature applied a moment later would miss them -- which is how
+        // a setting comes to work everywhere except on the screen you opened the app to.
+        [SCITWFeatures apply];
         SCITWInstallSwitchHooks();
     } else {
         SCILogV(@"switch layer turned off in settings");

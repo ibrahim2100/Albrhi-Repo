@@ -1,8 +1,8 @@
 Package: com.albrhi.twitter
 Name: Albrhi for Twitter (rootless)
-Version: 0.1.0
+Version: 0.2.0
 Architecture: iphoneos-arm64
-Description: See and change the switches X uses to decide what your app can do — in Arabic or English.
+Description: No ads, no Grok, less tracking — and every switch X uses, in Arabic or English.
  .
  X does not decide what to show you in the screens themselves. It asks one place —
  its own list of switches — and every part of the app obeys the answer. This tweak sits
@@ -13,9 +13,16 @@ Description: See and change the switches X uses to decide what your app can do �
  how many times it asked. Nothing is guessed and nothing is written down in advance: the
  list is whatever your copy of X actually looked up on your phone.
  .
- ▍WHAT IT CHANGES
- Nothing, until you say so. Tap any switch and set it on or off, and X is given your
- answer from then on. Tap again to hand the decision back.
+ ▍READY-MADE FEATURES
+ Seventeen switches in plain language: hide ads, hide the Promote button, hide Grok, stop
+ X translating by itself, hide Premium ads, send less about you, clean up the interface,
+ hide view counts, hide Spaces, stop GIFs playing alone, pinch to zoom in the timeline,
+ more gestures, more tabs, keep your likes private, open faster, and more. Each one sets a
+ group of X's own switches at once, and each says what it does before you turn it on.
+ .
+ ▍OR ANSWER ANY SWITCH YOURSELF
+ Tap any switch in the list and set it on or off. Your own answer always beats a feature,
+ and one button undoes everything.
  .
  ▍HOW TO OPEN IT
  Hold two fingers anywhere in X.
@@ -24,11 +31,12 @@ Description: See and change the switches X uses to decide what your app can do �
  Other tweaks change a screen at a time, and stop working the day X renames that screen.
  This one sits where X makes the decision, so it keeps working when the screens change.
  .
- TESTED ON X 12.15. Nothing is pinned to a version number: every class is looked up at
+ TESTED ON X 12.14 and 12.15. Nothing is pinned to a version number: every class is looked up at
  runtime and skipped if it is not there.
  .
- A first release, and a deliberately careful one — it reports far more than it changes.
- What it learns on real phones decides what the next one turns on by name.
+ Every switch a feature touches is one a real phone reported. What each one does is read
+ from its name, so if something looks wrong, turn the feature off and X goes straight back
+ to normal.
  .
  The switch layer was found from the published work of BandarHL (BHTwitter) and
  TWIGalaxy, whose choice of where to hook this app is credited. No code is taken from

@@ -2,6 +2,7 @@
 #import "Tweak.h"
 #import "Prefs.h"
 #import "Features/Switches/SCITWSwitches.h"
+#import "Features/Switches/SCITWFeatures.h"
 
 NSString *SCITWReportText(void) {
     NSMutableString *text = [NSMutableString string];
@@ -24,7 +25,18 @@ NSString *SCITWReportText(void) {
     [text appendFormat:@"switches seen: %lu over %lu questions\n\n",
         (unsigned long)records.count, (unsigned long)[SCITWSwitches totalAsked]];
 
+    // The named features, before the raw keys. A report that lists forty forced keys and
+    // does not say they came from one switch reads as somebody having set forty things by
+    // hand, and the first question back is always "what did you actually turn on".
+    NSMutableArray<NSString *> *on = [NSMutableArray array];
+    for (SCITWFeature *feature in [SCITWFeatures all]) {
+        if ([SCITWFeatures isOn:feature]) [on addObject:feature.identifier];
+    }
+    [text appendFormat:@"features on: %@\n\n",
+        on.count ? [on componentsJoinedByString:@", "] : @"none"];
+
     NSDictionary<NSString *, NSNumber *> *overrides = [SCITWSwitches allOverrides];
+    NSDictionary<NSString *, NSNumber *> *fromFeatures = [SCITWSwitches featureOverrides];
 
     // Overridden keys are listed twice on purpose: once here as their own short list, and
     // again in place below. The short list is what someone pastes into a bug report, and

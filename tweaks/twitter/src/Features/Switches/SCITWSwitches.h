@@ -78,8 +78,27 @@ typedef NS_ENUM(NSInteger, SCITWOverride) {
 /// How many questions have been asked in total, across every key.
 + (NSUInteger)totalAsked;
 
+/// What the user set by hand, for this key alone.
+///
+/// A hand-set answer always beats a named feature. Somebody who turns on "hide ads" and
+/// then sets one of its keys back is saying something more specific than the feature is,
+/// and the more specific instruction wins -- the alternative is a switch that flips itself
+/// back and no way to tell why.
 + (SCITWOverride)overrideForKey:(NSString *)key;
 + (void)setOverride:(SCITWOverride)override forKey:(NSString *)key;
+
+/// The layer the named features contribute, replaced wholesale each time any of them
+/// changes.
+///
+/// Wholesale rather than added to and removed from: turning a feature off would otherwise
+/// mean deleting its keys, but only the ones no other enabled feature also wants, and only
+/// where the user has not since set one by hand. Recomputing the whole map from the
+/// features that are on has none of that to get wrong.
+///
+/// Not persisted. It is derived from preferences that are, and storing a derived thing is
+/// how the two drift apart.
++ (void)setFeatureOverrides:(NSDictionary<NSString *, NSNumber *> *)overrides;
++ (NSDictionary<NSString *, NSNumber *> *)featureOverrides;
 
 /// Every key the user has an opinion about. Survives a restart; the records do not, and
 /// deliberately -- a list of what X asked is only true of the session that observed it.

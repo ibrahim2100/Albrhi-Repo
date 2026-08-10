@@ -1,6 +1,6 @@
 Package: com.albrhi
 Name: Albrhi (rootless)
-Version: 1.1.0
+Version: 1.2.0
 Description: One tweak for Instagram, YouTube and X, switched per app from Settings.
  .
  Everything Albrhi makes, in a single package. Install this and you have the Instagram
@@ -22,9 +22,9 @@ Description: One tweak for Instagram, YouTube and X, switched per app from Setti
  that keeps going in the background, and a quality ceiling per connection.
  .
  ▍X
- See the switches X uses to decide what your app can do, and answer them yourself. The
- list is whatever your own copy of X really asked about — nothing is guessed in advance.
- Hold two fingers anywhere in X to open it.
+ No ads, no Promote button, no Grok, no Premium nags, less tracking, no view counts, a
+ cleaner timeline and a faster launch — seventeen switches in plain language. Or open the
+ full list and answer any of X's own switches yourself. Hold two fingers anywhere in X.
  .
  ▍GROWING
  New Albrhi tweaks arrive in this same package and appear in the same list, so there is
