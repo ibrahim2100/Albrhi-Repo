@@ -1,0 +1,210 @@
+name: Build Albrhi for Locket (manual)
+
+
+#
+# **Manual only. This workflow no longer publishes anything.**
+#
+# Everything Albrhi makes now ships in one package, released by buildsuite.yml, which
+# also owns the APT index and the Pages deploy. Leaving this on a push trigger would
+# mean two workflows rebuilding the same index from scratch and racing for gh-pages --
+# the arrangement that once served a source a version behind its own release.
+#
+# It is kept, rather than deleted, because building one tweak on its own is still the
+# fastest way to find out whether that tweak compiles. It produces a package and stops.
+#
+
+on:
+    workflow_dispatch:
+
+env:
+    TWEAK_DIR: main/tweaks/locket
+    TWEAK_NAME: locket
+
+jobs:
+    build:
+        name: Build Locket rootless + roothide
+        runs-on: macos-latest
+
+
+        permissions:
+            contents: read
+
+
+        steps:
+            - name: Checkout Main
+              uses: actions/checkout@v4
+              with:
+                path: main
+                submodules: recursive
+
+            - name: Source checks
+              run: |
+                cd main
+                # Checks every tweak, not just this one: a change under shared/ or
+                # tools/ can break the other tweaks, and finding that out here costs
+                # seconds instead of a failed release later.
+                python3 tools/check.py
+
+            - name: Get version
+              run: |
+                LK_VERSION=$(awk -F': *' '/^Version:/ {print $2; exit}' "$TWEAK_DIR/control")
+
+                if [ -z "$LK_VERSION" ]; then
+                  echo "::error::Could not read Version from $TWEAK_DIR/control"
+                  exit 1
+                fi
+
+                echo "LK_VERSION=${LK_VERSION}" >> "$GITHUB_ENV"
+
+            - name: Point control at this repository
+              run: |
+                cd "$TWEAK_DIR"
+
+                OWNER="${{ github.repository_owner }}"
+                PROJECT="${{ github.event.repository.name }}"
+
+                sed -i.bak \
+                  -e "s|^Homepage: .*|Homepage: https://github.com/${OWNER}/${PROJECT}|" \
+                  -e "s|^Icon: .*|Icon: https://${OWNER}.github.io/${PROJECT}/CydiaIcon.png|" \
+                  -e "s|^Depiction: .*|Depiction: https://${OWNER}.github.io/${PROJECT}/depictions/albrhi-locket.html|" \
+                  -e "s|^SileoDepiction: .*|SileoDepiction: https://${OWNER}.github.io/${PROJECT}/depictions/albrhi-locket.json|" \
+                  control
+                rm -f control.bak
+
+                grep -E '^(Homepage|Icon|Depiction|SileoDepiction):' control
+
+            - name: Decide whether a build is needed
+              id: release_check
+              env:
+                GH_TOKEN: ${{ github.token }}
+              run: |
+                # Its own tag namespace, so this tweak's versions can never be confused
+                # with the others' -- they all share this repository's releases page.
+                TAG="locket-v${LK_VERSION}"
+                echo "TAG=${TAG}" >> "$GITHUB_ENV"
+
+                if [ "${{ github.event.inputs.force_rebuild }}" = "true" ]; then
+                  echo "Forced rebuild requested."
+                  echo "needed=true" >> "$GITHUB_OUTPUT"
+                elif gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+                  echo "::notice::${TAG} is already released - skipping the build."
+                  echo "::notice::Bump Version in $TWEAK_DIR/control to build again."
+                  echo "needed=false" >> "$GITHUB_OUTPUT"
+                else
+                  echo "${TAG} is new - building."
+                  echo "needed=true" >> "$GITHUB_OUTPUT"
+                fi
+
+            - name: Install dpkg
+              # Needed on every run, not only build runs: the index is assembled with
+              # dpkg-deb and dpkg-scanpackages even when the build is skipped. Gating
+              # this behind the build broke exactly that in the Instagram workflow.
+              run: brew install dpkg
+
+            - name: Install build dependencies
+              if: steps.release_check.outputs.needed == 'true'
+              run: brew install ldid make
+
+            - name: Set PATH environment variable
+              if: steps.release_check.outputs.needed == 'true'
+              run: echo "$(brew --prefix make)/libexec/gnubin" >> $GITHUB_PATH
+
+            - name: Setup Theos
+              if: steps.release_check.outputs.needed == 'true'
+              uses: actions/checkout@v4
+              with:
+                repository: theos/theos
+                ref: master
+                path: ${{ github.workspace }}/theos
+                submodules: recursive
+
+            - name: SDK Caching
+              if: steps.release_check.outputs.needed == 'true'
+              id: SDK
+              uses: actions/cache@v4
+              env:
+                cache-name: iPhoneOS16.2.sdk
+              with:
+                path: ${{ github.workspace }}/theos/sdks/
+                key: ${{ env.cache-name }}
+                restore-keys: ${{ env.cache-name }}
+
+            - name: Download iOS SDK
+              if: steps.release_check.outputs.needed == 'true' && steps.SDK.outputs.cache-hit != 'true'
+              run: |
+                git clone --quiet -n --depth=1 --filter=tree:0 https://github.com/xybp888/iOS-SDKs/
+                cd iOS-SDKs
+                git sparse-checkout set --no-cone iPhoneOS16.2.sdk
+                git checkout
+                mv *.sdk $THEOS/sdks
+              env:
+                THEOS: ${{ github.workspace }}/theos
+
+            - name: Build for rootless
+              if: steps.release_check.outputs.needed == 'true'
+              run: |
+                cd main
+                chmod +x build.sh
+                ./build.sh locket rootless
+                ls -la tweaks/locket/packages
+              env:
+                THEOS: ${{ github.workspace }}/theos
+
+            - name: Rename rootless deb
+              if: steps.release_check.outputs.needed == 'true'
+              run: |
+                cd "$TWEAK_DIR/packages"
+
+                BUILT_DEB=$(ls -t *.deb | head -n1)
+                if [ -z "$BUILT_DEB" ]; then
+                  echo "::error::No .deb produced by build.sh"
+                  exit 1
+                fi
+
+                mv "$BUILT_DEB" "com.albrhi.locket_${LK_VERSION}+rootless.deb"
+                ls -la
+
+            - name: Setup roothide Theos
+              if: steps.release_check.outputs.needed == 'true'
+              uses: actions/checkout@v4
+              with:
+                repository: roothide/theos
+                ref: master
+                path: ${{ github.workspace }}/theos-roothide
+                submodules: recursive
+
+            - name: Share the SDK with roothide Theos
+              if: steps.release_check.outputs.needed == 'true'
+              run: |
+                mkdir -p "${{ github.workspace }}/theos-roothide/sdks"
+                cp -R "${{ github.workspace }}/theos/sdks/." "${{ github.workspace }}/theos-roothide/sdks/"
+                ls "${{ github.workspace }}/theos-roothide/sdks"
+
+            - name: Build for roothide
+              if: steps.release_check.outputs.needed == 'true'
+              run: |
+                cd main
+                ./build.sh locket roothide
+                ls -la tweaks/locket/packages
+              env:
+                THEOS: ${{ github.workspace }}/theos-roothide
+
+            - name: Rename roothide deb
+              if: steps.release_check.outputs.needed == 'true'
+              run: |
+                cd "$TWEAK_DIR/packages"
+
+                # Matched on the roothide identity rather than on "whatever is
+                # newest": an exact name cannot pick up the rootless build by mistake.
+                BUILT_DEB=$(ls -t com.albrhi.locket.roothide_*.deb 2>/dev/null | head -n1)
+                if [ -z "$BUILT_DEB" ]; then
+                  echo "::error::No roothide .deb produced — the package identity swap may have failed"
+                  ls -la
+                  exit 1
+                fi
+
+                TARGET="com.albrhi.locket.roothide_${LK_VERSION}.deb"
+                if [ "$BUILT_DEB" != "$TARGET" ]; then
+                  mv "$BUILT_DEB" "$TARGET"
+                fi
+                ls -la

@@ -11,13 +11,14 @@ code, comments and user-facing strings are English + Arabic.
 
 ## What this is
 
-Tweaks for jailbroken and sideloaded iOS. **Four of them**, and one package:
+Tweaks for jailbroken and sideloaded iOS. **Five of them**, and one package:
 
 | directory | package | what it patches |
 |---|---|---|
 | `tweaks/instagram` | `com.albrhi.tweak` | Instagram, tested on **410.1.0** |
 | `tweaks/youtube` | `com.albrhi.youtube` | YouTube, tested on **21.30.5** |
 | `tweaks/twitter` | `com.albrhi.twitter` | X / Twitter, tested on **12.15** |
+| `tweaks/locket` | `com.albrhi.locket` | Locket, tested on **2.46.1** |
 | `tweaks/panel` | `com.albrhi.panel` | the Settings app — the per-app switches |
 | `suite/` | **`com.albrhi`** | all of the above, in one package |
 
@@ -28,7 +29,7 @@ package metadata — that is a licence obligation, not a courtesy. Never remove 
 **`com.albrhi` is what people install.** The individual packages are still built and
 still published, but the suite is the front door: one thing to install, one thing to
 update, and a new tweak arrives inside it rather than as a second download. It declares
-`Conflicts` and `Replaces` on all eight individual identities (rootless and roothide) —
+`Conflicts` and `Replaces` on all ten individual identities (rootless and roothide) —
 and that is not enough on its own, see the ground rule below.
 
 The repository doubles as an **APT source**: it builds itself, publishes releases,
@@ -115,6 +116,28 @@ and turning a feature off then meant removing its keys — but only the ones no 
 feature wanted, and only where the user had not since set one by hand. That bookkeeping is
 where the bugs live. Features contribute a map recomputed from scratch on every change; the
 hand-set map always wins; turning a feature off is a recompute, with nothing to get wrong.
+
+**A jailbreak-detection bypass hides the jailbreak; it never touches payment.** Locket does
+not block a jailbroken phone, it *reports* it — to OneSignal, to AppsFlyer, and from its own
+Flutter code — where the flag can count against an account. The tweak answers those checks
+as an unmodified phone would, and that is all it does. The `Check0verPlus.dylib` the owner
+sent alongside the app is a different thing: it fakes RevenueCat entitlements to unlock the
+paid "Locket Gold" subscription, which is taking money from the app's developers, not a
+device tweak. It was reviewed and deliberately not reproduced. The same line the rest of the
+project keeps — credit SCInsta, do not lift code, keep `app_attest_*` out of the X tweak —
+puts subscription cracking on the wrong side.
+
+**Hook the primitives a detector calls, not the detector.** Three SDKs check for a jailbreak
+in Locket and only one (OneSignal) exposes a single BOOL to override; AppsFlyer and the
+Flutter layer read the filesystem directly. So the bypass is Shadow-shaped: `%hookf` on
+`stat`/`lstat`/`access`/`fopen`, plus `-[NSFileManager fileExistsAtPath:]`, `-canOpenURL:`
+and `getenv`, each asking `SCILKShield` whether the path/scheme/var is a jailbreak probe and
+lying **only** then. Everything else passes through — the one rule that keeps a bypass from
+becoming a crash, which is why the path list is anchored at the start and never a substring
+match on "cydia" that a sandbox file could contain. `open` is left unhooked on purpose: it is
+variadic, and a two-arg hook drops the mode on every real `O_CREAT`, so `stat`+`fopen` carry
+it. Every hook is grouped and `%init`-ed from the `%ctor` after the panel gate, so "off"
+really means no hooks — a top-level ungrouped `%hookf` would install before the gate runs.
 
 **Run scripts before shipping them.** Three CI failures in a row came from shell
 one-liners that were never executed once locally. `tools/check.py` and a stubbed
@@ -216,6 +239,10 @@ tweaks/
                              quoted posts and DMs
     src/Settings/            reached by a two-finger hold on X's own window, not by
                              hooking one of X's screens
+  locket/                  Albrhi for Locket — com.albrhi.locket
+    src/Features/Bypass/     hides the jailbreak from Locket's three detectors; SCILKShield
+                             owns the path/scheme/env list, the .x holds only thin hooks
+    src/Settings/            a two-finger hold shows how many checks were answered
   panel/                   Albrhi Panel — com.albrhi.panel
                            an Albrhi page in the Settings app, one switch per patched
                            app. It writes; the tweaks read — and how they read it is a
@@ -391,13 +418,14 @@ and the others still run.
 
 ## CI, releases and the repo
 
-**Six workflows, one per thing that ships.**
+**Seven workflows, one per thing that ships.**
 
 | workflow | builds | tags |
 |---|---|---|
 | `buildtweak.yml` | Instagram | `v*` |
 | `buildyoutube.yml` | YouTube | `youtube-v*` |
 | `buildtwitter.yml` | X | `twitter-v*` |
+| `buildlocket.yml` | Locket | `locket-v*` |
 | `buildpanel.yml` | the Settings panel | its own namespace |
 | `buildsuite.yml` | **`com.albrhi`**, the combined package | `v${SUITE_VERSION}` |
 | `build-dav1d.yml` | the AV1 decoder Instagram links | on demand |
@@ -526,7 +554,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.5** · YouTube **1.12.4** · X **0.4.0** · Panel **0.6.1** · suite **1.4.0**.
+Instagram **4.1.5** · YouTube **1.12.4** · X **0.4.0** · Locket **0.1.0** · Panel **0.6.1** · suite **1.5.0**.
 
 - **Working, Instagram:** inline download button (posts + reels), Download Center queue,
   story seen-receipt control, per-message mark-as-seen in DMs, follow-back badge, feed and

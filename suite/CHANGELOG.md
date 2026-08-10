@@ -1,5 +1,21 @@
 # Albrhi Changelog
 
+## v1.5.0
+
+**A fourth app: Locket.** Albrhi now keeps Locket from reporting your phone as jailbroken —
+to its analytics, its ad-attribution SDK and its own code, all three of which check on a
+modified phone and send the answer home, where it can count against your account. They now
+come back clean.
+
+It answers only the jailbreak questions — is this file here, can this app be opened, is this
+folder writable — and only for the handful of paths a check looks at; everything else the app
+asks the system passes straight through. Hold two fingers anywhere in Locket to see how many
+checks were answered.
+
+It does not touch payments or subscriptions, on purpose.
+
+Includes the Locket tweak 0.1.0.
+
 ## v1.4.0
 
 **The X tweak puts the download button on the video.** In the corner beside play and mute,

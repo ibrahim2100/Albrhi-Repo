@@ -1,7 +1,7 @@
 Package: com.albrhi
 Name: Albrhi (rootless)
-Version: 1.4.0
-Description: One tweak for Instagram, YouTube and X, switched per app from Settings.
+Version: 1.5.0
+Description: One tweak for Instagram, YouTube, X and Locket, switched per app from Settings.
  .
  Everything Albrhi makes, in a single package. Install this and you have the Instagram
  tweak, the YouTube tweak and the X tweak; there is nothing else to download and one
@@ -26,6 +26,10 @@ Description: One tweak for Instagram, YouTube and X, switched per app from Setti
  best quality X offers, plus a list of everything it has shown you. Plus no ads, no Promote button, no Grok, no Premium nags,
  less tracking, no view counts and a faster launch. Hold two fingers anywhere in X.
  .
+ ▍LOCKET
+ Keeps Locket from reporting your phone as jailbroken — to its analytics, its ad tracking
+ and its own code. Nothing else is touched, and payments least of all.
+ .
  ▍GROWING
  New Albrhi tweaks arrive in this same package and appear in the same list, so there is
  never a second thing to install.
@@ -44,6 +48,6 @@ Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
 Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
 SileoDepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 Depends: mobilesubstrate, preferenceloader
-Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.panel, com.albrhi.panel.roothide
-Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.panel, com.albrhi.panel.roothide
+Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
+Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Tag: role::enduser

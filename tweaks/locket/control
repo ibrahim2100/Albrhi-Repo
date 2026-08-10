@@ -1,0 +1,40 @@
+Package: com.albrhi.locket
+Name: Albrhi for Locket (rootless)
+Version: 0.1.0
+Architecture: iphoneos-arm64
+Description: Keeps Locket from reporting your phone as jailbroken — in Arabic or English.
+ .
+ Locket does not block a jailbroken phone, but it does tell three companies your phone is
+ one: its analytics, its ad attribution, and its crash reporting each run their own check
+ and send the answer home. On a modified device that answer can quietly count against your
+ account. This tweak makes those checks come back clean.
+ .
+ ▍HOW IT WORKS
+ The checks all ask the system the same few questions — is this file here, can this app be
+ opened, is this folder writable. This sits underneath and answers only those questions,
+ only for the handful of paths a jailbreak check looks at. Everything else the app asks the
+ system passes straight through untouched.
+ .
+ ▍WHAT IT DOES NOT DO
+ It does not touch payments, subscriptions or anything you would pay Locket for. A tool that
+ unlocks paid features by faking a subscription was reviewed and deliberately not built —
+ that is taking money from the people who make the app, not a device tweak.
+ .
+ ▍SEE WHAT IT CAUGHT
+ Hold two fingers anywhere in Locket for a small screen that says how many checks were
+ answered and which ones. Arabic and English.
+ .
+ TESTED ON Locket 2.46.1. Nothing is pinned to a version number.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Author: Ibrahim Ismail AL-Rahn
+Section: Tweaks
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-locket.html
+SileoDepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-locket.json
+Depends: mobilesubstrate
+Conflicts: com.albrhi.locket.roothide
+Replaces: com.albrhi.locket.roothide
+Tag: role::enduser
