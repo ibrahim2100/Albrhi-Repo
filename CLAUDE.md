@@ -396,6 +396,14 @@ ends. **And the other tweaks are the oracle:** they build under `-Werror` today,
 finding in them is by definition a false positive. That turns "does this rule cry wolf"
 from a judgement into something a command answers.
 
+Rule 16 sees only indented locals, and that gap cost the Locket build a run: a file-scope
+`static const NSInteger SCILKSectionRecent = 2;` at column 0 went unused when the section
+it named was reached as a fall-through, and `-Wunused-const-variable` — a different warning
+from the local one — stopped the build. **Rule 16b** covers the column-0 `static const`
+case, narrow (only when the name appears nowhere else in its file) and checked the same way
+against the oracle. The lesson under the lesson: a rule written for one shape of a mistake
+does not cover the others, and `-Werror` has more than one warning that fails a release.
+
 **Rules 8 and 10 exist because one process failure cost two builds in a row, and
 then a third edit in the very commit that documented it.** A script with several
 `assert`s raises partway through: part of the change is on disk, part is not, and

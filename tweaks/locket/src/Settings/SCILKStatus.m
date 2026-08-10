@@ -142,17 +142,22 @@ static const NSInteger SCILKSectionRecent = 2;
         return cell;
     }
 
-    if (!self.recent.count) {
-        cell.textLabel.text = SCILocalized(@"kinds_empty");
+    // Named rather than left as the fall-through. The section constant is the third and
+    // last, and referring to it here is both clearer and the difference between a build
+    // and a -Werror stop on an unused constant.
+    if (indexPath.section == SCILKSectionRecent) {
+        if (!self.recent.count) {
+            cell.textLabel.text = SCILocalized(@"kinds_empty");
+            cell.textLabel.numberOfLines = 0;
+            cell.textLabel.textColor = [UIColor secondaryLabelColor];
+            return cell;
+        }
+
+        cell.textLabel.text = self.recent[indexPath.row];
+        cell.textLabel.font = [UIFont monospacedSystemFontOfSize:11 weight:UIFontWeightRegular];
         cell.textLabel.numberOfLines = 0;
         cell.textLabel.textColor = [UIColor secondaryLabelColor];
-        return cell;
     }
-
-    cell.textLabel.text = self.recent[indexPath.row];
-    cell.textLabel.font = [UIFont monospacedSystemFontOfSize:11 weight:UIFontWeightRegular];
-    cell.textLabel.numberOfLines = 0;
-    cell.textLabel.textColor = [UIColor secondaryLabelColor];
     return cell;
 }
 

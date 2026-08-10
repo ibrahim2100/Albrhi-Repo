@@ -692,6 +692,36 @@ for path in SRC:
         report('%s at %s:%d is assigned and never used again — -Werror fails the build'
                % (name, path, n))
 
+# 16b. A file-scope `static const` declared and never used.
+#
+# Rule 16 only sees indented locals; a `static const NSInteger SCILKSectionRecent = 2;`
+# at column 0 is not a local and slipped past it into a -Werror stop on
+# -Wunused-const-variable, one section constant that the code reached as a fall-through
+# instead of by name. Different warning, same failure: the build stops and a CI run is
+# spent on it.
+#
+# Narrow on purpose. Only `static const` at the start of a line, only when the name
+# appears nowhere else in its file. A `static` that is written in one function and read
+# in another is not const and is not matched; an `extern`/non-static const may be used
+# from another file and is left to the compiler. The other four tweaks are the oracle —
+# they build under -Werror, so a finding in them would be a false positive.
+STATIC_CONST = re.compile(r'^static\s+const\s+[\w\s*<>]+?\b([A-Za-z_]\w*)\s*=')
+
+for path in SRC:
+    body = open(path, encoding='utf-8').read()
+
+    for n, line in enumerate(body.split(chr(10)), 1):
+        match = STATIC_CONST.match(line)
+        if not match:
+            continue
+
+        name = match.group(1)
+        if len(re.findall(r'\b%s\b' % re.escape(name), body)) > 1:
+            continue
+
+        report('%s at %s:%d is a static const never used — -Werror fails the build'
+               % (name, path, n))
+
 print('keys: %d EN / %d AR   orphans: %d' % (len(en_keys), len(ar_keys), len(en_keys - used)))
 print('version: %s' % control_version)
 print()
