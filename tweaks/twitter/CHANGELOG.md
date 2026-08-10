@@ -1,5 +1,14 @@
 # Albrhi for X — what changed
 
+## 0.4.0
+
+**A download button on the video itself.** In the corner beside play and mute — tap it and
+the video is in Photos, at the best quality X offers. No opening a menu first.
+
+The list under the two-finger hold stays, and the two cover each other: the button is on
+one of X's views and could break the day X renames it, while the list saves from the model
+and does not. If the button ever goes missing after an X update, the list is still there.
+
 ## 0.3.0
 
 **Saving videos.** Hold two fingers in X and everything it has shown you since you opened

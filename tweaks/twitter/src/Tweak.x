@@ -5,8 +5,9 @@
 #import "Features/Switches/SCITWFeatures.h"
 #import "Settings/SCITWGesture.h"
 #import "Features/Media/SCITWMediaHooks.h"
+#import "Features/Media/SCITWInlineButton.h"
 
-NSString *SCIVersionString = @"v0.3.0";  // AlbrhiTW
+NSString *SCIVersionString = @"v0.4.0";  // AlbrhiTW
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written
@@ -15,6 +16,7 @@ NSString *SCIVersionString = @"v0.3.0";  // AlbrhiTW
     // installed. Registering makes the intended default explicit in one place.
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{
         SCIPrefSwitchLayer: @YES,
+        SCIPrefInlineButton: @YES,
         SCIPrefVerboseLogging: @NO,
     }];
 
@@ -44,6 +46,11 @@ NSString *SCIVersionString = @"v0.3.0";  // AlbrhiTW
     // feature switches are two different things, and someone who turned the switch layer
     // off to rule it out of a problem should not lose their downloads with it.
     SCITWInstallMediaHooks();
+
+    // The button on the video, beside the list. Its own hook so that a build where X has
+    // renamed the media view loses the button and keeps the list, and the diagnostics
+    // report says which of the two attached.
+    SCITWInstallInlineButton();
 
     if ([[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefSwitchLayer]) {
         // Before the hooks, not after. X asks its first questions while the app is still

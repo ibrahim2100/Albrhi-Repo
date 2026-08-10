@@ -526,7 +526,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.5** · YouTube **1.12.4** · X **0.3.0** · Panel **0.6.1** · suite **1.3.0**.
+Instagram **4.1.5** · YouTube **1.12.4** · X **0.4.0** · Panel **0.6.1** · suite **1.4.0**.
 
 - **Working, Instagram:** inline download button (posts + reels), Download Center queue,
   story seen-receipt control, per-message mark-as-seen in DMs, follow-back badge, feed and

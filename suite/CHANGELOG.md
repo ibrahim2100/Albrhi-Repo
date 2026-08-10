@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.4.0
+
+**The X tweak puts the download button on the video.** In the corner beside play and mute,
+where you would reach for it — tap and the video is in Photos at the best quality X offers.
+The list under the two-finger hold stays as a fallback, so saving keeps working even on a
+build where X has renamed the video view.
+
+Includes the X tweak 0.4.0.
+
 ## v1.3.0
 
 **The X tweak saves videos now.** Hold two fingers anywhere in X and everything it has shown

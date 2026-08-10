@@ -104,59 +104,8 @@ static NSMutableArray<SCITWMediaItem *> *_items = nil;
 }
 
 + (void)capture:(id)mediaEntity {
-    if (![mediaEntity isKindOfClass:NSClassFromString(@"TFSTwitterEntityMedia")]) return;
-
-    TFSTwitterEntityMedia *media = mediaEntity;
-
-    // Asked, not inferred. Every one of these is a question X answers about its own object,
-    // and the alternative -- deciding from `mediaType` being 2 -- is a number whose meaning
-    // is not written down anywhere and changes when X adds a media kind.
-    BOOL isVideo = [media respondsToSelector:@selector(isVideo)] && [media isVideo];
-    BOOL isGif = [media respondsToSelector:@selector(isAnimatedGif)] && [media isAnimatedGif];
-    BOOL isImage = [media respondsToSelector:@selector(isImage)] && [media isImage];
-
-    if ([media respondsToSelector:@selector(isDeadVideo)] && [media isDeadVideo]) return;
-
-    SCITWMediaItem *item = [[SCITWMediaItem alloc] init];
-    item.seen = [NSDate date];
-
-    if (isVideo || isGif) {
-        TFSTwitterEntityMediaVideoInfo *info =
-            [media respondsToSelector:@selector(videoInfo)] ? media.videoInfo : nil;
-
-        // A video with no playable variant is dropped here rather than listed and failed
-        // later. A row that cannot do what it offers is worse than a row that is absent:
-        // one is a missing feature, the other is a broken one.
-        item.url = [self bestVideoURL:info];
-        if (!item.url) return;
-
-        item.kind = isGif ? SCITWMediaKindGif : SCITWMediaKindVideo;
-        item.duration = [info respondsToSelector:@selector(duration)] ? info.duration : 0;
-    } else if (isImage) {
-        NSString *string = [media respondsToSelector:@selector(imageURLString)]
-            ? media.imageURLString : nil;
-        if (!string.length && [media respondsToSelector:@selector(mediaURL)]) {
-            string = media.mediaURL.absoluteString;
-        }
-
-        item.url = [self originalImageURL:string];
-        if (!item.url) return;
-
-        item.kind = SCITWMediaKindImage;
-    } else {
-        return;
-    }
-
-    // Identity by X's own id where there is one, and by the resolved URL otherwise. The URL
-    // is a fair fallback: two different pieces of media do not share one.
-    NSString *identifier = nil;
-    if ([media respondsToSelector:@selector(mediaID)]) identifier = media.mediaID;
-    if (!identifier.length && [media respondsToSelector:@selector(mediaKey)]) {
-        identifier = media.mediaKey;
-    }
-    item.identifier = identifier.length ? identifier : item.url.absoluteString;
-
-    if ([media respondsToSelector:@selector(altText)]) item.note = media.altText;
+    SCITWMediaItem *item = [self itemForEntity:mediaEntity];
+    if (!item) return;
 
     pthread_mutex_lock(&_lock);
 
@@ -173,6 +122,64 @@ static NSMutableArray<SCITWMediaItem *> *_items = nil;
     while (_items.count > SCITWMediaLimit) [_items removeLastObject];
 
     pthread_mutex_unlock(&_lock);
+}
+
++ (SCITWMediaItem *)itemForEntity:(id)mediaEntity {
+    if (![mediaEntity isKindOfClass:NSClassFromString(@"TFSTwitterEntityMedia")]) return nil;
+
+    TFSTwitterEntityMedia *media = mediaEntity;
+
+    // Asked, not inferred. Every one of these is a question X answers about its own object,
+    // and the alternative -- deciding from `mediaType` being 2 -- is a number whose meaning
+    // is not written down anywhere and changes when X adds a media kind.
+    BOOL isVideo = [media respondsToSelector:@selector(isVideo)] && [media isVideo];
+    BOOL isGif = [media respondsToSelector:@selector(isAnimatedGif)] && [media isAnimatedGif];
+    BOOL isImage = [media respondsToSelector:@selector(isImage)] && [media isImage];
+
+    if ([media respondsToSelector:@selector(isDeadVideo)] && [media isDeadVideo]) return nil;
+
+    SCITWMediaItem *item = [[SCITWMediaItem alloc] init];
+    item.seen = [NSDate date];
+
+    if (isVideo || isGif) {
+        TFSTwitterEntityMediaVideoInfo *info =
+            [media respondsToSelector:@selector(videoInfo)] ? media.videoInfo : nil;
+
+        // A video with no playable variant is dropped here rather than listed and failed
+        // later. A row that cannot do what it offers is worse than a row that is absent:
+        // one is a missing feature, the other is a broken one.
+        item.url = [self bestVideoURL:info];
+        if (!item.url) return nil;
+
+        item.kind = isGif ? SCITWMediaKindGif : SCITWMediaKindVideo;
+        item.duration = [info respondsToSelector:@selector(duration)] ? info.duration : 0;
+    } else if (isImage) {
+        NSString *string = [media respondsToSelector:@selector(imageURLString)]
+            ? media.imageURLString : nil;
+        if (!string.length && [media respondsToSelector:@selector(mediaURL)]) {
+            string = media.mediaURL.absoluteString;
+        }
+
+        item.url = [self originalImageURL:string];
+        if (!item.url) return nil;
+
+        item.kind = SCITWMediaKindImage;
+    } else {
+        return nil;
+    }
+
+    // Identity by X's own id where there is one, and by the resolved URL otherwise. The URL
+    // is a fair fallback: two different pieces of media do not share one.
+    NSString *identifier = nil;
+    if ([media respondsToSelector:@selector(mediaID)]) identifier = media.mediaID;
+    if (!identifier.length && [media respondsToSelector:@selector(mediaKey)]) {
+        identifier = media.mediaKey;
+    }
+    item.identifier = identifier.length ? identifier : item.url.absoluteString;
+
+    if ([media respondsToSelector:@selector(altText)]) item.note = media.altText;
+
+    return item;
 }
 
 + (NSArray<SCITWMediaItem *> *)recent {

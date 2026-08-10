@@ -1,6 +1,6 @@
 Package: com.albrhi.twitter
 Name: Albrhi for Twitter (rootless)
-Version: 0.3.0
+Version: 0.4.0
 Architecture: iphoneos-arm64
 Description: Save any video, photo or GIF — no ads, no Grok, less tracking. Arabic or English.
  .
@@ -9,13 +9,13 @@ Description: Save any video, photo or GIF — no ads, no Grok, less tracking. Ar
  at that one place.
  .
  ▍SAVE VIDEOS, PHOTOS AND GIFS
- Everything X has shown you since you opened it is listed in one place, newest first. Tap
- one and it is in Photos. Videos are saved at the best quality X itself offers, and photos
- at the size they were uploaded — not the smaller one the timeline was showing you.
+ A download button sits on the video itself, in the corner beside play and mute. Tap it and
+ the video is in Photos, at the best quality X offers. Photos save at the size they were
+ uploaded — not the smaller one the timeline was showing you.
  .
- No button is added to X. The list is in our own screen, so it cannot stop working the day
- X renames one of its views — which is what happens to every tweak that puts a button in
- a post.
+ And a list under a two-finger hold holds everything X has shown you since you opened it,
+ newest first — the same save, from the model rather than a button, so it keeps working on
+ a build where X has renamed the video view.
  .
  ▍WHAT IT SHOWS
  Every switch the app asked about while you were using it, the answer it was given, and

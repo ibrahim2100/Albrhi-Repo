@@ -37,4 +37,12 @@
 /// Two fingers held for two thirds of a second is rare enough in a scrolling app to not
 /// need one.
 
+/// The download button drawn on the video itself, in X's own media chrome.
+///
+/// On by default: it is the thing people ask for by name, and a download button that ships
+/// off is a feature nobody finds. The list under the two-finger hold is the fallback for a
+/// build where X has renamed the view this rides on -- so turning this off leaves saving
+/// working, which is why it is safe to default on.
+#define SCIPrefInlineButton     @"inline_download_button"
+
 #define SCIPrefVerboseLogging   @"verbose_logging"

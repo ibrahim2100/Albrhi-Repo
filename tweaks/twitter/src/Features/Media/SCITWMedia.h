@@ -73,6 +73,16 @@ typedef NS_ENUM(NSInteger, SCITWMediaKind) {
 /// between a working download button and one on every photo in the feed.
 + (void)capture:(id)mediaEntity;
 
+/// Reads one of X's media objects into an item, or returns nil when it is not something
+/// that can be saved -- a photo post whose `-videoInfo` is a hollow object, a live
+/// broadcast that offers a stream and no file.
+///
+/// Split out from `-capture:` so the in-video button can build an item for the one thing a
+/// person tapped without going through the remembered list, and so both paths decide
+/// "saveable" by the same rules. Takes `id` for the same reason `-capture:` does: the
+/// caller is a hook holding whatever X handed it, and this is the one place that checks.
++ (nullable SCITWMediaItem *)itemForEntity:(id)mediaEntity;
+
 /// Newest first, at most `SCITWMediaLimit`.
 + (NSArray<SCITWMediaItem *> *)recent;
 
