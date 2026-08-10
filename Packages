@@ -1,55 +1,4 @@
 Package: com.albrhi
-Version: 1.0.10
-Architecture: iphoneos-arm64
-Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
-Installed-Size: 1592
-Depends: mobilesubstrate, preferenceloader
-Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.panel, com.albrhi.panel.roothide
-Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.panel, com.albrhi.panel.roothide
-Filename: debs/com.albrhi_1.0.10_iphoneos-arm64.deb
-Size: 900196
-MD5sum: 6e730e760c19955c406c0167f2a73ffe
-SHA1: ffa29f49cd3a92c95dc2aa52ba2851c30534e86b
-SHA256: d31c01ec62662d20ea7101d11c8d11bdef9117cd68d07b2b8013491557c3aed0
-Section: Tweaks
-Homepage: https://github.com/ibrahim2100/Albrhi-Repo
-Description: One tweak for Instagram and YouTube, switched per app from Settings.
- .
- Everything Albrhi makes, in a single package. Install this and you have the Instagram
- tweak and the YouTube tweak; there is nothing else to download and one thing to update.
- .
- ▍CHOOSE FROM SETTINGS
- Settings › Albrhi lists every app Albrhi patches, with a switch each. Turn one off and
- Albrhi does nothing inside that app — no uninstalling, and your settings are kept for
- when you turn it back on. Close and reopen the app for a change to take effect.
- .
- ▍INSTAGRAM
- A download button in every post and reel, a Download Center with a real queue, a feed
- without ads or suggestions, watching stories without telling anyone, and confirmations
- before a mis-tap becomes a notification.
- .
- ▍YOUTUBE
- Downloads with their own player and Download Centre tab, no ads, SponsorBlock, playback
- that keeps going in the background, and a quality ceiling per connection.
- .
- ▍GROWING
- New Albrhi tweaks arrive in this same package and appear in the same list, so there is
- never a second thing to install.
- .
- Arabic and English throughout.
- .
- Developed by Ibrahim Ismail AL-Rahn. The Instagram tweak is an educational and corrective
- derivative of SCInsta by SoCuul, rebuilt with AI assistance to improve code quality,
- design, performance and user experience. Free and open source under the GNU GPL v3, with
- original authorship credited and preserved.
-Tag: role::enduser
-Author: Ibrahim Ismail AL-Rahn (Instagram tweak based on SCInsta by SoCuul, GPLv3)
-Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
-Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Name: Albrhi (rootless)
-Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
-
-Package: com.albrhi
 Version: 1.0.11
 Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
@@ -151,25 +100,26 @@ Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
 Name: Albrhi (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
-Package: com.albrhi.roothide
-Version: 1.0.10
-Architecture: iphoneos-arm64e
+Package: com.albrhi
+Version: 1.1.0
+Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 1592
 Depends: mobilesubstrate, preferenceloader
-Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.panel, com.albrhi.panel.roothide
-Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.panel, com.albrhi.panel.roothide
-Filename: debs/com.albrhi.roothide_1.0.10_iphoneos-arm64e.deb
-Size: 899942
-MD5sum: 9315b9c8d008db7a8be45a8a910cc14e
-SHA1: 4f8035430c9173361359d0455fa7ecdb0cb613f3
-SHA256: 71e9afbc0e48d7b0a5c01f1ebd38ad5e66a99a050308ddeafde9524f35e1ba6e
+Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.panel, com.albrhi.panel.roothide
+Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.panel, com.albrhi.panel.roothide
+Filename: debs/com.albrhi_1.1.0_iphoneos-arm64.deb
+Size: 964990
+MD5sum: 0fd2c5713c2a5664d1e8d694058a8f51
+SHA1: d9e75eb6e71b012491b1e34c53dfe4673ffb033a
+SHA256: 0af179a7e40dcc7f52d2a6dd48545752eb39bab309fb3f8cab2a62518c369e47
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
-Description: One tweak for Instagram and YouTube, switched per app from Settings.
+Description: One tweak for Instagram, YouTube and X, switched per app from Settings.
  .
  Everything Albrhi makes, in a single package. Install this and you have the Instagram
- tweak and the YouTube tweak; there is nothing else to download and one thing to update.
+ tweak, the YouTube tweak and the X tweak; there is nothing else to download and one
+ thing to update.
  .
  ▍CHOOSE FROM SETTINGS
  Settings › Albrhi lists every app Albrhi patches, with a switch each. Turn one off and
@@ -185,6 +135,11 @@ Description: One tweak for Instagram and YouTube, switched per app from Settings
  Downloads with their own player and Download Centre tab, no ads, SponsorBlock, playback
  that keeps going in the background, and a quality ceiling per connection.
  .
+ ▍X
+ See the switches X uses to decide what your app can do, and answer them yourself. The
+ list is whatever your own copy of X really asked about — nothing is guessed in advance.
+ Hold two fingers anywhere in X to open it.
+ .
  ▍GROWING
  New Albrhi tweaks arrive in this same package and appear in the same list, so there is
  never a second thing to install.
@@ -199,7 +154,7 @@ Tag: role::enduser
 Author: Ibrahim Ismail AL-Rahn (Instagram tweak based on SCInsta by SoCuul, GPLv3)
 Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
 Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Name: Albrhi (roothide)
+Name: Albrhi (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
 Package: com.albrhi.roothide
@@ -286,6 +241,63 @@ Description: One tweak for Instagram and YouTube, switched per app from Settings
  ▍YOUTUBE
  Downloads with their own player and Download Centre tab, no ads, SponsorBlock, playback
  that keeps going in the background, and a quality ceiling per connection.
+ .
+ ▍GROWING
+ New Albrhi tweaks arrive in this same package and appear in the same list, so there is
+ never a second thing to install.
+ .
+ Arabic and English throughout.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. The Instagram tweak is an educational and corrective
+ derivative of SCInsta by SoCuul, rebuilt with AI assistance to improve code quality,
+ design, performance and user experience. Free and open source under the GNU GPL v3, with
+ original authorship credited and preserved.
+Tag: role::enduser
+Author: Ibrahim Ismail AL-Rahn (Instagram tweak based on SCInsta by SoCuul, GPLv3)
+Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi (roothide)
+Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
+
+Package: com.albrhi.roothide
+Version: 1.1.0
+Architecture: iphoneos-arm64e
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 1592
+Depends: mobilesubstrate, preferenceloader
+Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.panel, com.albrhi.panel.roothide
+Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.panel, com.albrhi.panel.roothide
+Filename: debs/com.albrhi.roothide_1.1.0_iphoneos-arm64e.deb
+Size: 964674
+MD5sum: 7b0953e0f9d1e8f8993f10127940a241
+SHA1: fa6bb062ae98c5065c3126d3c79da7c6d9b4bd9c
+SHA256: a50124e6eac0456572254fc4b8b565a7a8ab7b5ed71ac77348560724f74a7fa9
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: One tweak for Instagram, YouTube and X, switched per app from Settings.
+ .
+ Everything Albrhi makes, in a single package. Install this and you have the Instagram
+ tweak, the YouTube tweak and the X tweak; there is nothing else to download and one
+ thing to update.
+ .
+ ▍CHOOSE FROM SETTINGS
+ Settings › Albrhi lists every app Albrhi patches, with a switch each. Turn one off and
+ Albrhi does nothing inside that app — no uninstalling, and your settings are kept for
+ when you turn it back on. Close and reopen the app for a change to take effect.
+ .
+ ▍INSTAGRAM
+ A download button in every post and reel, a Download Center with a real queue, a feed
+ without ads or suggestions, watching stories without telling anyone, and confirmations
+ before a mis-tap becomes a notification.
+ .
+ ▍YOUTUBE
+ Downloads with their own player and Download Centre tab, no ads, SponsorBlock, playback
+ that keeps going in the background, and a quality ceiling per connection.
+ .
+ ▍X
+ See the switches X uses to decide what your app can do, and answer them yourself. The
+ list is whatever your own copy of X really asked about — nothing is guessed in advance.
+ Hold two fingers anywhere in X to open it.
  .
  ▍GROWING
  New Albrhi tweaks arrive in this same package and appear in the same list, so there is
