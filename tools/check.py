@@ -105,21 +105,43 @@ for path in SRC:
         report('structure broken in %s (hook=%d end=%d depth=%d neg@%s)'
                % (path, hooks, ends, depth, first_negative))
 
-# 3. Hooked classes that use properties but have no @interface.
+# 3. Hooked classes that touch self but have no @interface.
+#
+# Logos leaves a `%hook` on an undeclared class with only a forward declaration, and a
+# `self` typed as a forward-declared class cannot be sent *any* message -- not even
+# `-respondsToSelector:`, which is where the X inline button's build actually failed, on
+# the guard rather than the property. So this catches a message send to self as well as
+# `self.<property>`; the first version saw only the dot syntax and missed the button.
+#
+# @interface declarations are read from the sources too, not only the headers: the fix for
+# that same failure declared the class inline in the .x, and a rule that looked only in
+# headers would then have called the fixed file broken -- a false alarm on correct code,
+# which is the way a check earns being ignored.
+#
+# System classes are skipped: a hooked NSFileManager or UIWindow gets its @interface from
+# the SDK import, so `self` is fully typed and the send compiles. They are recognised by
+# the Apple two-letter framework prefixes, none of which collide with this project's own
+# (SCI, IG, T1/TFS/TFN/TAE/TAV/TPS/TUC/TUI, ML, YT).
 declared = set()
-for path in HDR:
+for path in HDR + SRC:
     declared |= set(re.findall(r'@interface\s+(\w+)', open(path, encoding='utf-8').read()))
+
+SYSTEM_PREFIX = re.compile(
+    r'^(NS|UI|CA|CG|CF|AV|CL|WK|SK|MK|MP|PH|CM|CI|UN|CN|GLK|QL|EK|PK|HK|VN|NW|SF|WC)[A-Z]')
 
 for path in LOGOS:
     text = open(path, encoding='utf-8').read()
     for match in re.finditer(r'^%hook\s+([\w.]+)', text, re.M):
         name = match.group(1)
-        if '.' in name or name in declared:
+        if '.' in name or name in declared or SYSTEM_PREFIX.match(name):
             continue
         body = text[match.end():]
         end = body.find('\n%end')
-        if re.search(r'\bself\.\w+', body[:end if end > 0 else len(body)]):
+        body = body[:end if end > 0 else len(body)]
+        if re.search(r'\bself\.\w+', body):
             report('%s hooked without an @interface but uses self.<property> in %s' % (name, path))
+        elif re.search(r'\[\s*self\b', body):
+            report('%s hooked without an @interface but sends a message to self in %s' % (name, path))
 
 # 4. %orig sharing a line with braces or unbraced control flow.
 #    This Logos version expands %orig with #line directives, which breaks such lines.

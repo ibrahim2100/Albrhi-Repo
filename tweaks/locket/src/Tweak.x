@@ -2,9 +2,10 @@
 #import "Prefs.h"
 #import "SCILog.h"
 #import "Features/Bypass/SCILKBypass.h"
+#import "Features/Media/SCILKMediaHooks.h"
 #import "Settings/SCILKGesture.h"
 
-NSString *SCIVersionString = @"v0.1.0";  // AlbrhiLK
+NSString *SCIVersionString = @"v0.2.0";  // AlbrhiLK
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written returns
@@ -13,6 +14,7 @@ NSString *SCIVersionString = @"v0.1.0";  // AlbrhiLK
     // default explicit in one place.
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{
         SCIPrefBypass: @YES,
+        SCIPrefSaveMoments: @YES,
         SCIPrefVerboseLogging: @NO,
     }];
 
@@ -39,5 +41,13 @@ NSString *SCIVersionString = @"v0.1.0";  // AlbrhiLK
         SCILKInstallBypass();
     } else {
         SCILogV(@"bypass turned off in settings");
+    }
+
+    // Saving moments is independent of the bypass: the two answer different needs, and
+    // turning one off to rule it out of a problem should not take the other with it.
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefSaveMoments]) {
+        SCILKInstallMediaHooks();
+    } else {
+        SCILogV(@"moment saving turned off in settings");
     }
 }

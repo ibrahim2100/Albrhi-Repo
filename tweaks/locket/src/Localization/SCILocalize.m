@@ -25,6 +25,15 @@ static void SCIBuildTables(void) {
         @"bypass_off": @"Off",
         @"status_total": @"Checks answered",
 
+        @"section_media": @"Save a moment",
+        @"media_footer": @"Every moment Locket has loaded since you opened it, newest first. Tap one to save it to Photos. It saves the photo or video a friend actually sent — the full one, not a screenshot.",
+        @"media_empty": @"Nothing yet. Open a friend’s moment in Locket and come back.",
+        @"media_clear": @"Clear the list",
+        @"save_working": @"Saving…",
+        @"save_done": @"Saved to Photos",
+        @"save_failed": @"Could not save this one.",
+        @"save_no_permission": @"Locket needs permission to add to Photos. Settings › Locket › Photos.",
+
         @"section_kinds": @"What was answered",
         @"kinds_footer": @"Each time Locket or one of its libraries asked the system a question a jailbreak check asks, it was answered as an ordinary phone would answer. This is the running count since you opened the app.",
         @"kinds_empty": @"Nothing asked yet. That is normal early — the checks tend to run a moment after launch and again in the background.",
@@ -52,6 +61,15 @@ static void SCIBuildTables(void) {
         @"bypass_on": @"مُفعّل",
         @"bypass_off": @"مُطفأ",
         @"status_total": @"الفحوص المُجاب عنها",
+
+        @"section_media": @"حفظ لحظة",
+        @"media_footer": @"كل لحظة حمّلها لوكِت منذ فتحته، الأحدث أولاً. اضغط على واحدة لحفظها في الصور. تُحفظ الصورة أو الفيديو الذي أرسله صديقك فعلاً — الكاملة، لا لقطة شاشة.",
+        @"media_empty": @"لا شيء بعد. افتح لحظة صديق في لوكِت ثم ارجع.",
+        @"media_clear": @"مسح القائمة",
+        @"save_working": @"جارٍ الحفظ…",
+        @"save_done": @"حُفظ في الصور",
+        @"save_failed": @"تعذّر حفظ هذه.",
+        @"save_no_permission": @"يحتاج لوكِت إذناً بالإضافة إلى الصور. الإعدادات › Locket › الصور.",
 
         @"section_kinds": @"ما الذي أُجيب عنه",
         @"kinds_footer": @"في كل مرة سأل فيها لوكِت أو إحدى مكتباته النظامَ سؤالاً يسأله فحص الجيلبريك، أُجيب كما يُجيب هاتف عادي. هذا العدّ منذ فتحت التطبيق.",

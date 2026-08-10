@@ -1,5 +1,20 @@
 # Albrhi Changelog
 
+## v1.6.0
+
+**The Locket tweak saves moments now.** Hold two fingers anywhere in Locket and every moment
+it has loaded is listed, newest first — tap one to keep a friend’s photo or video to your
+Photos at full size, the one they sent rather than a screenshot. Locket is a Swift app, so
+the list is built from what it fetches over the network, filtered to real moments and away
+from the app’s own artwork.
+
+The jailbreak-hiding from 1.5.0 stays. And the X download button fix from this release rides
+along.
+
+It saves what is already on your phone and does not touch anything you would pay Locket for.
+
+Includes the Locket tweak 0.2.0 and the X tweak 0.4.0.
+
 ## v1.5.0
 
 **A fourth app: Locket.** Albrhi now keeps Locket from reporting your phone as jailbroken —

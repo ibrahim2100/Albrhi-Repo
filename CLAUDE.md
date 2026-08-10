@@ -242,7 +242,11 @@ tweaks/
   locket/                  Albrhi for Locket — com.albrhi.locket
     src/Features/Bypass/     hides the jailbreak from Locket's three detectors; SCILKShield
                              owns the path/scheme/env list, the .x holds only thin hooks
-    src/Settings/            a two-finger hold shows how many checks were answered
+    src/Features/Media/      saving a moment: captured at NSURLSession because a moment is a
+                             Swift struct no ObjC hook can read, filtered to the storage
+                             blobs and away from the public asset buckets
+    src/Settings/            a two-finger hold shows the moments to save, then how many
+                             checks were answered
   panel/                   Albrhi Panel — com.albrhi.panel
                            an Albrhi page in the Settings app, one switch per patched
                            app. It writes; the tweaks read — and how they read it is a
@@ -363,7 +367,9 @@ from a real build failure:
 
 1. duplicate `@interface` definitions
 2. brace balance and `%hook`/`%end` pairing
-3. hooked class used with properties but never declared
+3. hooked class that touches `self` — a property *or* a message send — but is never
+   declared, since Logos leaves it a forward declaration that cannot receive either;
+   `@interface`s are read from sources too, and Apple-prefixed classes are skipped
 4. fragile `%orig` placement
 5. unterminated string literals (comment-aware, so `https://` is not a false hit)
 6. localization parity and undefined keys — and a missing table at all
@@ -562,7 +568,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.5** · YouTube **1.12.4** · X **0.4.0** · Locket **0.1.0** · Panel **0.6.1** · suite **1.5.0**.
+Instagram **4.1.5** · YouTube **1.12.4** · X **0.4.0** · Locket **0.2.0** · Panel **0.6.1** · suite **1.6.0**.
 
 - **Working, Instagram:** inline download button (posts + reels), Download Center queue,
   story seen-receipt control, per-message mark-as-seen in DMs, follow-back badge, feed and

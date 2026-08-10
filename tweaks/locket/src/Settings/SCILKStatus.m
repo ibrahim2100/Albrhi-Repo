@@ -2,15 +2,21 @@
 #import "Prefs.h"
 #import "Localization/SCILocalize.h"
 #import "Features/Bypass/SCILKShield.h"
+#import "Features/Media/SCILKMedia.h"
+#import "Features/Media/SCILKDownload.h"
 
-static const NSInteger SCILKSectionStatus = 0;
-static const NSInteger SCILKSectionKinds  = 1;
-static const NSInteger SCILKSectionRecent = 2;
+// Media first, under nothing: it is what a person opens this for. The bypass status and its
+// counts come after, for when someone wants to confirm the hidden half is working.
+static const NSInteger SCILKSectionMedia  = 0;
+static const NSInteger SCILKSectionStatus = 1;
+static const NSInteger SCILKSectionKinds  = 2;
+static const NSInteger SCILKSectionRecent = 3;
 
 @interface SCILKStatus ()
 @property (nonatomic, strong) NSArray<NSString *> *kindOrder;
 @property (nonatomic, strong) NSDictionary<NSString *, NSNumber *> *byKind;
 @property (nonatomic, strong) NSArray<NSString *> *recent;
+@property (nonatomic, strong) NSArray<SCILKMediaItem *> *media;
 @property (nonatomic, strong) NSTimer *refresh;
 @end
 
@@ -52,6 +58,10 @@ static const NSInteger SCILKSectionRecent = 2;
                                          style:UIBarButtonItemStyleDone
                                         target:self
                                         action:@selector(dismissSelf)];
+    self.navigationItem.leftBarButtonItem =
+        [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemTrash
+                                                      target:self
+                                                      action:@selector(clearMedia)];
 
     // A fixed order for the kinds, so the rows do not reshuffle each refresh as one counter
     // overtakes another — a list that reorders while you read it is a list you cannot read.
@@ -77,29 +87,38 @@ static const NSInteger SCILKSectionRecent = 2;
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
+- (void)clearMedia {
+    [SCILKMedia forgetAll];
+    [self reload];
+}
+
 - (void)reload {
+    self.media = SCILKMedia.recent;
     self.byKind = SCILKInterceptsByKind();
     self.recent = SCILKRecentIntercepts();
     [self.tableView reloadData];
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 3;
+    return 4;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    if (section == SCILKSectionMedia) return self.media.count ?: 1;
     if (section == SCILKSectionStatus) return 3;
     if (section == SCILKSectionKinds) return self.kindOrder.count;
     return self.recent.count ?: 1;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+    if (section == SCILKSectionMedia) return SCILocalized(@"section_media");
     if (section == SCILKSectionStatus) return SCILocalized(@"section_status");
     if (section == SCILKSectionKinds) return SCILocalized(@"section_kinds");
     return SCILocalized(@"section_recent");
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
+    if (section == SCILKSectionMedia) return SCILocalized(@"media_footer");
     if (section == SCILKSectionKinds) return SCILocalized(@"kinds_footer");
     if (section == SCILKSectionStatus) return SCILocalized(@"about_note");
     return nil;
@@ -107,6 +126,29 @@ static const NSInteger SCILKSectionRecent = 2;
 
 - (UITableViewCell *)tableView:(UITableView *)tableView
          cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (indexPath.section == SCILKSectionMedia) {
+        // Its own style: a moment row is a label over its host, which Subtitle stacks, while
+        // the status and count rows below want Value1's right-aligned detail.
+        UITableViewCell *row =
+            [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
+
+        if (!self.media.count) {
+            row.textLabel.text = SCILocalized(@"media_empty");
+            row.textLabel.numberOfLines = 0;
+            row.textLabel.textColor = [UIColor secondaryLabelColor];
+            row.selectionStyle = UITableViewCellSelectionStyleNone;
+            return row;
+        }
+
+        SCILKMediaItem *item = self.media[indexPath.row];
+        row.textLabel.text = item.label;
+        row.textLabel.font = [UIFont monospacedSystemFontOfSize:12 weight:UIFontWeightRegular];
+        row.detailTextLabel.text = item.host;
+        row.detailTextLabel.textColor = [UIColor secondaryLabelColor];
+        row.imageView.image = [UIImage systemImageNamed:@"arrow.down.circle"];
+        return row;
+    }
+
     UITableViewCell *cell =
         [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:nil];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -159,6 +201,16 @@ static const NSInteger SCILKSectionRecent = 2;
         cell.textLabel.textColor = [UIColor secondaryLabelColor];
     }
     return cell;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+
+    if (indexPath.section != SCILKSectionMedia || !self.media.count) return;
+
+    // Saved on the tap, no confirmation: nothing is destroyed and nothing is sent anywhere,
+    // and a sheet asking "are you sure you want to keep this photo" protects against nothing.
+    [SCILKDownload save:self.media[indexPath.row]];
 }
 
 @end

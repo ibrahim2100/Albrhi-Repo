@@ -1,9 +1,16 @@
 Package: com.albrhi.locket
 Name: Albrhi for Locket (rootless)
-Version: 0.1.0
+Version: 0.2.0
 Architecture: iphoneos-arm64
-Description: Keeps Locket from reporting your phone as jailbroken — in Arabic or English.
+Description: Save any moment, and keep Locket from reporting your phone as jailbroken. Arabic or English.
  .
+ ▍SAVE A MOMENT
+ A friend’s photo or video, saved to your Photos at full size — the one they actually sent,
+ not a screenshot. Hold two fingers anywhere in Locket, and every moment it has loaded is
+ listed, newest first; tap one to save it. It saves what is already on your phone, and does
+ not touch anything you would pay Locket for.
+ .
+ ▍HIDES THE JAILBREAK
  Locket does not block a jailbroken phone, but it does tell three companies your phone is
  one: its analytics, its ad attribution, and its crash reporting each run their own check
  and send the answer home. On a modified device that answer can quietly count against your

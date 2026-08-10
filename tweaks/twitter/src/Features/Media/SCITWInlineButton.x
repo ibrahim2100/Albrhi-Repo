@@ -6,6 +6,19 @@
 #import "Prefs.h"
 #import "SCILog.h"
 
+/// Declared, not merely hooked.
+///
+/// A `%hook` on a class with no `@interface` leaves Logos with only a forward declaration,
+/// and `self` typed as a forward-declared class cannot be sent a message -- not even
+/// `-respondsToSelector:`, which is why the build failed on the guard rather than on the
+/// property. Declaring it a UIView subclass with the one method used gives the compiler the
+/// type it needs; `-overlayChromesContainerView` is X's own, reached through this rather
+/// than by a stringly-typed `-valueForKey:`.
+@interface T1InlineMediaView : UIView
+- (UIView *)overlayChromesContainerView;
+- (void)setViewModel:(id)viewModel;
+@end
+
 ///
 /// The button, on X's own inline media view.
 ///
@@ -109,7 +122,7 @@ static id SCITWEntityFromViewModel(id viewModel) {
 
     UIView *container = nil;
     if ([self respondsToSelector:@selector(overlayChromesContainerView)]) {
-        container = [self valueForKey:@"overlayChromesContainerView"];
+        container = [self overlayChromesContainerView];
     }
     if (!container) container = self;
 

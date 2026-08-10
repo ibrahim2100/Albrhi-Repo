@@ -1,6 +1,6 @@
 Package: com.albrhi
 Name: Albrhi (rootless)
-Version: 1.5.0
+Version: 1.6.0
 Description: One tweak for Instagram, YouTube, X and Locket, switched per app from Settings.
  .
  Everything Albrhi makes, in a single package. Install this and you have the Instagram
@@ -27,8 +27,9 @@ Description: One tweak for Instagram, YouTube, X and Locket, switched per app fr
  less tracking, no view counts and a faster launch. Hold two fingers anywhere in X.
  .
  ▍LOCKET
- Keeps Locket from reporting your phone as jailbroken — to its analytics, its ad tracking
- and its own code. Nothing else is touched, and payments least of all.
+ Save any moment a friend sent to your Photos at full size, and keep Locket from reporting
+ your phone as jailbroken — to its analytics, its ad tracking and its own code. Nothing else
+ is touched, and payments least of all.
  .
  ▍GROWING
  New Albrhi tweaks arrive in this same package and appear in the same list, so there is

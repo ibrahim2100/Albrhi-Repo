@@ -16,10 +16,10 @@ TWEAK_NAME = AlbrhiLK
 
 $(TWEAK_NAME)_FILES = $(shell find src -type f \( -iname \*.x -o -iname \*.xm -o -iname \*.m \))
 
-# UIKit for the small status screen the two-finger hold opens; Foundation for the file
-# and preference calls. No media framework: this release intercepts detection, it does
-# not download anything.
-$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation
+# UIKit for the status and save screen the two-finger hold opens; Photos for writing a
+# saved moment. No AVFoundation: Locket serves finished files, so a download is a fetch
+# and a write, and there is no player or encoder here.
+$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation Photos
 
 # src/ on the include path, so a header is imported by the name it has rather than by
 # counting ../ from wherever the importing file happens to sit. The reason is written in
