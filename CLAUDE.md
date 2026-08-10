@@ -127,6 +127,17 @@ fourth time in 1.0.4**, in a commit that was fixing something else, by an author
 read this paragraph. Treat it as a thing to check for after writing a heredoc, not as a
 thing to remember while writing one.
 
+**A fifth time, in the commit adding the rule that exists because of a half-applied
+script.** A `.replace()` with no `assert` matched nothing, half the change landed, the
+script printed its success line anyway, and CI found the unused variable it left behind.
+The repair was then written into a heredoc whose `\n` became a real newline and broke
+`check.py` itself — and in the same session an `assert` failing partway through a script
+left `CLAUDE.md` untouched while the commit went out claiming it had been updated.
+
+Use the editing tools for source. If a script must do it, `assert` every substitution
+**and** re-read the file: a script that prints a confirmation it did not earn is the
+failure, not the symptom.
+
 **`Conflicts` and `Replaces` are a request to a package manager, not to dpkg.** Sileo and
 Zebra honour them when installing from a source. `dpkg -i` on a downloaded file does not:
 it is handed one file and told to unpack it, and the old package stays exactly where it
@@ -320,7 +331,7 @@ rootless identity.
 ## Verification
 
 `python tools/check.py` — runs in CI before Theos, so a typo fails in seconds
-rather than after a five-minute compile. Eight rules, every one of them derived
+rather than after a five-minute compile. Sixteen rules, every one of them derived
 from a real build failure:
 
 1. duplicate `@interface` definitions
@@ -337,10 +348,26 @@ from a real build failure:
 10. a header promising a method its `@implementation` never defines
 11. a block variable that calls itself — ARC rejects the retain cycle, so it is a
     build failure and not a leak
+12. a `%hook` whose class name is never bound anywhere
+13. an untyped `NSDictionary`/`NSArray` subscripted for a property — the subscript is
+    `id` and will not compile
+14. `self.<property>` inside a `%group` whose `%init` names its class at runtime, where
+    `self` is `id`
+15. a C function in a header imported by `.xm`/`.mm` without `extern "C"`
+16. a local assigned and never mentioned again — the build runs with `-Werror`
 
 A check that cries wolf gets ignored. Four of these produced false positives on
 first writing and were tightened before landing. If you add a rule, prove it fails
 when it should by reintroducing the bug.
+
+**Rule 16 is the clearest instance of both halves of that, and of the oracle worth
+reusing.** Its first pattern put a non-greedy `[\w\s*<>,]*?` before the capture, which
+ate into the name itself: `NSString *page = …` was reported as `age`, matched nothing
+else in the file, and "failed" — 180 findings across four tweaks that all compile clean.
+Rewritten to take the last identifier before the `=` rather than guess where the type
+ends. **And the other tweaks are the oracle:** they build under `-Werror` today, so any
+finding in them is by definition a false positive. That turns "does this rule cry wolf"
+from a judgement into something a command answers.
 
 **Rules 8 and 10 exist because one process failure cost two builds in a row, and
 then a third edit in the very commit that documented it.** A script with several
@@ -357,7 +384,7 @@ failure — do not carry on to the commit.
 `control`). Run from the repository root, `check.py` re-executes itself once per
 directory under `tweaks/`, with the working directory moved there. Generalising the
 rules in place would have meant rewriting the part of that file most expensive to
-get wrong; a ten-line driver leaves all eight untouched. A failing tweak is named,
+get wrong; a ten-line driver leaves every one of them untouched. A failing tweak is named,
 and the others still run.
 
 ---
