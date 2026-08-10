@@ -3,11 +3,17 @@
 #import "Localization/SCILocalize.h"
 #import "Features/Switches/SCITWSwitches.h"
 #import "Features/Switches/SCITWFeatures.h"
+#import "Features/Media/SCITWMedia.h"
+#import "Features/Media/SCITWDownload.h"
 #import "Diagnostics/SCITWReport.h"
 
+// Media first, under the status. It is what people open this screen for, and a list of
+// three hundred switch names above it would bury the one section that does something in
+// one tap.
 static const NSInteger SCITWSectionStatus   = 0;
-static const NSInteger SCITWSectionFeatures = 1;
-static const NSInteger SCITWSectionKeys     = 2;
+static const NSInteger SCITWSectionMedia    = 1;
+static const NSInteger SCITWSectionFeatures = 2;
+static const NSInteger SCITWSectionKeys     = 3;
 
 @interface SCITWSettings () <UISearchBarDelegate>
 @property (nonatomic, strong) NSArray<SCITWSwitchRecord *> *all;
@@ -15,6 +21,7 @@ static const NSInteger SCITWSectionKeys     = 2;
 @property (nonatomic, copy) NSString *query;
 @property (nonatomic, assign) BOOL changedOnly;
 @property (nonatomic, strong) UISearchBar *searchBar;
+@property (nonatomic, strong) NSArray<SCITWMediaItem *> *media;
 @end
 
 
@@ -152,6 +159,7 @@ static const NSInteger SCITWSectionKeys     = 2;
 }
 
 - (void)reload {
+    self.media = [SCITWMedia recent];
     self.all = [SCITWSwitches records];
 
     NSDictionary<NSString *, NSNumber *> *overrides = [SCITWSwitches allOverrides];
@@ -172,22 +180,25 @@ static const NSInteger SCITWSectionKeys     = 2;
 #pragma mark - Table
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 3;
+    return 4;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == SCITWSectionStatus) return 4;
+    if (section == SCITWSectionMedia) return self.media.count ?: 1;
     if (section == SCITWSectionFeatures) return [SCITWFeatures all].count;
     return self.shown.count ?: 1;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     if (section == SCITWSectionStatus) return SCILocalized(@"section_status");
+    if (section == SCITWSectionMedia) return SCILocalized(@"section_media");
     if (section == SCITWSectionFeatures) return SCILocalized(@"section_features");
     return SCILocalized(@"section_keys");
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
+    if (section == SCITWSectionMedia) return SCILocalized(@"media_footer");
     if (section == SCITWSectionFeatures) return SCILocalized(@"features_footer");
     if (section == SCITWSectionKeys) return SCILocalized(@"keys_footer");
     return nil;
@@ -203,6 +214,14 @@ static const NSInteger SCITWSectionKeys     = 2;
     if (indexPath.section == SCITWSectionStatus) {
         [self fillStatusCell:cell row:indexPath.row];
         return cell;
+    }
+
+    if (indexPath.section == SCITWSectionMedia) {
+        UITableViewCell *row =
+            [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle
+                                   reuseIdentifier:nil];
+        [self fillMediaCell:row row:indexPath.row];
+        return row;
     }
 
     if (indexPath.section == SCITWSectionFeatures) {
@@ -261,6 +280,40 @@ static const NSInteger SCITWSectionKeys     = 2;
     cell.selectionStyle = UITableViewCellSelectionStyleDefault;
     cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     return cell;
+}
+
+- (void)fillMediaCell:(UITableViewCell *)cell row:(NSInteger)row {
+    if (!self.media.count) {
+        cell.textLabel.text = SCILocalized(@"media_empty");
+        cell.textLabel.numberOfLines = 0;
+        cell.textLabel.textColor = [UIColor secondaryLabelColor];
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        return;
+    }
+
+    SCITWMediaItem *item = self.media[row];
+
+    NSString *kind = SCILocalized(item.kind == SCITWMediaKindVideo ? @"media_video"
+                                : item.kind == SCITWMediaKindGif   ? @"media_gif"
+                                                                   : @"media_image");
+
+    // The alt text where the poster wrote one, and the kind where they did not. "Video"
+    // eleven times down a list is a list nobody can pick from, and alt text is the only
+    // caption X hands us for a piece of media.
+    cell.textLabel.text = item.note.length ? item.note : kind;
+    cell.textLabel.numberOfLines = 2;
+
+    NSMutableArray<NSString *> *parts = [NSMutableArray arrayWithObject:kind];
+    if (item.duration > 0.5) {
+        [parts addObject:[NSString stringWithFormat:@"%d:%02d",
+            (int)(item.duration / 60), (int)item.duration % 60]];
+    }
+    cell.detailTextLabel.text = [parts componentsJoinedByString:@" · "];
+    cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
+
+    cell.accessoryType = UITableViewCellAccessoryDetailButton;
+    cell.imageView.image = [UIImage systemImageNamed:
+        item.kind == SCITWMediaKindImage ? @"photo" : @"play.rectangle"];
 }
 
 - (void)fillFeatureCell:(UITableViewCell *)cell row:(NSInteger)row {
@@ -334,6 +387,17 @@ static const NSInteger SCITWSectionKeys     = 2;
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 
+    if (indexPath.section == SCITWSectionMedia) {
+        if (!self.media.count) return;
+
+        // Saved on the tap, with no confirmation. Nothing is destroyed and nothing is sent
+        // anywhere -- a sheet asking "are you sure you want to keep this" is a step that
+        // protects against nothing, and this project puts confirmations only where a
+        // mis-tap becomes a notification somebody else sees.
+        [SCITWDownload save:self.media[indexPath.row]];
+        return;
+    }
+
     if (indexPath.section != SCITWSectionKeys || !self.shown.count) return;
 
     SCITWSwitchRecord *record = self.shown[indexPath.row];
@@ -385,6 +449,13 @@ static const NSInteger SCITWSectionKeys     = 2;
             ? [NSString stringWithFormat:SCILocalized(@"report_saved"), name]
             : SCILocalized(@"report_failed");
         [self say:message];
+    }]];
+
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"menu_forget_media")
+                                               style:UIAlertActionStyleDefault
+                                             handler:^(UIAlertAction *action) {
+        [SCITWMedia forgetAll];
+        [self reload];
     }]];
 
     [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"menu_reset")

@@ -200,6 +200,9 @@ tweaks/
   twitter/                 Albrhi for X — com.albrhi.twitter
     src/Features/Switches/   the one place X decides what the app may do; the tweak
                              records every question and lets the user answer any of them
+    src/Features/Media/      downloads: captured at TFSTwitterMediaInfo, the model every
+                             surface builds, so one hook serves timeline, full screen,
+                             quoted posts and DMs
     src/Settings/            reached by a two-finger hold on X's own window, not by
                              hooking one of X's screens
   panel/                   Albrhi Panel — com.albrhi.panel
@@ -496,7 +499,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.5** · YouTube **1.12.4** · X **0.2.0** · Panel **0.6.1** · suite **1.2.0**.
+Instagram **4.1.5** · YouTube **1.12.4** · X **0.3.0** · Panel **0.6.1** · suite **1.3.0**.
 
 - **Working, Instagram:** inline download button (posts + reels), Download Center queue,
   story seen-receipt control, per-message mark-as-seen in DMs, follow-back badge, feed and

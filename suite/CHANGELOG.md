@@ -1,5 +1,18 @@
 # Albrhi Changelog
 
+## v1.3.0
+
+**The X tweak saves videos now.** Hold two fingers anywhere in X and everything it has shown
+you since you opened it is listed, newest first. Tap one and it is in Photos — videos at the
+best quality X offers, photos at the size they were uploaded rather than the smaller copy the
+timeline was showing, and GIFs as the video files X actually serves.
+
+There is no button added to X, and that is deliberate: a button lives inside one of X's own
+views, and those get renamed. The list is in our own screen, so it keeps working when X moves
+things around.
+
+Includes the X tweak 0.3.0.
+
 ## v1.2.0
 
 **The X tweak has its features.** Seventeen switches in plain language: hide ads, hide the

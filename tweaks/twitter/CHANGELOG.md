@@ -1,5 +1,26 @@
 # Albrhi for X — what changed
 
+## 0.3.0
+
+**Saving videos.** Hold two fingers in X and everything it has shown you since you opened
+it is at the top of the screen, newest first. Tap one and it is in Photos.
+
+- **Videos at the best quality X offers** — the choice is made by X's own picker, not by us
+  guessing at a URL.
+- **Photos at full size.** A timeline photo is a smaller copy; what gets saved is the one
+  that was uploaded.
+- **GIFs too**, saved as the video files X actually serves — which is what they have been
+  for years.
+- Progress while it downloads, and a plain answer if it fails.
+
+**No button is added to X**, and that is on purpose. A button has to live inside one of X's
+views, and those get renamed — this project has lost the same button twice on Instagram for
+exactly that reason. The list is in our own screen, so it keeps working when X moves things
+around.
+
+A live broadcast is the one thing that cannot be saved: X offers a stream for those and not
+a file, so they are left out of the list rather than listed and failing after the tap.
+
 ## 0.2.0
 
 **The features are here, and they are named after what they do.** 0.1.0 watched your phone

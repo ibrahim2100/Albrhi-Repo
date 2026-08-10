@@ -4,8 +4,9 @@
 #import "Features/Switches/SCITWSwitchHooks.h"
 #import "Features/Switches/SCITWFeatures.h"
 #import "Settings/SCITWGesture.h"
+#import "Features/Media/SCITWMediaHooks.h"
 
-NSString *SCIVersionString = @"v0.2.0";  // AlbrhiTW
+NSString *SCIVersionString = @"v0.3.0";  // AlbrhiTW
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written
@@ -38,6 +39,11 @@ NSString *SCIVersionString = @"v0.2.0";  // AlbrhiTW
     // diagnostics are behind the feature being diagnosed has already been shipped twice
     // here and cost a device round trip each time.
     SCITWInstallGesture();
+
+    // Independent of the switch layer on purpose. Saving a video and answering X's own
+    // feature switches are two different things, and someone who turned the switch layer
+    // off to rule it out of a problem should not lose their downloads with it.
+    SCITWInstallMediaHooks();
 
     if ([[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefSwitchLayer]) {
         // Before the hooks, not after. X asks its first questions while the app is still
