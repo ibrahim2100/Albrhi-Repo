@@ -636,6 +636,62 @@ for path, version in sorted(declared.items()):
     if version != control_version:
         report('version mismatch: control=%s %s=%s' % (control_version, path, version))
 
+# 16. A local assigned and never mentioned again.
+#
+# The build runs with -Werror, so an unused local is a failed release rather than a
+# warning. This one cost a CI run: one edit added `NSDictionary *fromFeatures = ...`
+# and the second edit that was to use it silently matched nothing — the half-applied
+# script this file already warns about twice, and none of the fifteen rules above
+# could see it, because both halves are individually valid Objective-C.
+#
+# **The first version of this rule was wrong, and how is worth keeping.** Its pattern
+# put a non-greedy `[\w\s*<>,]*?` before the capture, so it ate into the name itself:
+# `NSString *page = ...` was reported as `age`, which then matched nothing else in the
+# file and "failed". 180 findings across four tweaks that all compile clean. A rule
+# that cries wolf gets ignored, which is why four of the rules above were tightened
+# before landing and why this one was rewritten rather than shipped.
+#
+# So the name is taken as the last identifier before the `=` rather than by a pattern
+# that has to guess where the type ends — and the other three tweaks are the oracle,
+# since they build under -Werror today and any finding in them is a false positive.
+LOCAL = re.compile(r'^\s{4,}([A-Za-z_][\w\s*<>,]*?)\s*=\s*[\[@]')
+LAST_NAME = re.compile(r'([A-Za-z_]\w*)\s*\**$')
+
+for path in SRC:
+    body = open(path, encoding='utf-8').read()
+
+    for n, line in enumerate(body.split(chr(10)), 1):
+        stripped = line.strip()
+        if stripped.startswith(('//', '*', '/*')):
+            continue
+
+        match = LOCAL.match(line)
+        if not match:
+            continue
+
+        left = match.group(1)
+
+        # A declaration is a type and a name. One identifier means an assignment to
+        # something declared elsewhere — a static, an ivar, a property — and those are
+        # written here and read from another function by design.
+        if len(re.findall(r'[A-Za-z_]\w*', left)) < 2:
+            continue
+
+        name = LAST_NAME.search(left)
+        if not name:
+            continue
+        name = name.group(1)
+
+        # Every mention in the file, minus this declaration. The whole file rather than
+        # the enclosing function, deliberately: a name used once more anywhere — in a
+        # block, in another method, even in a comment — passes. That keeps the rule to
+        # the mistake it was written for and leaves the compiler the stricter judge.
+        if len(re.findall(r'\b%s\b' % re.escape(name), body)) > 1:
+            continue
+
+        report('%s at %s:%d is assigned and never used again — -Werror fails the build'
+               % (name, path, n))
+
 print('keys: %d EN / %d AR   orphans: %d' % (len(en_keys), len(ar_keys), len(en_keys - used)))
 print('version: %s' % control_version)
 print()

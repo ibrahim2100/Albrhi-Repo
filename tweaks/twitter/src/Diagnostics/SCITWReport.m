@@ -48,13 +48,25 @@ NSString *SCITWReportText(void) {
 
     [text appendString:@"\n--- every switch seen, most asked first ---\n"];
     for (SCITWSwitchRecord *record in records) {
-        NSNumber *override = overrides[record.key];
+        // Hand-set beats a feature, exactly as the hot path decides it. Written the same
+        // way in both places rather than summarised here: a report that disagrees with the
+        // code it describes is worse than no report, because it is believed.
+        NSNumber *byHand = overrides[record.key];
+        NSNumber *byFeature = fromFeatures[record.key];
+        NSNumber *effective = byHand ?: byFeature;
+
+        NSString *note = @"";
+        if (effective) {
+            note = [NSString stringWithFormat:@"  -> %@ (%@)",
+                effective.boolValue ? @"on" : @"off",
+                byHand ? @"by hand" : @"feature"];
+        }
 
         [text appendFormat:@"%7lu  %@  %@%@\n",
             (unsigned long)record.asked,
             record.appAnswer ? @"on " : @"off",
             record.key,
-            override ? (override.boolValue ? @"  -> forced on" : @"  -> forced off") : @""];
+            note];
     }
 
     return text;
