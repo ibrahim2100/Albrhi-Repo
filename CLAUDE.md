@@ -362,7 +362,7 @@ rootless identity.
 ## Verification
 
 `python tools/check.py` — runs in CI before Theos, so a typo fails in seconds
-rather than after a five-minute compile. Sixteen rules, every one of them derived
+rather than after a five-minute compile. Seventeen rules, every one of them derived
 from a real build failure:
 
 1. duplicate `@interface` definitions
@@ -388,6 +388,13 @@ from a real build failure:
     `self` is `id`
 15. a C function in a header imported by `.xm`/`.mm` without `extern "C"`
 16. a local assigned and never mentioned again — the build runs with `-Werror`
+17. an `SCI…()` call whose name is defined in no header this tweak can reach. Five
+    tweaks share a layout, a naming scheme and whole paragraphs of idiom, and they do
+    **not** share their helpers: `SCIPrefEnabled(...)` is YouTube's and Locket's, was
+    written into the X tweak by muscle memory, and killed a runner after every source
+    in that tweak had already compiled. Casts and message sends cannot be mistaken for
+    calls, but `@interface SCIFoo ()` can — twenty-four false positives on the first
+    run, which is why the rule skips Objective-C directives by name
 
 A check that cries wolf gets ignored. Four of these produced false positives on
 first writing and were tightened before landing. If you add a rule, prove it fails

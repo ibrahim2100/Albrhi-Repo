@@ -159,7 +159,14 @@ SCITWMediaItem *SCITWFirstSaveableInStatusView(UIView *view) {
 /// Adds the button, or leaves the one already there alone.
 static void SCITWAddSaveButton(UIView *view) {
     if (!view || !view.window) return;
-    if (!SCIPrefEnabled(SCIPrefInlineButton)) return;
+
+    // NSUserDefaults directly, the way the other button in this tweak reads it.
+    //
+    // `SCIPrefEnabled(...)` is the YouTube and Locket tweaks' helper and this tweak's
+    // Prefs.h has never had one. Five tweaks now share idioms and file layouts, and this
+    // is the first time one of them borrowed a symbol that only exists next door -- so
+    // check.py grew a rule for it rather than the fix being only this line.
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefInlineButton]) return;
 
     // Recycled views arrive with the button they were given last time. Found by tag, which
     // is what makes that cheap and correct.

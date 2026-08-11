@@ -1,5 +1,12 @@
 # Albrhi for X — what changed
 
+## v0.4.4
+
+Fixes the build. 0.4.3 did not compile: the new button read a setting through a helper
+that belongs to the YouTube and Locket tweaks and has never existed in this one.
+
+# Albrhi for X — what changed
+
 ## v0.4.3
 
 **A save button on the tweet itself, beside reply and like.** The owner said plainly that

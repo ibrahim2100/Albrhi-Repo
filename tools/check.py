@@ -744,6 +744,77 @@ for path in SRC:
         report('%s at %s:%d is a static const never used — -Werror fails the build'
                % (name, path, n))
 
+# 12. An SCI function called in this tweak that only exists in another one.
+#
+# `SCIPrefEnabled(...)` is the YouTube and Locket tweaks' helper. It was written into the
+# Twitter tweak, whose Prefs.h has never had one, and the build died on the runner after
+# every source in it had already compiled — a five-minute round trip for a symbol that is
+# either present in the directory or is not.
+#
+# Five tweaks now share a file layout, a naming scheme and whole paragraphs of idiom, and
+# they do *not* share their helpers. That makes borrowing one by muscle memory the obvious
+# next mistake rather than a freak one, which is what earns a rule.
+#
+# Only `SCI…(` call shapes: a cast reads `(SCIYTJobKind)x` and a message send reads
+# `[SCIYTMedia foo]`, so neither can be mistaken for a call. Definitions, declarations and
+# function-like macros all count as present — the question is whether the compiler will
+# find the name, not whether this file is where it lives.
+SCI_CALL = re.compile(r'\b(SCI[A-Za-z0-9_]*)\s*\(')
+SCI_DEFINED = re.compile(
+    r'(?:^|\s)(?:#define\s+)?(SCI[A-Za-z0-9_]*)\s*\(')
+
+known = set()
+for path in SRC + HDR + glob.glob('../../shared/src/*.h') + glob.glob('../../shared/src/*.m'):
+    try:
+        body = open(path, encoding='utf-8').read()
+    except OSError:
+        continue
+
+    for line in body.split(chr(10)):
+        line = strip_comment(line)[0]
+
+        # A definition or a declaration: either ends the line with `{` or `;` after the
+        # parameter list, or is a #define. A call sits inside an expression, so requiring
+        # the line to start with the return type keeps the two apart.
+        if re.match(r'^\s*#define\s+SCI', line):
+            # Object-like macros -- `#define SCIPrefHideAds @"hide_ads"` -- have no
+            # parameter list and are not callable, so there is nothing to record. Asking
+            # for group(1) on that returned None and took the whole run down; every tweak
+            # has dozens of them.
+            match = SCI_DEFINED.search(line)
+            if match:
+                known.add(match.group(1))
+            continue
+
+        match = re.match(r'^\s*(?:static\s+|inline\s+|extern\s+)*'
+                         r'[A-Za-z_][\w\s*<>,]*?\b(SCI[A-Za-z0-9_]*)\s*\(', line)
+        if match:
+            known.add(match.group(1))
+
+for path in SRC:
+    for n, line in enumerate(open(path, encoding='utf-8').read().split(chr(10)), 1):
+        line = strip_comment(line)[0]
+
+        # An Objective-C directive is never a call, and `@interface SCIFoo ()` -- a class
+        # extension, which every implementation file in this project opens with -- looks
+        # exactly like one to the pattern. That was twenty-four false positives across four
+        # tweaks on the first run of this rule, which is precisely how a check earns being
+        # ignored. Skipped by the directive rather than by the parenthesis, so a category
+        # `@interface SCIFoo (Bar)` goes with it.
+        if re.match(r'^\s*@(interface|implementation|class|protocol|end)\b', line):
+            continue
+
+        for name in SCI_CALL.findall(line):
+            if name in known:
+                continue
+
+            # A declaration of the thing itself is not a call to something missing.
+            if re.match(r'^\s*(?:static\s+|inline\s+|extern\s+|void\s+|BOOL\s+|NSString)', line):
+                continue
+
+            report('%s at %s:%d is called but defined nowhere this tweak can see '
+                   '-- another tweak has it' % (name, path, n))
+
 print('keys: %d EN / %d AR   orphans: %d' % (len(en_keys), len(ar_keys), len(en_keys - used)))
 print('version: %s' % control_version)
 print()
