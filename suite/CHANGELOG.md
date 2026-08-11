@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.7.2
+
+Fixes the build 1.7.1 broke before it produced anything.
+
+Includes X 0.5.2.
+
+
 ## v1.7.1
 
 **X: the save button is inside the video, and stays there while you swipe between videos.**

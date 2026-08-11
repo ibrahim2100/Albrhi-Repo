@@ -1,5 +1,11 @@
 # Albrhi for X — what changed
 
+## v0.5.2
+
+Fixes the build. 0.5.1 did not compile.
+
+# Albrhi for X — what changed
+
 ## v0.5.1
 
 **The button is inside the video now, and stays there while you swipe between videos.**

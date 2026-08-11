@@ -142,6 +142,19 @@ for path in LOGOS:
             report('%s hooked without an @interface but uses self.<property> in %s' % (name, path))
         elif re.search(r'\[\s*self\b', body):
             report('%s hooked without an @interface but sends a message to self in %s' % (name, path))
+        elif re.search(r'\?\s*:?\s*[^;\n]*\bself\b', body):
+            # `self` as an operand of a ternary, which needs a complete type on both sides.
+            #
+            # This is the third build this project has lost to a forward-declared `self` and
+            # the second shape of it: `SCITWMediaSubview(self) ?: self` is a ternary between
+            # UIView * and a class the compiler has only heard the name of, and clang rejects
+            # it under -Werror -- "incompatible operand types", three times in one file.
+            #
+            # A message send and a property access were already covered. What they have in
+            # common with this is that the type has to be known, so the rule is about the
+            # declaration and not about any one way of needing it.
+            report('%s hooked without an @interface but uses self in a ternary in %s'
+                   % (name, path))
 
 # 4. %orig sharing a line with braces or unbraced control flow.
 #    This Logos version expands %orig with #line directives, which breaks such lines.

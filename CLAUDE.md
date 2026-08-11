@@ -367,9 +367,11 @@ from a real build failure:
 
 1. duplicate `@interface` definitions
 2. brace balance and `%hook`/`%end` pairing
-3. hooked class that touches `self` — a property *or* a message send — but is never
-   declared, since Logos leaves it a forward declaration that cannot receive either;
-   `@interface`s are read from sources too, and Apple-prefixed classes are skipped
+3. hooked class that touches `self` — a property, a message send, *or* `self` as a
+   ternary operand — but is never declared, since Logos leaves it a forward declaration
+   and all three need a complete type; `@interface`s are read from sources too, and
+   Apple-prefixed classes are skipped. Three builds have gone to this in three different
+   shapes, the last being `SCITWMediaSubview(self) ?: self` under `-Werror`
 4. fragile `%orig` placement
 5. unterminated string literals (comment-aware, so `https://` is not a false hit)
 6. localization parity and undefined keys — and a missing table at all
