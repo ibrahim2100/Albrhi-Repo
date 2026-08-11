@@ -3,6 +3,7 @@
 #import "Prefs.h"
 #import "Features/Switches/SCITWSwitches.h"
 #import "Features/Switches/SCITWFeatures.h"
+#import "Features/Media/SCITWInlineButton.h"
 
 NSString *SCITWReportText(void) {
     NSMutableString *text = [NSMutableString string];
@@ -20,6 +21,14 @@ NSString *SCITWReportText(void) {
     NSArray<NSString *> *providers = [SCITWSwitches attachedProviders];
     [text appendFormat:@"providers hooked: %@\n",
         providers.count ? [providers componentsJoinedByString:@", "] : @"NONE"];
+
+    // The button, before the switches, because it is what gets reported about.
+    //
+    // A page that describes three hundred feature switches in detail and says nothing at
+    // all about whether the download button attached is a page that answers the question
+    // nobody asked. This line is the one somebody writing in about a missing button needs
+    // to paste, and until now there was nothing to paste.
+    [text appendFormat:@"inline button: %@\n", SCITWInlineButtonReport()];
 
     NSArray<SCITWSwitchRecord *> *records = [SCITWSwitches records];
     [text appendFormat:@"switches seen: %lu over %lu questions\n\n",

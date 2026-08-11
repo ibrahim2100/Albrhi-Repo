@@ -18,3 +18,11 @@
 /// Hooks X's inline media view to add the button, if this build has that class. Safe to
 /// call when it does not.
 void SCITWInstallInlineButton(void);
+
+/// What the button did, for the diagnostics page.
+///
+/// "It did not appear" has four causes that look the same from outside a phone, and
+/// nothing here recorded which one it was -- so the first report about it could not be
+/// acted on. This says: whether the class exists, whether the hook attached, how many
+/// models arrived, how many held media, and how many buttons were placed.
+NSString *SCITWInlineButtonReport(void);

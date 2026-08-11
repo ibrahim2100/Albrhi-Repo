@@ -1,5 +1,16 @@
 # Albrhi Changelog
 
+## v1.6.3
+
+**X: the save button, and the crash.** The button is placed with a plain frame now instead
+of asking for a fresh layout from inside the one it was created in, which is the likeliest
+cause of the crashing. And Diagnostics finally says what the button did — whether the
+class X uses is even in your build, whether the hook attached, and how many videos it
+saw — so a report about it can be acted on instead of guessed at.
+
+Includes X 0.4.2.
+
+
 ## v1.6.2
 
 **Locket no longer crashes.** The jailbreak bypass was hiding a folder that iPhone keeps

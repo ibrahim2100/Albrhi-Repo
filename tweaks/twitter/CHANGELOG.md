@@ -1,5 +1,22 @@
 # Albrhi for X — what changed
 
+## v0.4.2
+
+**The save button still did not appear, and the page could not say why.** Four different
+things produce exactly that — the view class not being in this build of X, the hook not
+attaching, the video never reaching it, or the button being placed and covered — and
+Diagnostics reported none of them. It now says which: whether the class is there, whether
+the hook attached, how many videos it saw, how many held saveable media, and how many
+buttons it placed.
+
+**And the crash is most likely gone.** The button was being given Auto Layout constraints
+from inside the layout pass it was created in, inside a view that lays its own overlay out
+with plain frames. Asking for a new layout while one is running asks for another, and the
+button was the only participant a solver had in a view that does not use one. It is a
+plain rectangle in the corner now — the same 30 points, no solver involved.
+
+# Albrhi for X — what changed
+
 ## v0.4.1
 
 **The save button now appears on videos.** It never did. The button is built when the view

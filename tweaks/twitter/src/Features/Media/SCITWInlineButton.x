@@ -38,6 +38,34 @@
 static const void *kButtonKey = &kButtonKey;
 static const void *kItemKey = &kItemKey;
 
+///
+/// What actually happened, for the report.
+///
+/// "The button did not appear" had four explanations that look identical from outside the
+/// phone: the class is not in this build, the hook attached but the model never arrived,
+/// the model arrived and yielded no media, or the button was placed and is behind
+/// something. The report said nothing about any of it, so a device report could not
+/// distinguish them and neither could I -- which is the failure mode this project has paid
+/// for more than any other, and it was reintroduced here with no counter at all.
+///
+/// Four integers. They cost nothing and they answer the question in one round trip.
+///
+static BOOL sciClassPresent = NO;
+static BOOL sciHookAttached = NO;
+static NSUInteger sciModelsSeen = 0;
+static NSUInteger sciItemsResolved = 0;
+static NSUInteger sciButtonsPlaced = 0;
+
+NSString *SCITWInlineButtonReport(void) {
+    if (!sciClassPresent) return @"T1InlineMediaView is not in this build";
+    if (!sciHookAttached) return @"T1InlineMediaView found, hook not installed";
+
+    return [NSString stringWithFormat:
+        @"%lu models, %lu with media, %lu buttons placed",
+        (unsigned long)sciModelsSeen, (unsigned long)sciItemsResolved,
+        (unsigned long)sciButtonsPlaced];
+}
+
 /// The entity behind a view model, however that model is shaped.
 ///
 /// `-mediaEntity` returns a TFSTwitterEntityMedia directly on the component models;
@@ -103,8 +131,12 @@ static id SCITWEntityFromViewModel(id viewModel) {
     // Resolved once, when the model is set, and remembered on the view. layoutSubviews runs
     // many times a second while a video plays and is the wrong place to be sending
     // messages down a model graph.
+    sciModelsSeen++;
+
     id entity = SCITWEntityFromViewModel(viewModel);
     SCITWMediaItem *item = entity ? [SCITWMedia itemForEntity:entity] : nil;
+
+    if (item) sciItemsResolved++;
 
     // Kept on the view, not on the button, and that is the whole bug this fixes.
     //
@@ -143,7 +175,6 @@ static id SCITWEntityFromViewModel(id viewModel) {
     UIButton *button = objc_getAssociatedObject(self, kButtonKey);
     if (!button) {
         button = [UIButton buttonWithType:UIButtonTypeSystem];
-        button.translatesAutoresizingMaskIntoConstraints = NO;
 
         UIImage *icon = [UIImage systemImageNamed:@"arrow.down.circle.fill"];
         [button setImage:icon forState:UIControlStateNormal];
@@ -164,14 +195,21 @@ static id SCITWEntityFromViewModel(id viewModel) {
 
         objc_setAssociatedObject(self, kButtonKey, button, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         [container addSubview:button];
-
-        [NSLayoutConstraint activateConstraints:@[
-            [button.topAnchor constraintEqualToAnchor:container.topAnchor constant:8],
-            [button.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:8],
-            [button.widthAnchor constraintEqualToConstant:30],
-            [button.heightAnchor constraintEqualToConstant:30],
-        ]];
+        sciButtonsPlaced++;
     }
+
+    // A frame, set here, rather than constraints activated here.
+    //
+    // This runs inside -layoutSubviews. Activating a constraint there invalidates the
+    // layout that is currently running, which asks for another pass, which runs this
+    // again -- and X's media view lays its own chrome out with frames, so the button was
+    // also the only Auto Layout participant in a manual-layout view. That combination is
+    // a layout loop at best and is the most likely thing behind "it crashes with use".
+    //
+    // Two numbers and a CGRect have none of that. The button is 30 points in the corner
+    // and does not need a solver to work that out.
+    button.translatesAutoresizingMaskIntoConstraints = YES;
+    button.frame = CGRectMake(8, 8, 30, 30);
 
     // Taken from the view every pass rather than only when the button is built.
     //
@@ -194,11 +232,14 @@ static id SCITWEntityFromViewModel(id viewModel) {
 
 
 void SCITWInstallInlineButton(void) {
+    sciClassPresent = (NSClassFromString(@"T1InlineMediaView") != nil);
+
     if (!NSClassFromString(@"T1InlineMediaView")) {
         SCILogV(@"T1InlineMediaView is not in this build — no inline button");
         return;
     }
 
     %init(InlineButton);
+    sciHookAttached = YES;
     SCILogV(@"inline download button attached");
 }
