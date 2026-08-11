@@ -5,7 +5,7 @@
 #import "Features/Media/SCILKMediaHooks.h"
 #import "Settings/SCILKGesture.h"
 
-NSString *SCIVersionString = @"v0.2.0";  // AlbrhiLK
+NSString *SCIVersionString = @"v0.2.1";  // AlbrhiLK
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written returns

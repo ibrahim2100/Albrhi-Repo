@@ -73,7 +73,30 @@ static const char *kPrefixPaths[] = {
     "/var/binpack",
     "/private/var/binpack",
     "/usr/lib/TweakInject/",
-    "/private/preboot/",      // roothide's jbroot lives under a hash here
+    NULL,
+};
+
+/// Paths this must never lie about, whatever else matches.
+///
+/// **`/private/preboot/` was in the prefix list above and it is where iOS keeps its own
+/// system content.** From iOS 16 the OS ships as cryptexes: `/System/Cryptexes/OS` is a
+/// firmlink to `/private/preboot/Cryptexes/OS`, and dyld resolves system libraries through
+/// it. Answering ENOENT for that tree tells the app a system framework does not exist,
+/// which is not a failed jailbreak check — it is a launch that dies.
+///
+/// roothide does put its root under a hash in there, and it is still found: it is marked,
+/// and the markers below catch it. A blanket prefix was never needed for that and it took
+/// the operating system with it.
+///
+/// Checked first, so a marker or a prefix cannot override it. A bypass that can deny the
+/// system its own files is worse than no bypass.
+static const char *kNeverLie[] = {
+    "/System/",
+    "/private/preboot/Cryptexes/",
+    "/private/preboot/active",
+    "/usr/lib/dyld",
+    "/usr/lib/libSystem",
+    "/Library/Caches/com.apple.dyld",
     NULL,
 };
 
@@ -93,8 +116,28 @@ static BOOL HasPrefix(const char *path, const char *prefix) {
     return strncmp(path, prefix, strlen(prefix)) == 0;
 }
 
+/// Whether a marker appears as a whole path component.
+///
+/// The comment on the marker list said "as a path component, not a substring" and the code
+/// used strstr, which is a substring. A file the app itself wrote called
+/// ".jbroot-thumbnail" would have been denied — and lying about a file the app legitimately
+/// created is the failure the top of this file warns against. What follows the marker has to
+/// be a slash or the end of the path.
+static BOOL HasComponent(const char *path, const char *marker) {
+    size_t length = strlen(marker);
+    for (const char *at = strstr(path, marker); at; at = strstr(at + 1, marker)) {
+        char next = at[length];
+        if (next == '\0' || next == '/') return YES;
+    }
+    return NO;
+}
+
 BOOL SCILKPathIsJailbreakProbe(const char *path) {
     if (!path || path[0] != '/') return NO;
+
+    for (int i = 0; kNeverLie[i]; i++) {
+        if (HasPrefix(path, kNeverLie[i])) return NO;
+    }
 
     for (int i = 0; kExactPaths[i]; i++) {
         if (strcmp(path, kExactPaths[i]) == 0) return YES;
@@ -103,7 +146,7 @@ BOOL SCILKPathIsJailbreakProbe(const char *path) {
         if (HasPrefix(path, kPrefixPaths[i])) return YES;
     }
     for (int i = 0; kRootMarkers[i]; i++) {
-        if (strstr(path, kRootMarkers[i])) return YES;
+        if (HasComponent(path, kRootMarkers[i])) return YES;
     }
     return NO;
 }
@@ -113,6 +156,12 @@ BOOL SCILKWriteIsSandboxProbe(const char *path, const char *mode) {
 
     // Only writes. A read is covered by the path list above.
     if (!strpbrk(mode, "wa+")) return NO;
+
+    // The same allowlist. This function denies whole trees by prefix, so it needs it more
+    // than the path list does.
+    for (int i = 0; kNeverLie[i]; i++) {
+        if (HasPrefix(path, kNeverLie[i])) return NO;
+    }
 
     // Inside the app's own container is fine — that is where it is allowed to write, and
     // where it does its real work. The container is under /var/mobile/Containers or the
@@ -173,6 +222,18 @@ static NSUInteger _total = 0;
 static NSMutableDictionary<NSString *, NSNumber *> *_byKind = nil;
 static NSMutableArray<NSString *> *_recent = nil;
 
+/// How many notes still get a written line. After this, only the counters move.
+///
+/// Every caller of this is a hook on stat, lstat, access or fopen, and Locket is a Flutter
+/// app: the Dart runtime asks the filesystem thousands of times a second. Formatting a
+/// string and scanning a forty-element array on each one is work done inside libc, on
+/// whatever thread called it, for a list that stopped changing after the first few seconds.
+///
+/// The counters are two integer bumps and stay honest for the whole session. The tail of
+/// examples is for a human reading a screen and is complete long before this cap.
+static const NSUInteger kDetailBudget = 400;
+static NSUInteger _detailsWritten = 0;
+
 void SCILKNoteIntercept(NSString *kind, NSString *detail) {
     if (!kind.length) return;
 
@@ -189,10 +250,14 @@ void SCILKNoteIntercept(NSString *kind, NSString *detail) {
     // A short tail of what was caught, newest first, for the screen. Deduplicated: a check
     // that runs every second would otherwise fill the list with one line, and the point of
     // the list is variety, not volume.
-    NSString *line = detail.length ? [NSString stringWithFormat:@"%@ · %@", kind, detail] : kind;
-    [_recent removeObject:line];
-    [_recent insertObject:line atIndex:0];
-    while (_recent.count > 40) [_recent removeLastObject];
+    if (_detailsWritten < kDetailBudget) {
+        _detailsWritten++;
+
+        NSString *line = detail.length ? [NSString stringWithFormat:@"%@ · %@", kind, detail] : kind;
+        [_recent removeObject:line];
+        [_recent insertObject:line atIndex:0];
+        while (_recent.count > 40) [_recent removeLastObject];
+    }
 
     pthread_mutex_unlock(&_lock);
 }

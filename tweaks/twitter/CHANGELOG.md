@@ -1,5 +1,17 @@
 # Albrhi for X — what changed
 
+## v0.4.1
+
+**The save button now appears on videos.** It never did. The button is built when the view
+lays itself out, and the video it belongs to is handed over earlier than that — so the
+button did not exist yet at the moment it was told what to save, and by the time it was
+built there was nothing left to tell it. It hid itself, correctly, on the strength of a
+question asked too early.
+
+What to save is now kept on the view rather than on the button, so it does not matter which
+of the two happens first.
+
+
 ## 0.4.0
 
 **A download button on the video itself.** In the corner beside play and mute — tap it and

@@ -7,7 +7,7 @@
 #import "Features/Media/SCITWMediaHooks.h"
 #import "Features/Media/SCITWInlineButton.h"
 
-NSString *SCIVersionString = @"v0.4.0";  // AlbrhiTW
+NSString *SCIVersionString = @"v0.4.1";  // AlbrhiTW
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written

@@ -1,5 +1,28 @@
 # Albrhi for Locket — what changed
 
+## v0.2.1
+
+**The app was crashing, and the bypass could not work because of it.** The list of paths
+to hide included everything under `/private/preboot/` — which is where iPhone keeps its
+own system content. From iOS 16 the operating system ships as cryptexes mounted there, and
+system libraries are loaded through that path, so telling the app they do not exist was
+not a failed jailbreak check. It was a launch that died.
+
+roothide does keep its root under a hash in that folder, and it is still found: it leaves
+a marker, and markers were already being looked for. The blanket rule was never needed and
+it took the operating system with it. There is now a short list of paths this will never
+lie about, checked before anything else, so no future rule can do the same thing again.
+
+**The filesystem checks no longer slow the app down.** Every hidden path was writing a
+line for the status screen, from inside libc, on whatever thread asked — and Locket asks
+thousands of times a second. The counts are still exact; the examples stop after four
+hundred, which is long after the list stopped changing.
+
+A path merely *containing* a jailbreak marker in its name is also no longer treated as one.
+The rule was meant to match a whole folder name and did not, so a file the app itself wrote
+could have been hidden from it.
+
+
 ## 0.2.0
 
 **Save a moment.** A friend’s photo or video, kept to your Photos at full size — the one they

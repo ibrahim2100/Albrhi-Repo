@@ -1,5 +1,18 @@
 # Albrhi Changelog
 
+## v1.6.2
+
+**Locket no longer crashes.** The jailbreak bypass was hiding a folder that iPhone keeps
+its own system files in, so the app was being told parts of iOS do not exist. The
+jailbreak is still hidden — by the marker it actually leaves — and there is now a short
+list of paths the bypass will never lie about, so nothing can do this again.
+
+**The save button appears on X videos.** It never did: the button was being told what to
+save before it existed, and hid itself because it had nothing.
+
+Includes Locket 0.2.1 and X 0.4.1.
+
+
 ## v1.6.1
 
 Three faults in the Settings page, found by reading it back rather than by anyone hitting

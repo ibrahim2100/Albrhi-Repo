@@ -106,13 +106,27 @@ static id SCITWEntityFromViewModel(id viewModel) {
     id entity = SCITWEntityFromViewModel(viewModel);
     SCITWMediaItem *item = entity ? [SCITWMedia itemForEntity:entity] : nil;
 
-    UIButton *button = objc_getAssociatedObject(self, kButtonKey);
-    objc_setAssociatedObject(button, kItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    // Kept on the view, not on the button, and that is the whole bug this fixes.
+    //
+    // -setViewModel: runs before -layoutSubviews has ever created the button, so the button
+    // was nil here on the first pass: setting an associated object on nil does nothing,
+    // hiding nil does nothing, and the item was dropped. layoutSubviews then created the
+    // button, read the item off the button it had just made, found none, and hid it — for
+    // good, because the model is not set again until the cell is reused. Every video showed
+    // no button at all.
+    //
+    // The view owns the model, so the view is where the item belongs. The button gets a copy
+    // in -layoutSubviews, where it is guaranteed to exist.
+    objc_setAssociatedObject(self, kItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
     // A reused cell that now holds a photo-only post, or no media, hides the button it was
     // given for a video. Left visible, it would offer to save the previous video from the
     // new post.
-    button.hidden = (item == nil);
+    UIButton *button = objc_getAssociatedObject(self, kButtonKey);
+    if (button) {
+        objc_setAssociatedObject(button, kItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        button.hidden = (item == nil);
+    }
 }
 
 - (void)layoutSubviews {
@@ -157,10 +171,17 @@ static id SCITWEntityFromViewModel(id viewModel) {
             [button.widthAnchor constraintEqualToConstant:30],
             [button.heightAnchor constraintEqualToConstant:30],
         ]];
-
-        SCITWMediaItem *item = objc_getAssociatedObject(button, kItemKey);
-        button.hidden = (item == nil);
     }
+
+    // Taken from the view every pass rather than only when the button is built.
+    //
+    // Whichever of -setViewModel: and -layoutSubviews runs first, this is where the two
+    // meet: the item is read from the view that owns it, handed to the button for the tap
+    // to find, and decides whether there is anything to offer. Doing it only at creation is
+    // what left the button hidden on the one pass that mattered.
+    SCITWMediaItem *item = objc_getAssociatedObject(self, kItemKey);
+    objc_setAssociatedObject(button, kItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    button.hidden = (item == nil);
 
     // Kept on top: X adds and removes chrome subviews as playback state changes, and a
     // button added once can end up behind the shaded overlay after a state change.
