@@ -4,6 +4,7 @@
 #import "Features/Switches/SCITWSwitches.h"
 #import "Features/Switches/SCITWFeatures.h"
 #import "Features/Media/SCITWInlineButton.h"
+#import "Features/Media/SCITWStatusButton.h"
 
 NSString *SCITWReportText(void) {
     NSMutableString *text = [NSMutableString string];
@@ -28,7 +29,9 @@ NSString *SCITWReportText(void) {
     // all about whether the download button attached is a page that answers the question
     // nobody asked. This line is the one somebody writing in about a missing button needs
     // to paste, and until now there was nothing to paste.
+    // Both surfaces, side by side, because the whole point is which of them attached.
     [text appendFormat:@"inline button: %@\n", SCITWInlineButtonReport()];
+    [text appendFormat:@"status button: %@\n", SCITWStatusButtonReport()];
 
     NSArray<SCITWSwitchRecord *> *records = [SCITWSwitches records];
     [text appendFormat:@"switches seen: %lu over %lu questions\n\n",

@@ -6,8 +6,9 @@
 #import "Settings/SCITWGesture.h"
 #import "Features/Media/SCITWMediaHooks.h"
 #import "Features/Media/SCITWInlineButton.h"
+#import "Features/Media/SCITWStatusButton.h"
 
-NSString *SCIVersionString = @"v0.4.2";  // AlbrhiTW
+NSString *SCIVersionString = @"v0.4.3";  // AlbrhiTW
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written
@@ -51,6 +52,10 @@ NSString *SCIVersionString = @"v0.4.2";  // AlbrhiTW
     // renamed the media view loses the button and keeps the list, and the diagnostics
     // report says which of the two attached.
     SCITWInstallInlineButton();
+
+    // The other surface, on the classes the working tweak names. Both are installed and
+    // the report says which attached -- one of them is on a class that may not exist here.
+    SCITWInstallStatusButton();
 
     if ([[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefSwitchLayer]) {
         // Before the hooks, not after. X asks its first questions while the app is still

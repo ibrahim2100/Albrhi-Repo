@@ -1,5 +1,23 @@
 # Albrhi for X — what changed
 
+## v0.4.3
+
+**A save button on the tweet itself, beside reply and like.** The owner said plainly that
+the tweak they use has a button you press for video, and a long press that saves images —
+so the binary was read to find out where that button lives. It is not on the video view at
+all: it goes on the tweet's own view, and the class our first button hooks appears nowhere
+in a tweak that works.
+
+So there are two now, and Diagnostics says which one your build of X actually supports.
+The new one is on three of X's status views, added when the tweet comes on screen rather
+than during a layout pass, and it finds the video the way the working tweak does — through
+the tweet's own entities.
+
+It is grey like X's own buttons rather than red. A fifth button in a different colour, in a
+row of four, reads as an advert.
+
+# Albrhi for X — what changed
+
 ## v0.4.2
 
 **The save button still did not appear, and the page could not say why.** Four different
