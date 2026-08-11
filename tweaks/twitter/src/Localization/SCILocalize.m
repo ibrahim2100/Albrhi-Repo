@@ -70,6 +70,15 @@ static void SCIBuildTables(void) {
         @"f_perf": @"Speed tweaks (experimental)",
         @"f_perf_note": @"Turns on X's own speed work that it ships switched off. It may be smoother, and it may be worse — this is the one here where that can happen. Easy to turn back off.",
 
+        @"section_albrhi": @"Albrhi",
+        @"albrhi_footer": @"The tweak's own settings. Everything below this is about X.",
+        @"albrhi_save_button": @"Save button on posts",
+        @"albrhi_save_button_note": @"A button in the corner of a video or photo that saves it. Turn it off and the list below still holds everything seen, so saving keeps working.",
+        @"albrhi_switch_layer": @"Feature switches",
+        @"albrhi_switch_layer_note": @"Off makes this tweak do nothing at all — every feature below stops, and X behaves exactly as it would with nothing installed. For a build of X where hooking causes trouble.",
+        @"albrhi_logging": @"Detailed log",
+        @"albrhi_logging_note": @"Writes what the tweak is doing to the system log. Off unless something is being looked into.",
+
         @"section_status": @"Status",
         @"status_providers": @"Places hooked",
         @"status_providers_none": @"none found",
@@ -164,6 +173,15 @@ static void SCIBuildTables(void) {
         @"f_launch_note": @"يتخطّى حركة الفتح ويمنع إكس من تحميل تبويبات لم تفتحها بعد.",
         @"f_perf": @"تحسينات السرعة (تجريبي)",
         @"f_perf_note": @"يُفعّل تحسينات إكس نفسه التي يشحنها مُطفأة. قد يصير أسلس، وقد يصير أسوأ — وهذه الميزة الوحيدة هنا التي يحتمل فيها ذلك. وإيقافها سهل.",
+
+        @"section_albrhi": @"البرهي",
+        @"albrhi_footer": @"إعدادات الأداة نفسها. وكل ما تحتها يخصّ إكس.",
+        @"albrhi_save_button": @"زر الحفظ على المنشورات",
+        @"albrhi_save_button_note": @"زر في زاوية الفيديو أو الصورة يحفظها. أطفئه وتبقى القائمة أدناه تحمل كل ما رأته الأداة، فالحفظ يظل يعمل.",
+        @"albrhi_switch_layer": @"مفاتيح المزايا",
+        @"albrhi_switch_layer_note": @"إطفاؤه يجعل الأداة لا تفعل شيئاً على الإطلاق — تتوقف كل المزايا أدناه، ويتصرف إكس كما لو لم يكن شيء مثبَّتاً. لبناءٍ من إكس يسبّب فيه الخطف مشكلة.",
+        @"albrhi_logging": @"سجل مفصّل",
+        @"albrhi_logging_note": @"يكتب ما تفعله الأداة في سجل النظام. مُطفأ إلا عند تتبّع مشكلة.",
 
         @"section_status": @"الحالة",
         @"status_providers": @"المواضع المربوطة",

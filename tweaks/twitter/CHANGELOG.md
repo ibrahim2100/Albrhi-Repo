@@ -1,5 +1,26 @@
 # Albrhi for X — what changed
 
+## v0.5.0
+
+**The save button has moved off the share button.** It was in the bottom corner of the
+post, which is exactly where X puts share — two small targets in the same place, so some
+taps saved and some shared. It now sits in the top corner of the video or photo itself,
+where nothing of X's competes for the tap, and it is bigger.
+
+The device report is what made that possible: it said the media view is there to be found,
+and said the other button had seen twenty-five posts and found media in none of them. That
+second one is why nothing appeared for so long.
+
+**And the settings page has the tweak's own settings on it.** All three of them were
+missing entirely — the save button, the feature switches, and the detailed log had no row
+anywhere, on the only screen this tweak has, with no way to turn any of them off. They are
+the first section now.
+
+Status has moved down. It is four lines of information about what attached, and opening a
+settings screen with a report puts the reading above everything anyone came to change.
+
+# Albrhi for X — what changed
+
 ## v0.4.4
 
 Fixes the build. 0.4.3 did not compile: the new button read a setting through a helper

@@ -1,5 +1,18 @@
 # Albrhi Changelog
 
+## v1.7.0
+
+**X: the save button is on the video now, not on top of the share button** — and it is
+bigger, so it can actually be pressed.
+
+**And X's settings page finally has Albrhi's own settings on it.** The save button, the
+feature switches and the detailed log had no row anywhere and could not be turned off at
+all. They are the first section; the status report has moved below them, where reading
+matter belongs.
+
+Includes X 0.5.0.
+
+
 ## v1.6.5
 
 Fixes the build 1.6.4 broke before it produced anything.

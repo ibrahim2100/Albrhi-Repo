@@ -49,6 +49,9 @@
 /// Ours. High enough that it cannot collide with a tag X sets for its own reasons.
 static const NSInteger kSCISaveButtonTag = 0x5C1D;
 
+/// The item the button is currently offering to save.
+static const void *kSCIItemKey = &kSCIItemKey;
+
 static BOOL sciStandardPresent = NO;
 static BOOL sciFocalPresent = NO;
 static BOOL sciConversationPresent = NO;
@@ -71,20 +74,27 @@ static NSUInteger sciMediaFound = 0;
 }
 
 - (void)tapped:(UIButton *)button {
-    // Resolved on the tap, from the view the button is sitting in.
+    // What was resolved when the button was placed, kept on the button.
     //
-    // The other button resolves at model-set time and keeps the item, which is faster and
-    // is also how it came to hold the previous post's video after a cell was recycled.
-    // Here the answer is asked for at the moment it is needed, from the view that is on
-    // screen -- one message chain, on a tap, which is not a hot path.
-    UIView *view = button.superview;
-    while (view && ![view respondsToSelector:NSSelectorFromString(@"viewModel")]) {
-        view = view.superview;
-    }
-    if (!view) { SCILogV(@"status button: no view model above the button"); return; }
+    // It is refreshed every time the tweet comes on screen, so a recycled cell cannot hand
+    // over the previous post's video -- which is the failure the other button had, and the
+    // reason this was originally written to resolve on the tap instead.
+    SCITWMediaItem *item = objc_getAssociatedObject(button, kSCIItemKey);
 
-    SCITWMediaItem *item = SCITWFirstSaveableInStatusView(view);
-    if (!item) { SCILogV(@"status button: nothing saveable on this tweet"); return; }
+    // Failing that, up the view tree, trying **every** ancestor that has a model rather
+    // than stopping at the first.
+    //
+    // Stopping at the first was wrong and the device report is what proves it: the button
+    // now sits on X's media view, that view has a `viewModel` of its own, and its model
+    // yields no media at all -- "25 models, 0 with media" is exactly that object being
+    // asked 25 times and answering nothing. The tweet's own model, two views further up,
+    // is the one that answers.
+    for (UIView *view = button.superview; view && !item; view = view.superview) {
+        if (![view respondsToSelector:NSSelectorFromString(@"viewModel")]) continue;
+        item = SCITWFirstSaveableInStatusView(view);
+    }
+
+    if (!item) { SCILogV(@"status button: nothing saveable above this button"); return; }
 
     [SCITWDownload save:item];
 }
@@ -156,6 +166,42 @@ SCITWMediaItem *SCITWFirstSaveableInStatusView(UIView *view) {
     return nil;
 }
 
+/// The media view inside a tweet, found by what its class is called.
+///
+/// By name at runtime, not by a `%hook` on the name -- the difference this project keeps
+/// making. Nothing here breaks if X renames the class: the search finds nothing and the
+/// button goes on the tweet instead, which is where it was before and still works.
+///
+/// Size is part of the test. A tweet carries small image views for the avatar, the verified
+/// badge and the play glyph, and any of them would match a name search alone; media is the
+/// large one. 120 points on the short side is comfortably above every piece of chrome and
+/// below the smallest inline photo X will draw.
+static UIView *SCITWMediaSubview(UIView *root) {
+    NSMutableArray<UIView *> *queue = [NSMutableArray arrayWithObject:root];
+    UIView *best = nil;
+    CGFloat bestArea = 0;
+
+    while (queue.count) {
+        UIView *view = queue.firstObject;
+        [queue removeObjectAtIndex:0];
+        [queue addObjectsFromArray:view.subviews];
+
+        NSString *name = NSStringFromClass([view class]);
+        if (![name containsString:@"InlineMedia"] && ![name containsString:@"MediaView"]) continue;
+
+        CGSize size = view.bounds.size;
+        if (MIN(size.width, size.height) < 120) continue;
+
+        // The largest match, because a media view can hold another one: a quoted post's
+        // photo is inside the quoting post's media container, and the outer one is the
+        // frame the video actually fills.
+        CGFloat area = size.width * size.height;
+        if (area > bestArea) { bestArea = area; best = view; }
+    }
+
+    return best;
+}
+
 /// Adds the button, or leaves the one already there alone.
 static void SCITWAddSaveButton(UIView *view) {
     if (!view || !view.window) return;
@@ -183,7 +229,13 @@ static void SCITWAddSaveButton(UIView *view) {
         return;
     }
 
-    if (existing) { existing.hidden = NO; return; }
+    if (existing) {
+        existing.hidden = NO;
+        // Refreshed, because this view has been recycled and may be showing a different
+        // post than the one the button was built for.
+        objc_setAssociatedObject(existing, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        return;
+    }
 
     UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
     button.tag = kSCISaveButtonTag;
@@ -203,17 +255,55 @@ static void SCITWAddSaveButton(UIView *view) {
                action:@selector(tapped:)
      forControlEvents:UIControlEventTouchUpInside];
 
-    // Bottom trailing corner, by frame, with no constraint anywhere.
+    // On the media, top trailing, and not in the corner of the tweet.
     //
-    // A frame set outside a layout pass cannot invalidate one. X lays this row out itself
-    // and will move its own buttons around ours; sitting in the corner rather than in the
-    // row means nothing of theirs has to make space.
-    CGRect bounds = view.bounds;
-    button.frame = CGRectMake(bounds.size.width - 38, bounds.size.height - 38, 30, 30);
-    button.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleTopMargin;
+    // The first version put it at the bottom trailing corner of the status view, which is
+    // exactly where X's share button is: the owner reported it sitting on top of share and
+    // being hard to press, and it was -- two 30-point targets in the same place, ours
+    // winning some taps and share winning others.
+    //
+    // The media view is found at injection rather than assumed, and the report is what says
+    // it is there to find: `inline button: 25 models` means T1InlineMediaView is in this
+    // build and in the hierarchy. Its own top trailing corner is empty -- X puts the ALT
+    // badge bottom leading and the audio toggle bottom trailing -- and it is the corner
+    // people already reach for on every other app that saves video.
+    UIView *host = SCITWMediaSubview(view) ?: view;
 
-    [view addSubview:button];
+    CGRect bounds = host.bounds;
+    button.frame = CGRectMake(bounds.size.width - 44, 8, 36, 36);
+    button.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin;
+
+    // 36 rather than 30. The old one was under Apple's 44-point minimum and sharing its
+    // space with another button; this one is bigger and has the corner to itself.
+    button.backgroundColor = [UIColor colorWithWhite:0 alpha:0.45];
+    button.layer.cornerRadius = 18;
+    button.layer.masksToBounds = YES;
+    button.tintColor = [UIColor whiteColor];
+
+    objc_setAssociatedObject(button, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+    [host addSubview:button];
+    [host bringSubviewToFront:button];
     sciButtonsAdded++;
+}
+
+
+/// The same, one turn of the runloop later.
+///
+/// `didMoveToWindow` runs before the view has been laid out, so at that moment the media
+/// view inside it is very often still zero by zero -- and the search above rejects anything
+/// under 120 points, so it would find nothing and the button would land on the tweet's own
+/// corner, which is the placement this release exists to stop.
+///
+/// A dispatch to the main queue is after that layout pass and still outside it: nothing is
+/// invalidated, so none of the recursion the other button caused is possible here. The view
+/// is held weakly because a cell can be recycled or released in between, and a strong
+/// capture would keep it alive to be decorated for no one.
+static void SCITWAddSaveButtonSoon(UIView *view) {
+    __weak UIView *weakView = view;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        SCITWAddSaveButton(weakView);
+    });
 }
 
 
@@ -231,7 +321,7 @@ static void SCITWAddSaveButton(UIView *view) {
 
 - (void)didMoveToWindow {
     %orig;
-    SCITWAddSaveButton(self);
+    SCITWAddSaveButtonSoon(self);
 }
 
 %end
@@ -245,7 +335,7 @@ static void SCITWAddSaveButton(UIView *view) {
 
 - (void)didMoveToWindow {
     %orig;
-    SCITWAddSaveButton(self);
+    SCITWAddSaveButtonSoon(self);
 }
 
 %end
@@ -259,7 +349,7 @@ static void SCITWAddSaveButton(UIView *view) {
 
 - (void)didMoveToWindow {
     %orig;
-    SCITWAddSaveButton(self);
+    SCITWAddSaveButtonSoon(self);
 }
 
 %end

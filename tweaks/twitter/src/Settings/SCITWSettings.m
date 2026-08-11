@@ -10,10 +10,28 @@
 // Media first, under the status. It is what people open this screen for, and a list of
 // three hundred switch names above it would bury the one section that does something in
 // one tap.
-static const NSInteger SCITWSectionStatus   = 0;
-static const NSInteger SCITWSectionMedia    = 1;
-static const NSInteger SCITWSectionFeatures = 2;
-static const NSInteger SCITWSectionKeys     = 3;
+/// Controls first, then what was saved, then information.
+///
+/// **The tweak's own three settings had no row anywhere on this page.** `Prefs.h` describes
+/// the save button as something you can turn off, and the switch layer as the thing to turn
+/// off on a build of X where hooking it causes trouble -- and neither had a switch, on the
+/// only screen this tweak has. Verbose logging the same. Three preferences, defaults only,
+/// no way to reach any of them.
+///
+/// So Albrhi is section zero and Status has moved down. Status is four rows of information
+/// -- what attached, how many keys were seen -- and opening a settings screen with a report
+/// puts the reading matter above everything anybody came to change.
+static const NSInteger SCITWSectionAlbrhi   = 0;
+static const NSInteger SCITWSectionFeatures = 1;
+static const NSInteger SCITWSectionMedia    = 2;
+static const NSInteger SCITWSectionStatus   = 3;
+static const NSInteger SCITWSectionKeys     = 4;
+
+/// The rows in section zero, in order.
+static const NSInteger SCITWAlbrhiSaveButton = 0;
+static const NSInteger SCITWAlbrhiSwitchLayer = 1;
+static const NSInteger SCITWAlbrhiLogging = 2;
+static const NSInteger SCITWAlbrhiRowCount = 3;
 
 @interface SCITWSettings () <UISearchBarDelegate>
 @property (nonatomic, strong) NSArray<SCITWSwitchRecord *> *all;
@@ -180,10 +198,11 @@ static const NSInteger SCITWSectionKeys     = 3;
 #pragma mark - Table
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 4;
+    return 5;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    if (section == SCITWSectionAlbrhi) return SCITWAlbrhiRowCount;
     if (section == SCITWSectionStatus) return 4;
     if (section == SCITWSectionMedia) return self.media.count ?: 1;
     if (section == SCITWSectionFeatures) return [SCITWFeatures all].count;
@@ -191,6 +210,7 @@ static const NSInteger SCITWSectionKeys     = 3;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+    if (section == SCITWSectionAlbrhi) return SCILocalized(@"section_albrhi");
     if (section == SCITWSectionStatus) return SCILocalized(@"section_status");
     if (section == SCITWSectionMedia) return SCILocalized(@"section_media");
     if (section == SCITWSectionFeatures) return SCILocalized(@"section_features");
@@ -198,6 +218,7 @@ static const NSInteger SCITWSectionKeys     = 3;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
+    if (section == SCITWSectionAlbrhi) return SCILocalized(@"albrhi_footer");
     if (section == SCITWSectionMedia) return SCILocalized(@"media_footer");
     if (section == SCITWSectionFeatures) return SCILocalized(@"features_footer");
     if (section == SCITWSectionKeys) return SCILocalized(@"keys_footer");
@@ -221,6 +242,14 @@ static const NSInteger SCITWSectionKeys     = 3;
             [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle
                                    reuseIdentifier:nil];
         [self fillMediaCell:row row:indexPath.row];
+        return row;
+    }
+
+    if (indexPath.section == SCITWSectionAlbrhi) {
+        UITableViewCell *row =
+            [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle
+                                   reuseIdentifier:nil];
+        [self fillAlbrhiCell:row row:indexPath.row];
         return row;
     }
 
@@ -314,6 +343,72 @@ static const NSInteger SCITWSectionKeys     = 3;
     cell.accessoryType = UITableViewCellAccessoryDetailButton;
     cell.imageView.image = [UIImage systemImageNamed:
         item.kind == SCITWMediaKindImage ? @"photo" : @"play.rectangle"];
+}
+
+/// The tweak's own three settings, which had no row until now.
+///
+/// Read and written straight through NSUserDefaults, the way every hook in this tweak reads
+/// them. No indirection worth adding for three booleans, and using the same call the hooks
+/// use means a switch here and a hook there can never disagree about where the value lives.
+- (void)fillAlbrhiCell:(UITableViewCell *)cell row:(NSInteger)row {
+    NSString *key = nil;
+    NSString *title = nil;
+    NSString *note = nil;
+    BOOL defaultOn = YES;
+
+    if (row == SCITWAlbrhiSaveButton) {
+        key = SCIPrefInlineButton;
+        title = SCILocalized(@"albrhi_save_button");
+        note = SCILocalized(@"albrhi_save_button_note");
+    } else if (row == SCITWAlbrhiSwitchLayer) {
+        key = SCIPrefSwitchLayer;
+        title = SCILocalized(@"albrhi_switch_layer");
+        note = SCILocalized(@"albrhi_switch_layer_note");
+    } else {
+        key = SCIPrefVerboseLogging;
+        title = SCILocalized(@"albrhi_logging");
+        note = SCILocalized(@"albrhi_logging_note");
+        defaultOn = NO;
+    }
+
+    cell.textLabel.text = title;
+    cell.detailTextLabel.text = note;
+    cell.detailTextLabel.numberOfLines = 0;
+    cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+
+    // Turning the switch layer off makes this tweak do nothing at all, which is a bigger
+    // step than any single feature and is marked the way the cautious features are.
+    if (row == SCITWAlbrhiSwitchLayer) cell.textLabel.textColor = [UIColor systemOrangeColor];
+
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    UISwitch *toggle = [[UISwitch alloc] init];
+    toggle.on = ([defaults objectForKey:key] == nil) ? defaultOn : [defaults boolForKey:key];
+    toggle.tag = row;
+    [toggle addTarget:self
+               action:@selector(albrhiToggled:)
+     forControlEvents:UIControlEventValueChanged];
+    cell.accessoryView = toggle;
+}
+
+- (void)albrhiToggled:(UISwitch *)toggle {
+    // All three named, rather than two named and the third left as the default. A default
+    // that happens to be right is a default that writes the wrong key the moment a fourth
+    // row is added above it -- and check.py failed the build for the unused constant, which
+    // is the same fact from the other end.
+    NSString *key = nil;
+    if (toggle.tag == SCITWAlbrhiSaveButton) key = SCIPrefInlineButton;
+    if (toggle.tag == SCITWAlbrhiSwitchLayer) key = SCIPrefSwitchLayer;
+    if (toggle.tag == SCITWAlbrhiLogging) key = SCIPrefVerboseLogging;
+    if (!key) return;
+
+    [[NSUserDefaults standardUserDefaults] setBool:toggle.on forKey:key];
+
+    // The switch layer is hooked from the constructor, so moving it changes nothing until X
+    // is opened again -- and a switch that appears to do nothing is the complaint this
+    // project has answered most often. Said here rather than discovered.
+    if (toggle.tag == SCITWAlbrhiSwitchLayer) [self say:SCILocalized(@"restart_note")];
 }
 
 - (void)fillFeatureCell:(UITableViewCell *)cell row:(NSInteger)row {
