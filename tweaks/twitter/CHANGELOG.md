@@ -1,5 +1,20 @@
 # Albrhi for X — what changed
 
+## v0.5.1
+
+**The button is inside the video now, and stays there while you swipe between videos.**
+
+X draws every video and photo in one kind of view — in the timeline, in a post you opened,
+in the fullscreen viewer, in a quoted post, in a message — and the button goes on that view
+rather than on the corner of a timeline cell. So it is inside the picture wherever the
+picture is.
+
+That view had a button of its own since the first release and it never appeared, and the
+report from a phone said exactly why: it was asking the video for what to save, and the
+video does not know. The post does. It now looks upward until something answers.
+
+# Albrhi for X — what changed
+
 ## v0.5.0
 
 **The save button has moved off the share button.** It was in the bottom corner of the

@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.7.1
+
+**X: the save button is inside the video, and stays there while you swipe between videos.**
+It goes on the view X draws every video in — timeline, opened post, fullscreen, quoted
+post, message — instead of on the corner of a cell.
+
+Includes X 0.5.1.
+
+
 ## v1.7.0
 
 **X: the save button is on the video now, not on top of the share button** — and it is

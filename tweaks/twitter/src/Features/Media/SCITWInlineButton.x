@@ -3,6 +3,7 @@
 #import "SCITWInlineButton.h"
 #import "SCITWMedia.h"
 #import "SCITWDownload.h"
+#import "SCITWStatusButton.h"
 #import "Prefs.h"
 #import "SCILog.h"
 
@@ -128,108 +129,38 @@ static id SCITWEntityFromViewModel(id viewModel) {
 - (void)setViewModel:(id)viewModel {
     %orig;
 
-    // Resolved once, when the model is set, and remembered on the view. layoutSubviews runs
-    // many times a second while a video plays and is the wrong place to be sending
-    // messages down a model graph.
+    // Counted, and nothing else.
+    //
+    // This is what the report was for and what it settled: twenty-five models arrived here
+    // and not one of them yielded media. So the model on this view is not the one that
+    // knows -- the tweet's is, two views up -- and asking this one was the whole reason a
+    // button never appeared. The placement below does not consult it at all.
     sciModelsSeen++;
 
     id entity = SCITWEntityFromViewModel(viewModel);
-    SCITWMediaItem *item = entity ? [SCITWMedia itemForEntity:entity] : nil;
-
-    if (item) sciItemsResolved++;
-
-    // Kept on the view, not on the button, and that is the whole bug this fixes.
-    //
-    // -setViewModel: runs before -layoutSubviews has ever created the button, so the button
-    // was nil here on the first pass: setting an associated object on nil does nothing,
-    // hiding nil does nothing, and the item was dropped. layoutSubviews then created the
-    // button, read the item off the button it had just made, found none, and hid it — for
-    // good, because the model is not set again until the cell is reused. Every video showed
-    // no button at all.
-    //
-    // The view owns the model, so the view is where the item belongs. The button gets a copy
-    // in -layoutSubviews, where it is guaranteed to exist.
-    objc_setAssociatedObject(self, kItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-
-    // A reused cell that now holds a photo-only post, or no media, hides the button it was
-    // given for a video. Left visible, it would offer to save the previous video from the
-    // new post.
-    UIButton *button = objc_getAssociatedObject(self, kButtonKey);
-    if (button) {
-        objc_setAssociatedObject(button, kItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        button.hidden = (item == nil);
-    }
+    if (entity && [SCITWMedia itemForEntity:entity]) sciItemsResolved++;
 }
 
-- (void)layoutSubviews {
+- (void)didMoveToWindow {
     %orig;
 
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefInlineButton]) return;
-
-    UIView *container = nil;
-    if ([self respondsToSelector:@selector(overlayChromesContainerView)]) {
-        container = [self overlayChromesContainerView];
-    }
-    if (!container) container = self;
-
-    UIButton *button = objc_getAssociatedObject(self, kButtonKey);
-    if (!button) {
-        button = [UIButton buttonWithType:UIButtonTypeSystem];
-
-        UIImage *icon = [UIImage systemImageNamed:@"arrow.down.circle.fill"];
-        [button setImage:icon forState:UIControlStateNormal];
-        button.tintColor = [UIColor whiteColor];
-
-        // A disc behind the glyph, so it reads on a bright frame of video as well as a dark
-        // one -- the same reason X's own audio toggle has one.
-        button.backgroundColor = [UIColor colorWithWhite:0 alpha:0.4];
-        button.layer.cornerRadius = 15;
-        button.layer.masksToBounds = YES;
-
-        // The chrome fades with taps on the video; the button rides that container, so it
-        // does not need its own show/hide. But it must not swallow the tap that toggles the
-        // chrome elsewhere on the view -- only its own 30pt circle.
-        [button addTarget:[SCITWInlineButtonTarget shared]
-                   action:@selector(tapped:)
-         forControlEvents:UIControlEventTouchUpInside];
-
-        objc_setAssociatedObject(self, kButtonKey, button, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        [container addSubview:button];
-        sciButtonsPlaced++;
-    }
-
-    // A frame, set here, rather than constraints activated here.
+    // The button goes on **this** view, which is the video.
     //
-    // This runs inside -layoutSubviews. Activating a constraint there invalidates the
-    // layout that is currently running, which asks for another pass, which runs this
-    // again -- and X's media view lays its own chrome out with frames, so the button was
-    // also the only Auto Layout participant in a manual-layout view. That combination is
-    // a layout loop at best and is the most likely thing behind "it crashes with use".
+    // That is the whole of what the owner asked for: a button inside the picture, there
+    // while swiping from one video to the next, rather than one bolted to the corner of a
+    // timeline cell. T1InlineMediaView is the surface X shows every video and photo in --
+    // timeline, tweet detail, the fullscreen viewer, a quoted post, a DM -- so a button on
+    // it is inside the video wherever the video is.
     //
-    // Two numbers and a CGRect have none of that. The button is 30 points in the corner
-    // and does not need a solver to work that out.
-    button.translatesAutoresizingMaskIntoConstraints = YES;
-    button.frame = CGRectMake(8, 8, 30, 30);
-
-    // Taken from the view every pass rather than only when the button is built.
-    //
-    // Whichever of -setViewModel: and -layoutSubviews runs first, this is where the two
-    // meet: the item is read from the view that owns it, handed to the button for the tap
-    // to find, and decides whether there is anything to offer. Doing it only at creation is
-    // what left the button hidden on the one pass that mattered.
-    SCITWMediaItem *item = objc_getAssociatedObject(self, kItemKey);
-    objc_setAssociatedObject(button, kItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    button.hidden = (item == nil);
-
-    // Kept on top: X adds and removes chrome subviews as playback state changes, and a
-    // button added once can end up behind the shaded overlay after a state change.
-    [container bringSubviewToFront:button];
+    // What to save is searched for upward from here, because this view's own model answers
+    // nothing. The shared placement takes the two separately for exactly that reason.
+    SCITWAddSaveButtonSoon(self, self);
+    sciButtonsPlaced++;
 }
 
 %end
 
 %end
-
 
 void SCITWInstallInlineButton(void) {
     sciClassPresent = (NSClassFromString(@"T1InlineMediaView") != nil);

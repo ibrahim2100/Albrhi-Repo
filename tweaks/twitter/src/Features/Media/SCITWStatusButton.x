@@ -203,8 +203,20 @@ static UIView *SCITWMediaSubview(UIView *root) {
 }
 
 /// Adds the button, or leaves the one already there alone.
-static void SCITWAddSaveButton(UIView *view) {
-    if (!view || !view.window) return;
+/// Places the button, and works out where from what it was handed.
+///
+/// `host` is where the button goes. `view` is where the search for a model starts, which is
+/// not the same thing: the video view's own model answers nothing on this build -- the
+/// device said so, "25 models, 0 with media" -- and the tweet's model two views up answers
+/// everything. So the two are separate arguments, and every caller says which is which.
+///
+/// Shared with the inline-media hook, which passes itself as both. That hook is why the
+/// button is inside the video at all: `T1InlineMediaView` *is* the video, on every surface X
+/// shows one -- timeline, tweet detail, the fullscreen viewer, a quoted post, a DM -- so a
+/// button placed on it is inside the picture wherever the picture is, including while
+/// swiping from one video to the next.
+static void SCITWPlaceSaveButton(UIView *host, UIView *view) {
+    if (!host || !view || !view.window) return;
 
     // NSUserDefaults directly, the way the other button in this tweak reads it.
     //
@@ -215,10 +227,19 @@ static void SCITWAddSaveButton(UIView *view) {
     if (![[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefInlineButton]) return;
 
     // Recycled views arrive with the button they were given last time. Found by tag, which
-    // is what makes that cheap and correct.
-    UIButton *existing = (UIButton *)[view viewWithTag:kSCISaveButtonTag];
+    // is what makes that cheap and correct -- and searched from the *host*, because that is
+    // where it was put and where a second one would end up.
+    UIButton *existing = (UIButton *)[host viewWithTag:kSCISaveButtonTag];
 
-    SCITWMediaItem *item = SCITWFirstSaveableInStatusView(view);
+    // Up the tree, every ancestor with a model, not just this view's own.
+    //
+    // This is the whole of what was wrong with the video-view route for four releases. The
+    // media view has a `viewModel`; it is simply not the one that knows about media. Asking
+    // only it produced the twenty-five zeroes in the report.
+    SCITWMediaItem *item = nil;
+    for (UIView *at = view; at && !item; at = at.superview) {
+        item = SCITWFirstSaveableInStatusView(at);
+    }
     if (item) sciMediaFound++;
 
     // A tweet with nothing to save gets no button, and one that had a button and now holds
@@ -255,20 +276,13 @@ static void SCITWAddSaveButton(UIView *view) {
                action:@selector(tapped:)
      forControlEvents:UIControlEventTouchUpInside];
 
-    // On the media, top trailing, and not in the corner of the tweet.
+    // Top trailing of whatever it was given, and never the bottom.
     //
-    // The first version put it at the bottom trailing corner of the status view, which is
-    // exactly where X's share button is: the owner reported it sitting on top of share and
-    // being hard to press, and it was -- two 30-point targets in the same place, ours
-    // winning some taps and share winning others.
-    //
-    // The media view is found at injection rather than assumed, and the report is what says
-    // it is there to find: `inline button: 25 models` means T1InlineMediaView is in this
-    // build and in the hierarchy. Its own top trailing corner is empty -- X puts the ALT
-    // badge bottom leading and the audio toggle bottom trailing -- and it is the corner
-    // people already reach for on every other app that saves video.
-    UIView *host = SCITWMediaSubview(view) ?: view;
-
+    // The first version used the bottom trailing corner of the status view, which is exactly
+    // where X's share button is: the owner reported it sitting on top of share and being
+    // hard to press, and it was -- two 30-point targets in one place, ours winning some taps
+    // and share winning others. The top trailing corner of a video is the one X leaves
+    // empty; the ALT badge is bottom leading and the audio toggle bottom trailing.
     CGRect bounds = host.bounds;
     button.frame = CGRectMake(bounds.size.width - 44, 8, 36, 36);
     button.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin;
@@ -299,10 +313,11 @@ static void SCITWAddSaveButton(UIView *view) {
 /// invalidated, so none of the recursion the other button caused is possible here. The view
 /// is held weakly because a cell can be recycled or released in between, and a strong
 /// capture would keep it alive to be decorated for no one.
-static void SCITWAddSaveButtonSoon(UIView *view) {
+void SCITWAddSaveButtonSoon(UIView *host, UIView *view) {
+    __weak UIView *weakHost = host;
     __weak UIView *weakView = view;
     dispatch_async(dispatch_get_main_queue(), ^{
-        SCITWAddSaveButton(weakView);
+        SCITWPlaceSaveButton(weakHost, weakView);
     });
 }
 
@@ -321,7 +336,7 @@ static void SCITWAddSaveButtonSoon(UIView *view) {
 
 - (void)didMoveToWindow {
     %orig;
-    SCITWAddSaveButtonSoon(self);
+    SCITWAddSaveButtonSoon(SCITWMediaSubview(self) ?: self, self);
 }
 
 %end
@@ -335,7 +350,7 @@ static void SCITWAddSaveButtonSoon(UIView *view) {
 
 - (void)didMoveToWindow {
     %orig;
-    SCITWAddSaveButtonSoon(self);
+    SCITWAddSaveButtonSoon(SCITWMediaSubview(self) ?: self, self);
 }
 
 %end
@@ -349,7 +364,7 @@ static void SCITWAddSaveButtonSoon(UIView *view) {
 
 - (void)didMoveToWindow {
     %orig;
-    SCITWAddSaveButtonSoon(self);
+    SCITWAddSaveButtonSoon(SCITWMediaSubview(self) ?: self, self);
 }
 
 %end

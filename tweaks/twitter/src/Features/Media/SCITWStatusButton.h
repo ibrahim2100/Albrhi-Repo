@@ -31,4 +31,17 @@ NSString *SCITWStatusButtonReport(void);
 /// a third surface is ever added.
 SCITWMediaItem *_Nullable SCITWFirstSaveableInStatusView(UIView *view);
 
+/// Places the save button on `host`, searching upward from `view` for what to save.
+///
+/// Two arguments because they are two different things: `T1InlineMediaView` is the video and
+/// is where the button belongs, and its own view model answers nothing -- the device report
+/// settled that with "25 models, 0 with media". The tweet's model, further up, is the one
+/// that knows.
+///
+/// Deferred by one turn of the runloop. `didMoveToWindow` runs before layout, so the view is
+/// often still zero by zero when it fires, and a button placed then lands in the wrong
+/// corner or nowhere. One turn later is after layout and still outside it, so nothing is
+/// invalidated and none of the recursion the constraint version caused is possible.
+void SCITWAddSaveButtonSoon(UIView *host, UIView *view);
+
 NS_ASSUME_NONNULL_END
