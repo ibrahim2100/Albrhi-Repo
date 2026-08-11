@@ -446,6 +446,7 @@ jobs:
                 gh api -X POST "repos/${{ github.repository }}/pages/builds" --silent                   && echo "build requested"                   || echo "::warning::could not request a build; the push may still start one"
 
             - name: Wait for the Pages build to finish
+              id: pages_build
               if: always() && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
               env:
                 GH_TOKEN: ${{ github.token }}
@@ -455,13 +456,24 @@ jobs:
               # the site still serving an older index and called that a failure -- when
               # it was simply a build that had not finished. Asking GitHub whether the
               # build is done is exact, where a sleep is a guess about how long it takes.
+              # Ten minutes, not five.
+              #
+              # Five was not enough and the run that proved it went on to fail the release
+              # for it. Two workflows in this repository push gh-pages and both ask for a
+              # build, GitHub serialises Pages builds per repository, so a build can sit
+              # behind another before it even starts. The next step is told whether this
+              # one finished, because "still building" and "built but stale" are different
+              # facts and only the second is a problem.
               run: |
-                for ATTEMPT in $(seq 1 30); do
+                echo "finished=false" >> $GITHUB_OUTPUT
+
+                for ATTEMPT in $(seq 1 60); do
                   STATUS=$(gh api "repos/${{ github.repository }}/pages/builds/latest"                       --jq '.status' 2>/dev/null || echo "unknown")
 
                   case "$STATUS" in
                     built)
                       echo "Pages build finished"
+                      echo "finished=true" >> $GITHUB_OUTPUT
                       exit 0
                       ;;
                     errored)
@@ -476,7 +488,7 @@ jobs:
                   esac
                 done
 
-                echo "::warning::the Pages build did not report finished in five minutes"
+                echo "::warning::the Pages build was still running after ten minutes"
 
             - name: Check the source actually serves this version
               # The outcome, not the mechanism.
@@ -508,23 +520,54 @@ jobs:
                     exit 0
                   fi
 
-                  SERVING=$(printf '%s' "$BODY" | grep -A5 '^Package: com.albrhi$' | grep '^Version:' | head -n1)
+                  # The *newest* com.albrhi in the index, not the first one in it.
+                  #
+                  # The index deliberately keeps the last three releases, and
+                  # dpkg-scanpackages emits them in filename order -- oldest first. So
+                  # `head -n1` was printing the oldest version the site holds and calling
+                  # it what the site is serving. A run that was two releases behind
+                  # reported "Version: 1.3.0" and read as five months of nothing working,
+                  # which is where the next hour went. sort -V, and the last line.
+                  SERVING=$(printf '%s' "$BODY" | grep -A5 '^Package: com.albrhi$'                       | grep '^Version:' | sort -V | tail -n1)
                   echo "attempt ${ATTEMPT}: ${SERVING:-nothing for com.albrhi yet}"
                   sleep 20
                 done
 
+                # Behind, and the reason decides whether this is a failure at all.
+                #
+                # If the Pages build had not finished when the step above gave up, then the
+                # site being behind is that build still running -- everything this workflow
+                # is responsible for succeeded, and failing the run says otherwise. It is
+                # said as a warning and the run stays green.
+                #
+                # A build that reported "built" while the site serves something older is a
+                # real contradiction and stays an error.
+                if [ "${{ steps.pages_build.outputs.finished }}" != "true" ]; then
+                  echo "::warning::the source is not serving ${SUITE_VERSION} yet"
+                  echo ""
+                  echo "The release is published and gh-pages holds the finished index."
+                  echo "The Pages build was still running when this ran, so the site is"
+                  echo "expected to catch up on its own within a few minutes. Nothing"
+                  echo "here needs doing."
+                  echo "Serving: ${SERVING:-nothing for com.albrhi}"
+                  exit 0
+                fi
+
                 echo "::error::the source is still not serving ${SUITE_VERSION}"
                 echo ""
-                echo "The release is published and gh-pages holds the finished index,"
-                echo "and the Pages build was requested and reported finished. If the"
-                echo "version above is an older Albrhi rather than nothing at all, the"
-                echo "site is updating and simply had not caught up when this ran --"
-                echo "check the URL again in a few minutes before treating it as broken."
+                echo "The release is published, gh-pages holds the finished index, and"
+                echo "the Pages build reported that it finished. Those three together mean"
+                echo "the site is not being built from the branch that was pushed."
                 echo ""
-                echo "If it is serving nothing for com.albrhi, the source is not set to"
-                echo "the branch:"
+                echo "Serving: ${SERVING:-nothing for com.albrhi}"
+                echo ""
+                echo "Check the one setting this side cannot read:"
                 echo ""
                 echo "  Settings -> Pages -> Build and deployment -> Source"
                 echo "      Deploy from a branch"
                 echo "      Branch: gh-pages    Folder: / (root)"
+                echo ""
+                echo "If it says GitHub Actions instead, branch pushes are never served"
+                echo "and the site stays frozen at the last branch build -- which looks"
+                echo "exactly like this."
                 exit 1
