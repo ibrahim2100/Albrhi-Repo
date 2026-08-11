@@ -445,57 +445,6 @@ jobs:
                 # on that trigger, which is the whole reason a deploy step existed.
                 gh api -X POST "repos/${{ github.repository }}/pages/builds" --silent                   && echo "build requested"                   || echo "::warning::could not request a build; the push may still start one"
 
-            - name: Wait for the Pages build to finish
-              id: pages_build
-              if: always() && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
-              env:
-                GH_TOKEN: ${{ github.token }}
-              # The build was requested in the step above and takes a few minutes.
-              #
-              # The previous version slept for two minutes and then judged, which found
-              # the site still serving an older index and called that a failure -- when
-              # it was simply a build that had not finished. Asking GitHub whether the
-              # build is done is exact, where a sleep is a guess about how long it takes.
-              # Two minutes, and it decides nothing.
-              #
-              # This step was the wrong idea, twice over. It waited five minutes, then ten,
-              # and `/pages/builds/latest` answered "building" the whole way through both --
-              # while the site was in fact serving the release before this one, so builds
-              # here do complete. The status stops being useful long before the deploy is
-              # done, and a run that sits on it for ten minutes has bought a slower failure
-              # and nothing else.
-              #
-              # CLAUDE.md already says what to do with a mechanism that reports one thing
-              # while the outcome says another: ask the outcome. So this is a note in the
-              # log now, bounded and harmless, and the live URL below is the only authority.
-              # `errored` is still worth failing on -- that is the API saying something real.
-              run: |
-                echo "status=unknown" >> $GITHUB_OUTPUT
-
-                for ATTEMPT in $(seq 1 12); do
-                  STATUS=$(gh api "repos/${{ github.repository }}/pages/builds/latest"                       --jq '.status' 2>/dev/null || echo "unknown")
-
-                  case "$STATUS" in
-                    built)
-                      echo "Pages build finished"
-                      echo "status=built" >> $GITHUB_OUTPUT
-                      exit 0
-                      ;;
-                    errored)
-                      gh api "repos/${{ github.repository }}/pages/builds/latest"                           --jq '.error.message' 2>/dev/null || true
-                      echo "::error::the Pages build failed"
-                      exit 1
-                      ;;
-                    *)
-                      echo "attempt ${ATTEMPT}: ${STATUS}"
-                      sleep 10
-                      ;;
-                  esac
-                done
-
-                echo "status=building" >> $GITHUB_OUTPUT
-                echo "still building after two minutes; the URL check below decides"
-
             - name: Check the source actually serves this version
               # The outcome, not the mechanism.
               #
@@ -516,11 +465,18 @@ jobs:
 
                 # Pages can take a little while to serve a fresh deploy, so this waits
                 # rather than deciding on the first answer.
-                # Twenty tries at thirty seconds: ten minutes, and this is where the waiting
-                # belongs. The step above used to hold the run for ten minutes on a build
-                # status that never changed, and then this one gave up after four -- so the
-                # whole budget went to the mechanism and almost none to the outcome.
-                for ATTEMPT in $(seq 1 20); do
+                # Six tries at twenty seconds, and no more.
+                #
+                # Waiting longer was the mistake, three times: five minutes on a build
+                # status, then ten, then ten here. What this step exists to catch is Pages
+                # not being served from the branch at all -- which is a setting, is
+                # actionable, and is answered by the first response. Whether the site has
+                # caught up to *this* version is latency, it is not a fault, and no amount
+                # of waiting turns it into information anyone can act on.
+                #
+                # A build that has not landed yet is the normal case. A source serving no
+                # com.albrhi at all is the fault. Two minutes tells those apart.
+                for ATTEMPT in $(seq 1 6); do
                   # A fresh query string each time: the Pages CDN can hand back the
                   # copy it already had for a little while after a build finishes.
                   BODY=$(curl -fsSL "${BASE}?t=$(date +%s)-${ATTEMPT}" 2>/dev/null || true)
@@ -540,30 +496,26 @@ jobs:
                   # which is where the next hour went. sort -V, and the last line.
                   SERVING=$(printf '%s' "$BODY" | grep -A5 '^Package: com.albrhi$'                       | grep '^Version:' | sort -V | tail -n1)
                   echo "attempt ${ATTEMPT}: ${SERVING:-nothing for com.albrhi yet}"
-                  sleep 30
+                  sleep 20
                 done
 
-                # Ten minutes and still behind. What is worth saying depends on whether the
-                # site is serving Albrhi at all.
-                #
-                # An older Albrhi means the branch is being served and the build for this
-                # push had not landed inside the window -- the release is out, the index is
-                # right, and the site catches up on its own. Warning, and the run stays
-                # green: failing here would mark a release that worked.
-                #
-                # Nothing at all for com.albrhi is the other thing entirely, and it has one
-                # cause worth naming.
-                echo "Pages build status when last asked: ${{ steps.pages_build.outputs.status }}"
+                # Not this version yet. Which of the two things that means is the whole
+                # question, and the answer is whether it is serving Albrhi at all.
                 echo "Serving: ${SERVING:-nothing for com.albrhi}"
                 echo ""
 
+                # An older Albrhi is the branch being served, with this push's build not
+                # landed yet. The release is out, the index on the branch is right, and the
+                # site catches up when Pages gets to it. Failing here marks a release that
+                # worked -- and it has, twice.
+                #
+                # Sileo will show the older number until then, while Settings > Albrhi shows
+                # what is actually installed. Those two disagreeing is the two of them
+                # answering different questions correctly, not a fault.
                 if [ -n "$SERVING" ]; then
-                  echo "::warning::the source is serving an older Albrhi, not ${SUITE_VERSION} yet"
-                  echo ""
-                  echo "The release is published and gh-pages holds the finished index, and"
-                  echo "the site is being served from the branch -- it is serving an earlier"
-                  echo "Albrhi. The build for this push had not landed within ten minutes."
-                  echo "It catches up on its own; nothing here needs doing."
+                  echo "::notice::the source is serving ${SERVING#Version: }; ${SUITE_VERSION} follows when Pages builds"
+                  echo "The release is published and the branch holds the right index."
+                  echo "Nothing here needs doing."
                   exit 0
                 fi
 
