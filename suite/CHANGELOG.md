@@ -1,5 +1,15 @@
 # Albrhi Changelog
 
+## v1.6.1
+
+Three faults in the Settings page, found by reading it back rather than by anyone hitting
+them: a header that could have laid out wrongly, the Albrhi mark existing at one
+resolution only, and the installed version reading as unknown on a device where Albrhi
+happened to be the first package installed. Details in the panel's own notes.
+
+Includes Panel 0.6.2.
+
+
 ## v1.6.0
 
 **The Locket tweak saves moments now.** Hold two fingers anywhere in Locket and every moment

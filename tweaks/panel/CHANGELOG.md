@@ -1,5 +1,26 @@
 # Albrhi Panel Changelog
 
+## v0.6.2
+
+Three faults found by reading 0.6.1 back rather than by anyone hitting them.
+
+**The header could have laid itself out wrongly.** The logo and the version pill were
+given sizes while they still carried their own automatic ones — a conflict that only went
+unnoticed because the container happened to clear it two lines later. Depending on the
+order of two lines to avoid a broken layout is exactly how this project's other settings
+page died twice.
+
+**The mark existed at one size only**, so a phone that is not the highest resolution had
+nothing exact to draw. All three are there now.
+
+**And the version could have read as unknown on some devices.** The installed version is
+found by its stanza in dpkg's records, and the first stanza in that file has no line
+break in front of it — so a device where Albrhi happened to be the first package
+installed would never have been found, and would have shown the fallback instead. That
+file is also a few megabytes, and it was being read twice every time the page laid itself
+out; it is read once now.
+
+
 ## v0.6.1
 
 **Four things reported from a phone, all of them real.**

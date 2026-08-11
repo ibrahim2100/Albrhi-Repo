@@ -86,6 +86,20 @@
 }
 
 + (NSString *)installedSuiteVersion {
+    // Read once per launch of Settings, and that is enough.
+    //
+    // dpkg's status file is a few megabytes of every package on the device, and this is
+    // asked for while a page is being laid out -- once for the header and once for the
+    // About row. Parsing it twice on the main thread for a string that cannot change
+    // while this page is open is work for nothing: the panel's own after-install step
+    // kills Preferences, so a new version always arrives in a new process.
+    static NSString *cached = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{ cached = [self readInstalledSuiteVersion]; });
+    return cached;
+}
+
++ (NSString *)readInstalledSuiteVersion {
     NSString *prefix = [self jailbreakPrefix];
 
     // Where each jailbreak keeps it. The prefixed path first, because that is where a
@@ -111,11 +125,26 @@
             // belonging to a package is the first Version: after its Package: line and
             // before the stanza ends. Scanning the whole file for "Version:" would return
             // whichever package happened to come first.
-            NSRange found = [status rangeOfString:
-                [NSString stringWithFormat:@"\nPackage: %@\n", package]];
-            if (found.location == NSNotFound) continue;
+            //
+            // The name is matched with the newlines around it, so looking for com.albrhi
+            // cannot land on com.albrhi.panel. And the first stanza in the file has no
+            // newline in front of it, so that one is checked separately -- a package that
+            // happened to be installed first would otherwise never be found, which is a
+            // bug that would have shown up on one device in however many and looked like
+            // the read failing.
+            NSString *label = [NSString stringWithFormat:@"Package: %@\n", package];
+            NSUInteger start;
 
-            NSString *rest = [status substringFromIndex:NSMaxRange(found)];
+            if ([status hasPrefix:label]) {
+                start = label.length;
+            } else {
+                NSRange found = [status rangeOfString:
+                    [@"\n" stringByAppendingString:label]];
+                if (found.location == NSNotFound) continue;
+                start = NSMaxRange(found);
+            }
+
+            NSString *rest = [status substringFromIndex:start];
             NSRange end = [rest rangeOfString:@"\n\n"];
             if (end.location != NSNotFound) rest = [rest substringToIndex:end.location];
 

@@ -19,6 +19,16 @@
     logo.layer.cornerRadius = 16;
     logo.layer.cornerCurve = kCACornerCurveContinuous;
     logo.clipsToBounds = YES;
+
+    // Turned off before a size is asked for, not after.
+    //
+    // A UIImageView made with -initWithImage: comes with the autoresizing mask translated
+    // into constraints and its own image's size as an intrinsic one. Activating a width
+    // beside those is a conflict, and the only reason it does not show as one is that
+    // UIStackView switches the flag off when the view becomes an arranged subview -- which
+    // happens later in this method. Depending on the order of two lines to avoid an
+    // unsatisfiable layout is how the Instagram panel died in CoreAutoLayout twice.
+    logo.translatesAutoresizingMaskIntoConstraints = NO;
     [logo.widthAnchor constraintEqualToConstant:72].active = YES;
     [logo.heightAnchor constraintEqualToConstant:72].active = YES;
 
@@ -43,6 +53,7 @@
     badge.backgroundColor = [UIColor tertiarySystemFillColor];
     badge.layer.cornerRadius = 9;
     badge.clipsToBounds = YES;
+    badge.translatesAutoresizingMaskIntoConstraints = NO;
     [badge.heightAnchor constraintEqualToConstant:18].active = YES;
 
     // Wrapped so the pill is its own width rather than the full column. A label in a
