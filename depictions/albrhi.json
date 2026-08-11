@@ -106,40 +106,40 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v1.7.2",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• Fixes the build 1.7.1 broke before it produced anything.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "v1.7.1",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **X: the save button is inside the video, and stays there while you swipe between videos.**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v1.7.0",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
           "markdown": "• **X: the save button is on the video now, not on top of the share button**",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v1.6.5",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• Fixes the build 1.6.4 broke before it produced anything.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v1.6.4",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **X: a save button on the tweet.**",
           "useSpacing": true
         },
         {
@@ -155,7 +155,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.7.0"
+          "text": "1.7.2"
         },
         {
           "class": "DepictionTableTextView",
