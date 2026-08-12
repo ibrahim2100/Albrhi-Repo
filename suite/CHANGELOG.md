@@ -1,5 +1,15 @@
 # Albrhi Changelog
 
+## v1.8.0
+
+**X: the save button is now inside the full-screen video — the swipe-up reels feed.** It
+joins the row of playback controls beside like, reply and share, placed by that row itself
+rather than floated over the corner, which is why it lands where the earlier one did not.
+Learned from reading the reference tweak's binary — the class the old button used is not in
+it; this one is.
+
+Includes X 0.6.0.
+
 ## v1.7.3
 
 **X: the save button lands inside the video every time now**, not just on a recycled

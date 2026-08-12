@@ -90,6 +90,18 @@ live in `T1Twitter.framework`, and `TFS*`/`TAE*`/`TFN*` in `TwitterSPMMigration`
 build has no switch layer. `NSClassFromString` asks every loaded image, which is why the
 Twitter tweak binds that way and not by scanning.
 
+**The in-video save button goes on the immersive player's control stack, not on an inline
+media view.** Four X releases put a floating button on `T1InlineMediaView` and it never
+appeared inside the video — and reading TWIGalaxy's binary said why: that class is not in it
+at all. What a working tweak hooks for an in-video button is one Swift class,
+`_TtC14T1TwitterSwift39ImmersiveInlinePlaybackButtonsStackView` — the row of playback
+controls in X's immersive (swipe-up, reels-style) player — and it adds the button there as an
+**arranged subview**, so the stack lays it out beside like and share on its own. A floating
+button fought `layoutSubviews`; an arranged one in a `UIStackView` is inside the picture by
+construction. The media is reached by walking up to `ImmersiveCardView`, whose model knows
+what is playing. The two older button surfaces are kept and the diagnostics report names
+which of the three attached, so "no button" is never four silent reasons at once.
+
 **And X answers its own feature questions in one place.** `-boolForKey:` on
 `TFSFeatureSwitches`, `TFSCachingFeatureSwitchProvider` and `TPSTwitterFeatureSwitches`
 (`B24@0:8@16` on all three) gates a large share of what the app does — so the tweak hooks
@@ -577,7 +589,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.5** · YouTube **1.12.4** · X **0.5.3** · Locket **0.2.1** · Panel **0.6.2** · suite **1.7.3**.
+Instagram **4.1.5** · YouTube **1.12.4** · X **0.6.0** · Locket **0.2.1** · Panel **0.6.2** · suite **1.8.0**.
 
 - **Working, Instagram:** inline download button (posts + reels), Download Center queue,
   story seen-receipt control, per-message mark-as-seen in DMs, follow-back badge, feed and

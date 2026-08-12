@@ -1,5 +1,20 @@
 # Albrhi for X — what changed
 
+## v0.6.0
+
+**The save button is inside the video now, in the full-screen player — the reels-style feed.**
+
+The earlier button was on the wrong view. Reading the reference tweak's binary settled it:
+the class the old button attached to does not exist in it at all, and the button it does
+show inside a video goes into the row of playback controls in X's immersive, swipe-up video
+player — as a real member of that row, not a floating badge. So the stack lays it out beside
+like, reply and share on its own, which is exactly why it appears where the floating one
+never did.
+
+The two older buttons stay for now, and the report under the two-finger hold names which of
+the three attached — so a phone can say plainly where the button is and is not, instead of
+four silent reasons for the same blank.
+
 ## v0.5.3
 
 **The save button lands inside the video now, every time — not just on a recycled cell.**
