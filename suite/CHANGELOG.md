@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.7.3
+
+**X: the save button lands inside the video every time now**, not just on a recycled
+cell — the search for the video was running before the timeline had sized anything, and
+now runs after.
+
+Includes X 0.5.3.
+
 ## v1.7.2
 
 Fixes the build 1.7.1 broke before it produced anything.

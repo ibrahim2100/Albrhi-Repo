@@ -577,7 +577,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.5** · YouTube **1.12.4** · X **0.4.0** · Locket **0.2.0** · Panel **0.6.1** · suite **1.6.0**.
+Instagram **4.1.5** · YouTube **1.12.4** · X **0.5.3** · Locket **0.2.1** · Panel **0.6.2** · suite **1.7.3**.
 
 - **Working, Instagram:** inline download button (posts + reels), Download Center queue,
   story seen-receipt control, per-message mark-as-seen in DMs, follow-back badge, feed and

@@ -320,22 +320,30 @@ static void SCITWPlaceSaveButton(UIView *host, UIView *view) {
 }
 
 
-/// The same, one turn of the runloop later.
+/// The video search and the placement, both one turn of the runloop later.
 ///
 /// `didMoveToWindow` runs before the view has been laid out, so at that moment the media
-/// view inside it is very often still zero by zero -- and the search above rejects anything
-/// under 120 points, so it would find nothing and the button would land on the tweet's own
-/// corner, which is the placement this release exists to stop.
+/// view inside it is very often still zero by zero. The first version of this ran
+/// `SCITWMediaSubview` immediately, at the call site, and only deferred the placement --
+/// so the search still ran against an unlaid-out tree, found nothing over 120 points,
+/// fell back to the status view itself, and the button landed on the tweet's corner
+/// instead of the video every single time, not only on a fresh cell. Moving the search
+/// inside the dispatched block is the fix: by the time it runs, layout has happened, the
+/// video view has its real size, and the button lands inside it -- the frame, not the post
+/// around it, the same as Instagram's reel download button.
 ///
 /// A dispatch to the main queue is after that layout pass and still outside it: nothing is
 /// invalidated, so none of the recursion the other button caused is possible here. The view
 /// is held weakly because a cell can be recycled or released in between, and a strong
 /// capture would keep it alive to be decorated for no one.
-void SCITWAddSaveButtonSoon(UIView *host, UIView *view) {
-    __weak UIView *weakHost = host;
+void SCITWAddSaveButtonSoon(UIView *view) {
     __weak UIView *weakView = view;
     dispatch_async(dispatch_get_main_queue(), ^{
-        SCITWPlaceSaveButton(weakHost, weakView);
+        UIView *strongView = weakView;
+        if (!strongView) return;
+
+        UIView *host = SCITWMediaSubview(strongView) ?: strongView;
+        SCITWPlaceSaveButton(host, strongView);
     });
 }
 
@@ -354,7 +362,7 @@ void SCITWAddSaveButtonSoon(UIView *host, UIView *view) {
 
 - (void)didMoveToWindow {
     %orig;
-    SCITWAddSaveButtonSoon(SCITWMediaSubview(self) ?: self, self);
+    SCITWAddSaveButtonSoon(self);
 }
 
 %end
@@ -368,7 +376,7 @@ void SCITWAddSaveButtonSoon(UIView *host, UIView *view) {
 
 - (void)didMoveToWindow {
     %orig;
-    SCITWAddSaveButtonSoon(SCITWMediaSubview(self) ?: self, self);
+    SCITWAddSaveButtonSoon(self);
 }
 
 %end
@@ -382,7 +390,7 @@ void SCITWAddSaveButtonSoon(UIView *host, UIView *view) {
 
 - (void)didMoveToWindow {
     %orig;
-    SCITWAddSaveButtonSoon(SCITWMediaSubview(self) ?: self, self);
+    SCITWAddSaveButtonSoon(self);
 }
 
 %end

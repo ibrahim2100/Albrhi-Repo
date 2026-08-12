@@ -51,20 +51,27 @@ static const void *kItemKey = &kItemKey;
 ///
 /// Four integers. They cost nothing and they answer the question in one round trip.
 ///
+/// **The fourth one is honest about what it counts.** Placement is deferred a turn of the
+/// runloop -- SCITWAddSaveButtonSoon does not report back whether a button actually went
+/// up -- so this file cannot know that synchronously. It used to increment on every
+/// `-didMoveToWindow` regardless, which counts appearances of the view, not buttons, and a
+/// report that says "buttons placed" when it means "times we asked" is the same overclaim
+/// this project keeps writing rules against elsewhere. Named for what it is instead.
+///
 static BOOL sciClassPresent = NO;
 static BOOL sciHookAttached = NO;
 static NSUInteger sciModelsSeen = 0;
 static NSUInteger sciItemsResolved = 0;
-static NSUInteger sciButtonsPlaced = 0;
+static NSUInteger sciPlacementAttempts = 0;
 
 NSString *SCITWInlineButtonReport(void) {
     if (!sciClassPresent) return @"T1InlineMediaView is not in this build";
     if (!sciHookAttached) return @"T1InlineMediaView found, hook not installed";
 
     return [NSString stringWithFormat:
-        @"%lu models, %lu with media, %lu buttons placed",
+        @"%lu models, %lu with media, %lu placements attempted",
         (unsigned long)sciModelsSeen, (unsigned long)sciItemsResolved,
-        (unsigned long)sciButtonsPlaced];
+        (unsigned long)sciPlacementAttempts];
 }
 
 /// The entity behind a view model, however that model is shaped.
@@ -148,14 +155,15 @@ static id SCITWEntityFromViewModel(id viewModel) {
     //
     // That is the whole of what the owner asked for: a button inside the picture, there
     // while swiping from one video to the next, rather than one bolted to the corner of a
-    // timeline cell. T1InlineMediaView is the surface X shows every video and photo in --
-    // timeline, tweet detail, the fullscreen viewer, a quoted post, a DM -- so a button on
-    // it is inside the video wherever the video is.
+    // timeline cell -- the same placement Instagram's reel download button uses. This class
+    // name itself contains "InlineMedia", so the shared search matches this view before it
+    // matches any subview, and the deferred host resolution lands on it once layout has
+    // given it a real size.
     //
     // What to save is searched for upward from here, because this view's own model answers
     // nothing. The shared placement takes the two separately for exactly that reason.
-    SCITWAddSaveButtonSoon(self, self);
-    sciButtonsPlaced++;
+    SCITWAddSaveButtonSoon(self);
+    sciPlacementAttempts++;
 }
 
 %end

@@ -1,5 +1,16 @@
 # Albrhi for X — what changed
 
+## v0.5.3
+
+**The save button lands inside the video now, every time — not just on a recycled cell.**
+
+0.5.1 put the button on the video, but the search for the video ran too early: the
+moment it looked, the timeline had not yet sized anything, so the search found nothing
+and the button fell back to the corner of the tweet — the exact placement it was meant
+to replace. The search now runs after layout, once the video has its real size, so it
+lands in the frame and stays there while you swipe between videos, the same as
+Instagram's reel download button.
+
 ## v0.5.2
 
 Fixes the build. 0.5.1 did not compile.

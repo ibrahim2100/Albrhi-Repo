@@ -8,7 +8,7 @@
 #import "Features/Media/SCITWInlineButton.h"
 #import "Features/Media/SCITWStatusButton.h"
 
-NSString *SCIVersionString = @"v0.5.2";  // AlbrhiTW
+NSString *SCIVersionString = @"v0.5.3";  // AlbrhiTW
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written
