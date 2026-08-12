@@ -1,5 +1,15 @@
 # Albrhi Changelog
 
+## v1.8.1
+
+**X: the timeline save button shows while scrolling now, not only after opening a post.**
+It was placed once, the first time a video's view was ever created, and a timeline reuses
+that same view for every post scrolled past — so it stayed on whatever was first on
+screen and never reached anything scrolled to afterward. It is placed on every post now,
+the moment X hands that view its content.
+
+Includes X 0.6.1.
+
 ## v1.8.0
 
 **X: the save button is now inside the full-screen video — the swipe-up reels feed.** It

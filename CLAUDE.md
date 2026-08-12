@@ -102,6 +102,17 @@ construction. The media is reached by walking up to `ImmersiveCardView`, whose m
 what is playing. The two older button surfaces are kept and the diagnostics report names
 which of the three attached, so "no button" is never four silent reasons at once.
 
+**A recycled table or collection view cell is never removed from its window, so
+`-didMoveToWindow` fires once for its whole life and never again on reuse.** The inline and
+status buttons were both triggered from `-didMoveToWindow` alone, and both appeared on the
+first screenful of a fresh scroll and nowhere after — every cell recycled after that got a
+new post and no signal to add or refresh a button for it. Opening a tweet worked regardless,
+because a push builds genuinely new views, which do enter a window for the first time.
+`-setViewModel:` is the actual bind point: it fires on first appearance and on every reuse
+alike, and it was already being hooked on all four classes to count models for the
+diagnostics report — the fix was asking it to trigger placement too, not only count.
+`-didMoveToWindow` stays as a fallback for a view windowed before its model is ever set.
+
 **And X answers its own feature questions in one place.** `-boolForKey:` on
 `TFSFeatureSwitches`, `TFSCachingFeatureSwitchProvider` and `TPSTwitterFeatureSwitches`
 (`B24@0:8@16` on all three) gates a large share of what the app does — so the tweak hooks

@@ -26,13 +26,26 @@
 ///
 /// So this is that arrangement, and every part of it is read rather than supposed.
 ///
-/// ## Why didMoveToWindow and not layoutSubviews
+/// ## Why setViewModel:, with didMoveToWindow only as a fallback
 ///
-/// The other button adds itself during `-layoutSubviews`, and that is very likely the
-/// crash the owner reported: adding a subview and activating constraints inside a layout
-/// pass invalidates the layout that is running, which asks for another. `didMoveToWindow`
-/// runs when the view enters a window -- once per appearance, outside layout, with the view
-/// already sized. Nothing here asks for a new layout at all.
+/// The first version of this placed on `didMoveToWindow` alone, which runs once when a view
+/// is first inserted into a window and does not run again for a cell that is scrolled out
+/// and back in -- table and collection view reuse keeps the same view instance resident in
+/// the window and rebinds it through the model instead. That is why the button appeared on
+/// the first screenful of a fresh scroll and nowhere after: every recycled cell got a new
+/// post and no signal to say so. Opening a tweet worked because a push creates a genuinely
+/// new view, which does enter a window.
+///
+/// `-setViewModel:` is the bind point, runs on first appearance and on every reuse alike,
+/// and it is the same selector `SCITWFirstSaveableInStatusView` already reads through
+/// `-viewModel` -- if the getter is there, so is the synthesized setter. `didMoveToWindow`
+/// stays only for the rarer case of a view windowed with its model already set and no
+/// further bind expected; placement is idempotent either way, found by tag and refreshed
+/// rather than duplicated.
+///
+/// Neither hook activates a constraint or forces a layout pass -- the button is a frame,
+/// set once layout has already run -- which is unrelated to this fix but still the reason
+/// neither one can retrigger the crash the owner reported earlier.
 ///
 /// ## Why a tag and not an associated object
 ///
@@ -220,7 +233,6 @@ static UIView *SCITWMediaSubview(UIView *root) {
     return best;
 }
 
-/// Adds the button, or leaves the one already there alone.
 /// Places the button, and works out where from what it was handed.
 ///
 /// `host` is where the button goes. `view` is where the search for a model starts, which is
@@ -356,9 +368,19 @@ void SCITWAddSaveButtonSoon(UIView *view) {
 // way and tools/check.py caught all three before Theos ever saw them, which is the whole
 // reason that rule is a check and not a paragraph.
 
+// -setViewModel: is the real trigger on each of these three, for the reason above:
+// -didMoveToWindow fires once for a cell's whole recycled life, -setViewModel: fires on
+// every bind. -didMoveToWindow stays as a fallback for the one case a view is windowed
+// before its model is ever set.
+
 %group StandardStatus
 
 %hook T1StandardStatusView
+
+- (void)setViewModel:(id)viewModel {
+    %orig;
+    SCITWAddSaveButtonSoon(self);
+}
 
 - (void)didMoveToWindow {
     %orig;
@@ -374,6 +396,11 @@ void SCITWAddSaveButtonSoon(UIView *view) {
 
 %hook T1TweetDetailsFocalStatusView
 
+- (void)setViewModel:(id)viewModel {
+    %orig;
+    SCITWAddSaveButtonSoon(self);
+}
+
 - (void)didMoveToWindow {
     %orig;
     SCITWAddSaveButtonSoon(self);
@@ -387,6 +414,11 @@ void SCITWAddSaveButtonSoon(UIView *view) {
 %group ConversationStatus
 
 %hook T1ConversationFocalStatusView
+
+- (void)setViewModel:(id)viewModel {
+    %orig;
+    SCITWAddSaveButtonSoon(self);
+}
 
 - (void)didMoveToWindow {
     %orig;

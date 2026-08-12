@@ -1,8 +1,6 @@
 #import <UIKit/UIKit.h>
-#import <objc/runtime.h>
 #import "SCITWInlineButton.h"
 #import "SCITWMedia.h"
-#import "SCITWDownload.h"
 #import "SCITWStatusButton.h"
 #import "Prefs.h"
 #import "SCILog.h"
@@ -13,31 +11,35 @@
 /// and `self` typed as a forward-declared class cannot be sent a message -- not even
 /// `-respondsToSelector:`, which is why the build failed on the guard rather than on the
 /// property. Declaring it a UIView subclass with the one method used gives the compiler the
-/// type it needs; `-overlayChromesContainerView` is X's own, reached through this rather
-/// than by a stringly-typed `-valueForKey:`.
+/// type it needs.
 @interface T1InlineMediaView : UIView
-- (UIView *)overlayChromesContainerView;
 - (void)setViewModel:(id)viewModel;
 @end
 
 ///
-/// The button, on X's own inline media view.
+/// The button, on X's own video/photo view.
 ///
 /// `T1InlineMediaView` is the surface every video and photo is shown in -- timeline, full
-/// screen, quoted post, direct message. It already carries an overlay of chrome (the play
-/// button, the audio toggle) in `overlayChromesContainerView`, and the button goes there so
-/// it appears and disappears with the rest of the chrome rather than sitting on top of a
-/// playing video forever.
+/// screen, quoted post, direct message. `SCITWPlaceSaveButton` (SCITWStatusButton.x) puts
+/// the button directly on it at a fixed corner, which is what makes the button inside the
+/// picture wherever the picture is.
 ///
-/// The media comes from the view's own `-viewModel`. That object is one of several classes
-/// depending on the surface, so the entity is reached by asking -- `-mediaEntity` directly,
-/// or a media-info holder's `-mediaEntity` -- rather than by assuming one shape. A view
-/// whose model yields no saveable entity gets no button, which is the same rule the list
-/// uses and the reason a photo-only post does not sprout one.
+/// This view's own `-viewModel` is not where the media comes from -- a device report
+/// settled that: twenty-five models arrived and not one yielded media, because the model
+/// here is the video's own, not the post's. `SCITWEntityFromViewModel` below exists only
+/// to count that for the report; the real save target is resolved by
+/// `SCITWPlaceSaveButton` walking upward until an ancestor's model answers.
 ///
-
-static const void *kButtonKey = &kButtonKey;
-static const void *kItemKey = &kItemKey;
+/// **Placement triggers from `-setViewModel:`, not only from `-didMoveToWindow`.** A cell
+/// scrolled out of view and back in during a timeline scroll is not removed from its window
+/// and reinserted -- it stays resident and is *reused*, rebound to a new post through this
+/// exact method, and `-didMoveToWindow` never fires again for it. That is why the button
+/// used to appear on the first screenful of a scroll and nowhere after: everything past the
+/// first reused batch of cells got no trigger at all. Opening a tweet worked regardless,
+/// because pushing a new screen builds genuinely new views, which do enter a window.
+/// `-setViewModel:` runs on first appearance and on every reuse alike -- the twenty-five
+/// calls in that same report are exactly the proof.
+///
 
 ///
 /// What actually happened, for the report.
@@ -103,32 +105,6 @@ static id SCITWEntityFromViewModel(id viewModel) {
 }
 
 
-@interface SCITWInlineButtonTarget : NSObject
-+ (instancetype)shared;
-- (void)tapped:(UIButton *)button;
-@end
-
-@implementation SCITWInlineButtonTarget
-
-+ (instancetype)shared {
-    static SCITWInlineButtonTarget *shared = nil;
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{ shared = [[SCITWInlineButtonTarget alloc] init]; });
-    return shared;
-}
-
-- (void)tapped:(UIButton *)button {
-    // The item is resolved at layout and kept on the button, not resolved on the tap: by
-    // the time a video is tapped its view model may have been handed to a different post as
-    // the cell is reused, and saving what is on screen now rather than what was under the
-    // finger is the kind of bug that ships and is blamed on "it saved the wrong video".
-    SCITWMediaItem *item = objc_getAssociatedObject(button, kItemKey);
-    if (item) [SCITWDownload save:item];
-}
-
-@end
-
-
 %group InlineButton
 
 %hook T1InlineMediaView
@@ -136,32 +112,27 @@ static id SCITWEntityFromViewModel(id viewModel) {
 - (void)setViewModel:(id)viewModel {
     %orig;
 
-    // Counted, and nothing else.
-    //
-    // This is what the report was for and what it settled: twenty-five models arrived here
-    // and not one of them yielded media. So the model on this view is not the one that
-    // knows -- the tweet's is, two views up -- and asking this one was the whole reason a
-    // button never appeared. The placement below does not consult it at all.
+    // Counted, and now also the real trigger -- see the class doc above for why
+    // -didMoveToWindow alone left every recycled cell in a timeline with no button.
     sciModelsSeen++;
 
     id entity = SCITWEntityFromViewModel(viewModel);
     if (entity && [SCITWMedia itemForEntity:entity]) sciItemsResolved++;
+
+    SCITWAddSaveButtonSoon(self);
+    sciPlacementAttempts++;
 }
 
 - (void)didMoveToWindow {
     %orig;
 
-    // The button goes on **this** view, which is the video.
+    // Kept as a second trigger, not the first any more.
     //
-    // That is the whole of what the owner asked for: a button inside the picture, there
-    // while swiping from one video to the next, rather than one bolted to the corner of a
-    // timeline cell -- the same placement Instagram's reel download button uses. This class
-    // name itself contains "InlineMedia", so the shared search matches this view before it
-    // matches any subview, and the deferred host resolution lands on it once layout has
-    // given it a real size.
-    //
-    // What to save is searched for upward from here, because this view's own model answers
-    // nothing. The shared placement takes the two separately for exactly that reason.
+    // A view can in principle enter a window with its model already set and receive no
+    // further -setViewModel: call before becoming visible -- rare, but a fallback that
+    // costs one more dispatch is cheaper than a video with no button in the one case it
+    // happens. SCITWPlaceSaveButton is idempotent either way: a button already there is
+    // found by its tag and only refreshed, never duplicated.
     SCITWAddSaveButtonSoon(self);
     sciPlacementAttempts++;
 }

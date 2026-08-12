@@ -1,5 +1,19 @@
 # Albrhi for X — what changed
 
+## v0.6.1
+
+**The timeline button showed on the first screenful of a scroll and nowhere after.** It
+was placed the moment the video view first appeared in a window, which happens once for a
+genuinely new view — and a timeline cell that scrolls out and back in is not a new view,
+it is the same one reused with new content. So the button from the top of the feed stayed
+exactly there while every recycled cell below it got nothing, and opening a tweet worked
+only because that builds a fresh view. The reels-style player added in 0.6.0 never had
+this problem and needs no change.
+
+It is placed from the video's own bind point now, on the tweet's view and the video view
+alike, which fires on first appearance and on every reuse — the same one Diagnostics had
+already been counting correctly the whole time, from asking it the wrong question.
+
 ## v0.6.0
 
 **The save button is inside the video now, in the full-screen player — the reels-style feed.**
