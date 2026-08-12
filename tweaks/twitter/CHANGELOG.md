@@ -1,5 +1,14 @@
 # Albrhi for X — what changed
 
+## v0.6.2
+
+**Diagnostics now says whether the button actually landed on the video, or on the tweet
+as a fallback.** The placement logic already prefers the video view -- it searches for it
+by name and size before falling back to the tweet's own view -- but that was a claim about
+what the code intends, not a measurement of what happens on a real timeline. The report
+now reads it from the live view hierarchy at the moment each button is shown: how many
+buttons landed on the video itself, and how many fell back to the tweet.
+
 ## v0.6.1
 
 **The timeline button showed on the first screenful of a scroll and nowhere after.** It

@@ -89,6 +89,13 @@ static BOOL sciConversationPresent = NO;
 static NSUInteger sciButtonsAdded = 0;
 static NSUInteger sciMediaFound = 0;
 
+/// Where the button actually landed, not where the code intends it to. Read from the
+/// live view hierarchy at the moment of placement rather than asserted, because a class
+/// dump says what a view is called and nothing about whether the search found it -- the
+/// same gap that cost this feature four releases the first time.
+static NSUInteger sciOnMediaView = 0;
+static NSUInteger sciOnFallback = 0;
+
 
 @interface SCITWStatusButtonTarget : NSObject
 + (instancetype)shared;
@@ -280,6 +287,16 @@ static void SCITWPlaceSaveButton(UIView *host, UIView *view) {
         return;
     }
 
+    // Whether `host` -- where the button is about to be shown -- is the video itself or
+    // the fallback. Matched by the same substring `SCITWMediaSubview` uses to find it, so
+    // this reports the same fact that function acted on rather than a second opinion.
+    NSString *hostClass = NSStringFromClass([host class]);
+    if ([hostClass containsString:@"InlineMedia"] || [hostClass containsString:@"MediaView"]) {
+        sciOnMediaView++;
+    } else {
+        sciOnFallback++;
+    }
+
     if (existing) {
         existing.hidden = NO;
         // Refreshed, because this view has been recycled and may be showing a different
@@ -438,9 +455,16 @@ NSString *SCITWStatusButtonReport(void) {
 
     if (!attached.count) return @"no status view class in this build";
 
-    return [NSString stringWithFormat:@"%@ · %lu with media, %lu buttons added",
-            [attached componentsJoinedByString:@"+"],
-            (unsigned long)sciMediaFound, (unsigned long)sciButtonsAdded];
+    // "on video" vs "on tweet" -- the answer to whether the button actually landed inside
+    // the picture, from the view hierarchy at placement time rather than from what the
+    // code was written to do. The two counts move every time a post is shown or a cell is
+    // recycled, so a low "on tweet" count next to a high "on video" one means the fallback
+    // is doing what it is for -- covering the rare miss -- and not carrying the feature.
+    return [NSString stringWithFormat:
+        @"%@ · %lu with media, %lu buttons added (%lu on video, %lu on tweet)",
+        [attached componentsJoinedByString:@"+"],
+        (unsigned long)sciMediaFound, (unsigned long)sciButtonsAdded,
+        (unsigned long)sciOnMediaView, (unsigned long)sciOnFallback];
 }
 
 void SCITWInstallStatusButton(void) {

@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.8.2
+
+**X: Diagnostics now says whether the save button is really on the video**, or fell back
+to the tweet's own view -- read from the device rather than assumed from the code.
+
+Includes X 0.6.2.
+
 ## v1.8.1
 
 **X: the timeline save button shows while scrolling now, not only after opening a post.**

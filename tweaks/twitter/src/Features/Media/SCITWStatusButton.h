@@ -21,7 +21,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// Hooks whichever of X's status views this build has. Safe when it has none.
 void SCITWInstallStatusButton(void);
 
-/// Which classes attached, how many tweets held media, how many buttons were added.
+/// Which classes attached, how many tweets held media, how many buttons were added, and
+/// how many of those actually landed on the video itself versus the tweet's own view as a
+/// fallback -- read from the live hierarchy at the moment each button was shown, not
+/// asserted from what the code intends.
 NSString *SCITWStatusButtonReport(void);
 
 /// The first saveable media on the tweet a view is showing, or nil.
