@@ -230,7 +230,16 @@ verify_versions() {
     #
     # The older published releases are still gathered and still served, so anyone who has
     # them can still see and roll back to them. They are simply not what must be present.
-    for control in "$(dirname "$0")"/../suite/control; do
+    local controls="$(dirname "$0")/../suite/control"
+    # A tweak that publishes its own releases -- CarPlay is the first -- has to be
+    # asserted here too, or its gather would happily deploy an index missing the
+    # version it was just built to publish. Suite-bundled tweaks have no entry of
+    # their own; only OWNER_TWEAK names one when it does.
+    if [ -n "$OWNER_TWEAK" ]; then
+        controls="${controls} $(dirname "$0")/../tweaks/${OWNER_TWEAK}/control"
+    fi
+
+    for control in $controls; do
         [ -f "$control" ] || continue
 
         local package version
@@ -289,10 +298,18 @@ missing="$(verify_versions)"
 if [ -n "$missing" ]; then
     echo "::warning::Missing from the listing:${missing} — asking for those releases by name."
 
-    # The same one the check above names. fetch_by_tag tries "<name>-v<version>",
+    # The same ones the check above names. fetch_by_tag tries "<name>-v<version>",
     # "v<version>" and "<version>" in that order, and the suite's tag is the middle one.
     version=$(awk -F': *' '/^Version:/ {print $2; exit}' "$(dirname "$0")/../suite/control")
     [ -n "$version" ] && fetch_by_tag "albrhi" "$version"
+
+    # And the run's own tweak, if it publishes independently of the suite -- its
+    # tag is "<tweak>-v<version>", which fetch_by_tag tries first.
+    if [ -n "$OWNER_TWEAK" ] && [ -f "$(dirname "$0")/../tweaks/${OWNER_TWEAK}/control" ]; then
+        tweak_version=$(awk -F': *' '/^Version:/ {print $2; exit}' \
+            "$(dirname "$0")/../tweaks/${OWNER_TWEAK}/control")
+        [ -n "$tweak_version" ] && fetch_by_tag "$OWNER_TWEAK" "$tweak_version"
+    fi
 
     missing="$(verify_versions)"
 fi

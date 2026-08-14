@@ -1,20 +1,16 @@
 # Albrhi Changelog
 
+## v1.9.1
+
+**CarPlay is out of this package.** 1.9.0 folded it in for a day; it does not touch any
+of the apps this suite patches and has nothing to do with them, so it now ships and
+updates on its own — `com.albrhi.carplay`, its own release, its own source entry. Nothing
+else changed.
+
 ## v1.9.0
 
-**A fifth tweak: Albrhi CarPlay.** Its first release does one thing — keeps your car's
-speakers in high quality while Camera is recording, instead of dropping to phone-call
-quality the moment a microphone is needed too. Output and input are asked for
-separately: the car stays on its high-quality profile, recording uses the iPhone's own
-mic. Two calls to ordinary, documented iOS audio settings, nothing more.
-
-The app launcher, dashboard, wallpapers and themes are not in this release. Putting
-another app's screen on CarPlay means working through private, deeply system-level
-APIs that a mistake in does not crash one app but can crash the whole home screen —
-worth building carefully, on a real device, one confirmed step at a time, not in one
-release nobody has tested yet.
-
-Includes CarPlay 0.1.0.
+A fifth tweak, Albrhi CarPlay, was briefly included in this release. It has since moved
+to its own package — see v1.9.1 and `com.albrhi.carplay`.
 
 ## v1.8.2
 

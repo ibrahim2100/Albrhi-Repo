@@ -41,10 +41,14 @@ rm -rf "${STAGE}"
 mkdir -p "${STAGE}"
 
 # Every directory under tweaks/ that has a control file, in a fixed order so the
-# package is byte-identical between runs that changed nothing.
+# package is byte-identical between runs that changed nothing -- except one that
+# opts itself out. CarPlay is the first: it patches SpringBoard and Camera for a
+# feature that has nothing to do with the social apps this package bundles, so it
+# publishes and updates on its own instead of riding along in here.
 for TWEAK_PATH in "${ROOT}"/tweaks/*/; do
     TWEAK="$(basename "${TWEAK_PATH}")"
     [ -f "${TWEAK_PATH}/control" ] || continue
+    [ -f "${TWEAK_PATH}/.no-suite" ] && { echo ""; echo "=== ${TWEAK} (skipped — not part of the suite)"; continue; }
 
     echo ""
     echo "=== ${TWEAK}"

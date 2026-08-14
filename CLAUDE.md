@@ -11,7 +11,8 @@ code, comments and user-facing strings are English + Arabic.
 
 ## What this is
 
-Tweaks for jailbroken and sideloaded iOS. **Six of them**, and one package:
+Tweaks for jailbroken and sideloaded iOS. **Six of them**, five in one package and one
+standing on its own:
 
 | directory | package | what it patches |
 |---|---|---|
@@ -19,9 +20,18 @@ Tweaks for jailbroken and sideloaded iOS. **Six of them**, and one package:
 | `tweaks/youtube` | `com.albrhi.youtube` | YouTube, tested on **21.30.5** |
 | `tweaks/twitter` | `com.albrhi.twitter` | X / Twitter, tested on **12.15** |
 | `tweaks/locket` | `com.albrhi.locket` | Locket, tested on **2.46.1** |
-| `tweaks/carplay` | `com.albrhi.carplay` | SpringBoard + Camera — CarPlay, not one app |
 | `tweaks/panel` | `com.albrhi.panel` | the Settings app — the per-app switches |
-| `suite/` | **`com.albrhi`** | all of the above, in one package |
+| `suite/` | **`com.albrhi`** | the four social-app tweaks and the panel, in one package |
+| `tweaks/carplay` | `com.albrhi.carplay` | SpringBoard + Camera — CarPlay, **released on its own** |
+
+**CarPlay is not in `com.albrhi`, on purpose.** It patches SpringBoard and Camera for a
+car-display feature with no relationship to the social apps the suite bundles —
+installing Albrhi should not mean installing something for a car nobody asked about.
+`tools/make-suite.sh` skips any `tweaks/*/` directory that carries a `.no-suite` marker
+file, which is the only thing that keeps a tweak out of the merge; CarPlay is the first
+to have one. It ships and updates through its own package, its own release tag
+(`carplay-v*`), and its own workflow, `buildcarplay.yml` — the one other tweak besides
+the suite that actually publishes; see the CI section for why the rest do not.
 
 The Instagram tweak is derived from [SCInsta](https://github.com/SoCuul/SCInsta) by
 SoCuul under GPLv3. Original authorship is credited in-app, in the README and in the
@@ -37,11 +47,13 @@ reference here** — this project reads open, licensed source for a technique, n
 competitor's paid binary to clone it feature by feature. See the ground rule below for
 why the display mechanism itself is not built yet.
 
-**`com.albrhi` is what people install.** The individual packages are still built and
-still published, but the suite is the front door: one thing to install, one thing to
-update, and a new tweak arrives inside it rather than as a second download. It declares
-`Conflicts` and `Replaces` on all twelve individual identities (rootless and roothide) —
-and that is not enough on its own, see the ground rule below.
+**`com.albrhi` is what people install for the social apps.** The individual packages are
+still built and still published, but the suite is the front door for Instagram, YouTube,
+X, Locket and the panel: one thing to install, one thing to update, and a new
+social-app tweak arrives inside it rather than as a second download. It declares
+`Conflicts` and `Replaces` on all ten of those individual identities (rootless and
+roothide) — and that is not enough on its own, see the ground rule below. CarPlay is
+deliberately not one of them; see above.
 
 The repository doubles as an **APT source**: it builds itself, publishes releases,
 and serves a Sileo/Zebra repo from GitHub Pages.
@@ -332,28 +344,38 @@ Create `tweaks/<name>/` with a `Makefile` (ending in
 a `SCIVersionString` matching `control`. `tools/check.py` finds it automatically
 and checks it like the others; `./build.sh <name> rootless` builds it.
 
-Releasing it means **its own workflow**, modelled on `buildyoutube.yml`: its own
-version gate, its own tag namespace (`youtube-v*`, so two tweaks' versions can
-never be confused on one releases page), its own assets. Separate workflows rather
-than one job per tweak, so a tweak that will not compile can never block another
-tweak's release.
+Most new tweaks belong inside `com.albrhi`, and need no workflow of their own at all:
+`make-suite.sh` picks up any `tweaks/*/control` automatically, so joining the suite is
+the default and costs nothing but a version bump in `suite/control`.
 
-**The one thing they cannot help sharing is the APT index, and that was the trap.**
-`make-repo.sh` wipes `debs/` and rebuilds it on purpose, so an index built from one
-tweak's build output would erase the other tweak from the source. Both workflows
-therefore build the index from what is **published** — `tools/fetch-published-debs.sh`
-gathers the newest three versions of every package from the releases — and both take
-the `albrhi-pages` concurrency group so they never write `gh-pages` at once.
+A tweak only earns its **own publishing workflow** when it has nothing to do with what
+the suite bundles — CarPlay is the only one so far, and `buildcarplay.yml` (modelled
+on the historical `buildyoutube.yml`, from back when every tweak published on its own)
+is the pattern to copy: its own version gate, its own tag namespace (`carplay-v*`, so
+two packages' versions can never be confused on one releases page), its own assets, and
+a `.no-suite` marker file in the tweak's directory so `make-suite.sh` does not also pull
+it into the combined package. Separate workflows rather than one job per tweak, so a
+tweak that will not compile can never block another tweak's release.
 
-Both also deploy, and this file used to say that made the order they run in irrelevant.
-**It does not, and the correction is worth keeping.** That only holds if both gathers see
-the same set of releases, and a release published *between* them breaks it: both runs
-started at 11:53:02, YouTube published 0.10.1 at 11:54:36, and the run that had already
+**The one thing two publishers cannot help sharing is the APT index, and that was the
+trap.** `make-repo.sh` wipes `debs/` and rebuilds it on purpose, so an index built from
+one tweak's build output would erase the other tweak from the source. Both `buildsuite.yml`
+and `buildcarplay.yml` therefore build the index from what is **published** —
+`tools/fetch-published-debs.sh` gathers the newest three versions of every package from
+the releases — and both take the `albrhi-pages` concurrency group so they never write
+`gh-pages` at once.
+
+Two publishers also means the order they run in is not automatically safe.
+**This file used to say a shared gather made the order irrelevant, and the correction is
+worth keeping.** That only holds if both gathers see the same set of releases, and a
+release published *between* them breaks it: both runs started at 11:53:02, YouTube
+published 0.10.1 at 11:54:36 back when it still published, and the run that had already
 gathered deployed an index without it — last. Nothing failed. The release was fine, the
 packages were fine, and the source served a version older than both.
 
-So the gather **states what the index must contain and checks**: every `tweaks/*/control`
-names a package and a version that has to be present. Missing means the listing was read
+So the gather **states what the index must contain and checks**: `suite/control`, and the
+running workflow's own tweak if it has one, each name a package and a version that has to
+be present. Missing means the listing was read
 too early — worth one more look after a pause, then worth failing the run. A red build is
 recoverable in a minute; a source quietly a version behind is not noticed until someone
 asks why the tweak did not update.
@@ -501,21 +523,26 @@ and the others still run.
 
 ## CI, releases and the repo
 
-**Seven workflows, one per thing that ships.**
+**Eight workflows, one per thing that ships.**
 
-| workflow | builds | tags |
-|---|---|---|
-| `buildtweak.yml` | Instagram | `v*` |
-| `buildyoutube.yml` | YouTube | `youtube-v*` |
-| `buildtwitter.yml` | X | `twitter-v*` |
-| `buildlocket.yml` | Locket | `locket-v*` |
-| `buildpanel.yml` | the Settings panel | its own namespace |
-| `buildsuite.yml` | **`com.albrhi`**, the combined package | `v${SUITE_VERSION}` |
-| `build-dav1d.yml` | the AV1 decoder Instagram links | on demand |
+| workflow | builds | tags | publishes? |
+|---|---|---|---|
+| `buildtweak.yml` | Instagram | `v*` | manual build only |
+| `buildyoutube.yml` | YouTube | `youtube-v*` | manual build only |
+| `buildtwitter.yml` | X | `twitter-v*` | manual build only |
+| `buildlocket.yml` | Locket | `locket-v*` | manual build only |
+| `buildpanel.yml` | the Settings panel | its own namespace | manual build only |
+| `buildsuite.yml` | **`com.albrhi`**, the combined package | `v${SUITE_VERSION}` | yes |
+| `buildcarplay.yml` | **`com.albrhi.carplay`** | `carplay-v*` | yes |
+| `build-dav1d.yml` | the AV1 decoder Instagram links | on demand | — |
 
-Separate rather than one job per tweak, so a tweak that will not compile can never block
-another tweak's release. They share the `albrhi-pages` concurrency group so no two write
-`gh-pages` at once.
+Only `buildsuite.yml` and `buildcarplay.yml` publish. The other five per-tweak workflows
+were reduced to manual, non-publishing builds once the suite became the front door for
+everything it bundles — a tweak that will not compile can still block only its own build,
+never another tweak's release, but nothing short of the suite's own run or CarPlay's own
+run ships anything. CarPlay publishes on its own precisely because it is *not* bundled:
+nothing else would ever ship it. They share the `albrhi-pages` concurrency group so no
+two writes to `gh-pages` land at once.
 
 ### Publishing Pages: what three releases established
 

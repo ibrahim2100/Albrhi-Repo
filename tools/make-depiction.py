@@ -135,6 +135,29 @@ YOUTUBE_FEATURES = [
      'it is readable even if nothing else worked.'),
 ]
 
+CARPLAY_FEATURES = [
+    ('The problem',
+     'CarPlay audio is playing over your car\'s speakers. Camera opens, recording '
+     'starts, and the music suddenly sounds like a phone call — because the instant '
+     'a microphone is needed too, iOS drops Bluetooth to the phone-call profile, the '
+     'only one that carries both directions at once.'),
+
+    ('The fix',
+     'Output and input are asked for separately: the car\'s speakers stay on the '
+     'high-quality profile, and the recording uses the iPhone\'s own microphone '
+     'instead of sharing the car\'s. Both are ordinary, documented AVAudioSession '
+     'settings — nothing here reads or changes anything about the call itself.'),
+
+    ('Not yet included',
+     'This is a first release. Showing other apps on the CarPlay screen, wallpapers '
+     'and themes are being built next, carefully and on a real device — none of it '
+     'is in this version.'),
+
+    ('Its own package',
+     'CarPlay has nothing to do with the social apps Albrhi patches, so it ships and '
+     'updates on its own instead of inside the combined package.'),
+]
+
 # Everything that differs between the two package pages, in one place.
 TWEAKS = {
     'instagram': {
@@ -220,6 +243,31 @@ TWEAKS = {
                       'derived from iSponsorBlock by Galactic Dev, GPLv3. Not '
                       'affiliated with, endorsed by or sponsored by YouTube or '
                       'Google._',
+    },
+    'carplay': {
+        'slug': 'albrhi-carplay',                # matches control's Depiction URLs
+        'title': 'Albrhi CarPlay',
+        'accent': '#0A84FF',
+        'features': CARPLAY_FEATURES,
+        'tagline': '**Keeps your car\'s speakers in high quality while Camera is '
+                   'recording**, instead of dropping to phone-call quality the '
+                   'moment a microphone is needed too.\n\nA first release, and its '
+                   'own package — CarPlay has nothing to do with the social apps '
+                   'the combined Albrhi package patches.',
+        'html_tagline': '<strong>Keeps your car\'s speakers in high quality while '
+                        'Camera is recording</strong> — a first release.',
+        'app': 'SpringBoard and Camera',
+        'tested': 'not yet validated on-device',
+        'tested_note': 'Written and checked against `tools/check.py`, but not yet '
+                       'run on a real phone in a real car. Treat the first install '
+                       'as the test.',
+        'rows': [('Architecture informed by', 'carplay-cast by Ethan Arbuckle, '
+                                               'Apache-2.0')],
+        'footer_html': 'GPLv3 · architecture informed by carplay-cast by Ethan '
+                       'Arbuckle (Apache-2.0) · not affiliated with Apple or any '
+                       'car manufacturer.',
+        'disclaimer': '_Free and open source. Not affiliated with, endorsed by or '
+                      'sponsored by Apple or any car manufacturer._',
     },
 }
 

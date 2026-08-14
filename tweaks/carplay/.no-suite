@@ -1,0 +1,4 @@
+This tweak is not part of the combined com.albrhi package. It patches SpringBoard and
+Camera for CarPlay, which has nothing to do with the social apps the suite bundles --
+see the CarPlay section of CLAUDE.md. make-suite.sh skips any tweaks/*/ directory that
+carries this file.
