@@ -7,7 +7,7 @@
 #import "Features/Bridge/SCICPAdmissionSpoof.h"
 #import "Features/Wallpaper/SCICPWallpaperHooks.h"
 
-NSString *SCIVersionString = @"v0.4.0";  // AlbrhiCP
+NSString *SCIVersionString = @"v0.4.1";  // AlbrhiCP
 
 ///
 /// One dylib, three processes.

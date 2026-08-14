@@ -1,5 +1,14 @@
 # Albrhi Panel Changelog
 
+## v0.6.7
+
+**The CarPlay page now says to respring, not just reopen the app, after editing the
+bridged-apps list or the master switch** — SpringBoard's own app-library cache is
+what CarPlay 0.4.1 actually fixed, and it does not always re-evaluate an app just
+because that app relaunched. The bridged-apps footer also names the exact identifier
+format expected and the known "car or phone, not both" limitation for an app that
+has not opted into running two windows at once.
+
 ## v0.6.6
 
 **The CarPlay page can set a custom dashboard wallpaper.** A photo picker

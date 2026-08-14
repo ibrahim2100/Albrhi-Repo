@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.9.6
+
+Includes Panel 0.6.7 — clearer guidance on the CarPlay page (its own separate
+package, not part of this one) after a real device report showed app bridging
+needed a respring, not just reopening the app, and was missing most of its
+admission mechanism. Nothing else in this package changed.
+
 ## v1.9.5
 
 Includes Panel 0.6.6 — a photo picker for Albrhi CarPlay's new dashboard-wallpaper

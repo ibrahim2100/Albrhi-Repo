@@ -255,7 +255,7 @@ static NSString *SCICPEnabledKey(void) {
 
 - (void)setEnabled:(NSNumber *)value specifier:(PSSpecifier *)specifier {
     [self sci_writeBool:value.boolValue forKey:SCICPEnabledKey()];
-    [self showRestartNote];
+    [self showRespringSuggestion];
 }
 
 // MARK: - Audio fix
@@ -399,6 +399,7 @@ static NSString *SCICPEnabledKey(void) {
         NSString *text = sheet.textFields.firstObject.text ?: @"";
         [weakSelf sci_writeString:text forKey:SCICPBridgedAppsKey];
         [weakSelf reloadSpecifiers];
+        [weakSelf showRespringSuggestion];
     }]];
     [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
                                               style:UIAlertActionStyleCancel
@@ -419,10 +420,15 @@ static NSString *SCICPEnabledKey(void) {
 
 // MARK: -
 
-- (void)showRestartNote {
+/// SpringBoard's own app-library cache is what actually admits a bundle to the
+/// CarPlay dashboard, and it does not necessarily re-evaluate an app just because
+/// that app was reopened -- respring is the reliable way to make it ask again.
+/// Suggested rather than forced: a respring is disruptive enough to ask for, never
+/// to do silently after an alert the user may not have read carefully.
+- (void)showRespringSuggestion {
     UIAlertController *note =
-        [UIAlertController alertControllerWithTitle:SCILocalized(@"carplay_master")
-                                            message:SCILocalized(@"switch_restart")
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"carplay_bridge_edit")
+                                            message:SCILocalized(@"carplay_bridge_respring")
                                      preferredStyle:UIAlertControllerStyleAlert];
     [note addAction:[UIAlertAction actionWithTitle:SCILocalized(@"ok")
                                              style:UIAlertActionStyleDefault

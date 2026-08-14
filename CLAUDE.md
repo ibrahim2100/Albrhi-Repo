@@ -346,6 +346,50 @@ The two references remain differently licensed (`carplay-cast`, Apache-2.0; `car
 stated license) and this implementation is written fresh from both, not lifted from
 either.
 
+**0.3.0's admission spoof implemented roughly a third of what carsurf's own
+architecture actually needs, and a real device report on iOS 16.1 is what showed
+which third was missing.** Answering `LSBundleProxy`'s two direct entitlement getters
+was not enough, and each of the following, on its own, is enough to keep an app off
+the dashboard entirely — fixed in 0.4.1:
+
+- **SpringBoard's own app-library code does not ask entitlement questions one key at
+  a time.** It calls `-entitlementValuesForKeys:` in bulk, and on a real device that
+  does not return an `NSDictionary` — it returns a private `LSBundleInfoCachedValues`
+  object, read afterward through its own accessor family
+  (`-boolForKey:`/`-objectForKey:`/…). `SCICPAdmissionSpoof.m` now tags that object
+  when it belongs to a bridged bundle (never replaces it — replacing it is exactly
+  what aborted `carsurf`'s own SpringBoard hook into safe mode on iOS 18, per its own
+  documented war story) and answers capability keys for tagged objects only.
+- **Nothing told CarPlay a bridged app was worth attempting a scene for in the first
+  place.** CarPlay reads what `LSBundleProxy` says an app's own `Info.plist`
+  declares — `UIApplicationSceneManifest`, `SBStarkLaunchModes` — *before* the app
+  is ever launched, to decide whether to try at all. A new file,
+  `SCICPSceneManifestSpoof.m`, adds a `UIWindowSceneSessionRoleCarPlay`
+  configuration to a bridged bundle's declared manifest, preserving every
+  configuration the app already has.
+- **Multi-scene support was never forced.** Virtually every modern app carries
+  *some* scene manifest (Xcode has defaulted to one since iOS 13) without ever
+  opting into `UIApplicationSupportsMultipleScenes` — almost nothing needs a second
+  window on the phone itself. Left unforced, the phone scene and the car scene
+  cannot coexist, so CarPlay connects the app's *existing* session rather than a
+  second one — which reads as "it only runs in the car now, and the phone can't
+  open it." **The user reported this exact behavior from CarBridge itself with
+  YouTube**, which settles that it is this class of app's known limitation, not a
+  bug unique to this implementation — `SCICPInstallMultiSceneForce` in
+  `SCICPSceneHooks.x` (a guarded manual swizzle on the private
+  `UIApplicationSceneManifest -supportsMultipleScenes`, the same reason
+  `LSBundleProxy` is hooked by hand rather than blind `%hook`) forces it on for a
+  bridged app, which is the most this project can do without also building the
+  transplant mechanism `carsurf`'s own `CSMirror.m` uses for apps that cannot hold
+  two scenes no matter what is forced.
+
+None of this was guessed at when it was first skipped — the fuller mechanism was
+already documented above, from reading `carsurf`'s own source, when 0.3.0 shipped
+only the entitlement-getter piece of it deliberately, to confirm a smaller surface
+first. What a real device actually needed is what turned "deliberately smaller"
+into "actually incomplete," and the fix is the rest of the same, already-documented
+architecture — not a new one.
+
 **The dashboard wallpaper (0.4.0) came from a different kind of source: Apple's own
 compiled system apps, not a third party's tweak.** The user supplied two `.ipa` files
 they said they pulled from Apple directly — `CarPlayWallpaper.app` and
@@ -868,8 +912,8 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.5** · YouTube **1.12.4** · X **0.6.2** · Locket **0.2.1** · Panel **0.6.6** ·
-CarPlay **0.4.0** · suite **1.9.5**.
+Instagram **4.1.5** · YouTube **1.12.4** · X **0.6.2** · Locket **0.2.1** · Panel **0.6.7** ·
+CarPlay **0.4.1** · suite **1.9.6**.
 
 - **Working, Instagram:** inline download button (posts + reels), Download Center queue,
   story seen-receipt control, per-message mark-as-seen in DMs, follow-back badge, feed and

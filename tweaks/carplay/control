@@ -1,6 +1,6 @@
 Package: com.albrhi.carplay
 Name: Albrhi CarPlay (rootless)
-Version: 0.4.0
+Version: 0.4.1
 Architecture: iphoneos-arm64
 Description: Run other apps on the CarPlay dashboard, set a custom dashboard wallpaper, and keep your car's speakers in high quality while Camera is recording. Arabic or English.
  .

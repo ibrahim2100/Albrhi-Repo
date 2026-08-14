@@ -1,5 +1,52 @@
 # Albrhi CarPlay — what changed
 
+## v0.4.1
+
+**App bridging did not actually work — reported from a real device on iOS 16.1, and
+found to be missing most of the admission mechanism, not broken.** 0.3.0's
+`SCICPAdmissionSpoof.m` answered `LSBundleProxy`'s two direct entitlement getters and
+stopped there. Three pieces were missing, and each one alone is enough to keep an
+app off the dashboard entirely:
+
+- **SpringBoard reads through a different route than CarPlay's own admission
+  check.** Its app-library code calls `-entitlementValuesForKeys:` in bulk, which on
+  a real device does not return a dictionary at all — a private
+  `LSBundleInfoCachedValues` object, with its own family of accessors
+  (`-boolForKey:`, `-objectForKey:`, …). Answering only the two single-key getters
+  left SpringBoard's own picture of the app untouched: admitted by one half of the
+  gate, invisible to the other.
+- **Nothing told CarPlay a bridged app was worth trying a scene for in the first
+  place.** CarPlay reads what `LSBundleProxy` says an app's own `Info.plist`
+  declares — `UIApplicationSceneManifest`, `SBStarkLaunchModes` — before the app is
+  ever launched, to decide whether attempting a CarPlay scene is worth it at all. An
+  ordinary app declares none of that. A new file, `SCICPSceneManifestSpoof.m`, adds
+  a `UIWindowSceneSessionRoleCarPlay` configuration to what a bridged app's manifest
+  answers as, preserving everything the app already declares.
+- **Multi-scene support was never forced.** Almost every modern app has *some*
+  scene manifest (Xcode has defaulted to one since iOS 13) without ever opting into
+  `UIApplicationSupportsMultipleScenes` — which almost nothing needs a second window
+  for. Left unforced, the phone scene and the car scene cannot coexist, so CarPlay
+  connects the app's *existing* session instead of a second one: exactly the
+  "now it only runs in the car, and the phone can't open it" behavior — which
+  matches CarBridge's own reported limitation for the same class of app, not a new
+  problem this release introduces. `SCICPInstallMultiSceneForce` in
+  `SCICPSceneHooks.x` forces it on for a bridged app's own scene manifest.
+
+None of these three were guessed at — the mechanism they complete is exactly what
+CLAUDE.md's CarPlay section already documented from `carsurf`'s own source when this
+tweak was first built; the first cut simply implemented the entitlement-getter half
+of it and left the rest for "confirm the first piece, then extend it." A real device
+report is what confirmed the rest was actually needed, not optional.
+
+**Settings › Albrhi CarPlay now says to respring after editing the bridged-apps
+list**, not just reopen the target app: SpringBoard's own app-library cache is what
+this release's fix actually answers, and it does not necessarily re-evaluate an app
+just because that app itself relaunched.
+
+Still not validated on-device against a real CarPlay connection — this release is
+reasoned from the exact gap a real device report identified, not itself confirmed
+working yet.
+
 ## v0.4.0
 
 **A custom photo behind the CarPlay dashboard's app icons.** Choose one from Settings
