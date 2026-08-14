@@ -555,6 +555,17 @@ if (x) { %orig; return; }        // "%end does not make sense inside a block"
 **A hooked class needs an `@interface` if you touch its properties.** Otherwise
 Logos emits only a forward declaration and `self.view` fails to compile.
 
+**A `PSListController` subclass that overrides `-specifiers` must assign the result
+to the `_specifiers` ivar itself, not just return it.** `SCICPSettingsController`
+(CarPlay's detail page, pushed from the panel's grouped row) built its row list
+correctly and returned it, and the page opened to a black screen with nothing on it
+— reported on-device. `PSListController`'s own machinery reads `_specifiers`
+directly in places an override's return value never reaches; `SCIPanelRoot.m`'s root
+page had always done `_specifiers = specifiers; return _specifiers;` and worked, and
+the new page skipped the ivar assignment and did not. Confirmed by matching the
+already-working pattern rather than guessing at why a black screen specifically
+means this.
+
 **`FINALPACKAGE=1` is set in `build.sh`** for all packaging modes. Without it every
 published build carried debug symbols and a `-1+debug` version suffix.
 
@@ -808,8 +819,8 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.5** · YouTube **1.12.4** · X **0.6.2** · Locket **0.2.1** · Panel **0.6.4** ·
-CarPlay **0.3.0** · suite **1.9.3**.
+Instagram **4.1.5** · YouTube **1.12.4** · X **0.6.2** · Locket **0.2.1** · Panel **0.6.5** ·
+CarPlay **0.3.0** · suite **1.9.4**.
 
 - **Working, Instagram:** inline download button (posts + reels), Download Center queue,
   story seen-receipt control, per-message mark-as-seen in DMs, follow-back badge, feed and

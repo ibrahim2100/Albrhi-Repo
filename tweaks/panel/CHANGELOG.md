@@ -1,5 +1,15 @@
 # Albrhi Panel Changelog
 
+## v0.6.5
+
+**The CarPlay settings page opened to a black screen.** Reported on-device: tapping
+"Albrhi CarPlay" pushed a page with nothing on it. `-specifiers` was building the row
+list and returning it, but never assigning it to the `_specifiers` ivar the way
+`SCIPanelRoot.m`'s own root page already does — `PSListController`'s own plumbing
+reads that ivar directly in places an override's return value never reaches, so a
+subclass that only returns the array renders nothing. Assigned now, matching the
+pattern the root page has used since it first worked.
+
 ## v0.6.4
 
 **Albrhi CarPlay's settings page now has the app-bridging list.** A second dylib the

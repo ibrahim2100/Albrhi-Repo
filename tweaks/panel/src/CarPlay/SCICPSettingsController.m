@@ -132,7 +132,12 @@ static NSString *SCICPEnabledKey(void) {
                                                              edit:Nil];
     [specifiers addObject:verbose];
 
-    return specifiers;
+    // Not just returned: PSListController's own plumbing reads the _specifiers ivar
+    // directly in places this override cannot reach, the same reason SCIPanelRoot.m's
+    // -specifiers assigns it too. A subclass that only returns the array shows a blank
+    // page -- the row pushes, the controller loads, and nothing it built ever appears.
+    _specifiers = specifiers;
+    return _specifiers;
 }
 
 // MARK: - Reading and writing

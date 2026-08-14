@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.9.4
+
+**Settings › Albrhi CarPlay opened to a black screen.** Fixed — the page was building
+itself correctly and simply never handing the result to the part of PSListController
+that draws it. Includes Panel 0.6.5.
+
 ## v1.9.3
 
 Includes Panel 0.6.4 — a filter plist can now tell the panel to skip it entirely, which
