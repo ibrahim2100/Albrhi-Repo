@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Albrhi CarPlay 0.1.0</title>
+<style>
+:root{--accent:#0A84FF;--bg:#fff;--fg:#1c1c1e;--muted:#6e6e73;--line:#e3e3e6}
+@media(prefers-color-scheme:dark){:root{--bg:#000;--fg:#f5f5f7;--muted:#98989d;--line:#2c2c2e}}
+body{margin:0;padding:24px 18px 60px;background:var(--bg);color:var(--fg);
+font:16px/1.55 -apple-system,BlinkMacSystemFont,system-ui,sans-serif}
+main{max-width:620px;margin:0 auto}
+h1{font-size:28px;margin:0 0 4px}
+.v{color:var(--muted);font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.beta{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);
+background:color-mix(in srgb,var(--accent) 14%,transparent);padding:3px 9px;
+border-radius:9px;margin-left:8px;vertical-align:3px}
+h2{font-size:15px;margin:26px 0 6px;color:var(--accent)}
+p{margin:0;color:var(--fg)}
+hr{border:0;border-top:1px solid var(--line);margin:26px 0}
+footer{color:var(--muted);font-size:13px;margin-top:30px}
+a{color:var(--accent)}
+</style></head><body><main>
+<h1>Albrhi CarPlay<span class="beta">BETA</span></h1>
+<div class="v">0.1.0 · by Ibrahim Ismail AL-Rahn</div>
+<hr>
+<p><strong>Keeps your car's speakers in high quality while Camera is recording</strong> — a first release.</p>
+<h2>The problem</h2><p>CarPlay audio is playing over your car's speakers. Camera opens, recording starts, and the music suddenly sounds like a phone call — because the instant a microphone is needed too, iOS drops Bluetooth to the phone-call profile, the only one that carries both directions at once.</p>
+<h2>The fix</h2><p>Output and input are asked for separately: the car's speakers stay on the high-quality profile, and the recording uses the iPhone's own microphone instead of sharing the car's. Both are ordinary, documented AVAudioSession settings — nothing here reads or changes anything about the call itself.</p>
+<h2>Not yet included</h2><p>This is a first release. Showing other apps on the CarPlay screen, wallpapers and themes are being built next, carefully and on a real device — none of it is in this version.</p>
+<h2>Its own package</h2><p>CarPlay has nothing to do with the social apps Albrhi patches, so it ships and updates on its own instead of inside the combined package.</p>
+<hr>
+<p class="v">Tested on not yet validated on-device. Newer builds should work — if one misbehaves, the
+diagnostics page writes the report for you.</p>
+<footer>
+<a href="https://github.com/ibrahim2100/Albrhi-Repo">Source</a> ·
+<a href="https://github.com/ibrahim2100/Albrhi-Repo/issues/new">Report an issue</a><br>
+GPLv3 · architecture informed by carplay-cast by Ethan Arbuckle (Apache-2.0) · not affiliated with Apple or any car manufacturer.
+</footer>
+</main></body></html>

@@ -1,0 +1,176 @@
+{
+  "minVersion": "0.1",
+  "class": "DepictionTabView",
+  "tintColor": "#0A84FF",
+  "tabs": [
+    {
+      "class": "DepictionStackView",
+      "tabname": "Details",
+      "views": [
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "**Keeps your car's speakers in high quality while Camera is recording**, instead of dropping to phone-call quality the moment a microphone is needed too.\n\nA first release, and its own package — CarPlay has nothing to do with the social apps the combined Albrhi package patches.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 12
+        },
+        {
+          "class": "DepictionHeaderView",
+          "title": "Beta"
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "Written and checked against `tools/check.py`, but not yet run on a real phone in a real car. Treat the first install as the test.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSeparatorView"
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "The problem",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "CarPlay audio is playing over your car's speakers. Camera opens, recording starts, and the music suddenly sounds like a phone call — because the instant a microphone is needed too, iOS drops Bluetooth to the phone-call profile, the only one that carries both directions at once.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 8
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "The fix",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "Output and input are asked for separately: the car's speakers stay on the high-quality profile, and the recording uses the iPhone's own microphone instead of sharing the car's. Both are ordinary, documented AVAudioSession settings — nothing here reads or changes anything about the call itself.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 8
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "Not yet included",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "This is a first release. Showing other apps on the CarPlay screen, wallpapers and themes are being built next, carefully and on a real device — none of it is in this version.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 8
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "Its own package",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "CarPlay has nothing to do with the social apps Albrhi patches, so it ships and updates on its own instead of inside the combined package.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 8
+        }
+      ]
+    },
+    {
+      "class": "DepictionStackView",
+      "tabname": "What's New",
+      "views": [
+        {
+          "class": "DepictionSubheaderView",
+          "title": "v0.1.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **The first release, and it does one thing: keeps your car's speakers in high quality while Camera is recording.**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        }
+      ]
+    },
+    {
+      "class": "DepictionStackView",
+      "tabname": "Info",
+      "views": [
+        {
+          "class": "DepictionTableTextView",
+          "title": "Version",
+          "text": "0.1.0"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Developer",
+          "text": "Ibrahim Ismail AL-Rahn"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Architecture informed by",
+          "text": "carplay-cast by Ethan Arbuckle, Apache-2.0"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Licence",
+          "text": "GNU GPL v3"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Tested on",
+          "text": "not yet validated on-device"
+        },
+        {
+          "class": "DepictionSeparatorView"
+        },
+        {
+          "class": "DepictionTableButtonView",
+          "title": "Source code",
+          "action": "https://github.com/ibrahim2100/Albrhi-Repo",
+          "openExternal": true
+        },
+        {
+          "class": "DepictionTableButtonView",
+          "title": "Report an issue",
+          "action": "https://github.com/ibrahim2100/Albrhi-Repo/issues/new",
+          "openExternal": true
+        },
+        {
+          "class": "DepictionTableButtonView",
+          "title": "Instagram — @Ib.11p",
+          "action": "https://instagram.com/Ib.11p",
+          "openExternal": true
+        },
+        {
+          "class": "DepictionTableButtonView",
+          "title": "Telegram — @Ib11p",
+          "action": "https://t.me/Ib11p",
+          "openExternal": true
+        },
+        {
+          "class": "DepictionSeparatorView"
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "_Free and open source. Not affiliated with, endorsed by or sponsored by Apple or any car manufacturer._",
+          "useSpacing": true
+        }
+      ]
+    }
+  ]
+}
