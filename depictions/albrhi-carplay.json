@@ -92,6 +92,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.3.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **The first real step toward running other apps on the CarPlay dashboard — the feature this whole project exists for, and the riskiest release yet.**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.2.0",
           "useBoldText": true
         },
@@ -127,7 +141,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.2.0"
+          "text": "0.3.0"
         },
         {
           "class": "DepictionTableTextView",
