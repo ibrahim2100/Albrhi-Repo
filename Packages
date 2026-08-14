@@ -131,10 +131,10 @@ Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide, com.albrhi.carplay, com.albrhi.carplay.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide, com.albrhi.carplay, com.albrhi.carplay.roothide
 Filename: debs/com.albrhi_1.9.0_iphoneos-arm64.deb
-Size: 1076538
-MD5sum: 7cd56f1ececb38a24161af164a9125e0
-SHA1: f65e02c99c613dbf2db1ec589547b7a849f1015a
-SHA256: 204b57351a81e5b3dd37393c34a03f459c8cfe4541efa13ab4af04cfe3f7b00b
+Size: 1076542
+MD5sum: a9e3c78cc346102e7796b2dfa189a3cb
+SHA1: ea04f0a708717e08d3468542bea6df6b7eeb805d
+SHA256: 80187e13f94efabcedc1feca17fe4b024a16ff9e68d04b8a74429ab544e163e4
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube, X, Locket and CarPlay, switched per app from Settings.
@@ -323,9 +323,9 @@ Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide, com.albrhi.carplay, com.albrhi.carplay.roothide
 Filename: debs/com.albrhi.roothide_1.9.0_iphoneos-arm64e.deb
 Size: 1076240
-MD5sum: 90f80113a0bfa80c7441d4bee65b24d4
-SHA1: dc857649202b80c0f290991f01d0c9f2af8d4c09
-SHA256: 95e8b556c5f4418eaa83a7877cf727b4b443a578b3caf81f4affb6e647f31141
+MD5sum: 787e24451a045f04dd5f3b21fb6cb582
+SHA1: 77e2b20f7b4100c489deb15ff2dc5785d06a5d97
+SHA256: 5258af3ccd3a09c2ff93b76a5e67a4b4e1bc7984822729cbe5f782472db27e6f
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube, X, Locket and CarPlay, switched per app from Settings.
