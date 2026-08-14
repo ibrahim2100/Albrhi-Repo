@@ -258,6 +258,68 @@ comes only after that has been confirmed on a device and the next piece is built
 way every other hook in this project is — one class, one report line, one confirmation
 before the next.
 
+**A second, more current reference for the app-display feature: `carsurf` by pavunato
+(github.com/pavunato/carsurf), studied 2026-08-14 — no LICENSE file, so this is read for
+architecture the same cautious way `carplay-cast` is, not copied from.** It targets iOS
+15-18 specifically and says outright that the `SBSceneManagerCoordinator`-family
+SpringBoard scene-hosting path above is the *old* CarBridge-era mechanism, abandoned
+because CarPlay's UI moved out of SpringBoard into its own process (`CarPlaySupport`
+pre-18, `CarKit` on 18+) sometime after iOS 13. Worth recording because it changes where
+the risk actually sits, not just the technique:
+
+- **The scene is built by the target app patching itself, not by SpringBoard
+  reaching into another app.** A dylib injected into *every enabled app*
+  (`CSApp.dylib`) rewrites its own incoming CarPlay scene role from
+  `CPTemplateApplicationSceneSessionRoleApplication` to the ordinary
+  `UIWindowSceneSessionRoleApplication` (`CSSceneBridge.m`) — UIKit then resolves the
+  app's real Info.plist window-scene configuration and hands it to the app's own scene
+  delegate. The app renders its actual phone UI on the car screen without knowing the
+  display is a car. A bug here crashes the one app that carries the dylib, not
+  SpringBoard — a materially smaller blast radius than hooking SpringBoard's own
+  scene-hosting machinery to project a *different* app's view, which is what the
+  `carplay-cast`-derived approach above would require.
+- **SpringBoard's own dylib (`CSSystem.dylib`) only ever answers admission
+  questions, never builds a scene itself:** it spoofs the CarPlay-capability
+  entitlement getters on `LSBundleProxy`/`CARAppEntitlements` (iOS 16/17,
+  `CSEntitlementSpoof.m`/`CSSceneManifestSpoof.m`) or promotes a
+  `CRCarPlayAppPolicyEvaluator` policy object per bundle (iOS 18,
+  `CSCarKitPolicy.m`) so the app CarPlay already decided to admit is told it may show
+  on the dashboard. Every hook is a guarded swizzle through the same pattern this
+  project already uses (`CSSwizzleInstanceMethod` returns NO and installs nothing if
+  the class/selector is absent — never adds a method the framework does not expect)
+  and is wrapped in `@try/@catch` that degrades to "not spoofed" rather than crashing.
+- **iOS 18 moved the actual admission gate somewhere no runtime hook can reach.**
+  `+[CRCarPlayAppDeclaration requiredEntitlementKeys]` reads code-signed entitlements
+  at app-registration time, outside any process a tweak injects into — confirmed by
+  hooking every entitlement accessor and observing none is ever consulted for a
+  non-CarPlay app on that release. So on iOS 18 the app's binary genuinely has to
+  carry `SBStarkCapable` on disk; a root daemon (`carsurf-helperd`) re-signs the
+  binary, adds its cdhash to the jailbreak's trustcache, and re-registers it with
+  LaunchServices — reversibly, keeping a backup and restoring it when the app is
+  disabled. An app already carrying real Apple-issued `com.apple.developer.carplay-*`
+  entitlements is *never* re-signed (confirmed the hard way: doing so once produced a
+  SIGKILL-on-every-launch app recoverable only by reinstalling from the App Store).
+- **Apps with no scene manifest at all get a different mechanism: transplant, not
+  render-twice.** `CSMirror.m` moves the app's one root view controller onto a new
+  window built on the car scene, and back onto the phone window on disconnect — chosen
+  specifically because a view controller can only belong to one window, so this is the
+  only way to get real touch/keyboard/gesture/modal support without hand-forwarding
+  events into a `CALayerHost` mirror.
+- **The two admission mechanisms above are gated by the *daemon's own recorded
+  outcome*, not by the user's enabled/disabled toggle.** An app can be enabled in
+  Settings and still not promoted if the on-disk patch failed, or — the common case —
+  if an App Store update silently re-signed the binary and stripped the entitlement
+  since the daemon last checked. The daemon re-verifies every enabled app on every
+  preference change and at boot rather than trusting its own past success, which is
+  what makes that self-heal instead of silently and permanently falling off CarPlay.
+
+None of this is adopted into Albrhi CarPlay yet — the same "confirm on a device before
+the next step" discipline applies, and this is now two independent, differently-licensed
+references (`carplay-cast`, Apache-2.0; `carsurf`, no stated license) describing
+overlapping but not identical mechanisms for two different iOS eras. Which one Albrhi
+CarPlay's own eventual implementation should actually follow is a decision for when that
+work starts, not settled by having read both.
+
 **The recording-audio fix needed no private API at all.** CarPlay audio dropping to
 phone-call quality the moment Camera starts recording is `AVAudioSession` asking for
 `AllowBluetooth` (HFP, which carries a microphone) instead of also asking for
