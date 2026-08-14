@@ -138,10 +138,16 @@ jobs:
               env:
                 THEOS: ${{ github.workspace }}/theos
 
-            - name: Check the package holds all three
+            - name: Check the package holds every tweak
               # A merged tree that quietly lost a dylib installs perfectly and does
               # nothing, which is the failure this whole change could produce and the
               # one nobody would notice until a feature was missing.
+              #
+              # This list was written for three tweaks and stayed at three while two
+              # more (X, Locket) were added and merged without it -- a silent gap of
+              # exactly the kind this check exists to catch, just in the check itself.
+              # It now includes every tweak under tweaks/, so the next one added here
+              # is the only place this needs to change again.
               run: |
                 cd main
                 DEB=$(ls -t packages/*.deb | head -n1)
@@ -154,6 +160,12 @@ jobs:
                     DynamicLibraries/Albrhi.plist \
                     DynamicLibraries/AlbrhiYT.dylib \
                     DynamicLibraries/AlbrhiYT.plist \
+                    DynamicLibraries/AlbrhiTW.dylib \
+                    DynamicLibraries/AlbrhiTW.plist \
+                    DynamicLibraries/AlbrhiLK.dylib \
+                    DynamicLibraries/AlbrhiLK.plist \
+                    DynamicLibraries/AlbrhiCP.dylib \
+                    DynamicLibraries/AlbrhiCP.plist \
                     PreferenceBundles/AlbrhiPanel.bundle/AlbrhiPanel \
                     PreferenceLoader/Preferences/AlbrhiPanel.plist
                 do

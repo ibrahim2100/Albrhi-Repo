@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+
+<plist version="1.0">
+<dict>
+    <!-- Nothing pinned here: SpringBoard and Camera are system apps whose CFBundleVersion
+         does not track an App Store release the way Instagram's or X's does, so there is
+         no single number to compare a device against. -->
+
+    <key>Filter</key>
+    <dict>
+        <key>Bundles</key>
+        <array>
+            <!-- Where the CarPlay screen connects, and the only process with the live
+                 scene-hosting machinery any future dashboard needs. -->
+            <string>com.apple.springboard</string>
+
+            <!-- The recording-quality fix. Named narrowly on purpose: this is the one
+                 app the project's own test case names, and the filter is a one-line
+                 change to widen once the mechanism is confirmed on a real device rather
+                 than guessed at for every recording app at once. -->
+            <string>com.apple.camera</string>
+        </array>
+    </dict>
+</dict>
+</plist>

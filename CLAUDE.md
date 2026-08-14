@@ -11,7 +11,7 @@ code, comments and user-facing strings are English + Arabic.
 
 ## What this is
 
-Tweaks for jailbroken and sideloaded iOS. **Five of them**, and one package:
+Tweaks for jailbroken and sideloaded iOS. **Six of them**, and one package:
 
 | directory | package | what it patches |
 |---|---|---|
@@ -19,6 +19,7 @@ Tweaks for jailbroken and sideloaded iOS. **Five of them**, and one package:
 | `tweaks/youtube` | `com.albrhi.youtube` | YouTube, tested on **21.30.5** |
 | `tweaks/twitter` | `com.albrhi.twitter` | X / Twitter, tested on **12.15** |
 | `tweaks/locket` | `com.albrhi.locket` | Locket, tested on **2.46.1** |
+| `tweaks/carplay` | `com.albrhi.carplay` | SpringBoard + Camera — CarPlay, not one app |
 | `tweaks/panel` | `com.albrhi.panel` | the Settings app — the per-app switches |
 | `suite/` | **`com.albrhi`** | all of the above, in one package |
 
@@ -26,10 +27,20 @@ The Instagram tweak is derived from [SCInsta](https://github.com/SoCuul/SCInsta)
 SoCuul under GPLv3. Original authorship is credited in-app, in the README and in the
 package metadata — that is a licence obligation, not a courtesy. Never remove it.
 
+**Albrhi CarPlay's own architecture is informed by [carplay-cast](https://github.com/EthanArbuckle/carplay-cast)
+by Ethan Arbuckle, Apache-2.0** — read for its design (three components: a hook inside
+Apple's CarPlay dashboard process, a hook inside SpringBoard using its own live
+scene-hosting machinery to put an app's view on the external screen, and a small
+per-app orientation lock), not copied from. **CarBridge, a paid commercial tweak
+(`Tag: cydia::commercial`) that solves the same problem, is deliberately not a
+reference here** — this project reads open, licensed source for a technique, not a
+competitor's paid binary to clone it feature by feature. See the ground rule below for
+why the display mechanism itself is not built yet.
+
 **`com.albrhi` is what people install.** The individual packages are still built and
 still published, but the suite is the front door: one thing to install, one thing to
 update, and a new tweak arrives inside it rather than as a second download. It declares
-`Conflicts` and `Replaces` on all ten individual identities (rootless and roothide) —
+`Conflicts` and `Replaces` on all twelve individual identities (rootless and roothide) —
 and that is not enough on its own, see the ground rule below.
 
 The repository doubles as an **APT source**: it builds itself, publishes releases,
@@ -219,6 +230,32 @@ deploy that "hung", and each time the fix was to ask the thing itself instead: w
 Pages is in, whether the build is `built` or `errored`, whether the live URL is serving
 the version just built. Every time a sleep was replaced with a question, the answer came
 back immediately and was right. See the CI section for what that turned into.
+
+**CarPlay's app display is deliberately not built yet, and the reason is worth keeping
+explicit.** Putting another app's live view onto the CarPlay screen means walking
+through private SpringBoard classes — `SBSceneManagerCoordinator`,
+`SBApplicationSceneHandleRequest`, `SBAppViewController`, `SBDeviceApplicationSceneEntity`
+— read about in `carplay-cast`'s source but never confirmed against a real device. This
+project's own rule from the Instagram section above — a class dump says what exists, not
+what renders — applies with higher stakes here: a wrong hook in a normal app's process
+crashes that app; a wrong hook in SpringBoard can take down the whole home-screen
+experience and force a respring. `SCICPScreenWatch` (0.1.0) is deliberately the smallest
+possible first step: `UIScreen.screens` and the two public connect/disconnect
+notifications, nothing private, nothing that mutates anything. The scene-hosting piece
+comes only after that has been confirmed on a device and the next piece is built the same
+way every other hook in this project is — one class, one report line, one confirmation
+before the next.
+
+**The recording-audio fix needed no private API at all.** CarPlay audio dropping to
+phone-call quality the moment Camera starts recording is `AVAudioSession` asking for
+`AllowBluetooth` (HFP, which carries a microphone) instead of also asking for
+`AllowBluetoothA2DP` (the high-quality profile) — both are public, documented category
+options, and an app can request both at once. Separately, forcing `-setPreferredInput:`
+to the built-in mic keeps the *input* off Bluetooth entirely, without asking the *output*
+to leave A2DP. Two ordinary calls, no jailbreak-specific behavior, hooked on
+`AVCaptureSession -startRunning`/`-stopRunning` — the same hook point any camera-feature
+tweak uses, hooked here for what happens to a fully separate audio session rather than to
+the capture itself.
 
 ---
 

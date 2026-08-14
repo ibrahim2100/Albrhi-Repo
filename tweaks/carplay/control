@@ -1,0 +1,36 @@
+Package: com.albrhi.carplay
+Name: Albrhi CarPlay (rootless)
+Version: 0.1.0
+Architecture: iphoneos-arm64
+Description: Keeps your car's speakers in high quality while Camera is recording. Arabic or English.
+ .
+ ▍THE PROBLEM
+ CarPlay audio is playing over your car's speakers. Camera opens, recording starts, and the
+ music suddenly sounds like a phone call — because the instant a microphone is needed too,
+ iOS drops Bluetooth to the phone-call profile, which is the only one that carries both
+ directions at once.
+ .
+ ▍THE FIX
+ Output and input are asked for separately: the car's speakers are kept on the
+ high-quality profile, and the recording uses the iPhone's own microphone instead of
+ sharing the car's. Both are ordinary, documented iOS audio settings — nothing here reads
+ or changes anything about the call itself.
+ .
+ ▍NOT YET INCLUDED
+ This is a first release. Showing other apps on the CarPlay screen, wallpapers and themes
+ are being built next; none of it is in this version. NOT VALIDATED ON-DEVICE — this has
+ been built and checked but not yet run on a real phone. Treat the first install as a test.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3. The
+ recording-audio approach uses only public, documented AVAudioSession API.
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Author: Ibrahim Ismail AL-Rahn
+Section: Tweaks
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-carplay.html
+SileoDepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-carplay.json
+Depends: mobilesubstrate
+Conflicts: com.albrhi.carplay.roothide
+Replaces: com.albrhi.carplay.roothide
+Tag: role::enduser
