@@ -44,10 +44,21 @@ if os.path.isdir(TWEAKS_DIR):
     print('ALL TWEAKS CLEAN')
     raise SystemExit(0)
 
-SRC = (glob.glob('src/**/*.x', recursive=True)
-       + glob.glob('src/**/*.xm', recursive=True)
-       + glob.glob('src/**/*.m', recursive=True))
-HDR = glob.glob('src/**/*.h', recursive=True)
+# src/ for every tweak so far; a tweak building more than one binary -- CarPlay is
+# the first -- adds its own source directories beside it (appsrc/, common/) rather
+# than nesting them under src/, since each binary's Makefile FILES glob has to name
+# its own tree without pulling in the other binary's sources. Scanning only src/
+# here would leave those directories checked by nothing at all -- not a narrower
+# check, an absent one, which is worse than the false positive this file usually
+# guards against.
+SOURCE_DIRS = [d for d in ('src', 'appsrc', 'common') if os.path.isdir(d)]
+
+SRC, HDR = [], []
+for _dir in SOURCE_DIRS:
+    SRC += glob.glob(_dir + '/**/*.x', recursive=True)
+    SRC += glob.glob(_dir + '/**/*.xm', recursive=True)
+    SRC += glob.glob(_dir + '/**/*.m', recursive=True)
+    HDR += glob.glob(_dir + '/**/*.h', recursive=True)
 LOGOS = [p for p in SRC if p.endswith(('.x', '.xm'))]
 
 problems = []
@@ -576,7 +587,12 @@ for path in SRC:
 # and reachable through Instagram's own -Ivendor/dav1d/include.
 def include_roots():
     roots = []
-    for makefile in ('Makefile', '../../shared/tweak.mk'):
+    # tweak.mk for every dylib-building project; bundle.mk for the panel, which is a
+    # preference bundle and includes the other one instead. Checking only tweak.mk
+    # here worked by accident until the panel imported its first shared/src/ header:
+    # nothing upstream of that ever needed an include root bundle.mk's own -I$(ROOT)
+    # is what actually provides.
+    for makefile in ('Makefile', '../../shared/tweak.mk', '../../shared/bundle.mk'):
         if not os.path.isfile(makefile):
             continue
         text = open(makefile, encoding='utf-8').read()

@@ -1,10 +1,16 @@
 Package: com.albrhi.carplay
 Name: Albrhi CarPlay (rootless)
-Version: 0.2.0
+Version: 0.3.0
 Architecture: iphoneos-arm64
-Description: Keeps your car's speakers in high quality while Camera is recording. Arabic or English.
+Description: Run other apps on the CarPlay dashboard, and keeps your car's speakers in high quality while Camera is recording. Arabic or English.
  .
- ▍THE PROBLEM
+ ▍APPS ON THE DASHBOARD
+ Add a bundle identifier in Settings › Albrhi CarPlay and that app's real interface
+ appears on the CarPlay screen the next time it opens, instead of a cut-down template
+ screen. Known to work on iOS 16 and 17; iOS 18 moved CarPlay's admission check
+ somewhere this cannot reach yet without an on-disk patch this release does not make.
+ .
+ ▍THE RECORDING-AUDIO PROBLEM
  CarPlay audio is playing over your car's speakers. Camera opens, recording starts, and the
  music suddenly sounds like a phone call — because the instant a microphone is needed too,
  iOS drops Bluetooth to the phone-call profile, which is the only one that carries both
@@ -16,13 +22,15 @@ Description: Keeps your car's speakers in high quality while Camera is recording
  sharing the car's. Both are ordinary, documented iOS audio settings — nothing here reads
  or changes anything about the call itself.
  .
- ▍NOT YET INCLUDED
- This is a first release. Showing other apps on the CarPlay screen, wallpapers and themes
- are being built next; none of it is in this version. NOT VALIDATED ON-DEVICE — this has
- been built and checked but not yet run on a real phone. Treat the first install as a test.
+ ▍NOT VALIDATED ON-DEVICE
+ Built and checked, reasoned from public documentation and from reading two open-source
+ references' architecture, but never run against a real CarPlay head unit. Treat the
+ first install as a test, and leave the bridged-apps list empty to keep only the
+ recording-audio fix.
  .
  Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3. The
- recording-audio approach uses only public, documented AVAudioSession API.
+ recording-audio approach uses only public, documented AVAudioSession API; the app-display
+ role rewrite hooks two public UIKit selectors for a purpose Apple did not intend.
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Author: Ibrahim Ismail AL-Rahn

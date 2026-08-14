@@ -29,3 +29,17 @@
 #define SCICPPreferredMicKey       @"carplay_preferred_mic"
 
 #define SCICPVerboseLoggingKey     @"carplay_verbose_logging"
+
+/// A comma-separated list of bundle identifiers the user has chosen to bridge onto
+/// the CarPlay dashboard -- read by both halves of the app-display feature: the
+/// SpringBoard-side admission spoof (SCICPAdmissionSpoof.m, tells CarPlay these
+/// bundles may reach the dashboard) and the app-side scene bridge
+/// (SCICPSceneBridge.m, only rewrites a scene role for a bundle actually on this
+/// list). Comma-separated rather than a picker: v0.3.0 has no on-disk code-signing
+/// daemon, so it is scoped to iOS 16/17's runtime admission path, which this project
+/// has not built a full app-browser UI for yet -- edited through a single-line
+/// UIAlertController text field in the panel, the same safe, already-proven
+/// UIAlertController this settings page already uses for its confirmations, rather
+/// than guessing at a private multi-line text cell class never confirmed to compile
+/// against this project's pinned SDK.
+#define SCICPBridgedAppsKey        @"carplay_bridged_apps"

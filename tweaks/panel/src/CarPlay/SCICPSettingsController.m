@@ -2,6 +2,7 @@
 #import <Preferences/PSSpecifier.h>
 #import "../SCIPanelDomain.h"
 #import "../SCIPanelScan.h"
+#import "../SCIPanelButtonAction.h"
 #import "../Localization/SCILocalize.h"
 #import "shared/src/SCICPPrefsKeys.h"
 
@@ -85,6 +86,29 @@ static NSString *SCICPEnabledKey(void) {
         [row setProperty:choice[0] forKey:@"sciMicValue"];
         [specifiers addObject:row];
     }
+
+    PSSpecifier *bridgeGroup = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"carplay_bridge_section")
+                                                              target:self
+                                                                 set:NULL
+                                                                 get:NULL
+                                                              detail:Nil
+                                                                cell:PSGroupCell
+                                                                edit:Nil];
+    [bridgeGroup setProperty:SCILocalized(@"carplay_bridge_footer") forKey:@"footerText"];
+    [specifiers addObject:bridgeGroup];
+
+    [specifiers addObject:[self valueRow:SCILocalized(@"carplay_bridge_count")
+                                    value:[self bridgedAppsSummary]]];
+
+    PSSpecifier *editBridge = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"carplay_bridge_edit")
+                                                              target:self
+                                                                 set:NULL
+                                                                 get:NULL
+                                                              detail:Nil
+                                                                cell:PSButtonCell
+                                                                edit:Nil];
+    SCISetButtonAction(editBridge, @selector(editBridgedApps));
+    [specifiers addObject:editBridge];
 
     PSSpecifier *aboutGroup = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"section_about")
                                                               target:self
@@ -216,6 +240,58 @@ static NSString *SCICPEnabledKey(void) {
 
     [self sci_writeString:[specifier propertyForKey:@"sciMicValue"] forKey:SCICPPreferredMicKey];
     [self reloadSpecifiers];
+}
+
+// MARK: - Bridged apps
+
+/// The stored list is comma-separated for editing; parsed and re-joined here rather
+/// than trusted verbatim, so a stray blank entry from "one, ,two" never becomes a
+/// bundle identifier the admission spoof tries to answer for.
+- (NSArray<NSString *> *)bridgedBundleIdentifiers {
+    NSString *raw = [self sci_readString:SCICPBridgedAppsKey fallback:@""];
+    NSMutableArray<NSString *> *identifiers = [NSMutableArray array];
+    for (NSString *entry in [raw componentsSeparatedByString:@","]) {
+        NSString *trimmed = [entry stringByTrimmingCharactersInSet:
+                              NSCharacterSet.whitespaceAndNewlineCharacterSet];
+        if (trimmed.length) [identifiers addObject:trimmed];
+    }
+    return identifiers;
+}
+
+- (NSString *)bridgedAppsSummary {
+    NSUInteger count = self.bridgedBundleIdentifiers.count;
+    return count ? [NSString stringWithFormat:@"%lu", (unsigned long)count]
+                 : SCILocalized(@"carplay_bridge_none");
+}
+
+- (void)editBridgedApps {
+    UIAlertController *sheet = [UIAlertController
+        alertControllerWithTitle:SCILocalized(@"carplay_bridge_edit")
+                          message:SCILocalized(@"carplay_bridge_edit_message")
+                   preferredStyle:UIAlertControllerStyleAlert];
+
+    NSString *current = [self.bridgedBundleIdentifiers componentsJoinedByString:@", "];
+    [sheet addTextFieldWithConfigurationHandler:^(UITextField *field) {
+        field.text = current;
+        field.placeholder = @"com.example.app, com.example.other";
+        field.autocapitalizationType = UITextAutocapitalizationTypeNone;
+        field.autocorrectionType = UITextAutocorrectionTypeNo;
+        field.clearButtonMode = UITextFieldViewModeWhileEditing;
+    }];
+
+    __weak SCICPSettingsController *weakSelf = self;
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"ok")
+                                              style:UIAlertActionStyleDefault
+                                            handler:^(UIAlertAction *action) {
+        NSString *text = sheet.textFields.firstObject.text ?: @"";
+        [weakSelf sci_writeString:text forKey:SCICPBridgedAppsKey];
+        [weakSelf reloadSpecifiers];
+    }]];
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
+                                              style:UIAlertActionStyleCancel
+                                            handler:nil]];
+
+    [self presentViewController:sheet animated:YES completion:nil];
 }
 
 // MARK: - Verbose logging

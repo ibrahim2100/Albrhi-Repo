@@ -4,8 +4,9 @@
 #import "Diagnostics/SCICPDiagnostics.h"
 #import "Features/Audio/SCICPAudioHooks.h"
 #import "Features/Dashboard/SCICPScreenWatch.h"
+#import "Features/Bridge/SCICPAdmissionSpoof.h"
 
-NSString *SCIVersionString = @"v0.2.0";  // AlbrhiCP
+NSString *SCIVersionString = @"v0.3.0";  // AlbrhiCP
 
 ///
 /// One dylib, two processes.
@@ -34,6 +35,7 @@ NSString *SCIVersionString = @"v0.2.0";  // AlbrhiCP
 
     if ([bundleID isEqualToString:@"com.apple.springboard"]) {
         [SCICPScreenWatch start];
+        SCICPInstallAdmissionSpoof();
     } else if ([bundleID isEqualToString:@"com.apple.camera"]) {
         SCICPInstallAudioHooks();
     }

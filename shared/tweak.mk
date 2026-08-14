@@ -19,29 +19,31 @@ ifeq ($(ROOT),)
 $(error ROOT must be set to the repository root before including shared/tweak.mk)
 endif
 
-# JGProgressHUD backs the download progress UI and is not app-specific.
-$(TWEAK_NAME)_FILES += $(wildcard $(ROOT)/modules/JGProgressHUD/*.m)
-
-# The per-app switch Albrhi Panel writes. Shared rather than copied into each tweak:
-# both sides have to agree on the preference domain and the key exactly, and two
-# copies of that agreement drift into a switch that appears to work and changes
-# nothing.
-$(TWEAK_NAME)_FILES += $(ROOT)/shared/src/SCIPanelGate.m
-
-# The repository root on the include path, so shared code is imported by the path
-# it actually has -- "modules/JGProgressHUD/JGProgressHUD.h" -- rather than by
-# counting ../ from whichever source file happens to need it. Four files reached
-# modules/ that way and every one of them broke the moment the sources moved a
-# level deeper; a header should not have to know how deep it is buried.
-$(TWEAK_NAME)_CFLAGS += -I$(ROOT)
-
-$(TWEAK_NAME)_CFLAGS += -DDISABLE_ROOTLESS_COMPAT_WARNING -fobjc-arc \
-	-Wno-unsupported-availability-guard -Wno-unused-value \
-	-Wno-deprecated-declarations -Wno-nullability-completeness \
-	-Wno-unused-function -Wno-incompatible-pointer-types \
-	-Wno-arc-performSelector-leaks
-
-$(TWEAK_NAME)_LOGOSFLAGS = --c warnings=none
+# Every one of TWEAK_NAME's binaries gets the same shared setup below. A tweak
+# almost always names one; CarPlay is the first to name two (one dylib for
+# SpringBoard/Camera, a second for every app the user enables), and
+# `$(TWEAK_NAME)_FILES +=` with a space-separated TWEAK_NAME would silently build
+# one oddly-named variable instead of two real ones -- Make does not split on
+# spaces inside a variable-name substitution. The loop is what makes a second
+# binary in one tweak cost nothing here.
+# The trailing space before each `)\` below is load-bearing, not tidiness: tools/
+# check.py's rule 9 finds include roots by scanning this file's raw text for
+# `-I(\S+)` rather than actually running Make, and `-I$(ROOT))` with no space reads
+# as one token, "$(ROOT))" -- the eval's own closing paren swallowed into the path,
+# turning every "shared/src/..." import in every tweak into a false "not there".
+# Confirmed the hard way: this file is included by all six tweaks, so the one
+# missing space failed all six at once instead of just CarPlay.
+$(foreach T,$(TWEAK_NAME),\
+	$(eval $(T)_FILES += $(wildcard $(ROOT)/modules/JGProgressHUD/*.m))\
+	$(eval $(T)_FILES += $(ROOT)/shared/src/SCIPanelGate.m)\
+	$(eval $(T)_CFLAGS += -I$(ROOT) )\
+	$(eval $(T)_CFLAGS += -DDISABLE_ROOTLESS_COMPAT_WARNING -fobjc-arc \
+		-Wno-unsupported-availability-guard -Wno-unused-value \
+		-Wno-deprecated-declarations -Wno-nullability-completeness \
+		-Wno-unused-function -Wno-incompatible-pointer-types \
+		-Wno-arc-performSelector-leaks)\
+	$(eval $(T)_LOGOSFLAGS = --c warnings=none)\
+)
 
 CCFLAGS += -std=c++11
 
@@ -52,7 +54,7 @@ include $(THEOS_MAKE_PATH)/tweak.mk
 # Only the local sideload build reaches this; CI and the published .dylib use
 # SELFCONTAINED below instead.
 ifdef SIDELOAD
-	$(TWEAK_NAME)_SUBPROJECTS += $(ROOT)/modules/flexing
+	$(foreach T,$(TWEAK_NAME),$(eval $(T)_SUBPROJECTS += $(ROOT)/modules/flexing))
 endif
 
 # A dylib that carries its own hooking, so it can be injected on its own -- by
@@ -68,6 +70,8 @@ endif
 # makes the result genuinely standalone rather than merely appearing to be.
 # CI verifies that with otool rather than trusting it.
 ifdef SELFCONTAINED
-	$(TWEAK_NAME)_CFLAGS += -DSCI_SELFCONTAINED
-	$(TWEAK_NAME)_LDFLAGS += -Wl,-dead_strip_dylibs
+	$(foreach T,$(TWEAK_NAME),\
+		$(eval $(T)_CFLAGS += -DSCI_SELFCONTAINED)\
+		$(eval $(T)_LDFLAGS += -Wl,-dead_strip_dylibs)\
+	)
 endif

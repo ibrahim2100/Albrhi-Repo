@@ -1,5 +1,13 @@
 # Albrhi Panel Changelog
 
+## v0.6.4
+
+**Albrhi CarPlay's settings page now has the app-bridging list.** A second dylib the
+tweak gained in 0.3.0 has no row of its own — `SCIPanelHidden` in a filter plist now
+tells the scan to skip it entirely rather than turning its framework-identity filter
+into rows of its own, the same class of mistake `SCIPanelGroupIdentifier` fixed for a
+different shape of it last release.
+
 ## v0.6.3
 
 **A tweak can now declare a real settings page of its own, and CarPlay is the first

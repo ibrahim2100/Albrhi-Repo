@@ -51,6 +51,12 @@ static void SCIBuildTables(void) {
         @"carplay_mic_automatic": @"Automatic",
         @"carplay_about_footer": @"Not validated on-device yet — this has been built and checked, but not run in a real car. Diagnostics are written to Documents/AlbrhiCP-report.txt inside whichever app CarPlay last ran in.",
         @"verbose_logging": @"Verbose logging",
+        @"carplay_bridge_section": @"Apps on the CarPlay dashboard",
+        @"carplay_bridge_footer": @"Bundle identifiers to show their real interface on the CarPlay dashboard instead of a template screen. Known to work on iOS 16 and 17 only — iOS 18 moved the admission check to a place this cannot reach yet without an on-disk patch this release does not make. Close the app for a change to take effect.",
+        @"carplay_bridge_count": @"Bridged apps",
+        @"carplay_bridge_none": @"None",
+        @"carplay_bridge_edit": @"Edit Bridged Apps",
+        @"carplay_bridge_edit_message": @"Comma-separated bundle identifiers, such as com.example.app, com.example.other.",
     };
 
     _arTable = @{
@@ -92,6 +98,12 @@ static void SCIBuildTables(void) {
         @"carplay_mic_automatic": @"تلقائي",
         @"carplay_about_footer": @"لم يُختبر على جهاز حقيقي بعد — بُني وفُحص لكن لم يُشغَّل داخل سيارة فعلية. تُكتب تقارير التشخيص في Documents/AlbrhiCP-report.txt داخل أيّ تطبيق شغّل كاربلي آخر مرة.",
         @"verbose_logging": @"سجلّ تفصيلي",
+        @"carplay_bridge_section": @"التطبيقات على لوحة كاربلي",
+        @"carplay_bridge_footer": @"معرّفات الحزم (bundle identifiers) لعرض واجهتها الحقيقية على لوحة كاربلي بدل شاشة القالب. معروف أنه يعمل على iOS 16 و17 فقط — iOS 18 نقل فحص القبول لمكان لا يمكن الوصول إليه بعد بدون تعديل على القرص لا يقوم به هذا الإصدار. أغلق التطبيق ليسري المفعول.",
+        @"carplay_bridge_count": @"التطبيقات المفعّلة",
+        @"carplay_bridge_none": @"لا شيء",
+        @"carplay_bridge_edit": @"تعديل التطبيقات المفعّلة",
+        @"carplay_bridge_edit_message": @"معرّفات الحزم مفصولة بفواصل، مثل com.example.app, com.example.other.",
     };
 }
 

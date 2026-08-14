@@ -167,17 +167,21 @@ jobs:
                   dpkg-deb -c "$DEB" | awk '{print $NF}' | sort
                 done
 
-            - name: Check the package holds the dylib
-              # A merged tree that quietly lost the dylib installs perfectly and does
-              # nothing -- the same failure buildsuite.yml's own check guards against,
-              # just for one package instead of a merge of several.
+            - name: Check the package holds both dylibs
+              # A merged tree that quietly lost a dylib installs perfectly and does
+              # nothing -- the same failure buildsuite.yml's own check guards against.
+              # Two dylibs since v0.3.0: AlbrhiCP (SpringBoard + Camera) and
+              # AlbrhiCPApp (every app that links UIKit, filtered in its own plist).
               run: |
                 cd main
                 for DEB in tweaks/carplay/packages/*.deb; do
                   echo "Inspecting $DEB"
                   dpkg-deb -c "$DEB" > /tmp/contents.txt
                   cat /tmp/contents.txt
-                  for EXPECTED in DynamicLibraries/AlbrhiCP.dylib DynamicLibraries/AlbrhiCP.plist; do
+                  for EXPECTED in \
+                      DynamicLibraries/AlbrhiCP.dylib DynamicLibraries/AlbrhiCP.plist \
+                      DynamicLibraries/AlbrhiCPApp.dylib DynamicLibraries/AlbrhiCPApp.plist
+                  do
                     if ! grep -q "$EXPECTED" /tmp/contents.txt; then
                       echo "::error::$EXPECTED is missing from $DEB"
                       exit 1

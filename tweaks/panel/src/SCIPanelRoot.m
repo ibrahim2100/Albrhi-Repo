@@ -5,11 +5,12 @@
 #import "SCIPanelScan.h"
 #import "SCIPanelHeader.h"
 #import "SCIPanelDomain.h"
+#import "SCIPanelButtonAction.h"
 #import "Localization/SCILocalize.h"
 #import <objc/message.h>
 #import <objc/runtime.h>
 
-NSString *SCIVersionString = @"v0.6.3";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.6.4";  // AlbrhiPanel
 
 ///
 /// Albrhi's own control panel, in the iOS Settings app.
@@ -39,31 +40,6 @@ NSString *SCIVersionString = @"v0.6.3";  // AlbrhiPanel
 /// Named identically in shared/src/SCIPanelGate.m, which is the half that reads it. Two
 /// spellings of this string is a switch that appears to work and changes nothing.
 static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
-
-/// What a button row does when it is tapped.
-///
-/// `specifier->action = @selector(...)` is the usual way to write this and it needs the
-/// ivar to be declared in whichever `PSSpecifier.h` the build happens to use — a header
-/// that lives outside this repository and that nothing here controls. Assuming the shape
-/// of a header nobody in this project owns is how the panel lost a build to a missing
-/// private framework already.
-///
-/// So it is asked for instead: the setter where iOS has one, the ivar by name where it
-/// does not, and nothing at all if neither is there — which is a button that does nothing
-/// rather than a page that will not compile.
-static void SCISetButtonAction(PSSpecifier *specifier, SEL action) {
-    SEL setter = NSSelectorFromString(@"setButtonAction:");
-    if ([specifier respondsToSelector:setter]) {
-        ((void (*)(id, SEL, SEL))objc_msgSend)(specifier, setter, action);
-        return;
-    }
-
-    Ivar ivar = class_getInstanceVariable([specifier class], "action");
-    if (!ivar) return;
-
-    SEL *slot = (SEL *)((uint8_t *)(__bridge void *)specifier + ivar_getOffset(ivar));
-    *slot = action;
-}
 
 /// Rebuilt on every appearance rather than cached for the life of the process.
 ///

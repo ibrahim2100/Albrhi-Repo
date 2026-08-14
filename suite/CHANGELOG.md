@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.9.3
+
+Includes Panel 0.6.4 — a filter plist can now tell the panel to skip it entirely, which
+CarPlay's second dylib (its own separate package, not part of this one) needed once it
+gained a second binary. Nothing else in this package changed.
+
 ## v1.9.2
 
 **Settings › Albrhi no longer lists "Camera" and "SpringBoard"** as if they were two

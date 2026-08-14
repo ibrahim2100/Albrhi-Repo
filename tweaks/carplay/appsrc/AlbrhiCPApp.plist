@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+
+<plist version="1.0">
+<dict>
+    <key>Filter</key>
+    <dict>
+        <key>Bundles</key>
+        <array>
+            <!-- Not this app's own bundle identifier: MobileSubstrate's Bundles filter
+                 matches against every bundle loaded in a process, not only the main
+                 one, and every UIKit-based foreground app loads these two. This is
+                 the standard idiom for "every app", narrower than the alternative of
+                 no Bundles key at all, which would also reach processes that never
+                 draw a window and have no CarPlay scene to rewrite in the first
+                 place. -->
+            <string>com.apple.UIKit</string>
+            <string>com.apple.UIKitCore</string>
+        </array>
+    </dict>
+
+    <!-- Read by Albrhi Panel's SCIPanelScan: the master switch and the settings page
+         both belong to AlbrhiCP.plist, so this second dylib for the same tweak must
+         not also produce a row of its own. -->
+    <key>SCIPanelHidden</key>
+    <true/>
+</dict>
+</plist>

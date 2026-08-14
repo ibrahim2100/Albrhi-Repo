@@ -243,20 +243,25 @@ Pages is in, whether the build is `built` or `errored`, whether the live URL is 
 the version just built. Every time a sleep was replaced with a question, the answer came
 back immediately and was right. See the CI section for what that turned into.
 
-**CarPlay's app display is deliberately not built yet, and the reason is worth keeping
-explicit.** Putting another app's live view onto the CarPlay screen means walking
-through private SpringBoard classes — `SBSceneManagerCoordinator`,
-`SBApplicationSceneHandleRequest`, `SBAppViewController`, `SBDeviceApplicationSceneEntity`
-— read about in `carplay-cast`'s source but never confirmed against a real device. This
-project's own rule from the Instagram section above — a class dump says what exists, not
-what renders — applies with higher stakes here: a wrong hook in a normal app's process
-crashes that app; a wrong hook in SpringBoard can take down the whole home-screen
-experience and force a respring. `SCICPScreenWatch` (0.1.0) is deliberately the smallest
-possible first step: `UIScreen.screens` and the two public connect/disconnect
-notifications, nothing private, nothing that mutates anything. The scene-hosting piece
-comes only after that has been confirmed on a device and the next piece is built the same
-way every other hook in this project is — one class, one report line, one confirmation
-before the next.
+**CarPlay's app display was deliberately not built at first, and the reason is worth
+keeping explicit even though a first cut now exists (see below).** Putting another
+app's live view onto the CarPlay screen by walking through private SpringBoard
+classes — `SBSceneManagerCoordinator`, `SBApplicationSceneHandleRequest`,
+`SBAppViewController`, `SBDeviceApplicationSceneEntity`, read about in
+`carplay-cast`'s source but never confirmed against a real device — is exactly the
+shape of mistake this project's Instagram-section rule warns about (a class dump says
+what exists, not what renders) with higher stakes: a wrong hook in a normal app's
+process crashes that app; a wrong hook in SpringBoard can take down the whole
+home-screen experience and force a respring. `SCICPScreenWatch` (0.1.0) was
+deliberately the smallest possible first step for exactly that reason: `UIScreen.screens`
+and the two public connect/disconnect notifications, nothing private, nothing that
+mutates anything.
+
+**What actually shipped in 0.3.0 took a different, lower-risk architecture instead of
+that SpringBoard-scene-hosting path — see `carsurf` below for why, and CHANGELOG.md
+for the release note.** The two are not the same mechanism, and the SpringBoard-scene-
+hosting path above is retained here as a record of what was studied and *not* built,
+not as a plan still pending.
 
 **A second, more current reference for the app-display feature: `carsurf` by pavunato
 (github.com/pavunato/carsurf), studied 2026-08-14 — no LICENSE file, so this is read for
@@ -313,12 +318,33 @@ the risk actually sits, not just the technique:
   preference change and at boot rather than trusting its own past success, which is
   what makes that self-heal instead of silently and permanently falling off CarPlay.
 
-None of this is adopted into Albrhi CarPlay yet — the same "confirm on a device before
-the next step" discipline applies, and this is now two independent, differently-licensed
-references (`carplay-cast`, Apache-2.0; `carsurf`, no stated license) describing
-overlapping but not identical mechanisms for two different iOS eras. Which one Albrhi
-CarPlay's own eventual implementation should actually follow is a decision for when that
-work starts, not settled by having read both.
+**Albrhi CarPlay 0.3.0 (2026-08-14) follows this architecture, in original code informed
+by it — not copied from an unlicensed source.** Scoped down from the full picture above
+on purpose, after the user chose the lower-risk starting point explicitly over building
+everything at once:
+
+- The scene-role rewrite (`AlbrhiCPApp.dylib`, filtered onto every app that links UIKit
+  the same `com.apple.UIKit`/`UIKitCore` way `CSApp.plist` does) hooks only two
+  selectors — both public, documented UIKit API
+  (`-[UISceneConfiguration initWithName:sessionRole:]`, `-[UISceneSession role]`) — and
+  is gated per-app on a comma-separated bundle-identifier list the user edits from
+  Settings › Albrhi CarPlay, not a private-API multi-scene force or a manifest-lookup
+  fallback.
+- The admission spoof (`SCICPAdmissionSpoof.m`, SpringBoard-side) answers only
+  `CARCapableApp`/`SBStarkCapable` on `LSBundleProxy`'s two `entitlementValueForKey:...`
+  getters — the iOS 16/17 runtime path. **No on-disk code-signing daemon, no
+  trustcache, no `CRCarPlayAppPolicyEvaluator` hook** — so this release is explicitly
+  known to do nothing on iOS 18, where carsurf's own measurement says the real
+  admission gate is unreachable without exactly that daemon. Building it is future
+  work, deliberately not bundled into the first cut.
+- Apps with no scene manifest (carsurf's `CSMirror.m`/transplant case) and forcing
+  multi-scene support on an app that has not declared it are both left out for the same
+  reason — smaller surface first, confirm it, then extend it.
+
+Not validated on-device, more than any other release in this project (see CHANGELOG.md).
+The two references remain differently licensed (`carplay-cast`, Apache-2.0; `carsurf`, no
+stated license) and this implementation is written fresh from both, not lifted from
+either.
 
 **The recording-audio fix needed no private API at all.** CarPlay audio dropping to
 phone-call quality the moment Camera starts recording is `AVAudioSession` asking for
@@ -412,6 +438,19 @@ tweaks/
                            an Albrhi page in the Settings app, one switch per patched
                            app. It writes; the tweaks read — and how they read it is a
                            ground rule above, not a detail.
+    src/CarPlay/             CarPlay's own settings page, pushed to from one row the
+                             panel collapses its two-process filter down to — see
+                             SCIPanelScan's SCIPanelGroupIdentifier handling
+  carplay/                 Albrhi CarPlay — com.albrhi.carplay, two dylibs (a first
+                           for this repo)
+    src/                     AlbrhiCP: SpringBoard (screen watch, admission spoof)
+                             and Camera (the recording-audio fix)
+    appsrc/                  AlbrhiCPApp: every app that links UIKit, filtered by
+                             framework identity rather than a bundle id — the scene
+                             role rewrite that actually shows an app on the dashboard
+    common/                  shared between the two binaries of this one tweak
+                             (SCILog.h, the bridged-app-list reader) — distinct from
+                             shared/ above, which every *tweak* draws from
 suite/
   control                  com.albrhi — the combined package everyone installs
   DEBIAN/preinst           removes the individual packages, because dpkg will not
@@ -527,6 +566,22 @@ that tweak's own `control`**, not written out in the script: the earlier version
 matched literal package ids with `sed`, which would silently do nothing for a
 second tweak — and doing nothing there means shipping a roothide build wearing the
 rootless identity.
+
+**A space-separated `TWEAK_NAME` builds two binaries; `$(TWEAK_NAME)_FILES +=` builds
+one badly-named variable.** CarPlay is the first tweak here with two dylibs
+(`AlbrhiCP AlbrhiCPApp`), and `shared/tweak.mk` had always written
+`$(TWEAK_NAME)_FILES += ...` on the assumption of exactly one name — Make does not
+split a variable-name substitution on spaces, so that line silently built a single
+variable named `AlbrhiCP AlbrhiCPApp_FILES` instead of setting `AlbrhiCP_FILES` and
+`AlbrhiCPApp_FILES` separately. Fixed with `$(foreach T,$(TWEAK_NAME),$(eval $(T)_FILES
++= ...))`, which degrades to exactly the old behaviour when a tweak names only one
+binary, so every other tweak here is unaffected. **And the fix broke all six tweaks at
+once on the first attempt**, for an unrelated reason: `tools/check.py`'s rule 9 finds
+include roots by scanning this file's raw text for `-I(\S+)`, and `-I$(ROOT))` with no
+separating space reads as one token — the `$(eval ...)`'s own closing paren swallowed
+into the path, turning `../..))` into every "shared/src/..." import's include root and
+failing every one of them. The fix is a literal trailing space before the paren, now
+commented so nobody reads it as stray formatting and removes it.
 
 ---
 
@@ -753,8 +808,8 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.5** · YouTube **1.12.4** · X **0.6.2** · Locket **0.2.1** · Panel **0.6.3** ·
-CarPlay **0.2.0** · suite **1.9.2**.
+Instagram **4.1.5** · YouTube **1.12.4** · X **0.6.2** · Locket **0.2.1** · Panel **0.6.4** ·
+CarPlay **0.3.0** · suite **1.9.3**.
 
 - **Working, Instagram:** inline download button (posts + reels), Download Center queue,
   story seen-receipt control, per-message mark-as-seen in DMs, follow-back badge, feed and

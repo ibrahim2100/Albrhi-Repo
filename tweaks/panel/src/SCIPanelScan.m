@@ -258,6 +258,14 @@
         NSDictionary *filter = plist[@"Filter"];
         if (![filter isKindOfClass:[NSDictionary class]]) continue;
 
+        // A second dylib belonging to a tweak the panel already has a row for.
+        // AlbrhiCPApp filters on com.apple.UIKit/UIKitCore -- MobileSubstrate's
+        // Bundles idiom for "every app that draws a window" -- and without this,
+        // those two framework identifiers would themselves become rows, exactly the
+        // "Camera"/"SpringBoard" mistake SCIPanelGroupIdentifier exists to fix, just
+        // for library names instead of app bundle identifiers this time.
+        if ([plist[@"SCIPanelHidden"] boolValue]) continue;
+
         unsigned long long size =
             [[files attributesOfItemAtPath:dylib error:NULL] fileSize];
 

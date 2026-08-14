@@ -1,5 +1,54 @@
 # Albrhi CarPlay — what changed
 
+## v0.3.0
+
+**The first real step toward running other apps on the CarPlay dashboard — the feature
+this whole project exists for, and the riskiest release yet.** Enter bundle
+identifiers in Settings › Albrhi CarPlay › Apps on the CarPlay dashboard and, on iOS
+16 or 17, that app's real interface appears on the car screen instead of a template
+scene when CarPlay opens it.
+
+**How it works, and where the risk actually sits.** A second dylib, AlbrhiCPApp,
+loads into every app that links UIKit — the standard MobileSubstrate idiom for
+"every foreground app" — and rewrites its own incoming CarPlay scene role from
+CPTemplateApplicationSceneSessionRoleApplication to the ordinary
+UIWindowSceneSessionRoleApplication, but only for a bundle identifier actually on the
+list; every other app loads the same hooks and they do nothing. Both hooked
+selectors, `-[UISceneConfiguration initWithName:sessionRole:]` and
+`-[UISceneSession role]`, are public, documented UIKit API intercepted for a purpose
+Apple did not intend — not private symbols. A bug here can only crash the one app
+that was actually enabled, never SpringBoard. SpringBoard's own dylib gained a
+matching admission spoof: it answers CarPlay's `CARCapableApp`/`SBStarkCapable`
+questions for an enabled bundle by hooking `LSBundleProxy`'s entitlement getters,
+which is the runtime admission path CarPlay used before iOS 18.
+
+**Known to work on iOS 16 and 17 only.** iOS 18 moved the real admission gate to
+`+[CRCarPlayAppDeclaration requiredEntitlementKeys]`, which reads code-signed
+entitlements at app-registration time — outside any process a tweak can inject into.
+Reaching it needs an on-disk patch (re-signing the target app's binary and trusting
+its cdhash in the jailbreak's own trustcache), which is a meaningfully bigger,
+harder-to-reverse step than anything else in this project so far and is deliberately
+not in this release. On iOS 18 the admission spoof installs and does nothing
+useful, same as everywhere else it cannot help.
+
+**What this deliberately does not do yet.** An app with no scene manifest at all has
+nothing for the role rewrite to resolve against and simply never gets a car scene —
+no crash, the feature just does not reach that app; moving its one window onto the
+car display and back is a separate piece for later. Multi-scene support is not
+forced for an app that has not already declared it in its own Info.plist, so such an
+app may not hold both a phone scene and a car scene at once. Dashboard-widget and
+instrument-cluster scene roles are left alone on purpose — putting a full app UI
+where the car expects a small widget is not an improvement.
+
+**Not validated on-device, more than anything else in this project so far.** Built,
+checked, and reasoned from public documentation plus architecture read from two
+open-source references (see CLAUDE.md) — never run against a real CarPlay head unit.
+Settings › Albrhi CarPlay's master switch still turns every hook in both dylibs off
+without uninstalling anything if a device does not get on with this release, and
+leaving the bridged-apps list empty (the default) means AlbrhiCPApp's hooks load
+into every app on the phone and do nothing, everywhere, until an identifier is
+actually entered.
+
 ## v0.2.0
 
 **A real settings page, and settings that actually reach across the sandbox.** Settings

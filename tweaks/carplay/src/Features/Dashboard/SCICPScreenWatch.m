@@ -1,5 +1,5 @@
 #import "SCICPScreenWatch.h"
-#import "../../SCILog.h"
+#import "SCILog.h"
 #import "../../Diagnostics/SCICPDiagnostics.h"
 #import <UIKit/UIKit.h>
 

@@ -1,7 +1,7 @@
 #import "SCICPAudioPolicy.h"
 #import "shared/src/SCIPanelGate.h"
 #import "shared/src/SCICPPrefsKeys.h"
-#import "../../SCILog.h"
+#import "SCILog.h"
 #import "../../Diagnostics/SCICPDiagnostics.h"
 #import <AVFoundation/AVFoundation.h>
 
