@@ -4,11 +4,12 @@
 
 #import "SCIPanelScan.h"
 #import "SCIPanelHeader.h"
+#import "SCIPanelDomain.h"
 #import "Localization/SCILocalize.h"
 #import <objc/message.h>
 #import <objc/runtime.h>
 
-NSString *SCIVersionString = @"v0.6.2";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.6.3";  // AlbrhiPanel
 
 ///
 /// Albrhi's own control panel, in the iOS Settings app.
@@ -37,7 +38,7 @@ NSString *SCIVersionString = @"v0.6.2";  // AlbrhiPanel
 
 /// Named identically in shared/src/SCIPanelGate.m, which is the half that reads it. Two
 /// spellings of this string is a switch that appears to work and changes nothing.
-static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
+static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
 
 /// What a button row does when it is tapped.
 ///
@@ -94,14 +95,39 @@ static void SCISetButtonAction(PSSpecifier *specifier, SEL action) {
     }
 
     for (SCIPanelEntry *entry in entries) {
-        PSSpecifier *row =
-            [PSSpecifier preferenceSpecifierNamed:entry.appName
-                                           target:self
-                                              set:@selector(setOn:forSpecifier:)
-                                              get:@selector(isOnForSpecifier:)
-                                           detail:Nil
-                                             cell:PSSwitchCell
-                                             edit:Nil];
+        PSSpecifier *row;
+
+        if (entry.detailControllerClassName.length) {
+            // A tweak that declared its own settings page (SCIPanelDetailController)
+            // gets a link row that pushes to it, not a switch on this list -- Albrhi
+            // CarPlay's master on/off lives inside that page instead, alongside the
+            // settings a single switch cell has no room for.
+            Class detailClass = NSClassFromString(entry.detailControllerClassName);
+            row = [PSSpecifier preferenceSpecifierNamed:entry.appName
+                                                 target:self
+                                                    set:NULL
+                                                    get:NULL
+                                                 detail:detailClass
+                                                   cell:PSLinkCell
+                                                   edit:Nil];
+        } else {
+            row = [PSSpecifier preferenceSpecifierNamed:entry.appName
+                                                 target:self
+                                                    set:@selector(setOn:forSpecifier:)
+                                                    get:@selector(isOnForSpecifier:)
+                                                 detail:Nil
+                                                   cell:PSSwitchCell
+                                                   edit:Nil];
+
+            // An app that is not on the phone gets a switch that cannot be moved.
+            // Offering a live switch for an app you do not have is offering a control
+            // over nothing. A row that pushes to its own page has nothing to dim --
+            // tapping it always works, whichever of its two processes is running.
+            if (!entry.appInstalled) {
+                [row setProperty:@NO forKey:@"enabled"];
+            }
+        }
+
         [row setProperty:entry.bundleIdentifier forKey:@"sciBundleIdentifier"];
 
         // The app's own icon, so the list is scanned by eye rather than read.
@@ -110,12 +136,6 @@ static void SCISetButtonAction(PSSpecifier *specifier, SEL action) {
         // the Instagram glyph and the YouTube glyph are told apart before reading starts.
         // Nil is fine and means no picture, never a blank space where one was promised.
         if (entry.appIcon) [row setProperty:entry.appIcon forKey:@"iconImage"];
-
-        // An app that is not on the phone gets a switch that cannot be moved. Offering a
-        // live switch for an app you do not have is offering a control over nothing.
-        if (!entry.appInstalled) {
-            [row setProperty:@NO forKey:@"enabled"];
-        }
 
         [specifiers addObject:row];
     }
@@ -200,6 +220,10 @@ static void SCISetButtonAction(PSSpecifier *specifier, SEL action) {
     // project has spent whole releases learning to build in from the start.
     NSMutableArray<SCIPanelEntry *> *known = [NSMutableArray array];
     for (SCIPanelEntry *entry in entries) {
+        // A row with its own settings page speaks for itself there; it never declares a
+        // tested app version in the first place, since it does not target one real app
+        // the way this section otherwise assumes.
+        if (entry.detailControllerClassName.length) continue;
         if (entry.appInstalled || entry.testedVersion.length) [known addObject:entry];
     }
     if (!known.count) return @[];

@@ -95,11 +95,15 @@
     // kills Preferences, so a new version always arrives in a new process.
     static NSString *cached = nil;
     static dispatch_once_t once;
-    dispatch_once(&once, ^{ cached = [self readInstalledSuiteVersion]; });
+    dispatch_once(&once, ^{
+        // The combined package first and the panel's own second, so a device that
+        // installed the components separately still gets a true answer rather than none.
+        cached = [self installedVersionForPackages:@[@"com.albrhi", @"com.albrhi.panel"]];
+    });
     return cached;
 }
 
-+ (NSString *)readInstalledSuiteVersion {
++ (NSString *)installedVersionForPackages:(NSArray<NSString *> *)wanted {
     NSString *prefix = [self jailbreakPrefix];
 
     // Where each jailbreak keeps it. The prefixed path first, because that is where a
@@ -109,10 +113,6 @@
         [prefix stringByAppendingPathComponent:@"var/lib/dpkg/status"],
         @"/var/lib/dpkg/status"
     ];
-
-    // The combined package first and the panel's own second, so a device that installed
-    // the components separately still gets a true answer rather than none.
-    NSArray<NSString *> *wanted = @[@"com.albrhi", @"com.albrhi.panel"];
 
     for (NSString *path in candidates) {
         NSString *status = [NSString stringWithContentsOfFile:path
@@ -261,9 +261,40 @@
         unsigned long long size =
             [[files attributesOfItemAtPath:dylib error:NULL] fileSize];
 
-        // Bundles is what both current filters use. Executables is read too, because a
-        // future Albrhi tweak written that way would otherwise produce no row at all --
-        // the app would simply not appear, with nothing to say why, which is exactly the
+        // A tweak that names its own group collapses to one row regardless of how many
+        // Bundles or Executables targets its filter carries -- Albrhi CarPlay is one
+        // filter naming two processes (SpringBoard, Camera) that is one feature, not two
+        // apps this project patches. Declared in the filter plist itself, the same place
+        // SCITestedVersion already is, rather than hard-coded here: this file should not
+        // have to know CarPlay's identifier to treat it correctly.
+        NSString *groupIdentifier = plist[@"SCIPanelGroupIdentifier"];
+        NSString *groupName = plist[@"SCIPanelGroupName"];
+        NSString *detailController = plist[@"SCIPanelDetailController"];
+
+        if ([groupIdentifier isKindOfClass:[NSString class]] && groupIdentifier.length) {
+            SCIPanelEntry *entry = [[SCIPanelEntry alloc] init];
+            entry.tweakName = stem;
+            entry.bundleIdentifier = groupIdentifier;
+            entry.appName = ([groupName isKindOfClass:[NSString class]] && groupName.length)
+                ? groupName : groupIdentifier;
+            entry.size = size;
+
+            // Not a real installed app, so there is no app to be missing -- the row
+            // exists whenever the tweak that declared it is installed, which it is: this
+            // loop only ever runs for a filter beside a dylib that is actually there.
+            entry.appInstalled = YES;
+
+            if ([detailController isKindOfClass:[NSString class]] && detailController.length) {
+                entry.detailControllerClassName = detailController;
+            }
+
+            [out addObject:entry];
+            continue;
+        }
+
+        // Bundles is what most filters use. Executables is read too, because a future
+        // Albrhi tweak written that way would otherwise produce no row at all -- the app
+        // would simply not appear, with nothing to say why, which is exactly the
         // silent-omission failure this project keeps having to fix.
         NSMutableArray *targets = [NSMutableArray array];
         for (id candidate in filter[@"Bundles"]) {

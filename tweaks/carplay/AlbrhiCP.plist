@@ -22,5 +22,20 @@
             <string>com.apple.camera</string>
         </array>
     </dict>
+
+    <!-- Read by Albrhi Panel's SCIPanelScan, not by MobileSubstrate: one filter, two
+         Bundles targets, would otherwise become two rows in Settings > Albrhi: "Camera"
+         and "SpringBoard", as if they were two apps this project patches rather than
+         two processes one feature happens to need. These three keys tell the scan to
+         collapse both targets into a single row under this identity and name, and to
+         push to a real settings page instead of offering a plain switch: the master
+         on/off lives inside that page now, alongside the audio-fix and microphone
+         choices, because a single row cannot carry three separate answers. -->
+    <key>SCIPanelGroupIdentifier</key>
+    <string>com.albrhi.carplay</string>
+    <key>SCIPanelGroupName</key>
+    <string>Albrhi CarPlay</string>
+    <key>SCIPanelDetailController</key>
+    <string>SCICPSettingsController</string>
 </dict>
 </plist>

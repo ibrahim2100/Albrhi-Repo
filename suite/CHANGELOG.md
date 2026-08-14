@@ -1,5 +1,16 @@
 # Albrhi Changelog
 
+## v1.9.2
+
+**Settings › Albrhi no longer lists "Camera" and "SpringBoard"** as if they were two
+apps this package patches, on a device that also has Albrhi CarPlay installed — the
+panel scans every Albrhi filter on the phone, suite or not, and CarPlay's names two
+system processes for one feature, not two apps. The panel can now give a tweak a full
+settings page of its own instead of a plain switch, and shows one "Albrhi CarPlay" row
+that opens it.
+
+Includes Panel 0.6.3.
+
 ## v1.9.1
 
 **CarPlay is out of this package.** 1.9.0 folded it in for a day; it does not touch any

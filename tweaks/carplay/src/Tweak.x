@@ -1,10 +1,11 @@
-#import "Prefs.h"
+#import "shared/src/SCIPanelGate.h"
+#import "shared/src/SCICPPrefsKeys.h"
 #import "SCILog.h"
 #import "Diagnostics/SCICPDiagnostics.h"
 #import "Features/Audio/SCICPAudioHooks.h"
 #import "Features/Dashboard/SCICPScreenWatch.h"
 
-NSString *SCIVersionString = @"v0.1.0";  // AlbrhiCP
+NSString *SCIVersionString = @"v0.2.0";  // AlbrhiCP
 
 ///
 /// One dylib, two processes.
@@ -15,18 +16,16 @@ NSString *SCIVersionString = @"v0.1.0";  // AlbrhiCP
 /// Neither process needs what the other one installs, so the constructor reads its own
 /// bundle identifier and only ever sets up the half that belongs to it.
 ///
+/// The master switch is asked for by name (SCIPanelAllowsApp), not by this process's
+/// own bundle identifier (SCIPanelAllowsThisApp) -- CarPlay is one tweak with one switch
+/// in the panel, and asking by the calling process's identity would split it into two
+/// unrelated answers, "is SpringBoard on" and "is Camera on", for a question that only
+/// has one meaning here.
 %ctor {
-    [[NSUserDefaults standardUserDefaults] registerDefaults:@{
-        SCIPrefEnabled: @YES,
-        SCIPrefAudioFix: @YES,
-        SCIPrefPreferredMic: @"iphone",
-        SCIPrefVerboseLogging: @NO,
-    }];
-
     NSLog(@"[AlbrhiCP] %@ loaded into %@", SCIVersionString,
           [[NSBundle mainBundle] bundleIdentifier]);
 
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefEnabled]) {
+    if (!SCIPanelAllowsApp(SCICPBundleIdentifier)) {
         SCILogV(@"disabled by preference — nothing installed");
         return;
     }

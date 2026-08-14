@@ -38,6 +38,19 @@ static void SCIBuildTables(void) {
         @"about_author": @"Made by",
         @"about_author_name": @"Ibrahim Ismail AL-Rahn",
         @"about_note": @"A greyed switch means that app is not installed on this device.",
+        @"carplay_title": @"Albrhi CarPlay",
+        @"carplay_master": @"Enabled",
+        @"carplay_master_footer": @"Turn CarPlay off and neither half of it — the recording-audio fix in Camera, or the screen watcher in SpringBoard — does anything. Close the app that is open for a change to take effect.",
+        @"carplay_audio_section": @"Recording audio fix",
+        @"carplay_audio_footer": @"Keeps your car's speakers in high quality while Camera is recording, instead of dropping to phone-call quality the moment a microphone is needed too.",
+        @"carplay_audio_fix": @"Audio fix enabled",
+        @"carplay_mic_section": @"Microphone while recording",
+        @"carplay_mic_footer": @"iPhone keeps the car's speakers on their high-quality profile and records with the iPhone's own mic. Car lets iOS use the car's microphone, which drops the speakers to phone-call quality — the behaviour without this tweak. Automatic leaves the session exactly as Camera set it up.",
+        @"carplay_mic_iphone": @"iPhone",
+        @"carplay_mic_car": @"Car",
+        @"carplay_mic_automatic": @"Automatic",
+        @"carplay_about_footer": @"Not validated on-device yet — this has been built and checked, but not run in a real car. Diagnostics are written to Documents/AlbrhiCP-report.txt inside whichever app CarPlay last ran in.",
+        @"verbose_logging": @"Verbose logging",
     };
 
     _arTable = @{
@@ -66,6 +79,19 @@ static void SCIBuildTables(void) {
         @"about_author": @"تطوير",
         @"about_author_name": @"إبراهيم إسماعيل الرهن",
         @"about_note": @"المفتاح الرمادي يعني أن ذلك التطبيق غير مثبَّت على هذا الجهاز.",
+        @"carplay_title": @"البرهي كاربلي",
+        @"carplay_master": @"مُفعَّل",
+        @"carplay_master_footer": @"أوقف كاربلي ولن يعمل أي من نصفيه — لا إصلاح صوت التسجيل في الكاميرا، ولا مراقب الشاشة في سبرينق بورد. أغلق التطبيق المفتوح ليسري المفعول.",
+        @"carplay_audio_section": @"إصلاح صوت التسجيل",
+        @"carplay_audio_footer": @"يبقي سماعات سيارتك بجودة عالية أثناء تسجيل الكاميرا، بدلاً من انخفاضها لجودة مكالمة هاتفية بمجرد الحاجة لمايكروفون أيضاً.",
+        @"carplay_audio_fix": @"إصلاح الصوت مُفعَّل",
+        @"carplay_mic_section": @"المايكروفون أثناء التسجيل",
+        @"carplay_mic_footer": @"آيفون يُبقي سماعات السيارة بجودتها العالية ويسجّل بمايك الآيفون نفسه. سيارة يترك iOS يستخدم مايك السيارة، وهذا يخفّض السماعات لجودة مكالمة هاتفية — وهو السلوك بلا هذه الأداة. تلقائي يترك الجلسة كما ضبطتها الكاميرا تماماً.",
+        @"carplay_mic_iphone": @"آيفون",
+        @"carplay_mic_car": @"سيارة",
+        @"carplay_mic_automatic": @"تلقائي",
+        @"carplay_about_footer": @"لم يُختبر على جهاز حقيقي بعد — بُني وفُحص لكن لم يُشغَّل داخل سيارة فعلية. تُكتب تقارير التشخيص في Documents/AlbrhiCP-report.txt داخل أيّ تطبيق شغّل كاربلي آخر مرة.",
+        @"verbose_logging": @"سجلّ تفصيلي",
     };
 }
 

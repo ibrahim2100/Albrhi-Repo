@@ -47,6 +47,17 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, nullable) NSString *appVersion;
 @property (nonatomic, copy, nullable) NSString *testedVersion;
 
+/// The class name of a full settings page this entry should push to when tapped,
+/// instead of showing a plain switch -- declared by the tweak's own filter plist via
+/// SCIPanelDetailController, alongside SCIPanelGroupIdentifier/SCIPanelGroupName. Nil
+/// for every tweak that is still one row, one app, one switch.
+///
+/// Written for Albrhi CarPlay: one filter naming two Bundles targets (SpringBoard,
+/// Camera) would otherwise become two rows -- as if they were two apps this project
+/// patches rather than two processes one feature needs -- and neither "SpringBoard" nor
+/// "Camera" has room for a switch, an audio-fix toggle and a microphone choice at once.
+@property (nonatomic, copy, nullable) NSString *detailControllerClassName;
+
 /// Whether the two match, once both are known.
 - (BOOL)runsTestedVersion;
 @end
@@ -84,6 +95,11 @@ NS_ASSUME_NONNULL_BEGIN
 /// Returns nil when nothing can be read — installed as a raw .dylib, or a status file
 /// somewhere this has not been taught to look.
 + (nullable NSString *)installedSuiteVersion;
+
+/// The same lookup, for any package by name -- CarPlay ships and updates on its own
+/// now, so "what version is on this phone" is a real question for com.albrhi.carplay
+/// too, not only for the combined suite.
++ (nullable NSString *)installedVersionForPackages:(NSArray<NSString *> *)packageNames;
 
 @end
 

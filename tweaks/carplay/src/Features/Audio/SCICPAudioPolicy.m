@@ -1,5 +1,6 @@
 #import "SCICPAudioPolicy.h"
-#import "../../Prefs.h"
+#import "shared/src/SCIPanelGate.h"
+#import "shared/src/SCICPPrefsKeys.h"
 #import "../../SCILog.h"
 #import "../../Diagnostics/SCICPDiagnostics.h"
 #import <AVFoundation/AVFoundation.h>
@@ -45,7 +46,7 @@ static AVAudioSessionPortDescription *SCICPBuiltInMicPort(void) {
 @implementation SCICPAudioPolicy
 
 + (void)applyForRecording {
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefAudioFix]) return;
+    if (!SCIPanelReadBool(SCICPAudioFixKey, YES)) return;
 
     AVAudioSession *session = [AVAudioSession sharedInstance];
 
@@ -56,7 +57,7 @@ static AVAudioSessionPortDescription *SCICPBuiltInMicPort(void) {
     sciSavedMode = session.mode;
     sciSavedOptions = session.categoryOptions;
 
-    NSString *preference = [[NSUserDefaults standardUserDefaults] stringForKey:SCIPrefPreferredMic] ?: @"iphone";
+    NSString *preference = SCIPanelReadString(SCICPPreferredMicKey, @"iphone");
 
     if ([preference isEqualToString:@"automatic"]) {
         SCILogV(@"audio: automatic mode -- leaving the session as Camera set it");

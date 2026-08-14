@@ -269,6 +269,33 @@ to leave A2DP. Two ordinary calls, no jailbreak-specific behavior, hooked on
 tweak uses, hooked here for what happens to a fully separate audio session rather than to
 the capture itself.
 
+**Albrhi Panel assumed one filter names one app, and CarPlay is the counterexample.**
+`SCIPanelScan` turned every `Bundles` entry in a filter plist into its own row, so
+CarPlay's two-process filter (SpringBoard, Camera) showed up as two rows reading
+"Camera" and "SpringBoard" — as if Albrhi patched Apple's own apps rather than hooking
+two processes for one feature. A filter can now declare `SCIPanelGroupIdentifier` /
+`SCIPanelGroupName` / `SCIPanelDetailController` to collapse to a single named row that
+pushes to a real settings page (`SCICPSettingsController`) instead of showing a plain
+switch — the master on/off, the audio-fix toggle and the microphone choice do not fit
+one switch cell between them. And that page's own preferences could not have worked
+before this: 0.1.0 stored them in `NSUserDefaults standardUserDefaults`, which is local
+to whichever of the two processes loaded the dylib and unreachable from Settings either
+way. `SCIPanelGate`'s cross-sandbox reader — built and proved for the per-app switch —
+was generalized from a bool-only, switch-only helper (`SCIPanelReadBool`/
+`SCIPanelReadString`, plus `SCIPanelAllowsApp` for an identity other than the calling
+process's own) rather than giving CarPlay a second, unproven cross-sandbox path of its
+own. Mic choice is three `PSSwitchCell` rows acting as a radio group, not a
+`PSListItemsController` picker — the private list-picker class was never confirmed to
+compile against the SDK this repository pins, and this project does not ship a guess
+at private API it has not built once.
+
+**An XML comment cannot contain `--`.** `AlbrhiCP.plist` failed to parse — silently, as
+far as `check.py` is concerned, since nothing here parses filter plists — because a
+comment explaining the grouped-row keys used `--` the way this file's own prose does
+everywhere else. `plistlib` catches it; `dpkg-deb` and MobileSubstrate might not agree
+on how, which is worse. Worth checking with a real plist parser after editing a `.plist`
+comment, the same discipline this project already applies to shell heredocs.
+
 ---
 
 ## Layout
@@ -664,7 +691,8 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.5** · YouTube **1.12.4** · X **0.6.0** · Locket **0.2.1** · Panel **0.6.2** · suite **1.8.0**.
+Instagram **4.1.5** · YouTube **1.12.4** · X **0.6.2** · Locket **0.2.1** · Panel **0.6.3** ·
+CarPlay **0.2.0** · suite **1.9.2**.
 
 - **Working, Instagram:** inline download button (posts + reels), Download Center queue,
   story seen-receipt control, per-message mark-as-seen in DMs, follow-back badge, feed and

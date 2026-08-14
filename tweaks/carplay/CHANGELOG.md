@@ -1,5 +1,29 @@
 # Albrhi CarPlay — what changed
 
+## v0.2.0
+
+**A real settings page, and settings that actually reach across the sandbox.** Settings
+› Albrhi listed "Camera" and "SpringBoard" as if they were two separate apps this
+project patches — they are the two processes one CarPlay tweak happens to need, and the
+panel now shows one "Albrhi CarPlay" row for both, which pushes to a full page: the
+master switch, the recording-audio fix on its own switch, a three-way microphone choice
+(iPhone, Car, Automatic), and verbose logging.
+
+**And those settings were never actually reachable before this.** 0.1.0 registered its
+preferences with `NSUserDefaults standardUserDefaults`, which is local to whichever
+process loaded the dylib — Camera's defaults and SpringBoard's defaults are not the same
+storage, and neither is reachable from Albrhi Panel running inside Settings. Every
+preference this tweak has moves to the same cross-sandbox path
+`shared/src/SCIPanelGate.h` already built and proved for the per-app on/off switch:
+`SCIPanelReadBool`/`SCIPanelReadString`, generalized from what was a bool-only,
+switch-only reader. The on/off switch itself moves too, from asking "is *this* process
+enabled" (which would have split into two unrelated answers, one for Camera and one for
+SpringBoard) to asking about CarPlay's own identity by name, from either process, through
+the domain's one shared key.
+
+Nothing about the audio fix or the screen watcher changed — same two features, same
+public API, still not validated on-device.
+
 ## v0.1.0
 
 **The first release, and it does one thing: keeps your car's speakers in high quality

@@ -1,5 +1,15 @@
 # Albrhi Panel Changelog
 
+## v0.6.3
+
+**A tweak can now declare a real settings page of its own, and CarPlay is the first
+to.** Any filter that names a `SCIPanelDetailController` collapses to one row and pushes
+to it instead of showing a switch — built because CarPlay's filter names two processes,
+SpringBoard and Camera, which was showing up as two confusing rows, "Camera" and
+"SpringBoard", as if they were separate apps this project patches. It is one "Albrhi
+CarPlay" row now, and it opens the master switch, the recording-audio fix, a
+microphone choice and verbose logging, all in one page.
+
 ## v0.6.2
 
 Three faults found by reading 0.6.1 back rather than by anyone hitting them.

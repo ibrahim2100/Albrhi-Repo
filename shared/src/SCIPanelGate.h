@@ -50,6 +50,31 @@ BOOL SCIPanelAllowsThisApp(void);
 /// Returns something like "off (file: /var/mobile/…)" or "on (nothing written)".
 NSString *SCIPanelGateReport(void);
 
+/// The same question as SCIPanelAllowsThisApp, for an identity other than the process
+/// asking it.
+///
+/// Written for Albrhi CarPlay, which is one dylib loaded into two processes
+/// (SpringBoard and Camera) but one tweak in the panel's list, with one switch. The
+/// per-app key SCIPanelAllowsThisApp derives from `[[NSBundle mainBundle]
+/// bundleIdentifier]` would split it into two answers -- "is SpringBoard on" and "is
+/// Camera on" -- for a question that only has one meaning. This asks about a name
+/// instead of the calling process, so both sides of that dylib ask about the same key:
+/// "app_enabled_com.albrhi.carplay", regardless of which of the two processes is asking.
+///
+/// Uncached, unlike SCIPanelAllowsThisApp: it is called for more than one identity in
+/// principle, and a single process only ever calls it once at %ctor time, so the cost of
+/// asking cfprefsd again is not worth a second cache to get wrong.
+BOOL SCIPanelAllowsApp(NSString *identifier);
+
+/// A preference the panel wrote for something other than the per-app on/off switch --
+/// CarPlay's recording-audio toggle, say. Same domain, same cross-sandbox path as the
+/// switch above; a different key because it answers a different question.
+BOOL SCIPanelReadBool(NSString *key, BOOL fallback);
+
+/// As above, for a preference that is not a plain on/off choice -- CarPlay's preferred
+/// microphone is a string ("iphone", "car" or "automatic"), not a boolean.
+NSString *SCIPanelReadString(NSString *key, NSString *fallback);
+
 #ifdef __cplusplus
 }
 #endif

@@ -48,17 +48,22 @@ static NSString *sciGateSource = nil;
 /// CFPreferences is still tried first because where it does work it is the cheaper answer
 /// and it sees a value that has been written but not yet flushed to disk.
 ///
-static BOOL SCIPanelReadSwitch(NSString *key, BOOL fallback) {
+/// Whichever plist type the panel actually wrote for this key -- an NSNumber for a
+/// switch, an NSString for something like the preferred-microphone choice -- or nil
+/// once every place this looks has been checked and nothing is there.
+///
+/// Both SCIPanelReadBool and SCIPanelReadString go through this one lookup rather than
+/// each repeating the CFPreferences-then-file dance: the shape of *where* an answer can
+/// be found does not depend on the shape of the answer itself, and two copies of that
+/// two-step lookup are two places for the fallback path to drift out of sync.
+static id SCIPanelCopyRawValue(NSString *key) {
     // 1. The daemon. Correct where the sandbox allows it, and free when it does not.
     CFPropertyListRef value = CFPreferencesCopyAppValue(
         (__bridge CFStringRef)key, (__bridge CFStringRef)kSCIPanelDomain);
 
     if (value) {
-        BOOL answer = fallback;
-        if (CFGetTypeID(value) == CFBooleanGetTypeID()) answer = CFBooleanGetValue((CFBooleanRef)value);
-        CFRelease(value);
         sciGateSource = @"preferences daemon";
-        return answer;
+        return (__bridge_transfer id)value;
     }
 
     // 2. The file itself. The panel writes through CFPreferences from the Settings app, so
@@ -78,18 +83,36 @@ static BOOL SCIPanelReadSwitch(NSString *key, BOOL fallback) {
     for (NSString *path in candidates) {
         NSDictionary *plist = [NSDictionary dictionaryWithContentsOfFile:path];
         id stored = plist[key];
-        if ([stored isKindOfClass:[NSNumber class]]) {
+        if (stored) {
             sciGateSource = path;
-            return [stored boolValue];
+            return stored;
         }
     }
 
-    // Nothing written anywhere. Said as its own answer rather than folded into "on":
-    // "never switched off" and "switched off and unreadable" are the two explanations
-    // this whole file exists to separate.
+    // Nothing written anywhere. Said as its own answer rather than folded into the
+    // fallback: "never switched off" and "switched off and unreadable" are the two
+    // explanations this whole file exists to separate.
     sciGateSource = [NSString stringWithFormat:@"nothing written (looked in %lu places)",
                      (unsigned long)candidates.count];
-    return fallback;
+    return nil;
+}
+
+BOOL SCIPanelReadBool(NSString *key, BOOL fallback) {
+    id value = SCIPanelCopyRawValue(key);
+    return [value isKindOfClass:[NSNumber class]] ? [value boolValue] : fallback;
+}
+
+NSString *SCIPanelReadString(NSString *key, NSString *fallback) {
+    id value = SCIPanelCopyRawValue(key);
+    return [value isKindOfClass:[NSString class]] ? value : fallback;
+}
+
+BOOL SCIPanelAllowsApp(NSString *identifier) {
+    if (!identifier.length) return YES;
+
+    // Absent reads as on. A device that has never opened the panel has every tweak it
+    // installed deliberately still working, which is the only safe reading of nothing.
+    return SCIPanelReadBool([@"app_enabled_" stringByAppendingString:identifier], YES);
 }
 
 BOOL SCIPanelAllowsThisApp(void) {
@@ -100,9 +123,7 @@ BOOL SCIPanelAllowsThisApp(void) {
         NSString *key = SCIPanelKeyForThisApp();
         if (!key) return;   // no bundle id to ask about; leave it on
 
-        // Absent reads as on. A device that has never opened the panel has every tweak it
-        // installed deliberately still working, which is the only safe reading of nothing.
-        allowed = SCIPanelReadSwitch(key, YES);
+        allowed = SCIPanelReadBool(key, YES);
     });
 
     return allowed;

@@ -1,5 +1,4 @@
 #import "SCICPAudioPolicy.h"
-#import "../../Prefs.h"
 #import "../../SCILog.h"
 #import <AVFoundation/AVFoundation.h>
 
