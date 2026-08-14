@@ -5,17 +5,19 @@
 #import "Features/Audio/SCICPAudioHooks.h"
 #import "Features/Dashboard/SCICPScreenWatch.h"
 #import "Features/Bridge/SCICPAdmissionSpoof.h"
+#import "Features/Wallpaper/SCICPWallpaperHooks.h"
 
-NSString *SCIVersionString = @"v0.3.0";  // AlbrhiCP
+NSString *SCIVersionString = @"v0.4.0";  // AlbrhiCP
 
 ///
-/// One dylib, two processes.
+/// One dylib, three processes.
 ///
-/// SpringBoard is where the CarPlay screen connects, and it is the process any future
-/// dashboard has to run in -- see SCICPScreenWatch.h for exactly how far that goes
-/// today and why it stops where it does. Camera is where the recording-audio fix runs.
-/// Neither process needs what the other one installs, so the constructor reads its own
-/// bundle identifier and only ever sets up the half that belongs to it.
+/// SpringBoard is where the CarPlay screen connects and where the admission spoof
+/// runs. Camera is where the recording-audio fix runs. com.apple.CarPlayWallpaper is
+/// Apple's own hidden system app that renders the dashboard background -- see
+/// SCICPWallpaperHooks.h for how that was found and what runs there. None of the
+/// three needs what the others install, so the constructor reads its own bundle
+/// identifier and only ever sets up the one that belongs to it.
 ///
 /// The master switch is asked for by name (SCIPanelAllowsApp), not by this process's
 /// own bundle identifier (SCIPanelAllowsThisApp) -- CarPlay is one tweak with one switch
@@ -38,6 +40,8 @@ NSString *SCIVersionString = @"v0.3.0";  // AlbrhiCP
         SCICPInstallAdmissionSpoof();
     } else if ([bundleID isEqualToString:@"com.apple.camera"]) {
         SCICPInstallAudioHooks();
+    } else if ([bundleID isEqualToString:@"com.apple.CarPlayWallpaper"]) {
+        SCICPInstallWallpaperHooks();
     }
 
     [SCICPDiagnostics writeReportToFile];

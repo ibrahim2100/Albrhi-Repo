@@ -1,5 +1,12 @@
 # Albrhi Panel Changelog
 
+## v0.6.6
+
+**The CarPlay page can set a custom dashboard wallpaper.** A photo picker
+(`PHPickerViewController` — no photo-library permission prompt needed, the modern
+picker Apple built for exactly that) saves the chosen image for Albrhi CarPlay's new
+wallpaper hook to pick up. Not validated on-device.
+
 ## v0.6.5
 
 **The CarPlay settings page opened to a black screen.** Reported on-device: tapping

@@ -1,5 +1,41 @@
 # Albrhi CarPlay — what changed
 
+## v0.4.0
+
+**A custom photo behind the CarPlay dashboard's app icons.** Choose one from Settings
+› Albrhi CarPlay and it replaces Apple's own wallpaper the next time CarPlay connects.
+
+**Found by reading Apple's own system apps, not a competitor's tweak.** Two hidden,
+`com.apple.`-signed apps — `CarPlayWallpaper.app` and `CarPlaySplashScreen.app` —
+ship inside iOS itself with no Settings screen of their own. Read directly (Mach-O
+class and method names, load commands — the same way every private API in this
+project is found), they show the dashboard background is resolved from a
+`wallpaperIdentifier` through `BaseBoardUI.framework`, the same private framework
+that already backs the iPhone's own Home Screen wallpaper — and assigned to a
+`UIImageView` inside one private method, `-[CPWRootViewController
+_updateWallpaperImage]`.
+
+**The hook does not try to control the identifier or the resolution — it overrides
+the very last step.** `%orig` runs first, so Apple's own wallpaper resolves exactly
+as it always has; only then, if a custom image has been chosen, does the hook
+replace `imageView.image` with it. Nothing here touches
+`_CRSUIWallpaperPreferences`, `_CRSUIWallpaperSceneSettings`, or how CarKit decides
+which identifier to hand over in the first place — those live in frameworks this
+project has not read, and guessing at them is exactly what CLAUDE.md's ground rules
+exist to keep out.
+
+A third target process for `AlbrhiCP.dylib`, not a new dylib: injecting into
+`com.apple.CarPlayWallpaper` is one more `%ctor` branch, the same shape SpringBoard
+and Camera already use. It is an ordinary app process, not SpringBoard — a mistake
+here can blank or crash the dashboard background, never respring the device.
+
+**Not validated on-device — CarPlayWallpaper.app has never been confirmed to still
+answer to this hook on a real connection.** The image is chosen through
+`PHPickerViewController` in the panel (Settings › Albrhi CarPlay), re-encoded to
+JPEG, and written to `/var/mobile/Library/Preferences/AlbrhiCP-wallpaper.jpg` — a
+plain file, not a preference value, for the same cross-sandbox reason
+`SCIPanelGate.h` already documents.
+
 ## v0.3.0
 
 **The first real step toward running other apps on the CarPlay dashboard — the feature

@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.9.5
+
+Includes Panel 0.6.6 — a photo picker for Albrhi CarPlay's new dashboard-wallpaper
+feature (its own separate package, not part of this one). Nothing else in this
+package changed.
+
 ## v1.9.4
 
 **Settings › Albrhi CarPlay opened to a black screen.** Fixed — the page was building

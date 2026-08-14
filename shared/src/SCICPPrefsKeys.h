@@ -43,3 +43,14 @@
 /// than guessing at a private multi-line text cell class never confirmed to compile
 /// against this project's pinned SDK.
 #define SCICPBridgedAppsKey        @"carplay_bridged_apps"
+
+/// Where the panel writes the chosen CarPlay dashboard wallpaper image, and where
+/// SCICPWallpaperHooks.x reads it back from inside com.apple.CarPlayWallpaper --
+/// Apple's own hidden system app that renders the dashboard background. A file, not
+/// a CFPreferences value: an image is too large to be a sane preference value, and
+/// this is the same jailbroken-device file-write Settings.app already relies on for
+/// com.albrhi.panel's own plist (see SCIPanelGate.h's own comment on why a
+/// sandboxed read across processes needs the real path, not the daemon, on this
+/// project's devices).
+#define SCICPWallpaperImagePath \
+    @"/var/mobile/Library/Preferences/AlbrhiCP-wallpaper.jpg"

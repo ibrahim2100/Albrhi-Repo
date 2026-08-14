@@ -57,6 +57,13 @@ static void SCIBuildTables(void) {
         @"carplay_bridge_none": @"None",
         @"carplay_bridge_edit": @"Edit Bridged Apps",
         @"carplay_bridge_edit_message": @"Comma-separated bundle identifiers, such as com.example.app, com.example.other.",
+        @"carplay_wallpaper_section": @"Dashboard wallpaper",
+        @"carplay_wallpaper_footer": @"Replaces the background behind the CarPlay dashboard's app icons with a photo of your own. Found by reading Apple's own hidden CarPlayWallpaper app, not guessed at — not validated on-device yet.",
+        @"carplay_wallpaper_status": @"Wallpaper",
+        @"carplay_wallpaper_choose": @"Choose Wallpaper Image",
+        @"carplay_wallpaper_clear": @"Remove Custom Wallpaper",
+        @"carplay_wallpaper_set": @"Custom image set",
+        @"carplay_wallpaper_none": @"None — Apple's own wallpaper",
     };
 
     _arTable = @{
@@ -104,6 +111,13 @@ static void SCIBuildTables(void) {
         @"carplay_bridge_none": @"لا شيء",
         @"carplay_bridge_edit": @"تعديل التطبيقات المفعّلة",
         @"carplay_bridge_edit_message": @"معرّفات الحزم مفصولة بفواصل، مثل com.example.app, com.example.other.",
+        @"carplay_wallpaper_section": @"خلفية لوحة التطبيقات",
+        @"carplay_wallpaper_footer": @"تستبدل الخلفية خلف أيقونات لوحة كاربلي بصورة من اختيارك. عُثر عليها بقراءة تطبيق آبل المخفي CarPlayWallpaper نفسه، لا تخمينًا — لم تُختبر على جهاز حقيقي بعد.",
+        @"carplay_wallpaper_status": @"الخلفية",
+        @"carplay_wallpaper_choose": @"اختيار صورة الخلفية",
+        @"carplay_wallpaper_clear": @"إزالة الخلفية المخصّصة",
+        @"carplay_wallpaper_set": @"صورة مخصّصة مُعيَّنة",
+        @"carplay_wallpaper_none": @"لا شيء — خلفية آبل الافتراضية",
     };
 }
 

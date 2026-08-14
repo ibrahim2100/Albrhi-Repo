@@ -11,10 +11,13 @@
 # screen watcher has anything to do there:
 #
 #   AlbrhiCP     SpringBoard (where the CarPlay screen connects and where the
-#                admission spoof runs) and Camera (the recording-quality
-#                fix). A %ctor gate on the bundle identifier decides which
-#                hooks a given process gets -- the same shape SCIPanelGate
-#                already uses to tell one host process from another.
+#                admission spoof runs), Camera (the recording-quality fix), and
+#                com.apple.CarPlayWallpaper -- Apple's own hidden system app
+#                that renders the dashboard background, found by reading its
+#                binary directly (see CLAUDE.md). A %ctor gate on the bundle
+#                identifier decides which hooks a given process gets -- the
+#                same shape SCIPanelGate already uses to tell one host process
+#                from another.
 #
 #   AlbrhiCPApp  Every app that links UIKit -- AlbrhiCPApp.plist filters on
 #                com.apple.UIKit/UIKitCore rather than a bundle identifier,
@@ -34,7 +37,7 @@
 ROOT := ../..
 
 TARGET := iphone:clang:latest:15.0
-INSTALL_TARGET_PROCESSES = SpringBoard Camera
+INSTALL_TARGET_PROCESSES = SpringBoard Camera CarPlayWallpaper
 ARCHS = arm64
 
 include $(THEOS)/makefiles/common.mk

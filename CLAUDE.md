@@ -346,6 +346,51 @@ The two references remain differently licensed (`carplay-cast`, Apache-2.0; `car
 stated license) and this implementation is written fresh from both, not lifted from
 either.
 
+**The dashboard wallpaper (0.4.0) came from a different kind of source: Apple's own
+compiled system apps, not a third party's tweak.** The user supplied two `.ipa` files
+they said they pulled from Apple directly — `CarPlayWallpaper.app` and
+`CarPlaySplashScreen.app`, both `Info.plist`-confirmed as `com.apple.CarPlayWallpaper`
+and `com.apple.CarPlaySplashScreen`, both `SBAppTags: hidden` (no user-facing entry
+point of their own — an unusual combination that says the OS ships a feature no Settings
+screen ever exposes turning on). Read the same way every other private API in this
+project is: Mach-O sections read directly (no `otool`/`class-dump` on this development
+machine — a small Python script parses `__objc_classname`/`__objc_methname` and
+`LC_LOAD_DYLIB` load commands by hand), not a class dump of a competitor's paid binary.
+That distinction is the whole reason this was fair to read at all — see the Instagram
+section's SCInsta credit and the CarBridge refusal earlier in this file for why the same
+action is not always the same decision.
+
+**What the binary said, plainly:** `CPWRootViewController` resolves a
+`wallpaperIdentifier` string into a `UIImage` (through private classes
+`_CRSUIWallpaperPreferences`/`_CRSUIWallpaperSceneSettings`, both living in
+`BaseBoardUI.framework` per the load-command list — the same private framework that
+backs the iPhone's own Home Screen wallpaper system, confirming CarPlay's dashboard
+wallpaper is not a separate feature but a second *scene* inside the OS's one wallpaper
+system) and assigns it to `self.imageView.image` inside one private method,
+`-_updateWallpaperImage`. *Where* the identifier itself comes from — which class decides
+it, whether any preference actually exposes choosing it — was not answered by two 90KB
+app binaries alone; `CarKit.framework` and `CarPlayUIServices.framework`, both linked but
+neither present to read, are where that logic actually lives.
+
+**So the hook does not try to answer that question at all — it intercepts the very last
+step instead.** `SCICPWallpaperHooks.x` hooks `-_updateWallpaperImage` on
+`CPWRootViewController` itself (forward-declared, matching this file's own rule about
+`@interface`s for touched properties), calls `%orig` so Apple's own resolution runs
+unchanged, and only then overwrites `imageView.image` with a user-chosen photo if one has
+been set — never touching the identifier, the preferences classes, or how CarKit decides
+anything. This is injected into `com.apple.CarPlayWallpaper` as a third target process
+for `AlbrhiCP.dylib` (alongside SpringBoard and Camera) rather than a fourth dylib: it is
+one hook in one file, not a second injection *scope* the way the app-bridging dylib
+needed. A mistake here is scoped to one ordinary app process, same severity class as the
+Camera hook — nowhere near SpringBoard's blast radius.
+
+The image itself travels as a plain file
+(`/var/mobile/Library/Preferences/AlbrhiCP-wallpaper.jpg`, written by the panel's new
+`PHPickerViewController`-based picker, re-encoded to JPEG so the reading side never has
+to guess at a HEIC decode) rather than a `CFPreferences` value — the same "a jailbroken
+device permits the real file path" reasoning `SCIPanelGate.h` already documents, just for
+an image instead of a plist.
+
 **The recording-audio fix needed no private API at all.** CarPlay audio dropping to
 phone-call quality the moment Camera starts recording is `AVAudioSession` asking for
 `AllowBluetooth` (HFP, which carries a microphone) instead of also asking for
@@ -599,7 +644,7 @@ commented so nobody reads it as stray formatting and removes it.
 ## Verification
 
 `python tools/check.py` — runs in CI before Theos, so a typo fails in seconds
-rather than after a five-minute compile. Seventeen rules, every one of them derived
+rather than after a five-minute compile. Eighteen rules, every one of them derived
 from a real build failure:
 
 1. duplicate `@interface` definitions
@@ -634,6 +679,10 @@ from a real build failure:
     in that tweak had already compiled. Casts and message sends cannot be mistaken for
     calls, but `@interface SCIFoo ()` can — twenty-four false positives on the first
     run, which is why the rule skips Objective-C directives by name
+18. `--` inside a `.plist` XML comment — illegal XML, and this project's own prose
+    uses `--` constantly. Nothing else here parses filter plists, so this broke
+    `AlbrhiCP.plist` silently three times in one afternoon before earning a rule;
+    caught only by running the file through `plistlib` by hand each time until then
 
 A check that cries wolf gets ignored. Four of these produced false positives on
 first writing and were tightened before landing. If you add a rule, prove it fails
@@ -819,8 +868,8 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.5** · YouTube **1.12.4** · X **0.6.2** · Locket **0.2.1** · Panel **0.6.5** ·
-CarPlay **0.3.0** · suite **1.9.4**.
+Instagram **4.1.5** · YouTube **1.12.4** · X **0.6.2** · Locket **0.2.1** · Panel **0.6.6** ·
+CarPlay **0.4.0** · suite **1.9.5**.
 
 - **Working, Instagram:** inline download button (posts + reels), Download Center queue,
   story seen-receipt control, per-message mark-as-seen in DMs, follow-back badge, feed and

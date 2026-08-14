@@ -20,6 +20,12 @@
                  change to widen once the mechanism is confirmed on a real device rather
                  than guessed at for every recording app at once. -->
             <string>com.apple.camera</string>
+
+            <!-- Apple's own hidden system app that renders the CarPlay dashboard
+                 background, found by reading its own compiled binary, not guessed at.
+                 See CLAUDE.md's CarPlay section for how, and SCICPWallpaperHooks.h for
+                 what runs here. -->
+            <string>com.apple.CarPlayWallpaper</string>
         </array>
     </dict>
 

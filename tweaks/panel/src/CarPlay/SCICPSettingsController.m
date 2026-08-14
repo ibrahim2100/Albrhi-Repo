@@ -1,5 +1,6 @@
 #import "SCICPSettingsController.h"
 #import <Preferences/PSSpecifier.h>
+#import <PhotosUI/PhotosUI.h>
 #import "../SCIPanelDomain.h"
 #import "../SCIPanelScan.h"
 #import "../SCIPanelButtonAction.h"
@@ -12,6 +13,9 @@
 static NSString *SCICPEnabledKey(void) {
     return [@"app_enabled_" stringByAppendingString:SCICPBundleIdentifier];
 }
+
+@interface SCICPSettingsController () <PHPickerViewControllerDelegate>
+@end
 
 @implementation SCICPSettingsController
 
@@ -85,6 +89,42 @@ static NSString *SCICPEnabledKey(void) {
                                                              edit:Nil];
         [row setProperty:choice[0] forKey:@"sciMicValue"];
         [specifiers addObject:row];
+    }
+
+    PSSpecifier *wallpaperGroup = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"carplay_wallpaper_section")
+                                                                 target:self
+                                                                    set:NULL
+                                                                    get:NULL
+                                                                 detail:Nil
+                                                                   cell:PSGroupCell
+                                                                   edit:Nil];
+    [wallpaperGroup setProperty:SCILocalized(@"carplay_wallpaper_footer") forKey:@"footerText"];
+    [specifiers addObject:wallpaperGroup];
+
+    [specifiers addObject:[self valueRow:SCILocalized(@"carplay_wallpaper_status")
+                                    value:[self wallpaperStatus]]];
+
+    PSSpecifier *chooseWallpaper = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"carplay_wallpaper_choose")
+                                                                   target:self
+                                                                      set:NULL
+                                                                      get:NULL
+                                                                   detail:Nil
+                                                                     cell:PSButtonCell
+                                                                     edit:Nil];
+    SCISetButtonAction(chooseWallpaper, @selector(chooseWallpaperImage));
+    [specifiers addObject:chooseWallpaper];
+
+    if ([NSFileManager.defaultManager fileExistsAtPath:SCICPWallpaperImagePath]) {
+        PSSpecifier *clearWallpaper = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"carplay_wallpaper_clear")
+                                                                      target:self
+                                                                         set:NULL
+                                                                         get:NULL
+                                                                      detail:Nil
+                                                                        cell:PSButtonCell
+                                                                        edit:Nil];
+        [clearWallpaper setProperty:@YES forKey:@"isDestructive"];
+        SCISetButtonAction(clearWallpaper, @selector(clearWallpaperImage));
+        [specifiers addObject:clearWallpaper];
     }
 
     PSSpecifier *bridgeGroup = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"carplay_bridge_section")
@@ -245,6 +285,74 @@ static NSString *SCICPEnabledKey(void) {
 
     [self sci_writeString:[specifier propertyForKey:@"sciMicValue"] forKey:SCICPPreferredMicKey];
     [self reloadSpecifiers];
+}
+
+// MARK: - Wallpaper
+
+- (NSString *)wallpaperStatus {
+    return [NSFileManager.defaultManager fileExistsAtPath:SCICPWallpaperImagePath]
+        ? SCILocalized(@"carplay_wallpaper_set") : SCILocalized(@"carplay_wallpaper_none");
+}
+
+- (void)chooseWallpaperImage {
+    PHPickerConfiguration *config =
+        [[PHPickerConfiguration alloc] initWithPhotoLibrary:PHPhotoLibrary.sharedPhotoLibrary];
+    config.filter = [PHPickerFilter imagesFilter];
+    config.selectionLimit = 1;
+
+    PHPickerViewController *picker = [[PHPickerViewController alloc] initWithConfiguration:config];
+    picker.delegate = self;
+    [self presentViewController:picker animated:YES completion:nil];
+}
+
+- (void)picker:(PHPickerViewController *)picker
+    didFinishPicking:(NSArray<PHPickerResult *> *)results {
+    [picker dismissViewControllerAnimated:YES completion:nil];
+
+    NSItemProvider *provider = results.firstObject.itemProvider;
+    if (![provider canLoadObjectOfClass:UIImage.class]) return;
+
+    __weak SCICPSettingsController *weakSelf = self;
+    [provider loadObjectOfClass:UIImage.class completionHandler:^(UIImage *image, NSError *error) {
+        if (![image isKindOfClass:UIImage.class]) return;
+
+        // Re-encoded rather than the original file's own bytes: a HEIC or PNG straight
+        // from Photos is exactly what SCICPWallpaperOverride does not need to guess
+        // about decoding inside a hidden system app's process -- one predictable
+        // format on the read side, chosen here where UIKit already has the decoded
+        // image in hand.
+        NSData *jpeg = UIImageJPEGRepresentation(image, 0.9);
+        if (!jpeg) return;
+
+        NSError *writeError = nil;
+        BOOL wrote = [jpeg writeToFile:SCICPWallpaperImagePath
+                                options:NSDataWritingAtomic
+                                  error:&writeError];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (wrote) {
+                [weakSelf reloadSpecifiers];
+            } else {
+                [weakSelf sayWallpaperSaveFailed:writeError];
+            }
+        });
+    }];
+}
+
+- (void)clearWallpaperImage {
+    [NSFileManager.defaultManager removeItemAtPath:SCICPWallpaperImagePath error:nil];
+    [self reloadSpecifiers];
+}
+
+- (void)sayWallpaperSaveFailed:(NSError *)error {
+    UIAlertController *note =
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"carplay_wallpaper_choose")
+                                            message:error.localizedDescription ?: @"?"
+                                     preferredStyle:UIAlertControllerStyleAlert];
+    [note addAction:[UIAlertAction actionWithTitle:SCILocalized(@"ok")
+                                             style:UIAlertActionStyleDefault
+                                           handler:nil]];
+    [self presentViewController:note animated:YES completion:nil];
 }
 
 // MARK: - Bridged apps

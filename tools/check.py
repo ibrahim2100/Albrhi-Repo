@@ -844,6 +844,22 @@ for path in SRC:
             report('%s at %s:%d is called but defined nowhere this tweak can see '
                    '-- another tweak has it' % (name, path, n))
 
+# 18. A "--" inside an XML comment in a .plist file.
+#
+# Illegal in XML -- a comment may not contain two consecutive hyphens anywhere in its
+# body, only at the very start of "<!--" and the very end of "-->" -- and this project's
+# own prose uses "--" constantly. AlbrhiCP.plist broke silently from this three times in
+# one afternoon: nothing here parses filter plists, so a broken one was caught only by
+# manually running it through plistlib afterwards, each time. check.py catches it now
+# instead of relying on remembering to check by hand a fourth time.
+for path in glob.glob('*.plist') + glob.glob('appsrc/*.plist'):
+    text = open(path, encoding='utf-8').read()
+    for match in re.finditer(r'<!--(.*?)-->', text, re.S):
+        if '--' in match.group(1):
+            line = text.count('\n', 0, match.start()) + 1
+            report('%s:%d has "--" inside an XML comment, which is not legal XML '
+                   'and breaks plistlib/dpkg-deb parsing' % (path, line))
+
 print('keys: %d EN / %d AR   orphans: %d' % (len(en_keys), len(ar_keys), len(en_keys - used)))
 print('version: %s' % control_version)
 print()
