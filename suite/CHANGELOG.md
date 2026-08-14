@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.9.7
+
+Includes YouTube 1.12.5 — an attempt at the lock screen showing a different video from the
+one playing. Background playback told the app that *every* video it built was fit to carry
+on in the background, including ones it was only preloading; it now answers for the video
+being watched. **Shipped to be tried, not confirmed fixed** — see the YouTube changelog for
+what was ruled out, what is still unscoped, and how to tell if this was not it.
+
 ## v1.9.6
 
 Includes Panel 0.6.7 — clearer guidance on the CarPlay page (its own separate

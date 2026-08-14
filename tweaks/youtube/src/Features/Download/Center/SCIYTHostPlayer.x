@@ -40,6 +40,23 @@ static __weak YTPlayerViewController *sciHostPlayer = nil;
     SCILogV(@"host: paused YouTube's player");
 }
 
++ (NSString *)activeVideoID {
+    YTPlayerViewController *player = sciHostPlayer;
+    if (!player) return nil;
+
+    // -currentVideoID is a lead, not a confirmed selector -- YouTubeHeaders.h says so where
+    // it is declared, and 0.1.1 died of calling a lead without asking first. Absent, the
+    // answer is nil and every caller falls back, which costs the scoping and never the
+    // player.
+    if (![player respondsToSelector:@selector(currentVideoID)]) {
+        SCILogV(@"host: no -currentVideoID on %@", NSStringFromClass([player class]));
+        return nil;
+    }
+
+    NSString *videoID = [player currentVideoID];
+    return videoID.length ? videoID : nil;
+}
+
 
 @end
 

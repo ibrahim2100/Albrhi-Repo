@@ -3,6 +3,38 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.12.5
+
+**The lock screen showed a different video from the one playing.** Reported from a
+device, and worth saying plainly: **this is a change to test, not a confirmed fix.** The
+mechanism below is read off the code rather than measured on a phone, and it is being
+shipped so it can be tried.
+
+Nothing in this tweak writes a lock-screen entry for an ordinary YouTube video — the only
+code that touches the now-playing centre belongs to the saved-downloads player, and that
+was ruled out first. What the tweak can do is change *which video the app itself treats as
+the one playing*, and background playback is where: the whole feature is three getters
+forced to YES, and the app's audio session, its playback controls and its lock-screen entry
+all follow from that one answer.
+
+They were forced for **every** instance, including videos the app was merely preloading. A
+preloaded video answering "yes, I may carry on in the background" is a candidate for the
+lock screen while something else is playing.
+
+`MLVideo -playableInBackground` now answers for the video actually being watched and leaves
+the rest to YouTube. Two deliberate limits:
+
+- It never answers *no*. An unmatched video gets YouTube's own answer — the behaviour
+  without this tweak — rather than an invented refusal.
+- No video id yet is not treated as a mismatch. That is the ordinary state for the first
+  video of a session, and refusing it would break the feature exactly where it is wanted.
+
+The file's other two hooks (`YTIPlayabilityStatus`, `YTPlaybackData`) are **not** scoped,
+because neither carries a video id to compare and attributing one would be guesswork. If
+the lock screen still disagrees with the sound, those two are the next place to look — and
+the quickest way to tell is to turn background playback off entirely and see whether the
+mismatch goes with it.
+
 ## v1.12.4
 
 - The tweak now states, in its own filter file, the YouTube version it was last verified

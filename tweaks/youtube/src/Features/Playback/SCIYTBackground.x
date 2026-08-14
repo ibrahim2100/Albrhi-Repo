@@ -1,6 +1,7 @@
 #import "../../YouTubeHeaders.h"
 #import "../../SCILog.h"
 #import "../../Prefs.h"
+#import "../Download/Center/SCIYTHostPlayer.h"
 
 ///
 /// Keep playing with the screen off.
@@ -32,12 +33,56 @@
 %end
 
 
+///
+/// Scoped to the video being watched, and this is the one of the three that could be.
+///
+/// The lock screen showed a different video from the one playing. Nothing in this tweak
+/// writes a now-playing entry for an ordinary YouTube video -- the only code that touches
+/// MPNowPlayingInfoCenter is the saved-downloads player -- so the tweak was not writing the
+/// wrong entry. What it could do is change *which video the app itself considers the one
+/// playing*, and this file is where it does it: the comment at the top of this file says
+/// outright that the audio session, the now-playing controls and the lock screen all follow
+/// from this one answer.
+///
+/// The app builds an MLVideo for videos it is only preloading -- Tweak.x hooks three of its
+/// initialisers precisely because so many are made -- and answering YES for every instance
+/// tells the app a video nobody is watching is fit to carry on in the background. So the
+/// answer is now given for the one being watched and left to the app for the rest.
+///
+/// Two things this deliberately does not do:
+///
+///   - It does not answer NO. Falling back to %orig means an unmatched video gets YouTube's
+///     own answer, which is the behaviour without this tweak at all; inventing a NO for a
+///     video that really is background-playable would be a new bug wearing a fix's clothes.
+///   - It does not scope on a missing id. No active id yet is the ordinary state for the
+///     first video of a session, asked before -play has ever fired, and refusing it there
+///     would break the feature outright for exactly the case it is most wanted in.
+///
+/// **The other two hooks in this file are not scoped, because they cannot be.** Neither
+/// YTIPlayabilityStatus nor YTPlaybackData carries a video id to compare, and inventing a
+/// way to attribute one to a video is guesswork of exactly the kind this project's first
+/// ground rule forbids. If the lock screen still disagrees with the sound after this, those
+/// two are where to look next, and they will need a different handle than an id.
+///
 %hook MLVideo
 
 - (BOOL)playableInBackground {
     if (!SCIPrefEnabled(SCIPrefBackgroundPlay)) {
         return %orig;
     }
+
+    NSString *active = [SCIYTHostPlayer activeVideoID];
+
+    // Guarded rather than read straight off: -ID is declared on this class in our own
+    // headers, but so was every selector that has gone missing between two YouTube builds.
+    NSString *mine = [self respondsToSelector:@selector(ID)] ? self.ID : nil;
+
+    if (active.length && mine.length && ![active isEqualToString:mine]) {
+        SCILogV(@"background: %@ is not the video playing (%@) — leaving it to YouTube",
+                mine, active);
+        return %orig;
+    }
+
     return YES;
 }
 
