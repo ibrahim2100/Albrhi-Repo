@@ -106,12 +106,26 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v1.9.1",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **CarPlay is out of this package.**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v1.9.0",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **A fifth tweak: Albrhi CarPlay.**",
+          "markdown": "• A fifth tweak, Albrhi CarPlay, was briefly included in this release.",
           "useSpacing": true
         },
         {
@@ -131,20 +145,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v1.8.1",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **X: the timeline save button shows while scrolling now, not only after opening a post.**",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -155,7 +155,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.9.0"
+          "text": "1.9.1"
         },
         {
           "class": "DepictionTableTextView",
