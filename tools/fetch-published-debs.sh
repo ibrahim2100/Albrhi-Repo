@@ -60,9 +60,40 @@ LOCAL_DIRS="${4:-}"
 # old version, a guard that never passes serves nothing new ever again.
 OWNER_TWEAK="${5:-}"
 
+# Packages that are deliberately kept out of the source, whatever the releases hold.
+#
+# Not publishing a package is not the same as withholding it, and that gap is why this
+# list exists rather than a workflow being switched off and left at that. This script
+# builds the index from what is *published* -- the whole reason it survives two
+# publishers writing one index -- so a package whose workflow stops releasing is still
+# gathered from its old releases and served forever, at the last version it shipped.
+# Silence removes nothing.
+#
+# CarPlay is here because its app bridging has never been confirmed working on a
+# device: 0.3.0 and 0.4.0 each looked finished and were not, and 0.4.1's fixes for what
+# a real iOS 16.1 report found missing are themselves unobserved. Serving it offers an
+# update to people whose only report is that it does not work.
+#
+# Both halves have to be undone together to publish it again -- this entry and the
+# release half of .github/workflows/buildcarplay.yml, which says the same thing from
+# its side. Removing only this one serves an old release as though it were current.
+#
+# Matched exactly, against the archive's own Package field, and every flavour has to be
+# named: com.albrhi.carplay and com.albrhi.carplay.roothide are separate identities, and
+# listing only the first would withhold the rootless build while still serving roothide.
+WITHHELD_PACKAGES="com.albrhi.carplay com.albrhi.carplay.roothide"
+
 # How far back to look. Bounded, because every push rebuilds the index and walking
 # the entire release history each time would cost more the longer the project lives.
 SCAN=40
+
+is_withheld() {
+    local candidate="$1" withheld
+    for withheld in $WITHHELD_PACKAGES; do
+        [ "$candidate" = "$withheld" ] && return 0
+    done
+    return 1
+}
 
 mkdir -p "$OUT_DIR"
 staging="$(mktemp -d)"
@@ -160,6 +191,14 @@ for tag in $tags; do
             continue
         fi
 
+        # Checked before the keep-count, so a withheld package never takes a slot it
+        # would then be dropped from -- it is not "an old version of something served",
+        # it is not served at all.
+        if is_withheld "$package"; then
+            echo "Withheld ${package} (from ${tag}) — kept out of the source on purpose."
+            continue
+        fi
+
         count=$(taken_for "$package")
         if [ "$count" -ge "$KEEP" ]; then
             continue
@@ -190,6 +229,16 @@ for dir in $LOCAL_DIRS; do
 
         package=$(dpkg-deb -f "$deb" Package 2>/dev/null || true)
         [ -n "$package" ] || continue
+
+        # A withheld package is withheld here too. This fold-in exists because the
+        # releases listing lags behind a release the same run just made -- but a run
+        # that builds a withheld package without releasing it would otherwise smuggle
+        # it into the index by this door, which is the one path the gather above
+        # cannot see.
+        if is_withheld "$package"; then
+            echo "Withheld ${package} — built this run, kept out of the source on purpose."
+            continue
+        fi
 
         version=$(dpkg-deb -f "$deb" Version 2>/dev/null || echo "0")
         arch=$(dpkg-deb -f "$deb" Architecture 2>/dev/null || echo "unknown")
@@ -246,6 +295,14 @@ verify_versions() {
         package=$(awk -F': *' '/^Package:/ {print $2; exit}' "$control")
         version=$(awk -F': *' '/^Version:/ {print $2; exit}' "$control")
         [ -n "$package" ] && [ -n "$version" ] || continue
+
+        # A withheld package must never be asserted present: it is missing by design,
+        # and this check would fail every run demanding what the gather deliberately
+        # dropped. That is not hypothetical -- it is precisely what a run would do if
+        # OWNER_TWEAK still named the withheld tweak.
+        if is_withheld "$package"; then
+            continue
+        fi
 
         # The rootless build publishes as name_version+rootless_arch.deb and the roothide
         # one as name.roothide_version_arch.deb, so the version is matched inside the

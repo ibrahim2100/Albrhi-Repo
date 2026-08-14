@@ -1,51 +1,44 @@
 name: Build Albrhi CarPlay
 
 #
-# CarPlay is not in com.albrhi. It patches SpringBoard and Camera for a car-display
-# feature that has nothing to do with the social apps the suite bundles, so it
-# publishes on its own instead of riding along in buildsuite.yml -- installing Albrhi
-# should not mean installing something for a car nobody asked about.
+# **Manual only. This workflow no longer publishes anything.**
 #
-# That makes this the second workflow that actually publishes, after buildsuite.yml.
-# The other four per-tweak workflows (buildtweak, buildyoutube, buildtwitter,
-# buildlocket) and buildpanel.yml stay manual-build-only, because everything they
-# build already ships through the suite -- see CLAUDE.md's CI section.
+# CarPlay is withheld from the source while its app-bridging mechanism is still
+# unconfirmed on a device. 0.4.1 shipped three fixes that a real iOS 16.1 report
+# said were missing, and none of the three has been observed working; 0.4.0 and
+# 0.3.0 each looked finished and were not. Publishing a package on that footing
+# offers an update to people whose only report so far is that it does not work.
 #
-# Two publishers means the shared APT index has to survive both writing it. The same
-# discipline buildsuite.yml uses applies here: build the index from what is published
-# rather than from this run's own output, fold this run's own build in by name so a
-# release the listing has not caught up with yet is not lost, and take the shared
-# albrhi-pages concurrency group so the two never write gh-pages at once.
+# So the withholding is deliberate and reversible, and it has two halves, because
+# stopping the publisher alone would leave the already-published carplay-v* releases
+# in the index forever -- tools/fetch-published-debs.sh builds the index from what is
+# *published*, not from any one run's output, which is exactly what makes it survive
+# two publishers and exactly what makes silence here insufficient. That script now
+# names com.albrhi.carplay as withheld and skips it on the way in. Both halves have to
+# be undone together to publish again; the note there says so too.
+#
+# This is kept, rather than deleted, for the same reason the other five per-tweak
+# workflows are: building one tweak on its own is still the fastest way to find out
+# whether it compiles. It produces two packages and stops.
+#
+# **To publish CarPlay again**, in one commit:
+#   1. restore the `push:` trigger, the release gate, the release step, the gather,
+#      the Pages steps and the `albrhi-pages` concurrency group -- git history for
+#      this file holds all of them, as of the commit that removed them;
+#   2. remove com.albrhi.carplay from WITHHELD_PACKAGES in
+#      tools/fetch-published-debs.sh.
+# Doing only the first republishes nothing, because the gather would still drop the
+# package this workflow had just released, and the run's own guard would then fail it
+# for publishing a source older than its release -- correctly.
 #
 
 on:
-    push:
-        branches:
-            - 'main'
-        paths:
-            - 'tweaks/carplay/**'
-            - 'shared/**'
-            - 'tools/**'
-            - '.github/workflows/buildcarplay.yml'
     workflow_dispatch:
-        inputs:
-            force_rebuild:
-                description: 'Release even if this version was already released'
-                type: boolean
-                default: false
 
 jobs:
     build:
-        name: Build, release and publish
+        name: Build both flavours
         runs-on: macos-latest
-
-        concurrency:
-            group: albrhi-pages
-            cancel-in-progress: false
-
-        permissions:
-            contents: write
-            pages: write
 
         steps:
             - name: Checkout
@@ -55,6 +48,8 @@ jobs:
                 submodules: recursive
 
             - name: Source checks
+              # Before Theos, so a typo fails in seconds rather than after a
+              # five-minute compile.
               run: |
                 cd main
                 python3 tools/check.py
@@ -64,23 +59,6 @@ jobs:
                 V=$(awk -F': *' '/^Version:/ {print $2; exit}' main/tweaks/carplay/control)
                 echo "CP_VERSION=$V" >> $GITHUB_ENV
                 echo "Building Albrhi CarPlay $V"
-
-            - name: Decide whether a release is needed
-              id: gate
-              run: |
-                cd main
-                if git ls-remote --exit-code --tags origin "refs/tags/carplay-v${CP_VERSION}" > /dev/null 2>&1; then
-                  if [ "${{ github.event.inputs.force_rebuild }}" = "true" ]; then
-                    echo "carplay-v${CP_VERSION} exists; forced"
-                    echo "release=true" >> $GITHUB_OUTPUT
-                  else
-                    echo "carplay-v${CP_VERSION} is already released — building, not releasing"
-                    echo "release=false" >> $GITHUB_OUTPUT
-                  fi
-                else
-                  echo "carplay-v${CP_VERSION} is new"
-                  echo "release=true" >> $GITHUB_OUTPUT
-                fi
 
             - name: Install build dependencies
               run: brew install ldid make dpkg
@@ -193,7 +171,10 @@ jobs:
             - name: Rename the debs to their published names
               # Debian convention -- package_version_architecture.deb -- so the two
               # flavours can never collide on one filename the way a converted
-              # package's original name has collided before.
+              # package's original name has collided before. Kept even though nothing
+              # is published from here: the artifact is what gets installed by hand
+              # while the source withholds the package, and the same two flavours are
+              # as easy to confuse in a download as they are in Sileo.
               run: |
                 cd main/tweaks/carplay/packages
                 for DEB in *.deb; do
@@ -214,168 +195,3 @@ jobs:
                 name: AlbrhiCarPlay-${{ env.CP_VERSION }}
                 path: main/tweaks/carplay/packages/*.deb
                 if-no-files-found: error
-
-            - name: Extract changelog for this version
-              if: steps.gate.outputs.release == 'true'
-              run: |
-                cd main
-                python3 tools/release-notes.py tweaks/carplay/CHANGELOG.md tweaks/carplay/control > /tmp/notes.md
-                echo '--- release notes'
-                cat /tmp/notes.md
-
-            - name: Publish release
-              if: steps.gate.outputs.release == 'true'
-              uses: softprops/action-gh-release@v2
-              with:
-                name: Albrhi CarPlay ${{ env.CP_VERSION }}
-                tag_name: carplay-v${{ env.CP_VERSION }}
-                body_path: /tmp/notes.md
-                files: main/tweaks/carplay/packages/*.deb
-                fail_on_unmatched_files: true
-
-            - name: Gather every published package
-              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/carplay-v')
-              env:
-                GH_TOKEN: ${{ github.token }}
-              run: |
-                # Built from what is published, not from this run's compile, for the same
-                # reason buildsuite.yml does it: make-repo.sh wipes debs/ and rebuilds it,
-                # so an index built from one workflow's output alone would erase the other
-                # publisher's packages from the source.
-                chmod +x main/tools/fetch-published-debs.sh
-                ./main/tools/fetch-published-debs.sh published "${{ github.repository }}" 3 "main/tweaks/carplay/packages" carplay
-
-            - name: Publish APT repo to GitHub Pages
-              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/carplay-v')
-              env:
-                GH_TOKEN: ${{ github.token }}
-              run: |
-                set -x
-                REPO_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
-                REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
-
-                rm -rf pages
-                mkdir pages
-                cd pages
-                git init -q
-                git remote add origin "$REMOTE"
-
-                if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
-                  echo "gh-pages exists — fetching it."
-                  git fetch -q --depth 1 origin gh-pages
-                  git checkout -q -b gh-pages FETCH_HEAD
-                else
-                  echo "gh-pages does not exist — starting a fresh branch."
-                  git checkout -q -b gh-pages
-                fi
-
-                cd ..
-
-                chmod +x main/tools/make-repo.sh
-                ./main/tools/make-repo.sh published pages "$REPO_URL"
-
-                cp main/tools/repo-index.html pages/index.html
-
-                mkdir -p pages/deb-edit
-                cp main/tools/deb-edit.html pages/deb-edit/index.html
-
-                mkdir -p pages/inject
-                cp main/tools/ipa-inject.html pages/inject/index.html
-
-                # Regenerated every run so the version and changelog shown always match
-                # what was actually built. From the tweak's own directory, because the
-                # generator reads CHANGELOG.md relative to its working directory.
-                PAGES_DIR="$(pwd)/pages"
-                ( cd main/tweaks/carplay && python3 ../../tools/make-depiction.py "$PAGES_DIR" "$CP_VERSION" "$REPO_URL" carplay )
-
-                ls -la pages/depictions
-
-                # Regenerated every run too; buildsuite.yml already does this for the same
-                # source icon, so this only needs to not clobber it with different bytes --
-                # make-logo.py is deterministic from the same tools/logo.png override (or
-                # its absence), so the two runs always agree.
-                python3 main/tools/make-logo.py pages/CydiaIcon.png 512
-
-                touch pages/.nojekyll
-
-                cd pages
-                git config user.name "github-actions[bot]"
-                git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-                git add -A
-
-                if git diff --cached --quiet; then
-                  echo "Repo index unchanged — nothing to push."
-                  exit 0
-                fi
-
-                git commit -q -m "Repo: Albrhi CarPlay ${CP_VERSION}"
-                git push -q origin gh-pages
-
-                echo "Index committed to gh-pages; the deploy steps below publish it."
-
-            - name: Serve the source from the branch
-              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/carplay-v')
-              env:
-                GH_TOKEN: ${{ github.token }}
-              # Same reasoning as buildsuite.yml's identical step: deploy-pages queued
-              # indefinitely on this repository and was removed for it. An APT source
-              # does not need it -- gh-pages is pushed above and already holds the
-              # finished index; this only makes the branch-serving arrangement explicit
-              # and requests a build rather than depending on a push trigger that has
-              # stopped firing before without warning.
-              run: |
-                echo "Pointing Pages at the gh-pages branch"
-                gh api -X PUT "repos/${{ github.repository }}" --field has_pages=true --silent 2>/dev/null || true
-
-                if gh api -X PUT "repos/${{ github.repository }}/pages" --field 'build_type=legacy' --field 'source[branch]=gh-pages' --field 'source[path]=/' --silent 2>/dev/null; then
-                  echo "Pages now serves gh-pages"
-                else
-                  echo "::warning::could not set the Pages source; continuing"
-                fi
-
-                gh api -X POST "repos/${{ github.repository }}/pages/builds" --silent && echo "build requested" || echo "::warning::could not request a build; the push may still start one"
-
-            - name: Check the source actually serves this version
-              if: always() && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/carplay-v'))
-              run: |
-                BASE="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/Packages"
-                echo "Asking $BASE for com.albrhi.carplay ${CP_VERSION}"
-
-                for ATTEMPT in $(seq 1 6); do
-                  BODY=$(curl -fsSL "${BASE}?t=$(date +%s)-${ATTEMPT}" 2>/dev/null || true)
-
-                  if printf '%s' "$BODY" | grep -A5 '^Package: com.albrhi.carplay$' | grep -q "^Version: ${CP_VERSION}$"; then
-                    echo "ok  the source is serving ${CP_VERSION}"
-                    exit 0
-                  fi
-
-                  SERVING=$(printf '%s' "$BODY" | grep -A5 '^Package: com.albrhi.carplay$' | grep '^Version:' | sort -V | tail -n1)
-                  echo "attempt ${ATTEMPT}: ${SERVING:-nothing for com.albrhi.carplay yet}"
-                  sleep 20
-                done
-
-                echo "Serving: ${SERVING:-nothing for com.albrhi.carplay}"
-                echo ""
-
-                if [ -n "$SERVING" ]; then
-                  echo "::notice::the source is serving ${SERVING#Version: }; ${CP_VERSION} follows when Pages builds"
-                  echo "The release is published and the branch holds the right index."
-                  echo "Nothing here needs doing."
-                  exit 0
-                fi
-
-                echo "::error::the source is serving no com.albrhi.carplay at all"
-                echo ""
-                echo "The release is published and gh-pages holds the finished index, so"
-                echo "the branch is right and the site is not being built from it."
-                echo ""
-                echo "Check the one setting this side cannot read:"
-                echo ""
-                echo "  Settings -> Pages -> Build and deployment -> Source"
-                echo "      Deploy from a branch"
-                echo "      Branch: gh-pages    Folder: / (root)"
-                echo ""
-                echo "If it says GitHub Actions instead, branch pushes are never served"
-                echo "and the site stays frozen at the last branch build -- which looks"
-                echo "exactly like this."
-                exit 1

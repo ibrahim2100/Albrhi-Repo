@@ -29,9 +29,36 @@ car-display feature with no relationship to the social apps the suite bundles �
 installing Albrhi should not mean installing something for a car nobody asked about.
 `tools/make-suite.sh` skips any `tweaks/*/` directory that carries a `.no-suite` marker
 file, which is the only thing that keeps a tweak out of the merge; CarPlay is the first
-to have one. It ships and updates through its own package, its own release tag
-(`carplay-v*`), and its own workflow, `buildcarplay.yml` — the one other tweak besides
-the suite that actually publishes; see the CI section for why the rest do not.
+to have one. It has its own package, its own release tag (`carplay-v*`) and its own
+workflow, `buildcarplay.yml`.
+
+**CarPlay is currently withheld from the source, deliberately, and this is reversible.**
+Its app bridging has never been confirmed working on a device: 0.3.0 and 0.4.0 each
+looked finished and were not, and 0.4.1's fixes for what a real iOS 16.1 report found
+missing are themselves unobserved. Serving the package offers an update to people whose
+only report so far is that it does not work, so `buildsuite.yml` is once again the only
+workflow that publishes anything.
+
+**Withholding took two changes, not one, and the reason is the whole architecture of the
+gather.** Switching off a publisher removes nothing: `fetch-published-debs.sh` builds the
+index from what is **published**, which is exactly what lets two workflows write one
+index safely — and exactly what means a package whose workflow goes quiet keeps being
+gathered from its old releases and served forever at its last version. So:
+
+- `buildcarplay.yml` lost its `push:` trigger, its release gate and step, its gather and
+  its Pages steps — `workflow_dispatch` only now, building both flavours to an artifact
+  and stopping, like the other five per-tweak workflows.
+- `fetch-published-debs.sh` names `com.albrhi.carplay` and `com.albrhi.carplay.roothide`
+  in `WITHHELD_PACKAGES` and skips them on the way in — in the release gather, in the
+  fold-in of a run's own build, and in the version assertion, which would otherwise
+  demand the very package the gather was told to drop. **Both flavours are listed
+  because they are separate package identities**; naming only the first would withhold
+  rootless and go on serving roothide.
+
+Undo both together to publish again. Doing only the first republishes nothing — the
+gather would drop the package the run had just released, and the run's own guard would
+then fail it for publishing a source older than its release, correctly. Both files carry
+this note from their own side.
 
 The Instagram tweak is derived from [SCInsta](https://github.com/SoCuul/SCInsta) by
 SoCuul under GPLv3. Original authorship is credited in-app, in the README and in the
@@ -566,21 +593,28 @@ Most new tweaks belong inside `com.albrhi`, and need no workflow of their own at
 the default and costs nothing but a version bump in `suite/control`.
 
 A tweak only earns its **own publishing workflow** when it has nothing to do with what
-the suite bundles — CarPlay is the only one so far, and `buildcarplay.yml` (modelled
-on the historical `buildyoutube.yml`, from back when every tweak published on its own)
-is the pattern to copy: its own version gate, its own tag namespace (`carplay-v*`, so
-two packages' versions can never be confused on one releases page), its own assets, and
-a `.no-suite` marker file in the tweak's directory so `make-suite.sh` does not also pull
-it into the combined package. Separate workflows rather than one job per tweak, so a
-tweak that will not compile can never block another tweak's release.
+the suite bundles — CarPlay is the only one that ever has, and `buildcarplay.yml` still
+holds the shape to copy in its git history (as of the commit that withheld it): its own
+version gate, its own tag namespace (`carplay-v*`, so two packages' versions can never be
+confused on one releases page), its own assets, and a `.no-suite` marker file in the
+tweak's directory so `make-suite.sh` does not also pull it into the combined package.
+Separate workflows rather than one job per tweak, so a tweak that will not compile can
+never block another tweak's release.
 
 **The one thing two publishers cannot help sharing is the APT index, and that was the
 trap.** `make-repo.sh` wipes `debs/` and rebuilds it on purpose, so an index built from
-one tweak's build output would erase the other tweak from the source. Both `buildsuite.yml`
-and `buildcarplay.yml` therefore build the index from what is **published** —
-`tools/fetch-published-debs.sh` gathers the newest three versions of every package from
-the releases — and both take the `albrhi-pages` concurrency group so they never write
-`gh-pages` at once.
+one tweak's build output would erase the other tweak from the source. `buildsuite.yml`
+therefore builds the index from what is **published** — `tools/fetch-published-debs.sh`
+gathers the newest three versions of every package from the releases — and takes the
+`albrhi-pages` concurrency group. Only one workflow publishes today, so nothing races for
+`gh-pages`; every word below is what a second publisher costs, and is kept because
+CarPlay was one and will be again.
+
+**That same design is why a package is not removed from the source by not releasing it.**
+Building the index from the releases means the releases *are* the source: a workflow that
+goes quiet keeps being gathered from what it published before, at the last version it
+shipped, indefinitely. Withholding is therefore an explicit list —
+`WITHHELD_PACKAGES` in `fetch-published-debs.sh` — and never an absence of action.
 
 Two publishers also means the order they run in is not automatically safe.
 **This file used to say a shared gather made the order irrelevant, and the correction is
@@ -781,16 +815,21 @@ and the others still run.
 | `buildlocket.yml` | Locket | `locket-v*` | manual build only |
 | `buildpanel.yml` | the Settings panel | its own namespace | manual build only |
 | `buildsuite.yml` | **`com.albrhi`**, the combined package | `v${SUITE_VERSION}` | yes |
-| `buildcarplay.yml` | **`com.albrhi.carplay`** | `carplay-v*` | yes |
+| `buildcarplay.yml` | `com.albrhi.carplay` | `carplay-v*` | manual build only — withheld |
 | `build-dav1d.yml` | the AV1 decoder Instagram links | on demand | — |
 
-Only `buildsuite.yml` and `buildcarplay.yml` publish. The other five per-tweak workflows
+**`buildsuite.yml` is the only workflow that publishes.** The five per-tweak workflows
 were reduced to manual, non-publishing builds once the suite became the front door for
-everything it bundles — a tweak that will not compile can still block only its own build,
-never another tweak's release, but nothing short of the suite's own run or CarPlay's own
-run ships anything. CarPlay publishes on its own precisely because it is *not* bundled:
-nothing else would ever ship it. They share the `albrhi-pages` concurrency group so no
-two writes to `gh-pages` land at once.
+everything it bundles — a tweak that will not compile can block only its own build, never
+another tweak's release, but nothing short of the suite's own run ships anything.
+
+CarPlay was the one exception, because it is *not* bundled and nothing else would ever
+ship it. It is now withheld instead: its workflow was reduced the same way and its
+package is skipped by the gather, until its app bridging is confirmed on a device — see
+the top of this file for what that took and how to undo it. **That leaves one publisher
+again, which is what the `albrhi-pages` concurrency group was for.** Keep the group on
+whatever workflow publishes: the moment a second one does, two runs write `gh-pages` and
+the arrangement below is what stops them landing at once.
 
 ### Publishing Pages: what three releases established
 
@@ -913,7 +952,11 @@ far less surface area than a real compressor for a few-kilobyte archive.
 ## Known state
 
 Instagram **4.1.5** · YouTube **1.12.4** · X **0.6.2** · Locket **0.2.1** · Panel **0.6.7** ·
-CarPlay **0.4.1** · suite **1.9.6**.
+CarPlay **0.4.1** (withheld from the source) · suite **1.9.6**.
+
+- **CarPlay is built but not served.** The code is complete and compiles; the package is
+  kept out of the APT index until its app bridging is confirmed on a device. Install it
+  by hand from `buildcarplay.yml`'s artifact in the meantime. See the top of this file.
 
 - **Working, Instagram:** inline download button (posts + reels), Download Center queue,
   story seen-receipt control, per-message mark-as-seen in DMs, follow-back badge, feed and
