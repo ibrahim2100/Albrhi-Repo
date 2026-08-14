@@ -92,6 +92,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.4.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **A custom photo behind the CarPlay dashboard's app icons.**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.3.0",
           "useBoldText": true
         },
@@ -117,20 +131,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.1.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **The first release, and it does one thing: keeps your car's speakers in high quality while Camera is recording.**",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -141,7 +141,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.3.0"
+          "text": "0.4.0"
         },
         {
           "class": "DepictionTableTextView",
