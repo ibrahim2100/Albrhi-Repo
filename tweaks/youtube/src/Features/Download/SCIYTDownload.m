@@ -637,9 +637,13 @@ static NSString *sciRequestedVideoID = nil;
             // "it saved the wrong video" looks like from the Download Centre.
             NSString *title = [SCIYTDiagnostics titleForVideoID:sciRequestedVideoID]
                 ?: [SCIYTDiagnostics lastVideoTitle];
+            // The same id the title was resolved from, so the thumbnail section fetches the
+            // cover of the video that was asked for rather than of whichever was captured
+            // last -- the Shorts mismatch documented just above, in picture form.
             [SCIYTChoiceSheet presentFrom:presenter
                                  variants:variants
                                     title:title
+                                  videoID:(sciRequestedVideoID ?: [SCIYTDiagnostics activeVideoID])
                                    chosen:^(SCIHLSVariant *variant, SCIYTJobKind kind) {
                 NSString *chosenID = sciRequestedVideoID ?: [SCIYTDiagnostics activeVideoID];
 

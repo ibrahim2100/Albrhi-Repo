@@ -292,8 +292,16 @@ static void SCIBuildTables(void) {
         @"dl_choose_title": @"Save",
         @"dl_kind_video": @"Video",
         @"dl_kind_audio": @"Sound",
+        @"dl_kind_thumb": @"Cover",
+        @"dl_thumb_header": @"Cover image",
+        @"dl_thumb_save": @"Save to Photos",
+        @"dl_thumb_where": @"Full size",
+        @"dl_thumb_saved": @"Cover saved to Photos.",
+        @"dl_thumb_failed": @"That cover could not be saved.",
         @"dl_sound_only": @"Sound only",
         @"dl_sound_small": @"A fraction of the size",
+        @"dl_quality_header": @"Quality",
+        @"dl_sound_header": @"Sound",
 
         // Settings.
         @"set_auto_photos": @"Also save to Photos",
@@ -600,8 +608,16 @@ static void SCIBuildTables(void) {
         @"dl_choose_title": @"حفظ",
         @"dl_kind_video": @"فيديو",
         @"dl_kind_audio": @"صوت",
+        @"dl_kind_thumb": @"الغلاف",
+        @"dl_thumb_header": @"صورة الغلاف",
+        @"dl_thumb_save": @"حفظ في الصور",
+        @"dl_thumb_where": @"بالحجم الكامل",
+        @"dl_thumb_saved": @"حُفظ الغلاف في الصور.",
+        @"dl_thumb_failed": @"تعذّر حفظ هذا الغلاف.",
         @"dl_sound_only": @"الصوت فقط",
         @"dl_sound_small": @"جزء يسير من الحجم",
+        @"dl_quality_header": @"الجودة",
+        @"dl_sound_header": @"الصوت",
 
         // الإعدادات.
         @"set_auto_photos": @"احفظ في الصور أيضًا",

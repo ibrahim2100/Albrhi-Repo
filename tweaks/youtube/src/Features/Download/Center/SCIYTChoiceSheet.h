@@ -26,9 +26,15 @@ NS_ASSUME_NONNULL_BEGIN
 @interface SCIYTChoiceSheet : UIViewController
 
 /// Presents it, and calls back with what was chosen. Never calls back if dismissed.
+///
+/// `videoID` is what the thumbnail section is built from, and passing nil simply leaves that
+/// section out — a segment that can only ever fail is worse than one that is not offered.
+/// The callback is for downloads only: saving a thumbnail finishes inside the sheet and
+/// never reaches it, which is why SCIYTJobKind still has exactly two cases.
 + (void)presentFrom:(UIViewController *)presenter
            variants:(NSArray<SCIHLSVariant *> *)variants
               title:(nullable NSString *)title
+            videoID:(nullable NSString *)videoID
              chosen:(void (^)(SCIHLSVariant *variant, SCIYTJobKind kind))chosen;
 
 @end
