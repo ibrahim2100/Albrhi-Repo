@@ -10,7 +10,7 @@
 #import "Features/Media/SCITWImmersiveButton.h"
 #import "Features/Media/SCITWActionBarButton.h"
 
-NSString *SCIVersionString = @"v0.10.0";  // AlbrhiTW
+NSString *SCIVersionString = @"v0.10.1";  // AlbrhiTW
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written

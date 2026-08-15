@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.13.1
+
+Includes X 0.10.1 — the in-video save button no longer jumps back to the wrong place after
+the first swipe. Two surfaces were adding a button under the same tag; the one that was never
+visible has been removed.
+
 ## v1.13.0
 
 Includes X 0.10.0 — **the X settings screen is redesigned.** A status card at the top says

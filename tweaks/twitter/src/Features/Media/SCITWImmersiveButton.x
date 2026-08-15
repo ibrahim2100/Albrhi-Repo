@@ -114,8 +114,7 @@ static NSString *sciImmersiveChain = nil;
 
 /// The in-video button: its own tag and counter, so the report can tell the two apart.
 static const NSInteger kInVideoButtonTag = 0x5C20;
-static NSUInteger sciInVideoButtons = 0;
-static BOOL sciInVideoHooked = NO;
+
 
 /// The card surface, counted separately again — it can attach while the page does not.
 static NSUInteger sciCardButtons = 0;
@@ -336,75 +335,6 @@ static void SCITWPlaceImmersiveButton(UIStackView *stack) {
 %end
 
 
-%group InVideo
-
-%hook _TtC14T1TwitterSwift22ImmersiveVideoPageView
-
-- (void)layoutSubviews {
-    %orig;
-
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefInlineButton]) return;
-
-    @try {
-        SCITWMediaItem *item = nil;
-        for (UIView *view = self; view && !item; view = view.superview) {
-            item = SCITWFirstSaveableInStatusView(view);
-        }
-
-        UIButton *button = (UIButton *)[self viewWithTag:kInVideoButtonTag];
-
-        if (!item) { button.hidden = YES; return; }
-
-        if (!button) {
-            button = [UIButton buttonWithType:UIButtonTypeSystem];
-            button.tag = kInVideoButtonTag;
-
-            UIImageSymbolConfiguration *config =
-                [UIImageSymbolConfiguration configurationWithPointSize:26
-                                                                weight:UIImageSymbolWeightSemibold];
-            [button setImage:[UIImage systemImageNamed:@"arrow.down.circle.fill"
-                                     withConfiguration:config]
-                    forState:UIControlStateNormal];
-
-            // White with a shadow rather than a plate: the picture underneath is arbitrary,
-            // and a shadow keeps the glyph readable over a bright frame without drawing a
-            // box that competes with X's own controls.
-            button.tintColor = [UIColor whiteColor];
-            button.layer.shadowColor = [UIColor blackColor].CGColor;
-            button.layer.shadowOpacity = 0.5;
-            button.layer.shadowRadius = 3;
-            button.layer.shadowOffset = CGSizeZero;
-
-            [button addTarget:[SCITWImmersiveButtonTarget shared]
-                       action:@selector(tapped:)
-             forControlEvents:UIControlEventTouchUpInside];
-
-            [self addSubview:button];
-            sciInVideoButtons++;
-        }
-
-        button.hidden = NO;
-        objc_setAssociatedObject(button, kImmersiveItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-
-        // Top-left, inside the safe area, clear of X's own top-right actions and of the
-        // right-hand engagement rail.
-        CGFloat side = 44.0;
-        CGFloat inset = 16.0;
-        CGFloat top = self.safeAreaInsets.top + inset;
-
-        button.frame = CGRectMake(inset, top, side, side);
-
-        // Every pass: the plugin views are added above the video as it plays, and a button
-        // added once sinks under the next one that arrives.
-        [self bringSubviewToFront:button];
-    } @catch (NSException *exception) {
-        SCILogV(@"in-video button: %@", exception.reason);
-    }
-}
-
-%end
-
-%end
 
 
 NSString *SCITWImmersiveButtonReport(void) {
@@ -433,10 +363,6 @@ NSString *SCITWInVideoButtonReport(void) {
     [parts addObject:sciCardHooked
         ? [NSString stringWithFormat:@"card %lu", (unsigned long)sciCardButtons]
         : @"card absent"];
-
-    [parts addObject:sciInVideoHooked
-        ? [NSString stringWithFormat:@"page %lu", (unsigned long)sciInVideoButtons]
-        : @"page absent"];
 
     return [parts componentsJoinedByString:@", "];
 }
@@ -477,11 +403,5 @@ void SCITWInstallImmersiveButton(void) {
         SCILogV(@"save button attached to ImmersiveCardView");
     }
 
-    if (NSClassFromString(@"_TtC14T1TwitterSwift22ImmersiveVideoPageView")) {
-        %init(InVideo);
-        sciInVideoHooked = YES;
-        SCILogV(@"in-video save button attached to ImmersiveVideoPageView");
-    } else {
-        SCILogV(@"ImmersiveVideoPageView is not in this build");
-    }
+
 }

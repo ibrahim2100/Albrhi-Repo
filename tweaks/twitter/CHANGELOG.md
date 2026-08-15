@@ -1,5 +1,17 @@
 # Albrhi for X — what changed
 
+## v0.10.1
+
+**The in-video button jumped back to its old place after the first swipe**, and the cause
+was mine: two surfaces were adding a button under the *same tag*. The card placed one 72
+points down, and `ImmersiveVideoPageView` placed another at the original spot behind X's
+back chevron. The first video showed the card's; swiping brought the page's forward.
+
+The page surface is removed outright rather than realigned. It was never seen — 0.9.0 added
+seven buttons there and showed none, because it sits underneath the whole plugin stack —
+so it was contributing nothing but a misplaced duplicate. `ImmersiveCardView` is the surface
+that works, and it is now the only one.
+
 ## v0.10.0
 
 **The settings screen, redesigned.**
