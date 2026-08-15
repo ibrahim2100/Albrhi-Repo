@@ -81,7 +81,42 @@ OWNER_TWEAK="${5:-}"
 # Matched exactly, against the archive's own Package field, and every flavour has to be
 # named: com.albrhi.carplay and com.albrhi.carplay.roothide are separate identities, and
 # listing only the first would withhold the rootless build while still serving roothide.
-WITHHELD_PACKAGES="com.albrhi.carplay com.albrhi.carplay.roothide"
+# Two different reasons live in this one list, and confusing them would be a mistake a
+# year from now, so they are written out separately.
+#
+# **Withheld until confirmed on a device** -- CarPlay. Temporary, and undoing it is two
+# changes, not one: this entry and the release half of buildcarplay.yml. See that file.
+#
+# **Withheld permanently** -- the individual social-app packages. com.albrhi is the front
+# door and has been since the suite was built; it declares Conflicts and Replaces on
+# exactly these ten identities and suite/DEBIAN/preinst removes them by hand, because
+# dpkg -i honours neither. So a device can never hold one of these *and* the suite, and
+# serving them offers an install that the next suite update deletes.
+#
+# What made this urgent rather than tidy: they were being served **frozen**. Nothing has
+# published them since the per-tweak workflows went manual, and this script builds the
+# index from what is published -- so the last release each one ever made was being offered
+# forever. The source was handing out com.albrhi.youtube 1.9.0 while the suite carried
+# 1.13.0, four minor versions further on, with no update path off it. A stale package that
+# can never move is worse than an absent one.
+#
+# All ten are named, including the six that have never been published at all
+# (twitter, locket, panel, each in two flavours). The list is cheaper than the accident:
+# if one is ever released by mistake, the withholding is already in place rather than
+# something to remember afterwards. And ten is not a coincidence -- it is the same ten
+# suite/control declares Conflicts on, so the package and the source now say the same thing.
+#
+# Matched exactly, against the archive's own Package field. Every flavour has to be named
+# because rootless and roothide are separate package identities: listing only the first
+# would withhold one and go on serving the other.
+WITHHELD_PACKAGES="
+com.albrhi.carplay          com.albrhi.carplay.roothide
+com.albrhi.tweak            com.albrhi.tweak.roothide
+com.albrhi.youtube          com.albrhi.youtube.roothide
+com.albrhi.twitter          com.albrhi.twitter.roothide
+com.albrhi.locket           com.albrhi.locket.roothide
+com.albrhi.panel            com.albrhi.panel.roothide
+"
 
 # How far back to look. Bounded, because every push rebuilds the index and walking
 # the entire release history each time would cost more the longer the project lives.

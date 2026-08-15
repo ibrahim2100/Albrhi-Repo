@@ -4,13 +4,16 @@
 
 ### iOS tweaks, built in the open — bilingual, native, and written to be read
 
-**العربية · English** · a working APT source · one repository, one tweak per app
+**العربية · English** · a working APT source · six tweaks, five in one package
 
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B-lightgrey.svg)]()
 [![Rootless](https://img.shields.io/badge/rootless-supported-success.svg)](#-compatibility)
-[![Instagram](https://img.shields.io/badge/Instagram-4.0.0-orange.svg)](tweaks/instagram/CHANGELOG.md)
-[![YouTube](https://img.shields.io/badge/YouTube-1.12.2-red.svg)](tweaks/youtube/CHANGELOG.md)
+[![Albrhi](https://img.shields.io/badge/Albrhi-1.10.0-blueviolet.svg)](suite/CHANGELOG.md)
+[![Instagram](https://img.shields.io/badge/Instagram-4.1.5-orange.svg)](tweaks/instagram/CHANGELOG.md)
+[![YouTube](https://img.shields.io/badge/YouTube-1.13.0-red.svg)](tweaks/youtube/CHANGELOG.md)
+[![X](https://img.shields.io/badge/X-0.6.2-black.svg)](tweaks/twitter/CHANGELOG.md)
+[![Locket](https://img.shields.io/badge/Locket-0.2.1-gold.svg)](tweaks/locket/CHANGELOG.md)
 [![Based on](https://img.shields.io/badge/based%20on-SCInsta-lightblue.svg)](https://github.com/SoCuul/SCInsta)
 
 <br/>
@@ -28,7 +31,10 @@
 
 ## ⚡ Install
 
-The easiest way — and how you get every update automatically — is to **add the Albrhi source** to Sileo or Zebra, then install *Albrhi for Instagram* from it.
+**There is one package to install: `com.albrhi`, listed as *Albrhi*.** It carries the
+Instagram, YouTube, X and Locket tweaks and the Settings panel together — one thing to
+install, one thing to update, and a new tweak arrives inside it rather than as a second
+download.
 
 **1 · Add the source**
 
@@ -41,16 +47,30 @@ https://ibrahim2100.github.io/Albrhi-Repo/
 - **Sileo** → Sources → **＋** → paste the URL.
 - **Zebra** → Sources → **＋** → paste the URL.
 
-**2 · Install** *Albrhi for Instagram* from the source, then **respring**.
+**2 · Install** *Albrhi*, then **respring**.
 
 The source serves both flavours; your package manager picks the right one:
 
 | Package | For |
 |---|---|
-| `com.albrhi.tweak` | Rootless jailbreaks (Dopamine, palera1n) |
-| `com.albrhi.tweak.roothide` | roothide |
+| `com.albrhi` | Rootless jailbreaks (Dopamine, palera1n) |
+| `com.albrhi.roothide` | roothide |
 
-> The two packages `Conflict`/`Replace` each other, so only one is ever active.
+> The two `Conflict`/`Replace` each other, so only one is ever active. What makes a package
+> roothide is its *paths*, not its control file, so the two are genuinely different builds
+> rather than the same one relabelled.
+
+**3 · Choose what it patches.** Settings → **Albrhi** lists every app, with a switch each.
+Turning one off leaves the package installed and its settings intact; reopen that app for
+the change to take effect.
+
+> **The individual packages are no longer served.** `com.albrhi.tweak`,
+> `com.albrhi.youtube` and the rest were frozen at whatever version they last published —
+> the source was offering YouTube 1.9.0 while the suite carried 1.13.0 — and they could
+> never have updated, because nothing publishes them any more. `com.albrhi` declares
+> `Conflicts`/`Replaces` on all ten of those identities anyway, so a device could not hold
+> both. If you installed one before, it still works; install the suite and it is removed
+> for you.
 
 <details>
 <summary><b>Other ways to install</b></summary>
@@ -80,16 +100,32 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 
 ### What is in here
 
-| Tweak | App | Status |
-|---|---|---|
-| **Albrhi for Instagram** | Instagram | **4.0.0** — `com.albrhi.tweak`: downloads, a quieter feed, watching without a seen receipt |
-| **Albrhi for YouTube** | YouTube | **1.12.2** — `com.albrhi.youtube`: downloads with their own player, no ads, SponsorBlock, background playback |
+**Six tweaks. Five ship inside `com.albrhi`; one stands on its own.**
 
-Each tweak is a self-contained project under `tweaks/`, with its own sources, package identity and
-version number. They are **separate packages that never meet at runtime**: an injection filter binds
-each dylib to one bundle id, so the YouTube tweak is never loaded into Instagram and neither can
-affect the other on your device. What they share is the build plumbing — the checks, the build
-script and the APT index — which is why installing one has nothing to do with the other.
+| Tweak | Patches | Version | What it does |
+|---|---|---|---|
+| **Albrhi for Instagram** | Instagram | 4.1.5 | downloads, a quieter feed, watching without a seen receipt |
+| **Albrhi for YouTube** | YouTube | 1.13.0 | downloads with their own player, no ads, SponsorBlock, background playback |
+| **Albrhi for X** | X / Twitter | 0.6.2 | media downloads, and the feature switches X asks itself about |
+| **Albrhi for Locket** | Locket | 0.2.1 | saving a moment, and answering jailbreak checks as an ordinary phone would |
+| **Albrhi Panel** | Settings | 0.6.7 | the Albrhi page — one switch per patched app |
+| **Albrhi CarPlay** | SpringBoard, Camera | 0.4.1 | any app on the car display, a dashboard wallpaper, an audio fix — **not served, see below** |
+
+Each is a self-contained Theos project under `tweaks/`, with its own sources, package
+identity and version number, and **they never meet at runtime**: an injection filter binds
+each dylib to one bundle id, so the YouTube tweak is never loaded into Instagram. What they
+share is the build plumbing — the checks, the build script and the APT index.
+
+`com.albrhi` is the merge of the first five, built by `tools/make-suite.sh`, which picks up
+any `tweaks/*/control` automatically. A tweak leaves the merge only by carrying a
+`.no-suite` marker file in its directory.
+
+**CarPlay is deliberately not in the suite, and is currently not served at all.** It patches
+SpringBoard and Camera for a car-display feature with no relationship to the social apps —
+installing Albrhi should not mean installing something for a car nobody asked about. It is
+also withheld from the source entirely until its app bridging is confirmed on a real device:
+0.3.0 and 0.4.0 each looked finished and were not. Build it yourself, or take the artifact
+from a manual run of `buildcarplay.yml`.
 
 > Albrhi is an **educational and corrective derivative** of
 > [SCInsta](https://github.com/SoCuul/SCInsta) by **SoCuul**, developed with AI assistance to
@@ -226,8 +262,15 @@ whether everything actually attached to *your* build. The report is also written
 | **iOS** | 15.0 and later |
 | **Architecture** | `arm64` — runs on arm64 and arm64e devices |
 | **Instagram** | Tested on **410, 439 and 441**, from one build *(other versions should work — see below)* |
+| **YouTube** | Tested on **21.30.5** |
+| **X / Twitter** | Tested on **12.15** |
+| **Locket** | Tested on **2.46.1** |
 | **Jailbreaks** | Rootless (Dopamine, palera1n) · roothide · rootful (unc0ver, checkra1n) |
 | **Sideloading** | Supported via the bundled FLEXing sub-project |
+
+> The tested versions are the newest builds the developer's own phone accepts. They are not
+> a ceiling: nothing here is pinned to a version number, every class is looked up at runtime,
+> and anything absent is skipped rather than crashed on.
 
 <details>
 <summary><b>About that Instagram version</b></summary>
@@ -257,9 +300,21 @@ git submodule update --init --recursive
 ./build.sh instagram rootless
 ```
 
-The result lands in `tweaks/instagram/packages/`. Swap `rootless` for `roothide`, `rootful` or
-`sideload`. `python3 tools/check.py` runs the source checks on their own — it takes a second and
-catches the mistakes that have actually broken this build before.
+The result lands in `tweaks/instagram/packages/`. Swap `instagram` for `youtube`, `twitter`,
+`locket`, `panel` or `carplay`, and `rootless` for `roothide`, `rootful` or `sideload`.
+
+**To build what people actually install**, merge the five into the suite:
+
+```bash
+tools/make-suite.sh rootless
+```
+
+**Run the source checks first, always.** They take a second and catch the mistakes that have
+genuinely broken this build before — a five-minute Theos compile is a slow way to find a typo:
+
+```bash
+python3 tools/check.py
+```
 
 GitHub Actions builds are also configured — see [BUILD.md](BUILD.md) and
 [GITHUB_BUILD.md](GITHUB_BUILD.md).
@@ -268,15 +323,37 @@ GitHub Actions builds are also configured — see [BUILD.md](BUILD.md) and
 
 ```
 tweaks/<app>/     a complete tweak: Makefile, control, filter plist, src/
+suite/            com.albrhi — the combined package, and the preinst that clears the old ones
 shared/           the Theos flags and build modes every tweak shares
 tools/            source checks, APT index, depiction, logo, .deb editing
 modules/ vendor/  third-party code, shared
 extra-debs/       drop a .deb here and the source publishes it
 ```
 
-Adding a tweak means adding a directory under `tweaks/` — `tools/check.py` finds it and checks it
-without being told, and `./build.sh <name> rootless` builds it. Releasing a second one still needs
-the workflow taught about per-tweak versions and tags; see [CLAUDE.md](CLAUDE.md).
+Adding a tweak means adding a directory under `tweaks/` — `tools/check.py` finds it and
+checks it without being told, `./build.sh <name> rootless` builds it, and `make-suite.sh`
+pulls it into `com.albrhi` automatically. Joining the suite is the default and costs
+nothing but a version bump in `suite/control`; staying out of it takes a `.no-suite` marker
+file, which only CarPlay has.
+
+### 🧰 The tools
+
+Everything under `tools/` is meant to be run by hand as well as by CI. None of it needs the
+repository's secrets except where noted.
+
+| | |
+|---|---|
+| **`check.py`** | Nineteen source checks, run before Theos so a typo fails in seconds rather than after a five-minute compile. Every rule comes from a build that actually broke: unbalanced `%hook`/`%end`, a hooked class touching `self` without an `@interface`, a fragile `%orig`, a localization key used but never defined, a `%new` parameter carrying an attribute. Run from the repo root it re-runs itself once per tweak. |
+| **`make-suite.sh`** | Merges every tweak without a `.no-suite` marker into `com.albrhi`. Checks the staged tree against the scheme it was asked for and refuses a mismatch — a "roothide" package built from a rootless staging tree installs as rootless, which cost two releases to learn. |
+| **`make-repo.sh`** | Builds the APT index from one or more package directories. Guards against two packages sharing name + version + architecture, and labels each rootful/rootless/roothide. Wipes `debs/` and rebuilds it on purpose, so a package removed from the source disappears from Sileo instead of lingering. |
+| **`fetch-published-debs.sh`** | Gathers the newest three versions of every package **from the published releases**, which is what lets more than one workflow rebuild one index safely. Holds `WITHHELD_PACKAGES` — the explicit list of what the source will not serve, because building the index from releases means silence removes nothing. |
+| **`make-depiction.py`** | Generates the Sileo native depiction and its HTML fallback **from the changelog**, so a depiction cannot go stale relative to what shipped. |
+| **`make-logo.py`** | Rasterises the repo icon in pure Python — no image library. Drop in `tools/logo.png` to override it. |
+| **`release-notes.py`** | Pulls one version's section out of a `CHANGELOG.md` for the GitHub release body. |
+| **`deb-edit.py`** | Edits `.deb` metadata from a terminal. `label` appends `(rootless)`/`(roothide)`/`(rootful)` to the display name, read from the package's own `Architecture`, so several flavours of one tweak are not identically named in Sileo. `normalize` converts an xz control archive to gzip. CI runs both over `extra-debs/` on every push. |
+| **`deb-edit.html`** | The same job in a browser, served at `…/deb-edit/`: list and remove packages, edit metadata, publish. Carries a hand-written DEFLATE encoder, because `DecompressionStream` only arrived in iOS 16.4 and every iOS browser is WebKit. |
+| **`ipa-inject.html`** | Injects a tweak dylib into a decrypted IPA in the browser, for sideloading without a Mac. |
+| **`repo-index.html`** | The source's landing page. Builds its package list from the live index, so it never disagrees with what is being served. |
 
 ---
 
@@ -294,8 +371,30 @@ YouTube's own settings: two attempts at that crashed the app, because a settings
 tables the tweak cannot reach. The gesture is on `UIWindow`, which is UIKit and cannot go missing.
 
 - **Hold the video** to save it — or use the row in the panel.
-- Everything else is a switch in the panel, and the card at the top says whether it all attached to
-  your build.
+- Saved videos live in their own tab beside *You*, with their own player.
+- A save button and the video's end time can be added to YouTube's own player layer, under
+  Interface. **Both are off by default**: they act on two classes read from another tweak's
+  open source rather than confirmed on this build, so they are asked for rather than
+  assumed, and Diagnostics reports which of the two attached.
+
+**On X** — open the panel by **holding two fingers anywhere**, the same gesture and for the
+same reason.
+
+- **Hold any photo or video** to save it. One capture point serves the timeline, full
+  screen, quoted posts and DMs, because all four build the same media model.
+- The Switches page lists the feature flags X asks itself about, recorded from your own use
+  — 341 of them on X 12.14 — with seventeen named features on top of them. The
+  `app_attest_*` keys are deliberately not offered: those are how X proves to its servers
+  that the device is unmodified, and answering them falsely is an account risk, not a
+  privacy setting.
+
+**On Locket** — **hold two fingers** to see the moments available to save, and how many
+jailbreak checks were answered. The tweak hides the jailbreak from Locket's three detectors
+and does nothing else; it deliberately does **not** touch subscriptions.
+
+**Everywhere** — Settings → **Albrhi** is the one page listing every app Albrhi patches,
+with a switch each. Turn one off and that tweak stops loading entirely, without uninstalling
+anything or losing its settings. Reopen the app for the change to take effect.
 
 ---
 
@@ -311,6 +410,13 @@ tables the tweak cannot reach. The gesture is on `UIWindow`, which is UIKit and 
 - [x] Self-publishing APT source with a browser control panel
 - [x] **Albrhi for YouTube** — a second tweak in this repository, sharing none of Instagram's runtime
 - [x] Video downloads on YouTube, without bundling a media library to convert them
+- [x] **Albrhi for X** and **Albrhi for Locket** — the fourth and fifth tweaks
+- [x] **Albrhi Panel** — one Settings page, a switch per patched app, read across the sandbox
+- [x] **`com.albrhi`** — the five in one package, so a new tweak arrives as an update rather than a download
+- [x] A save button and an end time on YouTube's own player layer
+- [ ] **Albrhi CarPlay confirmed on a device** — the code is written and withheld until it is
+- [ ] iOS 18 support for CarPlay, which needs an on-disk re-signing daemon rather than a runtime hook
+- [ ] Tie a SponsorBlock marker to the video its bar belongs to — today one global serves every bar
 - [ ] Settings profiles — several configurations, switched per account
 - [ ] Crash protection that isolates and disables a faulting feature rather than the whole tweak
 
