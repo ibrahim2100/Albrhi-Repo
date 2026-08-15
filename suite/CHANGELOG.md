@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.11.0
+
+Includes X 0.8.0 — **the save button is on X's own action row now**, beside reply, repost,
+like and share. X draws that row under a timeline post and over a playing video alike, so
+one surface answers both. The earlier in-video attempt was adding a button to a stack X
+rebuilds, which removed it every time; the report said "11 buttons added" and meant the
+opposite.
+
 ## v1.10.3
 
 Includes X 0.7.2 — if the in-video button is still missing, Diagnostics now prints the view

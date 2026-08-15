@@ -1,5 +1,42 @@
 # Albrhi for X — what changed
 
+## v0.8.0
+
+**The button is on X's own action row now — the one with reply, repost, like and share.**
+
+`11 buttons added` and no button on screen were never in conflict: the immersive rail is a
+Swift `UIStackView` whose arranged subviews X rebuilds, so ours went in, was swept out, was
+re-added on the next layout pass, eleven times over one session, and was never visible. **A
+rising add-count with nothing on screen is the signature of that, not evidence of success**
+— and it was read here as success for a release, which is the mistake worth remembering.
+
+**TWIGalaxy never used that rail.** Its binary names exactly two immersive Swift classes,
+`ImmersiveCardView` and the long-gone `ImmersiveInlinePlaybackButtonsStackView`, so its
+immersive path is as dead on X 12.15 as ours was. What it actually hooks is this bar —
+`TTAStatusInlineShareButton`, `…FavoriteButton`, `…RetweetButton`, `…BookmarkButton`, and a
+selector called `eleventhButtonTapped:`, which is a tweak adding an eleventh button to a row
+of ten.
+
+X draws that row **under a timeline post and over a playing video alike**, so one surface
+answers both places — which is why the button appears "inside the video" without anything
+being placed inside the video at all. Three surfaces were being maintained for a job with
+one.
+
+Why this one holds where the rail did not:
+
+- It is not a stack view. It positions its buttons itself, so a subview is not swept away
+  by an arranged-subview rebuild; ours is placed after X has placed its own.
+- It answers `-viewModel`, so the media lookup that already works elsewhere needed no new
+  path.
+- `-setViewModel:options:displayType:displayTextOptions:account:` is a real bind point,
+  firing on first use and every reuse — the lesson `-didMoveToWindow` already cost this
+  tweak once.
+- X extends this row itself (`TTAStatusInlineGrokButton`, `…AnalyticsButton`,
+  `…DownvoteButton` are all in the class dump), so it takes another button by design.
+
+The three older surfaces stay for now and the report names all four, so nothing is removed
+on the strength of one device until this one is confirmed.
+
 ## v0.7.2
 
 **Diagnostics now prints the view chain above the rail when no button is added.**

@@ -6,6 +6,7 @@
 #import "Features/Media/SCITWInlineButton.h"
 #import "Features/Media/SCITWStatusButton.h"
 #import "Features/Media/SCITWImmersiveButton.h"
+#import "Features/Media/SCITWActionBarButton.h"
 
 NSString *SCITWReportText(void) {
     NSMutableString *text = [NSMutableString string];
@@ -34,6 +35,7 @@ NSString *SCITWReportText(void) {
     [text appendFormat:@"inline button: %@\n", SCITWInlineButtonReport()];
     [text appendFormat:@"status button: %@\n", SCITWStatusButtonReport()];
     [text appendFormat:@"immersive button: %@\n", SCITWImmersiveButtonReport()];
+    [text appendFormat:@"action bar button: %@\n", SCITWActionBarButtonReport()];
 
     NSArray<SCITWSwitchRecord *> *records = [SCITWSwitches records];
     [text appendFormat:@"switches seen: %lu over %lu questions\n\n",

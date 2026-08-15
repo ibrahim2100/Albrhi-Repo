@@ -140,6 +140,26 @@ live in `T1Twitter.framework`, and `TFS*`/`TAE*`/`TFN*` in `TwitterSPMMigration`
 build has no switch layer. `NSClassFromString` asks every loaded image, which is why the
 Twitter tweak binds that way and not by scanning.
 
+**"A button was added" is not "a button appeared", and a rising add-count with nothing on
+screen is the signature of an arranged-subview rebuild.** `ImmersiveActionsStackView` is a
+Swift `UIStackView` whose arranged subviews X rebuilds; a button added to it is swept out,
+found missing by tag on the next layout pass, and added again — eleven times in one session,
+never visible. The counter was read here as success for a whole release. When an add-count
+climbs and the screen stays empty, suspect the container is rebuilding its children, not
+that placement is nearly working.
+
+**The bar X actually extends is `TTAStatusInlineActionsView`, and it is drawn under a
+timeline post *and* over a playing video.** One surface for both, which is what the three
+earlier surfaces were each reaching for separately. It is not a stack view — it lays its
+buttons out by hand in `-_t1_layoutInlineActionButtons`, so a subview survives; it answers
+`-viewModel` directly; `-setViewModel:options:displayType:displayTextOptions:account:` is
+its bind point, firing on reuse as well as first use; and X adds its own buttons to it
+(`TTAStatusInlineGrokButton`, `…AnalyticsButton`, `…DownvoteButton`), so it takes another by
+design. **TWIGalaxy hooks this, not the rail** — its binary names only `ImmersiveCardView`
+and the dead `ImmersiveInlinePlaybackButtonsStackView`, plus `TTAStatusInline*Button` and a
+selector `eleventhButtonTapped:`. Reading a competitor's binary for *which class* was right;
+assuming its immersive references were live was not.
+
 **And that class is gone. `ImmersiveInlinePlaybackButtonsStackView` is not in X 12.15 at
 all** — established from a class dump of `com.atebits.Tweetie2`, not guessed: its sibling
 `T1TwitterSwift.ImmersiveCardView` *is* in the same dump, so Swift classes are covered and

@@ -8,8 +8,9 @@
 #import "Features/Media/SCITWInlineButton.h"
 #import "Features/Media/SCITWStatusButton.h"
 #import "Features/Media/SCITWImmersiveButton.h"
+#import "Features/Media/SCITWActionBarButton.h"
 
-NSString *SCIVersionString = @"v0.7.2";  // AlbrhiTW
+NSString *SCIVersionString = @"v0.8.0";  // AlbrhiTW
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written
@@ -63,6 +64,12 @@ NSString *SCIVersionString = @"v0.7.2";  // AlbrhiTW
     // subview rather than a floating one, which is why this appears where the others did
     // not. The reels-equivalent surface, added last and reported like the rest.
     SCITWInstallImmersiveButton();
+
+    // The fourth surface, and the one the other three were reaching for. X's own inline
+    // action row is drawn under a timeline post *and* over a playing video, so it answers
+    // both places at once -- see SCITWActionBarButton.x for why the immersive rail could
+    // not, and how "11 buttons added" turned out to mean the opposite of what it said.
+    SCITWInstallActionBarButton();
 
     if ([[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefSwitchLayer]) {
         // Before the hooks, not after. X asks its first questions while the app is still
