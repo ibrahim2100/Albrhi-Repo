@@ -302,6 +302,13 @@ static void SCIBuildTables(void) {
         @"dl_sound_small": @"A fraction of the size",
         @"dl_quality_header": @"Quality",
         @"dl_sound_header": @"Sound",
+        @"overlay_save": @"Save this video",
+        @"overlay_ends_at": @"ends %@",
+        @"overlay_header": @"In the player",
+        @"overlay_button_title": @"Save button",
+        @"overlay_button_note": @"Adds a save button over the video, so a download does not mean leaving the player.",
+        @"overlay_endtime_title": @"End time",
+        @"overlay_endtime_note": @"Shows the clock time the video finishes at, above the progress bar.",
 
         // Settings.
         @"set_auto_photos": @"Also save to Photos",
@@ -618,6 +625,13 @@ static void SCIBuildTables(void) {
         @"dl_sound_small": @"جزء يسير من الحجم",
         @"dl_quality_header": @"الجودة",
         @"dl_sound_header": @"الصوت",
+        @"overlay_save": @"حفظ هذا الفيديو",
+        @"overlay_ends_at": @"ينتهي %@",
+        @"overlay_header": @"داخل المشغّل",
+        @"overlay_button_title": @"زر الحفظ",
+        @"overlay_button_note": @"يضيف زر حفظ فوق الفيديو، فلا يعني التنزيل مغادرة المشغّل.",
+        @"overlay_endtime_title": @"وقت الانتهاء",
+        @"overlay_endtime_note": @"يعرض الساعة التي ينتهي عندها الفيديو، فوق شريط التقدّم.",
 
         // الإعدادات.
         @"set_auto_photos": @"احفظ في الصور أيضًا",

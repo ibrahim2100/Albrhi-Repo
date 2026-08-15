@@ -255,6 +255,28 @@
 // The names are from iSponsorBlock, which is tested on this same 21.x line. Leads, as
 // ever, not facts -- which is why the report says which one actually turned up.
 
+///
+/// The two surfaces a button can be put on inside YouTube's own player.
+///
+/// **Both are leads, not confirmed selectors.** They are read from YTVideoOverlay
+/// (PoomSmart, MIT), which is the licensed reference this project used for the technique --
+/// architecture read from open source, the same way SCInsta and carplay-cast were. Nothing
+/// below was taken from a class dump of this build, so every one of them is guarded at the
+/// call site and the diagnostics report names which actually attached.
+///
+/// YTMainAppControlsOverlayView is the controls layer over the video; -topControls is the
+/// row a button is inserted at index 0 of. YTInlinePlayerBarContainerView owns the bar at
+/// the bottom, and -rightIcons is the array a button is appended to.
+///
+@interface YTMainAppControlsOverlayView : UIView
+- (NSArray *)topControls;
+@end
+
+@interface YTInlinePlayerBarContainerView : UIView
+- (NSMutableArray *)rightIcons;
+- (double)totalTime;
+@end
+
 @interface YTInlinePlayerBarView : UIView
 /// Guarded by -respondsToSelector: at every call site; the fallback is the duration
 /// captured from the player controller.

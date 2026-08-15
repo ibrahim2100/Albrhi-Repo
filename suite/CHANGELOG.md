@@ -1,5 +1,15 @@
 # Albrhi Changelog
 
+## v1.10.0
+
+Includes YouTube 1.13.0 — a save button and an end-time inside YouTube's own player, a cover
+section in the download sheet, and a saved-media player restyled to read as iOS's own. Also
+carries 1.12.5's background-playback scoping, which was never released on its own.
+
+The two player-layer additions **default off**: they act on classes read from YTVideoOverlay's
+source (MIT) rather than confirmed on a device, and the diagnostics page reports which
+attached. Turn them on in Albrhi › YouTube › Interface.
+
 ## v1.9.7
 
 Includes YouTube 1.12.5 — an attempt at the lock screen showing a different video from the

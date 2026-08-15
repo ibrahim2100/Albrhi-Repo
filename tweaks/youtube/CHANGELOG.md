@@ -3,6 +3,51 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.13.0
+
+Built after reading a modified YouTube IPA the developer supplied — eighteen dylibs, of
+which the relevant references are **YTVideoOverlay, YouQuality and YouSpeed by PoomSmart,
+all MIT** (licences verified, not assumed) and **YTLite, which publishes source but ships
+no LICENSE file** and is therefore read for architecture only, the same cautious way
+`carsurf` is in the CarPlay tweak. Nothing here is lifted from either.
+
+**A save button inside YouTube's own player, and the time the video ends at.** Until now
+the tweak had no presence on the layer over the video at all — a tab at the bottom and
+buttons in Shorts — so saving meant leaving the player, which is the one moment nobody
+wants to. The two classes that own those two places (`YTMainAppControlsOverlayView`,
+`YTInlinePlayerBarContainerView`) are read from YTVideoOverlay's source, not from a class
+dump of this build, so **both features default off**, every selector is behind
+`-respondsToSelector:`, and the diagnostics report names which of the two attached — "no
+button" is never two silent reasons at once.
+
+**A cover section in the download sheet**, beside Video and Sound. A cover is deliberately
+*not* a third `SCIYTJobKind`: that enum is read by the library, the queue, the list and the
+player, and every one tests it as a two-way question, so a third value would have made four
+files silently answer "video" for a thumbnail without failing to compile. Video and sound
+produce a job; a cover is fetched and handed to Photos on the spot. The section appears only
+when there is a video id, and that id is the same one the title is resolved from — so the
+cover belongs to the video asked for rather than to whichever was captured last, which is
+the Shorts mismatch already documented at that call site, in picture form.
+
+**The saved-media player now reads as iOS's own.** The transport row sits on a frosted
+capsule measured to its own height, the play and pause glyphs are the system's bare pair
+rather than the filled circles Music uses, and the timecodes are legible against a bright
+frame instead of 55% white over one.
+
+**Two settings headers were rendering their raw key**, and had been for a long time.
+`dl_quality_header` and `dl_sound_header` were never defined in either table; both sat inside
+a ternary within `SCILocalized(...)`, which `check.py`'s rule 6 cannot parse, so nothing ever
+checked them. Rewriting that ternary as plain calls is what exposed it.
+
+Two things the review found that needed **no** code, recorded so they are not rebuilt:
+per-network quality already exists in full (`nw_path_monitor`, separate Wi-Fi and cellular
+ceilings, both exposed); and SponsorBlock markers already reach the feed and mini-player bars
+— those three bar classes are generic. That second one is not a feature, it is a **latent
+bug**: `sciSegments` is one global for the active video with nothing tying a bar to the video
+it belongs to, so a feed video's bar can be drawn with another video's segments. Fixing it
+needs a device to say which class owns which model, which is exactly what this project
+refuses to guess at.
+
 ## v1.12.5
 
 **The lock screen showed a different video from the one playing.** Reported from a

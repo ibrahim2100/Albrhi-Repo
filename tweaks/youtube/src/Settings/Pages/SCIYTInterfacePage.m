@@ -73,7 +73,25 @@
                       prefKey:SCIPrefHideSharePromo],
         ];
 
-        return @[player, bar, elsewhere];
+        // Added rather than hidden, which is what every other row on this page does.
+        //
+        // Both act on classes this project has not confirmed on a device -- read from
+        // YTVideoOverlay (MIT) rather than from a class dump -- so they default off and the
+        // diagnostics report names which of the two attached.
+        SCISection *overlay = [[SCISection alloc] init];
+        overlay.title = SCILocalized(@"overlay_header");
+        overlay.rows = @[
+            [SCIRow switchRow:SCILocalized(@"overlay_button_title")
+                       detail:SCILocalized(@"overlay_button_note")
+                       symbol:@"arrow.down.circle"
+                      prefKey:SCIPrefOverlayButton],
+            [SCIRow switchRow:SCILocalized(@"overlay_endtime_title")
+                       detail:SCILocalized(@"overlay_endtime_note")
+                       symbol:@"clock"
+                      prefKey:SCIPrefOverlayEndTime],
+        ];
+
+        return @[player, bar, overlay, elsewhere];
     }];
 }
 

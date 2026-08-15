@@ -6,7 +6,7 @@
 #import "Diagnostics/SCIYTDiagnostics.h"
 #import "Features/Display/SCIYTDimmer.h"
 
-NSString *SCIVersionString = @"v1.12.5";  // AlbrhiYT
+NSString *SCIVersionString = @"v1.13.0";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.
@@ -137,6 +137,13 @@ NSString *SCIVersionString = @"v1.12.5";  // AlbrhiYT
         SCIPrefHideCastButton: @NO,
         SCIPrefHideSearchButton: @NO,
         SCIPrefHideSharePromo: @NO,
+
+        // The two additions to YouTube's own player layer. Off, and for a different reason
+        // from the hide switches above: those remove something that works, these act on two
+        // classes read from YTVideoOverlay's source rather than confirmed on a device. A
+        // surface nobody has yet seen attach should be asked for, not assumed.
+        SCIPrefOverlayButton: @NO,
+        SCIPrefOverlayEndTime: @NO,
 
         // Fullscreen direction: off, meaning YouTube keeps deciding from how the phone is
         // held. Forcing a side for everybody would be wrong for anybody who holds it the

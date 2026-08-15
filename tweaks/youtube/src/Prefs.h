@@ -58,6 +58,15 @@
 /// choice and not two switches.
 #define SCIPrefLockScreenSkip   @"lock_screen_skip"
 
+/// The layer over the video inside YouTube's own player.
+///
+/// Both default off. Every other switch here acts on a class this project has confirmed;
+/// these two act on leads read from YTVideoOverlay (MIT), and a surface nobody has yet seen
+/// attach on a device should be asked for rather than assumed.
+#define SCIPrefOverlayButton    @"overlay_save_button"
+#define SCIPrefOverlayEndTime   @"overlay_end_time"
+
+
 /// Quality.
 ///
 /// The two caps are resolutions, not menu positions -- 1080 means 1080, and 0 means leave

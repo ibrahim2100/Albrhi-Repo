@@ -38,6 +38,7 @@ static const double kSCINudge = 10;
 @property (nonatomic, strong) UIVisualEffectView *blur;
 @property (nonatomic, strong) UIImageView *artwork;
 @property (nonatomic, strong) UIView *chrome;
+@property (nonatomic, strong) UIVisualEffectView *transportCapsule;
 @property (nonatomic, strong) CAGradientLayer *scrim;
 
 /// The song's own colours, behind everything.
@@ -415,6 +416,11 @@ static SCIYTPlayer *sciCurrent = nil;
 
     self.layer.frame = self.stage.bounds;
     self.scrim.frame = self.chrome.bounds;
+
+    // Half the height, measured rather than assumed: the row grows with Dynamic Type and a
+    // hardcoded radius would stop being a capsule the moment it did.
+    CGFloat capsuleHeight = self.transportCapsule.bounds.size.height;
+    if (capsuleHeight > 0) self.transportCapsule.layer.cornerRadius = capsuleHeight / 2;
     self.wash.frame = self.view.bounds;
     [self applyShape];
 }
@@ -479,7 +485,15 @@ static SCIYTPlayer *sciCurrent = nil;
 
     UIButton *back = [self control:@"gobackward.10" size:24 action:@selector(nudgeBack)];
     UIButton *previous = [self control:@"backward.end.fill" size:22 action:@selector(previous)];
-    self.playPause = [self control:@"pause.circle.fill" size:56 action:@selector(togglePlay)];
+
+    // Plain glyphs, not the .circle.fill pair this used to carry.
+    //
+    // iOS's own video player draws a bare play triangle and pause bars; the filled circle is
+    // what Music uses. Since the whole point of this pass is that the screen should read as
+    // the system's player rather than as a tweak's, the glyph follows the system's -- and
+    // -showPlaying: swaps between the same two names, so the two places agree.
+    self.playPause = [self control:@"pause.fill" size:34 action:@selector(togglePlay)];
+
     UIButton *next = [self control:@"forward.end.fill" size:22 action:@selector(next)];
     UIButton *ahead = [self control:@"goforward.10" size:24 action:@selector(nudgeAhead)];
 
@@ -488,9 +502,47 @@ static SCIYTPlayer *sciCurrent = nil;
     transport.axis = UILayoutConstraintAxisHorizontal;
     transport.distribution = UIStackViewDistributionEqualCentering;
     transport.alignment = UIStackViewAlignmentCenter;
+    transport.translatesAutoresizingMaskIntoConstraints = NO;
+    transport.layoutMarginsRelativeArrangement = YES;
+    transport.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(10, 22, 10, 22);
+
+    // The transport row on a frosted capsule, which is the single thing that most makes this
+    // read as iOS's player rather than as buttons on a black field.
+    //
+    // A host view rather than a blur added into the stack: a UIStackView lays out its
+    // *arranged* subviews and treats anything else as a plain subview that it will neither
+    // size nor position, so a blur put in beside the buttons would sit at the origin at zero
+    // size. The host is what the stack arranges; the blur and the buttons are pinned inside
+    // it, where the stack's rules do not apply.
+    UIView *transportHost = [[UIView alloc] init];
+    transportHost.translatesAutoresizingMaskIntoConstraints = NO;
+
+    UIVisualEffectView *capsule = [[UIVisualEffectView alloc]
+        initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemThinMaterialDark]];
+    capsule.translatesAutoresizingMaskIntoConstraints = NO;
+    capsule.clipsToBounds = YES;
+    capsule.layer.cornerCurve = kCACornerCurveContinuous;
+    [transportHost addSubview:capsule];
+    [transportHost addSubview:transport];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [capsule.leadingAnchor constraintEqualToAnchor:transport.leadingAnchor],
+        [capsule.trailingAnchor constraintEqualToAnchor:transport.trailingAnchor],
+        [capsule.topAnchor constraintEqualToAnchor:transport.topAnchor],
+        [capsule.bottomAnchor constraintEqualToAnchor:transport.bottomAnchor],
+
+        // Centred rather than stretched: the capsule is as wide as the buttons need and no
+        // wider, the way the system's is.
+        [transport.centerXAnchor constraintEqualToAnchor:transportHost.centerXAnchor],
+        [transport.topAnchor constraintEqualToAnchor:transportHost.topAnchor],
+        [transport.bottomAnchor constraintEqualToAnchor:transportHost.bottomAnchor],
+        [transport.leadingAnchor constraintGreaterThanOrEqualToAnchor:transportHost.leadingAnchor]
+    ]];
+
+    self.transportCapsule = capsule;
 
     UIStackView *stack = [[UIStackView alloc] initWithArrangedSubviews:
-        @[self.name, self.subtitle, self.scrubber, times, transport]];
+        @[self.name, self.subtitle, self.scrubber, times, transportHost]];
     stack.axis = UILayoutConstraintAxisVertical;
     stack.spacing = 8;
     [stack setCustomSpacing:18 afterView:self.subtitle];
@@ -596,8 +648,11 @@ static SCIYTPlayer *sciCurrent = nil;
 
 - (UILabel *)timeLabel:(NSTextAlignment)alignment {
     UILabel *label = [[UILabel alloc] init];
-    label.font = [UIFont monospacedDigitSystemFontOfSize:12 weight:UIFontWeightMedium];
-    label.textColor = [UIColor colorWithWhite:1 alpha:0.55];
+    label.font = [UIFont monospacedDigitSystemFontOfSize:12 weight:UIFontWeightSemibold];
+
+    // Brighter than the 0.55 this carried. iOS's own player keeps its timecodes legible
+    // against a moving picture, and 0.55 white over a bright frame is not.
+    label.textColor = [UIColor colorWithWhite:1 alpha:0.85];
     label.textAlignment = alignment;
     label.text = @"--:--";
     return label;
@@ -938,8 +993,12 @@ static SCIYTPlayer *sciCurrent = nil;
     [self breathe:playing];
 
     UIImageSymbolConfiguration *weight =
-        [UIImageSymbolConfiguration configurationWithPointSize:56 weight:UIImageSymbolWeightMedium];
-    [self.playPause setImage:[UIImage systemImageNamed:(playing ? @"pause.circle.fill" : @"play.circle.fill")
+        [UIImageSymbolConfiguration configurationWithPointSize:34 weight:UIImageSymbolWeightMedium];
+
+    // The same two names -buildChrome creates the button with, at the same size. They were
+    // the circle-filled pair against a 56-point build there, and this is the place that
+    // would have quietly put them back on the first tap.
+    [self.playPause setImage:[UIImage systemImageNamed:(playing ? @"pause.fill" : @"play.fill")
                                      withConfiguration:weight]
                     forState:UIControlStateNormal];
 }
