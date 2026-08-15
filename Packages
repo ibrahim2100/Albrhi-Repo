@@ -69,10 +69,10 @@ Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Filename: debs/com.albrhi_1.10.1_iphoneos-arm64.deb
-Size: 1066658
-MD5sum: c5d5fe356498076e385cb49e6b57e109
-SHA1: 2f83e6b783f9f2163cb985511385e82b917a21a0
-SHA256: 09a87a9b0ea2ec178fbf96a93d88b38540ce862e547638a0559c57b8f1295909
+Size: 1066250
+MD5sum: 841ddfaa38d8384e17976c4ae7415476
+SHA1: 3a06b3ebbca503917dc2b7e1b593694b9fe7070b
+SHA256: b94c71481b0a2d47b52ce96f073c1d1ef1df38452e44a21e8546feab7d0ee3b2
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube, X and Locket, switched per app from Settings.
@@ -123,18 +123,18 @@ Name: Albrhi (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
 Package: com.albrhi
-Version: 1.9.7
+Version: 1.10.2
 Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 1588
 Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
-Filename: debs/com.albrhi_1.9.7_iphoneos-arm64.deb
-Size: 1061046
-MD5sum: 5c6a8f5224384a5c3b45b01803b241bd
-SHA1: 0c4187d0d36357bde6cb1853e2993adf925223af
-SHA256: 1e7726d105052175e3c937c9f34ba72acca4bfa90dc0d071032738f6fe5b0c15
+Filename: debs/com.albrhi_1.10.2_iphoneos-arm64.deb
+Size: 1066668
+MD5sum: a6d19c5078dc5fb8dcb7ae9224040c70
+SHA1: 711f14156d1e50095242bd0e74448426a3fc0b6c
+SHA256: 23544338f76f2f67e9c57c6a13dd24f5c3f275c21d134f4a2239df2e33a5db52
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube, X and Locket, switched per app from Settings.
@@ -255,10 +255,10 @@ Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Filename: debs/com.albrhi.roothide_1.10.1_iphoneos-arm64e.deb
-Size: 1066304
-MD5sum: ef773963c6e7af45413421888fca0676
-SHA1: b8c1de97702fb5387dbdf3fbeb215bf234d6d56b
-SHA256: 761aa838fdce5c2f612732d4af6f00bbb1b7aaec6f2c861975e9755a87b5c7d6
+Size: 1065904
+MD5sum: ff464fe18426c1eb239879ddb9259c39
+SHA1: 30239ab0a376d855c86964e737898d02834f978f
+SHA256: a5f7f820b89aff9e983d6b29064fdeb1b5fb532ccbab4d75fa2cb88b794e871b
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube, X and Locket, switched per app from Settings.
@@ -309,18 +309,18 @@ Name: Albrhi (roothide)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
 Package: com.albrhi.roothide
-Version: 1.9.7
+Version: 1.10.2
 Architecture: iphoneos-arm64e
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 1588
 Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
-Filename: debs/com.albrhi.roothide_1.9.7_iphoneos-arm64e.deb
-Size: 1060736
-MD5sum: 970eb7895e7d2232a2c4bfd052578e32
-SHA1: 39a45f587cf30b5a94e06dc81b4bb4728721917a
-SHA256: 5ca2a80fa4e7b037931b24dd3dc9ee7d03b6b0a7929258f5d335afd571290b75
+Filename: debs/com.albrhi.roothide_1.10.2_iphoneos-arm64e.deb
+Size: 1066290
+MD5sum: c231ffb95863d6bae168370ff814c3ce
+SHA1: 3ecdec7e5856db423b4453b12f083a994fd72440
+SHA256: 3c6637df71414386c6dec198762fcd7d1cbe343ae63a910398ca0f09d81cdcb2
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube, X and Locket, switched per app from Settings.
