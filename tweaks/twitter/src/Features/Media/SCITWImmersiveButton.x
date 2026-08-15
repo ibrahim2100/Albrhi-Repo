@@ -54,6 +54,30 @@
 @interface _TtC14T1TwitterSwift25ImmersiveActionsStackView : UIStackView
 @end
 
+///
+/// The page one video lives on, which is where a button that must stay *in* the video goes.
+///
+/// The action-bar button (SCITWActionBarButton.x) is on X's own row and is the reliable
+/// one; it is not what was asked for. What was asked for is a button pinned inside the
+/// picture that stays with that video while you swipe -- and that is a different surface
+/// again, because the action row belongs to the screen, not to the clip.
+///
+/// `ImmersiveVideoPageView` is the per-video page in the immersive pager: one instance per
+/// clip, carrying that clip's player. A subview added here is inside the video's own frame
+/// and travels with it, because swiping moves the page. Confirmed in a class dump of this
+/// build -- `-layoutSubviews`, `-initWithFrame:`, `-player:didUpdatePlaybackState:` -- and
+/// bound by the mangled Swift name, `ImmersiveVideoPageView` being 22 characters.
+///
+/// It is *not* a stack view, so nothing rebuilds its children out from under us -- the
+/// failure that made the rail add eleven invisible buttons. It is positioned by frame in
+/// -layoutSubviews after %orig, and brought to the front each pass, because the immersive
+/// player stacks full-screen plugin views over the video
+/// (`ImmersiveProfileSwipePluginView` is 390x844 on this device) and a button underneath
+/// one of those is a button nobody can tap.
+///
+@interface _TtC14T1TwitterSwift22ImmersiveVideoPageView : UIView
+@end
+
 static const NSInteger kImmersiveButtonTag = 0x5C1E;
 static const void *kImmersiveItemKey = &kImmersiveItemKey;
 
@@ -66,6 +90,11 @@ static NSString *sciImmersiveRail = nil;
 
 /// The superview chain above the rail, recorded the first time placement finds no media.
 static NSString *sciImmersiveChain = nil;
+
+/// The in-video button: its own tag and counter, so the report can tell the two apart.
+static const NSInteger kInVideoButtonTag = 0x5C20;
+static NSUInteger sciInVideoButtons = 0;
+static BOOL sciInVideoHooked = NO;
 
 
 @interface SCITWImmersiveButtonTarget : NSObject
@@ -210,6 +239,77 @@ static void SCITWPlaceImmersiveButton(UIStackView *stack) {
 %end
 
 
+%group InVideo
+
+%hook _TtC14T1TwitterSwift22ImmersiveVideoPageView
+
+- (void)layoutSubviews {
+    %orig;
+
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefInlineButton]) return;
+
+    @try {
+        SCITWMediaItem *item = nil;
+        for (UIView *view = self; view && !item; view = view.superview) {
+            item = SCITWFirstSaveableInStatusView(view);
+        }
+
+        UIButton *button = (UIButton *)[self viewWithTag:kInVideoButtonTag];
+
+        if (!item) { button.hidden = YES; return; }
+
+        if (!button) {
+            button = [UIButton buttonWithType:UIButtonTypeSystem];
+            button.tag = kInVideoButtonTag;
+
+            UIImageSymbolConfiguration *config =
+                [UIImageSymbolConfiguration configurationWithPointSize:26
+                                                                weight:UIImageSymbolWeightSemibold];
+            [button setImage:[UIImage systemImageNamed:@"arrow.down.circle.fill"
+                                     withConfiguration:config]
+                    forState:UIControlStateNormal];
+
+            // White with a shadow rather than a plate: the picture underneath is arbitrary,
+            // and a shadow keeps the glyph readable over a bright frame without drawing a
+            // box that competes with X's own controls.
+            button.tintColor = [UIColor whiteColor];
+            button.layer.shadowColor = [UIColor blackColor].CGColor;
+            button.layer.shadowOpacity = 0.5;
+            button.layer.shadowRadius = 3;
+            button.layer.shadowOffset = CGSizeZero;
+
+            [button addTarget:[SCITWImmersiveButtonTarget shared]
+                       action:@selector(tapped:)
+             forControlEvents:UIControlEventTouchUpInside];
+
+            [self addSubview:button];
+            sciInVideoButtons++;
+        }
+
+        button.hidden = NO;
+        objc_setAssociatedObject(button, kImmersiveItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+        // Top-left, inside the safe area, clear of X's own top-right actions and of the
+        // right-hand engagement rail.
+        CGFloat side = 44.0;
+        CGFloat inset = 16.0;
+        CGFloat top = self.safeAreaInsets.top + inset;
+
+        button.frame = CGRectMake(inset, top, side, side);
+
+        // Every pass: the plugin views are added above the video as it plays, and a button
+        // added once sinks under the next one that arrives.
+        [self bringSubviewToFront:button];
+    } @catch (NSException *exception) {
+        SCILogV(@"in-video button: %@", exception.reason);
+    }
+}
+
+%end
+
+%end
+
+
 NSString *SCITWImmersiveButtonReport(void) {
     if (!sciImmersivePresent) {
         return @"neither immersive rail is in this build "
@@ -228,6 +328,11 @@ NSString *SCITWImmersiveButtonReport(void) {
 
     return [NSString stringWithFormat:@"%@ — %lu buttons added",
             sciImmersiveRail ?: @"?", (unsigned long)sciImmersiveButtons];
+}
+
+NSString *SCITWInVideoButtonReport(void) {
+    if (!sciInVideoHooked) return @"ImmersiveVideoPageView is not in this build";
+    return [NSString stringWithFormat:@"%lu buttons added", (unsigned long)sciInVideoButtons];
 }
 
 void SCITWInstallImmersiveButton(void) {
@@ -254,5 +359,15 @@ void SCITWInstallImmersiveButton(void) {
 
     if (!sciImmersivePresent) {
         SCILogV(@"no immersive button rail in this build");
+    }
+
+    // The in-video page is a separate surface with a separate answer: the rail can be
+    // missing while this is present, and the report says so for each.
+    if (NSClassFromString(@"_TtC14T1TwitterSwift22ImmersiveVideoPageView")) {
+        %init(InVideo);
+        sciInVideoHooked = YES;
+        SCILogV(@"in-video save button attached to ImmersiveVideoPageView");
+    } else {
+        SCILogV(@"ImmersiveVideoPageView is not in this build");
     }
 }

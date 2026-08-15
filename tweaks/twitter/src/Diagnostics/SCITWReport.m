@@ -36,6 +36,7 @@ NSString *SCITWReportText(void) {
     [text appendFormat:@"status button: %@\n", SCITWStatusButtonReport()];
     [text appendFormat:@"immersive button: %@\n", SCITWImmersiveButtonReport()];
     [text appendFormat:@"action bar button: %@\n", SCITWActionBarButtonReport()];
+    [text appendFormat:@"in-video button: %@\n", SCITWInVideoButtonReport()];
 
     NSArray<SCITWSwitchRecord *> *records = [SCITWSwitches records];
     [text appendFormat:@"switches seen: %lu over %lu questions\n\n",

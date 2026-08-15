@@ -28,3 +28,7 @@ void SCITWInstallImmersiveButton(void);
 /// Whether the stack class was found, and how many buttons went into it. For the report,
 /// so "no button in the video" can be told apart from "the class is not in this build".
 NSString *SCITWImmersiveButtonReport(void);
+
+/// The separate, pinned-inside-the-video button on ImmersiveVideoPageView. A separate
+/// answer because it is a separate surface: the rail can be absent while this is present.
+NSString *SCITWInVideoButtonReport(void);

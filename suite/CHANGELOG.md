@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.12.0
+
+Includes X 0.9.0 — **a save button pinned inside the video itself**, which stays with that
+video as you swipe between clips. It goes on the per-video page rather than on the action
+row, so it belongs to the clip and not to the screen, and it is raised above the full-screen
+gesture layers X stacks over the video. The action-row button from 1.11.0 stays.
+
 ## v1.11.2
 
 **Instagram: on a multi-photo post, "Save this one" saved the first photo no matter which

@@ -1,5 +1,36 @@
 # Albrhi for X — what changed
 
+## v0.9.0
+
+**A save button pinned inside the video, that stays with that video while you swipe.**
+
+0.8.0 put a button on X's own action row, and that one is reliable — but the action row
+belongs to the *screen*, not to the clip. What was asked for is a button in the picture,
+travelling with the video it belongs to. That is a third surface, not a nicer version of the
+second.
+
+`ImmersiveVideoPageView` is the per-video page in the immersive pager: one instance per clip,
+carrying that clip's player. A subview added there is inside the video's own frame and moves
+with the page when you swipe, because the page *is* what swipes. Confirmed in a class dump
+of this build — `-layoutSubviews`, `-initWithFrame:`, `-player:didUpdatePlaybackState:` —
+and bound by its mangled Swift name.
+
+Two things learned the hard way are built into it:
+
+- **It is not a stack view**, so nothing rebuilds its children out from under the button.
+  That is exactly what made the action rail report eleven buttons added and show none.
+- **It is brought to the front on every layout pass.** The immersive player stacks
+  full-screen plugin views over the video as it plays — `ImmersiveProfileSwipePluginView` is
+  the full 390×844 on a real device — and a button added once sinks underneath the next one
+  to arrive, where nothing can tap it.
+
+Drawn white with a shadow rather than on a plate: the picture underneath is arbitrary, and a
+shadow keeps the glyph readable over a bright frame without a box competing with X's own
+controls.
+
+The action-row button stays, and Diagnostics now reports both separately — one surface can
+be present while the other is not, and a single yes/no could never say which.
+
 ## v0.8.0
 
 **The button is on X's own action row now — the one with reply, repost, like and share.**
