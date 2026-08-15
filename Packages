@@ -1,66 +1,4 @@
 Package: com.albrhi
-Version: 1.12.0
-Architecture: iphoneos-arm64
-Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
-Installed-Size: 1588
-Depends: mobilesubstrate, preferenceloader
-Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
-Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
-Filename: debs/com.albrhi_1.12.0_iphoneos-arm64.deb
-Size: 1069704
-MD5sum: ff013f49884c6ebf007809d8033f7615
-SHA1: 30e9940b37d0a612b7bf2e93d9418855eff9a552
-SHA256: 58fda9fcaf820315eccc7040597d5c6fdcb11144ba98ebdca9e48b4dfe3afb82
-Section: Tweaks
-Homepage: https://github.com/ibrahim2100/Albrhi-Repo
-Description: One tweak for Instagram, YouTube, X and Locket, switched per app from Settings.
- .
- Everything Albrhi makes for social apps, in a single package. Install this and you have
- the Instagram tweak, the YouTube tweak, the X tweak and the Locket tweak; there is
- nothing else to download and one thing to update.
- .
- ▍CHOOSE FROM SETTINGS
- Settings › Albrhi lists every app Albrhi patches, with a switch each. Turn one off and
- Albrhi does nothing inside that app — no uninstalling, and your settings are kept for
- when you turn it back on. Close and reopen the app for a change to take effect.
- .
- ▍INSTAGRAM
- A download button in every post and reel, a Download Center with a real queue, a feed
- without ads or suggestions, watching stories without telling anyone, and confirmations
- before a mis-tap becomes a notification.
- .
- ▍YOUTUBE
- Downloads with their own player and Download Centre tab, no ads, SponsorBlock, playback
- that keeps going in the background, and a quality ceiling per connection.
- .
- ▍X
- Save any video, photo or GIF to Photos — a download button on the video itself, at the
- best quality X offers, plus a list of everything it has shown you. Plus no ads, no Promote button, no Grok, no Premium nags,
- less tracking, no view counts and a faster launch. Hold two fingers anywhere in X.
- .
- ▍LOCKET
- Save any moment a friend sent to your Photos at full size, and keep Locket from reporting
- your phone as jailbroken — to its analytics, its ad tracking and its own code. Nothing else
- is touched, and payments least of all.
- .
- ▍GROWING
- New Albrhi tweaks arrive in this same package and appear in the same list, so there is
- never a second thing to install.
- .
- Arabic and English throughout.
- .
- Developed by Ibrahim Ismail AL-Rahn. The Instagram tweak is an educational and corrective
- derivative of SCInsta by SoCuul, rebuilt with AI assistance to improve code quality,
- design, performance and user experience. Free and open source under the GNU GPL v3, with
- original authorship credited and preserved.
-Tag: role::enduser
-Author: Ibrahim Ismail AL-Rahn (Instagram tweak based on SCInsta by SoCuul, GPLv3)
-Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
-Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Name: Albrhi (rootless)
-Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
-
-Package: com.albrhi
 Version: 1.12.1
 Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
@@ -184,19 +122,19 @@ Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
 Name: Albrhi (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
-Package: com.albrhi.roothide
-Version: 1.12.0
-Architecture: iphoneos-arm64e
+Package: com.albrhi
+Version: 1.13.0
+Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 1588
 Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
-Filename: debs/com.albrhi.roothide_1.12.0_iphoneos-arm64e.deb
-Size: 1069346
-MD5sum: 9832c29be029988d791d04b64190531f
-SHA1: 7825e3d8bf4e059c4c60b87c01067fbffb85685f
-SHA256: 8839df8f4078e33267993ae20bf9ba87d34c7f673f2d59272ca1164c7c9b27aa
+Filename: debs/com.albrhi_1.13.0_iphoneos-arm64.deb
+Size: 1072872
+MD5sum: 0862549b5250d10820ec9a8ba2785cf3
+SHA1: 922ba8b9b6bcd7ecd1980bbdbd55e237e5565f1d
+SHA256: 3d42d9a31329d38b05d0c74861a3e760ba9ae5a27e9a58b1532233fe7fc10826
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube, X and Locket, switched per app from Settings.
@@ -243,7 +181,7 @@ Tag: role::enduser
 Author: Ibrahim Ismail AL-Rahn (Instagram tweak based on SCInsta by SoCuul, GPLv3)
 Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
 Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Name: Albrhi (roothide)
+Name: Albrhi (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
 Package: com.albrhi.roothide
@@ -321,6 +259,68 @@ Size: 1070156
 MD5sum: 2fe0d49dc501f435481f5b91434f109d
 SHA1: aa108507ccd8d46f0f9205b51679f607fd107229
 SHA256: 49f9cceb52e23b569ca170b1e4203de861b4762fd31926b03f8d8d8479fa693a
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: One tweak for Instagram, YouTube, X and Locket, switched per app from Settings.
+ .
+ Everything Albrhi makes for social apps, in a single package. Install this and you have
+ the Instagram tweak, the YouTube tweak, the X tweak and the Locket tweak; there is
+ nothing else to download and one thing to update.
+ .
+ ▍CHOOSE FROM SETTINGS
+ Settings › Albrhi lists every app Albrhi patches, with a switch each. Turn one off and
+ Albrhi does nothing inside that app — no uninstalling, and your settings are kept for
+ when you turn it back on. Close and reopen the app for a change to take effect.
+ .
+ ▍INSTAGRAM
+ A download button in every post and reel, a Download Center with a real queue, a feed
+ without ads or suggestions, watching stories without telling anyone, and confirmations
+ before a mis-tap becomes a notification.
+ .
+ ▍YOUTUBE
+ Downloads with their own player and Download Centre tab, no ads, SponsorBlock, playback
+ that keeps going in the background, and a quality ceiling per connection.
+ .
+ ▍X
+ Save any video, photo or GIF to Photos — a download button on the video itself, at the
+ best quality X offers, plus a list of everything it has shown you. Plus no ads, no Promote button, no Grok, no Premium nags,
+ less tracking, no view counts and a faster launch. Hold two fingers anywhere in X.
+ .
+ ▍LOCKET
+ Save any moment a friend sent to your Photos at full size, and keep Locket from reporting
+ your phone as jailbroken — to its analytics, its ad tracking and its own code. Nothing else
+ is touched, and payments least of all.
+ .
+ ▍GROWING
+ New Albrhi tweaks arrive in this same package and appear in the same list, so there is
+ never a second thing to install.
+ .
+ Arabic and English throughout.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. The Instagram tweak is an educational and corrective
+ derivative of SCInsta by SoCuul, rebuilt with AI assistance to improve code quality,
+ design, performance and user experience. Free and open source under the GNU GPL v3, with
+ original authorship credited and preserved.
+Tag: role::enduser
+Author: Ibrahim Ismail AL-Rahn (Instagram tweak based on SCInsta by SoCuul, GPLv3)
+Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi (roothide)
+Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
+
+Package: com.albrhi.roothide
+Version: 1.13.0
+Architecture: iphoneos-arm64e
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 1588
+Depends: mobilesubstrate, preferenceloader
+Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
+Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
+Filename: debs/com.albrhi.roothide_1.13.0_iphoneos-arm64e.deb
+Size: 1072556
+MD5sum: a01b9c98195e9d71aaf1a43205d5c75e
+SHA1: 62ad4d9b0e6154d6352412cf85111ca99fc8e26d
+SHA256: 711a7b6e4473ba76559be8c9111196513e6eec7c11ddbcc6742624335b709ea9
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube, X and Locket, switched per app from Settings.
