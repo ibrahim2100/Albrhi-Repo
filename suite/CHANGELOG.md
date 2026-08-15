@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.12.2
+
+Includes X 0.9.2 — the in-video save button moves clear of X's back chevron, which it was
+landing behind.
+
 ## v1.12.1
 
 Includes X 0.9.1 — the in-video button moves to `ImmersiveCardView`, which is the container

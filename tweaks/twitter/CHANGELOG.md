@@ -1,5 +1,15 @@
 # Albrhi for X — what changed
 
+## v0.9.2
+
+**The in-video button appeared — and landed behind X's back chevron.** The top-left corner
+belongs to X, so the save button was only reachable when the chevron happened to be hidden,
+which is what "its position is wrong while swiping" was describing.
+
+It sits 72 points lower now: enough to clear a 44-point control and its inset, measured from
+the safe area rather than the top of the view so it lands in the same place on a device with
+a notch and one without.
+
 ## v0.9.1
 
 **The button goes on `ImmersiveCardView` — the surface TWIGalaxy actually uses.**

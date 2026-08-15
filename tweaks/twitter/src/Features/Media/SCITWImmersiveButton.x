@@ -308,9 +308,19 @@ static void SCITWPlaceImmersiveButton(UIStackView *stack) {
         button.hidden = NO;
         objc_setAssociatedObject(button, kImmersiveItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
+        // Below X's own back button, not beside it.
+        //
+        // The top-left corner is taken: X puts its back chevron there, and on a real device
+        // the save button landed behind it -- reachable only when the chevron happened to be
+        // hidden, which is what "the position is wrong while swiping" was describing.
+        //
+        // 72 points down clears a 44-point control and its inset with room to spare, and it
+        // is measured from the safe area rather than the top of the view so it sits in the
+        // same place on a device with a notch and one without.
         CGFloat side = 44.0;
         CGFloat inset = 16.0;
-        button.frame = CGRectMake(inset, self.safeAreaInsets.top + inset, side, side);
+        CGFloat below = 72.0;
+        button.frame = CGRectMake(inset, self.safeAreaInsets.top + inset + below, side, side);
 
         // The whole reason this surface works where the page did not: the plugin overlays
         // are this view's own children, so raising the button here puts it above them.
