@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.10.2
+
+Includes X 0.7.1 — the in-video save button now actually appears. 0.7.0 found the right
+rail; the media lookup behind it asked every view for `-viewModel`, and the immersive
+card answers `-status` instead, so it gave up holding the object it needed.
+
 ## v1.10.1
 
 Includes X 0.7.0 — **the save button inside a video finally has something to attach to.** A

@@ -148,9 +148,29 @@ static NSUInteger sciOnFallback = 0;
 /// `-respondsToSelector:` each. Whichever answers first wins.
 SCITWMediaItem *SCITWFirstSaveableInStatusView(UIView *view) {
     SEL modelSelector = NSSelectorFromString(@"viewModel");
-    if (![view respondsToSelector:modelSelector]) return nil;
+    SEL statusSelector = NSSelectorFromString(@"status");
 
-    id model = ((id (*)(id, SEL))objc_msgSend)(view, modelSelector);
+    // The model, or the view itself when the view *is* the model's holder.
+    //
+    // **This is why the immersive button attached and still added nothing.** A device report
+    // on X 12.15 said `ImmersiveActionsStackView — 0 buttons added`: the rail was found and
+    // hooked, and every placement bailed here, at the first line, because the walk upward
+    // reaches `ImmersiveCardView` and that class has **no -viewModel**. It answers -status
+    // directly — confirmed in the class dump, where its whole interface is -status,
+    // -playerView, -playerSessionProducer and gesture plumbing, and no model getter at all.
+    //
+    // So the view is treated as its own model when it answers -status. Everything below
+    // already knows how to go from a status to entities to media; it was only ever the one
+    // hop at the top that the immersive hierarchy does not have. The ordinary surfaces are
+    // untouched: they answer -viewModel, which is still tried first.
+    id model = nil;
+
+    if ([view respondsToSelector:modelSelector]) {
+        model = ((id (*)(id, SEL))objc_msgSend)(view, modelSelector);
+    } else if ([view respondsToSelector:statusSelector]) {
+        model = view;
+    }
+
     if (!model) return nil;
 
     NSMutableArray *candidates = [NSMutableArray array];
@@ -173,7 +193,8 @@ SCITWMediaItem *SCITWFirstSaveableInStatusView(UIView *view) {
     }
 
     // Then the path TWIGalaxy takes: the status behind the model, and its entities.
-    SEL statusSelector = NSSelectorFromString(@"status");
+    // statusSelector is declared at the top, where it also decides whether the view can
+    // stand in for its own model.
     if ([model respondsToSelector:statusSelector]) {
         id status = ((id (*)(id, SEL))objc_msgSend)(model, statusSelector);
 

@@ -1,5 +1,25 @@
 # Albrhi for X — what changed
 
+## v0.7.1
+
+**The rail was found and the button still never appeared.** A device report on X 12.15
+said it in one line: `immersive button: ImmersiveActionsStackView — 0 buttons added`. The
+class 0.7.0 identified is right and the hook attaches; every placement then bailed at the
+first line of the media lookup.
+
+`SCITWFirstSaveableInStatusView` starts by asking the view for `-viewModel`. Walking up
+from the rail reaches `ImmersiveCardView`, and **that class has no `-viewModel`** — its
+whole interface is `-status`, `-playerView`, `-playerSessionProducer` and gesture plumbing,
+confirmed in the class dump rather than guessed. So the lookup returned nil before it read
+anything, on a hierarchy that was carrying exactly the object it wanted.
+
+A view that answers `-status` is now treated as its own model. Everything after that hop
+already knew how to go from a status to entities to media; only the top step was missing.
+Surfaces that do answer `-viewModel` are untouched — it is still tried first.
+
+The same report is why this was findable at all: `0 buttons added` and "the class is not
+here" are different sentences, and 0.7.0 made the report say which.
+
 ## v0.7.0
 
 **The save button did not appear inside the video, and a class dump answered why in one
