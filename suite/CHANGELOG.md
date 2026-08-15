@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.11.2
+
+**Instagram: on a multi-photo post, "Save this one" saved the first photo no matter which
+one you were on.** It now asks the page-control dots which slide is showing and saves that
+one. "Save all" was never affected.
+
+Includes Instagram 4.1.7.
+
 ## v1.11.1
 
 **Instagram: changing your profile picture crashed the app.** Fixed. The cause was the

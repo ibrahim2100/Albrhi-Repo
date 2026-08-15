@@ -4,6 +4,27 @@
 Other versions should work too — the tweak looks for what it needs while the app runs
 rather than expecting a particular version number.
 
+## v4.1.7
+
+**On a multi-photo post, "Save this one" saved the first photo whatever you were looking
+at.** Not an edge case — it did it every time, by design rather than by accident.
+
+The line responsible assumed that if the media it resolved was not itself the carousel,
+then it must be the slide on screen. On this build the action row resolves to the **post**,
+so that test always failed and the code took its documented fallback: `children.firstObject`.
+The first photo, always.
+
+Nothing in the media model says which slide is visible, so it is now asked of the view that
+knows. The dots under a carousel are `IGFeedItemPageControlMediaOverlay` and it answers
+`-pageControlCurrentPage` — both confirmed in a class dump of this build rather than
+guessed. The post's own view tree is searched for that overlay, and the slide at that index
+is what gets saved.
+
+A post with no page control to ask keeps the old behaviour rather than being handed an
+invented index: something is still saved, which is better than nothing being saved.
+
+"Save all" was never affected — it always took every child.
+
 ## v4.1.6
 
 **Changing your profile picture crashed the app.** Reported from a device, and the cause was

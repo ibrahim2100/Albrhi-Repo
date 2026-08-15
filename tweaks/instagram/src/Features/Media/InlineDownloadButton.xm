@@ -1,5 +1,6 @@
 #import <substrate.h>
 #import <objc/runtime.h>
+#import <objc/message.h>
 #import "../../InstagramHeaders.h"
 #import "../../Utils.h"
 #import "../../Downloader/SCIMediaDownloader.h"
@@ -248,6 +249,52 @@ static NSArray *SCICarouselChildrenForBar(UIView *bar) {
     return nil;
 }
 
+///
+/// Which slide of a carousel is actually on screen.
+///
+/// **"Save this one" saved the first photo whatever you were looking at**, and the reason
+/// was an assumption written into the line below this: that if the resolved media is not
+/// itself the carousel then it must be the visible slide. On this build the action row
+/// resolves to the *post*, so that test failed and the code fell back to
+/// `children.firstObject` — the first photo, every time, by design rather than by accident.
+///
+/// The dots under a carousel are `IGFeedItemPageControlMediaOverlay`, and it answers
+/// `-pageControlCurrentPage`. Both are confirmed in a class dump of this build; neither is
+/// guessed. Searching the post's own view tree for that overlay is what turns "a carousel is
+/// open" into "slide 3 is open".
+///
+/// Returns NSNotFound when there is no overlay to ask, and the caller keeps its old
+/// behaviour rather than inventing an index — a post whose dots are hidden should still save
+/// something.
+///
+static NSInteger SCIVisibleCarouselIndex(UIView *bar) {
+    Class overlayClass = NSClassFromString(@"IGFeedItemPageControlMediaOverlay");
+    if (!overlayClass) return NSNotFound;
+
+    SEL currentPage = NSSelectorFromString(@"pageControlCurrentPage");
+
+    // Up to the post's own cell, then down through it. The overlay is a sibling of the
+    // media, not an ancestor of the action row, so neither direction alone finds it.
+    UIView *ancestor = bar;
+    for (NSInteger depth = 0; ancestor && depth < 14; depth++, ancestor = ancestor.superview) {
+        NSMutableArray<UIView *> *queue = [NSMutableArray arrayWithObject:ancestor];
+
+        while (queue.count) {
+            UIView *view = queue.firstObject;
+            [queue removeObjectAtIndex:0];
+
+            if ([view isKindOfClass:overlayClass] && [view respondsToSelector:currentPage]) {
+                NSInteger page = ((NSInteger (*)(id, SEL))objc_msgSend)(view, currentPage);
+                if (page >= 0) return page;
+            }
+
+            [queue addObjectsFromArray:view.subviews];
+        }
+    }
+
+    return NSNotFound;
+}
+
 // The button's action: on a multi-item post, offer "this one" or "all N"; otherwise
 // download the single media directly.
 static void SCIHandleDownloadForBar(UIView *bar, UIView *anchor) {
@@ -255,9 +302,18 @@ static void SCIHandleDownloadForBar(UIView *bar, UIView *anchor) {
     NSArray *children = [SCIUtils getBoolPref:@"carousel_download_choice"] ? SCICarouselChildrenForBar(bar) : nil;
 
     if (children.count > 1) {
-        // If the resolved media is a child (not the carousel itself), it *is* the
-        // current slide; otherwise fall back to the first.
-        id currentSlide = SCIMediaIsCarousel(current) ? children.firstObject : (current ?: children.firstObject);
+        // The visible slide, asked for rather than assumed. The old reasoning is kept as the
+        // fallback for a post with no page control to ask, and is documented above.
+        id currentSlide = nil;
+
+        NSInteger index = SCIVisibleCarouselIndex(bar);
+        if (index != NSNotFound && index < (NSInteger)children.count) {
+            currentSlide = children[(NSUInteger)index];
+        }
+
+        if (!currentSlide) {
+            currentSlide = SCIMediaIsCarousel(current) ? children.firstObject : (current ?: children.firstObject);
+        }
 
         UIAlertController *sheet = [UIAlertController alertControllerWithTitle:nil
                                                                        message:nil
