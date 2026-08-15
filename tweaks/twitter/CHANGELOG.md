@@ -1,5 +1,29 @@
 # Albrhi for X — what changed
 
+## v0.9.1
+
+**The button goes on `ImmersiveCardView` — the surface TWIGalaxy actually uses.**
+
+0.9.0 added seven buttons to `ImmersiveVideoPageView` and showed none, which is the same
+shape of failure as the rail's eleven. Rather than reason about the hierarchy a fourth time,
+TWIGalaxy's own package was unpacked and read: every X class its binary names is in
+`__cstring`, and of the immersive family there are exactly **two** —
+`ImmersiveInlinePlaybackButtonsStackView`, which is not in X 12.15, and **`ImmersiveCardView`,
+which is.** So its working in-video button can only be on the card.
+
+That explains what three of our surfaces could not. The card is the *container* for one
+video — `-playerView`, `-status`, `-playerSessionProducer`, `-handleSingleTap:` — and the
+plugin overlays are **its own children**. A button added to the card and raised each layout
+pass sits above them. `ImmersiveVideoPageView` sits underneath that whole stack, so a button
+there is behind `ImmersiveProfileSwipePluginView` and its 390×844 of full-screen gesture
+layer, where it can be neither seen nor tapped.
+
+It needs no walk either: the card answers `-status`, so it is its own model — the fix 0.7.1
+already made to the shared lookup pays for itself here.
+
+Diagnostics reports the card and the page separately, so if this is still wrong the next
+report says which of the two attached and how many each placed.
+
 ## v0.9.0
 
 **A save button pinned inside the video, that stays with that video while you swipe.**

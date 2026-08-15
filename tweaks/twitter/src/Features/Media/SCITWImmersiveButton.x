@@ -78,6 +78,27 @@
 @interface _TtC14T1TwitterSwift22ImmersiveVideoPageView : UIView
 @end
 
+///
+/// The card itself — and this is the one TWIGalaxy uses.
+///
+/// Its package was read to settle this rather than reasoned about again. Every X class its
+/// binary names is in `__cstring`, and of the immersive family there are exactly two:
+/// `ImmersiveInlinePlaybackButtonsStackView`, which is not in X 12.15, and
+/// **`ImmersiveCardView`, which is.** So the working in-video button in that tweak can only
+/// be on the card.
+///
+/// It explains what three surfaces of ours could not. `ImmersiveCardView` is the *container*
+/// for one video: `-playerView`, `-status`, `-playerSessionProducer`, `-handleSingleTap:`.
+/// The plugin overlays are its children, so a button added to the card and raised sits above
+/// them. `ImmersiveVideoPageView` sits underneath that stack — which is why 0.9.0 added seven
+/// buttons and showed none, the same shape of failure as the rail's eleven.
+///
+/// It also answers `-status` directly, so there is no walk to do: the card is its own model,
+/// which is the fix 0.7.1 already made to the shared lookup.
+///
+@interface _TtC14T1TwitterSwift17ImmersiveCardView : UIView
+@end
+
 static const NSInteger kImmersiveButtonTag = 0x5C1E;
 static const void *kImmersiveItemKey = &kImmersiveItemKey;
 
@@ -95,6 +116,10 @@ static NSString *sciImmersiveChain = nil;
 static const NSInteger kInVideoButtonTag = 0x5C20;
 static NSUInteger sciInVideoButtons = 0;
 static BOOL sciInVideoHooked = NO;
+
+/// The card surface, counted separately again — it can attach while the page does not.
+static NSUInteger sciCardButtons = 0;
+static BOOL sciCardHooked = NO;
 
 
 @interface SCITWImmersiveButtonTarget : NSObject
@@ -239,6 +264,68 @@ static void SCITWPlaceImmersiveButton(UIStackView *stack) {
 %end
 
 
+%group Card
+
+%hook _TtC14T1TwitterSwift17ImmersiveCardView
+
+- (void)layoutSubviews {
+    %orig;
+
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefInlineButton]) return;
+
+    @try {
+        // No walk: the card answers -status, so it is its own model.
+        SCITWMediaItem *item = SCITWFirstSaveableInStatusView(self);
+
+        UIButton *button = (UIButton *)[self viewWithTag:kInVideoButtonTag];
+        if (!item) { button.hidden = YES; return; }
+
+        if (!button) {
+            button = [UIButton buttonWithType:UIButtonTypeSystem];
+            button.tag = kInVideoButtonTag;
+
+            UIImageSymbolConfiguration *config =
+                [UIImageSymbolConfiguration configurationWithPointSize:26
+                                                                weight:UIImageSymbolWeightSemibold];
+            [button setImage:[UIImage systemImageNamed:@"arrow.down.circle.fill"
+                                     withConfiguration:config]
+                    forState:UIControlStateNormal];
+
+            button.tintColor = [UIColor whiteColor];
+            button.layer.shadowColor = [UIColor blackColor].CGColor;
+            button.layer.shadowOpacity = 0.5;
+            button.layer.shadowRadius = 3;
+            button.layer.shadowOffset = CGSizeZero;
+
+            [button addTarget:[SCITWImmersiveButtonTarget shared]
+                       action:@selector(tapped:)
+             forControlEvents:UIControlEventTouchUpInside];
+
+            [self addSubview:button];
+            sciCardButtons++;
+        }
+
+        button.hidden = NO;
+        objc_setAssociatedObject(button, kImmersiveItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+        CGFloat side = 44.0;
+        CGFloat inset = 16.0;
+        button.frame = CGRectMake(inset, self.safeAreaInsets.top + inset, side, side);
+
+        // The whole reason this surface works where the page did not: the plugin overlays
+        // are this view's own children, so raising the button here puts it above them.
+        // Done every pass, because more of them arrive as the video plays.
+        [self bringSubviewToFront:button];
+    } @catch (NSException *exception) {
+        SCILogV(@"card button: %@", exception.reason);
+    }
+}
+
+%end
+
+%end
+
+
 %group InVideo
 
 %hook _TtC14T1TwitterSwift22ImmersiveVideoPageView
@@ -331,8 +418,17 @@ NSString *SCITWImmersiveButtonReport(void) {
 }
 
 NSString *SCITWInVideoButtonReport(void) {
-    if (!sciInVideoHooked) return @"ImmersiveVideoPageView is not in this build";
-    return [NSString stringWithFormat:@"%lu buttons added", (unsigned long)sciInVideoButtons];
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+
+    [parts addObject:sciCardHooked
+        ? [NSString stringWithFormat:@"card %lu", (unsigned long)sciCardButtons]
+        : @"card absent"];
+
+    [parts addObject:sciInVideoHooked
+        ? [NSString stringWithFormat:@"page %lu", (unsigned long)sciInVideoButtons]
+        : @"page absent"];
+
+    return [parts componentsJoinedByString:@", "];
 }
 
 void SCITWInstallImmersiveButton(void) {
@@ -363,6 +459,14 @@ void SCITWInstallImmersiveButton(void) {
 
     // The in-video page is a separate surface with a separate answer: the rail can be
     // missing while this is present, and the report says so for each.
+    // The card first: it is the surface TWIGalaxy uses, and the only immersive class in its
+    // binary that exists on this build.
+    if (NSClassFromString(@"_TtC14T1TwitterSwift17ImmersiveCardView")) {
+        %init(Card);
+        sciCardHooked = YES;
+        SCILogV(@"save button attached to ImmersiveCardView");
+    }
+
     if (NSClassFromString(@"_TtC14T1TwitterSwift22ImmersiveVideoPageView")) {
         %init(InVideo);
         sciInVideoHooked = YES;

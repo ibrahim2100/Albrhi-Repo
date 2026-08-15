@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.12.1
+
+Includes X 0.9.1 — the in-video button moves to `ImmersiveCardView`, which is the container
+the video's overlays are children of, so the button can finally sit above them. 0.9.0 put it
+on the page underneath that stack: seven added, none visible. Settled by unpacking TWIGalaxy
+and reading which classes it actually names.
+
 ## v1.12.0
 
 Includes X 0.9.0 — **a save button pinned inside the video itself**, which stays with that
