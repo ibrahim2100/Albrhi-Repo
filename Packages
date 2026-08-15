@@ -69,10 +69,10 @@ Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Filename: debs/com.albrhi_1.10.1_iphoneos-arm64.deb
-Size: 1066250
-MD5sum: 841ddfaa38d8384e17976c4ae7415476
-SHA1: 3a06b3ebbca503917dc2b7e1b593694b9fe7070b
-SHA256: b94c71481b0a2d47b52ce96f073c1d1ef1df38452e44a21e8546feab7d0ee3b2
+Size: 1066658
+MD5sum: c5d5fe356498076e385cb49e6b57e109
+SHA1: 2f83e6b783f9f2163cb985511385e82b917a21a0
+SHA256: 09a87a9b0ea2ec178fbf96a93d88b38540ce862e547638a0559c57b8f1295909
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube, X and Locket, switched per app from Settings.
@@ -255,10 +255,10 @@ Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.locket, com.albrhi.locket.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Filename: debs/com.albrhi.roothide_1.10.1_iphoneos-arm64e.deb
-Size: 1065904
-MD5sum: ff464fe18426c1eb239879ddb9259c39
-SHA1: 30239ab0a376d855c86964e737898d02834f978f
-SHA256: a5f7f820b89aff9e983d6b29064fdeb1b5fb532ccbab4d75fa2cb88b794e871b
+Size: 1066304
+MD5sum: ef773963c6e7af45413421888fca0676
+SHA1: b8c1de97702fb5387dbdf3fbeb215bf234d6d56b
+SHA256: 761aa838fdce5c2f612732d4af6f00bbb1b7aaec6f2c861975e9755a87b5c7d6
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube, X and Locket, switched per app from Settings.
