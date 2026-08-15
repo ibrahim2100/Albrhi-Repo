@@ -27,11 +27,21 @@
 extern "C" {
 #endif
 
-/// YES unless the panel has been used to switch this app off.
+/// NO until the panel has been used to switch this app on.
 ///
-/// Defaults to YES on purpose: a device that has never opened the panel has no preference
-/// written, and reading that absence as "off" would silently disable a tweak somebody
-/// installed deliberately.
+/// **Opt-in, and this is a reversal of what it used to be.** Absence used to read as YES,
+/// on the argument that somebody who installed a tweak deliberately should not have it
+/// silently disabled. That argument was sound while a package meant one tweak for one app.
+/// `com.albrhi` ended it: one install now carries Instagram, YouTube, X and Locket, and
+/// reading silence as consent modifies four apps that the install never asked about.
+///
+/// Nothing is patched until it is asked for. A fresh install therefore does nothing visible
+/// until Settings › Albrhi is opened — which the panel states plainly rather than leaving
+/// anyone to wonder why their app looks untouched.
+///
+/// The answer persists by itself: the value lives in the panel's plist, which dpkg leaves
+/// alone on upgrade and `suite/DEBIAN/preinst` does not remove. On stays on across updates;
+/// a deliberate off stays off.
 ///
 /// Read once and kept. The value is consulted on paths that run during layout and playback,
 /// and a cross-process preference lookup on each of those would show. Changing the switch

@@ -108,22 +108,39 @@ NSString *SCIPanelReadString(NSString *key, NSString *fallback) {
 }
 
 BOOL SCIPanelAllowsApp(NSString *identifier) {
-    if (!identifier.length) return YES;
+    // No identity, no question, no injection. Consistent with the opt-in reading below,
+    // and it cannot strand anyone: the injection filters bind by bundle identifier, so a
+    // process with none was never going to load this dylib in the first place.
+    if (!identifier.length) return NO;
 
-    // Absent reads as on. A device that has never opened the panel has every tweak it
-    // installed deliberately still working, which is the only safe reading of nothing.
-    return SCIPanelReadBool([@"app_enabled_" stringByAppendingString:identifier], YES);
+    // **Absent reads as off, and this is a reversal.**
+    //
+    // It used to read as on, and the argument was that a device which never opened the
+    // panel should keep the tweak it installed deliberately. That argument holds for
+    // somebody who installed one tweak for one app. It stopped holding when com.albrhi
+    // became the front door: installing it now patches Instagram, YouTube, X and Locket at
+    // once, and reading silence as consent means four apps are modified by an install that
+    // asked about none of them.
+    //
+    // So nothing is patched until it is asked for. The cost is real and is accepted: a
+    // fresh install does nothing visible until the panel is opened, and the panel says so.
+    // The cost of the other reading was worse and less visible.
+    //
+    // Persistence needs no code. The value lives in the panel's own plist, which dpkg does
+    // not touch on upgrade and suite/DEBIAN/preinst does not remove -- so once switched on
+    // it stays on across every update, and a deliberate off stays off just as firmly.
+    return SCIPanelReadBool([@"app_enabled_" stringByAppendingString:identifier], NO);
 }
 
 BOOL SCIPanelAllowsThisApp(void) {
-    static BOOL allowed = YES;
+    static BOOL allowed = NO;
     static dispatch_once_t once;
 
     dispatch_once(&once, ^{
         NSString *key = SCIPanelKeyForThisApp();
-        if (!key) return;   // no bundle id to ask about; leave it on
+        if (!key) return;   // no bundle id to ask about; stays off, as above
 
-        allowed = SCIPanelReadBool(key, YES);
+        allowed = SCIPanelReadBool(key, NO);
     });
 
     return allowed;

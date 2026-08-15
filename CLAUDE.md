@@ -268,6 +268,28 @@ replace `DEBIAN/control` wholesale and threw away what Theos had written into it
 merge now wins field by field. The general direction matters more than this instance:
 discarding information you did not know you had is the failure mode, and it is silent.
 
+**The per-app switch is opt-in now: absence reads as *off*, and that reverses what this
+file used to argue.** The old reading — nothing written means on — was right while a package
+meant one tweak for one app: somebody who installed it deliberately should not have it
+silently disabled. `com.albrhi` ended that. One install carries Instagram, YouTube, X and
+Locket, so reading silence as consent modifies four apps the install never asked about.
+Nothing is patched until it is asked for, and the panel's footer says so in both languages
+rather than leaving a fresh install looking broken.
+
+**One question, three answers, in three processes — and two of them agreeing is not
+enough.** `SCIPanelGate` decides whether the dylib acts; `SCIPanelRoot -isOnForSpecifier:`
+draws the row in Settings; `SCICPSettingsController -enabledForSpecifier:` draws the same
+row on CarPlay's own page. All three read `app_enabled_<bundleid>` from separate code, and
+the first sweep found only the first two. Leaving the third at YES would have drawn
+CarPlay's switch on while the gate held it off — a screen actively lying, which is worse
+than one that merely surprises. Grep `app_enabled_` before changing this default again;
+sub-feature keys (CarPlay's audio fix) are a different question and stay defaulted on,
+because they sit *inside* a tweak already opted into.
+
+**Persistence needed no code.** The value lives in the panel's plist, which dpkg leaves
+alone on upgrade and `suite/DEBIAN/preinst` does not remove — checked, not assumed. On stays
+on across updates; a deliberate off stays off just as firmly.
+
 **A sandboxed app asking cfprefsd for another application's domain is answered with
 nothing, not with an error.** The panel writes the per-app switch from inside Settings;
 Instagram and YouTube read it from inside their own sandboxes and saw an absence — which

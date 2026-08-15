@@ -250,7 +250,12 @@ static NSString *SCICPEnabledKey(void) {
 // MARK: - Master switch
 
 - (id)enabledForSpecifier:(PSSpecifier *)specifier {
-    return @([self sci_readBool:SCICPEnabledKey() fallback:YES]);
+    // NO, matching SCIPanelGate and the root page's own switch. This is the third place one
+    // question is answered -- the gate decides whether the dylib acts, the root page draws
+    // the row, and this draws the same row on CarPlay's own screen -- and all three read
+    // the same key from different code. Two of them agreeing is not enough. See
+    // SCIPanelGate.h for why absence means off.
+    return @([self sci_readBool:SCICPEnabledKey() fallback:NO]);
 }
 
 - (void)setEnabled:(NSNumber *)value specifier:(PSSpecifier *)specifier {

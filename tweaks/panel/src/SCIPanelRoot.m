@@ -360,12 +360,18 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
     CFPropertyListRef value = CFPreferencesCopyAppValue(
         (__bridge CFStringRef)[self keyFor:specifier], (__bridge CFStringRef)kSCIPanelDomain);
 
-    // Never written means on. A device that has not opened this panel has every tweak it
-    // installed deliberately still working, which is the only safe reading of an absence.
-    if (!value) return @YES;
+    // Never written means off, and this **must** match SCIPanelGate's reading exactly.
+    //
+    // These are two separate answers to one question -- the panel decides what the switch
+    // looks like, the gate decides whether the dylib does anything -- and they are read in
+    // different processes from different code. Leaving this one at YES while the gate moved
+    // to NO would draw every switch on while every tweak stayed off: the worst of the two
+    // possible bugs, because the screen would be actively lying rather than merely
+    // surprising. The reasoning for opt-in is written out once, in SCIPanelGate.h.
+    if (!value) return @NO;
 
     BOOL on = (CFGetTypeID(value) == CFBooleanGetTypeID())
-        ? CFBooleanGetValue((CFBooleanRef)value) : YES;
+        ? CFBooleanGetValue((CFBooleanRef)value) : NO;
     CFRelease(value);
     return @(on);
 }
