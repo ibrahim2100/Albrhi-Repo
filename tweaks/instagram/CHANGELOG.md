@@ -4,6 +4,43 @@
 Other versions should work too — the tweak looks for what it needs while the app runs
 rather than expecting a particular version number.
 
+## v4.1.6
+
+**Changing your profile picture crashed the app.** Reported from a device, and the cause was
+the follow-status badge — a feature that never touches the profile picture at all.
+
+Its user lookup probed twelve speculative keys with `-valueForKey:` — `user`,
+`currentUser`, `displayedUser`, `profileUser`, `owner`, `account`, `viewModel`, `model`,
+`dataSource` and more — on **every object up the responder chain**, two levels deep, from
+inside `-layoutSubviews`. The comment above it claimed that was safe because a missing key
+"just throws (caught)".
+
+**That is not what `-valueForKey:` does.** It calls the real getter when one exists and
+reads the ivar directly when one does not; raising is the last resort, not the first. So
+every one of those keys was *executing Instagram's own code* — `dataSource` on a collection
+view and `account` on Instagram's objects being the two worth naming — dozens of times a
+second while the screen rebuilt. And `@catch` catches `NSException`; a Swift getter that
+traps, a failed assertion or a half-initialised model are none of those, and end the
+process with no handler involved. Changing a profile picture is exactly when those models
+are mid-replacement.
+
+There is now **no KVC in that lookup at all.** It asks for one selector, `-userGQL`, which a
+class dump of this build confirms is on `IGProfilePictureImageView`, and only after
+`-respondsToSelector:` says so; objects that do not answer it are stepped over rather than
+interrogated. The responder walk stays, so the badge still follows the profile you are
+actually looking at — only what it asks for changed.
+
+Two things found alongside it:
+
+- The avatar capture also asked for a key named `user`, which **is not on that class** —
+  confirmed absent in the dump. It raised an exception on every layout pass and could never
+  have returned anything.
+- The profile picture's long-press recogniser was added in `-didMoveToSuperview` with no
+  check, so re-parenting the avatar stacked another one each time. It is marked with an
+  associated flag now — not by scanning for a long press, since Instagram attaches its own.
+
+The badge, profile-picture saving and account-info copy all behave exactly as before.
+
 ## v4.1.5
 
 - The tweak now states, in its own filter file, which Instagram versions it was last

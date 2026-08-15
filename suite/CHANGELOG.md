@@ -1,5 +1,16 @@
 # Albrhi Changelog
 
+## v1.11.1
+
+**Instagram: changing your profile picture crashed the app.** Fixed. The cause was the
+follow-status badge, which searched for the profile's user by probing a dozen guessed keys
+with `-valueForKey:` on everything up the responder chain, from inside layout — and
+`-valueForKey:` runs the app's real getters rather than politely failing. It now asks for
+one confirmed accessor and nothing else. Nothing about the badge or any other feature
+changes.
+
+Includes Instagram 4.1.6.
+
 ## v1.11.0
 
 Includes X 0.8.0 — **the save button is on X's own action row now**, beside reply, repost,

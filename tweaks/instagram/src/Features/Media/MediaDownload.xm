@@ -1,3 +1,4 @@
+#import <objc/runtime.h>
 #import "../../InstagramHeaders.h"
 #import "../../Utils.h"
 #import "../../Downloader/Download.h"
@@ -38,6 +39,20 @@ static void initDownloaders (void) {
     return;
 }
 %new - (void)addLongPressGestureRecognizer {
+    // Once per view, not once per move.
+    //
+    // -didMoveToSuperview fires every time the view is re-parented, and the profile-picture
+    // screens re-parent the avatar repeatedly -- so this stacked a new recogniser on the
+    // same view each time, each one firing the same handler on a single long press.
+    //
+    // Marked with an associated flag rather than by scanning -gestureRecognizers for a long
+    // press: Instagram attaches its own long presses to this view, and a scan cannot tell
+    // one of those from ours without inspecting targets, which is not something a
+    // recogniser exposes. A flag is exact and answers in one read.
+    static const void *kAttachedKey = &kAttachedKey;
+    if (objc_getAssociatedObject(self, kAttachedKey)) return;
+    objc_setAssociatedObject(self, kAttachedKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
     SCILogV(@"[SCInsta] Adding profile picture long press gesture recognizer");
 
     UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];

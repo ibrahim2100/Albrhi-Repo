@@ -104,6 +104,23 @@ repeatedly against classes that were never instantiated. The Diagnostics page
 runtime, and its magnifier button scans the live view hierarchy. Use it before
 writing a hook.
 
+**`-valueForKey:` is not a safe probe — it runs the app's code.** It calls the real getter
+when one exists and reads the ivar directly when one does not; raising is its last resort,
+not its first. The follow-status badge probed twelve guessed keys with it — `user`,
+`account`, `dataSource`, `viewModel` and more — on every object up the responder chain, two
+deep, from inside `-layoutSubviews`, behind a comment asserting that a missing key "just
+throws (caught)". It was executing Instagram's own code dozens of times a second, and
+changing a profile picture crashed the app.
+
+**And `@catch` does not make a probe safe.** It catches `NSException`. A Swift getter that
+traps, a failed assertion, or a half-initialised object are none of those: they end the
+process and no handler ever sees them. A `@try` around a speculative call buys far less
+than it looks like it does — it is why that comment was believed for so long.
+
+The replacement asks for **one selector confirmed in a class dump**, guarded by
+`-respondsToSelector:`, and steps over anything that does not answer. Same rule as the
+class-name one above, applied to accessors: read what exists, do not guess and catch.
+
 **Measure each stage before changing a pipeline.** The quality picker was
 "fixed" three times against the wrong stage. The bug only surfaced once the code
 reported `raw → parsed → deduped` counts separately.

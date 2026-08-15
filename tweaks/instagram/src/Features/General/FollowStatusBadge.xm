@@ -1,3 +1,4 @@
+#import <objc/message.h>
 #import "../../InstagramHeaders.h"
 #import "../../Utils.h"
 #import "../../Localization/SCILocalize.h"
@@ -41,39 +42,50 @@ static BOOL SCILooksLikeUser(id obj) {
     return NO;
 }
 
-// Safe KVC search for the profile's IGUser — valueForKey respects accessors and any
-// missing key just throws (caught), so unlike raw ivar reads it can't crash.
-static id SCIUserViaKVC(id obj, int depth) {
-    if (!obj || depth > 2) return nil;
+///
+/// Finds the profile's user by asking for one **confirmed** selector, and never by KVC.
+///
+/// What was here before probed twelve speculative keys -- user, currentUser, displayedUser,
+/// profileUser, owner, account, viewModel, userDetailViewModel, model, headerViewModel,
+/// header, dataSource -- with -valueForKey:, on every object up the responder chain, two
+/// levels deep, from inside -layoutSubviews. Its own comment claimed that was safe because
+/// "a missing key just throws (caught)".
+///
+/// **That is not what -valueForKey: does.** It calls the real getter when one exists, and
+/// falls back to reading the ivar directly; raising is only the last resort. So each of
+/// those keys was *executing Instagram's code* -- `dataSource` on a collection view, and
+/// `account` on Instagram's own objects, being the two worth naming -- dozens of times a
+/// second while the screen was being rebuilt.
+///
+/// And @catch does not make that safe. It catches NSException. A Swift getter that traps, a
+/// failed assertion, or a half-initialised object are not exceptions; they end the process
+/// and no handler sees them. Changing a profile picture is exactly when those models are
+/// mid-replacement, which is the crash that was reported.
+///
+/// So: no KVC anywhere in this file's lookup. `-userGQL` is confirmed present on
+/// IGProfilePictureImageView in a class dump of this build, it is guarded by
+/// -respondsToSelector: before it is ever sent, and objects that do not answer it are
+/// stepped over rather than interrogated. The responder walk is kept, because it is what
+/// makes the badge correct on the *current* profile rather than the last one captured --
+/// it is only what the walk asks that changed.
+///
+static id SCIUserFromObject(id obj) {
+    if (!obj) return nil;
     if (SCILooksLikeUser(obj)) return obj;
 
-    for (NSString *key in @[@"user", @"currentUser", @"displayedUser", @"profileUser", @"owner", @"account"]) {
-        id value = nil;
-        @try { value = [obj valueForKey:key]; } @catch (__unused id e) {}
-        if (SCILooksLikeUser(value)) return value;
-    }
+    SEL userGQL = @selector(userGQL);
+    if (![obj respondsToSelector:userGQL]) return nil;
 
-    if (depth < 2) {
-        for (NSString *key in @[@"viewModel", @"userDetailViewModel", @"model", @"headerViewModel", @"header", @"dataSource"]) {
-            id nested = nil;
-            @try { nested = [obj valueForKey:key]; } @catch (__unused id e) {}
-            if (nested && nested != obj) {
-                id user = SCIUserViaKVC(nested, depth + 1);
-                if (user) return user;
-            }
-        }
-    }
-    return nil;
+    id user = ((id (*)(id, SEL))objc_msgSend)(obj, userGQL);
+    return SCILooksLikeUser(user) ? user : nil;
 }
 
 static id SCIProfileUserFromResponder(UIView *view) {
     UIResponder *responder = view;
     int steps = 0;
     while (responder && steps++ < 25) {
-        if ([responder isKindOfClass:[UIViewController class]]) {
-            id user = SCIUserViaKVC(responder, 0);
-            if (user) return user;
-        }
+        id user = SCIUserFromObject(responder);
+        if (user) return user;
         responder = responder.nextResponder;
     }
     return nil;
@@ -97,12 +109,12 @@ static void SCIUpdateFollowBadge(UIView *container) {
 
     // Never on your own profile.
     NSString *me = [SCIUtils currentUsername];
-    NSString *them = nil;
-    @try { them = [user valueForKey:@"username"]; } @catch (__unused id e) {}
+    // Sent directly, not through KVC: SCILooksLikeUser has already proved both selectors
+    // exist on this object, so there is nothing KVC would add but another code path.
+    NSString *them = ((NSString *(*)(id, SEL))objc_msgSend)(user, @selector(username));
     if (me.length && them.length && [me isEqualToString:them]) { SCIRemoveBadge(container); return; }
 
-    BOOL follows = NO;
-    @try { follows = [[user valueForKey:@"followsCurrentUser"] boolValue]; } @catch (__unused id e) {}
+    BOOL follows = ((BOOL (*)(id, SEL))objc_msgSend)(user, @selector(followsCurrentUser));
 
     // Anchor under the followers stat button; the container is its parent.
     UIView *followers = SCIFindViewWithIdentifier(container, SCIFollowersIdentifier) ?: container;
@@ -147,11 +159,11 @@ static void SCIUpdateFollowBadge(UIView *container) {
     if (![SCIUtils getBoolPref:@"show_follow_status"]) return;
     if (self.bounds.size.width < SCIProfileAvatarMinWidth) return;
 
-    id user = nil;
-    @try { user = [self valueForKey:@"userGQL"]; } @catch (__unused id e) {}
-    if (!user) { @try { user = [self valueForKey:@"user"]; } @catch (__unused id e) {} }
-
-    if (SCILooksLikeUser(user)) sciProfileUser = user;
+    // -userGQL only. "user" is not on this class at all -- confirmed absent in the class
+    // dump -- so asking for it raised an exception on every single layout pass and could
+    // never have returned anything.
+    id user = SCIUserFromObject(self);
+    if (user) sciProfileUser = user;
 }
 
 %end
