@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.10.1
+
+Includes X 0.7.0 — **the save button inside a video finally has something to attach to.** A
+class dump of X showed the rail it was being added to no longer exists; the immersive player
+was rebuilt around plugin views and its action rail is now `ImmersiveActionsStackView`. Both
+names are hooked, and diagnostics names which one attached.
+
 ## v1.10.0
 
 Includes YouTube 1.13.0 — a save button and an end-time inside YouTube's own player, a cover

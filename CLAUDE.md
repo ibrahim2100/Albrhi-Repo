@@ -140,6 +140,20 @@ live in `T1Twitter.framework`, and `TFS*`/`TAE*`/`TFN*` in `TwitterSPMMigration`
 build has no switch layer. `NSClassFromString` asks every loaded image, which is why the
 Twitter tweak binds that way and not by scanning.
 
+**And that class is gone. `ImmersiveInlinePlaybackButtonsStackView` is not in X 12.15 at
+all** — established from a class dump of `com.atebits.Tweetie2`, not guessed: its sibling
+`T1TwitterSwift.ImmersiveCardView` *is* in the same dump, so Swift classes are covered and
+the absence is real. Five releases of button-placement work could not have worked, because
+nothing was there to attach to. X rebuilt the immersive player around plugin views
+(`ImmersiveEngagementActionsPluginView`, `ImmersivePlayPauseButtonPluginView`,
+`ImmersiveTopRightActionsPluginsView`, ~30 more) and the action rail is now
+**`ImmersiveActionsStackView`**, members `ImmersiveActionButton`. Same shape, new name — the
+arranged-subview placement below was right and did not change. Both names are hooked now,
+since a `%hook` on an absent class never attaches, and the report names *which* rail
+attached rather than answering yes or no. **TWIGalaxy's binary still references the old
+name, which is the trap**: a working competitor naming a class is not evidence the class is
+in *your* build, and the dump is what settles it.
+
 **The in-video save button goes on the immersive player's control stack, not on an inline
 media view.** Four X releases put a floating button on `T1InlineMediaView` and it never
 appeared inside the video — and reading TWIGalaxy's binary said why: that class is not in it

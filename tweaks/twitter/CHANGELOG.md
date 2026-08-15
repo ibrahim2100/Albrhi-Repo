@@ -1,5 +1,30 @@
 # Albrhi for X — what changed
 
+## v0.7.0
+
+**The save button did not appear inside the video, and a class dump answered why in one
+line: the class it was being added to is not in this build at all.**
+
+`ImmersiveInlinePlaybackButtonsStackView` — the rail 0.6.0 was written against, and which
+TWIGalaxy's binary still names — is gone. Its sibling `ImmersiveCardView` is present, so the
+dump does carry Swift classes and the absence is real rather than an artefact of how it was
+taken. Five releases had been spent on button placement and none of them could have worked,
+because nothing was there to attach to.
+
+X rebuilt the immersive player around plugin views — `ImmersiveEngagementActionsPluginView`,
+`ImmersivePlayPauseButtonPluginView`, `ImmersiveTopRightActionsPluginsView` and thirty-odd
+more — and the rail of action buttons is now **`ImmersiveActionsStackView`**, whose members
+are `ImmersiveActionButton`. It is the same shape as the old one: a stack of buttons with
+`-layoutSubviews`, `-hitTest:withEvent:` and `-initWithFrame:`. Only the name moved, so the
+placement itself did not need rethinking — the button is still an *arranged* subview, which
+is what puts it in the rail beside like and share instead of fighting layout as a floating
+one.
+
+**Both names are hooked.** A `%hook` on an absent class never attaches, so naming the old
+one costs nothing and covers builds that still carry it. The diagnostics report now names
+which rail attached rather than answering yes or no — after an X update the useful question
+is not whether a button appeared but which surface is left.
+
 ## v0.6.2
 
 **Diagnostics now says whether the button actually landed on the video, or on the tweet

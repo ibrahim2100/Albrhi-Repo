@@ -26,12 +26,43 @@
 @interface _TtC14T1TwitterSwift39ImmersiveInlinePlaybackButtonsStackView : UIStackView
 @end
 
+///
+/// The same rail under the name X gives it now.
+///
+/// The button did not appear inside the video, and a class dump of com.atebits.Tweetie2
+/// said why in one line: **`ImmersiveInlinePlaybackButtonsStackView` is not in this build
+/// at all.** Its sibling `ImmersiveCardView` is (`T1TwitterSwift.ImmersiveCardView`), so
+/// the dump does carry Swift classes and the absence is real rather than an artefact of
+/// how it was taken.
+///
+/// X rebuilt the immersive player around plugin views — `ImmersiveEngagementActionsPluginView`,
+/// `ImmersivePlayPauseButtonPluginView`, `ImmersiveTopRightActionsPluginsView` and some
+/// thirty more — and the rail of action buttons is now `ImmersiveActionsStackView`, whose
+/// members are `ImmersiveActionButton` (it carries `-didTapInlineActionButton:`). It is the
+/// same shape as the old one: `-layoutSubviews`, `-hitTest:withEvent:`, `-initWithFrame:`,
+/// a stack of buttons. Only the name moved.
+///
+/// **Both are kept, and this is deliberate.** TWIGalaxy's own binary still references the
+/// old name, so builds carrying it exist; a `%hook` on an absent class never attaches, so
+/// naming both costs nothing and means one X update cannot take the button away again
+/// without the report saying which surface went. That is the same reasoning that keeps
+/// three button surfaces alive in this tweak rather than one.
+///
+/// Bound by its mangled runtime name like its predecessor: `_TtC`, then the module's length
+/// and name, then the class's. `ImmersiveActionsStackView` is 25 characters.
+///
+@interface _TtC14T1TwitterSwift25ImmersiveActionsStackView : UIStackView
+@end
+
 static const NSInteger kImmersiveButtonTag = 0x5C1E;
 static const void *kImmersiveItemKey = &kImmersiveItemKey;
 
 static BOOL sciImmersivePresent = NO;
 static BOOL sciImmersiveHooked = NO;
 static NSUInteger sciImmersiveButtons = 0;
+
+/// Which rail actually attached, for the report. Both can, so this is a name and not a flag.
+static NSString *sciImmersiveRail = nil;
 
 
 @interface SCITWImmersiveButtonTarget : NSObject
@@ -65,23 +96,22 @@ static NSUInteger sciImmersiveButtons = 0;
 @end
 
 
-%group Immersive
-
-%hook _TtC14T1TwitterSwift39ImmersiveInlinePlaybackButtonsStackView
-
-- (void)layoutSubviews {
-    %orig;
-
+/// Puts the button on a rail, or refreshes the one already there.
+///
+/// A plain function taking the stack, because two classes now need identical treatment and
+/// the alternative is the same forty lines twice — which is how one of them ends up fixed
+/// and the other not. It is called from each hook's `-layoutSubviews` with `self`.
+static void SCITWPlaceImmersiveButton(UIStackView *stack) {
     if (![[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefInlineButton]) return;
 
     // Once. A recycled stack arrives with its button already in the arranged list, found by
     // tag, and its saved item refreshed rather than a second button added.
-    UIButton *existing = (UIButton *)[self viewWithTag:kImmersiveButtonTag];
+    UIButton *existing = (UIButton *)[stack viewWithTag:kImmersiveButtonTag];
 
     // What is playing, searched for upward from here. The stack's own view answers nothing;
     // the card two steps up does.
     SCITWMediaItem *item = nil;
-    for (UIView *view = self; view && !item; view = view.superview) {
+    for (UIView *view = stack; view && !item; view = view.superview) {
         item = SCITWFirstSaveableInStatusView(view);
     }
 
@@ -117,13 +147,37 @@ static NSUInteger sciImmersiveButtons = 0;
     // Arranged, so the stack places it. Guarded because the class name says UIStackView and
     // the declaration assumes it, but a build that made it a plain view would otherwise get
     // a button at the origin -- addSubview is the honest fallback there.
-    if ([self respondsToSelector:@selector(addArrangedSubview:)]) {
-        [self addArrangedSubview:button];
+    if ([stack respondsToSelector:@selector(addArrangedSubview:)]) {
+        [stack addArrangedSubview:button];
     } else {
-        [self addSubview:button];
+        [stack addSubview:button];
     }
 
     sciImmersiveButtons++;
+}
+
+
+%group Immersive
+
+%hook _TtC14T1TwitterSwift39ImmersiveInlinePlaybackButtonsStackView
+
+- (void)layoutSubviews {
+    %orig;
+    SCITWPlaceImmersiveButton(self);
+}
+
+%end
+
+%end
+
+
+%group ImmersiveActions
+
+%hook _TtC14T1TwitterSwift25ImmersiveActionsStackView
+
+- (void)layoutSubviews {
+    %orig;
+    SCITWPlaceImmersiveButton(self);
 }
 
 %end
@@ -132,21 +186,41 @@ static NSUInteger sciImmersiveButtons = 0;
 
 
 NSString *SCITWImmersiveButtonReport(void) {
-    if (!sciImmersivePresent) return @"immersive player stack not in this build";
-    if (!sciImmersiveHooked) return @"immersive stack found, hook not installed";
-    return [NSString stringWithFormat:@"%lu buttons added", (unsigned long)sciImmersiveButtons];
+    if (!sciImmersivePresent) {
+        return @"neither immersive rail is in this build "
+                "(ImmersiveActionsStackView, ImmersiveInlinePlaybackButtonsStackView)";
+    }
+    if (!sciImmersiveHooked) return @"immersive rail found, hook not installed";
+
+    // Which one, by name. "No button" used to be two silent reasons at once, and after an X
+    // update the useful question is not whether a button appeared but which rail is left.
+    return [NSString stringWithFormat:@"%@ — %lu buttons added",
+            sciImmersiveRail ?: @"?", (unsigned long)sciImmersiveButtons];
 }
 
 void SCITWInstallImmersiveButton(void) {
-    sciImmersivePresent =
-        (NSClassFromString(@"_TtC14T1TwitterSwift39ImmersiveInlinePlaybackButtonsStackView") != nil);
-
-    if (!sciImmersivePresent) {
-        SCILogV(@"immersive player button stack not in this build");
-        return;
+    // The current name first, the older one after it. Both are tried and both can attach:
+    // one build may carry either, and a %hook on an absent class never installs, so asking
+    // for both costs nothing and survives X moving the rail again.
+    if (NSClassFromString(@"_TtC14T1TwitterSwift25ImmersiveActionsStackView")) {
+        %init(ImmersiveActions);
+        sciImmersivePresent = YES;
+        sciImmersiveHooked = YES;
+        sciImmersiveRail = @"ImmersiveActionsStackView";
+        SCILogV(@"immersive save button attached to ImmersiveActionsStackView");
     }
 
-    %init(Immersive);
-    sciImmersiveHooked = YES;
-    SCILogV(@"immersive save button attached");
+    if (NSClassFromString(@"_TtC14T1TwitterSwift39ImmersiveInlinePlaybackButtonsStackView")) {
+        %init(Immersive);
+        sciImmersivePresent = YES;
+        sciImmersiveHooked = YES;
+        sciImmersiveRail = sciImmersiveRail
+            ? [sciImmersiveRail stringByAppendingString:@" + ImmersiveInlinePlaybackButtonsStackView"]
+            : @"ImmersiveInlinePlaybackButtonsStackView";
+        SCILogV(@"immersive save button attached to ImmersiveInlinePlaybackButtonsStackView");
+    }
+
+    if (!sciImmersivePresent) {
+        SCILogV(@"no immersive button rail in this build");
+    }
 }
