@@ -1,5 +1,31 @@
 # Albrhi for X — what changed
 
+## v0.10.0
+
+**The settings screen, redesigned.**
+
+It opened onto a search field and a segmented control stacked in a plain header — two
+controls, and no answer to the first question anyone opening it has: *is this thing even
+attached?*
+
+**A status card at the top now answers it.** The tweak's mark, its version beside X's own,
+and three pills — Switches, Recording, Media — each green or red. Never grey: "unknown" is
+not a state this screen can honestly report. They are read from the data the screen has
+already loaded, so the card can never disagree with the list beneath it, which is how every
+status display that keeps its own copy eventually lies.
+
+**Search moved to the navigation bar**, where iOS puts it. It used to sit in the table
+header and scroll away with the content — taking the only way of finding one key among 355
+with it. It is pinned under the title now and reachable at any scroll position.
+
+**The All/Changed filter is kept**, as the search bar's own scopes rather than a second
+control. Same two choices, on the control iOS provides for exactly this, appearing with the
+keyboard instead of taking a row of the screen from everyone who is not searching.
+
+The card is built from stack views inside one rounded container, with no constraint between
+siblings that a stack does not own — the arrangement that has taken this project's settings
+screens down twice.
+
 ## v0.9.2
 
 **The in-video button appeared — and landed behind X's back chevron.** The top-left corner

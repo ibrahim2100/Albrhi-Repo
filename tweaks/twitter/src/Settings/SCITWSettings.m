@@ -1,4 +1,5 @@
 #import "SCITWSettings.h"
+#import "Tweak.h"          // SCIVersionString, for the card
 #import "Prefs.h"
 #import "Localization/SCILocalize.h"
 #import "Features/Switches/SCITWSwitches.h"
@@ -33,12 +34,12 @@ static const NSInteger SCITWAlbrhiSwitchLayer = 1;
 static const NSInteger SCITWAlbrhiLogging = 2;
 static const NSInteger SCITWAlbrhiRowCount = 3;
 
-@interface SCITWSettings () <UISearchBarDelegate>
+@interface SCITWSettings () <UISearchResultsUpdating, UISearchBarDelegate>
+@property (nonatomic, strong) UISearchController *searchController;
 @property (nonatomic, strong) NSArray<SCITWSwitchRecord *> *all;
 @property (nonatomic, strong) NSArray<SCITWSwitchRecord *> *shown;
 @property (nonatomic, copy) NSString *query;
 @property (nonatomic, assign) BOOL changedOnly;
-@property (nonatomic, strong) UISearchBar *searchBar;
 @property (nonatomic, strong) NSArray<SCITWMediaItem *> *media;
 @end
 
@@ -90,50 +91,175 @@ static const NSInteger SCITWAlbrhiRowCount = 3;
                                                       target:self
                                                       action:@selector(showMenu:)];
 
+    // Search belongs to the navigation bar, not to the table.
+    //
+    // It was a UISearchBar stacked above a segmented control in a 96-point table header,
+    // which scrolled away with the content and took the only way of finding a key with it.
+    // A UISearchController pins it under the title, keeps it reachable at any scroll
+    // position, and is the control iOS uses for exactly this.
+    UISearchController *search = [[UISearchController alloc] initWithSearchResultsController:nil];
+    search.searchResultsUpdater = self;
+    search.obscuresBackgroundDuringPresentation = NO;
+    search.searchBar.placeholder = SCILocalized(@"search_placeholder");
+    search.searchBar.autocapitalizationType = UITextAutocapitalizationTypeNone;
+    // The All/Changed filter, kept -- as the search bar's own scopes rather than a second
+    // control stacked above it. Same two choices, one control, and it appears with the
+    // keyboard instead of occupying the screen when nobody is searching.
+    search.searchBar.scopeButtonTitles = @[SCILocalized(@"filter_all"), SCILocalized(@"filter_changed")];
+    search.searchBar.showsScopeBar = NO;
+    search.searchBar.delegate = self;
+    self.navigationItem.searchController = search;
+    self.navigationItem.hidesSearchBarWhenScrolling = NO;
+    self.searchController = search;
+
+    if (@available(iOS 15.0, *)) {
+        self.navigationItem.scrollEdgeAppearance = [[UINavigationBarAppearance alloc] init];
+        [self.navigationItem.scrollEdgeAppearance configureWithDefaultBackground];
+    }
+
+    self.tableView.sectionHeaderTopPadding = 0;
+
     [self buildHeader];
     [self buildFooter];
     [self reload];
 }
 
-/// The search field and the All/Changed filter, in one header.
+/// The card at the top: what this tweak is, and whether it is working.
 ///
-/// A search field rather than a scroll: X asks about hundreds of keys and the list is
-/// ordered by how often each was asked, so anything specific is nowhere near the top by
-/// design. Without a way to type a name this screen would be a wall.
+/// What was here was a search field and a filter stacked in a plain 96-point view — two
+/// controls and no answer to the first question anyone opening this screen has, which is
+/// whether the thing is attached at all. Search moved to the navigation bar where it
+/// belongs; this space now says something.
+///
+/// Built from stack views inside one rounded container. No constraint between siblings that
+/// the stack does not own, which is the arrangement that has taken this project's settings
+/// screens down twice.
 - (void)buildHeader {
-    UIView *header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 0, 96)];
+    UIView *header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 0, 0)];
 
-    UISegmentedControl *filter = [[UISegmentedControl alloc] initWithItems:@[
-        SCILocalized(@"filter_all"),
-        SCILocalized(@"filter_changed"),
-    ]];
-    filter.selectedSegmentIndex = 0;
-    filter.translatesAutoresizingMaskIntoConstraints = NO;
-    [filter addTarget:self
-               action:@selector(filterChanged:)
-     forControlEvents:UIControlEventValueChanged];
-    [header addSubview:filter];
+    UIView *card = [[UIView alloc] init];
+    card.translatesAutoresizingMaskIntoConstraints = NO;
+    card.backgroundColor = [UIColor secondarySystemGroupedBackgroundColor];
+    card.layer.cornerRadius = 18;
+    card.layer.cornerCurve = kCACornerCurveContinuous;
+    [header addSubview:card];
 
-    UISearchBar *search = [[UISearchBar alloc] init];
-    search.delegate = self;
-    search.placeholder = SCILocalized(@"search_placeholder");
-    search.searchBarStyle = UISearchBarStyleMinimal;
-    search.autocapitalizationType = UITextAutocapitalizationTypeNone;
-    search.translatesAutoresizingMaskIntoConstraints = NO;
-    [header addSubview:search];
-    self.searchBar = search;
+    // The mark: X's own blue, filled, at a size that reads as an app icon rather than a
+    // glyph in a row.
+    UIImageView *mark = [[UIImageView alloc] initWithImage:
+        [UIImage systemImageNamed:@"arrow.down.circle.fill"
+                withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:34
+                                                                                  weight:UIImageSymbolWeightSemibold]]];
+    mark.tintColor = [UIColor systemBlueColor];
+    mark.contentMode = UIViewContentModeScaleAspectFit;
+    [mark setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+
+    UILabel *name = [[UILabel alloc] init];
+    name.text = SCILocalized(@"title");
+    name.font = [UIFont systemFontOfSize:20 weight:UIFontWeightBold];
+    name.textColor = [UIColor labelColor];
+
+    UILabel *version = [[UILabel alloc] init];
+    version.text = [NSString stringWithFormat:@"%@ · X %@", SCIVersionString,
+        [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"] ?: @"?"];
+    version.font = [UIFont monospacedDigitSystemFontOfSize:12 weight:UIFontWeightMedium];
+    version.textColor = [UIColor secondaryLabelColor];
+
+    UIStackView *titles = [[UIStackView alloc] initWithArrangedSubviews:@[name, version]];
+    titles.axis = UILayoutConstraintAxisVertical;
+    titles.spacing = 2;
+
+    UIStackView *top = [[UIStackView alloc] initWithArrangedSubviews:@[mark, titles]];
+    top.axis = UILayoutConstraintAxisHorizontal;
+    top.spacing = 12;
+    top.alignment = UIStackViewAlignmentCenter;
+
+    // Three pills, each answering one question the report answers in prose. Green or red,
+    // because "attached" and "not attached" is the only distinction that matters here and a
+    // colour says it before the words are read.
+    UIStackView *pills = [[UIStackView alloc] init];
+    pills.axis = UILayoutConstraintAxisHorizontal;
+    pills.spacing = 8;
+    pills.distribution = UIStackViewDistributionFillEqually;
+
+    // Read from what this screen already loaded, so the card can never disagree with the
+    // list below it -- the failure mode of every status display that keeps its own copy.
+    BOOL providers = [SCITWSwitches attachedProviders].count > 0;
+    BOOL seen = self.all.count > 0;
+    BOOL media = self.media.count > 0;
+
+    [pills addArrangedSubview:[self pillWithTitle:SCILocalized(@"pill_switches") on:providers]];
+    [pills addArrangedSubview:[self pillWithTitle:SCILocalized(@"pill_seen") on:seen]];
+    [pills addArrangedSubview:[self pillWithTitle:SCILocalized(@"pill_media") on:media]];
+
+    UIStackView *stack = [[UIStackView alloc] initWithArrangedSubviews:@[top, pills]];
+    stack.axis = UILayoutConstraintAxisVertical;
+    stack.spacing = 14;
+    stack.translatesAutoresizingMaskIntoConstraints = NO;
+    [card addSubview:stack];
 
     [NSLayoutConstraint activateConstraints:@[
-        [filter.topAnchor constraintEqualToAnchor:header.topAnchor constant:8],
-        [filter.leadingAnchor constraintEqualToAnchor:header.leadingAnchor constant:20],
-        [filter.trailingAnchor constraintEqualToAnchor:header.trailingAnchor constant:-20],
+        [card.topAnchor constraintEqualToAnchor:header.topAnchor constant:4],
+        [card.leadingAnchor constraintEqualToAnchor:header.leadingAnchor constant:20],
+        [card.trailingAnchor constraintEqualToAnchor:header.trailingAnchor constant:-20],
+        [card.bottomAnchor constraintEqualToAnchor:header.bottomAnchor constant:-14],
 
-        [search.topAnchor constraintEqualToAnchor:filter.bottomAnchor constant:6],
-        [search.leadingAnchor constraintEqualToAnchor:header.leadingAnchor constant:8],
-        [search.trailingAnchor constraintEqualToAnchor:header.trailingAnchor constant:-8],
+        [stack.topAnchor constraintEqualToAnchor:card.topAnchor constant:16],
+        [stack.leadingAnchor constraintEqualToAnchor:card.leadingAnchor constant:16],
+        [stack.trailingAnchor constraintEqualToAnchor:card.trailingAnchor constant:-16],
+        [stack.bottomAnchor constraintEqualToAnchor:card.bottomAnchor constant:-16],
     ]];
 
+    // Measured once and set as the frame, the same reason the footer does it: a table
+    // header is laid out before the table has its final width, and a self-sizing one wraps
+    // to nothing on the first pass and never recovers.
+    CGFloat width = [UIScreen mainScreen].bounds.size.width;
+    header.frame = CGRectMake(0, 0, width,
+        [header systemLayoutSizeFittingSize:CGSizeMake(width, 0)
+              withHorizontalFittingPriority:UILayoutPriorityRequired
+                    verticalFittingPriority:UILayoutPriorityFittingSizeLevel].height);
+
     self.tableView.tableHeaderView = header;
+}
+
+/// One status pill. Green when the answer is yes, red when it is no, and never grey --
+/// "unknown" is not one of the states this screen can honestly report.
+- (UIView *)pillWithTitle:(NSString *)title on:(BOOL)on {
+    UIView *pill = [[UIView alloc] init];
+    pill.backgroundColor = [(on ? [UIColor systemGreenColor] : [UIColor systemRedColor])
+        colorWithAlphaComponent:0.15];
+    pill.layer.cornerRadius = 10;
+    pill.layer.cornerCurve = kCACornerCurveContinuous;
+
+    UIImageView *dot = [[UIImageView alloc] initWithImage:
+        [UIImage systemImageNamed:(on ? @"checkmark.circle.fill" : @"xmark.circle.fill")
+                withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:11
+                                                                                  weight:UIImageSymbolWeightBold]]];
+    dot.tintColor = on ? [UIColor systemGreenColor] : [UIColor systemRedColor];
+    [dot setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+
+    UILabel *label = [[UILabel alloc] init];
+    label.text = title;
+    label.font = [UIFont systemFontOfSize:11 weight:UIFontWeightSemibold];
+    label.textColor = on ? [UIColor systemGreenColor] : [UIColor systemRedColor];
+    label.adjustsFontSizeToFitWidth = YES;
+    label.minimumScaleFactor = 0.8;
+
+    UIStackView *row = [[UIStackView alloc] initWithArrangedSubviews:@[dot, label]];
+    row.axis = UILayoutConstraintAxisHorizontal;
+    row.spacing = 4;
+    row.alignment = UIStackViewAlignmentCenter;
+    row.translatesAutoresizingMaskIntoConstraints = NO;
+    [pill addSubview:row];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [row.topAnchor constraintEqualToAnchor:pill.topAnchor constant:7],
+        [row.bottomAnchor constraintEqualToAnchor:pill.bottomAnchor constant:-7],
+        [row.leadingAnchor constraintEqualToAnchor:pill.leadingAnchor constant:9],
+        [row.trailingAnchor constraintEqualToAnchor:pill.trailingAnchor constant:-9],
+    ]];
+
+    return pill;
 }
 
 - (void)buildFooter {
@@ -162,18 +288,19 @@ static const NSInteger SCITWAlbrhiRowCount = 3;
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
-- (void)filterChanged:(UISegmentedControl *)control {
-    self.changedOnly = (control.selectedSegmentIndex == 1);
+- (void)updateSearchResultsForSearchController:(UISearchController *)searchController {
+    self.query = searchController.searchBar.text;
     [self reload];
 }
 
-- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)text {
-    self.query = text;
+/// The All/Changed choice, now the search bar's own scopes.
+///
+/// The same two options the segmented control offered, on the control iOS provides for
+/// exactly this — so the filter appears with the keyboard instead of taking a row of the
+/// screen from everyone who is not searching.
+- (void)searchBar:(UISearchBar *)searchBar selectedScopeButtonIndexDidChange:(NSInteger)scope {
+    self.changedOnly = (scope == 1);
     [self reload];
-}
-
-- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar {
-    [searchBar resignFirstResponder];
 }
 
 - (void)reload {

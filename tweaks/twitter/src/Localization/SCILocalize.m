@@ -93,6 +93,9 @@ static void SCIBuildTables(void) {
         @"keys_empty": @"Nothing yet. Scroll around X and come back.",
         @"search_placeholder": @"Search",
 
+        @"pill_switches": @"Switches",
+        @"pill_seen": @"Recording",
+        @"pill_media": @"Media",
         @"filter_all": @"All",
         @"filter_changed": @"Changed",
 
@@ -197,6 +200,9 @@ static void SCIBuildTables(void) {
         @"keys_empty": @"لا شيء بعد. تصفّح إكس قليلاً ثم ارجع.",
         @"search_placeholder": @"بحث",
 
+        @"pill_switches": @"المفاتيح",
+        @"pill_seen": @"التسجيل",
+        @"pill_media": @"الوسائط",
         @"filter_all": @"الكل",
         @"filter_changed": @"المُعدَّلة",
 

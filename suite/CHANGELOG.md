@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.13.0
+
+Includes X 0.10.0 — **the X settings screen is redesigned.** A status card at the top says
+whether the tweak is attached at a glance, search moved to the navigation bar where it stays
+reachable, and the All/Changed filter became the search bar's own scopes.
+
 ## v1.12.2
 
 Includes X 0.9.2 — the in-video save button moves clear of X's back chevron, which it was
