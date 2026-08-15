@@ -675,6 +675,18 @@ It must sit alone on its own line inside a full block. This breaks:
 if (x) { %orig; return; }        // "%end does not make sense inside a block"
 ```
 
+**A `%new` method's parameter type is pasted into `@encode()`, so an attribute there is a
+build failure.** Logos generates the method's Objective-C type encoding from what the
+parameter is *written* as, verbatim. `- (void)sciSaveTapped:(__unused UIButton *)sender`
+becomes `@encode(__unused UIButton *)`, clang answers `'__unused__' attribute ignored when
+parsing type`, and `-Werror` turns that into three fatal errors inside one generated line
+that exists in no source file, pointing at a column in the middle of it. The habit that
+causes it is a good one everywhere else in this project — `__unused` on a parameter a hook
+does not read is correct in `%hook`, and appears throughout. It is only `%new` that
+encodes. Every other `%new` here writes a plain typed parameter, which is also the fix:
+an unused parameter is not warned about in an Objective-C method the way it is in a C
+function, so the attribute buys nothing. Rule 19 catches it now.
+
 **A hooked class needs an `@interface` if you touch its properties.** Otherwise
 Logos emits only a forward declaration and `self.view` fails to compile.
 
@@ -722,7 +734,7 @@ commented so nobody reads it as stray formatting and removes it.
 ## Verification
 
 `python tools/check.py` — runs in CI before Theos, so a typo fails in seconds
-rather than after a five-minute compile. Eighteen rules, every one of them derived
+rather than after a five-minute compile. Nineteen rules, every one of them derived
 from a real build failure:
 
 1. duplicate `@interface` definitions
@@ -761,6 +773,12 @@ from a real build failure:
     uses `--` constantly. Nothing else here parses filter plists, so this broke
     `AlbrhiCP.plist` silently three times in one afternoon before earning a rule;
     caught only by running the file through `plistlib` by hand each time until then
+19. a `%new` method parameter written with an attribute — `(__unused UIButton *)` and the
+    like. Logos pastes the written type into `@encode()`, where an attribute is a
+    `-Wignored-attributes` error under `-Werror`, reported against a generated line no
+    source file contains. Only the parameter list is examined: `__unused` on a *local*
+    inside a `%new` body is fine, and matching the whole method would flag those. Cost a
+    full CI run, which is exactly the five minutes this file exists to save
 
 A check that cries wolf gets ignored. Four of these produced false positives on
 first writing and were tightened before landing. If you add a rule, prove it fails

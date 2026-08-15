@@ -128,8 +128,16 @@ static UIViewController *SCIOwningController(UIView *view) {
     return controls;
 }
 
+// The parameter carries no __unused, and must not.
+//
+// %new builds the method's type encoding by pasting the parameter's written type straight
+// into @encode(...), so `__unused UIButton *` became `@encode(__unused UIButton *)` -- an
+// attribute inside @encode, which clang reports as ignored-while-parsing-a-type and
+// -Werror turns into three fatal errors in one generated line. Every other %new in this
+// project writes a plain typed parameter for the same reason; an unused one is not warned
+// about in an Objective-C method the way it would be in a C function.
 %new
-- (void)sciSaveTapped:(__unused UIButton *)sender {
+- (void)sciSaveTapped:(UIButton *)sender {
     UIViewController *host = SCIOwningController(self);
     if (host) [SCIYTDownload presentFrom:host];
 }

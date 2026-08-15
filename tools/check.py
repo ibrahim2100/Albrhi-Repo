@@ -860,6 +860,48 @@ for path in glob.glob('*.plist') + glob.glob('appsrc/*.plist'):
             report('%s:%d has "--" inside an XML comment, which is not legal XML '
                    'and breaks plistlib/dpkg-deb parsing' % (path, line))
 
+# 19. A %new method whose parameter type carries an attribute.
+#
+# Logos builds a %new method's Objective-C type encoding by pasting each parameter's
+# *written* type straight into @encode(...). A parameter declared
+# `(__unused UIButton *)sender` therefore generates `@encode(__unused UIButton *)` -- an
+# attribute where clang expects only a type. It answers with
+# "'__unused__' attribute ignored when parsing type" (-Wignored-attributes), and under the
+# -Werror this project builds with that is three fatal errors inside one generated line
+# that does not exist in any source file, naming a column in the middle of it.
+#
+# Cost a full CI run on SCIYTOverlayButton.x. Every other %new in this repository writes a
+# plain typed parameter, which is also the fix: an unused parameter is not warned about in
+# an Objective-C method the way it would be in a C function, so the attribute buys nothing
+# and breaks the build.
+#
+# Only the parameter list is examined. `%new` on a method whose *body* uses __unused for a
+# local is fine, and matching the whole method would flag those.
+for path in [p for p in SRC if p.endswith(('.x', '.xm'))]:
+    text = open(path, encoding='utf-8').read()
+    lines = text.split('\n')
+
+    for n, line in enumerate(lines, 1):
+        if not re.match(r'\s*%new\b', line):
+            continue
+
+        # The signature is either on this line (`%new - (void)foo:(X *)y {`) or the ones
+        # after it, up to the opening brace. Both spellings appear in this repository.
+        chunk = []
+        for probe in lines[n - 1:n + 6]:
+            chunk.append(probe)
+            if '{' in probe:
+                break
+        signature = '\n'.join(chunk)
+
+        for param in re.finditer(r':\s*\(([^)]*)\)', signature):
+            written = param.group(1)
+            if re.search(r'\b__unused\b|__attribute__|\b__deprecated\b', written):
+                report('%s:%d — a %%new method parameter is written "(%s)"; Logos pastes '
+                       'that into @encode(), where an attribute is a -Werror failure'
+                       % (path, n, written.strip()))
+
+
 print('keys: %d EN / %d AR   orphans: %d' % (len(en_keys), len(ar_keys), len(en_keys - used)))
 print('version: %s' % control_version)
 print()
