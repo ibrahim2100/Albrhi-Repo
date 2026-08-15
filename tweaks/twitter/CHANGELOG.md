@@ -1,5 +1,24 @@
 # Albrhi for X — what changed
 
+## v0.7.2
+
+**Diagnostics now prints the view chain above the rail when no button is added.**
+
+Two releases have been spent on `0 buttons added`, a sentence that names a symptom and no
+cause: first the rail was the wrong class, then the right class answered `-status` where the
+lookup asked for `-viewModel`. If it is still zero, one unknown is left, and it is the one
+nobody here can see — **whether the walk upward from the rail passes `ImmersiveCardView` at
+all.** The immersive player is built of plugin views, and if the rail's plugin is a *sibling*
+of the card rather than a descendant, no upward walk will ever reach the model and the fix is
+a different search, not a different getter.
+
+So the report answers it. `immersive button: ImmersiveActionsStackView — 0 buttons added;
+above it: A < B < C …` — the actual superview chain, recorded once rather than on every
+layout pass, since that hook runs continuously while a video plays.
+
+Nothing else changed. This is instrumentation, and it is here because guessing at a
+hierarchy from a class dump has now been wrong twice in a row about this one surface.
+
 ## v0.7.1
 
 **The rail was found and the button still never appeared.** A device report on X 12.15

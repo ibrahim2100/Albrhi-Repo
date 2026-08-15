@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.10.3
+
+Includes X 0.7.2 — if the in-video button is still missing, Diagnostics now prints the view
+chain above the rail, which is the one thing that separates "wrong getter" from "the model
+is not up there at all". Instrumentation only.
+
 ## v1.10.2
 
 Includes X 0.7.1 — the in-video save button now actually appears. 0.7.0 found the right

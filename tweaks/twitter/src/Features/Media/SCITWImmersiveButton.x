@@ -64,6 +64,9 @@ static NSUInteger sciImmersiveButtons = 0;
 /// Which rail actually attached, for the report. Both can, so this is a name and not a flag.
 static NSString *sciImmersiveRail = nil;
 
+/// The superview chain above the rail, recorded the first time placement finds no media.
+static NSString *sciImmersiveChain = nil;
+
 
 @interface SCITWImmersiveButtonTarget : NSObject
 + (instancetype)shared;
@@ -122,7 +125,29 @@ static void SCITWPlaceImmersiveButton(UIStackView *stack) {
         return;
     }
 
-    if (!item) return;
+    if (!item) {
+        // What was actually walked, recorded once.
+        //
+        // "0 buttons added" has now cost two releases as a sentence that names a symptom and
+        // no cause -- first the wrong class, then a class that answers -status rather than
+        // -viewModel. The remaining unknown is whether the walk even passes ImmersiveCardView:
+        // the immersive player is built of plugin views, and if the rail's plugin is a
+        // *sibling* of the card rather than a descendant, no upward walk from here will ever
+        // reach the model, and the fix is a different search rather than a different getter.
+        //
+        // The chain answers that in one line, so the next report settles it instead of another
+        // round of reasoning about a hierarchy nobody here can see. Recorded once, not per
+        // layout pass -- this runs continuously while a video plays.
+        if (!sciImmersiveChain) {
+            NSMutableArray<NSString *> *chain = [NSMutableArray array];
+            for (UIView *view = stack; view && chain.count < 12; view = view.superview) {
+                [chain addObject:NSStringFromClass([view class])];
+            }
+            sciImmersiveChain = [chain componentsJoinedByString:@" < "];
+            SCILogV(@"immersive button: nothing saveable above it — %@", sciImmersiveChain);
+        }
+        return;
+    }
 
     UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
     button.tag = kImmersiveButtonTag;
@@ -194,6 +219,13 @@ NSString *SCITWImmersiveButtonReport(void) {
 
     // Which one, by name. "No button" used to be two silent reasons at once, and after an X
     // update the useful question is not whether a button appeared but which rail is left.
+    if (sciImmersiveButtons == 0 && sciImmersiveChain) {
+        // The chain, not just the zero. Which classes sit above the rail is the one thing
+        // that separates "wrong getter" from "the model is not up there at all".
+        return [NSString stringWithFormat:@"%@ — 0 buttons added; above it: %@",
+                sciImmersiveRail ?: @"?", sciImmersiveChain];
+    }
+
     return [NSString stringWithFormat:@"%@ — %lu buttons added",
             sciImmersiveRail ?: @"?", (unsigned long)sciImmersiveButtons];
 }
