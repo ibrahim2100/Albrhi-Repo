@@ -126,6 +126,14 @@ static NSArray<NSString *> *SCIPromotedIdentifiers(void) {
             @"video_display_full_layout",
             @"video_display_full_buttoned_layout",
 
+            // Confirmed from a device report, not read out of the binary: a section
+            // carrying ad_slot_logging_data with slot_data.type SLOT_TYPE_IN_FEED and
+            // ad_layout_logging_data with layout_data.type
+            // LAYOUT_TYPE_VIDEO_DISPLAY_CAROUSEL_BUTTON_GROUP, scattered into Home between
+            // ordinary videos -- the shape the "layout has no 'ad' in its name" note above
+            // already warned a hand-written list would miss, and it did, until this one.
+            @"video_display_carousel_button_group_layout",
+
             // Community posts promoted into the feed.
             @"post_shelf",
 

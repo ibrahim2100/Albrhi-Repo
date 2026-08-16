@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.24.0
+
+Includes YouTube 1.20.0 — **the scattered ad on Home, found and fixed.** A real in-feed
+ad slot was carrying a layout identifier, `video_display_carousel_button_group_layout`,
+that had no "ad" anywhere in its name and was not yet on the feed filter's list. Found
+from a device report, confirmed as a real ad slot rather than guessed, and added.
+
 ## v1.23.1
 
 Includes YouTube 1.19.1 — the feed diagnostic widened after its own first report showed

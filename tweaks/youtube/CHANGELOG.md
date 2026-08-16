@@ -3,6 +3,21 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.20.0
+
+**The scattered ad on Home, found and named.** The second device report from the widened
+feed sample said plainly what 1.19.1 was built to find: a section carrying
+`ad_slot_logging_data` with `slot_data.type SLOT_TYPE_IN_FEED` — a real in-feed ad slot,
+not tracking metadata on an ordinary video — and `ad_layout_logging_data` with
+`layout_data.type LAYOUT_TYPE_VIDEO_DISPLAY_CAROUSEL_BUTTON_GROUP`. The identifier itself,
+`video_display_carousel_button_group_layout`, sits in the same family as
+`video_display_full_layout` already on the list — a layout name with no "ad" anywhere in
+it, exactly the shape a hand-written list was always going to miss until a real one was
+caught.
+
+Added to the feed filter's identifier list. Confirmed from a device report this time, the
+same way every identifier already on that list was.
+
 ## v1.19.1
 
 The first device report from the "Home feed → kept sections" sample above showed exactly
