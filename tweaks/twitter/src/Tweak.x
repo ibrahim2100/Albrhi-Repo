@@ -10,8 +10,12 @@
 #import "Features/Media/SCITWImmersiveButton.h"
 #import "Features/Media/SCITWActionBarButton.h"
 #import "Features/Ads/SCITWPromotedFilter.h"
+#import "Features/Ads/SCITWSuggestedFilter.h"
+#import "Features/Confirm/SCITWRepostConfirm.h"
+#import "Features/Media/SCITWAvatarSave.h"
+#import "Features/Playback/SCITWPictureInPicture.h"
 
-NSString *SCIVersionString = @"v0.12.0";  // AlbrhiTW
+NSString *SCIVersionString = @"v0.13.0";  // AlbrhiTW
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written
@@ -22,6 +26,9 @@ NSString *SCIVersionString = @"v0.12.0";  // AlbrhiTW
         SCIPrefSwitchLayer: @YES,
         SCIPrefInlineButton: @YES,
         SCIPrefHidePromoted: @NO,
+        SCIPrefHideSuggested: @NO,
+        SCIPrefConfirmRepost: @NO,
+        SCIPrefSaveAvatar: @YES,
         SCIPrefVerboseLogging: @NO,
     }];
 
@@ -78,6 +85,25 @@ NSString *SCIVersionString = @"v0.12.0";  // AlbrhiTW
     // switch. Its own hook, on the same three classes the save button already found, and
     // off by default until a device confirms it.
     SCITWInstallPromotedFilter();
+
+    // A blunter version of the same idea: T1UserRecommendationView is confirmed real, but
+    // nothing in this class dump says where X uses it, so this hides every instance rather
+    // than only the unwanted kind -- off by default, for the same reason.
+    SCITWInstallSuggestedFilter();
+
+    // A confirmation before a repost goes out -- off by default, since X's own button
+    // already costs one tap and a second is a real cost to weigh, not a free safety net.
+    SCITWInstallRepostConfirm();
+
+    // Offers to save a profile photo from the same tap that already opens it full screen.
+    SCITWInstallAvatarSave();
+
+    // Not a feature -- a recorder. What was asked for could not honestly ship as a working
+    // toggle: the real API takes an enum this class dump names no values for, and forcing
+    // a guessed number into it risks disabling playback rather than enabling
+    // picture-in-picture. This counts the values X sets on its own instead, so a real
+    // toggle can be built from what a report says rather than from a guess.
+    SCITWInstallPictureInPictureRecorder();
 
     if ([[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefSwitchLayer]) {
         // Before the hooks, not after. X asks its first questions while the app is still

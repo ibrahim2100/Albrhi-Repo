@@ -37,10 +37,13 @@ static const NSInteger SCITWSectionKeys     = 4;
 
 /// The rows in section zero, in order.
 static const NSInteger SCITWAlbrhiSaveButton = 0;
-static const NSInteger SCITWAlbrhiHidePromoted = 1;
-static const NSInteger SCITWAlbrhiSwitchLayer = 2;
-static const NSInteger SCITWAlbrhiLogging = 3;
-static const NSInteger SCITWAlbrhiRowCount = 4;
+static const NSInteger SCITWAlbrhiSaveAvatar = 1;
+static const NSInteger SCITWAlbrhiConfirmRepost = 2;
+static const NSInteger SCITWAlbrhiHidePromoted = 3;
+static const NSInteger SCITWAlbrhiHideSuggested = 4;
+static const NSInteger SCITWAlbrhiSwitchLayer = 5;
+static const NSInteger SCITWAlbrhiLogging = 6;
+static const NSInteger SCITWAlbrhiRowCount = 7;
 
 @interface SCITWSettings ()
 @property (nonatomic, strong) NSArray<SCITWSwitchRecord *> *all;
@@ -477,11 +480,31 @@ static UIImage *SCITWBadge(NSString *symbolName, UIColor *color) {
         note = SCILocalized(@"albrhi_save_button_note");
         icon = @"arrow.down.circle.fill";
         color = [UIColor systemBlueColor];
+    } else if (row == SCITWAlbrhiSaveAvatar) {
+        key = SCIPrefSaveAvatar;
+        title = SCILocalized(@"albrhi_save_avatar");
+        note = SCILocalized(@"albrhi_save_avatar_note");
+        icon = @"person.crop.circle.fill";
+        color = [UIColor systemBlueColor];
+    } else if (row == SCITWAlbrhiConfirmRepost) {
+        key = SCIPrefConfirmRepost;
+        title = SCILocalized(@"albrhi_confirm_repost");
+        note = SCILocalized(@"albrhi_confirm_repost_note");
+        icon = @"arrow.2.squarepath";
+        color = [UIColor systemGreenColor];
+        defaultOn = NO;
     } else if (row == SCITWAlbrhiHidePromoted) {
         key = SCIPrefHidePromoted;
         title = SCILocalized(@"albrhi_hide_promoted");
         note = SCILocalized(@"albrhi_hide_promoted_note");
         icon = @"eye.slash.circle.fill";
+        color = [UIColor systemOrangeColor];
+        defaultOn = NO;
+    } else if (row == SCITWAlbrhiHideSuggested) {
+        key = SCIPrefHideSuggested;
+        title = SCILocalized(@"albrhi_hide_suggested");
+        note = SCILocalized(@"albrhi_hide_suggested_note");
+        icon = @"person.2.slash.fill";
         color = [UIColor systemOrangeColor];
         defaultOn = NO;
     } else if (row == SCITWAlbrhiSwitchLayer) {
@@ -511,7 +534,8 @@ static UIImage *SCITWBadge(NSString *symbolName, UIColor *color) {
     // promoted-tweet filter gets the same colour for the reason its own file gives: it has
     // not been confirmed on a device, and a row that looks exactly like a settled feature
     // is a row nobody reads twice before flipping.
-    if (row == SCITWAlbrhiSwitchLayer || row == SCITWAlbrhiHidePromoted) {
+    if (row == SCITWAlbrhiSwitchLayer || row == SCITWAlbrhiHidePromoted
+        || row == SCITWAlbrhiHideSuggested) {
         cell.textLabel.textColor = [UIColor systemOrangeColor];
     }
 
@@ -533,7 +557,10 @@ static UIImage *SCITWBadge(NSString *symbolName, UIColor *color) {
     // is the same fact from the other end.
     NSString *key = nil;
     if (toggle.tag == SCITWAlbrhiSaveButton) key = SCIPrefInlineButton;
+    if (toggle.tag == SCITWAlbrhiSaveAvatar) key = SCIPrefSaveAvatar;
+    if (toggle.tag == SCITWAlbrhiConfirmRepost) key = SCIPrefConfirmRepost;
     if (toggle.tag == SCITWAlbrhiHidePromoted) key = SCIPrefHidePromoted;
+    if (toggle.tag == SCITWAlbrhiHideSuggested) key = SCIPrefHideSuggested;
     if (toggle.tag == SCITWAlbrhiSwitchLayer) key = SCIPrefSwitchLayer;
     if (toggle.tag == SCITWAlbrhiLogging) key = SCIPrefVerboseLogging;
     if (!key) return;

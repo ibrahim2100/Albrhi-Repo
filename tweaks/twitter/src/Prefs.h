@@ -54,4 +54,34 @@
 /// working, which is why it is safe to default on.
 #define SCIPrefInlineButton     @"inline_download_button"
 
+/// Also hides a promoted trend, on the same status view classes' sibling surface.
+///
+/// Shares the main switch above rather than getting its own: it is the exact same
+/// discovery -- `-isPromoted` reachable from the server-populated model, this time on
+/// `TwitterURT.PromotableTrend` instead of `TFNTwitterStatus` -- and a second on/off row
+/// for "the same thing, somewhere else" is a settings screen asking to be misread as two
+/// different features.
+#define SCIPrefHidePromotedTrends @"hide_promoted_trends"
+
+/// Asks before a repost goes out, the way this project already asks before a DM's seen
+/// receipt or an Instagram like -- a mis-tap on Retweet is a mis-tap that reaches every
+/// follower, and undoing it does not un-notify anyone who already saw it.
+///
+/// Off by default. X's own retweet button costs one tap already; this adds a second, and
+/// that is a real cost to weigh against the mis-tap it prevents, not a free safety net --
+/// so the choice is left to whoever actually wants it rather than assumed for everyone.
+#define SCIPrefConfirmRepost     @"confirm_repost"
+
+/// Whether the download button also offers to save a profile photo, from the profile
+/// screen's own avatar-tap gesture.
+#define SCIPrefSaveAvatar        @"save_avatar"
+
+/// Hides "who to follow" cards wherever `T1UserRecommendationView` draws one.
+///
+/// **A blunt tool, and marked as one.** That view is confirmed real; where X uses it is
+/// not -- a dedicated page someone opens on purpose looks identical, from this class
+/// alone, to the same card appearing uninvited in a timeline, and this cannot tell the two
+/// apart. Off by default until a report says whether that trade is worth it.
+#define SCIPrefHideSuggested     @"hide_suggested_accounts"
+
 #define SCIPrefVerboseLogging   @"verbose_logging"

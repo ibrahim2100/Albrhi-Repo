@@ -1,5 +1,16 @@
 # Albrhi Changelog
 
+## v1.16.0
+
+Includes X 0.13.0 — **four more features, and two honest declines.** A confirmation
+before Retweet (off by default), an offer to save a profile photo when you open one (on
+by default), an experimental and openly blunt "who to follow" card hider, and a
+picture-in-picture *recorder* rather than a switch — the real API takes a private numeric
+code this class dump names no meaning for, and a guessed number was not worth the risk of
+silently breaking video playback instead of turning PIP on. Extending the promoted-tweet
+filter to trends, and touching account-level premium flags directly, were both looked
+into and left alone: neither could be done without a guess this project does not ship.
+
 ## v1.15.0
 
 Includes X 0.12.0 — **a new, experimental switch that hides real Promoted Tweets**, which

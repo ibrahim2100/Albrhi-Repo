@@ -1,5 +1,40 @@
 # Albrhi for X — what changed
 
+## v0.13.0
+
+Four more, out of six that were looked into -- and two honest no's, said plainly rather
+than shipped as guesses.
+
+**Confirm before Retweet.** Off by default. One more tap before a repost goes out, the
+same reasoning behind every confirmation this project has already shipped: a mis-tap here
+reaches every follower, and there is no undo that un-notifies whoever already saw it.
+
+**Save a profile photo.** Tap someone's avatar to open it, the same as always, and this
+now also offers to save it. On by default -- it only asks, it never saves without a
+second tap.
+
+**"Who to follow" cards can be hidden -- and it says plainly that it is blunt.** The class
+that draws one is confirmed real; where X actually uses it is not, so this hides every
+card it draws rather than only the unwanted kind. Off by default, named as experimental,
+and the settings row says exactly what it cannot yet tell apart.
+
+**Picture-in-picture could not honestly ship as a working switch, so it did not.** The
+setting exists -- `nativePictureInPictureBehavior` -- but it is a private numeric code with
+no meaning named anywhere in this class dump, set through a fifteen-argument initialiser.
+Forcing a guessed number into it risks disabling the player instead of turning PIP on, which
+is not a risk worth a silent toggle. What shipped instead is a recorder: it counts every
+value X sets on its own, so a real switch can be built from what a report says rather than
+from a guess -- the same discipline the switch layer itself was built on.
+
+**And two were looked into and not shipped.** Extending the promoted-tweet filter to
+trends found the right classes -- `TwitterURT.PromotableTrend` really does carry
+`-isPromoted` -- but neither `TrendView` nor `URTTimelineTrendCell` exposes any way to
+reach it from this class dump; nothing here says how. Hooking `TFNTwitterAccount`'s own
+boolean methods (`isPremiumTierUser`, `isTweetPromoteButtonEnabled`, and a dozen more) was
+raised only as a research question, not a feature -- forcing any of them without knowing
+what reads the answer risks breaking premium-gated screens this project has no way to
+audit without a device, and that is not a trade made blind.
+
 ## v0.12.0
 
 **"Hide ads" was never going to touch a real Promoted Tweet, and now something does.**

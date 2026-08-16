@@ -8,6 +8,10 @@
 #import "Features/Media/SCITWImmersiveButton.h"
 #import "Features/Media/SCITWActionBarButton.h"
 #import "Features/Ads/SCITWPromotedFilter.h"
+#import "Features/Ads/SCITWSuggestedFilter.h"
+#import "Features/Confirm/SCITWRepostConfirm.h"
+#import "Features/Media/SCITWAvatarSave.h"
+#import "Features/Playback/SCITWPictureInPicture.h"
 
 NSString *SCITWReportText(void) {
     NSMutableString *text = [NSMutableString string];
@@ -38,6 +42,10 @@ NSString *SCITWReportText(void) {
     [text appendFormat:@"immersive button: %@\n", SCITWImmersiveButtonReport()];
     [text appendFormat:@"action bar button: %@\n", SCITWActionBarButtonReport()];
     [text appendFormat:@"promoted-tweet filter: %@\n", SCITWPromotedFilterReport()];
+    [text appendFormat:@"suggested-account filter: %@\n", SCITWSuggestedFilterReport()];
+    [text appendFormat:@"repost confirm: %@\n", SCITWRepostConfirmReport()];
+    [text appendFormat:@"avatar save: %@\n", SCITWAvatarSaveReport()];
+    [text appendFormat:@"picture-in-picture: %@\n", SCITWPictureInPictureReport()];
     [text appendFormat:@"in-video button: %@\n", SCITWInVideoButtonReport()];
 
     NSArray<SCITWSwitchRecord *> *records = [SCITWSwitches records];
