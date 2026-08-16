@@ -22,20 +22,37 @@ static NSString *const kSCIWelcomeShown = @"welcome_shown_v2";
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     if ([[defaults stringForKey:kSCIWelcomeShown] length]) return;
 
-    // Late, and only once the app has a window worth presenting on. Run at load time this
-    // finds no root view controller and does nothing at all, which is the quietest way for
-    // a welcome screen to never appear.
+    [self attempt:0];
+}
+
+/// Tried every 2.5 seconds, up to roughly a minute, rather than once.
+///
+/// A single attempt assumed Locket's own UI settles within one short window after
+/// launch, and a real report said otherwise: nothing appeared at all. Locket's own
+/// splash, permission prompts or onboarding can plausibly still be on screen well past
+/// 2.5 seconds, and a one-shot attempt that finds them there gives up for the rest of
+/// the app's life rather than for the rest of that one moment. Capped so a greeting
+/// does not keep trying to interrupt someone using the app normally an hour in.
++ (void)attempt:(NSInteger)count {
+    if (count >= 24) return;
+
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.5 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
+        // Checked again -- a later attempt after an earlier one already succeeded is
+        // the one case this loop must not repeat.
+        if ([[[NSUserDefaults standardUserDefaults] stringForKey:kSCIWelcomeShown] length]) return;
+
         @try {
-            [self present];
+            if (![self present]) [self attempt:count + 1];
         } @catch (NSException *exception) {
             SCILogV(@"welcome: could not show — %@", exception.reason);
         }
     });
 }
 
-+ (void)present {
+/// Returns whether it actually presented, so the retry loop above knows whether to try
+/// again rather than assume one attempt was always going to be enough.
++ (BOOL)present {
     UIWindow *window = nil;
     for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
         if (![scene isKindOfClass:[UIWindowScene class]]) continue;
@@ -44,23 +61,24 @@ static NSString *const kSCIWelcomeShown = @"welcome_shown_v2";
         }
         if (window) break;
     }
-    if (!window) return;
+    if (!window) return NO;
 
     UIViewController *top = window.rootViewController;
     while (top.presentedViewController) top = top.presentedViewController;
 
-    // Not over another sheet. Someone who opened something in the first seconds is doing
-    // something; a greeting can wait for the next launch -- and it now actually gets one,
-    // since the flag below is not set until this point is reached.
-    if (!top || top != window.rootViewController) return;
+    // Not over another sheet. Someone who opened something is doing something; a
+    // greeting can wait -- and it now actually does wait rather than giving up, since
+    // the caller retries whenever this returns NO.
+    if (!top || top != window.rootViewController) return NO;
 
     // Marked here, immediately before showing, rather than back in +showIfFirstRun. The
-    // exception guard around -present still means a crash inside init costs one launch
-    // and not every launch forever; a launch that merely finds something already on
-    // screen no longer costs anything; it tries again next time.
+    // exception guard around -present still means a crash inside init costs one attempt
+    // and not every attempt forever; an attempt that merely finds something already on
+    // screen costs nothing at all now -- it is not even counted as having tried.
     [[NSUserDefaults standardUserDefaults] setObject:SCIVersionString forKey:kSCIWelcomeShown];
 
     [top presentViewController:[[SCILKWelcome alloc] init] animated:YES completion:nil];
+    return YES;
 }
 
 - (instancetype)init {

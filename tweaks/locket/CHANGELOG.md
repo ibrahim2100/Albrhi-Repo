@@ -1,5 +1,22 @@
 # Albrhi for Locket — what changed
 
+## v0.4.1
+
+**The welcome screen still did not appear, even with a fresh flag from 0.3.2's fix.** A
+single attempt 2.5 seconds after launch assumed Locket's own UI settles by then; a real
+report said it does not always. Locket's own splash, a permission prompt, or its own
+onboarding can plausibly still be on screen well past 2.5 seconds, and `-present`'s "not
+over another sheet" guard correctly declined to interrupt it -- once, and then never
+again, because nothing was left to try a second time. `-present` now reports back whether
+it actually showed anything, and `+showIfFirstRun` retries every 2.5 seconds — up to
+about a minute — until it does, instead of giving up after a single look.
+
+The quick-save button from 0.4.0 has not changed: it is hidden by design until
+`SCILKMedia` has actually captured a moment, which only happens once Locket's own feed
+has loaded at least one. A hidden button on a fresh launch with nothing opened yet is
+that behaviour working, not a second instance of this bug — open a friend's moment once
+and it should appear.
+
 ## v0.4.0
 
 **A one-tap shortcut to save the newest moment.** A small circular button now sits in the
