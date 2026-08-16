@@ -1,20 +1,40 @@
-name: Build Albrhi for Locket (manual)
+name: Build Albrhi for Locket
 
-
 #
-# **Manual only. This workflow no longer publishes anything.**
+# Locket is not in com.albrhi any more. It publishes on its own now -- its own package,
+# its own releases, its own tag namespace -- the same way CarPlay already does, and
+# unlike CarPlay it is not withheld: this workflow actually publishes.
 #
-# Everything Albrhi makes now ships in one package, released by buildsuite.yml, which
-# also owns the APT index and the Pages deploy. Leaving this on a push trigger would
-# mean two workflows rebuilding the same index from scratch and racing for gh-pages --
-# the arrangement that once served a source a version behind its own release.
+# That makes this the second workflow that actually publishes releases and rewrites the
+# shared APT index, after buildsuite.yml (CarPlay is a third in shape but not in practice
+# while it stays withheld -- see CLAUDE.md). The same discipline applies here that applies
+# there: build the index from what is *published* rather than from this run's own output,
+# fold this run's own build in by name so a release the listing has not caught up with yet
+# is not lost, and take the shared albrhi-pages concurrency group so two workflows never
+# write gh-pages at once.
 #
-# It is kept, rather than deleted, because building one tweak on its own is still the
-# fastest way to find out whether that tweak compiles. It produces a package and stops.
+# It also builds a third asset the suite's own tweaks do not produce on their own: a
+# self-contained dylib with its own hooking layer, carrying no dependency on CydiaSubstrate
+# -- for sideloading with TrollStore, a certificate, SideStore, LiveContainer, anything that
+# can inject a dylib into Locket without a jailbreak underneath it. Proven standalone with
+# otool and nm here, not merely assumed, the same way Instagram's sideload dylib already is.
 #
 
 on:
+    push:
+        branches:
+            - 'main'
+        paths:
+            - 'tweaks/locket/**'
+            - 'shared/**'
+            - 'tools/**'
+            - '.github/workflows/buildlocket.yml'
     workflow_dispatch:
+        inputs:
+            force_rebuild:
+                description: 'Release even if this version was already released'
+                type: boolean
+                default: false
 
 env:
     TWEAK_DIR: main/tweaks/locket
@@ -22,13 +42,19 @@ env:
 
 jobs:
     build:
-        name: Build Locket rootless + roothide
+        name: Build, release and publish
         runs-on: macos-latest
 
+        # Shared with buildsuite.yml, and never cancelled: two runs must not rebuild and
+        # deploy gh-pages at once, and cancelling rather than queueing would drop an index
+        # update rather than merely delay it.
+        concurrency:
+            group: albrhi-pages
+            cancel-in-progress: false
 
         permissions:
-            contents: read
-
+            contents: write
+            pages: write
 
         steps:
             - name: Checkout Main
@@ -73,7 +99,7 @@ jobs:
 
                 grep -E '^(Homepage|Icon|Depiction|SileoDepiction):' control
 
-            - name: Decide whether a build is needed
+            - name: Decide whether a release is needed
               id: release_check
               env:
                 GH_TOKEN: ${{ github.token }}
@@ -164,6 +190,72 @@ jobs:
                 mv "$BUILT_DEB" "com.albrhi.locket_${LK_VERSION}+rootless.deb"
                 ls -la
 
+            - name: Build the standalone dylib for sideloading
+              if: steps.release_check.outputs.needed == 'true'
+              env:
+                # This step invokes make directly rather than through build.sh, so it
+                # needs THEOS declared just as the other build steps do -- without it
+                # the Makefile's include expands to /makefiles/common.mk and nothing
+                # builds.
+                THEOS: ${{ github.workspace }}/theos
+              run: |
+                cd "$TWEAK_DIR"
+
+                # Built separately from the packages, not copied out of them. The
+                # package binary hooks through CydiaSubstrate, which a sideloaded app
+                # has no reason to have -- injected on its own it would load nothing
+                # and Locket would simply look untweaked, with no error to explain
+                # why. This build carries its own hooking instead.
+                make clean
+                rm -rf .theos
+
+                # Same scheme the published dylib was built under before, so the only
+                # difference from the package binary is the hooking layer.
+                export THEOS_PACKAGE_SCHEME=rootless
+                make SELFCONTAINED=1 FINALPACKAGE=1
+
+                DYLIB=$(find .theos/obj -name 'AlbrhiLK.dylib' -type f | head -n1)
+
+                if [ -z "$DYLIB" ]; then
+                  echo "::error::AlbrhiLK.dylib not found under .theos/obj"
+                  exit 1
+                fi
+
+                # Proof, not assumption: calling this standalone is something the user
+                # would otherwise only get to disprove on their own device, where the
+                # failure is silent -- Locket just looks untweaked.
+                echo "Linked libraries:"
+                otool -L "$DYLIB"
+
+                if otool -L "$DYLIB" | grep -qi 'substrate'; then
+                  echo "::error::The dylib still links CydiaSubstrate — it is not standalone"
+                  exit 1
+                fi
+
+                # The stricter half. A library can be dropped from the load commands
+                # while an undefined MS* symbol remains, and that would fail at load
+                # time rather than here. Every symbol the dylib still expects from
+                # outside is listed, and any MS one is fatal.
+                echo "Undefined symbols beginning with MS:"
+                nm -u "$DYLIB" | grep -E '^_MS' || echo "  (none)"
+
+                if nm -u "$DYLIB" | grep -qE '^_MS'; then
+                  echo "::error::The dylib still expects Substrate symbols at load time"
+                  nm -u "$DYLIB" | grep -E '^_MS'
+                  exit 1
+                fi
+
+                echo "Standalone: no Substrate library, no Substrate symbols."
+
+                cp "$DYLIB" "packages/AlbrhiLK_${LK_VERSION}.dylib"
+
+                # The package builds that follow must not inherit this build's
+                # objects, or a .deb would ship the sideload flavour.
+                make clean
+                rm -rf .theos
+
+                ls -la packages
+
             - name: Setup roothide Theos
               if: steps.release_check.outputs.needed == 'true'
               uses: actions/checkout@v4
@@ -208,3 +300,181 @@ jobs:
                   mv "$BUILT_DEB" "$TARGET"
                 fi
                 ls -la
+
+            - name: Upload build artifacts
+              if: steps.release_check.outputs.needed == 'true'
+              uses: actions/upload-artifact@v4
+              with:
+                name: AlbrhiLocket-${{ env.LK_VERSION }}
+                path: |
+                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/com.albrhi.locket_${{ env.LK_VERSION }}+rootless.deb
+                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/com.albrhi.locket.roothide_${{ env.LK_VERSION }}.deb
+                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/AlbrhiLK_${{ env.LK_VERSION }}.dylib
+                if-no-files-found: error
+
+            - name: Extract changelog for this version
+              if: steps.release_check.outputs.needed == 'true'
+              run: |
+                cd main
+                python3 tools/release-notes.py tweaks/locket/CHANGELOG.md tweaks/locket/control > /tmp/notes.md
+                echo '--- release notes'
+                cat /tmp/notes.md
+
+            - name: Publish release
+              if: steps.release_check.outputs.needed == 'true'
+              uses: softprops/action-gh-release@v2
+              with:
+                name: Albrhi for Locket ${{ env.LK_VERSION }}
+                tag_name: locket-v${{ env.LK_VERSION }}
+                body_path: /tmp/notes.md
+                files: |
+                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/com.albrhi.locket_${{ env.LK_VERSION }}+rootless.deb
+                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/com.albrhi.locket.roothide_${{ env.LK_VERSION }}.deb
+                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/AlbrhiLK_${{ env.LK_VERSION }}.dylib
+                fail_on_unmatched_files: true
+
+            - name: Gather every published package
+              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/locket-v')
+              env:
+                GH_TOKEN: ${{ github.token }}
+              run: |
+                # Built from what is published, not from this run's compile -- the same
+                # reason buildsuite.yml does it this way: make-repo.sh wipes debs/ and
+                # rebuilds it, so an index built from one workflow's output alone would
+                # erase the other publisher's packages from the source.
+                chmod +x main/tools/fetch-published-debs.sh
+                ./main/tools/fetch-published-debs.sh published "${{ github.repository }}" 3 "$TWEAK_DIR/packages" locket
+
+            - name: Publish APT repo to GitHub Pages
+              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/locket-v')
+              env:
+                GH_TOKEN: ${{ github.token }}
+              run: |
+                set -x
+                REPO_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+                REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+
+                rm -rf pages
+                mkdir pages
+                cd pages
+                git init -q
+                git remote add origin "$REMOTE"
+
+                if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+                  echo "gh-pages exists — fetching it."
+                  git fetch -q --depth 1 origin gh-pages
+                  git checkout -q -b gh-pages FETCH_HEAD
+                else
+                  echo "gh-pages does not exist — starting a fresh branch."
+                  git checkout -q -b gh-pages
+                fi
+
+                cd ..
+
+                chmod +x main/tools/make-repo.sh
+                ./main/tools/make-repo.sh published pages "$REPO_URL"
+
+                cp main/tools/repo-index.html pages/index.html
+
+                mkdir -p pages/deb-edit
+                cp main/tools/deb-edit.html pages/deb-edit/index.html
+
+                mkdir -p pages/inject
+                cp main/tools/ipa-inject.html pages/inject/index.html
+
+                # Regenerated every run so the version and changelog shown always match
+                # what was actually built. From the tweak's own directory, because the
+                # generator reads CHANGELOG.md relative to its working directory.
+                PAGES_DIR="$(pwd)/pages"
+                ( cd main/tweaks/locket && python3 ../../tools/make-depiction.py "$PAGES_DIR" "$LK_VERSION" "$REPO_URL" albrhi-locket )
+
+                ls -la pages/depictions
+
+                # Regenerated every run too; buildsuite.yml already does this for the
+                # same source icon, and make-logo.py is deterministic from the same
+                # tools/logo.png override (or its absence), so the two runs agree.
+                python3 main/tools/make-logo.py pages/CydiaIcon.png 512
+
+                touch pages/.nojekyll
+
+                cd pages
+                git config user.name "github-actions[bot]"
+                git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                git add -A
+
+                if git diff --cached --quiet; then
+                  echo "Repo index unchanged — nothing to push."
+                  exit 0
+                fi
+
+                git commit -q -m "Repo: Albrhi for Locket ${LK_VERSION}"
+                git push -q origin gh-pages
+
+                echo "Index committed to gh-pages; the deploy steps below publish it."
+
+            - name: Serve the source from the branch
+              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/locket-v')
+              env:
+                GH_TOKEN: ${{ github.token }}
+              # Same reasoning as buildsuite.yml's identical step: deploy-pages queued
+              # indefinitely on this repository and was removed for it. An APT source
+              # does not need it -- gh-pages is pushed above and already holds the
+              # finished index; this only makes the branch-serving arrangement explicit
+              # and requests a build rather than depending on a push trigger that has
+              # stopped firing before without warning.
+              run: |
+                echo "Pointing Pages at the gh-pages branch"
+                gh api -X PUT "repos/${{ github.repository }}" --field has_pages=true --silent 2>/dev/null || true
+
+                if gh api -X PUT "repos/${{ github.repository }}/pages" --field 'build_type=legacy' --field 'source[branch]=gh-pages' --field 'source[path]=/' --silent 2>/dev/null; then
+                  echo "Pages now serves gh-pages"
+                else
+                  echo "::warning::could not set the Pages source; continuing"
+                fi
+
+                gh api -X POST "repos/${{ github.repository }}/pages/builds" --silent && echo "build requested" || echo "::warning::could not request a build; the push may still start one"
+
+            - name: Check the source actually serves this version
+              if: always() && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/locket-v'))
+              run: |
+                BASE="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/Packages"
+                echo "Asking $BASE for com.albrhi.locket ${LK_VERSION}"
+
+                for ATTEMPT in $(seq 1 6); do
+                  BODY=$(curl -fsSL "${BASE}?t=$(date +%s)-${ATTEMPT}" 2>/dev/null || true)
+
+                  if printf '%s' "$BODY" | grep -A5 '^Package: com.albrhi.locket$' | grep -q "^Version: ${LK_VERSION}$"; then
+                    echo "ok  the source is serving ${LK_VERSION}"
+                    exit 0
+                  fi
+
+                  SERVING=$(printf '%s' "$BODY" | grep -A5 '^Package: com.albrhi.locket$' | grep '^Version:' | sort -V | tail -n1)
+                  echo "attempt ${ATTEMPT}: ${SERVING:-nothing for com.albrhi.locket yet}"
+                  sleep 20
+                done
+
+                echo "Serving: ${SERVING:-nothing for com.albrhi.locket}"
+                echo ""
+
+                if [ -n "$SERVING" ]; then
+                  echo "::notice::the source is serving ${SERVING#Version: }; ${LK_VERSION} follows when Pages builds"
+                  echo "The release is published and the branch holds the right index."
+                  echo "Nothing here needs doing."
+                  exit 0
+                fi
+
+                echo "::error::the source is serving no com.albrhi.locket at all"
+                echo ""
+                echo "The release is published and gh-pages holds the finished index, so"
+                echo "the branch is right and the site is not being built from it."
+                echo ""
+                echo "Check the one setting this side cannot read:"
+                echo ""
+                echo "  Settings -> Pages -> Build and deployment -> Source"
+                echo "      Deploy from a branch"
+                echo "      Branch: gh-pages    Folder: / (root)"
+                echo ""
+                echo "If it says GitHub Actions instead, branch pushes are never served"
+                echo "and the site stays frozen at the last branch build -- which looks"
+                echo "exactly like this."
+                exit 1

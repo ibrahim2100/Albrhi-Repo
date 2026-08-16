@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.25.0
+
+**Locket has left the suite.** It is no longer bundled in `com.albrhi`, no longer
+declared in Conflicts or Replaces, and no longer removed by the suite's own preinst — it
+publishes independently now, as its own package (`com.albrhi.locket`), with its own
+releases and its own self-contained sideload dylib. See tweaks/locket/CHANGELOG.md v0.3.0
+for what changed in Locket itself, including a new welcome screen. This package now
+bundles Instagram, YouTube and X.
+
 ## v1.24.0
 
 Includes YouTube 1.20.0 — **the scattered ad on Home, found and fixed.** A real in-feed

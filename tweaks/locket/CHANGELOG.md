@@ -1,5 +1,26 @@
 # Albrhi for Locket — what changed
 
+## v0.3.0
+
+**Standalone.** Locket has left `com.albrhi` — it is no longer bundled in the suite, has
+no Conflicts or Replaces on it any more, and publishes its own releases from its own
+workflow, under its own tag namespace, the same way CarPlay's package already does. The
+suite still bundles Instagram, YouTube and X; Locket is its own thing now, for anyone who
+wants this and nothing else.
+
+**A self-contained dylib, for sideloading.** Alongside the rootless and roothide `.deb`
+files, every release now also carries a plain `.dylib` built with its own hooking layer
+instead of CydiaSubstrate — provably standalone, checked in CI with `otool` and `nm`
+rather than assumed, the same discipline Instagram's own sideload build already uses. It
+installs with TrollStore, a developer certificate, SideStore, LiveContainer, or anything
+else that can inject a dylib into Locket, with no jailbreak underneath it required.
+
+**A welcome screen.** What this tweak does was previously reachable only by knowing to
+hold two fingers on the app — and finding that out meant reading the depiction first. The
+first launch now says it directly: what gets hidden from Locket's own checks, that a
+moment saves as the real file rather than a screenshot, and the gesture that opens the
+status screen. Shown once, in Arabic or English.
+
 ## v0.2.1
 
 **The app was crashing, and the bypass could not work because of it.** The list of paths

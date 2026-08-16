@@ -87,9 +87,9 @@ OWNER_TWEAK="${5:-}"
 # **Withheld until confirmed on a device** -- CarPlay. Temporary, and undoing it is two
 # changes, not one: this entry and the release half of buildcarplay.yml. See that file.
 #
-# **Withheld permanently** -- the individual social-app packages. com.albrhi is the front
-# door and has been since the suite was built; it declares Conflicts and Replaces on
-# exactly these ten identities and suite/DEBIAN/preinst removes them by hand, because
+# **Withheld permanently** -- the individual social-app packages still bundled in the
+# suite. com.albrhi is the front door for these; it declares Conflicts and Replaces on
+# exactly these identities and suite/DEBIAN/preinst removes them by hand, because
 # dpkg -i honours neither. So a device can never hold one of these *and* the suite, and
 # serving them offers an install that the next suite update deletes.
 #
@@ -100,11 +100,18 @@ OWNER_TWEAK="${5:-}"
 # 1.13.0, four minor versions further on, with no update path off it. A stale package that
 # can never move is worse than an absent one.
 #
-# All ten are named, including the six that have never been published at all
-# (twitter, locket, panel, each in two flavours). The list is cheaper than the accident:
-# if one is ever released by mistake, the withholding is already in place rather than
-# something to remember afterwards. And ten is not a coincidence -- it is the same ten
-# suite/control declares Conflicts on, so the package and the source now say the same thing.
+# Every one named here has never been published at all (tweak, youtube, twitter, panel,
+# each in two flavours) except where a package outgrew the list -- see Locket below. The
+# list is cheaper than the accident: if one is ever released by mistake, the withholding
+# is already in place rather than something to remember afterwards. It is the same set
+# suite/control declares Conflicts on, so the package and the source now say the same
+# thing.
+#
+# **Locket left this list.** It left the suite entirely -- suite/control no longer
+# declares Conflicts or Replaces on com.albrhi.locket or its roothide flavour, and
+# tweaks/locket carries a .no-suite marker so make-suite.sh does not bundle it. A
+# package no longer inside the suite has no reason to be withheld on the suite's
+# account, and buildlocket.yml publishes it independently now -- see that file.
 #
 # Matched exactly, against the archive's own Package field. Every flavour has to be named
 # because rootless and roothide are separate package identities: listing only the first
@@ -114,7 +121,6 @@ com.albrhi.carplay          com.albrhi.carplay.roothide
 com.albrhi.tweak            com.albrhi.tweak.roothide
 com.albrhi.youtube          com.albrhi.youtube.roothide
 com.albrhi.twitter          com.albrhi.twitter.roothide
-com.albrhi.locket           com.albrhi.locket.roothide
 com.albrhi.panel            com.albrhi.panel.roothide
 "
 

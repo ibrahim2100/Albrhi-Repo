@@ -16,6 +16,11 @@ static void SCIBuildTables(void) {
         @"title": @"Albrhi for Locket",
         @"done": @"Done",
 
+        @"welcome_title": @"Albrhi for Locket",
+        @"welcome_body": @"Hides the jailbreak from Locket’s own checks, so a modified phone answers exactly like an ordinary one. And it saves a friend’s moment — the full photo or video they actually sent, not a screenshot.",
+        @"welcome_gesture": @"Hold two fingers anywhere in Locket to open it.",
+        @"welcome_go": @"Got it",
+
         @"section_status": @"Status",
         @"status_gate": @"Albrhi in Locket",
         @"gate_on": @"On",
@@ -52,6 +57,11 @@ static void SCIBuildTables(void) {
     _arTable = @{
         @"title": @"البرهي للوكِت",
         @"done": @"تم",
+
+        @"welcome_title": @"البرهي للوكِت",
+        @"welcome_body": @"يُخفي الجيلبريك عن فحوص لوكِت الخاصة، فيجيب الهاتف المعدَّل تماماً كما يجيب هاتف عادي. ويحفظ لحظة أرسلها صديق — الصورة أو الفيديو الكامل الذي أرسله فعلاً، لا لقطة شاشة.",
+        @"welcome_gesture": @"اضغط بإصبعين في أي مكان داخل لوكِت لفتحه.",
+        @"welcome_go": @"فهمت",
 
         @"section_status": @"الحالة",
         @"status_gate": @"البرهي داخل لوكِت",

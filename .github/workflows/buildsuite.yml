@@ -162,8 +162,6 @@ jobs:
                     DynamicLibraries/AlbrhiYT.plist \
                     DynamicLibraries/AlbrhiTW.dylib \
                     DynamicLibraries/AlbrhiTW.plist \
-                    DynamicLibraries/AlbrhiLK.dylib \
-                    DynamicLibraries/AlbrhiLK.plist \
                     PreferenceBundles/AlbrhiPanel.bundle/AlbrhiPanel \
                     PreferenceLoader/Preferences/AlbrhiPanel.plist
                 do

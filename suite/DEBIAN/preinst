@@ -16,7 +16,6 @@ set -e
 OLD="com.albrhi.tweak com.albrhi.tweak.roothide \
      com.albrhi.youtube com.albrhi.youtube.roothide \
      com.albrhi.twitter com.albrhi.twitter.roothide \
-     com.albrhi.locket com.albrhi.locket.roothide \
      com.albrhi.panel com.albrhi.panel.roothide"
 
 for PACKAGE in $OLD; do

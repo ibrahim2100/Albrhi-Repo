@@ -4,8 +4,9 @@
 #import "Features/Bypass/SCILKBypass.h"
 #import "Features/Media/SCILKMediaHooks.h"
 #import "Settings/SCILKGesture.h"
+#import "UI/SCILKWelcome.h"
 
-NSString *SCIVersionString = @"v0.2.1";  // AlbrhiLK
+NSString *SCIVersionString = @"v0.3.0";  // AlbrhiLK
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written returns
@@ -50,4 +51,8 @@ NSString *SCIVersionString = @"v0.2.1";  // AlbrhiLK
     } else {
         SCILogV(@"moment saving turned off in settings");
     }
+
+    // Said once, on the first launch after installing. Deliberately after everything
+    // else in here: a greeting must never be the reason a hook did not get installed.
+    [SCILKWelcome showIfFirstRun];
 }
