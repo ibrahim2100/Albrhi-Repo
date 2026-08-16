@@ -352,6 +352,21 @@ a value written but not yet flushed. **The jailbreak prefix comes from `dladdr` 
 code's own address** — the only way to get it right on roothide, where it is a different
 random directory on every device.
 
+**The opt-in panel gate is right for `com.albrhi` and wrong for every self-contained
+sideload build, and this went unnoticed until Locket's own report said "nothing works,
+not even the welcome screen."** `SCIPanelAllowsThisApp()` reading absence as *off* exists
+because installing the suite patches four apps at once, and silence should not read as
+consent for all of them — but a `SELFCONTAINED` build is one tweak, chosen and installed
+deliberately, for one app, quite possibly on a device with no jailbreak on it at all.
+Albrhi Panel is itself a jailbreak package (a `PreferenceLoader` bundle, no sideloaded
+equivalent exists), so on such a device it can *never* be installed, the switch can never
+be turned on, and the opt-in gate refuses forever — every hook in the tweak standing down
+on every launch, silently, because the gate sits before all of them in `%ctor`. Fixed once,
+in `SCIPanelGate.m` itself rather than per tweak: `SCIPanelAllowsThisApp()` answers `YES`
+unconditionally under `#ifdef SCI_SELFCONTAINED`, restoring the older "installed it
+deliberately" reading for the one case that is still true of. Every tweak's own `%ctor`
+needed no change, because every tweak already asks this one function and nothing else.
+
 **A sleep is a guess about how long something takes.** Three releases went into a Pages
 deploy that "hung", and each time the fix was to ask the thing itself instead: which mode
 Pages is in, whether the build is `built` or `errored`, whether the live URL is serving

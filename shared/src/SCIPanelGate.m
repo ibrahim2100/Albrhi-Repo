@@ -133,6 +133,22 @@ BOOL SCIPanelAllowsApp(NSString *identifier) {
 }
 
 BOOL SCIPanelAllowsThisApp(void) {
+#ifdef SCI_SELFCONTAINED
+    // The opt-in reading above is right for com.albrhi, which installs four apps' worth
+    // of hooks in one go -- silence should not read as consent for all of them at once.
+    // A self-contained sideload build is the case that reasoning was never about: one
+    // tweak, chosen and installed deliberately, for one app, on a device that may have no
+    // jailbreak on it at all. Albrhi Panel is a jailbreak package (PreferenceLoader has no
+    // sideloaded equivalent this project ships), so it can never be installed there, the
+    // switch can never be turned on, and the opt-in gate below would refuse forever --
+    // every hook standing down on every single launch, silently, which is exactly what a
+    // real report of "nothing works, not even the welcome screen" turned out to be.
+    //
+    // So this asks nothing and answers yes unconditionally, restoring the older
+    // "installed it deliberately" reading for the one case that is still true of.
+    sciGateSource = @"self-contained build — panel not applicable";
+    return YES;
+#else
     static BOOL allowed = NO;
     static dispatch_once_t once;
 
@@ -144,6 +160,7 @@ BOOL SCIPanelAllowsThisApp(void) {
     });
 
     return allowed;
+#endif
 }
 
 NSString *SCIPanelGateReport(void) {

@@ -28,6 +28,10 @@ NSString *SCIVersionString = @"v0.3.0";  // AlbrhiLK
     // The panel switch, before anything else. Settings > Albrhi can turn this tweak off for
     // Locket without uninstalling it, and off has to mean the app behaves exactly as it
     // would with nothing installed -- so no hook below this line is even registered.
+    //
+    // SCIPanelAllowsThisApp() itself is what actually decides this correctly for a
+    // self-contained sideload build too, where there is no panel to ask at all -- see
+    // shared/src/SCIPanelGate.m for why "absent" answers differently there.
     if (!SCIPanelAllowsThisApp()) {
         SCILogV(@"switched off for this app: %@", SCIPanelGateReport());
         return;
