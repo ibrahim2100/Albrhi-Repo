@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.20.0
+
+Includes YouTube 1.16.0 — **the Download Centre split into three: Video, Shorts, Audio.**
+A Short now gets its own section and its own tall thumbnail shape instead of being
+stretched into a video row it never fit. Also: a real diagnostic for the "sound does not
+show on the lock screen" report, in place of a guessed fix — the code treats video and
+sound identically end to end, so a fourth blind guess would very likely have been wrong
+the way two of the last three guesses at its sibling bug were.
+
 ## v1.19.0
 
 Includes X 0.14.0 — **the save button, down to one surface.** It was showing twice on an

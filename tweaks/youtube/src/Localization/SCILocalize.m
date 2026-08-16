@@ -266,6 +266,8 @@ static void SCIBuildTables(void) {
         @"diag_feed_counts": @"%lu sections seen, %lu dropped as promoted.",
         @"diag_tab": @"Downloads tab",
         @"diag_tab_none": @"Nothing yet. It attaches when the tab bar is first built.",
+        @"diag_lock_screen": @"Player → lock screen",
+        @"diag_lock_screen_none": @"Nothing yet. Recorded the moment a saved video or sound starts playing.",
         @"set_lock_skip": @"Lock screen jumps 15 seconds",
         @"set_lock_skip_note": @"Off, the lock screen gets next and previous. On, it gets 15 seconds back and forward instead. iPhone shows one pair or the other, never both.",
         @"player_speed": @"Playback speed",
@@ -297,6 +299,7 @@ static void SCIBuildTables(void) {
         // Choosing what to save.
         @"dl_choose_title": @"Save",
         @"dl_kind_video": @"Video",
+        @"dl_kind_shorts": @"Shorts",
         @"dl_kind_audio": @"Sound",
         @"dl_kind_thumb": @"Cover",
         @"dl_thumb_header": @"Cover image",
@@ -595,6 +598,8 @@ static void SCIBuildTables(void) {
         @"diag_feed_counts": @"%lu قسمًا شوهد، و%lu أُسقط كإعلان.",
         @"diag_tab": @"تبويب التحميلات",
         @"diag_tab_none": @"لا شيء بعد. يتعلّق عند أوّل بناء لشريط التبويب.",
+        @"diag_lock_screen": @"المشغّل ← شاشة القفل",
+        @"diag_lock_screen_none": @"لا شيء بعد. يُسجَّل عند بدء تشغيل فيديو أو صوت محفوظ.",
         @"set_lock_skip": @"قفزة ١٥ ثانية في شاشة القفل",
         @"set_lock_skip_note": @"مطفأ: تظهر أزرار التالي والسابق. مشغّل: تظهر بدلها قفزة ١٥ ثانية للأمام والخلف. الآيفون يعرض زوجاً واحداً لا الاثنين.",
         @"player_speed": @"سرعة التشغيل",
@@ -626,6 +631,7 @@ static void SCIBuildTables(void) {
         // اختيار ما يُحفظ.
         @"dl_choose_title": @"حفظ",
         @"dl_kind_video": @"فيديو",
+        @"dl_kind_shorts": @"شورتس",
         @"dl_kind_audio": @"صوت",
         @"dl_kind_thumb": @"الغلاف",
         @"dl_thumb_header": @"صورة الغلاف",

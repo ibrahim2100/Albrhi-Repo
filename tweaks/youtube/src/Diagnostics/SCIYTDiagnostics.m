@@ -168,6 +168,20 @@ static NSMutableOrderedSet<NSString *> *sciTabStates = nil;
     [sciTabStates addObject:state];
 }
 
+/// The last four, not the first four -- unlike the tab's attach sequence above, a track
+/// starting is not a one-time event whose *first* moments matter most, and the useful
+/// question is what the most *recent* video and the most recent sound each did, side by
+/// side, on the report someone sends in right after reproducing this.
+static NSMutableArray<NSString *> *sciLockScreenStates = nil;
+
++ (void)recordLockScreenState:(NSString *)state {
+    if (!state.length) return;
+    if (!sciLockScreenStates) sciLockScreenStates = [NSMutableArray array];
+
+    [sciLockScreenStates addObject:state];
+    while (sciLockScreenStates.count > 4) [sciLockScreenStates removeObjectAtIndex:0];
+}
+
 /// Running totals, not the last call: the feed is filled a page at a time, and the last
 /// page alone says nothing about whether the ads were caught.
 static NSUInteger sciFeedSeen = 0;
@@ -377,6 +391,11 @@ static NSMutableDictionary<NSString *, NSNumber *> *sciSabrAnswers = nil;
 + (NSString *)tabState {
     if (!sciTabStates.count) return SCILocalized(@"diag_tab_none");
     return [[sciTabStates array] componentsJoinedByString:@"\n  "];
+}
+
++ (NSString *)lockScreenState {
+    if (!sciLockScreenStates.count) return SCILocalized(@"diag_lock_screen_none");
+    return [sciLockScreenStates componentsJoinedByString:@"\n  "];
 }
 
 /// Which video the captured response is for.
@@ -733,6 +752,11 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     // Which counter buttons were seen and what each said before anything was written into
     // button -- or on none -- this is the line that says why.
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_tab"), [self tabState]];
+
+    // What the saved-media player last handed the lock screen, for whichever kinds were
+    // actually played -- the fact needed to settle whether "sound does not show" is a
+    // real difference between the two paths or a report about something else entirely.
+    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_lock_screen"), [self lockScreenState]];
 
     // What the feed filter saw. 0.20.1 shipped a wider ad list and this line to judge it by,
     // and the line never got written -- so the release changed what is hidden and removed

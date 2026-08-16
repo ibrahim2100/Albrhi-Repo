@@ -1050,6 +1050,22 @@ static SCIYTPlayer *sciCurrent = nil;
     [self setChromeHidden:NO animated:NO];
     [self describeToLockScreen];
     [self announce];
+
+    // Read back rather than asserted -- the one call in -load that checks whether what
+    // was just handed to iOS actually stuck, for exactly the report that says whether
+    // "sound does not show on the lock screen" is a real difference between the two
+    // kinds or something else. Video and sound reach -describeToLockScreen the same way,
+    // on the same schedule; if the dictionary is missing or wrong for one and not the
+    // other, this is where it would show without guessing at a fourth fix blind.
+    NSDictionary *published = [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo;
+    [SCIYTDiagnostics recordLockScreenState:
+        [NSString stringWithFormat:
+            @"%@ · title %@ · artwork %@ · category %@ · session claimed %@",
+            isVideo ? @"video" : @"audio",
+            published[MPMediaItemPropertyTitle] ? @"set" : @"MISSING",
+            published[MPMediaItemPropertyArtwork] ? @"set" : @"none",
+            [AVAudioSession sharedInstance].category ?: @"?",
+            self.claimed ? @"yes" : @"NO"]];
 }
 
 - (void)next {

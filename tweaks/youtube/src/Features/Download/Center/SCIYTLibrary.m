@@ -150,12 +150,14 @@ NSNotificationName const SCIYTLibraryDidChangeNotification = @"SCIYTLibraryDidCh
 - (SCIYTJob *)startVariant:(SCIHLSVariant *)variant
                       kind:(SCIYTJobKind)kind
                      title:(NSString *)title
-                   videoID:(NSString *)videoID {
+                   videoID:(NSString *)videoID
+                   isShort:(BOOL)isShort {
 
     NSString *quality = (kind == SCIYTJobKindAudio) ? SCILocalized(@"dl_kind_audio")
                                                      : [variant label];
 
     SCIYTJob *job = [SCIYTJob jobWithTitle:title quality:quality kind:kind videoID:videoID];
+    job.isShort = isShort;
     [self.store insertObject:job atIndex:0];
     [self changed];
 

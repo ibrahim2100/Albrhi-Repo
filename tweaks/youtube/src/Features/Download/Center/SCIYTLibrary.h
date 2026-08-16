@@ -48,7 +48,8 @@ extern NSNotificationName const SCIYTLibraryDidChangeNotification;
 - (SCIYTJob *)startVariant:(SCIHLSVariant *)variant
                       kind:(SCIYTJobKind)kind
                      title:(nullable NSString *)title
-                   videoID:(nullable NSString *)videoID;
+                   videoID:(nullable NSString *)videoID
+                   isShort:(BOOL)isShort;
 
 /// A finished save of this video, if there is one.
 ///

@@ -195,10 +195,15 @@ static const CGFloat kSCIInset = 16;
 - (void)fillWith:(SCIYTJob *)job artwork:(UIImage *)artwork playing:(BOOL)playing {
     BOOL isVideo = (job.kind == SCIYTJobKindVideo);
 
-    // The shape, which is the whole of the difference between the two kinds. A still is 16:9
-    // and a cover is square, and forcing either into the other's frame is the thing that
-    // makes a media list look homemade.
-    self.artworkWidth.constant = isVideo ? (kSCIArt * 16.0 / 9.0) : kSCIArt;
+    // The shape, which is most of the difference between the three kinds of row. An
+    // ordinary still is 16:9, a Short is 9:16 -- tall, the way every Short actually is --
+    // and a cover is square. Stretching any of them into another's frame is the thing
+    // that makes a media list look homemade, and it is exactly what a Short got before
+    // this: the same landscape frame a video gets, with a vertical picture squashed
+    // sideways to fill it.
+    self.artworkWidth.constant = job.isShort ? (kSCIArt * 9.0 / 16.0)
+                                : isVideo ? (kSCIArt * 16.0 / 9.0)
+                                : kSCIArt;
     self.artwork.image = artwork ?: [UIImage systemImageNamed:isVideo ? @"film" : @"music.note"];
     self.artwork.contentMode = artwork ? UIViewContentModeScaleAspectFill
                                        : UIViewContentModeCenter;

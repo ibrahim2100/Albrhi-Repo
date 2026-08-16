@@ -659,10 +659,14 @@ static NSString *sciRequestedVideoID = nil;
                     return;
                 }
 
+                // Set only from the Shorts save button -- the one caller that ever hands
+                // this class a video id up front, because a long press elsewhere means
+                // "whatever is currently playing" and never means Shorts.
                 [[SCIYTLibrary shared] startVariant:variant
                                                 kind:kind
                                                title:title
-                                             videoID:chosenID];
+                                             videoID:chosenID
+                                             isShort:(sciRequestedVideoID != nil)];
 
                 // And that is the end of it here. The download is a row in the centre
                 // now, so the app is handed straight back -- watching something while a

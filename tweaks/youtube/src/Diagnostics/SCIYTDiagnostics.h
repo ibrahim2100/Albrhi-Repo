@@ -106,6 +106,16 @@
 + (void)recordTabState:(NSString *)state;
 + (NSString *)tabState;
 
+/// What the saved-media player actually handed the lock screen, once per track started.
+///
+/// Reported because "the lock screen does not show" has looked, on paper, like it should
+/// be impossible for one kind and not the other: video and sound go through the same
+/// -describeToLockScreen, on the same schedule, with the same session category. If the
+/// dictionary really is being built and handed over the same way for both, the fault is
+/// downstream of this tweak -- and if it is not, this line is where that would show.
++ (void)recordLockScreenState:(NSString *)state;
++ (NSString *)lockScreenState;
+
 /// What the Shorts save button did, or why there is none.
 + (void)recordShortsButton:(NSString *)state;
 + (NSString *)shortsButtonState;

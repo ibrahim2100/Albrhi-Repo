@@ -3,6 +3,37 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.16.0
+
+**The Download Centre is three sections now, not two: Video, Shorts, Audio.** A Short
+downloaded through its own save button was landing in the same list as an ordinary
+video, indistinguishable from one, and its thumbnail was being stretched into a
+landscape frame it never had -- a Short is 9:16 and the row was drawing it as 16:9.
+Shorts get their own section now, and their own row shape: the picture is tall, the way
+a Short actually looks, instead of a sliver cropped out of a widescreen box.
+
+Not a new kind of job -- a Short still plays through the exact same video engine an
+ordinary video does. `SCIYTJob` gained one flag, `isShort`, set only by the Shorts save
+button (the one caller that ever hands a video id up front rather than asking for
+whatever is currently playing), and the Centre filters on it. Saved before this existed?
+Every one of those decodes to an ordinary video, which is what they always were.
+
+**The lock-screen and freeze report, answered with a measurement instead of a fourth
+guess.** Read through end to end: video and sound reach `-describeToLockScreen` the same
+way, on the same schedule, through the same audio session category -- nothing in this
+code treats them differently. That symmetry is itself the reason no fix shipped here.
+Three releases were already spent guessing at a sibling of this exact bug (the tab that
+sticks on the wrong page after a download plays -- see CLAUDE.md) before it was measured
+instead of reasoned about, and two of those three guesses were confidently wrong. Rather
+than repeat that with the lock screen, the player now records what it actually handed
+`MPNowPlayingInfoCenter` -- kind, whether a title made it in, whether artwork did,
+whether the session was genuinely claimed -- once per track, in Settings › Diagnostics ›
+"Player → lock screen". The existing "Downloads tab" diagnostic already catches the
+freeze if it is the same stuck-content fault reproduced with sound instead of video,
+since that hook fires on every tab change regardless of what was playing. Reproduce
+either with a saved sound file playing and send both sections; a guess now would cost a
+release the same way the last three did.
+
 ## v1.15.0
 
 The saved-media player, made to feel like the rest of the system rather than like a

@@ -45,6 +45,14 @@ typedef NS_ENUM(NSInteger, SCIYTJobState) {
 @property (nonatomic) SCIYTJobKind kind;
 @property (nonatomic) SCIYTJobState state;
 
+/// Whether this came from Shorts rather than an ordinary video.
+///
+/// Not a third `SCIYTJobKind` -- a Short still plays through the same video engine an
+/// ordinary video does, so the playback code needs nothing new. It is a browsing fact
+/// only: the Centre lists it separately, and its row draws the picture in the tall shape
+/// Shorts actually are rather than stretched into a landscape frame it never had.
+@property (nonatomic) BOOL isShort;
+
 /// 0 to 1 while working.
 @property (nonatomic) double progress;
 

@@ -70,6 +70,11 @@
     self.position   = [coder decodeDoubleForKey:@"position"];
     self.exported   = [coder decodeBoolForKey:@"exported"];
 
+    // Absent on anything saved before this existed, and a missing key decodes to NO --
+    // exactly right, since every job saved before Shorts had their own tab was an
+    // ordinary video by definition.
+    self.isShort    = [coder decodeBoolForKey:@"short"];
+
     // Always Done. Only finished jobs are written out, and a decoder that trusted a
     // stored state would put a permanently stalled row in front of the user after a
     // crash mid-download.
@@ -91,6 +96,7 @@
     [coder encodeDouble:self.duration forKey:@"duration"];
     [coder encodeDouble:self.position forKey:@"position"];
     [coder encodeBool:self.exported forKey:@"exported"];
+    [coder encodeBool:self.isShort forKey:@"short"];
 }
 
 @end

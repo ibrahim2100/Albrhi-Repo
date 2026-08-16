@@ -11,22 +11,28 @@
 
 @interface SCIYTDownloadList ()
 @property (nonatomic) SCIYTJobKind kind;
+@property (nonatomic) BOOL shorts;
 @property (nonatomic, strong) NSArray<SCIYTJob *> *rows;
 @end
 
 @implementation SCIYTDownloadList
 
-- (instancetype)initWithKind:(SCIYTJobKind)kind {
+- (instancetype)initWithKind:(SCIYTJobKind)kind shorts:(BOOL)shorts {
     self = [super initWithStyle:UITableViewStyleInsetGrouped];
     if (!self) return nil;
 
     _kind = kind;
+    _shorts = shorts && kind == SCIYTJobKindVideo;
 
-    BOOL video = (kind == SCIYTJobKindVideo);
-    self.title = SCILocalized(video ? @"dl_kind_video" : @"dl_kind_audio");
+    NSString *titleKey = self.shorts ? @"dl_kind_shorts"
+                        : (kind == SCIYTJobKindVideo) ? @"dl_kind_video" : @"dl_kind_audio";
+    NSString *symbol = self.shorts ? @"bolt.fill"
+                     : (kind == SCIYTJobKindVideo) ? @"film" : @"music.note";
+
+    self.title = SCILocalized(titleKey);
     self.tabBarItem = [[UITabBarItem alloc]
         initWithTitle:self.title
-                image:[UIImage systemImageNamed:video ? @"film" : @"music.note"]
+                image:[UIImage systemImageNamed:symbol]
                   tag:kind];
     return self;
 }
@@ -60,7 +66,13 @@
 - (void)reload {
     NSMutableArray<SCIYTJob *> *mine = [NSMutableArray array];
     for (SCIYTJob *job in [SCIYTLibrary shared].jobs) {
-        if (job.kind == self.kind) [mine addObject:job];
+        if (job.kind != self.kind) continue;
+
+        // Only checked for video: audio has no Shorts split, and a Short saved as sound
+        // belongs with every other saved sound rather than nowhere at all.
+        if (self.kind == SCIYTJobKindVideo && job.isShort != self.shorts) continue;
+
+        [mine addObject:job];
     }
     self.rows = mine;
     [self.tableView reloadData];
@@ -110,7 +122,7 @@
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
 
     cell.imageView.image = [UIImage systemImageNamed:
-        self.kind == SCIYTJobKindVideo ? @"film.stack" : @"music.note.list"];
+        self.shorts ? @"bolt" : self.kind == SCIYTJobKindVideo ? @"film.stack" : @"music.note.list"];
     cell.imageView.tintColor = [UIColor colorWithWhite:1 alpha:0.25];
 
     cell.textLabel.text = SCILocalized(@"dl_centre_empty");

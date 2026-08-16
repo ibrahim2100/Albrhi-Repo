@@ -45,11 +45,15 @@
     [self.view.layer insertSublayer:ground atIndex:0];
     self.ground = ground;
 
-    self.lists = @[[[SCIYTDownloadList alloc] initWithKind:SCIYTJobKindVideo],
-                   [[SCIYTDownloadList alloc] initWithKind:SCIYTJobKindAudio]];
+    // Video, Shorts, Audio -- video and Shorts are the same SCIYTJobKind and split only by
+    // the isShort flag set at the moment a download starts, see SCIYTJob.h. Audio has no
+    // Shorts split of its own.
+    self.lists = @[[[SCIYTDownloadList alloc] initWithKind:SCIYTJobKindVideo shorts:NO],
+                   [[SCIYTDownloadList alloc] initWithKind:SCIYTJobKindVideo shorts:YES],
+                   [[SCIYTDownloadList alloc] initWithKind:SCIYTJobKindAudio shorts:NO]];
 
     self.picker = [[UISegmentedControl alloc] initWithItems:
-        @[SCILocalized(@"dl_kind_video"), SCILocalized(@"dl_kind_audio")]];
+        @[SCILocalized(@"dl_kind_video"), SCILocalized(@"dl_kind_shorts"), SCILocalized(@"dl_kind_audio")]];
     self.picker.selectedSegmentIndex = 0;
     self.picker.selectedSegmentTintColor = SCIAccent();
     [self.picker setTitleTextAttributes:@{NSForegroundColorAttributeName: [UIColor whiteColor]}
