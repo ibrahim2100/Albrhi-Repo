@@ -1,5 +1,27 @@
 # Albrhi Panel Changelog
 
+## v0.8.1
+
+**Settings crashed the moment the Albrhi page was opened.** 0.8.0's fault, and the fix is
+one word.
+
+The new row was registered by setting `cellClass` to the string `@"SCIPanelAppCell"`.
+Preferences takes that property as a **Class** and sends class messages to it — so it sent
+`+alloc` to an `NSString` instance, which does not answer it, and Settings died. The name
+reads identically in the source and is a completely different kind of object.
+
+Two more things went with it, both found by reading the file back rather than by anyone
+hitting them:
+
+- The cell forced `UITableViewCellStyleSubtitle` on its superclass to get
+  `-detailTextLabel`, which it never used — it draws its own label. Overriding the style a
+  `PSControlTableCell` was constructed with, for nothing.
+- `-layoutSubviews` moved the title up by half the subtitle's height **relative to where the
+  title already was**. That is only correct if it runs once; a visible row is laid out
+  repeatedly, so it read a value it had written and moved it again, and the title would
+  creep upward for as long as the row stayed on screen. Both frames are computed from the
+  row's own centre now, which gives the same answer however many times it runs.
+
 ## v0.8.0
 
 **One row per app, carrying everything.**

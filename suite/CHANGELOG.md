@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.27.1
+
+**Settings crashed when opening the Albrhi page.** Fixed — 1.27.0 registered its new row
+type by name where Preferences expected the type itself. Includes Panel 0.8.1.
+
 ## v1.27.0
 
 Includes Panel 0.8.0 — **Settings › Albrhi is one row per app now.** Each carries its icon,

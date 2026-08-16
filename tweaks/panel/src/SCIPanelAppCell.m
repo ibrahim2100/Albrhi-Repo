@@ -19,15 +19,13 @@ NSString *const SCIPanelCellAccentKey   = @"sciSubtitleIsWarning";
 - (instancetype)initWithStyle:(UITableViewCellStyle)style
               reuseIdentifier:(NSString *)reuseIdentifier
                     specifier:(PSSpecifier *)specifier {
-    // Subtitle style, asked for here rather than accepted from Preferences.
+    // The style Preferences asked for, passed through untouched.
     //
-    // PSSwitchTableCell is created with the style its specifier implies, which for a switch
-    // row is Default — one label and no second line. Passing Subtitle up to
-    // UITableViewCell is what creates -detailTextLabel at all; without it there is nothing
-    // to write the version into, and setting the text silently does nothing.
-    self = [super initWithStyle:UITableViewCellStyleSubtitle
-                reuseIdentifier:reuseIdentifier
-                      specifier:specifier];
+    // An earlier version forced UITableViewCellStyleSubtitle here, to get -detailTextLabel.
+    // That was unnecessary -- this cell draws its own label and never touches
+    // -detailTextLabel -- and overriding the style a PSControlTableCell was constructed
+    // with is meddling with how Preferences builds its own control for no gain.
+    self = [super initWithStyle:style reuseIdentifier:reuseIdentifier specifier:specifier];
     if (!self) return nil;
 
     // Its own label rather than -detailTextLabel.
@@ -86,14 +84,23 @@ NSString *const SCIPanelCellAccentKey   = @"sciSubtitleIsWarning";
     CGFloat height = ceil(_subtitle.font.lineHeight);
     CGFloat available = CGRectGetWidth(self.contentView.bounds) - CGRectGetMinX(title) - 16;
 
-    // The title moves up by half the subtitle so the pair sits centred where the single
-    // line used to, instead of the whole row growing downward and the icon drifting.
+    // Both frames computed from the row's own centre, not from where the title currently is.
+    //
+    // The first version subtracted half the subtitle's height from the title's existing
+    // origin on every pass. That is only correct if -layoutSubviews runs exactly once:
+    // it reads a value it wrote last time and moves it again, so the title creeps upward
+    // for as long as the row is laid out -- and a table lays a visible row out repeatedly.
+    // Deriving both positions from the content height instead gives the same answer every
+    // pass, however many times it runs.
+    CGFloat pair = CGRectGetHeight(title) + 1 + height;
+    CGFloat top = floor((CGRectGetHeight(self.contentView.bounds) - pair) / 2);
+
     CGRect lifted = title;
-    lifted.origin.y -= height / 2;
+    lifted.origin.y = top;
     self.textLabel.frame = lifted;
 
     _subtitle.frame = CGRectMake(CGRectGetMinX(title),
-                                 CGRectGetMaxY(lifted) + 1,
+                                 top + CGRectGetHeight(title) + 1,
                                  MAX(available, 0),
                                  height);
 }

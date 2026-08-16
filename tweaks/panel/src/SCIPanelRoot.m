@@ -11,7 +11,7 @@
 #import <objc/message.h>
 #import <objc/runtime.h>
 
-NSString *SCIVersionString = @"v0.8.0";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.8.1";  // AlbrhiPanel
 
 ///
 /// Albrhi's own control panel, in the iOS Settings app.
@@ -117,7 +117,13 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
         if (subtitle.length && !entry.detailControllerClassName.length) {
             [row setProperty:subtitle forKey:@"sciSubtitle"];
             [row setProperty:@(warn) forKey:@"sciSubtitleIsWarning"];
-            [row setProperty:@"SCIPanelAppCell" forKey:@"cellClass"];
+            // A Class, not its name.
+            //
+            // This was set to the string @"SCIPanelAppCell", and Preferences takes this
+            // property as a Class and sends class messages to it -- so it messaged an
+            // NSString and Settings died the moment the page was opened. The name reads
+            // identically in the source and is a completely different object.
+            [row setProperty:[SCIPanelAppCell class] forKey:@"cellClass"];
         }
 
         // The app's own icon, so the list is scanned by eye rather than read.
