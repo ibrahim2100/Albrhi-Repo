@@ -5,7 +5,15 @@
 
 /// Which version last said hello. A string rather than a flag, so a later release can show
 /// this again for something worth mentioning without anyone having to invent a second key.
-static NSString *const kSCIWelcomeShown = @"welcome_shown_version";
+///
+/// Renamed once, deliberately, from "welcome_shown_version": the first version of -present
+/// marked this *before* checking whether presenting would actually succeed, so a launch
+/// where Locket's own UI had something on screen in the first 2.5 seconds -- its own splash,
+/// a permission prompt, its own onboarding -- set the flag and then bailed at the "not over
+/// another sheet" guard below, permanently, with nothing ever having appeared. A new key
+/// gives every install one more real attempt under the corrected logic; the old key is
+/// simply never read again.
+static NSString *const kSCIWelcomeShown = @"welcome_shown_v2";
 
 
 @implementation SCILKWelcome
@@ -13,10 +21,6 @@ static NSString *const kSCIWelcomeShown = @"welcome_shown_version";
 + (void)showIfFirstRun {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     if ([[defaults stringForKey:kSCIWelcomeShown] length]) return;
-
-    // Marked before showing, not after. If building the screen throws, the tweak has one
-    // bad launch rather than one bad launch on every launch forever.
-    [defaults setObject:SCIVersionString forKey:kSCIWelcomeShown];
 
     // Late, and only once the app has a window worth presenting on. Run at load time this
     // finds no root view controller and does nothing at all, which is the quietest way for
@@ -46,8 +50,15 @@ static NSString *const kSCIWelcomeShown = @"welcome_shown_version";
     while (top.presentedViewController) top = top.presentedViewController;
 
     // Not over another sheet. Someone who opened something in the first seconds is doing
-    // something; a greeting can wait for the next launch.
+    // something; a greeting can wait for the next launch -- and it now actually gets one,
+    // since the flag below is not set until this point is reached.
     if (!top || top != window.rootViewController) return;
+
+    // Marked here, immediately before showing, rather than back in +showIfFirstRun. The
+    // exception guard around -present still means a crash inside init costs one launch
+    // and not every launch forever; a launch that merely finds something already on
+    // screen no longer costs anything; it tries again next time.
+    [[NSUserDefaults standardUserDefaults] setObject:SCIVersionString forKey:kSCIWelcomeShown];
 
     [top presentViewController:[[SCILKWelcome alloc] init] animated:YES completion:nil];
 }

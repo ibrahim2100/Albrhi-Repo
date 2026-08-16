@@ -1,5 +1,17 @@
 # Albrhi for Locket — what changed
 
+## v0.3.2
+
+**The welcome screen could mark itself "shown" without ever having shown.** It set its
+one-time flag *before* checking whether the app's own UI had anything on screen yet — a
+splash, a permission prompt, Locket's own onboarding, anything present in the first 2.5
+seconds after launch made `-present` bail at its "not over another sheet" guard, with the
+flag already written. One unlucky launch and it would never show again on that device.
+Fixed by moving the flag to right before the actual `presentViewController:` call, so a
+launch that finds something already on screen costs nothing and simply tries again next
+time — and the flag itself was renamed, so every install gets a fresh first attempt under
+the corrected logic rather than staying stuck on whatever the old key already recorded.
+
 ## v0.3.1
 
 **The self-contained dylib did nothing at all, on a real device — not even the welcome

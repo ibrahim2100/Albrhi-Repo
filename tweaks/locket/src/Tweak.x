@@ -6,7 +6,7 @@
 #import "Settings/SCILKGesture.h"
 #import "UI/SCILKWelcome.h"
 
-NSString *SCIVersionString = @"v0.3.1";  // AlbrhiLK
+NSString *SCIVersionString = @"v0.3.2";  // AlbrhiLK
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written returns
