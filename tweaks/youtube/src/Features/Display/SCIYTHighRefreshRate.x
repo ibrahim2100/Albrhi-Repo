@@ -1,4 +1,5 @@
 #import <QuartzCore/QuartzCore.h>
+#import <UIKit/UIKit.h>
 #import "../../SCILog.h"
 #import "../../Prefs.h"
 
