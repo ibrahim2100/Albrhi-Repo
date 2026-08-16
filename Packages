@@ -131,10 +131,10 @@ Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Filename: debs/com.albrhi_1.25.0_iphoneos-arm64.deb
-Size: 1037330
-MD5sum: 2130b2476fc22c886fdc89be4fab13a9
-SHA1: c75cf355434f1e191bf5725013ef47e9865c6825
-SHA256: ffb8445a20598ffac115c40bce53cf8f757f4f6da9127c59ca0a1c50467a7160
+Size: 1037320
+MD5sum: 07de6b0bca4d15c867879c6526f2599e
+SHA1: 22ccd39bfdf501204d914cfaf4d6ce353aae0459
+SHA256: ce8ec1676e02ac1895b3c1a504025f46ec02550eb6051fa779d69888a76865ff
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube and X, switched per app from Settings.
@@ -288,6 +288,60 @@ Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
 Name: Albrhi for Locket (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-locket.json
 
+Package: com.albrhi.locket
+Version: 0.3.2
+Architecture: iphoneos-arm64
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 168
+Depends: mobilesubstrate
+Conflicts: com.albrhi.locket.roothide
+Replaces: com.albrhi.locket.roothide
+Filename: debs/com.albrhi.locket_0.3.2_iphoneos-arm64.deb
+Size: 40324
+MD5sum: f655104b5804bcc00e40c07b3e1be7e4
+SHA1: 0d6857adc236045f6721c224fff7e69766cb30ba
+SHA256: c23f17c2ae0465b2d57e0f8a9bad48e20a29b58675e2829e8aaae8c45322336d
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: Save any moment, and keep Locket from reporting your phone as jailbroken. Arabic or English.
+ .
+ ▍SAVE A MOMENT
+ A friend’s photo or video, saved to your Photos at full size — the one they actually sent,
+ not a screenshot. Hold two fingers anywhere in Locket, and every moment it has loaded is
+ listed, newest first; tap one to save it. It saves what is already on your phone, and does
+ not touch anything you would pay Locket for.
+ .
+ ▍HIDES THE JAILBREAK
+ Locket does not block a jailbroken phone, but it does tell three companies your phone is
+ one: its analytics, its ad attribution, and its crash reporting each run their own check
+ and send the answer home. On a modified device that answer can quietly count against your
+ account. This tweak makes those checks come back clean.
+ .
+ ▍HOW IT WORKS
+ The checks all ask the system the same few questions — is this file here, can this app be
+ opened, is this folder writable. This sits underneath and answers only those questions,
+ only for the handful of paths a jailbreak check looks at. Everything else the app asks the
+ system passes straight through untouched.
+ .
+ ▍WHAT IT DOES NOT DO
+ It does not touch payments, subscriptions or anything you would pay Locket for. A tool that
+ unlocks paid features by faking a subscription was reviewed and deliberately not built —
+ that is taking money from the people who make the app, not a device tweak.
+ .
+ ▍SEE WHAT IT CAUGHT
+ Hold two fingers anywhere in Locket for a small screen that says how many checks were
+ answered and which ones. Arabic and English.
+ .
+ TESTED ON Locket 2.46.1. Nothing is pinned to a version number.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+Tag: role::enduser
+Author: Ibrahim Ismail AL-Rahn
+Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-locket.html
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi for Locket (rootless)
+Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-locket.json
+
 Package: com.albrhi.locket.roothide
 Version: 0.3.0
 Architecture: iphoneos-arm64e
@@ -355,6 +409,60 @@ Size: 40270
 MD5sum: 38305a42bce2f4427c3480162a27112a
 SHA1: 100fca9db1aa24d6b7ac71b2032772a88b4554f7
 SHA256: 9af73c030ad1bea6c4fa3b6502de58a03335f26f239cb3e5d8e1d0f930bbaa58
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: Save any moment, and keep Locket from reporting your phone as jailbroken. Arabic or English.
+ .
+ ▍SAVE A MOMENT
+ A friend’s photo or video, saved to your Photos at full size — the one they actually sent,
+ not a screenshot. Hold two fingers anywhere in Locket, and every moment it has loaded is
+ listed, newest first; tap one to save it. It saves what is already on your phone, and does
+ not touch anything you would pay Locket for.
+ .
+ ▍HIDES THE JAILBREAK
+ Locket does not block a jailbroken phone, but it does tell three companies your phone is
+ one: its analytics, its ad attribution, and its crash reporting each run their own check
+ and send the answer home. On a modified device that answer can quietly count against your
+ account. This tweak makes those checks come back clean.
+ .
+ ▍HOW IT WORKS
+ The checks all ask the system the same few questions — is this file here, can this app be
+ opened, is this folder writable. This sits underneath and answers only those questions,
+ only for the handful of paths a jailbreak check looks at. Everything else the app asks the
+ system passes straight through untouched.
+ .
+ ▍WHAT IT DOES NOT DO
+ It does not touch payments, subscriptions or anything you would pay Locket for. A tool that
+ unlocks paid features by faking a subscription was reviewed and deliberately not built —
+ that is taking money from the people who make the app, not a device tweak.
+ .
+ ▍SEE WHAT IT CAUGHT
+ Hold two fingers anywhere in Locket for a small screen that says how many checks were
+ answered and which ones. Arabic and English.
+ .
+ TESTED ON Locket 2.46.1. Nothing is pinned to a version number.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+Tag: role::enduser
+Author: Ibrahim Ismail AL-Rahn
+Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-locket.html
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi for Locket (roothide)
+Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-locket.json
+
+Package: com.albrhi.locket.roothide
+Version: 0.3.2
+Architecture: iphoneos-arm64e
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 168
+Depends: mobilesubstrate
+Conflicts: com.albrhi.locket
+Replaces: com.albrhi.locket
+Filename: debs/com.albrhi.locket.roothide_0.3.2_iphoneos-arm64e.deb
+Size: 40282
+MD5sum: 304c97dadd5321bb6b358af71564886a
+SHA1: cd655e895e3df43bd9d8a33538184cd00b26495c
+SHA256: fcc19f8a81c316e9e2e20f9854c853cde9ec4309266d6eaba87091ff75021e0d
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: Save any moment, and keep Locket from reporting your phone as jailbroken. Arabic or English.
@@ -529,10 +637,10 @@ Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Filename: debs/com.albrhi.roothide_1.25.0_iphoneos-arm64e.deb
-Size: 1037056
-MD5sum: d02c872ec134741a7d851f78e9abfb07
-SHA1: 1d06dce7ca789932f8c011fd9dcfaff57e48ad26
-SHA256: 2280861ab9106be122082b7a645d6eb0859510a89cc2ecf99b14263c1babdc23
+Size: 1037044
+MD5sum: 4c47548709d7d97cc9cf14c878d06aab
+SHA1: 779c645ad2cbb0451e6d214aefb8e5fa0d94785d
+SHA256: 8266b1a33e0545664a3a346232ec08c9ee8a8e6917bf0ee492a93edf0b7d56a9
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube and X, switched per app from Settings.
