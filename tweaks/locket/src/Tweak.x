@@ -3,10 +3,11 @@
 #import "SCILog.h"
 #import "Features/Bypass/SCILKBypass.h"
 #import "Features/Media/SCILKMediaHooks.h"
+#import "Features/Media/SCILKQuickSave.h"
 #import "Settings/SCILKGesture.h"
 #import "UI/SCILKWelcome.h"
 
-NSString *SCIVersionString = @"v0.3.2";  // AlbrhiLK
+NSString *SCIVersionString = @"v0.4.0";  // AlbrhiLK
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written returns
@@ -52,6 +53,10 @@ NSString *SCIVersionString = @"v0.3.2";  // AlbrhiLK
     // turning one off to rule it out of a problem should not take the other with it.
     if ([[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefSaveMoments]) {
         SCILKInstallMediaHooks();
+
+        // The one-tap shortcut, alongside the capture it depends on -- there is nothing
+        // for it to save without SCILKInstallMediaHooks running first.
+        SCILKInstallQuickSave();
     } else {
         SCILogV(@"moment saving turned off in settings");
     }

@@ -1,5 +1,23 @@
 # Albrhi for Locket — what changed
 
+## v0.4.0
+
+**A one-tap shortcut to save the newest moment.** A small circular button now sits in the
+bottom corner of the screen whenever there is something to save, and hides itself when
+there is not. It saves the most recently captured moment directly — the two-finger list
+is still there for anything older, but the common case (a friend's photo just arrived,
+save it) no longer needs the hold-and-pick.
+
+A button *on the photo itself* was asked for and looked into first, against a real class
+dump of Locket 2.46.1: the moment-viewing screen is SwiftUI end to end, and the one class
+in it visible to Objective-C at all (`LivePhotoPlayer.PlayerView`) exposes no property a
+hook could read — there is no way to know from there which moment is on screen, the same
+wall `SCILKMedia.h` already documents for the capture side. The corner button is what
+that constraint allows: it cannot know what you are looking at, so it always saves what
+was captured most recently instead, attached to the window itself rather than to
+anything inside Locket's own view hierarchy — the same technique the two-finger gesture
+already uses, for the same reason.
+
 ## v0.3.2
 
 **The welcome screen could mark itself "shown" without ever having shown.** It set its
