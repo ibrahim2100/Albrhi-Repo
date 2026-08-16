@@ -111,6 +111,14 @@ and serves a Sileo/Zebra repo from GitHub Pages.
 
 Every line here comes from something that actually broke.
 
+**A class dump is of one app version, and an undated dump is a trap.** The follow-badge
+crash fix was built from a dump nobody had dated; it turned out to be **439**, while the
+device reporting had none of that crash because it runs **410**. Narrowing a lookup to one
+accessor confirmed on 439 alone, in a tweak that serves 410, 439 and 441 from one build, is
+how a crash fix silently costs a feature on a version it was never tested against. Date the
+dump before trusting it — this project's own markers do it in one grep: `-autoScrollState`
+is 410-only, `IGSundialAutoScroll` is 439-only.
+
 **Do not guess at Instagram class names.** Reading a class dump tells you what
 *exists* in the binary, not what the app *renders*. Two features were "fixed"
 repeatedly against classes that were never instantiated. The Diagnostics page

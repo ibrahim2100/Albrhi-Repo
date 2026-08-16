@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.25.1
+
+Includes Instagram 4.1.8 — the follow badge keeps a second way of finding the profile's
+user, so the crash fix in 4.1.6 cannot cost the badge on Instagram 410. The class dump that
+fix was built from turned out to be 439; this tweak serves 410, 439 and 441 from one build.
+Still no KVC.
+
 ## v1.25.0
 
 **Locket has left the suite.** It is no longer bundled in `com.albrhi`, no longer

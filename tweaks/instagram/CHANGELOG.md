@@ -4,6 +4,25 @@
 Other versions should work too — the tweak looks for what it needs while the app runs
 rather than expecting a particular version number.
 
+## v4.1.8
+
+**4.1.6 fixed a crash on Instagram 439 and may have quietly broken the follow badge on
+410.** This restores it, without undoing the fix.
+
+The class dump that fix was built from was never dated. It has been now, using the markers
+this project already records: `-autoScrollState` (410-only) is **absent** from it and
+`IGSundialAutoScroll` (439-only) is **present**. So it is a 439 dump — and the lookup was
+narrowed to a single accessor confirmed on 439 alone, on a tweak that serves 410, 439 and
+441 from one build. If 410 spells that accessor differently, the badge stops appearing there
+and says nothing about why.
+
+`-user` is tried after `-userGQL` again. That is **not** a return to the twelve-key KVC
+probe that caused the crash: `-respondsToSelector:` asks whether a real method exists, and
+sending it calls that method and nothing else, where `-valueForKey:` falls back to reading
+ivars and interrogates objects that have no such concept. Two named accessors on a view
+already known to be an avatar is a different thing from guessing at everything up the
+responder chain.
+
 ## v4.1.7
 
 **On a multi-photo post, "Save this one" saved the first photo whatever you were looking

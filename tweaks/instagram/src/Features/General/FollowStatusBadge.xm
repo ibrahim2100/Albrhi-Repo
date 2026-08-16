@@ -62,8 +62,8 @@ static BOOL SCILooksLikeUser(id obj) {
 /// and no handler sees them. Changing a profile picture is exactly when those models are
 /// mid-replacement, which is the crash that was reported.
 ///
-/// So: no KVC anywhere in this file's lookup. `-userGQL` is confirmed present on
-/// IGProfilePictureImageView in a class dump of this build, it is guarded by
+/// So: no KVC anywhere in this file's lookup. The names asked for are real accessors, each
+/// guarded by
 /// -respondsToSelector: before it is ever sent, and objects that do not answer it are
 /// stepped over rather than interrogated. The responder walk is kept, because it is what
 /// makes the badge correct on the *current* profile rather than the last one captured --
@@ -73,11 +73,30 @@ static id SCIUserFromObject(id obj) {
     if (!obj) return nil;
     if (SCILooksLikeUser(obj)) return obj;
 
-    SEL userGQL = @selector(userGQL);
-    if (![obj respondsToSelector:userGQL]) return nil;
+    // Two names, both real accessors, both asked for by selector.
+    //
+    // `-userGQL` is confirmed on IGProfilePictureImageView in a class dump -- **of Instagram
+    // 439**, which is not the only build this tweak serves. The dump was dated after the
+    // fact using the markers this project already records: `-autoScrollState` (410-only) is
+    // absent from it and `IGSundialAutoScroll` (439-only) is present. So a lookup that knows
+    // one name would quietly lose the badge on 410 if that build spells it differently --
+    // exactly the kind of silent feature loss this change was supposed to avoid.
+    //
+    // `-user` is tried second for that reason. This is **not** a return to the twelve-key
+    // KVC probe: -respondsToSelector: asks whether a real method exists and sending it calls
+    // that method and nothing else, where -valueForKey: falls back to reading ivars and
+    // will happily interrogate an object that has no such concept at all. Two named
+    // accessors on a view that is already known to be an avatar is a different thing from
+    // guessing at everything up the responder chain.
+    for (NSString *name in @[@"userGQL", @"user"]) {
+        SEL selector = NSSelectorFromString(name);
+        if (![obj respondsToSelector:selector]) continue;
 
-    id user = ((id (*)(id, SEL))objc_msgSend)(obj, userGQL);
-    return SCILooksLikeUser(user) ? user : nil;
+        id user = ((id (*)(id, SEL))objc_msgSend)(obj, selector);
+        if (SCILooksLikeUser(user)) return user;
+    }
+
+    return nil;
 }
 
 static id SCIProfileUserFromResponder(UIView *view) {
@@ -101,8 +120,8 @@ static void SCIUpdateFollowBadge(UIView *container) {
     if (!container) return;
     if (![SCIUtils getBoolPref:@"show_follow_status"]) { SCIRemoveBadge(container); return; }
 
-    // Primary: read the profile VC's user via safe KVC. Fallback: the user captured
-    // from the header avatar's -userGQL.
+    // Primary: the responder chain, asked by selector. Fallback: the user captured from the
+    // header avatar. No KVC on either path -- see SCIUserFromObject for why.
     id user = SCIProfileUserFromResponder(container);
     if (!SCILooksLikeUser(user)) user = sciProfileUser;
     if (!SCILooksLikeUser(user)) { SCIRemoveBadge(container); return; }
