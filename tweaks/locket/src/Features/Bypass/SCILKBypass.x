@@ -32,6 +32,28 @@
 /// that works and one that appears to. `%hookf` rebinds the C function itself.
 ///
 
+///
+/// Not built into the self-contained sideload dylib.
+///
+/// Every %hookf below compiles to a call to MSHookFunction -- Substrate's own
+/// C-function hooking primitive, and a genuinely different mechanism from the
+/// MSHookMessageEx that SCISubstrateShim.m already replaces for Objective-C
+/// hooks. Reimplementing function-level hooking without Substrate (fishhook-
+/// style symbol rebinding, or Apple's own DYLD_INTERPOSE) is real systems work
+/// this project has not built and verified on a device yet, so rather than link
+/// it in unverified, the whole file compiles to a no-op stub in that build and
+/// the moment-saving feature -- which only ever uses ordinary %hook, not
+/// %hookf -- still ships standalone. The jailbreak packages are unaffected:
+/// this is exactly what they had, unchanged.
+///
+#ifdef SCI_SELFCONTAINED
+
+void SCILKInstallBypass(void) {
+    SCILogV(@"jailbreak-detection bypass not built into the self-contained dylib");
+}
+
+#else
+
 %group Core
 
 #pragma mark - libc
@@ -155,3 +177,5 @@ void SCILKInstallBypass(void) {
         SCILogV(@"OneSignalJailbreakDetection not in this build — the libc hooks still cover it");
     }
 }
+
+#endif  /* SCI_SELFCONTAINED */

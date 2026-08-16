@@ -15,6 +15,16 @@ rather than assumed, the same discipline Instagram's own sideload build already 
 installs with TrollStore, a developer certificate, SideStore, LiveContainer, or anything
 else that can inject a dylib into Locket, with no jailbreak underneath it required.
 
+**The jailbreak-detection bypass is not in that dylib, on purpose — moment-saving is
+the whole of it there.** The bypass hooks C functions (`stat`, `access`, `fopen`,
+`getenv`) through Substrate's `MSHookFunction`, a genuinely different mechanism from the
+Objective-C method hooking the dylib's own standalone replacement already covers.
+Building that without Substrate needs real systems work — symbol rebinding or
+`DYLD_INTERPOSE` — that has not been built and verified on a device yet, and shipping it
+unverified risks a crash on the one feature meant to keep the app usable. The rootless
+and roothide `.deb` packages are unaffected: the bypass works exactly as it always has
+there, where Substrate is actually present.
+
 **A welcome screen.** What this tweak does was previously reachable only by knowing to
 hold two fingers on the app — and finding that out meant reading the depiction first. The
 first launch now says it directly: what gets hidden from Locket's own checks, that a
