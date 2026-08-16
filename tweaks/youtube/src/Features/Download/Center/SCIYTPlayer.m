@@ -21,7 +21,7 @@ static const NSTimeInterval kSCIChromeLinger = 3.5;
 /// this gesture uses -- a number people already know without being told.
 static const double kSCINudge = 10;
 
-@interface SCIYTPlayer () <AVPictureInPictureControllerDelegate>
+@interface SCIYTPlayer () <AVPictureInPictureControllerDelegate, UIGestureRecognizerDelegate>
 - (void)load;
 - (void)togglePlay;
 - (void)teardown;
@@ -32,11 +32,13 @@ static const double kSCINudge = 10;
 @property (nonatomic, strong) AVPlayerLayer *layer;
 @property (nonatomic, strong) AVPictureInPictureController *pip;
 @property (nonatomic, strong) id ticker;
+@property (nonatomic) BOOL observingTimeControl;
 
 @property (nonatomic, strong) UIView *stage;
 @property (nonatomic, strong) UIImageView *backdrop;
 @property (nonatomic, strong) UIVisualEffectView *blur;
 @property (nonatomic, strong) UIImageView *artwork;
+@property (nonatomic, strong) UIActivityIndicatorView *spinner;
 @property (nonatomic, strong) UIView *chrome;
 @property (nonatomic, strong) UIVisualEffectView *transportCapsule;
 @property (nonatomic, strong) CAGradientLayer *scrim;
@@ -252,6 +254,11 @@ static SCIYTPlayer *sciCurrent = nil;
         self.ticker = nil;
     }
 
+    if (self.observingTimeControl) {
+        [self.player removeObserver:self forKeyPath:@"timeControlStatus"];
+        self.observingTimeControl = NO;
+    }
+
     [self.player pause];
     self.pip = nil;
     self.layer.player = nil;
@@ -344,6 +351,21 @@ static SCIYTPlayer *sciCurrent = nil;
         [self.artwork.widthAnchor constraintLessThanOrEqualToAnchor:self.stage.widthAnchor multiplier:0.78],
         [self.artwork.heightAnchor constraintLessThanOrEqualToAnchor:self.stage.heightAnchor multiplier:0.78],
         [self.artwork.widthAnchor constraintEqualToAnchor:self.artwork.heightAnchor]
+    ]];
+
+    // Shown only while AVFoundation is actually waiting on data, not while it merely has
+    // not started -- +load sets it up before -play is ever called, so a spinner tied to
+    // "not yet playing" would flash on every single open.
+    self.spinner = [[UIActivityIndicatorView alloc]
+        initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
+    self.spinner.color = [UIColor colorWithWhite:1 alpha:0.85];
+    self.spinner.hidesWhenStopped = YES;
+    self.spinner.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.stage addSubview:self.spinner];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [self.spinner.centerXAnchor constraintEqualToAnchor:self.stage.centerXAnchor],
+        [self.spinner.centerYAnchor constraintEqualToAnchor:self.stage.centerYAnchor],
     ]];
 
     // Both kept, one active at a time. Rotating changes which -- in landscape the picture
@@ -620,6 +642,73 @@ static SCIYTPlayer *sciCurrent = nil;
     [self.stage addGestureRecognizer:once];
     [self.stage addGestureRecognizer:twice];
     self.stage.userInteractionEnabled = YES;
+
+    // Drag down from anywhere to close, the way every full-screen player on the platform
+    // already works -- a chevron in the corner is the only way out otherwise, and that is
+    // not where a thumb goes to leave a screen.
+    UIPanGestureRecognizer *dismiss =
+        [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleDismissPan:)];
+    dismiss.delegate = self;
+    [self.view addGestureRecognizer:dismiss];
+}
+
+// Left alone for the slider, the transport buttons and the route picker -- a pan
+// recognizer sitting on the whole screen would otherwise catch the same touch a control
+// underneath it needs to track, and dragging the scrubber would drag the screen instead.
+- (BOOL)gestureRecognizer:(__unused UIGestureRecognizer *)gestureRecognizer
+       shouldReceiveTouch:(UITouch *)touch {
+    for (UIView *view = touch.view; view && view != self.view; view = view.superview) {
+        if ([view isKindOfClass:[UIControl class]]) return NO;
+    }
+    return YES;
+}
+
+- (void)handleDismissPan:(UIPanGestureRecognizer *)pan {
+    CGPoint translation = [pan translationInView:self.view];
+
+    switch (pan.state) {
+        case UIGestureRecognizerStateChanged: {
+            // A horizontal or upward drag is not this gesture -- left alone rather than
+            // fought, so it never fights the double-tap zones for the same touch.
+            if (translation.y < 0 || fabs(translation.x) > fabs(translation.y)) return;
+
+            self.view.transform = CGAffineTransformMakeTranslation(0, translation.y * 0.85);
+            self.view.alpha = 1 - MIN(translation.y / self.view.bounds.size.height, 1) * 0.35;
+            break;
+        }
+
+        case UIGestureRecognizerStateEnded:
+        case UIGestureRecognizerStateCancelled: {
+            CGFloat velocity = [pan velocityInView:self.view].y;
+
+            if (translation.y > 120 || velocity > 800) {
+                self.view.transform = CGAffineTransformIdentity;
+                self.view.alpha = 1;
+                [[[UIImpactFeedbackGenerator alloc]
+                    initWithStyle:UIImpactFeedbackStyleMedium] impactOccurred];
+                [self close];
+            } else {
+                [UIView animateWithDuration:0.3
+                                       delay:0
+                      usingSpringWithDamping:0.8
+                       initialSpringVelocity:0
+                                     options:UIViewAnimationOptionAllowUserInteraction
+                                  animations:^{
+                    self.view.transform = CGAffineTransformIdentity;
+                    self.view.alpha = 1;
+                } completion:nil];
+            }
+            break;
+        }
+
+        default: break;
+    }
+}
+
+/// A small, consistent nudge on the transport actions -- play, pause, skip, track change --
+/// which is what makes the buttons feel answered rather than merely tapped.
+- (void)lightHaptic {
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
 }
 
 - (UIImage *)thumbOfSize:(CGFloat)size {
@@ -858,8 +947,8 @@ static SCIYTPlayer *sciCurrent = nil;
     [self skipBy:ahead ? kSCINudge : -kSCINudge];
 }
 
-- (void)nudgeBack { [self skipBy:-kSCINudge]; }
-- (void)nudgeAhead { [self skipBy:kSCINudge]; }
+- (void)nudgeBack { [self lightHaptic]; [self skipBy:-kSCINudge]; }
+- (void)nudgeAhead { [self lightHaptic]; [self skipBy:kSCINudge]; }
 
 // MARK: - The queue
 
@@ -892,7 +981,24 @@ static SCIYTPlayer *sciCurrent = nil;
 
     if (self.ticker) { [self.player removeTimeObserver:self.ticker]; self.ticker = nil; }
 
+    // Off the outgoing player before it is replaced -- KVO does not follow a property to a
+    // new object, and leaving it registered on one about to be released is a crash waiting
+    // for the next track change.
+    if (self.observingTimeControl) {
+        [self.player removeObserver:self forKeyPath:@"timeControlStatus"];
+        self.observingTimeControl = NO;
+    }
+
     self.player = [AVPlayer playerWithURL:file];
+
+    // Only ever asked "is it waiting on data right now" -- not "has playback started yet",
+    // which is true for the entire span between +load and the first frame and would spin
+    // the wheel on every single open rather than only the times a file is actually slow.
+    [self.player addObserver:self
+                   forKeyPath:@"timeControlStatus"
+                      options:NSKeyValueObservingOptionNew
+                      context:NULL];
+    self.observingTimeControl = YES;
 
     [[NSNotificationCenter defaultCenter] removeObserver:self
                                                     name:AVPlayerItemDidPlayToEndTimeNotification
@@ -947,12 +1053,14 @@ static SCIYTPlayer *sciCurrent = nil;
 }
 
 - (void)next {
+    [self lightHaptic];
     if (self.index + 1 >= self.jobs.count) { [self.player pause]; [self showPlaying:NO]; return; }
     self.index++;
     [self load];
 }
 
 - (void)previous {
+    [self lightHaptic];
     if (CMTimeGetSeconds(self.player.currentTime) > 3 || self.index == 0) {
         [self seekTo:0];
         return;
@@ -976,6 +1084,7 @@ static SCIYTPlayer *sciCurrent = nil;
 }
 
 - (void)togglePlay {
+    [self lightHaptic];
     BOOL playing = (self.player.rate > 0);
     if (playing) {
         [self.player pause];
@@ -1225,6 +1334,26 @@ static SCIYTPlayer *sciCurrent = nil;
 
 - (void)cameBack {
     if ([self current].kind == SCIYTJobKindVideo) self.layer.player = self.player;
+}
+
+// MARK: - Buffering
+
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                       ofObject:(__unused id)object
+                         change:(__unused NSDictionary *)change
+                        context:(__unused void *)context {
+    if (![keyPath isEqualToString:@"timeControlStatus"]) return;
+
+    // AVPlayer's own queue for this is not guaranteed to be the main one, and everything
+    // the spinner touches is a view.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        BOOL waiting = self.player.timeControlStatus == AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate;
+        if (waiting) {
+            [self.spinner startAnimating];
+        } else {
+            [self.spinner stopAnimating];
+        }
+    });
 }
 
 // MARK: - The lock screen

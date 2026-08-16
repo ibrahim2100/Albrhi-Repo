@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.18.0
+
+Includes YouTube 1.15.0 — **the saved-media player, polished to feel like the rest of
+the system.** Drag down anywhere to close, the way every full-screen player on the
+platform already works. A spinner while a file is genuinely buffering rather than while
+it merely has not started. A light haptic tap on play, pause, skip and track change.
+
 ## v1.17.0
 
 Includes YouTube 1.14.0 — **real, system Picture-in-Picture**, unlocked rather than built:

@@ -3,6 +3,35 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.15.0
+
+The saved-media player, made to feel like the rest of the system rather than like a
+tweak's own screen — asked for on purpose, built to be used rather than admired.
+
+**Drag down to close.** The chevron in the corner was the only way out, and a thumb does
+not go looking for a corner on a full screen — it drags down, the way every player on the
+platform already answers that gesture. The whole screen now tracks the drag with a light
+rubber-band, snaps back if you let go early, and lets go for real past a threshold or a
+fast enough flick. It stays out of the way of anything that already owns the same
+gesture: the scrubber, the transport buttons and the AirPlay picker are excluded by
+delegate, not fought with `%orig` — this is a plain view controller, not a hook.
+
+**A spinner while it is actually waiting, not while it merely has not started.** Tied to
+`AVPlayer`'s own `timeControlStatus` rather than to "not yet playing" — the difference
+that matters, since every open of the player passes through the second state for a
+moment and only sometimes through the first. A file that takes a second to buffer used to
+look identical to one that had silently failed; now the wheel says which.
+
+**A light tap answers play, pause, skip and track change.** Small on purpose — the same
+`UIImpactFeedbackStyleLight` on all four, so the screen feels like it is responding to a
+press rather than merely reacting to one later.
+
+Considered and left out: swiping left or right to change track. The gesture already
+belongs to the double-tap-to-seek zones on the same stage, and layering a second meaning
+onto the same area risks the wrong one firing on a real tap — the previous/next buttons
+and the lock screen's own track buttons already reach the same place without the
+ambiguity.
+
 ## v1.14.0
 
 Read from a modified YouTube IPA the developer supplied — eighteen bundled dylibs, none
