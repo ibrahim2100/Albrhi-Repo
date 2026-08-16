@@ -24,10 +24,18 @@ on:
             - 'main'
         paths:
             # Anything that changes what ends up in the package, which is now every
-            # tweak: they are not released separately any more, so a fix to one of
-            # them reaches people only through this.
+            # tweak this workflow actually bundles -- Instagram, YouTube, X and the
+            # panel. Locket and CarPlay are excluded on purpose: neither is in the
+            # package (.no-suite marks both), so a commit that only touches one of
+            # them has nothing for this workflow to do, and running it anyway is
+            # exactly the confusion a report named directly -- a Locket-only push
+            # rebuilding Instagram, YouTube, X and the panel for no reason, on every
+            # single commit. Keep this list in step with tools/make-suite.sh's own
+            # skip list; a third standalone tweak needs its own '!' line here too.
             - 'suite/**'
             - 'tweaks/**'
+            - '!tweaks/locket/**'
+            - '!tweaks/carplay/**'
             - 'shared/**'
             - 'tools/**'
             - 'extra-debs/**'

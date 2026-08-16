@@ -709,6 +709,18 @@ shape in its git history (as of the commit that withheld it) for the same reason
 Separate workflows rather than one job per tweak, so a tweak that will not compile can
 never block another tweak's release.
 
+**The `.no-suite` marker keeps a tweak out of the package; it does not keep
+`buildsuite.yml` from running on that tweak's commits, and those are two different
+things.** `buildsuite.yml`'s own trigger watched `tweaks/**`, which matches
+`tweaks/locket/**` and `tweaks/carplay/**` just as much as any bundled tweak's directory
+— so a commit touching only Locket rebuilt Instagram, YouTube, X and the panel anyway,
+every single time, for a package that commit could never change. Reported plainly as
+confusion ("ليش بعد كل تحديث يتم اعادة بناء البانل؟"), and it was worth taking at face
+value: the workflow really was doing something it had no reason to do. Fixed with `!`
+exclusion patterns for both standalone tweaks in the trigger's `paths:` list, kept next
+to `make-suite.sh`'s own skip list so the two are checked together. A third standalone
+tweak needs a line in both places, not just the marker file.
+
 **The one thing two publishers cannot help sharing is the APT index, and that was the
 trap.** `make-repo.sh` wipes `debs/` and rebuilds it on purpose, so an index built from
 one tweak's build output would erase the other tweak from the source. Both `buildsuite.yml`
