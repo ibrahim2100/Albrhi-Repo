@@ -1,6 +1,6 @@
 Package: com.albrhi.locket
 Name: Albrhi for Locket (rootless)
-Version: 0.3.0
+Version: 0.3.1
 Architecture: iphoneos-arm64
 Description: Save any moment, and keep Locket from reporting your phone as jailbroken. Arabic or English.
  .

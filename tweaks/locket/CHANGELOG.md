@@ -1,5 +1,20 @@
 # Albrhi for Locket — what changed
 
+## v0.3.1
+
+**The self-contained dylib did nothing at all, on a real device — not even the welcome
+screen — because v0.3.0's published build predates this fix.** `SCIPanelAllowsThisApp()`
+reads an unanswered question as *off* by design, because installing the suite patches
+four apps at once and silence should not read as consent for all of them. A sideloaded
+dylib is the opposite case: one tweak, installed deliberately, for one app, on a device
+that may have no jailbreak on it — so Albrhi Panel (itself a jailbreak package) can never
+be installed, the switch can never be turned on, and every hook this tweak has stood down
+on every single launch, silently, because that gate sits before all of them. Fixed in
+`SCIPanelGate.m` itself: the self-contained build now answers the gate `YES`
+unconditionally, restoring the older "installed it deliberately" reading for the case
+that is still true of. The rootless and roothide `.deb` packages were never affected —
+Albrhi Panel is genuinely reachable there.
+
 ## v0.3.0
 
 **Standalone.** Locket has left `com.albrhi` — it is no longer bundled in the suite, has
@@ -14,17 +29,6 @@ instead of CydiaSubstrate — provably standalone, checked in CI with `otool` an
 rather than assumed, the same discipline Instagram's own sideload build already uses. It
 installs with TrollStore, a developer certificate, SideStore, LiveContainer, or anything
 else that can inject a dylib into Locket, with no jailbreak underneath it required.
-
-**The self-contained dylib did nothing at all, on a real device, until this fix — not
-even the welcome screen.** `SCIPanelAllowsThisApp()` reads an unanswered question as
-*off* by design, because installing the suite patches four apps at once and silence
-should not read as consent for all of them. A sideloaded dylib is the opposite case: one
-tweak, installed deliberately, for one app, on a device that may have no jailbreak on it
-— so Albrhi Panel (itself a jailbreak package) can never be installed, the switch can
-never be turned on, and every hook this tweak has stood down on every single launch,
-silently, because that gate sits before all of them. Fixed in `SCIPanelGate.m` itself:
-the self-contained build now answers the gate `YES` unconditionally, restoring the older
-"installed it deliberately" reading for the case that is still true of.
 
 **The jailbreak-detection bypass is not in that dylib, on purpose — moment-saving is
 the whole of it there.** The bypass hooks C functions (`stat`, `access`, `fopen`,
