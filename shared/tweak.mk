@@ -36,6 +36,7 @@ endif
 $(foreach T,$(TWEAK_NAME),\
 	$(eval $(T)_FILES += $(wildcard $(ROOT)/modules/JGProgressHUD/*.m))\
 	$(eval $(T)_FILES += $(ROOT)/shared/src/SCIPanelGate.m)\
+	$(eval $(T)_FILES += $(ROOT)/shared/src/SCISubstrateShim.m)\
 	$(eval $(T)_CFLAGS += -I$(ROOT) )\
 	$(eval $(T)_CFLAGS += -DDISABLE_ROOTLESS_COMPAT_WARNING -fobjc-arc \
 		-Wno-unsupported-availability-guard -Wno-unused-value \
@@ -64,11 +65,19 @@ endif
 # Off by default and never set for the jailbreak packages: those keep using
 # Substrate exactly as they always have, and this cannot affect them.
 #
-# Compat/SCISubstrateShim.m supplies MSHookMessageEx itself. Defining it in our
-# own binary means the linker resolves it internally, and -dead_strip_dylibs
-# then drops the now-unreferenced CydiaSubstrate load command -- which is what
-# makes the result genuinely standalone rather than merely appearing to be.
-# CI verifies that with otool rather than trusting it.
+# shared/src/SCISubstrateShim.m (added to every tweak above, alongside
+# SCIPanelGate.m) supplies MSHookMessageEx itself, compiling to nothing unless
+# SCI_SELFCONTAINED is defined. Defining it in our own binary means the linker
+# resolves it internally, and -dead_strip_dylibs then drops the now-unreferenced
+# CydiaSubstrate load command -- which is what makes the result genuinely
+# standalone rather than merely appearing to be. CI verifies that with otool
+# rather than trusting it.
+#
+# It lived under tweaks/instagram/src/Compat/ at first and only Instagram's own
+# SELFCONTAINED build ever pulled it in -- Locket's own such build linked the
+# real CydiaSubstrate anyway, having no shim to satisfy MSHookMessageEx
+# internally, and "The dylib still links CydiaSubstrate" is what said so. The
+# file itself was never Instagram-specific; only its location was.
 #
 # Neither $(foreach) line below may start with a tab. A tab in column one of a
 # makefile is never "an indented statement" to Make -- it is always an attempt
