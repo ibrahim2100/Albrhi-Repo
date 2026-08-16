@@ -18,7 +18,10 @@
 @implementation SCIYTDownloadList
 
 - (instancetype)initWithKind:(SCIYTJobKind)kind shorts:(BOOL)shorts {
-    self = [super initWithStyle:UITableViewStyleInsetGrouped];
+    // Plain, not inset-grouped -- the app's own scrolling lists are edge to edge, and the
+    // grouped style adds a second set of side margins on top of the row's own, doubling
+    // up the gutter and pushing the thumbnail in from where the app would put it.
+    self = [super initWithStyle:UITableViewStylePlain];
     if (!self) return nil;
 
     _kind = kind;

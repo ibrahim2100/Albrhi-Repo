@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.21.0
+
+Includes YouTube 1.17.0 — **the Download Centre redrawn to look native**, not like a
+skin borrowed from a music player. A real large title, a flat dark background matching
+the app's own, filter chips styled exactly like the app's own filter row, and rows
+without floating cards or per-item colour tinting — a picture, two lines of text, a thin
+hairline, edge to edge.
+
 ## v1.20.0
 
 Includes YouTube 1.16.0 — **the Download Centre split into three: Video, Shorts, Audio.**

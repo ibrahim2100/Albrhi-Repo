@@ -10,11 +10,13 @@
 @interface SCIYTCentrePage ()
 @property (nonatomic, strong) NSArray<SCIYTDownloadList *> *lists;
 @property (nonatomic, strong) SCIYTDownloadList *showing;
-@property (nonatomic, strong) UISegmentedControl *picker;
+@property (nonatomic, strong) NSArray<UIButton *> *chips;
+@property (nonatomic, strong) UIView *chipBar;
+@property (nonatomic) NSInteger selected;
 @property (nonatomic) BOOL dismissable;
 @property (nonatomic, strong) SCIYTMiniPlayer *mini;
 @property (nonatomic, strong) NSLayoutConstraint *miniHeight;
-@property (nonatomic, strong) CAGradientLayer *ground;
+@property (nonatomic, strong) NSArray<NSLayoutConstraint *> *listConstraints;
 @end
 
 @implementation SCIYTCentrePage
@@ -30,20 +32,26 @@
     [super viewDidLoad];
 
     self.title = SCILocalized(@"dl_centre_title");
-    self.view.backgroundColor = [UIColor blackColor];
 
-    // One surface, lit from the top.
-    //
-    // A flat near-black behind an inset-grouped table was two greys with a gap between them,
-    // and it read as a settings screen with pictures in it. A single graded ground with the
-    // cards floating on it is the shape this actually is: a shelf of things, not a form.
-    CAGradientLayer *ground = [CAGradientLayer layer];
-    ground.colors = @[(id)[UIColor colorWithWhite:0.13 alpha:1].CGColor,
-                      (id)[UIColor colorWithWhite:0.04 alpha:1].CGColor];
-    ground.startPoint = CGPointMake(0.5, 0);
-    ground.endPoint = CGPointMake(0.5, 0.65);
-    [self.view.layer insertSublayer:ground atIndex:0];
-    self.ground = ground;
+    // Flat, the way the app's own dark mode actually is. The gradient this used to carry
+    // read as a mood board -- Apple Music's colour, not YouTube's -- and the ask was for
+    // this to look like it belongs to the app, not like a skin over it.
+    self.view.backgroundColor = [UIColor colorWithWhite:0.043 alpha:1];
+
+    // A real large title rather than a control standing in the bar's title slot. The bar's
+    // own tabs read this way, and a page reached from one of them should look like it grew
+    // out of the same navigation stack rather than borrowed the space at the top of it.
+    self.navigationController.navigationBar.prefersLargeTitles = YES;
+    self.navigationItem.largeTitleDisplayMode = UINavigationItemLargeTitleDisplayModeAlways;
+
+    UINavigationBarAppearance *appearance = [[UINavigationBarAppearance alloc] init];
+    [appearance configureWithOpaqueBackground];
+    appearance.backgroundColor = self.view.backgroundColor;
+    appearance.shadowColor = nil;
+    appearance.titleTextAttributes = @{NSForegroundColorAttributeName: [UIColor whiteColor]};
+    appearance.largeTitleTextAttributes = @{NSForegroundColorAttributeName: [UIColor whiteColor]};
+    self.navigationItem.standardAppearance = appearance;
+    self.navigationItem.scrollEdgeAppearance = appearance;
 
     // Video, Shorts, Audio -- video and Shorts are the same SCIYTJobKind and split only by
     // the isShort flag set at the moment a download starts, see SCIYTJob.h. Audio has no
@@ -52,19 +60,7 @@
                    [[SCIYTDownloadList alloc] initWithKind:SCIYTJobKindVideo shorts:YES],
                    [[SCIYTDownloadList alloc] initWithKind:SCIYTJobKindAudio shorts:NO]];
 
-    self.picker = [[UISegmentedControl alloc] initWithItems:
-        @[SCILocalized(@"dl_kind_video"), SCILocalized(@"dl_kind_shorts"), SCILocalized(@"dl_kind_audio")]];
-    self.picker.selectedSegmentIndex = 0;
-    self.picker.selectedSegmentTintColor = SCIAccent();
-    [self.picker setTitleTextAttributes:@{NSForegroundColorAttributeName: [UIColor whiteColor]}
-                               forState:UIControlStateSelected];
-    [self.picker addTarget:self action:@selector(pickedKind)
-          forControlEvents:UIControlEventValueChanged];
-
-    // In the bar rather than under it. A control in the title position is what the app puts
-    // there for exactly this -- one page, two views of it -- and it costs no vertical room
-    // on a screen that is a list.
-    self.navigationItem.titleView = self.picker;
+    [self buildChipBar];
 
     if (self.dismissable) {
         self.navigationItem.rightBarButtonItem =
@@ -75,6 +71,82 @@
 
     [self buildMiniPlayer];
     [self show:self.lists.firstObject];
+}
+
+/// A row of pills under the title, the exact shape the app's own filter chips already
+/// are: a capsule each, dim and grey until picked, solid white with black text once it
+/// is -- not this tweak's accent colour standing in for a selection, but the same colour
+/// switch the real filter row already makes.
+- (void)buildChipBar {
+    self.chipBar = [[UIView alloc] init];
+    self.chipBar.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:self.chipBar];
+
+    NSArray<NSString *> *titles = @[SCILocalized(@"dl_kind_video"),
+                                     SCILocalized(@"dl_kind_shorts"),
+                                     SCILocalized(@"dl_kind_audio")];
+
+    NSMutableArray<UIButton *> *chips = [NSMutableArray array];
+    UIButton *previous = nil;
+
+    for (NSUInteger i = 0; i < titles.count; i++) {
+        UIButton *chip = [UIButton buttonWithType:UIButtonTypeSystem];
+        [chip setTitle:titles[i] forState:UIControlStateNormal];
+        chip.titleLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightSemibold];
+        chip.tag = (NSInteger)i;
+        chip.contentEdgeInsets = UIEdgeInsetsMake(8, 16, 8, 16);
+        chip.layer.cornerCurve = kCACornerCurveContinuous;
+        chip.translatesAutoresizingMaskIntoConstraints = NO;
+        [chip addTarget:self action:@selector(chipTapped:) forControlEvents:UIControlEventTouchUpInside];
+        [self.chipBar addSubview:chip];
+
+        [NSLayoutConstraint activateConstraints:@[
+            [chip.topAnchor constraintEqualToAnchor:self.chipBar.topAnchor],
+            [chip.bottomAnchor constraintEqualToAnchor:self.chipBar.bottomAnchor],
+            previous
+                ? [chip.leadingAnchor constraintEqualToAnchor:previous.trailingAnchor constant:8]
+                : [chip.leadingAnchor constraintEqualToAnchor:self.chipBar.leadingAnchor constant:16],
+        ]];
+
+        [chips addObject:chip];
+        previous = chip;
+    }
+
+    self.chips = chips;
+    self.selected = 0;
+    [self restyleChips];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [self.chipBar.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:8],
+        [self.chipBar.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [self.chipBar.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [self.chipBar.heightAnchor constraintEqualToConstant:36],
+    ]];
+}
+
+- (void)restyleChips {
+    for (UIButton *chip in self.chips) {
+        BOOL on = chip.tag == self.selected;
+        chip.backgroundColor = on ? [UIColor whiteColor] : [UIColor colorWithWhite:1 alpha:0.12];
+        [chip setTitleColor:(on ? [UIColor blackColor] : [UIColor whiteColor])
+                   forState:UIControlStateNormal];
+
+        // Sized after the colour is set, not before -- the corner radius is half of
+        // whatever height auto layout actually gave the button, measured rather than
+        // guessed at the point sizes above suggest.
+        [chip layoutIfNeeded];
+        chip.layer.cornerRadius = chip.bounds.size.height / 2;
+    }
+}
+
+- (void)chipTapped:(UIButton *)sender {
+    if (sender.tag == self.selected) return;
+    self.selected = sender.tag;
+    [self restyleChips];
+
+    if ((NSUInteger)self.selected < self.lists.count) {
+        [self show:self.lists[(NSUInteger)self.selected]];
+    }
 }
 
 
@@ -112,11 +184,6 @@
     [self inset:playing ? 62 : 0];
 }
 
-- (void)viewDidLayoutSubviews {
-    [super viewDidLayoutSubviews];
-    self.ground.frame = self.view.bounds;
-}
-
 - (void)inset:(CGFloat)bottom {
     for (SCIYTDownloadList *list in self.lists) {
         UIEdgeInsets insets = list.tableView.contentInset;
@@ -128,12 +195,6 @@
 
 - (void)close {
     [self dismissViewControllerAnimated:YES completion:nil];
-}
-
-- (void)pickedKind {
-    NSUInteger at = (NSUInteger)MAX(self.picker.selectedSegmentIndex, 0);
-    if (at >= self.lists.count) return;
-    [self show:self.lists[at]];
 }
 
 /// Swaps which list is on screen, as a proper child.
@@ -150,9 +211,11 @@
         [self.showing removeFromParentViewController];
     }
 
+    if (self.listConstraints) [NSLayoutConstraint deactivateConstraints:self.listConstraints];
+
     [self addChildViewController:list];
-    list.view.frame = self.view.bounds;
-    list.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    list.view.translatesAutoresizingMaskIntoConstraints = NO;
+
     // Under the mini bar, which was added first and would otherwise end up behind every list
     // swapped in after it -- playing, tappable in theory, and invisible.
     if (self.mini) {
@@ -160,6 +223,15 @@
     } else {
         [self.view addSubview:list.view];
     }
+
+    self.listConstraints = @[
+        [list.view.topAnchor constraintEqualToAnchor:self.chipBar.bottomAnchor constant:8],
+        [list.view.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [list.view.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [list.view.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
+    ];
+    [NSLayoutConstraint activateConstraints:self.listConstraints];
+
     [list didMoveToParentViewController:self];
 
     self.showing = list;

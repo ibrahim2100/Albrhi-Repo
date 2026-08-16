@@ -3,6 +3,28 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.17.0
+
+**The Download Centre redrawn to look like it grew out of the app, not like a skin over
+it.** The gradient "mood" background, the floating rounded cards with a hint of the
+artwork's own colour tinting each one, the segmented control standing in for the title —
+all of that read as borrowed from a music player, not as part of YouTube.
+
+- **A real large title** ("Downloads") instead of a control living in the bar's title
+  slot, matching how the app's own tabs present a page.
+- **Flat, not gradient.** The background is one solid near-black, the same tone the
+  app's own dark mode actually uses, not a lit-from-the-top wash.
+- **Filter chips instead of a segmented control** — three capsules under the title,
+  dim grey until picked and solid white with black text once they are, the same colour
+  switch the app's own filter row already makes rather than this tweak's accent
+  standing in for a selection.
+- **Rows without cards.** No per-item background tint, no border, no floating card —
+  a picture, two lines of text, a thin hairline under the last one. The picture keeps
+  its real shape: 16:9 for video, 9:16 for a Short, square for sound.
+- **Plain list style, not inset-grouped.** The grouped style was adding a second gutter
+  on top of the row's own margin, which is not how the app's own scrolling lists are
+  built — they run edge to edge.
+
 ## v1.16.0
 
 **The Download Centre is three sections now, not two: Video, Shorts, Audio.** A Short

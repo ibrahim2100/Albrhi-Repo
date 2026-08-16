@@ -1,19 +1,18 @@
 #import "SCIYTRowCell.h"
 #import "SCIYTThumbnails.h"
-#import "SCIYTPalette.h"
 #import "../../../Tweak.h"
 
 /// The artwork's height. Everything else on the row is laid out around it, so this is the
 /// one number the row's proportions come from.
-static const CGFloat kSCIArt = 62;
+static const CGFloat kSCIArt = 68;
 
-/// The margin either side. Wider than a stock cell's, because a list of pictures needs air
-/// around it far more than a list of text does.
+/// The margin either side. The app's own list rows sit flush with a modest inset, not the
+/// wide gutter a floating card wants -- there is no card any more to hold away from the
+/// edge.
 static const CGFloat kSCIInset = 16;
 
 
 @interface SCIYTRowCell ()
-@property (nonatomic, strong) UIView *card;
 @property (nonatomic, strong) UIImageView *artwork;
 @property (nonatomic, strong) UIView *artworkShade;
 @property (nonatomic, strong) UILabel *badge;
@@ -24,6 +23,7 @@ static const CGFloat kSCIInset = 16;
 @property (nonatomic, strong) UIView *bars;          ///< the playing mark
 @property (nonatomic, strong) UIView *progressTrack;
 @property (nonatomic, strong) UIView *progressFill;
+@property (nonatomic, strong) UIView *separator;
 @property (nonatomic, strong) NSLayoutConstraint *progressWidth;
 @property (nonatomic, strong) NSLayoutConstraint *artworkWidth;
 @end
@@ -32,9 +32,9 @@ static const CGFloat kSCIInset = 16;
 @implementation SCIYTRowCell
 
 + (CGFloat)heightForKind:(SCIYTJobKind)kind {
-    // The same for both. A video's artwork is wider and a song's is square, but they are the
-    // same height, so the rows are -- and a list that changes row height when you flip the
-    // switch above it reads as two different screens rather than two views of one.
+    // The same for every section. A video's artwork is wider, a Short's is taller and a
+    // song's is square, but they share one row height -- a list that changes shape when
+    // you switch chips reads as three different screens rather than three views of one.
     return kSCIArt + 22;
 }
 
@@ -45,28 +45,19 @@ static const CGFloat kSCIInset = 16;
     self.contentView.backgroundColor = [UIColor clearColor];
     self.selectionStyle = UITableViewCellSelectionStyleNone;
 
-    // A card per row rather than separators between rows.
-    //
-    // Separators are a way of saying "these are the same kind of thing, in a list"; a card
-    // says "this is one thing". For rows carrying artwork the second is the truer statement,
-    // and it is what every list worth looking at on this platform now does.
-    self.card = [[UIView alloc] init];
-    self.card.backgroundColor = [UIColor colorWithWhite:1 alpha:0.06];
-    self.card.layer.cornerRadius = 16;
-    self.card.layer.cornerCurve = kCACornerCurveContinuous;
-    self.card.layer.borderWidth = 0.5;
-    self.card.layer.borderColor = [UIColor colorWithWhite:1 alpha:0.08].CGColor;
-    self.card.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.contentView addSubview:self.card];
+    // A plain row on the app's own flat ground -- no card, no per-item colour, no border.
+    // A colour-tinted card behind every thumbnail was reading as this tweak's own screen
+    // rather than as a page inside the app; the app's own lists are exactly this: a
+    // picture, two lines of text, and a hairline underneath the last one.
 
     self.artwork = [[UIImageView alloc] init];
     self.artwork.contentMode = UIViewContentModeScaleAspectFill;
     self.artwork.clipsToBounds = YES;
     self.artwork.backgroundColor = [UIColor colorWithWhite:1 alpha:0.06];
-    self.artwork.layer.cornerRadius = 10;
+    self.artwork.layer.cornerRadius = 8;
     self.artwork.layer.cornerCurve = kCACornerCurveContinuous;
     self.artwork.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.card addSubview:self.artwork];
+    [self.contentView addSubview:self.artwork];
 
     // A darkening at the foot of the artwork, so a white badge is legible on a pale still.
     self.artworkShade = [[UIView alloc] init];
@@ -75,13 +66,13 @@ static const CGFloat kSCIInset = 16;
     [self.artwork addSubview:self.artworkShade];
 
     self.badgeBacking = [[UIView alloc] init];
-    self.badgeBacking.backgroundColor = [UIColor colorWithWhite:0 alpha:0.55];
+    self.badgeBacking.backgroundColor = [UIColor colorWithWhite:0 alpha:0.65];
     self.badgeBacking.layer.cornerRadius = 4;
     self.badgeBacking.translatesAutoresizingMaskIntoConstraints = NO;
     [self.artwork addSubview:self.badgeBacking];
 
-    // The length, on the artwork, the way it is on a thumbnail everywhere else. It belongs
-    // there rather than in the meta line because it is a property of the picture.
+    // The length, on the artwork, the way every duration badge in the app's own thumbnails
+    // already sits -- bottom-trailing corner, dark chip, white monospaced digits.
     self.badge = [[UILabel alloc] init];
     self.badge.font = [UIFont monospacedDigitSystemFontOfSize:10 weight:UIFontWeightSemibold];
     self.badge.textColor = [UIColor whiteColor];
@@ -93,44 +84,45 @@ static const CGFloat kSCIInset = 16;
     self.name.textColor = [UIColor whiteColor];
     self.name.numberOfLines = 2;
     self.name.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.card addSubview:self.name];
+    [self.contentView addSubview:self.name];
 
     self.meta = [[UILabel alloc] init];
     self.meta.font = [UIFont systemFontOfSize:12 weight:UIFontWeightRegular];
     self.meta.textColor = [UIColor colorWithWhite:1 alpha:0.5];
     self.meta.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.card addSubview:self.meta];
+    [self.contentView addSubview:self.meta];
 
     self.bars = [self buildBars];
     self.bars.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.card addSubview:self.bars];
+    [self.contentView addSubview:self.bars];
 
-    // Progress along the foot of the card, edge to edge.
-    //
-    // A UIProgressView in the accessory slot was a 60-point stub on the right of the row,
-    // which is where iOS puts a control rather than where a reader looks. A bar the width of
-    // the thing it describes is readable from across the room.
+    // Progress along the foot of the row, edge to edge under the text column -- not under
+    // the artwork, which already has its own duration badge and does not need a second
+    // read on how far along the file is.
     self.progressTrack = [[UIView alloc] init];
-    self.progressTrack.backgroundColor = [UIColor colorWithWhite:1 alpha:0.10];
+    self.progressTrack.backgroundColor = [UIColor colorWithWhite:1 alpha:0.12];
     self.progressTrack.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.card addSubview:self.progressTrack];
+    [self.contentView addSubview:self.progressTrack];
 
     self.progressFill = [[UIView alloc] init];
     self.progressFill.backgroundColor = SCIAccent();
     self.progressFill.translatesAutoresizingMaskIntoConstraints = NO;
     [self.progressTrack addSubview:self.progressFill];
 
+    // The one separator, a hairline rather than the system's -- drawn under the text
+    // column only, the way a list that puts its picture flush left already does, so the
+    // line reads as ending one row's text rather than crossing under the artwork too.
+    self.separator = [[UIView alloc] init];
+    self.separator.backgroundColor = [UIColor colorWithWhite:1 alpha:0.08];
+    self.separator.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.contentView addSubview:self.separator];
+
     self.progressWidth = [self.progressFill.widthAnchor constraintEqualToConstant:0];
     self.artworkWidth = [self.artwork.widthAnchor constraintEqualToConstant:kSCIArt];
 
     [NSLayoutConstraint activateConstraints:@[
-        [self.card.topAnchor constraintEqualToAnchor:self.contentView.topAnchor constant:5],
-        [self.card.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor constant:-5],
-        [self.card.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor constant:kSCIInset],
-        [self.card.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor constant:-kSCIInset],
-
-        [self.artwork.leadingAnchor constraintEqualToAnchor:self.card.leadingAnchor constant:6],
-        [self.artwork.centerYAnchor constraintEqualToAnchor:self.card.centerYAnchor],
+        [self.artwork.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor constant:kSCIInset],
+        [self.artwork.centerYAnchor constraintEqualToAnchor:self.contentView.centerYAnchor],
         [self.artwork.heightAnchor constraintEqualToConstant:kSCIArt],
         self.artworkWidth,
 
@@ -149,26 +141,31 @@ static const CGFloat kSCIInset = 16;
 
         [self.name.leadingAnchor constraintEqualToAnchor:self.artwork.trailingAnchor constant:12],
         [self.name.trailingAnchor constraintEqualToAnchor:self.bars.leadingAnchor constant:-8],
-        [self.name.bottomAnchor constraintEqualToAnchor:self.card.centerYAnchor constant:1],
+        [self.name.bottomAnchor constraintEqualToAnchor:self.contentView.centerYAnchor constant:1],
 
         [self.meta.leadingAnchor constraintEqualToAnchor:self.name.leadingAnchor],
         [self.meta.trailingAnchor constraintEqualToAnchor:self.name.trailingAnchor],
         [self.meta.topAnchor constraintEqualToAnchor:self.name.bottomAnchor constant:3],
 
-        [self.bars.trailingAnchor constraintEqualToAnchor:self.card.trailingAnchor constant:-14],
-        [self.bars.centerYAnchor constraintEqualToAnchor:self.card.centerYAnchor],
+        [self.bars.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor constant:-kSCIInset],
+        [self.bars.centerYAnchor constraintEqualToAnchor:self.contentView.centerYAnchor],
         [self.bars.widthAnchor constraintEqualToConstant:16],
         [self.bars.heightAnchor constraintEqualToConstant:14],
 
-        [self.progressTrack.leadingAnchor constraintEqualToAnchor:self.card.leadingAnchor],
-        [self.progressTrack.trailingAnchor constraintEqualToAnchor:self.card.trailingAnchor],
-        [self.progressTrack.bottomAnchor constraintEqualToAnchor:self.card.bottomAnchor],
+        [self.progressTrack.leadingAnchor constraintEqualToAnchor:self.name.leadingAnchor],
+        [self.progressTrack.trailingAnchor constraintEqualToAnchor:self.bars.leadingAnchor constant:-8],
+        [self.progressTrack.topAnchor constraintEqualToAnchor:self.meta.bottomAnchor constant:5],
         [self.progressTrack.heightAnchor constraintEqualToConstant:2.5],
 
         [self.progressFill.leadingAnchor constraintEqualToAnchor:self.progressTrack.leadingAnchor],
         [self.progressFill.topAnchor constraintEqualToAnchor:self.progressTrack.topAnchor],
         [self.progressFill.bottomAnchor constraintEqualToAnchor:self.progressTrack.bottomAnchor],
         self.progressWidth,
+
+        [self.separator.leadingAnchor constraintEqualToAnchor:self.name.leadingAnchor],
+        [self.separator.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor constant:-kSCIInset],
+        [self.separator.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor],
+        [self.separator.heightAnchor constraintEqualToConstant:0.5],
     ]];
 
     return self;
@@ -195,12 +192,11 @@ static const CGFloat kSCIInset = 16;
 - (void)fillWith:(SCIYTJob *)job artwork:(UIImage *)artwork playing:(BOOL)playing {
     BOOL isVideo = (job.kind == SCIYTJobKindVideo);
 
-    // The shape, which is most of the difference between the three kinds of row. An
-    // ordinary still is 16:9, a Short is 9:16 -- tall, the way every Short actually is --
-    // and a cover is square. Stretching any of them into another's frame is the thing
-    // that makes a media list look homemade, and it is exactly what a Short got before
-    // this: the same landscape frame a video gets, with a vertical picture squashed
-    // sideways to fill it.
+    // The shape, which is most of the difference between the three rows. An ordinary
+    // still is 16:9, a Short is 9:16 -- tall, the way a Short actually is -- and a cover
+    // is square. Forcing any of them into another's frame is what makes a media list
+    // look homemade, and it is exactly what a Short got before this: stretched into the
+    // same landscape box a video gets.
     self.artworkWidth.constant = job.isShort ? (kSCIArt * 9.0 / 16.0)
                                 : isVideo ? (kSCIArt * 16.0 / 9.0)
                                 : kSCIArt;
@@ -236,28 +232,15 @@ static const CGFloat kSCIInset = 16;
         [self layoutIfNeeded];
         self.progressWidth.constant = self.progressTrack.bounds.size.width * job.progress;
     }
-
-    // The card takes a hint of the artwork's colour, which is what stops a list of cards
-    // reading as a spreadsheet. Faint on purpose -- it should be felt at a glance and not
-    // identifiable as a colour if you look straight at it.
-    if (artwork) {
-        UIColor *accent = [SCIYTPalette accentFor:artwork];
-        self.card.backgroundColor = [accent colorWithAlphaComponent:0.10];
-        self.card.layer.borderColor = [accent colorWithAlphaComponent:0.18].CGColor;
-    } else {
-        self.card.backgroundColor = [UIColor colorWithWhite:1 alpha:0.06];
-        self.card.layer.borderColor = [UIColor colorWithWhite:1 alpha:0.08].CGColor;
-    }
 }
 
-/// Pressed state, since the stock selection style is off.
+/// Pressed state, since the stock selection style is off. A dim rather than a scale --
+/// the app's own rows do not shrink under a touch, they just darken.
 - (void)setHighlighted:(BOOL)highlighted animated:(BOOL)animated {
     [super setHighlighted:highlighted animated:animated];
 
-    [UIView animateWithDuration:0.18 animations:^{
-        self.card.transform = highlighted ? CGAffineTransformMakeScale(0.975, 0.975)
-                                          : CGAffineTransformIdentity;
-        self.card.alpha = highlighted ? 0.75 : 1;
+    [UIView animateWithDuration:0.15 animations:^{
+        self.contentView.alpha = highlighted ? 0.6 : 1;
     }];
 }
 
