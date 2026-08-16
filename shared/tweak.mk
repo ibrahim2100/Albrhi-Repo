@@ -54,7 +54,7 @@ include $(THEOS_MAKE_PATH)/tweak.mk
 # Only the local sideload build reaches this; CI and the published .dylib use
 # SELFCONTAINED below instead.
 ifdef SIDELOAD
-	$(foreach T,$(TWEAK_NAME),$(eval $(T)_SUBPROJECTS += $(ROOT)/modules/flexing))
+$(foreach T,$(TWEAK_NAME),$(eval $(T)_SUBPROJECTS += $(ROOT)/modules/flexing))
 endif
 
 # A dylib that carries its own hooking, so it can be injected on its own -- by
@@ -69,9 +69,24 @@ endif
 # then drops the now-unreferenced CydiaSubstrate load command -- which is what
 # makes the result genuinely standalone rather than merely appearing to be.
 # CI verifies that with otool rather than trusting it.
+#
+# Neither $(foreach) line below may start with a tab. A tab in column one of a
+# makefile is never "an indented statement" to Make -- it is always an attempt
+# at a recipe, valid only inside a rule, and a bare $(eval)-as-statement idiom
+# like this one is not a rule. It reads as "recipe commences before first
+# target" and stops the parse cold, at this line, whether or not SELFCONTAINED
+# is even set -- Make has to parse every line to find the matching endif before
+# it can decide whether to skip the block. The unconditional $(foreach) above
+# (for JGProgressHUD, SCIPanelGate and the rest) sits at column one for exactly
+# this reason; these two did not, because indenting a line to show it belongs
+# inside its ifdef reads as correct and is the opposite of correct here. It
+# went unnoticed since check.py's rule 9 does not run Make, and neither
+# SIDELOAD nor SELFCONTAINED is ever set by an ordinary build -- only Locket's
+# own sideload-dylib CI step, the first to actually pass SELFCONTAINED=1 in a
+# long while, ran into it.
 ifdef SELFCONTAINED
-	$(foreach T,$(TWEAK_NAME),\
-		$(eval $(T)_CFLAGS += -DSCI_SELFCONTAINED)\
-		$(eval $(T)_LDFLAGS += -Wl,-dead_strip_dylibs)\
-	)
+$(foreach T,$(TWEAK_NAME),\
+	$(eval $(T)_CFLAGS += -DSCI_SELFCONTAINED)\
+	$(eval $(T)_LDFLAGS += -Wl,-dead_strip_dylibs)\
+)
 endif

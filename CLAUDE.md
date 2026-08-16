@@ -822,6 +822,22 @@ into the path, turning `../..))` into every "shared/src/..." import's include ro
 failing every one of them. The fix is a literal trailing space before the paren, now
 commented so nobody reads it as stray formatting and removes it.
 
+**A tab in column one of a makefile is never indentation — it is always an attempted
+recipe, and a bare `$(eval)`-as-statement line is not a rule.** That same CarPlay commit
+indented the `ifdef SIDELOAD` and `ifdef SELFCONTAINED` blocks' own `$(foreach ...)` lines
+with a tab, to show they belonged inside their `ifdef` — which reads as correct and is
+the opposite of correct. Make decides "is this a recipe" purely from the first character,
+before any macro expansion, so a tab there demands a preceding target and finds none:
+`shared/tweak.mk:73: *** recipe commences before first target. Stop.` It went unnoticed
+for as long as it did because neither `SIDELOAD` nor `SELFCONTAINED` is ever set by an
+ordinary build — normal builds skip both blocks entirely, and skipping still requires
+Make to scan every line for the matching `endif`, so the broken line was there to trip
+over the first time anything actually set either flag. That was Locket's own
+sideload-dylib CI step, the first in a long while (maybe ever, since the conversion) to
+pass `SELFCONTAINED=1`. The unconditional `$(foreach ...)` above both blocks (for
+JGProgressHUD, `SCIPanelGate` and the rest) was never touched by that commit and sits at
+column one, which is exactly why it kept working while its neighbours silently did not.
+
 ---
 
 ## Verification
