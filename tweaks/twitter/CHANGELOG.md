@@ -1,5 +1,22 @@
 # Albrhi for X — what changed
 
+## v0.14.0
+
+**Three of the four save-button surfaces, removed.** Reported from a device: the save
+button was appearing twice on an ordinary post — once on the corner of the media itself,
+once after X's own share button in the action row — and a third and fourth surface could
+join them inside the immersive video player. All four were installed at once, each one
+built as a fallback in case a previous surface stopped working after an X update, and the
+result read as broken rather than thorough.
+
+Removed: the corner-of-the-picture overlay (`SCITWStatusButton`/`SCITWInlineButton`, on
+every video and photo view X draws) and the action-row button after share
+(`SCITWActionBarButton`). **Kept, unchanged: the button inside the video** — the immersive
+player's own control surface, the one that was actually asked for originally, pinned
+inside the picture and staying with it while you swipe to the next clip. It is now the
+only surface this tweak installs, so it is also the only place a save button appears —
+open a video full-screen to save it, rather than from the timeline directly.
+
 ## v0.13.0
 
 Four more, out of six that were looked into -- and two honest no's, said plainly rather

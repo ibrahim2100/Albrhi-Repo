@@ -57,10 +57,11 @@
 ///
 /// The page one video lives on, which is where a button that must stay *in* the video goes.
 ///
-/// The action-bar button (SCITWActionBarButton.x) is on X's own row and is the reliable
-/// one; it is not what was asked for. What was asked for is a button pinned inside the
-/// picture that stays with that video while you swipe -- and that is a different surface
-/// again, because the action row belongs to the screen, not to the clip.
+/// X's own inline action row was tried too, and was the reliable one of the four surfaces
+/// this file used to run alongside — but it is not what was asked for. What was asked for
+/// is a button pinned inside the picture that stays with that video while you swipe -- a
+/// different surface, because the action row belongs to the screen, not to the clip. This
+/// is now the only surface installed; see Tweak.x for why the other three were removed.
 ///
 /// `ImmersiveVideoPageView` is the per-video page in the immersive pager: one instance per
 /// clip, carrying that clip's player. A subview added here is inside the video's own frame

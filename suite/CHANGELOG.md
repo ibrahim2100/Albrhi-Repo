@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.19.0
+
+Includes X 0.14.0 — **the save button, down to one surface.** It was showing twice on an
+ordinary post — once on the media's own corner, once after the share button — because
+four separate placements ran at once as fallbacks for each other. Three are gone; the one
+kept is the button inside the video itself, which stays with it while you swipe.
+
 ## v1.18.0
 
 Includes YouTube 1.15.0 — **the saved-media player, polished to feel like the rest of

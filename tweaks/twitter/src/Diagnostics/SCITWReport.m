@@ -3,10 +3,7 @@
 #import "Prefs.h"
 #import "Features/Switches/SCITWSwitches.h"
 #import "Features/Switches/SCITWFeatures.h"
-#import "Features/Media/SCITWInlineButton.h"
-#import "Features/Media/SCITWStatusButton.h"
 #import "Features/Media/SCITWImmersiveButton.h"
-#import "Features/Media/SCITWActionBarButton.h"
 #import "Features/Ads/SCITWPromotedFilter.h"
 #import "Features/Ads/SCITWSuggestedFilter.h"
 #import "Features/Confirm/SCITWRepostConfirm.h"
@@ -36,11 +33,7 @@ NSString *SCITWReportText(void) {
     // all about whether the download button attached is a page that answers the question
     // nobody asked. This line is the one somebody writing in about a missing button needs
     // to paste, and until now there was nothing to paste.
-    // Both surfaces, side by side, because the whole point is which of them attached.
-    [text appendFormat:@"inline button: %@\n", SCITWInlineButtonReport()];
-    [text appendFormat:@"status button: %@\n", SCITWStatusButtonReport()];
     [text appendFormat:@"immersive button: %@\n", SCITWImmersiveButtonReport()];
-    [text appendFormat:@"action bar button: %@\n", SCITWActionBarButtonReport()];
     [text appendFormat:@"promoted-tweet filter: %@\n", SCITWPromotedFilterReport()];
     [text appendFormat:@"suggested-account filter: %@\n", SCITWSuggestedFilterReport()];
     [text appendFormat:@"repost confirm: %@\n", SCITWRepostConfirmReport()];

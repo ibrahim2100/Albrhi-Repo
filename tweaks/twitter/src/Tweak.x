@@ -5,17 +5,14 @@
 #import "Features/Switches/SCITWFeatures.h"
 #import "Settings/SCITWGesture.h"
 #import "Features/Media/SCITWMediaHooks.h"
-#import "Features/Media/SCITWInlineButton.h"
-#import "Features/Media/SCITWStatusButton.h"
 #import "Features/Media/SCITWImmersiveButton.h"
-#import "Features/Media/SCITWActionBarButton.h"
 #import "Features/Ads/SCITWPromotedFilter.h"
 #import "Features/Ads/SCITWSuggestedFilter.h"
 #import "Features/Confirm/SCITWRepostConfirm.h"
 #import "Features/Media/SCITWAvatarSave.h"
 #import "Features/Playback/SCITWPictureInPicture.h"
 
-NSString *SCIVersionString = @"v0.13.0";  // AlbrhiTW
+NSString *SCIVersionString = @"v0.14.0";  // AlbrhiTW
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written
@@ -59,26 +56,19 @@ NSString *SCIVersionString = @"v0.13.0";  // AlbrhiTW
     // off to rule it out of a problem should not lose their downloads with it.
     SCITWInstallMediaHooks();
 
-    // The button on the video, beside the list. Its own hook so that a build where X has
-    // renamed the media view loses the button and keeps the list, and the diagnostics
-    // report says which of the two attached.
-    SCITWInstallInlineButton();
-
-    // The other surface, on the classes the working tweak names. Both are installed and
-    // the report says which attached -- one of them is on a class that may not exist here.
-    SCITWInstallStatusButton();
-
     // The button inside the video, in the immersive player's own control stack -- the one
     // place reading TWIGalaxy's binary proved it puts an in-video button, and an arranged
     // subview rather than a floating one, which is why this appears where the others did
-    // not. The reels-equivalent surface, added last and reported like the rest.
+    // not.
+    //
+    // The only surface installed now. Three others existed alongside it at one point -- a
+    // corner overlay on the media view, the same overlay triggered from the tweet's own
+    // status classes, and a button on X's action row after its own share button -- kept as
+    // redundant fallbacks in case X moved the immersive classes again. All four running at
+    // once meant a video could show the save button four times over, which read as broken
+    // rather than thorough. The immersive surface is the one that was actually asked for --
+    // a button that stays inside the video while swiping -- so it is the one that stays.
     SCITWInstallImmersiveButton();
-
-    // The fourth surface, and the one the other three were reaching for. X's own inline
-    // action row is drawn under a timeline post *and* over a playing video, so it answers
-    // both places at once -- see SCITWActionBarButton.x for why the immersive rail could
-    // not, and how "11 buttons added" turned out to mean the opposite of what it said.
-    SCITWInstallActionBarButton();
 
     // Unrelated to the switch layer and unrelated to "Hide ads": neither touches a real
     // Promoted Tweet, which is an ordinary status the server marks rather than a client
