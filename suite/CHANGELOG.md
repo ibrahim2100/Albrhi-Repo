@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.23.1
+
+Includes YouTube 1.19.1 — the feed diagnostic widened after its own first report showed
+it cutting a promising section off mid-word. A flagged section now reads up to 1800
+characters instead of 150; nothing is dropped differently, only more is kept to read.
+
 ## v1.23.0
 
 Includes YouTube 1.19.0 — the ad measurement retargeted to where the ads actually were:

@@ -3,6 +3,22 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.19.1
+
+The first device report from the "Home feed → kept sections" sample above showed exactly
+what it was built to find: a section carrying `ad_logging_data { ad_slot_logging_data`,
+cut off at 220 characters right where it was starting to say something. The excerpt was
+too short to reach the field that would actually identify it as an ad.
+
+Fixed without guessing at the field itself. A section's own description is scanned for a
+short list of suspicious words first (`ad_logging_data`, `ad_slot`, `sponsor`, `shopping`,
+and others) — nothing here drops anything, this only decides how much of a section gets
+read. A flagged section is kept up to 1800 characters instead of 150, prioritised
+regardless of where in the batch it sits, so the one worth reading is not pushed out by
+eleven ordinary videos ahead of it. Send another report from the same place in Settings ›
+Diagnostics; the section that only showed a fragment last time should show enough to name
+what it actually is this time.
+
 ## v1.19.0
 
 Corrected where the last release's measurement was aimed. "Ads still get through

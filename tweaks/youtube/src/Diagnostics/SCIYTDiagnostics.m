@@ -258,15 +258,32 @@ static NSMutableOrderedSet<NSString *> *sciPlaybackFailures = nil;
     [self writeReportToFile];
 }
 
-/// The latest batch only, and short excerpts rather than full descriptions -- a section's
-/// -description prints every item inside it, and a shelf of a dozen videos would make one
-/// entry longer than the whole rest of the report. The renderer's own type and its top
-/// fields sit at the front of that text, which is where the identifier that would have
-/// caught it as an ad already lives, so an excerpt costs nothing this needs.
+/// Words worth a longer look. Not a filter -- nothing here is dropped for carrying one of
+/// these, which would be the exact "a marker inside a shelf condemned the whole shelf"
+/// mistake the real filter above already learned not to make. This only decides how much
+/// of a section's own description gets kept for reading, not whether the section survives.
+static NSArray<NSString *> *SCISuspiciousMarkers(void) {
+    static NSArray *markers = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        markers = @[@"ad_logging_data", @"ad_slot", @"advertis", @"sponsor", @"promo",
+                    @"shopping", @"masthead", @"companion_ad", @"display_ad"];
+    });
+    return markers;
+}
+
+/// The latest batch only. A 220-character excerpt cut a genuinely promising section off
+/// mid-word right as its ad_logging_data field was starting to say something -- the field
+/// that would identify a section as an ad sits deeper in than a short excerpt reaches.
+/// So a section is read in full for a suspicious word first, and
+/// only given the longer allowance if one is actually there; an ordinary section still
+/// gets a short excerpt, so twelve untagged videos do not turn one report into a log file.
 static NSMutableArray<NSString *> *sciFeedKeptSample = nil;
 
 + (void)recordFeedKeptSample:(NSArray *)sections {
-    NSMutableArray<NSString *> *sample = [NSMutableArray array];
+    NSArray<NSString *> *markers = SCISuspiciousMarkers();
+    NSMutableArray<NSString *> *flagged = [NSMutableArray array];
+    NSMutableArray<NSString *> *ordinary = [NSMutableArray array];
 
     for (id section in sections) {
         NSString *text = nil;
@@ -277,11 +294,29 @@ static NSMutableArray<NSString *> *sciFeedKeptSample = nil;
         }
         if (!text.length) continue;
 
-        if (text.length > 220) text = [text substringToIndex:220];
-        [sample addObject:text];
-        if (sample.count >= 12) break;
+        BOOL suspicious = NO;
+        for (NSString *marker in markers) {
+            if ([text rangeOfString:marker options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                suspicious = YES;
+                break;
+            }
+        }
+
+        // Flagged sections are collected in full first, regardless of where in the batch
+        // they sit -- the one worth reading might be the last of fourteen, and a plain
+        // scan-order cap would drop it before it was ever looked at.
+        if (suspicious) {
+            NSString *text1800 = text.length > 1800 ? [text substringToIndex:1800] : text;
+            [flagged addObject:[@"[flagged] " stringByAppendingString:text1800]];
+        } else if (ordinary.count < 8) {
+            [ordinary addObject:text.length > 150 ? [text substringToIndex:150] : text];
+        }
+
+        if (flagged.count >= 6) break;
     }
 
+    NSMutableArray<NSString *> *sample = [NSMutableArray arrayWithArray:flagged];
+    [sample addObjectsFromArray:ordinary];
     sciFeedKeptSample = sample;
 }
 
