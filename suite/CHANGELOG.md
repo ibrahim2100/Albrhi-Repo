@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.22.0
+
+Includes YouTube 1.18.0 — a measurement for "ads still get through sometimes," not a
+fix yet. Two reference tweaks were read for architecture and confirmed this tweak
+already hooks the same core ad gates they do; they also touch a cluster of ad-slot
+selectors this one does not, every one confirmed real on this build but of unknown
+class and shape. A new diagnostic probes them safely and reports what it finds — a real
+hook follows once a device report says which class answers.
+
 ## v1.21.0
 
 Includes YouTube 1.17.0 — **the Download Centre redrawn to look native**, not like a

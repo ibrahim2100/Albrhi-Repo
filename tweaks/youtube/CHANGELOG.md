@@ -3,6 +3,30 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.18.0
+
+A measurement, not a feature yet, for "ads still get through sometimes." Two other
+tweaks that hide ads on this same build were read for architecture (their `.dylib`s
+parsed directly for strings, no otool on this machine): both hit almost exactly the
+methods this tweak already hooks — `decorateContext:` and `spamSignalsDictionary` on
+the same two classes, `createAdsPlaybackCoordinator`, `hasAdLoggingData` — which is
+itself worth knowing, since it means the four gates already shipped are the same four a
+working reference tweak relies on.
+
+What they also touch and this tweak did not: `playerAdsArray`, `adPlacementsArray`,
+`adSlotsArray`, `adSlotRenderer`, `adParams`, `adNextParams`, `adBreakParams` — a
+cluster of selectors around ad-slot data on the player response itself, every one of
+them confirmed real on this exact build against the class dump this tweak's other ad
+reasoning is measured from. What is not known is which class answers which, or what
+shape the answer takes, and guessing that wrong is exactly the mistake this project has
+paid for before (the reels button, the quality picker).
+
+So this release only measures. `SCIYTDiagnostics` now probes a captured player response
+for all seven names, one at a time, `-respondsToSelector:` guarded — never a blind
+`-valueForKey:` sweep — and records the class and count of whatever answers, in Settings
+› Diagnostics › "Ad-slot probe". Watch a video an ad got through on, then send that
+section; a real hook ships once it says which class and what shape.
+
 ## v1.17.0
 
 **The Download Centre redrawn to look like it grew out of the app, not like a skin over

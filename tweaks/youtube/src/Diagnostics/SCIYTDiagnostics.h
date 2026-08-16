@@ -116,6 +116,19 @@
 + (void)recordLockScreenState:(NSString *)state;
 + (NSString *)lockScreenState;
 
+/// What a captured player response answers for a cluster of ad-slot selectors that two
+/// independently reference tweaks touch and this one does not yet — playerAdsArray,
+/// adPlacementsArray, adSlotsArray, adSlotRenderer, adParams, adNextParams, adBreakParams.
+/// Every one of them is confirmed as a real selector on this build from the same class
+/// dump the rest of this file's ad-blocking reasoning is measured from; what is not yet
+/// known is which class answers which, or what shape the answer takes -- an array with
+/// items in it, an array that is always empty, a message that is always nil. This probes
+/// -respondsToSelector: one name at a time and reads back only the class and count of
+/// whatever answers, the same discipline the X tweak's follow-badge rewrite was built on:
+/// one confirmed selector, guarded, never a blind -valueForKey: sweep.
++ (void)recordAdSlotProbe:(NSString *)state;
++ (NSString *)adSlotProbeState;
+
 /// What the Shorts save button did, or why there is none.
 + (void)recordShortsButton:(NSString *)state;
 + (NSString *)shortsButtonState;

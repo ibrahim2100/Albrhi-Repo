@@ -6,6 +6,7 @@
 #import "../Localization/SCILocalize.h"
 #import "../Features/Download/SCIYTDownload.h"
 #import <objc/runtime.h>
+#import <objc/message.h>
 
 ///
 /// The classes worth reporting on, and why each one is here.
@@ -398,6 +399,24 @@ static NSMutableDictionary<NSString *, NSNumber *> *sciSabrAnswers = nil;
     return [sciLockScreenStates componentsJoinedByString:@"\n  "];
 }
 
+/// One video's worth of what each candidate ad-slot selector answered, kept the same way
+/// the lock-screen states are -- the last three, not the first three, because the useful
+/// question is what a *recent* capture looked like when the report was actually sent.
+static NSMutableArray<NSString *> *sciAdSlotStates = nil;
+
++ (void)recordAdSlotProbe:(NSString *)state {
+    if (!state.length) return;
+    if (!sciAdSlotStates) sciAdSlotStates = [NSMutableArray array];
+
+    [sciAdSlotStates addObject:state];
+    while (sciAdSlotStates.count > 3) [sciAdSlotStates removeObjectAtIndex:0];
+}
+
++ (NSString *)adSlotProbeState {
+    if (!sciAdSlotStates.count) return SCILocalized(@"diag_ad_slots_none");
+    return [sciAdSlotStates componentsJoinedByString:@"\n  "];
+}
+
 /// Which video the captured response is for.
 ///
 /// This is the id that matters for downloading and it was the one nobody wrote down. The
@@ -408,6 +427,63 @@ static NSMutableDictionary<NSString *, NSNumber *> *sciSabrAnswers = nil;
 /// over the wrong video's playlist. In Shorts all three ids differ routinely, which is why
 /// it was wrong there every time and fine everywhere else.
 static NSString *sciResponseVideoID = nil;
+
+/// What a value answered, described without assuming its class.
+///
+/// A protobuf repeated field is not an NSArray -- it is Google's own container type, not
+/// public API this file can import and check with -isKindOfClass:. Checked by selector
+/// instead: anything that answers -count is described with its count, which covers both
+/// the real container type and a plain NSArray alike without needing to name either one.
+static NSString *SCIDescribeAdSlotValue(id value) {
+    if (!value) return @"nil";
+
+    if ([value respondsToSelector:@selector(count)]) {
+        NSUInteger count = ((NSUInteger (*)(id, SEL))objc_msgSend)(value, @selector(count));
+        return [NSString stringWithFormat:@"%@(%lu)", NSStringFromClass([value class]), (unsigned long)count];
+    }
+
+    return NSStringFromClass([value class]);
+}
+
+/// Reads a small, named set of selectors off a captured player response, one at a time.
+///
+/// Every name here is confirmed real on this build already -- present in the class dump
+/// this file's other reasoning is measured from -- so the open question is not whether
+/// they exist but which class answers and what it hands back. `-respondsToSelector:`
+/// decides that per name, and only a name that answers is ever sent.
+static void SCIProbeAdSlots(id response) {
+    if (!response) return;
+
+    static NSArray<NSString *> *candidates = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        candidates = @[@"playerAdsArray", @"adPlacementsArray", @"adSlotsArray",
+                       @"adSlotRenderer", @"adParams", @"adNextParams", @"adBreakParams"];
+    });
+
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+
+    @try {
+        for (NSString *name in candidates) {
+            SEL selector = NSSelectorFromString(name);
+            if (![response respondsToSelector:selector]) continue;
+
+            id value = ((id (*)(id, SEL))objc_msgSend)(response, selector);
+            [parts addObject:[NSString stringWithFormat:@"%@=%@", name, SCIDescribeAdSlotValue(value)]];
+        }
+    } @catch (NSException *exception) {
+        [SCIYTDiagnostics recordAdSlotProbe:
+            [NSString stringWithFormat:@"%@ — probe failed: %@",
+                sciResponseVideoID ?: @"?", exception.reason ?: @"?"]];
+        return;
+    }
+
+    [SCIYTDiagnostics recordAdSlotProbe:parts.count
+        ? [NSString stringWithFormat:@"%@ — %@", sciResponseVideoID ?: @"?",
+            [parts componentsJoinedByString:@", "]]
+        : [NSString stringWithFormat:@"%@ — none of the candidate selectors answered on %@",
+            sciResponseVideoID ?: @"?", NSStringFromClass([response class])]];
+}
 
 + (void)recordPlayerResponse:(id)response {
     if (!response) return;
@@ -455,6 +531,8 @@ static NSString *sciResponseVideoID = nil;
     }
 
     SCILogV(@"captured player response %@ for %@", [response class], sciResponseVideoID);
+
+    SCIProbeAdSlots(response);
 }
 
 + (NSString *)responseVideoID { return sciResponseVideoID; }
@@ -757,6 +835,11 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     // actually played -- the fact needed to settle whether "sound does not show" is a
     // real difference between the two paths or a report about something else entirely.
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_lock_screen"), [self lockScreenState]];
+
+    // The ad-slot probe -- what a cluster of selectors two other tweaks touch actually
+    // answer on this build's own player response, measured rather than guessed at before
+    // any of them gets hooked.
+    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_ad_slots"), [self adSlotProbeState]];
 
     // What the feed filter saw. 0.20.1 shipped a wider ad list and this line to judge it by,
     // and the line never got written -- so the release changed what is hidden and removed

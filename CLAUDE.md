@@ -1042,8 +1042,8 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.7** · YouTube **1.17.0** · X **0.14.0** · Locket **0.2.1** · Panel **0.6.7** ·
-CarPlay **0.4.1** (withheld from the source) · suite **1.21.0**.
+Instagram **4.1.7** · YouTube **1.18.0** · X **0.14.0** · Locket **0.2.1** · Panel **0.6.7** ·
+CarPlay **0.4.1** (withheld from the source) · suite **1.22.0**.
 
 - **CarPlay is built but not served.** The code is complete and compiles; the package is
   kept out of the APT index until its app bridging is confirmed on a device. Install it
