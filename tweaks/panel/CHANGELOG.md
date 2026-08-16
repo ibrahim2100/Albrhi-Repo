@@ -1,5 +1,35 @@
 # Albrhi Panel Changelog
 
+## v0.8.0
+
+**One row per app, carrying everything.**
+
+The page listed every app twice: once as a switch, and again in a Versions section stating
+two version numbers. Two passes down the same list to answer one question about one app —
+and the switch was in the first pass while the reason you might want to move it was in the
+second.
+
+Each app is one row now, with its icon, its name, and a line underneath saying which version
+is on this phone and which one that tweak was last verified against. The Versions section is
+gone; its explanation moved into the footer above, where it now describes something visible.
+
+**Amber, not red**, when the app is newer than the tested build. That is a caution, not a
+fault — the tested numbers are the newest builds the developer's own phone accepts, never a
+compatibility ceiling, and colouring it red would claim a problem where there is only an
+unknown. An app that is not installed says so on its own row instead of showing a dead
+switch with no explanation.
+
+The row is a `PSSwitchTableCell` subclass. Theos ships headers for both that and
+`PSTableCell`, so the switch, its wiring and its enabled state keep working exactly as the
+plain cell's did, and **no private property is guessed at** — the rule that keeps CarPlay's
+microphone choice three switch cells instead of a private list picker.
+
+Two things the layout had to be careful about, both recorded in the cell itself: the second
+line is positioned against the title frame Preferences has already set rather than the
+content view, because the title inset changes with the icon, the switch and the iOS version;
+and the subtitle is the cell's own label rather than `-detailTextLabel`, which `PSTableCell`
+restyles on every refresh.
+
 ## v0.7.0
 
 **The panel says how much of Albrhi is actually on, before anything is read.**

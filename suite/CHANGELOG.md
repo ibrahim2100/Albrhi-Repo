@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.27.0
+
+Includes Panel 0.8.0 — **Settings › Albrhi is one row per app now.** Each carries its icon,
+its switch, and a line saying which version is on this phone and which the tweak was verified
+against. The separate Versions section, which listed the same apps a second time, is gone.
+
 ## v1.26.0
 
 Includes Panel 0.7.0 — Settings › Albrhi now says how much of the tweak is on at a glance
