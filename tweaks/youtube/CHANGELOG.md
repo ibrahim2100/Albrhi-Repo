@@ -3,6 +3,27 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.19.0
+
+Corrected where the last release's measurement was aimed. "Ads still get through
+sometimes" turned out to mean the Home feed while scrolling between videos, not the
+player during playback — a different layer of SCIYTAdBlock.x entirely, and the ad-slot
+probe 1.18.0 shipped was watching the wrong one.
+
+The feed filter (`addSectionsFromArray:` on `YTInnerTubeCollectionViewController`) already
+drops a section whose description contains one of a known list of identifiers, and that
+list was built the same way it always has been: from real ad sections found on a device,
+not guessed. A section this tweak has never seen an example of is a section whose
+identifier is not on the list yet, and the fastest way to find one is to look at what the
+filter chose to *keep* right after watching one slip through.
+
+So the diagnostic now does that: every batch of Home sections the filter lets past is
+sampled -- a short excerpt of each kept section, up to twelve of them -- in Settings ›
+Diagnostics › "Home feed → kept sections". Scroll until an ad appears, stop, open
+Diagnostics immediately (the sample is the *last* batch loaded, overwritten on the next
+scroll), and send that section. The identifier that slipped through will be sitting in
+the excerpt.
+
 ## v1.18.0
 
 A measurement, not a feature yet, for "ads still get through sometimes." Two other

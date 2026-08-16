@@ -215,6 +215,12 @@ static BOOL SCISectionIsPromoted(id section) {
     // second, and the next step differs.
     [SCIYTDiagnostics recordFeedSections:sections.count dropped:sections.count - kept.count];
 
+    // What is left after filtering -- the sections the identifier list did not recognise.
+    // Reported separately from the counts above because a scattered ad on Home is this
+    // list still holding one, and the fastest way to find which identifier is missing is
+    // to look at what came through right after seeing it happen.
+    [SCIYTDiagnostics recordFeedKeptSample:kept];
+
     // Filtered on the way in, so the sections are never built into views at all --
     // as opposed to hiding cells afterwards, which leaves gaps in the feed where the
     // cell used to be.

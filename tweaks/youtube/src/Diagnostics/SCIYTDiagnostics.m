@@ -258,6 +258,38 @@ static NSMutableOrderedSet<NSString *> *sciPlaybackFailures = nil;
     [self writeReportToFile];
 }
 
+/// The latest batch only, and short excerpts rather than full descriptions -- a section's
+/// -description prints every item inside it, and a shelf of a dozen videos would make one
+/// entry longer than the whole rest of the report. The renderer's own type and its top
+/// fields sit at the front of that text, which is where the identifier that would have
+/// caught it as an ad already lives, so an excerpt costs nothing this needs.
+static NSMutableArray<NSString *> *sciFeedKeptSample = nil;
+
++ (void)recordFeedKeptSample:(NSArray *)sections {
+    NSMutableArray<NSString *> *sample = [NSMutableArray array];
+
+    for (id section in sections) {
+        NSString *text = nil;
+        @try {
+            text = [section description];
+        } @catch (__unused NSException *exception) {
+            continue;
+        }
+        if (!text.length) continue;
+
+        if (text.length > 220) text = [text substringToIndex:220];
+        [sample addObject:text];
+        if (sample.count >= 12) break;
+    }
+
+    sciFeedKeptSample = sample;
+}
+
++ (NSString *)feedKeptSampleState {
+    if (!sciFeedKeptSample.count) return SCILocalized(@"diag_feed_sample_none");
+    return [sciFeedKeptSample componentsJoinedByString:@"\n  ---\n  "];
+}
+
 + (NSString *)playbackFailures {
     if (!sciPlaybackFailures.count) return SCILocalized(@"diag_playback_none");
     return [[sciPlaybackFailures array] componentsJoinedByString:@"\n  "];
@@ -845,6 +877,11 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     // and the line never got written -- so the release changed what is hidden and removed
     // the only way to tell what it hid.
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_feed"), [self feedState]];
+
+    // The actual content of the last batch the filter let through -- not just how many,
+    // which section identifiers, so a scattered ad on Home can be matched to the exact
+    // marker that needs adding to the list.
+    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_feed_sample"), [self feedKeptSampleState]];
 
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts"), [self shortsButtonState]];
 

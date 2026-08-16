@@ -129,6 +129,14 @@
 + (void)recordAdSlotProbe:(NSString *)state;
 + (NSString *)adSlotProbeState;
 
+/// A short excerpt of every section the feed filter chose to *keep* on its last pass —
+/// not the ones it dropped, the ones it let through. Reported because the complaint this
+/// answers is scattered ads on Home while scrolling, which is the feed filter missing a
+/// section rather than the player showing one, and the fastest way to find what it missed
+/// is to look at what it did not drop right after seeing one slip through.
++ (void)recordFeedKeptSample:(NSArray *)sections;
++ (NSString *)feedKeptSampleState;
+
 /// What the Shorts save button did, or why there is none.
 + (void)recordShortsButton:(NSString *)state;
 + (NSString *)shortsButtonState;

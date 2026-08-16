@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.23.0
+
+Includes YouTube 1.19.0 — the ad measurement retargeted to where the ads actually were:
+the Home feed while scrolling, not the player. Every batch of Home sections the ad
+filter lets through is now sampled in Settings › Diagnostics › "Home feed → kept
+sections" — scroll until an ad shows, stop, and send that section so the real fix can
+target the exact identifier that slipped past.
+
 ## v1.22.0
 
 Includes YouTube 1.18.0 — a measurement for "ads still get through sometimes," not a
