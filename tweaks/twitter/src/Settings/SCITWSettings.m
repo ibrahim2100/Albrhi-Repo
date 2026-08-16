@@ -22,9 +22,15 @@
 /// So Albrhi is section zero and Status has moved down. Status is four rows of information
 /// -- what attached, how many keys were seen -- and opening a settings screen with a report
 /// puts the reading matter above everything anybody came to change.
+///
+/// **Media sits right under the quick controls, ahead of Features.** Saving a video or a
+/// photo is the reason this tweak's name comes up at all -- it is the first thing asked for
+/// when this project took on X -- and a screen that made that scroll past seventeen switch
+/// names first would be arranging itself around what is easy to list, not around what
+/// somebody opened it to do.
 static const NSInteger SCITWSectionAlbrhi   = 0;
-static const NSInteger SCITWSectionFeatures = 1;
-static const NSInteger SCITWSectionMedia    = 2;
+static const NSInteger SCITWSectionMedia    = 1;
+static const NSInteger SCITWSectionFeatures = 2;
 static const NSInteger SCITWSectionStatus   = 3;
 static const NSInteger SCITWSectionKeys     = 4;
 
@@ -42,6 +48,52 @@ static const NSInteger SCITWAlbrhiRowCount = 3;
 @property (nonatomic, assign) BOOL changedOnly;
 @property (nonatomic, strong) NSArray<SCITWMediaItem *> *media;
 @end
+
+
+/// A small colour-badge icon, drawn the way Settings.app draws its own rows: a rounded
+/// square in a colour with a white glyph centred in it.
+///
+/// `UITableViewCell.imageView` is a plain `UIImageView` with no way to give it a background
+/// layer of its own, so the background is baked into the image itself -- the badge is one
+/// flat bitmap, not a glyph over a separately-drawn square. That is the whole trick behind
+/// every icon in iOS's own Settings app, and it needs no custom cell class here: setting
+/// `cell.imageView.image` is enough, and the built-in cell styles already size and place it.
+///
+/// Returns nothing to draw -- an empty, transparent 29-point square -- when the symbol name
+/// does not exist on this iOS version, rather than crashing on a nil image or silently
+/// drawing a coloured square with nothing in it that looks like a rendering bug.
+///
+/// **Deliberately not used on the raw switch list.** Three hundred and more rows redrawing
+/// a bitmap each would be spending real work on a list built to be lean and searchable, for
+/// a section where every row is already told apart by its own name -- the curated sections
+/// below are few enough, and different enough from each other, that an icon is worth its
+/// keep on them and would be noise repeated three hundred times on that one.
+static UIImage *SCITWBadge(NSString *symbolName, UIColor *color) {
+    CGSize size = CGSizeMake(29, 29);
+
+    UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat preferredFormat];
+    format.opaque = NO;
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:size
+                                                                                format:format];
+
+    return [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+        UIBezierPath *background =
+            [UIBezierPath bezierPathWithRoundedRect:CGRectMake(0, 0, size.width, size.height)
+                                        cornerRadius:7];
+        [(color ?: [UIColor systemGrayColor]) setFill];
+        [background fill];
+
+        UIImageSymbolConfiguration *config =
+            [UIImageSymbolConfiguration configurationWithPointSize:15
+                                                             weight:UIImageSymbolWeightMedium];
+        UIImage *glyph = [[UIImage systemImageNamed:symbolName withConfiguration:config]
+            imageWithTintColor:[UIColor whiteColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
+        if (!glyph) return;
+
+        [glyph drawAtPoint:CGPointMake((size.width - glyph.size.width) / 2,
+                                       (size.height - glyph.size.height) / 2)];
+    }];
+}
 
 
 @implementation SCITWSettings
@@ -119,9 +171,21 @@ static const NSInteger SCITWAlbrhiRowCount = 3;
 
     self.tableView.sectionHeaderTopPadding = 0;
 
+    // A pull re-reads what X has answered since the screen opened, the same as -reload
+    // does on any other trigger. Nothing here is fetched over a network -- it is already on
+    // the phone -- so the spinner is brief and honest rather than theatre over a delay.
+    UIRefreshControl *refresh = [[UIRefreshControl alloc] init];
+    [refresh addTarget:self action:@selector(pulledToRefresh) forControlEvents:UIControlEventValueChanged];
+    self.refreshControl = refresh;
+
     [self buildHeader];
     [self buildFooter];
     [self reload];
+}
+
+- (void)pulledToRefresh {
+    [self reload];
+    [self.refreshControl endRefreshing];
 }
 
 /// The card at the top: what this tweak is, and whether it is working.
@@ -468,8 +532,11 @@ static const NSInteger SCITWAlbrhiRowCount = 3;
     cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
 
     cell.accessoryType = UITableViewCellAccessoryDetailButton;
-    cell.imageView.image = [UIImage systemImageNamed:
-        item.kind == SCITWMediaKindImage ? @"photo" : @"play.rectangle"];
+
+    NSString *icon = item.kind == SCITWMediaKindImage ? @"photo.fill" : @"play.rectangle.fill";
+    UIColor *color = item.kind == SCITWMediaKindImage ? [UIColor systemBlueColor]
+                                                       : [UIColor systemPurpleColor];
+    cell.imageView.image = SCITWBadge(icon, color);
 }
 
 /// The tweak's own three settings, which had no row until now.
@@ -481,20 +548,28 @@ static const NSInteger SCITWAlbrhiRowCount = 3;
     NSString *key = nil;
     NSString *title = nil;
     NSString *note = nil;
+    NSString *icon = nil;
+    UIColor *color = nil;
     BOOL defaultOn = YES;
 
     if (row == SCITWAlbrhiSaveButton) {
         key = SCIPrefInlineButton;
         title = SCILocalized(@"albrhi_save_button");
         note = SCILocalized(@"albrhi_save_button_note");
+        icon = @"arrow.down.circle.fill";
+        color = [UIColor systemBlueColor];
     } else if (row == SCITWAlbrhiSwitchLayer) {
         key = SCIPrefSwitchLayer;
         title = SCILocalized(@"albrhi_switch_layer");
         note = SCILocalized(@"albrhi_switch_layer_note");
+        icon = @"switch.2";
+        color = [UIColor systemOrangeColor];
     } else {
         key = SCIPrefVerboseLogging;
         title = SCILocalized(@"albrhi_logging");
         note = SCILocalized(@"albrhi_logging_note");
+        icon = @"doc.text.magnifyingglass";
+        color = [UIColor systemGrayColor];
         defaultOn = NO;
     }
 
@@ -503,6 +578,7 @@ static const NSInteger SCITWAlbrhiRowCount = 3;
     cell.detailTextLabel.numberOfLines = 0;
     cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    cell.imageView.image = SCITWBadge(icon, color);
 
     // Turning the switch layer off makes this tweak do nothing at all, which is a bigger
     // step than any single feature and is marked the way the cautious features are.
@@ -546,6 +622,7 @@ static const NSInteger SCITWAlbrhiRowCount = 3;
     cell.detailTextLabel.numberOfLines = 0;
     cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    cell.imageView.image = SCITWBadge(feature.iconName, feature.iconColor);
 
     // Marked, not hidden. Each of these removes a disclosure, changes what X is told about
     // the device, or turns on something X shipped switched off -- and a row that looks
@@ -581,6 +658,7 @@ static const NSInteger SCITWAlbrhiRowCount = 3;
             cell.detailTextLabel.text = SCIPanelAllowsThisApp()
                 ? SCILocalized(@"gate_on") : SCILocalized(@"gate_off");
             cell.detailTextLabel.numberOfLines = 0;
+            cell.imageView.image = SCITWBadge(@"shield.lefthalf.filled", [UIColor systemBlueColor]);
             break;
         }
         case 1: {
@@ -589,18 +667,21 @@ static const NSInteger SCITWAlbrhiRowCount = 3;
             cell.detailTextLabel.text = providers.count
                 ? [NSString stringWithFormat:@"%lu", (unsigned long)providers.count]
                 : SCILocalized(@"status_providers_none");
+            cell.imageView.image = SCITWBadge(@"link", [UIColor systemIndigoColor]);
             break;
         }
         case 2: {
             cell.textLabel.text = SCILocalized(@"status_keys");
             cell.detailTextLabel.text =
                 [NSString stringWithFormat:@"%lu", (unsigned long)self.all.count];
+            cell.imageView.image = SCITWBadge(@"key.fill", [UIColor systemTealColor]);
             break;
         }
         default: {
             cell.textLabel.text = SCILocalized(@"status_asked");
             cell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",
                 (unsigned long)[SCITWSwitches totalAsked]];
+            cell.imageView.image = SCITWBadge(@"questionmark.circle.fill", [UIColor systemGrayColor]);
             break;
         }
     }

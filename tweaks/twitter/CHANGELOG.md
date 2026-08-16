@@ -1,5 +1,23 @@
 # Albrhi for X — what changed
 
+## v0.11.0
+
+**The settings screen, redrawn with an icon beside every row — the way iOS's own Settings
+app draws its rows.** Each control, feature and status line now carries a small coloured
+badge rather than plain text alone, which is the single biggest thing that made past
+versions of this screen look like a debug page rather than part of the phone.
+
+**Saved media moved up**, right under the three quick switches and ahead of the seventeen
+named features. Saving a video or a photo is the reason this tweak exists in the first
+place, and a screen that made that scroll past a wall of switch names first was arranging
+itself around what was easy to list rather than around what someone opened it to do.
+
+**Pull to refresh** re-reads what has been seen and saved since the screen opened — nothing
+here reaches a network, so the spinner is brief and honest rather than theatre over a wait.
+
+The raw switch list at the bottom keeps its plain, dense rows on purpose: it is a search
+tool over 350-plus entries, and an icon repeated that many times would be noise, not polish.
+
 ## v0.10.1
 
 **The in-video button jumped back to its old place after the first swipe**, and the cause

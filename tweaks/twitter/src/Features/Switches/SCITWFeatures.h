@@ -31,6 +31,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -53,6 +54,13 @@ NS_ASSUME_NONNULL_BEGIN
 /// Whether it deserves a warning colour: it removes a disclosure, changes what X is told
 /// about the device, or turns on something X shipped switched off.
 @property (nonatomic, assign) BOOL cautious;
+
+/// An SF Symbol name and a colour, for the badge the settings screen draws beside each
+/// feature -- the same rounded-square-icon shape Settings.app itself uses. Kept here rather
+/// than hard-coded per row in the screen, so a feature and the way it is drawn cannot drift
+/// apart when the table above gains a row and someone forgets the screen fifty lines below.
+@property (nonatomic, copy) NSString *iconName;
+@property (nonatomic, strong) UIColor *iconColor;
 
 @end
 

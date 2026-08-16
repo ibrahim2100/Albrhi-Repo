@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.14.0
+
+Includes X 0.11.0 — **the settings screen carries an icon beside every row now**, the way
+iOS's own Settings app draws its own. Saved media moved up, right under the quick switches
+and ahead of the seventeen named features, since saving a video or a photo is the reason
+this tweak exists in the first place. Pull to refresh re-reads what has been seen and saved.
+
 ## v1.13.1
 
 Includes X 0.10.1 — the in-video save button no longer jumps back to the wrong place after

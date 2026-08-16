@@ -11,12 +11,16 @@ static SCITWFeature *Feature(NSString *identifier,
                              NSString *titleKey,
                              NSString *noteKey,
                              BOOL cautious,
+                             NSString *iconName,
+                             UIColor *iconColor,
                              NSDictionary<NSString *, NSNumber *> *keys) {
     SCITWFeature *feature = [[SCITWFeature alloc] init];
     feature.identifier = identifier;
     feature.titleKey = titleKey;
     feature.noteKey = noteKey;
     feature.cautious = cautious;
+    feature.iconName = iconName;
+    feature.iconColor = iconColor;
     feature.keys = keys;
     return feature;
 }
@@ -40,7 +44,8 @@ static SCITWFeature *Feature(NSString *identifier,
             // where an ad may be placed. The three placement keys are turned *on* rather
             // than off -- they are X's own protections against an ad in the first slot and
             // beside a post that moved, and X ships them off.
-            Feature(@"ads", @"f_ads", @"f_ads_note", NO, @{
+            Feature(@"ads", @"f_ads", @"f_ads_note", NO,
+                    @"megaphone.fill", [UIColor systemRedColor], @{
                 @"ssp_ads_home_enabled": @NO,
                 @"ssp_ads_home_client_only_integration": @NO,
                 @"ssp_ads_preroll_enabled": @NO,
@@ -68,7 +73,8 @@ static SCITWFeature *Feature(NSString *identifier,
 
             // Seven keys, each asked 7,734 times -- the same count, which is what a set of
             // labels on one button looks like from here.
-            Feature(@"promote", @"f_promote", @"f_promote_note", NO, @{
+            Feature(@"promote", @"f_promote", @"f_promote_note", NO,
+                    @"arrowshape.turn.up.right.fill", [UIColor systemPinkColor], @{
                 @"ios_tweet_promote_button_enabled": @NO,
                 @"ios_tweet_promote_button_analytics_sheet_enabled": @NO,
                 @"ios_tweet_promote_button_booster_status_label_enabled": @NO,
@@ -78,7 +84,8 @@ static SCITWFeature *Feature(NSString *identifier,
                 @"ios_tweet_promote_button_social_context_label_enabled": @NO,
             }),
 
-            Feature(@"grok", @"f_grok", @"f_grok_note", NO, @{
+            Feature(@"grok", @"f_grok", @"f_grok_note", NO,
+                    @"sparkles", [UIColor systemPurpleColor], @{
                 @"grok_ask_grok_button_under_post_preview_enabled": @NO,
                 @"grok_ios_author_view_analyze_button_via_backend_enabled": @NO,
                 @"grok_ios_analyze_context_menu_enabled": @NO,
@@ -99,7 +106,8 @@ static SCITWFeature *Feature(NSString *identifier,
             // Grok feature on purpose -- turning off automatic translation is not the same
             // decision as removing Grok's buttons, and someone reading a timeline in three
             // languages wants opposite things from the two.
-            Feature(@"autotranslate", @"f_autotranslate", @"f_autotranslate_note", NO, @{
+            Feature(@"autotranslate", @"f_autotranslate", @"f_autotranslate_note", NO,
+                    @"character.book.closed.fill", [UIColor systemBlueColor], @{
                 @"grok_translations_post_auto_translation_is_enabled": @NO,
                 @"grok_translations_bio_auto_translation_is_enabled": @NO,
                 @"grok_translations_community_note_auto_translation_is_enabled": @NO,
@@ -107,7 +115,8 @@ static SCITWFeature *Feature(NSString *identifier,
                 @"ios_tweet_detail_always_load_is_translatable": @NO,
             }),
 
-            Feature(@"upsell", @"f_upsell", @"f_upsell_note", NO, @{
+            Feature(@"upsell", @"f_upsell", @"f_upsell_note", NO,
+                    @"creditcard.fill", [UIColor systemGreenColor], @{
                 @"subscriptions_offers_promotional_enabled": @NO,
                 @"subscriptions_inapp_grok_upsell_enabled": @NO,
                 @"subscriptions_inapp_grok": @NO,
@@ -126,7 +135,8 @@ static SCITWFeature *Feature(NSString *identifier,
             // not a privacy setting: it is telling the server something it will not
             // believe, on an account that can be locked for it. Not offered, rather than
             // offered with a warning -- there is no version of that trade worth an account.
-            Feature(@"tracking", @"f_tracking", @"f_tracking_note", YES, @{
+            Feature(@"tracking", @"f_tracking", @"f_tracking_note", YES,
+                    @"eye.slash.fill", [UIColor systemRedColor], @{
                 @"ios_scribe_flush_linger_on_background_enabled": @NO,
                 @"ios_scribe_linger_monotonic_clock_enabled": @NO,
                 @"ios_scribe_device_integrity_enabled": @NO,
@@ -154,7 +164,8 @@ static SCITWFeature *Feature(NSString *identifier,
                 @"crashlytics_logging_logger_enabled": @NO,
             }),
 
-            Feature(@"clutter", @"f_clutter", @"f_clutter_note", NO, @{
+            Feature(@"clutter", @"f_clutter", @"f_clutter_note", NO,
+                    @"hand.raised.slash.fill", [UIColor systemTealColor], @{
                 @"ios_ui_inline_actions_tip_enabled": @NO,
                 @"level_up_reactive_prompts_like_reaction_enabled": @NO,
                 @"level_up_reactive_prompts_user_follow_reaction_enabled": @NO,
@@ -173,13 +184,15 @@ static SCITWFeature *Feature(NSString *identifier,
                 @"ios_ui_multi_media_carousel_avatar_avoidance_enabled": @NO,
             }),
 
-            Feature(@"viewcounts", @"f_viewcounts", @"f_viewcounts_note", NO, @{
+            Feature(@"viewcounts", @"f_viewcounts", @"f_viewcounts_note", NO,
+                    @"eye.fill", [UIColor systemIndigoColor], @{
                 @"view_counts_public_visibility_enabled": @NO,
                 @"view_counts_everywhere_api_enabled": @NO,
                 @"ios_rank_badge_enabled": @NO,
             }),
 
-            Feature(@"spaces", @"f_spaces", @"f_spaces_note", NO, @{
+            Feature(@"spaces", @"f_spaces", @"f_spaces_note", NO,
+                    @"waveform", [UIColor systemPurpleColor], @{
                 @"voice_rooms_consumption_enabled": @NO,
                 @"voice_rooms_main_fab_creation_enabled": @NO,
                 @"ios_timeline_avatar_discovery_spaces_experiment": @NO,
@@ -189,41 +202,48 @@ static SCITWFeature *Feature(NSString *identifier,
             // A warning being removed, so it is marked cautious and defaults off like every
             // other feature here. YouTube's paid-promotion switch defaults off for the same
             // reason: taking a disclosure away for everybody is not a tweak's call.
-            Feature(@"sensitive", @"f_sensitive", @"f_sensitive_note", YES, @{
+            Feature(@"sensitive", @"f_sensitive", @"f_sensitive_note", YES,
+                    @"exclamationmark.triangle.fill", [UIColor systemOrangeColor], @{
                 @"sensitive_tweet_warnings_enabled": @NO,
                 @"sensitive_tweet_warnings_fixed_height_enabled": @NO,
                 @"media_poll_sensitive_media_banner_enabled": @NO,
             }),
 
-            Feature(@"gif", @"f_gif", @"f_gif_note", NO, @{
+            Feature(@"gif", @"f_gif", @"f_gif_note", NO,
+                    @"photo.fill.on.rectangle.fill", [UIColor systemPinkColor], @{
                 @"photo_ignore_autoplay_settings_for_gif": @NO,
             }),
 
-            Feature(@"zoom", @"f_zoom", @"f_zoom_note", NO, @{
+            Feature(@"zoom", @"f_zoom", @"f_zoom_note", NO,
+                    @"plus.magnifyingglass", [UIColor systemBlueColor], @{
                 @"ios_inline_zoom_enabled": @YES,
             }),
 
-            Feature(@"gestures", @"f_gestures", @"f_gestures_note", NO, @{
+            Feature(@"gestures", @"f_gestures", @"f_gestures_note", NO,
+                    @"hand.draw.fill", [UIColor systemBrownColor], @{
                 @"ios_ui_timeline_gestures_by_default_enabled": @YES,
                 @"ios_tab_bar_gesture_rework_enabled": @YES,
                 @"custom_post_swipe_gestures_enabled": @YES,
                 @"ios_ui_timeline_name_profile_navigation_enabled": @YES,
             }),
 
-            Feature(@"tabs", @"f_tabs", @"f_tabs_note", NO, @{
+            Feature(@"tabs", @"f_tabs", @"f_tabs_note", NO,
+                    @"square.grid.2x2.fill", [UIColor systemIndigoColor], @{
                 @"ios_tab_bar_default_show_communities": @YES,
                 @"ios_tab_bar_default_show_profile": @YES,
                 @"hometimeline_pinned_tabs_generic_timelines_enabled": @YES,
             }),
 
-            Feature(@"privacy", @"f_privacy", @"f_privacy_note", NO, @{
+            Feature(@"privacy", @"f_privacy", @"f_privacy_note", NO,
+                    @"lock.fill", [UIColor systemGreenColor], @{
                 @"hidden_profile_likes_enabled": @YES,
                 @"hidden_profile_subscriptions_enabled": @YES,
                 @"global_mention_settings_enabled": @YES,
                 @"dont_mention_me_view_api_enabled": @YES,
             }),
 
-            Feature(@"launch", @"f_launch", @"f_launch_note", NO, @{
+            Feature(@"launch", @"f_launch", @"f_launch_note", NO,
+                    @"bolt.fill", [UIColor systemYellowColor], @{
                 @"app_launch_animated_launch_screen_enabled": @NO,
                 @"ios_home_timeline_container_defer_loading_inactive_timelines_enabled": @YES,
                 @"ios_client_performance_defer_notifications_load_until_view_will_appear_enabled": @YES,
@@ -234,7 +254,8 @@ static SCITWFeature *Feature(NSString *identifier,
             // which usually means they are being rolled out, and sometimes means they were
             // rolled back. Turning them on is the one group here where "it got worse" is a
             // plausible outcome, so it says so and is easy to undo.
-            Feature(@"perf", @"f_perf", @"f_perf_note", YES, @{
+            Feature(@"perf", @"f_perf", @"f_perf_note", YES,
+                    @"speedometer", [UIColor systemOrangeColor], @{
                 @"ios_client_performance_urt_timeline_update_action_async_start_enabled": @YES,
                 @"ios_client_performance_urt_timeline_update_stop_main_queue_dispatch_enabled": @YES,
                 @"ios_client_performance_status_author_view_info_text_layout_eligibility_validation_enabled": @YES,
