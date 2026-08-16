@@ -268,7 +268,17 @@ static void SCIAskForLevel(SCIYTSettingsHostController *host) {
                            action:^{ SCIAskForTime(host, SCIPrefNightEnd); }],
         ];
 
-        return @[fullscreen, brightness, night];
+        SCISection *motion = [[SCISection alloc] init];
+        motion.title = SCILocalized(@"section_motion");
+        motion.footer = SCILocalized(@"high_refresh_rate_footer");
+        motion.rows = @[
+            [SCIRow switchRow:SCILocalized(@"high_refresh_rate")
+                       detail:SCILocalized(@"high_refresh_rate_note")
+                       symbol:@"waveform.path.ecg"
+                      prefKey:SCIPrefHighRefreshRate],
+        ];
+
+        return @[fullscreen, brightness, night, motion];
     }];
 }
 

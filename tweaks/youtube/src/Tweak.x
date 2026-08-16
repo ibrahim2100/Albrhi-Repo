@@ -6,7 +6,7 @@
 #import "Diagnostics/SCIYTDiagnostics.h"
 #import "Features/Display/SCIYTDimmer.h"
 
-NSString *SCIVersionString = @"v1.13.0";  // AlbrhiYT
+NSString *SCIVersionString = @"v1.14.0";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.
@@ -88,6 +88,13 @@ NSString *SCIVersionString = @"v1.13.0";  // AlbrhiYT
         SCIPrefBackgroundPlay: @YES,
         SCIPrefBlockUpdateNag: @YES,
         SCIPrefHidePaidPromo: @NO,
+
+        // Both pure upside with nothing to weigh against: real PIP is a system window
+        // this app already knows how to fill once permitted, and a display link asking
+        // for less than the screen already gives for free is not a trade anyone wants.
+        SCIPrefNativePIP: @YES,
+        SCIPrefHighRefreshRate: @YES,
+
         SCIPrefVerboseLogging: @NO,
 
         // The button beside You is on: a Download Centre nobody can find is a Download

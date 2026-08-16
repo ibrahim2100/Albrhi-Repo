@@ -72,6 +72,10 @@ static void SCIAskForSeek(SCIYTSettingsHostController *host) {
                        detail:SCILocalized(@"background_playback_note")
                        symbol:@"speaker.wave.2.fill"
                       prefKey:SCIPrefBackgroundPlay],
+            [SCIRow switchRow:SCILocalized(@"native_pip")
+                       detail:SCILocalized(@"native_pip_note")
+                       symbol:@"pip.fill"
+                      prefKey:SCIPrefNativePIP],
             [SCIRow disclosureRow:SCILocalized(@"seek_seconds")
                            detail:SCISeekLabel(SCIPrefNumber(SCIPrefSeekSeconds))
                            symbol:@"goforward"

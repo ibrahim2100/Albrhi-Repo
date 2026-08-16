@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.17.0
+
+Includes YouTube 1.14.0 — **real, system Picture-in-Picture**, unlocked rather than built:
+the app's own player already has the whole thing, gated by one property this tweak now
+forces. And **smoother motion on a ProMotion phone** — the player's own redraw rate is
+raised to the screen's real ceiling rather than a lower one YouTube sets on its own.
+
 ## v1.16.0
 
 Includes X 0.13.0 — **four more features, and two honest declines.** A confirmation

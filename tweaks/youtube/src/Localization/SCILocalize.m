@@ -36,6 +36,12 @@ static void SCIBuildTables(void) {
         @"hide_paid_promotion": @"Hide the paid promotion notice",
         @"hide_paid_promotion_note": @"Removes the banner a creator shows when a video is sponsored. Off by default — it is a disclosure.",
 
+        @"native_pip": @"Picture in picture",
+        @"native_pip_note": @"Shrinks the video into a floating window you can move around, drag off screen, or leave running over another app — the system window iOS already gives Safari a video for. Unlocked rather than built: the player already has it, gated by account plan.",
+        @"section_motion": @"Motion",
+        @"high_refresh_rate": @"Smoother motion (ProMotion)",
+        @"high_refresh_rate_note": @"Lets the player redraw at your screen's real top speed instead of a lower rate the app sets on its own. Does nothing on a 60Hz phone — there is no faster to ask for.",
+        @"high_refresh_rate_footer": @"Only changes how often a frame already decoded is redrawn — not the quality or the source of the video itself.",
         @"background_playback": @"Keep playing in the background",
         @"background_playback_note": @"Audio carries on when you leave the app or lock the screen.",
 
@@ -359,6 +365,12 @@ static void SCIBuildTables(void) {
         @"hide_paid_promotion": @"إخفاء تنبيه الترويج المدفوع",
         @"hide_paid_promotion_note": @"يُزيل الشريط الذي يظهر عندما يكون الفيديو مموّلًا. مطفأ افتراضيًا — لأنه إفصاح.",
 
+        @"native_pip": @"صورة داخل صورة",
+        @"native_pip_note": @"يُصغّر الفيديو إلى نافذة عائمة تحرّكها كما تشاء، أو تتركها فوق تطبيق آخر — نفس النافذة التي يعطيها iOS لفيديو Safari. لم تُبنَ من الصفر، بل فُتحت: المشغّل يملكها أصلاً، وكانت مقفلة بحسب خطة الحساب.",
+        @"section_motion": @"الحركة",
+        @"high_refresh_rate": @"حركة أنعم (ProMotion)",
+        @"high_refresh_rate_note": @"يترك المشغّل يرسم بأعلى سرعة يقدر عليها شاشتك فعلياً، بدل سرعة أقل يفرضها التطبيق بنفسه. لا يفعل شيئاً على شاشة 60 هرتز — لا شيء أسرع يُطلب.",
+        @"high_refresh_rate_footer": @"يغيّر فقط عدد مرّات إعادة رسم الإطار الذي فُكّت شفرته أصلاً — لا جودة الفيديو ولا مصدره.",
         @"background_playback": @"الاستمرار في الخلفية",
         @"background_playback_note": @"يكمل الصوت عند خروجك من التطبيق أو قفل الشاشة.",
 

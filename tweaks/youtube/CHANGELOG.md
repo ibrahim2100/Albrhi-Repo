@@ -3,6 +3,28 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.14.0
+
+Read from a modified YouTube IPA the developer supplied — eighteen bundled dylibs, none
+carrying a licence file, so every one of them was read for architecture only, the same
+cautious way YTLite already is. Two findings were concrete enough to build independently.
+
+**Real, system Picture-in-Picture — unlocked, not built.** The app already carries the
+whole thing: `AVPictureInPictureController` is linked, and the video model answers
+`-isPlayableInPictureInPictureByUserSettings` sitting in the same property list, right next
+to `-playableInBackground` — the same class this tweak's own background-playback hook
+already touches. That one property is the account-plan gate; forcing it is the entire
+feature, since the controller, the AVFoundation session and the system window are all
+already there and already working. Deliberately not forced: `-isPlayableInPictureInPicture`,
+the narrower per-video answer, which can be genuinely NO for a live stream or a restricted
+upload and would open a PIP window on something that cannot actually play in it.
+
+**Smoother motion on a ProMotion phone.** YouTube's own player caps its `CADisplayLink`
+under the screen's real refresh ceiling; this raises the cap to `UIScreen`'s own
+`maximumFramesPerSecond` rather than a hard-coded 120, so it does nothing (correctly) on a
+60Hz phone. Only the redraw rate of an already-decoded frame changes — not what the video
+decodes at.
+
 ## v1.13.0
 
 Built after reading a modified YouTube IPA the developer supplied — eighteen dylibs, of

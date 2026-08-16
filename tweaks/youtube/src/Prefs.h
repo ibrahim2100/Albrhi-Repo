@@ -12,6 +12,15 @@
 #define SCIPrefBackgroundPlay   @"background_playback"
 #define SCIPrefHidePaidPromo    @"hide_paid_promotion"
 #define SCIPrefBlockUpdateNag   @"block_update_nag"
+/// Unlocks native, system Picture-in-Picture -- forces the one property that gates it by
+/// account plan rather than by the video itself. Read from `MLVideo`, the same class
+/// `-playableInBackground` is already hooked on.
+#define SCIPrefNativePIP        @"native_picture_in_picture"
+
+/// Lets the player's own display link run at the screen's real refresh ceiling, on a
+/// ProMotion phone where YouTube caps it under that on its own.
+#define SCIPrefHighRefreshRate  @"high_refresh_rate"
+
 #define SCIPrefVerboseLogging   @"verbose_logging"
 
 /// Downloads.
