@@ -14,6 +14,7 @@ static NSDictionary *_arTable = nil;
 static void SCIBuildTables(void) {
     _enTable = @{
         @"panel_title": @"Albrhi",
+        @"panel_on_count": @"%ld of %ld on",
         @"panel_tagline": @"One tweak for every app it supports, switched from here.",
         @"section_apps": @"Apps",
         @"section_versions": @"Versions",
@@ -69,6 +70,7 @@ static void SCIBuildTables(void) {
 
     _arTable = @{
         @"panel_title": @"البرهي",
+        @"panel_on_count": @"%ld من %ld مُشغَّل",
         @"panel_tagline": @"أداة واحدة لكل تطبيق تدعمه، تتحكم بها من هنا.",
         @"section_apps": @"التطبيقات",
         @"section_versions": @"الإصدارات",

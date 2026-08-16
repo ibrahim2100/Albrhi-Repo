@@ -10,7 +10,10 @@
     return [UIImage imageNamed:@"AlbrhiMark" inBundle:bundle compatibleWithTraitCollection:nil];
 }
 
-+ (UIView *)viewForWidth:(CGFloat)width version:(NSString *)version {
++ (UIView *)viewForWidth:(CGFloat)width
+                 version:(NSString *)version
+                      on:(NSInteger)on
+                      of:(NSInteger)total {
     UIImage *mark = [self mark];
     if (!mark) return nil;
 
@@ -56,9 +59,32 @@
     badge.translatesAutoresizingMaskIntoConstraints = NO;
     [badge.heightAnchor constraintEqualToConstant:18].active = YES;
 
-    // Wrapped so the pill is its own width rather than the full column. A label in a
-    // vertical stack stretches; a label centred inside a wrapper does not.
-    UIStackView *badgeRow = [[UIStackView alloc] initWithArrangedSubviews:@[badge]];
+    // The one thing this screen exists to say, said before anything is read.
+    //
+    // The list below already shows a switch per app, but "how much of this is actually on"
+    // takes counting them -- and on a fresh install, where everything is off by design,
+    // nothing on the screen says so plainly. The pill does.
+    //
+    // Green when anything is patched, plain when nothing is: not red, because none-on is a
+    // deliberate and valid state here, not a fault. Colour is reserved for what is wrong.
+    UILabel *status = [[UILabel alloc] init];
+    status.text = [NSString stringWithFormat:@"  %@  ",
+        [NSString stringWithFormat:SCILocalized(@"panel_on_count"), (long)on, (long)total]];
+    status.font = [UIFont systemFontOfSize:12 weight:UIFontWeightSemibold];
+    status.textAlignment = NSTextAlignmentCenter;
+    status.textColor = on > 0 ? [UIColor systemGreenColor] : [UIColor secondaryLabelColor];
+    status.backgroundColor = on > 0
+        ? [[UIColor systemGreenColor] colorWithAlphaComponent:0.14]
+        : [UIColor tertiarySystemFillColor];
+    status.layer.cornerRadius = 9;
+    status.clipsToBounds = YES;
+    status.translatesAutoresizingMaskIntoConstraints = NO;
+    [status.heightAnchor constraintEqualToConstant:18].active = YES;
+
+    // Wrapped so the pills are their own width rather than the full column. A label in a
+    // vertical stack stretches; labels centred inside a wrapper do not.
+    UIStackView *badgeRow = [[UIStackView alloc] initWithArrangedSubviews:@[badge, status]];
+    badgeRow.spacing = 6;
     badgeRow.axis = UILayoutConstraintAxisHorizontal;
     badgeRow.alignment = UIStackViewAlignmentCenter;
     badgeRow.distribution = UIStackViewDistributionEqualCentering;

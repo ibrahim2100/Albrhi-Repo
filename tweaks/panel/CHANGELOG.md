@@ -1,5 +1,22 @@
 # Albrhi Panel Changelog
 
+## v0.7.0
+
+**The panel says how much of Albrhi is actually on, before anything is read.**
+
+The list already shows a switch per app, but knowing how much is patched meant counting
+them — and since the switch became opt-in, a fresh install is a page of switches that are
+all off with nothing saying so plainly. A pill beside the version now reads "2 of 5 on".
+
+Green when anything is patched, plain grey when nothing is. **Not red**: none-on is a
+deliberate and valid state here, not a fault, and colour is kept for what is actually wrong.
+
+The count is taken when the header is built rather than cached, so it cannot disagree with
+the switches under it — the page reloads its rows on every return, and a header holding its
+own tally would show yesterday's answer. It reads through one shared accessor with the rows,
+for the reason this project already learned the hard way: the same question is answered in
+three places across two processes, and the third one was missed once.
+
 ## v0.6.7
 
 **The CarPlay page now says to respring, not just reopen the app, after editing the

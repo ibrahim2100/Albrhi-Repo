@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.26.0
+
+Includes Panel 0.7.0 — Settings › Albrhi now says how much of the tweak is on at a glance
+("2 of 5 on") instead of leaving it to be counted. Since the per-app switch became opt-in, a
+fresh install is a page of switches that are all off, and nothing said so.
+
 ## v1.25.1
 
 Includes Instagram 4.1.8 — the follow badge keeps a second way of finding the profile's

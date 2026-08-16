@@ -10,7 +10,7 @@
 #import <objc/message.h>
 #import <objc/runtime.h>
 
-NSString *SCIVersionString = @"v0.6.7";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.7.0";  // AlbrhiPanel
 
 ///
 /// Albrhi's own control panel, in the iOS Settings app.
@@ -351,6 +351,27 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
     [self presentViewController:note animated:YES completion:nil];
 }
 
+/// The same question -isOnForSpecifier: answers, asked about an identifier instead of a row.
+///
+/// The header needs the count before any specifier exists to ask. Sharing this one reader is
+/// what stops the pill and the switches from drifting apart -- the panel already answers this
+/// question in three places across two processes, and CLAUDE.md records what the third one
+/// cost when it was missed.
+- (NSNumber *)isOnForSpecifierWithIdentifier:(NSString *)identifier {
+    if (!identifier.length) return @NO;
+
+    CFPropertyListRef value = CFPreferencesCopyAppValue(
+        (__bridge CFStringRef)[@"app_enabled_" stringByAppendingString:identifier],
+        (__bridge CFStringRef)kSCIPanelDomain);
+
+    if (!value) return @NO;
+
+    BOOL on = (CFGetTypeID(value) == CFBooleanGetTypeID())
+        ? CFBooleanGetValue((CFBooleanRef)value) : NO;
+    CFRelease(value);
+    return @(on);
+}
+
 - (NSString *)keyFor:(PSSpecifier *)specifier {
     return [@"app_enabled_" stringByAppendingString:
         [specifier propertyForKey:@"sciBundleIdentifier"]];
@@ -419,7 +440,20 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
     // rebuild the header while the user is scrolling past it.
     if (table.tableHeaderView && ABS(table.tableHeaderView.frame.size.width - width) < 0.5) return;
 
-    UIView *header = [SCIPanelHeader viewForWidth:width version:[self displayedVersion]];
+    // Counted here rather than cached, so the pill can never disagree with the switches
+    // below it -- -viewWillAppear reloads the specifiers on every return to this page, and
+    // a header holding its own tally would keep yesterday's answer.
+    NSArray<SCIPanelEntry *> *entries = [SCIPanelScan entries];
+    NSInteger on = 0;
+    for (SCIPanelEntry *entry in entries) {
+        if (!entry.appInstalled) continue;
+        if ([[self isOnForSpecifierWithIdentifier:entry.bundleIdentifier] boolValue]) on++;
+    }
+
+    UIView *header = [SCIPanelHeader viewForWidth:width
+                                          version:[self displayedVersion]
+                                               on:on
+                                               of:(NSInteger)entries.count];
     if (header) table.tableHeaderView = header;
 }
 
