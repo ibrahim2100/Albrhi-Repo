@@ -106,6 +106,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v1.18.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• Includes YouTube 1.15.0 — **the saved-media player, polished to feel like the rest of the system.** Drag down anywhere to close, the way every full-screen player on the…",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v1.17.0",
           "useBoldText": true
         },
@@ -131,20 +145,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v1.15.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• Includes X 0.12.0 — **a new, experimental switch that hides real Promoted Tweets**, which \"Hide ads\" never touched: those are ordinary posts the server marks, not…",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -155,7 +155,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.17.0"
+          "text": "1.18.0"
         },
         {
           "class": "DepictionTableTextView",
