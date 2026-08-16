@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.15.0
+
+Includes X 0.12.0 — **a new, experimental switch that hides real Promoted Tweets**, which
+"Hide ads" never touched: those are ordinary posts the server marks, not something a client
+switch can suppress. Off by default until a device confirms it, with its own counter on the
+diagnostics page. And **the raw switch list moved to its own page**, one tap from a single
+row instead of the last, long section of the main screen every time it opened.
+
 ## v1.14.0
 
 Includes X 0.11.0 — **the settings screen carries an icon beside every row now**, the way

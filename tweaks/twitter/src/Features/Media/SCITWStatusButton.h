@@ -18,6 +18,24 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// Declared here, once, rather than in either .x file that hooks them.
+///
+/// A `%hook` on an undeclared class gets a forward declaration only, and `self` is then an
+/// incomplete type -- the ternary error this project has already hit three times in three
+/// shapes. Two files hook these same three classes now, the save button and the promoted-
+/// tweet filter, and a declaration repeated in both would be the exact duplicate-@interface
+/// failure `tools/check.py` rule 1 exists to catch -- caught here rather than at Theos.
+///
+/// Nothing is claimed about them beyond being views, which is all either file needs.
+@interface T1StandardStatusView : UIView
+@end
+
+@interface T1TweetDetailsFocalStatusView : UIView
+@end
+
+@interface T1ConversationFocalStatusView : UIView
+@end
+
 /// Hooks whichever of X's status views this build has. Safe when it has none.
 void SCITWInstallStatusButton(void);
 

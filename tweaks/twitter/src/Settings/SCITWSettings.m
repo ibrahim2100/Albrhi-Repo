@@ -1,4 +1,5 @@
 #import "SCITWSettings.h"
+#import "SCITWKeysList.h"
 #import "Tweak.h"          // SCIVersionString, for the card
 #import "Prefs.h"
 #import "Localization/SCILocalize.h"
@@ -36,16 +37,13 @@ static const NSInteger SCITWSectionKeys     = 4;
 
 /// The rows in section zero, in order.
 static const NSInteger SCITWAlbrhiSaveButton = 0;
-static const NSInteger SCITWAlbrhiSwitchLayer = 1;
-static const NSInteger SCITWAlbrhiLogging = 2;
-static const NSInteger SCITWAlbrhiRowCount = 3;
+static const NSInteger SCITWAlbrhiHidePromoted = 1;
+static const NSInteger SCITWAlbrhiSwitchLayer = 2;
+static const NSInteger SCITWAlbrhiLogging = 3;
+static const NSInteger SCITWAlbrhiRowCount = 4;
 
-@interface SCITWSettings () <UISearchResultsUpdating, UISearchBarDelegate>
-@property (nonatomic, strong) UISearchController *searchController;
+@interface SCITWSettings ()
 @property (nonatomic, strong) NSArray<SCITWSwitchRecord *> *all;
-@property (nonatomic, strong) NSArray<SCITWSwitchRecord *> *shown;
-@property (nonatomic, copy) NSString *query;
-@property (nonatomic, assign) BOOL changedOnly;
 @property (nonatomic, strong) NSArray<SCITWMediaItem *> *media;
 @end
 
@@ -143,27 +141,9 @@ static UIImage *SCITWBadge(NSString *symbolName, UIColor *color) {
                                                       target:self
                                                       action:@selector(showMenu:)];
 
-    // Search belongs to the navigation bar, not to the table.
-    //
-    // It was a UISearchBar stacked above a segmented control in a 96-point table header,
-    // which scrolled away with the content and took the only way of finding a key with it.
-    // A UISearchController pins it under the title, keeps it reachable at any scroll
-    // position, and is the control iOS uses for exactly this.
-    UISearchController *search = [[UISearchController alloc] initWithSearchResultsController:nil];
-    search.searchResultsUpdater = self;
-    search.obscuresBackgroundDuringPresentation = NO;
-    search.searchBar.placeholder = SCILocalized(@"search_placeholder");
-    search.searchBar.autocapitalizationType = UITextAutocapitalizationTypeNone;
-    // The All/Changed filter, kept -- as the search bar's own scopes rather than a second
-    // control stacked above it. Same two choices, one control, and it appears with the
-    // keyboard instead of occupying the screen when nobody is searching.
-    search.searchBar.scopeButtonTitles = @[SCILocalized(@"filter_all"), SCILocalized(@"filter_changed")];
-    search.searchBar.showsScopeBar = NO;
-    search.searchBar.delegate = self;
-    self.navigationItem.searchController = search;
-    self.navigationItem.hidesSearchBarWhenScrolling = NO;
-    self.searchController = search;
-
+    // No search bar on this screen any more -- it belonged to the raw key list, and the
+    // list moved to its own page (SCITWKeysList), search and all. This screen keeps only
+    // the count of what it holds.
     if (@available(iOS 15.0, *)) {
         self.navigationItem.scrollEdgeAppearance = [[UINavigationBarAppearance alloc] init];
         [self.navigationItem.scrollEdgeAppearance configureWithDefaultBackground];
@@ -352,37 +332,9 @@ static UIImage *SCITWBadge(NSString *symbolName, UIColor *color) {
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
-- (void)updateSearchResultsForSearchController:(UISearchController *)searchController {
-    self.query = searchController.searchBar.text;
-    [self reload];
-}
-
-/// The All/Changed choice, now the search bar's own scopes.
-///
-/// The same two options the segmented control offered, on the control iOS provides for
-/// exactly this — so the filter appears with the keyboard instead of taking a row of the
-/// screen from everyone who is not searching.
-- (void)searchBar:(UISearchBar *)searchBar selectedScopeButtonIndexDidChange:(NSInteger)scope {
-    self.changedOnly = (scope == 1);
-    [self reload];
-}
-
 - (void)reload {
     self.media = [SCITWMedia recent];
     self.all = [SCITWSwitches records];
-
-    NSDictionary<NSString *, NSNumber *> *overrides = [SCITWSwitches allOverrides];
-    NSString *needle = [self.query stringByTrimmingCharactersInSet:
-        [NSCharacterSet whitespaceCharacterSet]].lowercaseString;
-
-    NSMutableArray<SCITWSwitchRecord *> *shown = [NSMutableArray array];
-    for (SCITWSwitchRecord *record in self.all) {
-        if (self.changedOnly && !overrides[record.key]) continue;
-        if (needle.length && [record.key rangeOfString:needle].location == NSNotFound) continue;
-        [shown addObject:record];
-    }
-
-    self.shown = shown;
     [self.tableView reloadData];
 }
 
@@ -397,7 +349,8 @@ static UIImage *SCITWBadge(NSString *symbolName, UIColor *color) {
     if (section == SCITWSectionStatus) return 4;
     if (section == SCITWSectionMedia) return self.media.count ?: 1;
     if (section == SCITWSectionFeatures) return [SCITWFeatures all].count;
-    return self.shown.count ?: 1;
+    // Keys: one link row, not the list itself -- see SCITWKeysList.
+    return 1;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
@@ -455,48 +408,14 @@ static UIImage *SCITWBadge(NSString *symbolName, UIColor *color) {
         return row;
     }
 
-    if (!self.shown.count) {
-        cell.textLabel.text = SCILocalized(@"keys_empty");
-        cell.textLabel.numberOfLines = 0;
-        cell.textLabel.textColor = [UIColor secondaryLabelColor];
-        cell.detailTextLabel.text = nil;
-        return cell;
-    }
-
-    SCITWSwitchRecord *record = self.shown[indexPath.row];
-    SCITWOverride override = [SCITWSwitches overrideForKey:record.key];
-
-    // Monospaced, because these are identifiers rather than prose and the underscores are
-    // load-bearing -- two keys differing by one word are told apart by their shape here.
-    cell.textLabel.text = record.key;
-    cell.textLabel.font = [UIFont monospacedSystemFontOfSize:12
-                                                       weight:UIFontWeightRegular];
-    cell.textLabel.numberOfLines = 0;
-
-    SCITWFeature *owner = override == SCITWOverrideNone
-        ? [SCITWFeatures featureOwningKey:record.key] : nil;
-
-    NSString *state;
-    if (override != SCITWOverrideNone) {
-        state = SCILocalized(override == SCITWOverrideOn ? @"detail_you_on" : @"detail_you_off");
-    } else if (owner) {
-        // Named, not just marked. "Something is overriding this" is the answer that sends
-        // somebody hunting through seventeen switches; naming the feature is one tap.
-        NSNumber *wanted = owner.keys[record.key];
-        state = [NSString stringWithFormat:SCILocalized(
-            wanted.boolValue ? @"detail_feature_on" : @"detail_feature_off"),
-            SCILocalized(owner.titleKey)];
-    } else {
-        state = SCILocalized(record.appAnswer ? @"detail_app_on" : @"detail_app_off");
-    }
-
-    cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ · %@", state,
-        [NSString stringWithFormat:SCILocalized(@"detail_asked"),
-            (unsigned long)record.asked]];
-    cell.detailTextLabel.textColor = (override != SCITWOverrideNone)
-        ? [UIColor systemBlueColor]
-        : (owner ? [UIColor systemTealColor] : [UIColor secondaryLabelColor]);
-
+    // Keys: a single link row, not the three hundred and fifty behind it. Count read live
+    // from SCITWSwitches so the row is honest about how many there are without needing the
+    // list itself loaded here.
+    cell.textLabel.text = SCILocalized(@"keys_link_title");
+    cell.detailTextLabel.text =
+        [NSString stringWithFormat:@"%lu", (unsigned long)self.all.count];
+    cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
+    cell.imageView.image = SCITWBadge(@"list.bullet.rectangle", [UIColor systemGrayColor]);
     cell.selectionStyle = UITableViewCellSelectionStyleDefault;
     cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     return cell;
@@ -558,6 +477,13 @@ static UIImage *SCITWBadge(NSString *symbolName, UIColor *color) {
         note = SCILocalized(@"albrhi_save_button_note");
         icon = @"arrow.down.circle.fill";
         color = [UIColor systemBlueColor];
+    } else if (row == SCITWAlbrhiHidePromoted) {
+        key = SCIPrefHidePromoted;
+        title = SCILocalized(@"albrhi_hide_promoted");
+        note = SCILocalized(@"albrhi_hide_promoted_note");
+        icon = @"eye.slash.circle.fill";
+        color = [UIColor systemOrangeColor];
+        defaultOn = NO;
     } else if (row == SCITWAlbrhiSwitchLayer) {
         key = SCIPrefSwitchLayer;
         title = SCILocalized(@"albrhi_switch_layer");
@@ -581,8 +507,13 @@ static UIImage *SCITWBadge(NSString *symbolName, UIColor *color) {
     cell.imageView.image = SCITWBadge(icon, color);
 
     // Turning the switch layer off makes this tweak do nothing at all, which is a bigger
-    // step than any single feature and is marked the way the cautious features are.
-    if (row == SCITWAlbrhiSwitchLayer) cell.textLabel.textColor = [UIColor systemOrangeColor];
+    // step than any single feature and is marked the way the cautious features are. The
+    // promoted-tweet filter gets the same colour for the reason its own file gives: it has
+    // not been confirmed on a device, and a row that looks exactly like a settled feature
+    // is a row nobody reads twice before flipping.
+    if (row == SCITWAlbrhiSwitchLayer || row == SCITWAlbrhiHidePromoted) {
+        cell.textLabel.textColor = [UIColor systemOrangeColor];
+    }
 
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
 
@@ -602,6 +533,7 @@ static UIImage *SCITWBadge(NSString *symbolName, UIColor *color) {
     // is the same fact from the other end.
     NSString *key = nil;
     if (toggle.tag == SCITWAlbrhiSaveButton) key = SCIPrefInlineButton;
+    if (toggle.tag == SCITWAlbrhiHidePromoted) key = SCIPrefHidePromoted;
     if (toggle.tag == SCITWAlbrhiSwitchLayer) key = SCIPrefSwitchLayer;
     if (toggle.tag == SCITWAlbrhiLogging) key = SCIPrefVerboseLogging;
     if (!key) return;
@@ -701,41 +633,12 @@ static UIImage *SCITWBadge(NSString *symbolName, UIColor *color) {
         return;
     }
 
-    if (indexPath.section != SCITWSectionKeys || !self.shown.count) return;
+    if (indexPath.section != SCITWSectionKeys) return;
 
-    SCITWSwitchRecord *record = self.shown[indexPath.row];
-    [self askAbout:record fromCell:[tableView cellForRowAtIndexPath:indexPath]];
-}
-
-- (void)askAbout:(SCITWSwitchRecord *)record fromCell:(UITableViewCell *)cell {
-    UIAlertController *sheet =
-        [UIAlertController alertControllerWithTitle:record.key
-                                            message:SCILocalized(@"restart_note")
-                                     preferredStyle:UIAlertControllerStyleActionSheet];
-
-    void (^choose)(NSString *, SCITWOverride) = ^(NSString *key, SCITWOverride value) {
-        [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(key)
-                                                   style:UIAlertActionStyleDefault
-                                                 handler:^(UIAlertAction *action) {
-            [SCITWSwitches setOverride:value forKey:record.key];
-            [self reload];
-        }]];
-    };
-
-    choose(@"choose_default", SCITWOverrideNone);
-    choose(@"choose_on", SCITWOverrideOn);
-    choose(@"choose_off", SCITWOverrideOff);
-
-    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
-                                               style:UIAlertActionStyleCancel
-                                             handler:nil]];
-
-    // Required on iPad, where an action sheet with nothing to point at is not shown at
-    // all rather than being shown badly.
-    sheet.popoverPresentationController.sourceView = cell ?: self.view;
-    sheet.popoverPresentationController.sourceRect = (cell ?: self.view).bounds;
-
-    [self presentViewController:sheet animated:YES completion:nil];
+    // The one row this section has left: push the real list. A search field and an
+    // action sheet per key belong to that screen now, not to this one.
+    SCITWKeysList *keys = [[SCITWKeysList alloc] init];
+    [self.navigationController pushViewController:keys animated:YES];
 }
 
 - (void)showMenu:(UIBarButtonItem *)sender {

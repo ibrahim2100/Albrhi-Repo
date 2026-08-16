@@ -1,5 +1,30 @@
 # Albrhi for X — what changed
 
+## v0.12.0
+
+**"Hide ads" was never going to touch a real Promoted Tweet, and now something does.**
+
+The seventeen named features include one called Hide ads, and what it turns off is a set of
+`ssp_ads_*` switches — third-party ad-SDK integration points, asked a handful of times a
+session, the shape of a check made once per screen rather than once per post. **None of them
+gate a Promoted Tweet in the timeline.** That is an ordinary post, the same class every tweet
+is, carrying `-isPromoted` = YES straight from the server as part of the timeline response.
+No client switch can make the server stop sending it.
+
+**A new, separate, experimental switch hides it where it is drawn instead** — Settings ›
+Hide Promoted Tweets, off by default. It can leave an empty gap where the post was rather
+than closing the row, and it has not been confirmed on a device: the class names and the
+property are read from a real class dump, whether X actually routes a promoted status
+through them on 12.15 is what the next report answers. The diagnostics page counts both how
+many statuses were checked and how many were hidden, so the report says plainly whether it
+attached to anything rather than staying silent either way.
+
+**And the raw switch list moved to its own page.** Three hundred and fifty-plus monospaced
+rows used to be the last section of this screen, in full, every time it opened — a wall
+past the six things anyone actually came to change. It is one tap away now, from a single
+row that just says how many there are, and the search box and the All/Changed filter moved
+with it rather than being lost.
+
 ## v0.11.0
 
 **The settings screen, redrawn with an icon beside every row — the way iOS's own Settings

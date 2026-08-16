@@ -9,8 +9,9 @@
 #import "Features/Media/SCITWStatusButton.h"
 #import "Features/Media/SCITWImmersiveButton.h"
 #import "Features/Media/SCITWActionBarButton.h"
+#import "Features/Ads/SCITWPromotedFilter.h"
 
-NSString *SCIVersionString = @"v0.11.0";  // AlbrhiTW
+NSString *SCIVersionString = @"v0.12.0";  // AlbrhiTW
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written
@@ -20,6 +21,7 @@ NSString *SCIVersionString = @"v0.11.0";  // AlbrhiTW
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{
         SCIPrefSwitchLayer: @YES,
         SCIPrefInlineButton: @YES,
+        SCIPrefHidePromoted: @NO,
         SCIPrefVerboseLogging: @NO,
     }];
 
@@ -70,6 +72,12 @@ NSString *SCIVersionString = @"v0.11.0";  // AlbrhiTW
     // both places at once -- see SCITWActionBarButton.x for why the immersive rail could
     // not, and how "11 buttons added" turned out to mean the opposite of what it said.
     SCITWInstallActionBarButton();
+
+    // Unrelated to the switch layer and unrelated to "Hide ads": neither touches a real
+    // Promoted Tweet, which is an ordinary status the server marks rather than a client
+    // switch. Its own hook, on the same three classes the save button already found, and
+    // off by default until a device confirms it.
+    SCITWInstallPromotedFilter();
 
     if ([[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefSwitchLayer]) {
         // Before the hooks, not after. X asks its first questions while the app is still

@@ -7,6 +7,7 @@
 #import "Features/Media/SCITWStatusButton.h"
 #import "Features/Media/SCITWImmersiveButton.h"
 #import "Features/Media/SCITWActionBarButton.h"
+#import "Features/Ads/SCITWPromotedFilter.h"
 
 NSString *SCITWReportText(void) {
     NSMutableString *text = [NSMutableString string];
@@ -36,6 +37,7 @@ NSString *SCITWReportText(void) {
     [text appendFormat:@"status button: %@\n", SCITWStatusButtonReport()];
     [text appendFormat:@"immersive button: %@\n", SCITWImmersiveButtonReport()];
     [text appendFormat:@"action bar button: %@\n", SCITWActionBarButtonReport()];
+    [text appendFormat:@"promoted-tweet filter: %@\n", SCITWPromotedFilterReport()];
     [text appendFormat:@"in-video button: %@\n", SCITWInVideoButtonReport()];
 
     NSArray<SCITWSwitchRecord *> *records = [SCITWSwitches records];

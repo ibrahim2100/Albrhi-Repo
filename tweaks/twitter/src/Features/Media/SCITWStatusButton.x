@@ -59,23 +59,10 @@
 /// says which did -- so "no button" can never again mean four things at once.
 ///
 
-/// Declared as what they are, rather than left to Logos.
-///
-/// A `%hook` on an undeclared class gets a forward declaration only, and `self` is then an
-/// incomplete type -- so `SCITWMediaSubview(self) ?: self` is a ternary between `UIView *`
-/// and a type the compiler knows nothing about, which is exactly the error the runner
-/// produced three times. The sibling file declares `T1InlineMediaView` for the same reason
-/// and says so; this is that lesson, arriving again in a different shape.
-///
-/// Nothing is claimed about them beyond being views, which is all this file needs.
-@interface T1StandardStatusView : UIView
-@end
-
-@interface T1TweetDetailsFocalStatusView : UIView
-@end
-
-@interface T1ConversationFocalStatusView : UIView
-@end
+// T1StandardStatusView, T1TweetDetailsFocalStatusView and T1ConversationFocalStatusView are
+// declared in SCITWStatusButton.h now, not here -- the promoted-tweet filter hooks the same
+// three classes and needs the same declarations, and two @interfaces for one class is the
+// exact failure rule 1 of tools/check.py exists to catch.
 
 /// Ours. High enough that it cannot collide with a tag X sets for its own reasons.
 static const NSInteger kSCISaveButtonTag = 0x5C1D;

@@ -29,6 +29,15 @@
 /// "the update broke it" three weeks later.
 #define SCIPrefFeaturePrefix    @"feature_"
 
+/// Hiding the real Promoted Tweet -- an ordinary status the server marks `-isPromoted`,
+/// unrelated to every `ssp_ads_*` switch "Hide ads" already turns off.
+///
+/// **Off by default, and marked experimental on the settings screen.** Read from a real
+/// class dump, never confirmed on a phone: the class names and the property exist, whether
+/// X's home timeline actually routes a promoted status through them on 12.15 is the one
+/// thing only a device can answer. Shipped to be tried, not shipped as fixed.
+#define SCIPrefHidePromoted     @"hide_promoted_tweets"
+
 /// There is deliberately no preference for the two-finger hold.
 ///
 /// It is the only way into this tweak's own screen, and a switch that can make the only

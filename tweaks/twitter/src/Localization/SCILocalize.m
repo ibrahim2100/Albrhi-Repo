@@ -74,6 +74,8 @@ static void SCIBuildTables(void) {
         @"albrhi_footer": @"The tweak's own settings. Everything below this is about X.",
         @"albrhi_save_button": @"Save button on posts",
         @"albrhi_save_button_note": @"A button in the corner of a video or photo that saves it. Turn it off and the list below still holds everything seen, so saving keeps working.",
+        @"albrhi_hide_promoted": @"Hide Promoted Tweets (experimental)",
+        @"albrhi_hide_promoted_note": @"“Hide ads” above does not touch these — a Promoted Tweet is an ordinary post the server marks, not a switch. This hides it where it is drawn instead, which can leave an empty gap in its place. Not yet confirmed on a device — try it and see.",
         @"albrhi_switch_layer": @"Feature switches",
         @"albrhi_switch_layer_note": @"Off makes this tweak do nothing at all — every feature below stops, and X behaves exactly as it would with nothing installed. For a build of X where hooking causes trouble.",
         @"albrhi_logging": @"Detailed log",
@@ -89,6 +91,7 @@ static void SCIBuildTables(void) {
         @"gate_off": @"Off — turn it on in Settings › Albrhi",
 
         @"section_keys": @"Switches",
+        @"keys_link_title": @"View every switch",
         @"keys_footer": @"This is what X asked about while you were using it, not a list written in advance. Use the app for a while and more will appear. Tap one to answer it yourself.",
         @"keys_empty": @"Nothing yet. Scroll around X and come back.",
         @"search_placeholder": @"Search",
@@ -181,6 +184,8 @@ static void SCIBuildTables(void) {
         @"albrhi_footer": @"إعدادات الأداة نفسها. وكل ما تحتها يخصّ إكس.",
         @"albrhi_save_button": @"زر الحفظ على المنشورات",
         @"albrhi_save_button_note": @"زر في زاوية الفيديو أو الصورة يحفظها. أطفئه وتبقى القائمة أدناه تحمل كل ما رأته الأداة، فالحفظ يظل يعمل.",
+        @"albrhi_hide_promoted": @"إخفاء التغريدات المُروَّجة (تجريبي)",
+        @"albrhi_hide_promoted_note": @"«إخفاء الإعلانات» أعلاه لا يمسّ هذه — التغريدة المُروَّجة منشور عادي يضع الخادم عليه علامة، لا مفتاحاً. هذا يُخفيها في مكان رسمها بدلاً من ذلك، وقد يترك فراغاً مكانها. لم يُؤكَّد بعد على جهاز حقيقي — جرّبها وانظر.",
         @"albrhi_switch_layer": @"مفاتيح المزايا",
         @"albrhi_switch_layer_note": @"إطفاؤه يجعل الأداة لا تفعل شيئاً على الإطلاق — تتوقف كل المزايا أدناه، ويتصرف إكس كما لو لم يكن شيء مثبَّتاً. لبناءٍ من إكس يسبّب فيه الخطف مشكلة.",
         @"albrhi_logging": @"سجل مفصّل",
@@ -196,6 +201,7 @@ static void SCIBuildTables(void) {
         @"gate_off": @"مُطفأ — فعّله من الإعدادات › البرهي",
 
         @"section_keys": @"المفاتيح",
+        @"keys_link_title": @"عرض كل مفتاح",
         @"keys_footer": @"هذا ما سأل عنه إكس أثناء استخدامك، لا قائمة مكتوبة مسبقاً. استخدم التطبيق قليلاً وستظهر مفاتيح أكثر. اضغط على أي مفتاح لتجيب أنت عنه.",
         @"keys_empty": @"لا شيء بعد. تصفّح إكس قليلاً ثم ارجع.",
         @"search_placeholder": @"بحث",
