@@ -1,5 +1,29 @@
 # Albrhi Changelog
 
+## v1.27.1
+
+**Settings crashed when opening the Albrhi page.** Fixed — 1.27.0 registered its new row
+type by name where Preferences expected the type itself. Includes Panel 0.8.1.
+
+## v1.27.0
+
+Includes Panel 0.8.0 — **Settings › Albrhi is one row per app now.** Each carries its icon,
+its switch, and a line saying which version is on this phone and which the tweak was verified
+against. The separate Versions section, which listed the same apps a second time, is gone.
+
+## v1.26.0
+
+Includes Panel 0.7.0 — Settings › Albrhi now says how much of the tweak is on at a glance
+("2 of 5 on") instead of leaving it to be counted. Since the per-app switch became opt-in, a
+fresh install is a page of switches that are all off, and nothing said so.
+
+## v1.25.1
+
+Includes Instagram 4.1.8 — the follow badge keeps a second way of finding the profile's
+user, so the crash fix in 4.1.6 cannot cost the badge on Instagram 410. The class dump that
+fix was built from turned out to be 439; this tweak serves 410, 439 and 441 from one build.
+Still no KVC.
+
 ## v1.25.0
 
 **Locket has left the suite.** It is no longer bundled in `com.albrhi`, no longer

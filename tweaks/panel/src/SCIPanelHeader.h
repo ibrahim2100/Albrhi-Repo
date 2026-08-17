@@ -26,7 +26,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// A header sized for this width. Nil only if the artwork is missing, in which case the
 /// page shows its list with no header rather than not showing.
-+ (nullable UIView *)viewForWidth:(CGFloat)width version:(NSString *)version;
++ (nullable UIView *)viewForWidth:(CGFloat)width
+                           version:(NSString *)version
+                                on:(NSInteger)on
+                                of:(NSInteger)total;
 
 @end
 

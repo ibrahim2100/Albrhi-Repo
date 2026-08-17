@@ -4,13 +4,14 @@
 
 #import "SCIPanelScan.h"
 #import "SCIPanelHeader.h"
+#import "SCIPanelAppCell.h"
 #import "SCIPanelDomain.h"
 #import "SCIPanelButtonAction.h"
 #import "Localization/SCILocalize.h"
 #import <objc/message.h>
 #import <objc/runtime.h>
 
-NSString *SCIVersionString = @"v0.6.7";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.8.1";  // AlbrhiPanel
 
 ///
 /// Albrhi's own control panel, in the iOS Settings app.
@@ -106,6 +107,25 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
 
         [row setProperty:entry.bundleIdentifier forKey:@"sciBundleIdentifier"];
 
+        // Everything the versions section used to say, on the row it is about.
+        //
+        // The cell class is only set on switch rows: a row that pushes to its own page is a
+        // PSLinkCell and giving it a switch cell's class would replace the disclosure
+        // chevron with a switch that controls nothing.
+        BOOL warn = NO;
+        NSString *subtitle = [self subtitleForEntry:entry warning:&warn];
+        if (subtitle.length && !entry.detailControllerClassName.length) {
+            [row setProperty:subtitle forKey:@"sciSubtitle"];
+            [row setProperty:@(warn) forKey:@"sciSubtitleIsWarning"];
+            // A Class, not its name.
+            //
+            // This was set to the string @"SCIPanelAppCell", and Preferences takes this
+            // property as a Class and sends class messages to it -- so it messaged an
+            // NSString and Settings died the moment the page was opened. The name reads
+            // identically in the source and is a completely different object.
+            [row setProperty:[SCIPanelAppCell class] forKey:@"cellClass"];
+        }
+
         // The app's own icon, so the list is scanned by eye rather than read.
         //
         // Two rows of text that differ by one word are two rows a person has to read;
@@ -115,8 +135,6 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
 
         [specifiers addObject:row];
     }
-
-    [specifiers addObjectsFromArray:[self versionSpecifiersFor:entries]];
 
     PSSpecifier *about = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"section_about")
                                                         target:self
@@ -186,58 +204,46 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
 /// Nothing is disabled on a mismatch. Nothing is pinned to a version number anywhere in
 /// this project and a newer app usually works fine; the point is to show the one fact
 /// that explains it when it does not.
-- (NSArray<PSSpecifier *> *)versionSpecifiersFor:(NSArray<SCIPanelEntry *> *)entries {
-    // Every installed app gets a row, even one where neither number could be read.
-    //
-    // The first version of this skipped an entry it knew nothing about, so a device where
-    // the version lookup failed showed no section at all — and "the section did not
-    // appear" is indistinguishable from "the feature was not installed". A row reading
-    // "not known" says which of the two it is, and that difference is the thing this
-    // project has spent whole releases learning to build in from the start.
-    NSMutableArray<SCIPanelEntry *> *known = [NSMutableArray array];
-    for (SCIPanelEntry *entry in entries) {
-        // A row with its own settings page speaks for itself there; it never declares a
-        // tested app version in the first place, since it does not target one real app
-        // the way this section otherwise assumes.
-        if (entry.detailControllerClassName.length) continue;
-        if (entry.appInstalled || entry.testedVersion.length) [known addObject:entry];
+///
+/// What a row says under the app's name.
+///
+/// This was a whole second section that listed every app again to state two version
+/// numbers. Two passes down the same list to answer one question about one app -- and the
+/// switch was in the first pass while the reason you might want to move it was in the
+/// second. It is one line under the name now, and the section is gone.
+///
+/// Every string it can produce is the one the old section used; nothing here changes what
+/// is said, only where. Returns nil when there is genuinely nothing to say, and the cell
+/// hides the line rather than reserving an empty one.
+- (NSString *)subtitleForEntry:(SCIPanelEntry *)entry warning:(BOOL *)warning {
+    if (warning) *warning = NO;
+
+    // A row with its own settings page speaks for itself there, and never declares a tested
+    // app version -- it does not target one real app the way the others do.
+    if (entry.detailControllerClassName.length) return nil;
+
+    if (!entry.appInstalled) return SCILocalized(@"versions_not_installed");
+
+    if (!entry.appVersion.length && !entry.testedVersion.length) {
+        return SCILocalized(@"versions_unknown");
     }
-    if (!known.count) return @[];
+    if (!entry.appVersion.length) {
+        // Nothing to compare against. The tested version is still worth stating: it is what
+        // this tweak is for.
+        return [NSString stringWithFormat:SCILocalized(@"versions_tested_only"),
+                entry.testedVersion];
+    }
+    if (!entry.testedVersion.length) return entry.appVersion;
 
-    PSSpecifier *group = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"section_versions")
-                                                        target:self
-                                                           set:NULL
-                                                           get:NULL
-                                                        detail:Nil
-                                                          cell:PSGroupCell
-                                                          edit:Nil];
-    [group setProperty:SCILocalized(@"versions_footer") forKey:@"footerText"];
-
-    NSMutableArray<PSSpecifier *> *rows = [NSMutableArray arrayWithObject:group];
-
-    for (SCIPanelEntry *entry in known) {
-        NSString *value;
-
-        if (!entry.appVersion.length && !entry.testedVersion.length) {
-            value = SCILocalized(@"versions_unknown");
-        } else if (!entry.appVersion.length) {
-            // Nothing to compare against. The tested version is still worth stating: it
-            // is what this tweak is for.
-            value = [NSString stringWithFormat:SCILocalized(@"versions_tested_only"),
-                     entry.testedVersion];
-        } else if (!entry.testedVersion.length) {
-            value = entry.appVersion;
-        } else if ([entry runsTestedVersion]) {
-            value = [NSString stringWithFormat:SCILocalized(@"versions_match"), entry.appVersion];
-        } else {
-            value = [NSString stringWithFormat:SCILocalized(@"versions_differ"),
-                     entry.appVersion, entry.testedVersion];
-        }
-
-        [rows addObject:[self valueRow:entry.appName value:value]];
+    if ([entry runsTestedVersion]) {
+        return [NSString stringWithFormat:SCILocalized(@"versions_match"), entry.appVersion];
     }
 
-    return rows;
+    // The one case worth colouring: this build has not been verified against the app on the
+    // phone. A caution, not a fault -- see the cell for why it is amber and not red.
+    if (warning) *warning = YES;
+    return [NSString stringWithFormat:SCILocalized(@"versions_differ"),
+            entry.appVersion, entry.testedVersion];
 }
 
 /// A row showing a fixed value on the right.
@@ -351,6 +357,27 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
     [self presentViewController:note animated:YES completion:nil];
 }
 
+/// The same question -isOnForSpecifier: answers, asked about an identifier instead of a row.
+///
+/// The header needs the count before any specifier exists to ask. Sharing this one reader is
+/// what stops the pill and the switches from drifting apart -- the panel already answers this
+/// question in three places across two processes, and CLAUDE.md records what the third one
+/// cost when it was missed.
+- (NSNumber *)isOnForSpecifierWithIdentifier:(NSString *)identifier {
+    if (!identifier.length) return @NO;
+
+    CFPropertyListRef value = CFPreferencesCopyAppValue(
+        (__bridge CFStringRef)[@"app_enabled_" stringByAppendingString:identifier],
+        (__bridge CFStringRef)kSCIPanelDomain);
+
+    if (!value) return @NO;
+
+    BOOL on = (CFGetTypeID(value) == CFBooleanGetTypeID())
+        ? CFBooleanGetValue((CFBooleanRef)value) : NO;
+    CFRelease(value);
+    return @(on);
+}
+
 - (NSString *)keyFor:(PSSpecifier *)specifier {
     return [@"app_enabled_" stringByAppendingString:
         [specifier propertyForKey:@"sciBundleIdentifier"]];
@@ -419,7 +446,20 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
     // rebuild the header while the user is scrolling past it.
     if (table.tableHeaderView && ABS(table.tableHeaderView.frame.size.width - width) < 0.5) return;
 
-    UIView *header = [SCIPanelHeader viewForWidth:width version:[self displayedVersion]];
+    // Counted here rather than cached, so the pill can never disagree with the switches
+    // below it -- -viewWillAppear reloads the specifiers on every return to this page, and
+    // a header holding its own tally would keep yesterday's answer.
+    NSArray<SCIPanelEntry *> *entries = [SCIPanelScan entries];
+    NSInteger on = 0;
+    for (SCIPanelEntry *entry in entries) {
+        if (!entry.appInstalled) continue;
+        if ([[self isOnForSpecifierWithIdentifier:entry.bundleIdentifier] boolValue]) on++;
+    }
+
+    UIView *header = [SCIPanelHeader viewForWidth:width
+                                          version:[self displayedVersion]
+                                               on:on
+                                               of:(NSInteger)entries.count];
     if (header) table.tableHeaderView = header;
 }
 
