@@ -313,6 +313,15 @@ player — clients Google has not migrated — which means impersonating a diffe
 signed requests, and the `n`-signature, from inside the official app while signed in to a
 real account. The counting hooks stay in `SCIYTSabr.x`; the switch was removed in 1.12.0.
 
+**A framework-wide selector dump says a name exists; it never says on what class.** This
+cost two rounds on TikTok's downloader. `downloadAddr` appears in MusicallyCore's
+`__objc_methname` and in NA9's binary, so it was tried first -- twice -- and it is **not on
+`AWEVideoModel`**. The class's own accessors, printed from the device in one line, are
+`downloadNoWatermarkURL`, `downloadURL`, `h264DownloadURL`, `bitrateModels`,
+`audioBitrateModels`, `playURL`, `playLowBitURL`. Reaching for the binary was right; treating
+a global name list as class membership was not. When the question is "does *this* class answer
+*this* selector", the device answers it and a 785 MB dump does not.
+
 **TikTok's classes are not in TikTok's binary either, and a competitor's selectors are not
 your build's.** `com.zhiliaoapp.musically` 46.4.0 ships a 91 KB executable and puts everything
 in `MusicallyCore.framework` — 785 MB, **1,032,816 selectors** in `__objc_methname`. Dumping

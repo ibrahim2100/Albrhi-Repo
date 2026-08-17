@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.33.0
+
+Includes TikTok 0.8.0 — **downloads should finally be the video, at download quality, without
+a watermark.** The video model's own accessor list, printed from a device, named
+`downloadNoWatermarkURL` and `downloadURL` — and showed that the field guessed at twice
+before was never on that class. The save button also no longer leans to one side: only its
+height had been matched to the rail, never its width.
+
 ## v1.32.1
 
 Includes TikTok 0.7.1 — the save button no longer lands between two invisible background

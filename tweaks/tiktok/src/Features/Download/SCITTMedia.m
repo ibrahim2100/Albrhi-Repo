@@ -178,15 +178,33 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url) {
             //
             // Each ends in a URL model, whose confirmed accessors are `originURLList`,
             // `urlList` and `URLList` -- not `bestURLtoDownload`, which does not exist.
-            @[@"video", @"downloadAddr", @"originURLList"],
-            @[@"video", @"downloadAddr", @"urlList"],
-            @[@"video", @"downloadAddr", @"URLList"],
+            // AWEVideoModel's real accessors, dumped from the device at last.
+            //
+            // `downloadAddr` -- guessed at twice, from NA9's binary and from a global
+            // selector dump -- **is not on this class**. A framework-wide selector list says
+            // a name exists somewhere in 785 MB; it never says on what. The device printed
+            // the class's own list and settled it in one line.
+            //
+            // What is there, in the order that matters:
+            //
+            //   downloadNoWatermarkURL   download quality, no watermark
+            //   downloadURL              download quality
+            //   h264DownloadURL          codec-named download
+            //   bitrateModels            the HD ladder (also HDR/SDR variants)
+            //   playURL                  the *streaming* URL -- what we had been using
+            //   playLowBitURL            named for exactly what it is
+            //
+            // And `audioBitrateModels` sits right beside them, which is the shape of the
+            // "972317 bytes of audio/mp4" this has been saving: the model carries separate
+            // audio lists, and a URL picked without regard to which list it came from can
+            // easily be the sound.
+            @[@"video", @"downloadNoWatermarkURL", @"originURLList"],
+            @[@"video", @"downloadNoWatermarkURL", @"urlList"],
+            @[@"video", @"downloadNoWatermarkURL", @"URLList"],
 
-            @[@"video", @"playAddrH264", @"originURLList"],
-            @[@"video", @"playAddrH264", @"urlList"],
-
-            @[@"video", @"playAddr", @"originURLList"],
-            @[@"video", @"playAddr", @"urlList"],
+            @[@"video", @"downloadURL", @"originURLList"],
+            @[@"video", @"downloadURL", @"urlList"],
+            @[@"video", @"downloadURL", @"URLList"],
 
             @[@"video", @"playURL", @"originURLList"],
             @[@"video", @"playURL", @"urlList"],
@@ -319,11 +337,11 @@ static void SCITTAddResolved(NSURL *url) {
             // The same confirmed ladder as the aweme path above, for a video model reached
             // directly. downloadAddr before playAddr before playURL: download address, then
             // codec-named playback address, then the generic one.
-            @[@"downloadAddr", @"originURLList"],
-            @[@"downloadAddr", @"urlList"],
-            @[@"playAddrH264", @"originURLList"],
-            @[@"playAddr", @"originURLList"],
-            @[@"playAddr", @"urlList"],
+            // Same confirmed ladder, for a video model reached directly.
+            @[@"downloadNoWatermarkURL", @"originURLList"],
+            @[@"downloadNoWatermarkURL", @"urlList"],
+            @[@"downloadURL", @"originURLList"],
+            @[@"downloadURL", @"urlList"],
 
             @[@"playURL", @"originURLList"],
             @[@"playURL", @"originURL"],

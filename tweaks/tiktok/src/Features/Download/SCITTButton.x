@@ -212,12 +212,30 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
     // Matched to a sibling's own height rather than a number picked here, so the button
     // occupies the same vertical slot every other icon does instead of whatever 44
     // points happens to look like on this rail.
+    // Width as well as height, and this is what "leaning far to the right" was.
+    //
+    // Only the height was matched. A vertical stack whose alignment is not .fill positions
+    // each arranged subview by its own width, so a button sized from its glyph sat at a
+    // different horizontal offset from every icon around it -- pushed off to one side by
+    // however much narrower or wider than them it happened to be. Nothing about the index
+    // could fix that; it is a sizing bug, and the report calling the placement "nice but
+    // leaning right" is precisely the shape of one.
+    //
+    // Both dimensions come from a sibling rather than from numbers chosen here, so the button
+    // occupies the same slot TikTok's own icons do on whatever rail it lands in.
     UIView *reference = siblings.lastObject;
-    if (reference && reference.bounds.size.height > 8) {
-        [button.heightAnchor constraintEqualToConstant:reference.bounds.size.height].active = YES;
-    } else {
-        [button.heightAnchor constraintEqualToConstant:44].active = YES;
-    }
+    CGFloat side = (reference && reference.bounds.size.height > 8)
+        ? reference.bounds.size.height : 44;
+    CGFloat wide = (reference && reference.bounds.size.width > 8)
+        ? reference.bounds.size.width : side;
+
+    [button.heightAnchor constraintEqualToConstant:side].active = YES;
+    [button.widthAnchor constraintEqualToConstant:wide].active = YES;
+
+    // And centred inside whatever width it is given, so the glyph sits on the same vertical
+    // line as the icons above and below rather than against one edge of its own box.
+    button.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+    button.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
 
     // Beside a real interaction view, not "one before last".
     //

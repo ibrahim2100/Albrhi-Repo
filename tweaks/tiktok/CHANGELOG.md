@@ -1,5 +1,43 @@
 # Albrhi for TikTok — what changed
 
+## v0.8.0
+
+**The device printed `AWEVideoModel`'s own accessors, and that answered both open questions.**
+
+`downloadAddr` — guessed at twice, once from NA9's binary and once from a framework-wide
+selector dump — **is not on that class at all.** A selector list taken across 785 MB says a
+name exists *somewhere*; it never says on what. One line from the device settled what two
+rounds of reading binaries could not.
+
+What is actually there:
+
+```
+downloadNoWatermarkURL   download quality, no watermark
+downloadURL              download quality
+h264DownloadURL          codec-named download
+bitrateModels            the HD ladder (plus HDR/SDR variants)
+audioBitrateModels       a separate audio ladder
+playURL                  the streaming URL — what this tweak had been using
+playLowBitURL            named for exactly what it is
+```
+
+`downloadNoWatermarkURL` and `downloadURL` now lead the chain. `playURL` stays as a
+fallback, where it belongs: it is what the app *streams*.
+
+And `audioBitrateModels` sitting right beside the video ones is the shape of the
+"972317 bytes of `audio/mp4`" this kept saving — the model carries separate audio lists, so a
+URL chosen without regard to which list it came from can easily be the sound.
+
+**The button leaning far to the right was a sizing bug, not a placement one.** Only its
+height was matched to the rail. A vertical stack whose alignment is not `.fill` positions each
+arranged subview by its own width, so a button sized from its glyph sat at a different
+horizontal offset from every icon around it. Both dimensions now come from a sibling, and the
+glyph is centred inside them.
+
+Still open: the button appearing on some videos and not others. `2 placed` against 164 feed
+items seen, and the rail is rebuilt per cell — but that is being left to a measurement rather
+than a third guess.
+
 ## v0.7.1
 
 **The button was being placed between two background views.** A device report dumped what
