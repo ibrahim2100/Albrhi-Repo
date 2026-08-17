@@ -118,56 +118,34 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url) {
     if (!model) return nil;
 
     @try {
-        // Several candidate paths, tried in order -- not because all are equally
-        // likely, but because a live device report is what actually tells this project
-        // which name a given build uses, and guessing exactly one path is what put a
-        // now-confirmed-wrong `-videoModel` here the first time. `bestURLtoDownload`
-        // is the one doubly-confirmed step (a real string in the binary and NA9's own
-        // hooked selector) and appears in every chain that plausibly reaches
-        // `AWEURLModel`; `-video`, `-playURL` and `-url` are read from NA9's own
-        // `_objc_msgSend$…` message-send stubs -- real selectors this binary actually
-        // sends, not guessed names, though not confirmed to be sent specifically to an
-        // aweme model the way `-isAds` and `AWEURLModel`'s own method are.
-        // The second batch (downloadinfoModel, urlHolder, playURIString, playItem,
-        // URLList) is read from AWEAwemeModel's own live property list -- a runtime
-        // dump of this exact class on this exact device, not a string dump of a
-        // binary. `-video` itself is on that list too and is included above already,
-        // even though every capture so far has answered it nil; `+watchModel:` covers
-        // the possibility that it is simply not populated yet at the moment a model is
-        // first built, which construction-time capture alone cannot.
-        // playURIString and URLList are tried last, not first: playURIString has
-        // already been shown to resolve to *something* that is not an http(s) link
-        // (a download attempted against it failed outright), and URLList's own
-        // element type is not confirmed at all. The chains most likely to end at a
-        // real AWEURLModel -- and therefore at bestURLtoDownload, the one doubly-
-        // confirmed step in this whole file -- are tried first.
+        // The aweme model is now only a fallback -- `SCITTCapture.x` hooks
+        // `AWEVideoModel` directly, because `-video` here is nil for nearly every
+        // model at construction time. What is left are the same confirmed-sent
+        // selectors `+captureVideoModel:` uses, reached one hop further out through
+        // `-video` (sent by both reference tweaks) for the cases where it *is*
+        // populated by the time a retry runs.
+        //
+        // `-playURIString` and `-URLList` are gone, and that is a measured removal:
+        // `URLList` resolved 288 times of 706 and the file it produced was 972 KB of
+        // `audio/mp4` with no video track at all. It is the *sound's* URL list. Every
+        // one of those "successes" was the music, which is worse than resolving
+        // nothing. `-playURIString` was already rejected for answering a non-http(s)
+        // link. `-h264URL` and `-downloadURL` were invented here and are gone too:
+        // neither tweak sends them and neither binary carries them as strings.
         NSArray<NSArray<NSString *> *> *chains = @[
-            // Confirmed on a real device, one hop at a time, from the previous
-            // report's own failures rather than guessed: -video answers a real
-            // AWEVideoModel (it used to answer nil; +watchModel:'s retry is why it no
-            // longer does), and AWEVideoModel -playURL answers a real AWEURLModel --
-            // "chain ended at AWEURLModel, not a URL or string" said so outright, one
-            // hop short of AWEURLModel's own doubly-confirmed -bestURLtoDownload.
             @[@"video", @"playURL", @"bestURLtoDownload"],
-            @[@"videoModel", @"playAddr", @"bestURLtoDownload"],
-            @[@"video", @"playAddr", @"bestURLtoDownload"],
+            @[@"video", @"playURL", @"originURLList"],
+            @[@"video", @"playURL", @"urlList"],
+            @[@"video", @"h264DownloadURL"],
+            @[@"video", @"h264DownloadURL", @"originURLList"],
+            @[@"video", @"playURLList", @"originURLList"],
+            @[@"video", @"playURLList", @"urlList"],
             @[@"video", @"bestURLtoDownload"],
+            @[@"video", @"originURLList"],
             @[@"downloadinfoModel", @"bestURLtoDownload"],
-            @[@"downloadinfoModel", @"playAddr", @"bestURLtoDownload"],
+            @[@"downloadinfoModel", @"originURLList"],
             @[@"urlHolder", @"bestURLtoDownload"],
             @[@"playItem", @"bestURLtoDownload"],
-            @[@"video", @"playURL"],
-            @[@"video", @"url"],
-            @[@"playURL"],
-            @[@"videoModel", @"playURL"],
-            @[@"urlHolder", @"url"],
-            // playURIString and URLList are gone, and this is a measured removal, not a
-            // tidy-up. `URLList` resolved 288 times of 706 -- and the file it produced
-            // was 972 KB of `audio/mp4` with no video track at all. It is the *sound's*
-            // URL list, not the video's. Every one of those "successes" was the music.
-            // `playURIString` was already rejected for answering a non-http(s) link.
-            // Leaving either in place would keep the button saving songs and reporting
-            // success, which is worse than resolving nothing.
         ];
 
         sciResolveAttempts++;
@@ -232,24 +210,52 @@ static void SCITTAddResolved(NSURL *url) {
         // class by a device report ("chain ended at AWEURLModel"); -playAddr and
         // -bitratePlayAddr are tried after it because the reference tweaks name them
         // and one of them may be what a different build populates first.
-        // `-originURL` and `-originURLList` are new here and are **confirmed sent
-        // selectors**, not guesses: NA9's own binary carries
-        // `_objc_msgSend$originURL` and `_objc_msgSend$originURLList` stubs, which
-        // exist only for a selector the compiler saw actually being sent. They join
-        // `-bestURLtoDownload` (the same standard) as the three real ways to get a
-        // link out of an `AWEURLModel`. `-playAddr`/`-bitratePlayAddr` are **not**
-        // sent anywhere in that binary -- they appear as plain strings only, which is
-        // dictionary-key territory -- so they sit after the confirmed three rather
-        // than in front of them.
+        //
+        // **Every selector below except the last two is a confirmed *sent* selector**,
+        // taken from `_objc_msgSend$…` stub symbols in NA9's and VibeTok's own
+        // binaries -- a stub the compiler emits only for a selector it actually saw
+        // being sent, which is a far higher bar than a name appearing as a string.
+        // The two tweaks turned out to use different names for the same job, and
+        // reading only one of them is what kept this feature broken:
+        //
+        //   selector              NA9 sends   VibeTok sends
+        //   playURL               yes         -
+        //   h264DownloadURL       -           yes
+        //   playURLList           -           yes
+        //   bestURLtoDownload     yes         -
+        //   originURL             yes         -
+        //   originUrl             -           yes      (note the casing)
+        //   originURLList         yes         yes      <- both, the strongest signal
+        //   urlList               -           yes
+        //
+        // `originURLList` is the only one both tweaks send, so it is tried early on
+        // every container. `-h264URL` and `-downloadURL`, which earlier versions of
+        // this list guessed at, are sent by neither tweak and appear as strings in
+        // neither binary -- they were invented here and are gone. `-playAddr` and
+        // `-bitratePlayAddr` are strings only, never sent, so they stay last.
+        //
         NSArray<NSArray<NSString *> *> *chains = @[
             @[@"playURL", @"bestURLtoDownload"],
-            @[@"playURL", @"originURL"],
             @[@"playURL", @"originURLList"],
+            @[@"playURL", @"originURL"],
+            @[@"playURL", @"originUrl"],
+            @[@"playURL", @"urlList"],
+
+            // VibeTok's own path, and the name suggests exactly what this feature
+            // wants: the H.264 download link rather than a streaming address. Tried
+            // both as a direct answer and as a container.
+            @[@"h264DownloadURL"],
+            @[@"h264DownloadURL", @"bestURLtoDownload"],
+            @[@"h264DownloadURL", @"originURLList"],
+            @[@"h264DownloadURL", @"urlList"],
+
+            @[@"playURLList", @"originURLList"],
+            @[@"playURLList", @"urlList"],
+            @[@"playURLList", @"bestURLtoDownload"],
+            @[@"playURLList"],
+
             @[@"playAddr", @"bestURLtoDownload"],
-            @[@"playAddr", @"originURL"],
             @[@"bitratePlayAddr", @"bestURLtoDownload"],
-            @[@"h264URL", @"bestURLtoDownload"],
-            @[@"downloadURL", @"bestURLtoDownload"],
         ];
 
         NSMutableArray<NSString *> *failures = [NSMutableArray array];

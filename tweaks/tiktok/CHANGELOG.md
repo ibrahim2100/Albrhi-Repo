@@ -1,5 +1,36 @@
 # Albrhi for TikTok — what changed
 
+## v0.5.2
+
+**VibeTok does have a download feature, and reading only NA9 is what kept this
+broken.** An earlier pass concluded VibeTok had none — it does: a whole
+`MSGDownloadSettingsViewController`, "Download video", "Download audio",
+`PHAssetCreationRequest`, a `download_HD_Video` preference. And crucially it reaches the
+link through **different selector names than NA9 uses for the same job**:
+
+| selector | NA9 sends | VibeTok sends |
+|---|---|---|
+| `playURL` | yes | — |
+| `h264DownloadURL` | — | **yes** |
+| `playURLList` | — | **yes** |
+| `bestURLtoDownload` | yes | — |
+| `originURL` | yes | — |
+| `originUrl` | — | **yes** (note the casing) |
+| `originURLList` | **yes** | **yes** |
+| `urlList` | — | **yes** |
+
+All of those are `_objc_msgSend$…` stub symbols — emitted only for a selector the
+compiler saw actually being sent, which is a far higher bar than a name appearing
+somewhere as a string. `originURLList` is the only one **both** tweaks send, so it is
+now tried early on every container. `h264DownloadURL` is VibeTok's own path and its
+name says exactly what this feature wants: a download link rather than a streaming
+address.
+
+**Two names this file had invented are gone.** `-h264URL` and `-downloadURL` were
+guesses from an earlier release; neither tweak sends them and neither binary carries
+them as strings at all. Same for the ranking of `-playAddr`/`-bitratePlayAddr` — strings
+only, never sent, so they stay last rather than second.
+
 ## v0.5.1
 
 **The Download list is gone from the settings screen, on request.** It was a list of

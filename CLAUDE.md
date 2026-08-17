@@ -131,6 +131,20 @@ Instagram's own story-seen feature draws), and a profile view. The ad filter now
 checks `isAd`/`isAdItem`/`isAdsOrPseudoAds` alongside `-isAds`, plus a separate
 splash/launch-ad surface. Bypass gained six more confirmed checks.
 
+**Two reference tweaks doing the same job can use entirely different selector names for
+it, and reading only one of them is how a feature stays broken for eight releases.**
+VibeTok was first read as having no download feature at all — it has a whole
+`MSGDownloadSettingsViewController` — and where NA9 sends `-playURL` /
+`-bestURLtoDownload` / `-originURL`, VibeTok sends `-h264DownloadURL` / `-playURLList` /
+`-urlList` / `-originUrl` (that casing) for the same purpose. `-originURLList` is the
+only selector **both** send, which makes it the strongest single candidate in the whole
+table. The technique that settles this is the `_objc_msgSend$<selector>` stub symbol:
+the compiler emits one only for a selector it actually saw being sent, so its presence
+is real evidence where a bare string in `__cstring` is not — and its *absence* is
+evidence too, which is how `-playAddr` and `-bitratePlayAddr` were demoted to last
+(strings only, never sent) and how `-h264URL`/`-downloadURL` were caught as names this
+project had invented. Grep both binaries for the stub before ranking a candidate chain.
+
 **NA9's own download button works because it does not use TikTok's model chain at all,
 and that is deliberately not reproduced here.** Its HD path fetches
 `https://tikwm.com/video/media/hdplay/<id>.mp4` — a third-party scraper service, keyed
@@ -1259,11 +1273,11 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.5.1** (four features, three-way privacy, one in-feed button in the
+source) · TikTok **0.5.2** (four features, three-way privacy, one in-feed button in the
 rail and no download list at all; the link is resolved from `AWEVideoModel` at its own
 construction — the aweme model's `-video` is nil at that point and its `-URLList`
 resolves the *song*, which is what made 288 "successful" saves all audio)
-· suite **1.30.1**.
+· suite **1.30.2**.
 
 - **CarPlay is built but not served.** The code is complete and compiles; the package is
   kept out of the APT index until its app bridging is confirmed on a device. Install it
