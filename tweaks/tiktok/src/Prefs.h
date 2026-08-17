@@ -20,10 +20,13 @@
 /// checks the way an unmodified phone would; touches nothing about payment.
 #define SCIPrefBypass           @"bypass"
 
-/// Stops the app telling TikTok's own servers a moment was seen: a story open, a
-/// message read, or a profile visited. Never touches what shows on this device's own
-/// screen -- only what gets reported back.
-#define SCIPrefPrivacy          @"privacy"
+/// Three separate switches, not one -- a story's seen mark, a message's read receipt
+/// and a profile view are three different things reported to three different places,
+/// and turning one off should not silently touch the other two. Never touches what
+/// shows on this device's own screen -- only what gets reported back.
+#define SCIPrefPrivacyStory     @"privacy_story"
+#define SCIPrefPrivacyMessages  @"privacy_messages"
+#define SCIPrefPrivacyProfile   @"privacy_profile"
 
 #define SCIPrefVerboseLogging   @"verbose_logging"
 

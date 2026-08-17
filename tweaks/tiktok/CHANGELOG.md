@@ -1,5 +1,39 @@
 # Albrhi for TikTok — what changed
 
+## v0.4.1
+
+Three things reported directly after v0.4.0 shipped: the in-feed button still did not
+appear, privacy was one switch for three different reports, and the settings screen's
+own text overlapped itself.
+
+**The overlap was a real, confirmable bug, independent of anything device-specific.**
+Every Controls/Privacy row carries a wrapped, multi-line note under its title, and the
+table never set an automatic row height -- every cell sat clamped to the fixed 44-point
+default, so a two- or three-line note was drawn on top of the row underneath it rather
+than pushing it down. `self.tableView.rowHeight = UITableViewAutomaticDimension` with an
+estimated height fixes it outright.
+
+**Privacy split into three separate switches**, each its own row in a new Privacy
+section: story views, message read receipts, profile views. One switch bundling all
+three could never be turned off for just one of them, which is what was asked for
+directly. `SCIPrefPrivacy` is gone; `SCIPrefPrivacyStory`/`SCIPrefPrivacyMessages`/
+`SCIPrefPrivacyProfile` gate their own hook in `SCITTPrivacy.x` independently.
+
+**The in-feed button's placement no longer depends on the rail's own layout firing.**
+`TTKFeedInteractionStackView`/`TTKFeedRightInteractionStackView -layoutSubviews` and
+`-didMoveToWindow` are still hooked as a fallback, but this project's own CLAUDE.md
+already documents why neither can be trusted alone on a *reused* cell -- the same
+lesson a much earlier X-tweak bug cost a release to learn, and a UIStackView is not
+guaranteed a fresh layout pass just because the cell holding it was rebound to a
+different model. Placement is now driven directly from `AWEFeedViewTemplateCell`'s own
+`-configWithModel:`/`-configureWithModel:` -- confirmed to fire on every reuse -- via a
+depth-first search of the cell's own subview tree for the rail, immediately after the
+resolved item is stashed on the cell. Whether this actually surfaces the button on a
+real device is still unconfirmed; the Status section's own "In-feed button" row now
+says exactly which of four states it is in (rail absent, cell hooked but no rail, rail
+found with nothing resolved above it, or N buttons placed) rather than a bare yes/no,
+so a report from here on names which one rather than only "no button."
+
 ## v0.4.0
 
 A download button in the feed itself, and a real settings screen -- both asked for

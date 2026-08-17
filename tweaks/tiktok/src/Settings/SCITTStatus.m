@@ -9,22 +9,30 @@
 
 ///
 /// A real grouped settings screen, in sections -- not a stack of switches with one
-/// report dumped underneath. Controls first, then what has been captured, then the
-/// numbers behind each feature -- the same shape the X tweak's own settings screen
-/// (SCITWSettings.m) already settled on for the same reason: a screen with several
-/// unrelated things to say reads better sectioned than run together.
+/// report dumped underneath. Controls, then Privacy as its own section (a story seen, a
+/// message read and a profile view are three different reports to three different
+/// places, and one switch bundling all three could never be turned off for just one of
+/// them), then what has been captured, then the numbers behind each feature -- the same
+/// shape the X tweak's own settings screen (SCITWSettings.m) already settled on.
 ///
 
 static const NSInteger kSCISectionControls = 0;
-static const NSInteger kSCISectionDownload = 1;
-static const NSInteger kSCISectionStatus = 2;
-static const NSInteger kSCISectionCount = 3;
+static const NSInteger kSCISectionPrivacy = 1;
+static const NSInteger kSCISectionDownload = 2;
+static const NSInteger kSCISectionStatus = 3;
+static const NSInteger kSCISectionCount = 4;
 
 static const NSInteger kSCIRowAds = 0;
 static const NSInteger kSCIRowDownloadButton = 1;
 static const NSInteger kSCIRowBypass = 2;
-static const NSInteger kSCIRowPrivacy = 3;
-static const NSInteger kSCIControlsRowCount = 4;
+static const NSInteger kSCIControlsRowCount = 3;
+
+static const NSInteger kSCIRowPrivacyStory = 0;
+static const NSInteger kSCIRowPrivacyMessages = 1;
+static const NSInteger kSCIRowPrivacyProfile = 2;
+static const NSInteger kSCIPrivacyRowCount = 3;
+
+static const NSInteger kSCIStatusRowCount = 5;
 
 @interface SCITTStatus ()
 @property (nonatomic, strong) NSArray<SCITTMediaItem *> *items;
@@ -100,6 +108,14 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
                                          action:@selector(dismissSelf)];
 
     self.tableView.sectionHeaderTopPadding = 0;
+
+    // Every row here can carry a wrapped, multi-line note under its title. Without an
+    // automatic row height every cell is clamped to the table's fixed 44-point default
+    // and a two- or three-line note is drawn overlapping the row below it rather than
+    // pushing it down -- which is exactly the "text running into itself" a fixed-height
+    // subtitle cell produces the moment its detail label wraps past one line.
+    self.tableView.rowHeight = UITableViewAutomaticDimension;
+    self.tableView.estimatedRowHeight = 64;
 
     UIRefreshControl *refresh = [[UIRefreshControl alloc] init];
     [refresh addTarget:self action:@selector(pulledToRefresh) forControlEvents:UIControlEventValueChanged];
@@ -270,13 +286,15 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == kSCISectionControls) return kSCIControlsRowCount;
+    if (section == kSCISectionPrivacy) return kSCIPrivacyRowCount;
     if (section == kSCISectionDownload) return self.items.count ?: 1;
-    if (section == kSCISectionStatus) return 4; // gate, ads, button, bypass+privacy folded together
+    if (section == kSCISectionStatus) return kSCIStatusRowCount;
     return 0;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     if (section == kSCISectionControls) return SCILocalized(@"section_controls");
+    if (section == kSCISectionPrivacy) return SCILocalized(@"section_privacy");
     if (section == kSCISectionDownload) return SCILocalized(@"section_download");
     if (section == kSCISectionStatus) return SCILocalized(@"section_status");
     return nil;
@@ -294,6 +312,14 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
             [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
         [self fillControlCell:cell row:indexPath.row];
+        return cell;
+    }
+
+    if (indexPath.section == kSCISectionPrivacy) {
+        UITableViewCell *cell =
+            [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        [self fillPrivacyCell:cell row:indexPath.row];
         return cell;
     }
 
@@ -327,21 +353,74 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
         note = SCILocalized(@"row_download_button_note");
         icon = @"arrow.down.circle.fill";
         color = SCIAccent();
-    } else if (row == kSCIRowBypass) {
+    } else {
         key = SCIPrefBypass;
         title = SCILocalized(@"row_bypass");
         note = SCILocalized(@"row_bypass_note");
         icon = @"shield.lefthalf.filled";
         color = [UIColor systemIndigoColor];
-    } else {
-        key = SCIPrefPrivacy;
-        title = SCILocalized(@"row_privacy");
-        note = SCILocalized(@"row_privacy_note");
-        icon = @"eye.slash.fill";
-        color = [UIColor systemTealColor];
     }
 
+    [self fillSwitchCell:cell key:key title:title note:note icon:icon color:color tag:row
+                  action:@selector(controlToggled:)];
+}
+
+- (void)controlToggled:(UISwitch *)toggle {
+    NSString *key = (toggle.tag == kSCIRowAds) ? SCIPrefHideAds
+                   : (toggle.tag == kSCIRowDownloadButton) ? SCIPrefDownloadButton
+                   : (toggle.tag == kSCIRowBypass) ? SCIPrefBypass
+                   : nil;
+    if (!key) return;
+    [[NSUserDefaults standardUserDefaults] setBool:toggle.on forKey:key];
+}
+
+- (void)fillPrivacyCell:(UITableViewCell *)cell row:(NSInteger)row {
+    NSString *key = nil, *title = nil, *note = nil, *icon = nil;
+    UIColor *color = [UIColor systemTealColor];
+
+    if (row == kSCIRowPrivacyStory) {
+        key = SCIPrefPrivacyStory;
+        title = SCILocalized(@"row_privacy_story");
+        note = SCILocalized(@"row_privacy_story_note");
+        icon = @"eye.slash.fill";
+    } else if (row == kSCIRowPrivacyMessages) {
+        key = SCIPrefPrivacyMessages;
+        title = SCILocalized(@"row_privacy_messages");
+        note = SCILocalized(@"row_privacy_messages_note");
+        icon = @"message.fill";
+    } else {
+        key = SCIPrefPrivacyProfile;
+        title = SCILocalized(@"row_privacy_profile");
+        note = SCILocalized(@"row_privacy_profile_note");
+        icon = @"person.fill.questionmark";
+    }
+
+    [self fillSwitchCell:cell key:key title:title note:note icon:icon color:color tag:row
+                  action:@selector(privacyToggled:)];
+}
+
+- (void)privacyToggled:(UISwitch *)toggle {
+    NSString *key = (toggle.tag == kSCIRowPrivacyStory) ? SCIPrefPrivacyStory
+                   : (toggle.tag == kSCIRowPrivacyMessages) ? SCIPrefPrivacyMessages
+                   : (toggle.tag == kSCIRowPrivacyProfile) ? SCIPrefPrivacyProfile
+                   : nil;
+    if (!key) return;
+    [[NSUserDefaults standardUserDefaults] setBool:toggle.on forKey:key];
+}
+
+/// One row shared by Controls and Privacy: a title, a wrapped note under it, a coloured
+/// badge, and a switch bound to `key`. `tag` says which row fired without a side table
+/// to keep in step with the switches themselves.
+- (void)fillSwitchCell:(UITableViewCell *)cell
+                    key:(NSString *)key
+                  title:(NSString *)title
+                   note:(NSString *)note
+                   icon:(NSString *)icon
+                  color:(UIColor *)color
+                    tag:(NSInteger)tag
+                 action:(SEL)action {
     cell.textLabel.text = title;
+    cell.textLabel.numberOfLines = 0;
     cell.detailTextLabel.text = note;
     cell.detailTextLabel.numberOfLines = 0;
     cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
@@ -350,19 +429,9 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
     UISwitch *toggle = [[UISwitch alloc] init];
     toggle.onTintColor = SCIAccent();
     toggle.on = [[NSUserDefaults standardUserDefaults] boolForKey:key];
-    toggle.tag = row;
-    [toggle addTarget:self action:@selector(controlToggled:) forControlEvents:UIControlEventValueChanged];
+    toggle.tag = tag;
+    [toggle addTarget:self action:action forControlEvents:UIControlEventValueChanged];
     cell.accessoryView = toggle;
-}
-
-- (void)controlToggled:(UISwitch *)toggle {
-    NSString *key = (toggle.tag == kSCIRowAds) ? SCIPrefHideAds
-                   : (toggle.tag == kSCIRowDownloadButton) ? SCIPrefDownloadButton
-                   : (toggle.tag == kSCIRowBypass) ? SCIPrefBypass
-                   : (toggle.tag == kSCIRowPrivacy) ? SCIPrefPrivacy
-                   : nil;
-    if (!key) return;
-    [[NSUserDefaults standardUserDefaults] setBool:toggle.on forKey:key];
 }
 
 - (void)fillMediaCell:(UITableViewCell *)cell row:(NSInteger)row {
@@ -389,36 +458,35 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
 }
 
 - (void)fillStatusCell:(UITableViewCell *)cell row:(NSInteger)row {
+    cell.detailTextLabel.numberOfLines = 0;
+
     switch (row) {
         case 0:
             cell.textLabel.text = SCILocalized(@"status_gate");
             cell.detailTextLabel.text =
                 SCIPanelAllowsThisApp() ? SCILocalized(@"gate_on") : SCILocalized(@"gate_off");
-            cell.detailTextLabel.numberOfLines = 0;
             cell.imageView.image = SCITTBadge(@"switch.2", [UIColor systemGrayColor]);
             break;
         case 1:
             cell.textLabel.text = SCILocalized(@"diag_ads");
             cell.detailTextLabel.text = [SCITTDiagnostics adFilterState];
-            cell.detailTextLabel.numberOfLines = 0;
             cell.imageView.image = SCITTBadge(@"nosign", [UIColor systemRedColor]);
             break;
         case 2:
             cell.textLabel.text = SCILocalized(@"status_button");
             cell.detailTextLabel.text = SCITTButtonReport();
-            cell.detailTextLabel.numberOfLines = 0;
             cell.imageView.image = SCITTBadge(@"arrow.down.circle.fill", SCIAccent());
             break;
-        default: {
-            NSString *bypass = [SCITTDiagnostics bypassState];
-            NSString *privacy = [SCITTDiagnostics privacyState];
-            cell.textLabel.text = [NSString stringWithFormat:@"%@ / %@",
-                SCILocalized(@"diag_bypass"), SCILocalized(@"diag_privacy")];
-            cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ — %@", bypass, privacy];
-            cell.detailTextLabel.numberOfLines = 0;
+        case 3:
+            cell.textLabel.text = SCILocalized(@"diag_bypass");
+            cell.detailTextLabel.text = [SCITTDiagnostics bypassState];
             cell.imageView.image = SCITTBadge(@"shield.lefthalf.filled", [UIColor systemIndigoColor]);
             break;
-        }
+        default:
+            cell.textLabel.text = SCILocalized(@"diag_privacy");
+            cell.detailTextLabel.text = [SCITTDiagnostics privacyState];
+            cell.imageView.image = SCITTBadge(@"eye.slash.fill", [UIColor systemTealColor]);
+            break;
     }
 }
 

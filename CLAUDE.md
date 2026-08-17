@@ -160,6 +160,22 @@ set rather than sharing the bypass tally, and gained two more confirmed
 `TTKProfileViewsVisitor` selectors (`-visit:`, `-p_shouldReportHasVeiwedProfileForUser:`)
 found in the same pass.
 
+**v0.4.1 answered three reports against v0.4.0 directly: the button still did not
+appear, privacy was one switch for three different things, and the settings screen's
+own text overlapped.** The overlap was a genuine, device-independent bug — the table
+never set `rowHeight = UITableViewAutomaticDimension`, so a wrapped multi-line note
+under a switch row was drawn on top of the row below it rather than pushing it down.
+Privacy split into three independent preferences (`SCIPrefPrivacyStory`/
+`…Messages`/`…Profile`), each its own row in a new Privacy section, rather than one
+switch bundling a story-seen mark, a message read receipt and a profile view together.
+The button's placement was moved off the rail's own `-layoutSubviews`/`-didMoveToWindow`
+— this file's own recycled-cell lesson already says why those cannot be trusted alone
+on a *reused* cell — and onto `AWEFeedViewTemplateCell`'s confirmed-every-reuse config
+hook instead, which now does a depth-first search of its own subview tree for the rail
+immediately after stashing the resolved item. Whether this actually surfaces the button
+is still unconfirmed; the Status section's own report was widened from a bare count to
+four distinct states so the next report names which one instead of only "no button."
+
 **Albrhi CarPlay's own architecture is informed by [carplay-cast](https://github.com/EthanArbuckle/carplay-cast)
 by Ethan Arbuckle, Apache-2.0** — read for its design (three components: a hook inside
 Apple's CarPlay dashboard process, a hook inside SpringBoard using its own live
@@ -1211,8 +1227,8 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.4.0** (four features, in-feed button, sectioned settings screen) ·
-suite **1.29.0**.
+source) · TikTok **0.4.1** (four features, three-way privacy, in-feed button, sectioned
+settings screen — button placement unconfirmed on a real device) · suite **1.29.1**.
 
 - **CarPlay is built but not served.** The code is complete and compiles; the package is
   kept out of the APT index until its app bridging is confirmed on a device. Install it

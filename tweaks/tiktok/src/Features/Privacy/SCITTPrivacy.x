@@ -38,7 +38,7 @@
 %hook TTKStoryMarkReadService
 
 - (void)markAsRead:(id)story {
-    if (!SCIPrefEnabled(SCIPrefPrivacy)) {
+    if (!SCIPrefEnabled(SCIPrefPrivacyStory)) {
         %orig;
         return;
     }
@@ -50,7 +50,7 @@
 %hook AWEIMMessageReadComponent
 
 - (void)p_markReadSyncToServerWithMessage:(id)message {
-    if (!SCIPrefEnabled(SCIPrefPrivacy)) {
+    if (!SCIPrefEnabled(SCIPrefPrivacyMessages)) {
         %orig;
         return;
     }
@@ -62,7 +62,7 @@
 %hook TTKProfileViewsVisitor
 
 - (void)reportProfileView {
-    if (!SCIPrefEnabled(SCIPrefPrivacy)) {
+    if (!SCIPrefEnabled(SCIPrefPrivacyProfile)) {
         %orig;
         return;
     }
@@ -70,7 +70,7 @@
 }
 
 - (BOOL)p_shouldReportProfileView {
-    if (!SCIPrefEnabled(SCIPrefPrivacy)) return %orig;
+    if (!SCIPrefEnabled(SCIPrefPrivacyProfile)) return %orig;
     [SCITTDiagnostics recordPrivacyAnswer:@"profile view withheld"];
     return NO;
 }
@@ -81,7 +81,7 @@
 // -reportProfileView, and this gate answers a second, separate "has this already been
 // reported" question the other two do not.
 - (void)visit:(id)profile {
-    if (!SCIPrefEnabled(SCIPrefPrivacy)) {
+    if (!SCIPrefEnabled(SCIPrefPrivacyProfile)) {
         %orig;
         return;
     }
@@ -89,7 +89,7 @@
 }
 
 - (BOOL)p_shouldReportHasVeiwedProfileForUser:(id)user {
-    if (!SCIPrefEnabled(SCIPrefPrivacy)) return %orig;
+    if (!SCIPrefEnabled(SCIPrefPrivacyProfile)) return %orig;
     [SCITTDiagnostics recordPrivacyAnswer:@"profile view withheld"];
     return NO;
 }

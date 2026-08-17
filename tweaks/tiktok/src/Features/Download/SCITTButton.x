@@ -100,6 +100,33 @@ static SCITTMediaItem *SCITTItemAboveView(UIView *view) {
     return nil;
 }
 
+/// Depth-first search for the interaction rail inside a cell's own subview tree, capped
+/// so a pathological view hierarchy cannot make this expensive.
+///
+/// This project's own CLAUDE.md already documents why the rail's `-layoutSubviews` and
+/// `-didMoveToWindow` cannot be trusted alone: "a recycled table or collection view cell
+/// is never removed from its window, so -didMoveToWindow fires once for its whole life
+/// and never again on reuse", and a UIStackView is not guaranteed a fresh layout pass
+/// just because the cell it sits in was rebound to a different model. Both hooks are
+/// kept below as a fallback for a rail built after the cell's own config method runs,
+/// but placement is driven from here first -- the one bind point already confirmed to
+/// fire on every reuse, not a secondary one whose firing on reuse was never confirmed.
+static UIStackView *SCITTFindRail(UIView *root, NSInteger depth) {
+    if (!root || depth <= 0) return nil;
+
+    Class railA = NSClassFromString(@"TTKFeedInteractionStackView");
+    Class railB = NSClassFromString(@"TTKFeedRightInteractionStackView");
+    if ((railA && [root isKindOfClass:railA]) || (railB && [root isKindOfClass:railB])) {
+        return (UIStackView *)root;
+    }
+
+    for (UIView *child in root.subviews) {
+        UIStackView *found = SCITTFindRail(child, depth - 1);
+        if (found) return found;
+    }
+    return nil;
+}
+
 /// Puts the button on a rail, or refreshes the one already there. One function for two
 /// classes, called from each hook's own -layoutSubviews with self -- the same reasoning
 /// the X tweak's own SCITWPlaceImmersiveButton function gives for not writing this twice.
@@ -169,6 +196,12 @@ static void SCITTPlaceButton(UIStackView *stack) {
         } else {
             objc_setAssociatedObject(self, kSCIItemKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
+
+        // Placed right here rather than waiting for the rail's own layout pass -- see
+        // SCITTFindRail's own comment for why that pass cannot be trusted alone on a
+        // reused cell.
+        UIStackView *rail = SCITTFindRail(self, 8);
+        if (rail) SCITTPlaceButton(rail);
     }
 }
 
@@ -184,6 +217,12 @@ static void SCITTPlaceButton(UIStackView *stack) {
         } else {
             objc_setAssociatedObject(self, kSCIItemKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
+
+        // Placed right here rather than waiting for the rail's own layout pass -- see
+        // SCITTFindRail's own comment for why that pass cannot be trusted alone on a
+        // reused cell.
+        UIStackView *rail = SCITTFindRail(self, 8);
+        if (rail) SCITTPlaceButton(rail);
     }
 }
 

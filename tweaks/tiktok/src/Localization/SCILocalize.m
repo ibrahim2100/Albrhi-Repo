@@ -17,6 +17,7 @@ static void SCIBuildTables(void) {
         @"done": @"Done",
 
         @"section_controls": @"Controls",
+        @"section_privacy": @"Privacy",
         @"section_download": @"Download",
         @"section_status": @"Status",
 
@@ -26,8 +27,13 @@ static void SCIBuildTables(void) {
         @"row_download_button_note": @"A button beside like, comment and share on the video on screen.",
         @"row_bypass": @"Hide the jailbreak",
         @"row_bypass_note": @"Answers TikTok's own device checks the way an unmodified phone would.",
-        @"row_privacy": @"Watch without being seen",
-        @"row_privacy_note": @"Stops a story-seen mark, a message read receipt and a profile-view report.",
+
+        @"row_privacy_story": @"Story views",
+        @"row_privacy_story_note": @"Stops the seen mark a story's author would otherwise get.",
+        @"row_privacy_messages": @"Message read receipts",
+        @"row_privacy_messages_note": @"Stops the read receipt sent to the other side. Your own unread badge still clears normally.",
+        @"row_privacy_profile": @"Profile views",
+        @"row_privacy_profile_note": @"Stops the report sent when you open someone's profile.",
 
         @"pill_ads": @"Ads",
         @"pill_button": @"Button",
@@ -68,6 +74,7 @@ static void SCIBuildTables(void) {
         @"done": @"تم",
 
         @"section_controls": @"التحكم",
+        @"section_privacy": @"الخصوصية",
         @"section_download": @"التحميل",
         @"section_status": @"الحالة",
 
@@ -77,8 +84,13 @@ static void SCIBuildTables(void) {
         @"row_download_button_note": @"زر بجانب اللايك والتعليق والمشاركة على الفيديو المعروض.",
         @"row_bypass": @"إخفاء الجيلبريك",
         @"row_bypass_note": @"يجاوب على فحوصات تيك توك للجهاز كأنه جهاز غير معدَّل.",
-        @"row_privacy": @"مشاهدة بدون أن يعرفوا",
-        @"row_privacy_note": @"يوقف علامة مشاهدة القصة، وتأكيد قراءة الرسالة، وتقرير زيارة البروفايل.",
+
+        @"row_privacy_story": @"مشاهدة القصص",
+        @"row_privacy_story_note": @"يوقف علامة المشاهدة اللي يشوفها صاحب القصة.",
+        @"row_privacy_messages": @"تأكيد قراءة الرسائل",
+        @"row_privacy_messages_note": @"يوقف تأكيد القراءة اللي يوصل للطرف الثاني. الشارة عندك تستمر تُمسح بشكل طبيعي.",
+        @"row_privacy_profile": @"زيارة البروفايلات",
+        @"row_privacy_profile_note": @"يوقف التقرير اللي يُرسل عند فتحك لبروفايل أحد.",
 
         @"pill_ads": @"الإعلانات",
         @"pill_button": @"الزر",

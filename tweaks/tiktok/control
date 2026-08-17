@@ -1,6 +1,6 @@
 Package: com.albrhi.tiktok
 Name: Albrhi for TikTok (rootless)
-Version: 0.4.0
+Version: 0.4.1
 Architecture: iphoneos-arm64
 Description: No ads, downloads, privacy, and TikTok's own checks answered the way an
  unmodified phone would.
@@ -17,8 +17,9 @@ Description: No ads, downloads, privacy, and TikTok's own checks answered the wa
  saved into Photos or, for audio-only content, into the app's own files.
  .
  ▍PRIVACY
- Stops the app telling TikTok's own servers a story was opened, a message was read, or a
- profile was visited — without touching what this device's own screen shows.
+ Three separate switches, not one — a story's seen mark, a message's read receipt and a
+ profile view report to three different places, so turning one off never touches the
+ other two. Never touches what this device's own screen shows.
  .
  ▍HIDES THE JAILBREAK
  TikTok asks many places whether the device is modified: a direct jailbreak check, its
