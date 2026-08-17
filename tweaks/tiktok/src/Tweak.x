@@ -1,29 +1,39 @@
 #import "Tweak.h"
 #import "Prefs.h"
 #import "SCILog.h"
+#import "Features/Ads/SCITTAdBlock.h"
+#import "Features/Bypass/SCITTBypass.h"
+#import "Settings/SCITTGesture.h"
 
-NSString *SCIVersionString = @"v0.1.0";  // AlbrhiTT
+NSString *SCIVersionString = @"v0.2.0";  // AlbrhiTT
 
 ///
-/// The scaffold. No feature lives here yet -- see CLAUDE.md for what this tweak is
-/// waiting on: a real class dump and a real IPA of the current TikTok build, so every
-/// hook this project ever writes is confirmed against what actually exists rather than
-/// guessed from BHTikTok's own source, which targets a TikTok build years older than
-/// whatever is current now.
+/// TESTED ON TikTok 46.4.0. Every class here was confirmed present in that build's own
+/// MusicallyCore.framework binary before being hooked -- read directly, not carried
+/// over from BHTikTok's own source, which this was read for architecture only. See
+/// CLAUDE.md and this tweak's own CHANGELOG.md for what that reading found.
 ///
 
 %ctor {
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{
+        SCIPrefHideAds: @YES,
+        SCIPrefBypass: @YES,
         SCIPrefVerboseLogging: @NO,
     }];
 
-    NSLog(@"[AlbrhiTT] %@ loaded into %@ (scaffold — no features yet)", SCIVersionString,
+    NSLog(@"[AlbrhiTT] %@ loaded into %@", SCIVersionString,
           [[NSBundle mainBundle] bundleIdentifier]);
+
+    // The gesture goes on even when every feature below it is off, so the status
+    // screen that explains why nothing is happening is always reachable -- the same
+    // rule the other tweaks in this repository follow.
+    SCITTInstallGesture();
 
     if (!SCIPanelAllowsThisApp()) {
         SCILogV(@"switched off for this app: %@", SCIPanelGateReport());
         return;
     }
 
-    // Nothing to install yet.
+    SCITTInstallAdBlock();
+    SCITTInstallBypass();
 }

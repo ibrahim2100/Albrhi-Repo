@@ -1,17 +1,32 @@
 Package: com.albrhi.tiktok
 Name: Albrhi for TikTok (rootless)
-Version: 0.1.0
+Version: 0.2.0
 Architecture: iphoneos-arm64
-Description: Scaffold only — no features built yet. Do not install.
+Description: No ads, and TikTok's own checks answered the way an unmodified phone would.
  .
- The tweak's own structure exists so the source checks and the build script have
- something to run against while the real hooks are written; nothing here patches
- TikTok yet. See CLAUDE.md for the plan.
+ ▍NO ADS
+ A feed item TikTok's own server marked as an ad never becomes an object at all — refused
+ at the model itself, the moment it is built, rather than a view hidden after the fact.
  .
- Reference architecture read from BandarHL's and al3raQe's published BHTikTok source
- (github.com/BandarHL/BHTikTok, github.com/al3raQe/BHTikTok) — no LICENSE file in
- either, so this is architecture read only, the same cautious way this project treats
- every unlicensed reference; no code is taken from it.
+ ▍HIDES THE JAILBREAK
+ TikTok asks several places whether the device is modified: a direct jailbreak check, its
+ signing information, whether the app looks like a genuine App Store build, whether an
+ embedded provisioning profile exists. Each is answered the way it would be on an
+ unmodified phone. Nothing here touches a purchase, a receipt or a subscription.
+ .
+ ▍SEE WHAT IT CAUGHT
+ Hold two fingers anywhere in TikTok for a screen with a switch for each feature and a
+ report of what has actually run. Arabic and English.
+ .
+ TESTED ON TikTok 46.4.0. Nothing is pinned to a version number: every class is looked up
+ at runtime and skipped if it is not there.
+ .
+ Architecture for both features was read from BandarHL's and al3raQe's published BHTikTok
+ source (github.com/BandarHL/BHTikTok, github.com/al3raQe/BHTikTok) — neither carries a
+ LICENSE file, so this is read for where TikTok is hookable only, the same cautious way
+ this project treats every unlicensed reference. No code is taken from it; every class
+ named here was independently confirmed present in TikTok's own binary before being
+ hooked. Downloading videos is next.
  .
  Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo

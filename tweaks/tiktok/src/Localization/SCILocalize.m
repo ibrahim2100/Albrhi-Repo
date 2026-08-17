@@ -15,11 +15,31 @@ static void SCIBuildTables(void) {
     _enTable = @{
         @"title": @"Albrhi for TikTok",
         @"done": @"Done",
+
+        @"row_ads": @"Hide ads",
+        @"row_bypass": @"Hide the jailbreak",
+
+        @"diag_ads": @"Ad filter",
+        @"diag_ads_none": @"Nothing seen yet. Scroll the feed, then come back.",
+        @"diag_ads_counts": @"%lu dropped of %lu feed items seen",
+
+        @"diag_bypass": @"Bypass",
+        @"diag_bypass_none": @"Nothing asked yet.",
     };
 
     _arTable = @{
         @"title": @"البرهي لتيك توك",
         @"done": @"تم",
+
+        @"row_ads": @"إخفاء الإعلانات",
+        @"row_bypass": @"إخفاء الجيلبريك",
+
+        @"diag_ads": @"فلتر الإعلانات",
+        @"diag_ads_none": @"لا شيء بعد. مرّر بالفيد ثم ارجع.",
+        @"diag_ads_counts": @"%lu مُسقَط من %lu عنصر فيد",
+
+        @"diag_bypass": @"الإخفاء",
+        @"diag_bypass_none": @"لا شيء سُئل بعد.",
     };
 }
 

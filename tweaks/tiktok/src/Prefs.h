@@ -7,7 +7,22 @@
 /// String keys spread across feature files is how a typo becomes a feature that silently
 /// never turns on. Here they are constants, so a mistake is a compile error.
 ///
-/// Empty so far -- this is the scaffold, before any feature exists to have a preference.
-///
+
+/// Drops a feed item the server itself marked as an ad, before it is ever built into a
+/// cell. On by default: it is why someone installs this.
+#define SCIPrefHideAds          @"hide_ads"
+
+/// Whether the anti-tamper / jailbreak-detection cluster runs. Answers TikTok's own
+/// checks the way an unmodified phone would; touches nothing about payment.
+#define SCIPrefBypass           @"bypass"
 
 #define SCIPrefVerboseLogging   @"verbose_logging"
+
+/// Albrhi Panel's per-app switch, asked first. Every feature here reads its setting
+/// through this one function, so turning the app off in the panel stands all of them
+/// down at once -- the hooks stay installed and answer %orig, which is the only stop
+/// that cannot leave the app half-patched.
+static inline BOOL SCIPrefEnabled(NSString *key) {
+    if (!SCIPanelAllowsThisApp()) return NO;
+    return [[NSUserDefaults standardUserDefaults] boolForKey:key];
+}

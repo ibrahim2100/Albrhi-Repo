@@ -78,25 +78,37 @@ The Instagram tweak is derived from [SCInsta](https://github.com/SoCuul/SCInsta)
 SoCuul under GPLv3. Original authorship is credited in-app, in the README and in the
 package metadata — that is a licence obligation, not a courtesy. Never remove it.
 
-**A seventh tweak, for TikTok, exists as a scaffold only — `tweaks/tiktok`, package
-`com.albrhi.tiktok`, version 0.1.0.** Structure and source layout only: Makefile,
-control, filter plist (`com.zhiliaoapp.musically`), bilingual localisation table, the
-panel gate — enough for `tools/check.py` and `./build.sh tiktok rootless` to run
-against, and nothing that patches TikTok yet. Not wired into `suite/control`, on
-purpose, until it does something. Two references were read for architecture, both
-unlicensed and both by the same author family the X tweak's own control file already
-credits: BandarHL's original [BHTikTok](https://github.com/BandarHL/BHTikTok) and
-al3raQe's maintained fork of the same
+**A seventh tweak, for TikTok — `tweaks/tiktok`, package `com.albrhi.tiktok`, version
+0.2.0.** Not wired into `suite/control` yet, on purpose, until there is more to it than
+two features. Architecture was read from two unlicensed references, both by the same
+author family the X tweak's own control file already credits: BandarHL's original
+[BHTikTok](https://github.com/BandarHL/BHTikTok) and al3raQe's maintained fork
 ([github.com/al3raQe/BHTikTok](https://github.com/al3raQe/BHTikTok)) — read the same
-cautious way every unlicensed reference here is, for where TikTok is hookable, never
-for the code. `tweaks/tiktok/CHANGELOG.md`'s v0.1.0 entry names every class that
-mattered from that reading, and names two that will not be built regardless of what a
-real class dump confirms: `PIPOIAPStoreManager`/`PIPOStoreKitHelper`, an in-app-purchase
-fake — the same shape of thing `Check0verPlus.dylib` was for Locket, reviewed and
-refused there for taking money from the app's own developers rather than being a device
-tweak. Waiting on a real class dump and IPA of the current TikTok build before any hook
-is written, so nothing here is carried over from a reference that may target a TikTok
-years older than today's.
+cautious way every unlicensed reference here is, for where TikTok is hookable, never for
+the code.
+
+**Every class this tweak hooks is now confirmed against a real TikTok 46.4.0 IPA, not
+carried over from a reference that turned out to target an older build.** The app's real
+logic sits in `MusicallyCore.framework` — 810 MB; the main executable itself is a 92 KB
+stub — parsed by hand for its own class and selector strings, the same no-`otool` method
+this project already uses everywhere else. Two names in BHTikTok's own source,
+`AWEPlayVideoPlayerController` and `TIKTOKProfileHeaderView`, do not exist as exact
+strings in that binary at all; plausible replacements were found
+(`AWEPlayVideoPlayerControllerClass`, a `TTK`-prefixed profile family) but are not yet
+confirmed enough to hook. **`AWEAPMManager` was misfiled as an ad-related class on first
+reading, going only by its name** — reading BHTikTok's own hook showed it answers a
+signing-info question (`+signInfo` → `"AppStore"`), a jailbreak-detection answer, not an
+ad control; corrected in the same changelog entry that found it rather than silently.
+
+Shipped in v0.2.0: an ad filter (`AWEAwemeModel`'s own `-isAds` mark, refused at
+`-init`/`-initWithDictionary:error:` after `%orig` builds the object, never as a view
+hidden afterward) and a jailbreak-detection bypass across six confirmed checks. **Not
+being built, regardless of what a class dump confirms**: `PIPOIAPStoreManager`/
+`PIPOStoreKitHelper`, an in-app-purchase fake — the same shape of thing
+`Check0verPlus.dylib` was for Locket, reviewed and refused there for taking money from
+the app's own developers rather than being a device tweak. Next: download, which needs
+`AWEURLModel`'s actual shape measured before anything is hooked — confirmed present, not
+yet confirmed in what form it answers.
 
 **Albrhi CarPlay's own architecture is informed by [carplay-cast](https://github.com/EthanArbuckle/carplay-cast)
 by Ethan Arbuckle, Apache-2.0** — read for its design (three components: a hook inside
@@ -1138,9 +1150,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.7** · YouTube **1.20.0** · X **0.14.0** · Locket **0.3.0** (released on
-its own, not in the suite) · Panel **0.6.7** · CarPlay **0.4.1** (withheld from the
-source) · suite **1.25.0**.
+Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
+its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
+source) · TikTok **0.2.0** (not in the suite yet, two features) · suite **1.27.1**.
 
 - **CarPlay is built but not served.** The code is complete and compiles; the package is
   kept out of the APT index until its app bridging is confirmed on a device. Install it
