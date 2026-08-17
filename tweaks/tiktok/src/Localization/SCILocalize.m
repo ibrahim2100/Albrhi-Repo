@@ -16,9 +16,28 @@ static void SCIBuildTables(void) {
         @"title": @"Albrhi for TikTok",
         @"done": @"Done",
 
+        @"section_controls": @"Controls",
+        @"section_download": @"Download",
+        @"section_status": @"Status",
+
         @"row_ads": @"Hide ads",
+        @"row_ads_note": @"A feed item marked as an ad by TikTok's own server is never built into a cell.",
+        @"row_download_button": @"Download button in the feed",
+        @"row_download_button_note": @"A button beside like, comment and share on the video on screen.",
         @"row_bypass": @"Hide the jailbreak",
+        @"row_bypass_note": @"Answers TikTok's own device checks the way an unmodified phone would.",
         @"row_privacy": @"Watch without being seen",
+        @"row_privacy_note": @"Stops a story-seen mark, a message read receipt and a profile-view report.",
+
+        @"pill_ads": @"Ads",
+        @"pill_button": @"Button",
+        @"pill_bypass": @"Bypass",
+
+        @"status_gate": @"Panel switch",
+        @"gate_on": @"On",
+        @"gate_off": @"Off — turn TikTok on in Settings › Albrhi",
+
+        @"status_button": @"In-feed button",
 
         @"diag_ads": @"Ad filter",
         @"diag_ads_none": @"Nothing seen yet. Scroll the feed, then come back.",
@@ -27,24 +46,49 @@ static void SCIBuildTables(void) {
         @"diag_bypass": @"Bypass",
         @"diag_bypass_none": @"Nothing asked yet.",
 
+        @"diag_privacy": @"Privacy",
+        @"diag_privacy_none": @"Nothing asked yet.",
+
         @"media_title": @"Ready to save",
         @"media_empty": @"Nothing yet. Scroll the feed, then come back.",
         @"media_save": @"Save",
+        @"media_footer": @"Tap a row to save it. Newest first.",
 
         @"save_working": @"Saving…",
         @"save_failed": @"Couldn't save it",
         @"save_done": @"Saved to Photos",
         @"save_done_audio": @"Sound saved",
         @"save_no_permission": @"Photos access is off",
+
+        @"credit": @"Architecture read from BandarHL's and al3raQe's BHTikTok, NA9 For TikTok and VibeTok — none copied from.",
     };
 
     _arTable = @{
         @"title": @"البرهي لتيك توك",
         @"done": @"تم",
 
+        @"section_controls": @"التحكم",
+        @"section_download": @"التحميل",
+        @"section_status": @"الحالة",
+
         @"row_ads": @"إخفاء الإعلانات",
+        @"row_ads_note": @"أي عنصر يعلّمه سيرفر تيك توك نفسه كإعلان لا يُبنى ككائن أصلاً.",
+        @"row_download_button": @"زر تحميل في الواجهة",
+        @"row_download_button_note": @"زر بجانب اللايك والتعليق والمشاركة على الفيديو المعروض.",
         @"row_bypass": @"إخفاء الجيلبريك",
+        @"row_bypass_note": @"يجاوب على فحوصات تيك توك للجهاز كأنه جهاز غير معدَّل.",
         @"row_privacy": @"مشاهدة بدون أن يعرفوا",
+        @"row_privacy_note": @"يوقف علامة مشاهدة القصة، وتأكيد قراءة الرسالة، وتقرير زيارة البروفايل.",
+
+        @"pill_ads": @"الإعلانات",
+        @"pill_button": @"الزر",
+        @"pill_bypass": @"الإخفاء",
+
+        @"status_gate": @"مفتاح البانل",
+        @"gate_on": @"مفعّل",
+        @"gate_off": @"مغلق — فعّل تيك توك من الإعدادات › البرهي",
+
+        @"status_button": @"زر الواجهة",
 
         @"diag_ads": @"فلتر الإعلانات",
         @"diag_ads_none": @"لا شيء بعد. مرّر بالفيد ثم ارجع.",
@@ -53,15 +97,21 @@ static void SCIBuildTables(void) {
         @"diag_bypass": @"الإخفاء",
         @"diag_bypass_none": @"لا شيء سُئل بعد.",
 
+        @"diag_privacy": @"الخصوصية",
+        @"diag_privacy_none": @"لا شيء سُئل بعد.",
+
         @"media_title": @"جاهز للحفظ",
         @"media_empty": @"لا شيء بعد. مرّر بالفيد ثم ارجع.",
         @"media_save": @"حفظ",
+        @"media_footer": @"اضغط على أي صف لحفظه. الأحدث أولاً.",
 
         @"save_working": @"جارِ الحفظ…",
         @"save_failed": @"تعذّر الحفظ",
         @"save_done": @"تم الحفظ في الصور",
         @"save_done_audio": @"تم حفظ الصوت",
         @"save_no_permission": @"صلاحية الصور مغلقة",
+
+        @"credit": @"البنية مقروءة من BHTikTok لـ BandarHL وal3raQe، وNA9 For TikTok وVibeTok — لا شيء منسوخ منها.",
     };
 }
 

@@ -4,9 +4,10 @@
 #import "Features/Ads/SCITTAdBlock.h"
 #import "Features/Bypass/SCITTBypass.h"
 #import "Features/Privacy/SCITTPrivacy.h"
+#import "Features/Download/SCITTButton.h"
 #import "Settings/SCITTGesture.h"
 
-NSString *SCIVersionString = @"v0.3.0";  // AlbrhiTT
+NSString *SCIVersionString = @"v0.4.0";  // AlbrhiTT
 
 ///
 /// TESTED ON TikTok 46.4.0. Every class here was confirmed present in that build's own
@@ -18,6 +19,7 @@ NSString *SCIVersionString = @"v0.3.0";  // AlbrhiTT
 %ctor {
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{
         SCIPrefHideAds: @YES,
+        SCIPrefDownloadButton: @YES,
         SCIPrefBypass: @YES,
         SCIPrefPrivacy: @YES,
         SCIPrefVerboseLogging: @NO,
@@ -39,4 +41,5 @@ NSString *SCIVersionString = @"v0.3.0";  // AlbrhiTT
     SCITTInstallAdBlock();
     SCITTInstallBypass();
     SCITTInstallPrivacy();
+    SCITTInstallButton();
 }

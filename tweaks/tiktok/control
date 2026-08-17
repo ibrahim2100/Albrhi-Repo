@@ -1,6 +1,6 @@
 Package: com.albrhi.tiktok
 Name: Albrhi for TikTok (rootless)
-Version: 0.3.0
+Version: 0.4.0
 Architecture: iphoneos-arm64
 Description: No ads, downloads, privacy, and TikTok's own checks answered the way an
  unmodified phone would.
@@ -11,9 +11,10 @@ Description: No ads, downloads, privacy, and TikTok's own checks answered the wa
  A separate splash-ad surface is suppressed too.
  .
  ▍DOWNLOAD
- Every video (and song, where TikTok separates it) this tweak has resolved a link for is
- listed on its own status screen with a Save button, saved into Photos or, for
- audio-only content, into the app's own files.
+ A button right beside like, comment and share, on the video actually on screen — no
+ separate list to remember to open. Every video (and song, where TikTok separates it)
+ this tweak resolves a link for is also kept on the settings screen with a Save button,
+ saved into Photos or, for audio-only content, into the app's own files.
  .
  ▍PRIVACY
  Stops the app telling TikTok's own servers a story was opened, a message was read, or a
@@ -28,8 +29,9 @@ Description: No ads, downloads, privacy, and TikTok's own checks answered the wa
  surface.
  .
  ▍SEE WHAT IT CAUGHT
- Hold two fingers anywhere in TikTok for a screen with a switch for each feature and a
- report of what has actually run. Arabic and English.
+ Hold two fingers anywhere in TikTok for a real settings screen: a switch and an
+ explanation for every feature, what has actually been resolved for download, and live
+ numbers behind each hook. Arabic and English.
  .
  TESTED ON TikTok 46.4.0. Nothing is pinned to a version number: every class is looked up
  at runtime and skipped if it is not there.

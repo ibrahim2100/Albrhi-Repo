@@ -12,6 +12,10 @@
 /// cell. On by default: it is why someone installs this.
 #define SCIPrefHideAds          @"hide_ads"
 
+/// A download button in the feed itself, beside like/comment/share, rather than only a
+/// list to come back to on the status screen.
+#define SCIPrefDownloadButton   @"download_button"
+
 /// Whether the anti-tamper / jailbreak-detection cluster runs. Answers TikTok's own
 /// checks the way an unmodified phone would; touches nothing about payment.
 #define SCIPrefBypass           @"bypass"

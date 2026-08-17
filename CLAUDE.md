@@ -140,6 +140,26 @@ One confirmed jailbreak-check method on that specific class was not treated as r
 enough to cross a boundary this project had already drawn on purpose; the same question
 is already answered by the six other checks that are hooked.
 
+**v0.4.0 put the download button in the feed itself and rebuilt the settings screen,
+both directly requested after v0.3.0 shipped download as a status-screen list only.**
+`AWEFeedViewTemplateCell -configWithModel:`/`-configureWithModel:` — two of NA9's own
+hooked selectors — are hooked not to place anything but to catch the model a hooked
+method's own argument already hands over with no guessing needed, and the resolved URL
+is stashed on the cell via an associated object. The button itself lives on
+`TTKFeedInteractionStackView`/`TTKFeedRightInteractionStackView` (both confirmed present
+as literal strings in the real 46.4.0 binary; VibeTok independently hooks the first for
+an unrelated reason, which counts as a second confirmation), added as an arranged
+subview the same way the X tweak's own immersive button avoids fighting `layoutSubviews`
+— and it reads its item by walking up from the rail to whichever ancestor cell holds the
+association, the same upward-search shape `SCITWFirstSaveableInStatusView` already uses.
+The settings screen was replaced with a real grouped `UITableViewController` — status
+pills, a Controls section with an icon and an explanation per switch, a Download list,
+and a Status section with live per-hook numbers — in the shape the X tweak's own
+`SCITWSettings.m` had already settled on. Privacy diagnostics now record into their own
+set rather than sharing the bypass tally, and gained two more confirmed
+`TTKProfileViewsVisitor` selectors (`-visit:`, `-p_shouldReportHasVeiwedProfileForUser:`)
+found in the same pass.
+
 **Albrhi CarPlay's own architecture is informed by [carplay-cast](https://github.com/EthanArbuckle/carplay-cast)
 by Ethan Arbuckle, Apache-2.0** — read for its design (three components: a hook inside
 Apple's CarPlay dashboard process, a hook inside SpringBoard using its own live
@@ -1191,7 +1211,8 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.3.0** (four features) · suite **1.28.0**.
+source) · TikTok **0.4.0** (four features, in-feed button, sectioned settings screen) ·
+suite **1.29.0**.
 
 - **CarPlay is built but not served.** The code is complete and compiles; the package is
   kept out of the APT index until its app bridging is confirmed on a device. Install it

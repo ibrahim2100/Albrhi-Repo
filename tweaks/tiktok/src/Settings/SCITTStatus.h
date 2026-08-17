@@ -7,7 +7,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface SCITTStatus : UIViewController
+@interface SCITTStatus : UITableViewController
 
 /// Presents the report, over whatever is currently on screen.
 + (void)present;

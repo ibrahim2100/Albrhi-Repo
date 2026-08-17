@@ -42,7 +42,7 @@
         %orig;
         return;
     }
-    [SCITTDiagnostics recordBypassAnswer:@"story markAsRead withheld"];
+    [SCITTDiagnostics recordPrivacyAnswer:@"story markAsRead withheld"];
 }
 
 %end
@@ -54,7 +54,7 @@
         %orig;
         return;
     }
-    [SCITTDiagnostics recordBypassAnswer:@"message read-sync withheld"];
+    [SCITTDiagnostics recordPrivacyAnswer:@"message read-sync withheld"];
 }
 
 %end
@@ -66,12 +66,31 @@
         %orig;
         return;
     }
-    [SCITTDiagnostics recordBypassAnswer:@"profile view withheld"];
+    [SCITTDiagnostics recordPrivacyAnswer:@"profile view withheld"];
 }
 
 - (BOOL)p_shouldReportProfileView {
     if (!SCIPrefEnabled(SCIPrefPrivacy)) return %orig;
-    [SCITTDiagnostics recordBypassAnswer:@"profile view withheld"];
+    [SCITTDiagnostics recordPrivacyAnswer:@"profile view withheld"];
+    return NO;
+}
+
+// Two more of this same class's own selectors, found in the same NA9/VibeTok symbol
+// tables the three above came from and confirmed present in TikTok 46.4.0's own
+// binary the same way -- -visit: is the entry point both references hook alongside
+// -reportProfileView, and this gate answers a second, separate "has this already been
+// reported" question the other two do not.
+- (void)visit:(id)profile {
+    if (!SCIPrefEnabled(SCIPrefPrivacy)) {
+        %orig;
+        return;
+    }
+    [SCITTDiagnostics recordPrivacyAnswer:@"profile view withheld"];
+}
+
+- (BOOL)p_shouldReportHasVeiwedProfileForUser:(id)user {
+    if (!SCIPrefEnabled(SCIPrefPrivacy)) return %orig;
+    [SCITTDiagnostics recordPrivacyAnswer:@"profile view withheld"];
     return NO;
 }
 

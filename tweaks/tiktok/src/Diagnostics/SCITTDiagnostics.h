@@ -24,6 +24,12 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)recordBypassAnswer:(NSString *)which;
 + (NSString *)bypassState;
 
+/// Same idea, its own set -- so a report about the jailbreak checks and a report about
+/// what was withheld from TikTok's own servers never get mixed into one undifferentiated
+/// list.
++ (void)recordPrivacyAnswer:(NSString *)which;
++ (NSString *)privacyState;
+
 /// The whole report, for the status screen and for a paste into an issue.
 + (NSString *)report;
 

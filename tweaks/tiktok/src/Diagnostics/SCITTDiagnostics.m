@@ -35,6 +35,19 @@ static NSMutableOrderedSet<NSString *> *sciBypassAnswered = nil;
     return [[sciBypassAnswered array] componentsJoinedByString:@", "];
 }
 
+static NSMutableOrderedSet<NSString *> *sciPrivacyAnswered = nil;
+
++ (void)recordPrivacyAnswer:(NSString *)which {
+    if (!which.length) return;
+    if (!sciPrivacyAnswered) sciPrivacyAnswered = [NSMutableOrderedSet orderedSet];
+    [sciPrivacyAnswered addObject:which];
+}
+
++ (NSString *)privacyState {
+    if (!sciPrivacyAnswered.count) return SCILocalized(@"diag_privacy_none");
+    return [[sciPrivacyAnswered array] componentsJoinedByString:@", "];
+}
+
 + (NSString *)report {
     NSMutableString *out = [NSMutableString string];
     [out appendFormat:@"Albrhi for TikTok %@\n", SCIVersionString];
@@ -43,6 +56,7 @@ static NSMutableOrderedSet<NSString *> *sciBypassAnswered = nil;
 
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_ads"), [self adFilterState]];
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_bypass"), [self bypassState]];
+    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_privacy"), [self privacyState]];
 
     return out;
 }

@@ -24,40 +24,35 @@ static NSURL *SCITTURLFromValue(id value) {
     return nil;
 }
 
-+ (void)captureModel:(AWEAwemeModel *)model {
-    if (!model) return;
++ (NSURL *)resolveURLForModel:(AWEAwemeModel *)model {
+    if (!model) return nil;
 
     @try {
-        if (![model respondsToSelector:@selector(isAds)]) {
-            // Not fatal to capture -- only relevant to the ad filter, which already
-            // checked this before deciding to keep the model at all.
-        }
-
         if (![model respondsToSelector:NSSelectorFromString(@"videoModel")]) {
             sciLastAttemptState = @"model has no -videoModel";
-            return;
+            return nil;
         }
         id video = ((id (*)(id, SEL))objc_msgSend)(model, NSSelectorFromString(@"videoModel"));
         if (!video) {
             sciLastAttemptState = @"-videoModel answered nil";
-            return;
+            return nil;
         }
 
         if (![video respondsToSelector:NSSelectorFromString(@"playAddr")]) {
             sciLastAttemptState = [NSString stringWithFormat:
                 @"%@ has no -playAddr", NSStringFromClass([video class])];
-            return;
+            return nil;
         }
         id playAddr = ((id (*)(id, SEL))objc_msgSend)(video, NSSelectorFromString(@"playAddr"));
         if (!playAddr) {
             sciLastAttemptState = @"-playAddr answered nil";
-            return;
+            return nil;
         }
 
         if (![playAddr respondsToSelector:@selector(bestURLtoDownload)]) {
             sciLastAttemptState = [NSString stringWithFormat:
                 @"%@ has no -bestURLtoDownload", NSStringFromClass([playAddr class])];
-            return;
+            return nil;
         }
         id resolved = [playAddr bestURLtoDownload];
         NSURL *url = SCITTURLFromValue(resolved);
@@ -65,10 +60,24 @@ static NSURL *SCITTURLFromValue(id value) {
             sciLastAttemptState = [NSString stringWithFormat:
                 @"-bestURLtoDownload answered %@, not a URL or string",
                 resolved ? NSStringFromClass([resolved class]) : @"nil"];
-            return;
+            return nil;
         }
 
         sciLastAttemptState = @"resolved a download URL";
+        return url;
+    } @catch (NSException *exception) {
+        sciLastAttemptState = [NSString stringWithFormat:@"threw: %@", exception.reason ?: @"?"];
+        SCILogV(@"media resolve: %@", exception.reason);
+        return nil;
+    }
+}
+
++ (void)captureModel:(AWEAwemeModel *)model {
+    if (!model) return;
+
+    @try {
+        NSURL *url = [self resolveURLForModel:model];
+        if (!url) return;
 
         if (!sciRecent) sciRecent = [NSMutableArray array];
 

@@ -1,5 +1,51 @@
 # Albrhi for TikTok — what changed
 
+## v0.4.0
+
+A download button in the feed itself, and a real settings screen -- both asked for
+directly after v0.3.0 shipped only a status-screen list.
+
+**The button.** NA9 For TikTok's and VibeTok's own `_ungrouped$` hook tables were read
+again, this time for where a *visible* button belongs rather than for a resolution
+chain. NA9 places one on `AWEFeedViewTemplateCell` directly and, on a newer rail, on
+`TTKFeedInteractionStackView` / `TTKFeedRightInteractionStackView` -- the vertical stack
+of like/comment/bookmark/share icons beside the video. VibeTok, a tweak with no
+download feature at all, independently hooks `TTKFeedInteractionStackView
+-layoutSubviews` for its own unrelated reason, which is a second, unrelated confirmation
+that class is real. Both stack names are confirmed present as literal strings in TikTok
+46.4.0's own `MusicallyCore` binary, read directly the same no-`otool` way every class in
+this tweak has been.
+
+What is not carried over is how the reference tweaks find out which video to download --
+that reads a model accessor on the stack view this project has not independently
+confirmed. Instead, the model is caught where it needs no confirmation at all:
+`AWEFeedViewTemplateCell -configWithModel:` / `-configureWithModel:` are two of NA9's own
+hooked selectors, and a hooked method's own argument is simply what was passed, not a
+guess. The resolved URL is stashed on the cell the moment its model is set, and the
+button -- nested somewhere inside that cell -- reads it back by walking up its own
+superview chain, the same upward search the X tweak's own immersive button already uses
+to reach its card from its rail. `SCITTMedia`'s resolution chain was split out into its
+own `+resolveURLForModel:`, callable without touching the status screen's recent list, so
+there is exactly one resolution implementation behind both surfaces.
+
+**The settings screen.** Replaced entirely -- a plain stack of three switches over one
+text-view report is not what "detailed and organized like NA9 and VibeTok" asked for.
+Rebuilt as a real grouped `UITableViewController`, in the shape the X tweak's own
+settings screen (`SCITWSettings.m`) already settled on: a status card with pass/fail
+pills at the top, a Controls section with a coloured icon and an explanation under every
+switch, a Download section listing what has actually been resolved (tap a row to save
+it, no confirmation sheet), and a Status section with live numbers -- the panel gate,
+the ad filter's own count, which interaction rail the button attached to, and what the
+bypass and privacy hooks have each answered. Privacy answers now record into their own
+set (`SCITTDiagnostics recordPrivacyAnswer:`/`privacyState`) instead of sharing the
+bypass tally, so the two numbers cannot be read as one.
+
+**Privacy widened by two more confirmed selectors.** `TTKProfileViewsVisitor -visit:` and
+`-p_shouldReportHasVeiwedProfileForUser:` turned up in the same NA9/VibeTok symbol tables
+the other three privacy hooks came from, confirmed present in the real binary the same
+way -- added alongside `-reportProfileView`/`-p_shouldReportProfileView` on the same
+class, all four withheld together.
+
 ## v0.3.0
 
 Two more references arrived — NA9 For TikTok's compiled `.deb` and VibeTok's compiled

@@ -35,6 +35,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// not guessed past.
 + (void)captureModel:(AWEAwemeModel *)model;
 
+/// The same resolution `captureModel:` runs, without touching the recent list --
+/// for a caller that already has a model in hand and needs its URL right now, such
+/// as the in-feed button binding itself to a cell the moment that cell's model is
+/// set. Nil on anything the chain could not resolve.
++ (nullable NSURL *)resolveURLForModel:(AWEAwemeModel *)model;
+
 /// Newest first, at most a small cap.
 + (NSArray<SCITTMediaItem *> *)recent;
 
