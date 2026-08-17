@@ -10,11 +10,12 @@ save are **not** fixed yet — see the TikTok changelog for why each is named ra
 guessed at.
 
 > **Note on 1.28.0 – 1.31.1.** Those four releases moved `suite/control` without leaving
-> notes here. Their changes are recorded in the per-tweak changelogs (TikTok 0.4.x–0.6.1, X
-> up to 0.14.0, YouTube up to 1.20.0, Locket leaving the suite). This file is what the
-> release notes and the Sileo depiction are generated from, so the gap is visible to anyone
-> updating — it is left named rather than filled in with descriptions written after the fact
-> by someone who did not make those changes.
+> notes here, and they are where **the TikTok tweak arrived in this package** — the only
+> thing in it this file has never described. Its own history is in
+> `tweaks/tiktok/CHANGELOG.md`. This file is what the release notes and the Sileo depiction
+> are generated from, so the gap shows to anyone updating; it is named rather than filled
+> in with suite-level descriptions written after the fact by someone who did not make those
+> releases.
 
 ## v1.27.1
 
