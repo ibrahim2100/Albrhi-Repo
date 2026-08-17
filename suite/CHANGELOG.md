@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.32.1
+
+Includes TikTok 0.7.1 — the save button no longer lands between two invisible background
+views, which is why it looked off-centre. And Diagnostics now prints the video model's own
+URL accessors, which is the one list that has never been in the report and the reason the
+"saves audio instead of video" problem is still open.
+
 ## v1.32.0
 
 Includes TikTok 0.7.0 — **downloads should be the real quality now.** The app's own binary

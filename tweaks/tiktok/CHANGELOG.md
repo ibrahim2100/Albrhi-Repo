@@ -1,5 +1,36 @@
 # Albrhi for TikTok — what changed
 
+## v0.7.1
+
+**The button was being placed between two background views.** A device report dumped what
+the rail actually holds:
+
+```
+TTKRightInteractionAreaBackgroundView | TikTokFeedInteractionBiz.PlayInteractionLikeView
+| TTKRightInteractionAreaBackgroundView x4
+```
+
+Most of that rail is **not buttons**. The interactive elements are `PlayInteraction*` views
+(Swift, module `TikTokFeedInteractionBiz`); the rest are background containers. Inserting
+"one before last" therefore dropped the save button between two backgrounds — which is
+precisely the "not centred, not aligned with the icons" that was reported, and no amount of
+sizing could have fixed it, because the neighbours it was sized against are not icons.
+
+It is now inserted directly after the last view whose class names an interaction. A rail with
+none keeps the old behaviour rather than getting a newly invented one.
+
+**And the audio problem gets measured rather than guessed at a second time.** The report says
+resolution succeeds via `AWEVideoModel.playURL.originURLList` *and* that the saved file is
+972317 bytes of `audio/mp4`. Both are true, which means the link that resolves is not the
+video. Every accessor list in this report so far belongs to the **aweme** model — the video
+model's own has never been printed, and that is the list that would name the right URL.
+
+TikTok 46.4.0's framework does contain `downloadAddr`, `playAddr`, `playAddrH264`,
+`bitrateModels`, `HDRBitrateModels` and `SDRBitrateModels`; a selector dump is global, so it
+cannot say which are on `AWEVideoModel`. Trying `downloadAddr` first was the obvious guess and
+it did not win. So Diagnostics now prints `AWEVideoModel`'s own URL-bearing accessors, and the
+next report answers it outright.
+
 ## v0.7.0
 
 **The download chain was mostly dead, and the app's own binary said so.**

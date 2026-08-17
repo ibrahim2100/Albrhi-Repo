@@ -306,6 +306,25 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
                                   matching:@[@"model", @"aweme", @"item", @"data"]]];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_media_candidates"),
         [SCITTMedia candidateAccessorsOnAwemeModel]];
+
+    // AWEVideoModel's own accessors -- the one list that has never been in this report, and
+    // the reason the audio problem is still open.
+    //
+    // The report says resolution succeeds "via AWEVideoModel.playURL.originURLList" and then
+    // that the saved file is 972317 bytes of audio/mp4. Both are true, which means the link
+    // that resolves is not the video -- and every accessor listed above belongs to the
+    // *aweme* model, not to the video model the link actually comes from. So the list that
+    // would name the right one has never been printed.
+    //
+    // TikTok 46.4.0's framework does contain downloadAddr, playAddr, playAddrH264,
+    // bitrateModels, HDRBitrateModels and SDRBitrateModels; what it does not say is which of
+    // them are on AWEVideoModel, because a selector dump is global. Trying downloadAddr first
+    // was the obvious guess and it did not win, so this asks the device instead of guessing a
+    // second time.
+    [report appendFormat:@"%@: %@\n", SCILocalized(@"status_video_accessors"),
+        [SCITTMedia accessorsOnClassNamed:@"AWEVideoModel"
+                                  matching:@[@"url", @"URL", @"addr", @"Addr", @"bitrate",
+                                             @"bitRate", @"uri", @"URI", @"play", @"download"]]];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"diag_bypass"), [SCITTDiagnostics bypassState]];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"diag_privacy"), [SCITTDiagnostics privacyState]];
 

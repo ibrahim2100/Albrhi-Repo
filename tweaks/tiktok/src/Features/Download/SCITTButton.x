@@ -219,7 +219,35 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
         [button.heightAnchor constraintEqualToConstant:44].active = YES;
     }
 
-    if (siblings.count >= 2 && [stack respondsToSelector:@selector(insertArrangedSubview:atIndex:)]) {
+    // Beside a real interaction view, not "one before last".
+    //
+    // A device report dumped what this rail actually holds, and most of it is not buttons:
+    //
+    //   TTKRightInteractionAreaBackgroundView | TikTokFeedInteractionBiz.PlayInteractionLikeView
+    //   | TTKRightInteractionAreaBackgroundView x4
+    //
+    // The interactive elements are `PlayInteraction*` views (Swift, module
+    // TikTokFeedInteractionBiz); the rest are background containers. Inserting before the
+    // last item therefore dropped the button between two backgrounds -- which is exactly the
+    // "not centred, not aligned with the icons" that was reported, and no amount of sizing
+    // would have fixed it, because the neighbours it was being sized against are not icons.
+    //
+    // So the anchor is the *last* view whose class names an interaction, and the button goes
+    // straight after it. Matched on the name rather than the class object because these are
+    // Swift types in a submodule -- the mangled name is not something to hardcode when the
+    // substring is unambiguous and already in the report.
+    NSInteger anchor = NSNotFound;
+    for (NSInteger i = 0; i < (NSInteger)siblings.count; i++) {
+        NSString *cls = NSStringFromClass([siblings[(NSUInteger)i] class]);
+        if ([cls containsString:@"PlayInteraction"] || [cls containsString:@"InteractionButton"]) {
+            anchor = i;
+        }
+    }
+
+    if (anchor != NSNotFound && [stack respondsToSelector:@selector(insertArrangedSubview:atIndex:)]) {
+        [stack insertArrangedSubview:button atIndex:(NSUInteger)(anchor + 1)];
+    } else if (siblings.count >= 2 && [stack respondsToSelector:@selector(insertArrangedSubview:atIndex:)]) {
+        // No interaction view found: keep the old behaviour rather than inventing a new one.
         [stack insertArrangedSubview:button atIndex:siblings.count - 1];
         sciPlacedBeforeLast = YES;
     } else if ([stack respondsToSelector:@selector(addArrangedSubview:)]) {
