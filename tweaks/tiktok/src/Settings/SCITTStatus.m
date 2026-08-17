@@ -302,7 +302,13 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_media_resolve"), [SCITTMedia lastAttemptState]];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_download"), SCITTDownloadReport()];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_cell_accessors"),
-        [SCITTMedia accessorsOnClassNamed:@"AWEFeedViewCell"
+        // AWEFeedViewTemplateCell -- the class the feed actually uses.
+        //
+        // This asked AWEFeedViewCell, which is why the list came back full of accessibility
+        // and layout internals and nothing resembling a model: it was dumping a different
+        // class from the one the button is on. Three reports printed that list and nobody
+        // noticed it was the wrong object.
+        [SCITTMedia accessorsOnClassNamed:@"AWEFeedViewTemplateCell"
                                   matching:@[@"model", @"aweme", @"item", @"data"]]];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_media_candidates"),
         [SCITTMedia candidateAccessorsOnAwemeModel]];
@@ -532,7 +538,7 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
             // video it is actually attached to.
             cell.textLabel.text = SCILocalized(@"status_cell_accessors");
             cell.detailTextLabel.text =
-                [SCITTMedia accessorsOnClassNamed:@"AWEFeedViewCell"
+                [SCITTMedia accessorsOnClassNamed:@"AWEFeedViewTemplateCell"
                                           matching:@[@"model", @"aweme", @"item", @"data"]];
             cell.imageView.image = SCITTBadge(@"rectangle.on.rectangle", [UIColor systemPurpleColor]);
             break;

@@ -1,5 +1,37 @@
 # Albrhi for TikTok — what changed
 
+## v0.10.0
+
+**Downloads work, and now they save the video you are actually watching.**
+
+0.9.0's report was the first to say `saved to Photos — 1 video / 1 audio track(s), 1561847
+bytes`. A real video, with a real audio track, after five releases of saving 972 KB of sound.
+`downloadNoWatermarkURL` was the answer.
+
+But it saved the *same* clip three times while something else was on screen, because the button
+took `[SCITTMedia recent].firstObject` — whatever model TikTok had most recently built. During a
+scroll that is a video being **preloaded**, not the one under your finger. The button was
+correct about *a* video and wrong about *which*, which is exactly the Instagram carousel bug
+fixed earlier the same day: assuming instead of asking.
+
+The cell is the thing that knows. It is asked for its own model now, through whichever of
+`awemeModel` / `aweme` / `model` / `currentAweme` / `itemModel` / `cellModel` it answers —
+each behind `-respondsToSelector:`, and **the one that answered is printed in the report**, so
+it never has to be guessed at again. A candidate that does not answer `-video` is rejected: a
+property sharing the name is not a model.
+
+**There is no fallback to "the most recent anything".** Saving the wrong video is worse than
+saving none — one is a missing feature, the other hands you someone else's clip and looks like
+it worked.
+
+**The button sits above the profile picture now**, clear of the whole rail rather than among
+like and comment.
+
+And the diagnostic was dumping the wrong class. It asked `AWEFeedViewCell` while the feed uses
+`AWEFeedViewTemplateCell`, which is why that list came back full of accessibility and layout
+internals with nothing resembling a model in it. Three reports printed it before anyone noticed
+it described a different object.
+
 ## v0.9.0
 
 **The button goes on the feed cell now, which is where the working tweak puts its own.**

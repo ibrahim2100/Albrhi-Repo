@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.35.0
+
+Includes TikTok 0.10.0 — **saving works, and saves the right video.** Downloads are real videos
+now rather than 972 KB of audio, and the button asks its own feed cell which clip it belongs to
+instead of taking the last one TikTok happened to build — which during a scroll is one being
+preloaded, not the one on screen. The button also moves above the profile picture.
+
 ## v1.34.0
 
 Includes TikTok 0.9.0 — **the save button moves off TikTok's interaction rail and onto the feed

@@ -1,5 +1,6 @@
 #import <UIKit/UIKit.h>
 #import <objc/runtime.h>
+#import <objc/message.h>
 #import "SCITTButton.h"
 #import "SCITTMedia.h"
 #import "SCITTDownload.h"
@@ -428,6 +429,9 @@ static const NSInteger kSCICellButtonTag = 0x5C18;
 static NSUInteger sciCellButtonsPlaced = 0;
 static BOOL sciCellPresent = NO;
 
+/// Which accessor the cell answered its model through, for the report.
+static NSString *sciCellModelVia = nil;
+
 /// A hooked class that touches a property needs a real @interface, not the forward
 /// declaration Logos leaves behind -- rule 3 in check.py exists for this, and three builds
 /// have gone to it in three different shapes.
@@ -488,16 +492,59 @@ static BOOL sciCellPresent = NO;
         CGRect b = host.bounds;
         if (b.size.width <= 0 || b.size.height <= 0) return;
 
-        // Left of nothing, below the middle: the right edge is TikTok's own rail, so the
-        // button sits on it, under the share icon and above the spinning disc. Measured from
-        // the bottom so it holds whatever the cell's height turns out to be.
+        // Above the profile picture, which is the top of TikTok's rail.
+        //
+        // 0.62 put it among like/comment/share, below the avatar. Asked for higher: the rail
+        // runs avatar, like, comment, bookmark, share, disc from the top down, so clearing the
+        // avatar means going above all of them.
         button.frame = CGRectMake(b.size.width - side - right,
-                                  b.size.height * 0.62,
+                                  b.size.height * 0.38,
                                   side, side);
 
         [host bringSubviewToFront:button];
 
-        SCITTMediaItem *item = [SCITTMedia recent].firstObject;
+        // The model this cell holds -- not the last one captured anywhere.
+        //
+        // `[SCITTMedia recent].firstObject` is whatever model TikTok most recently built,
+        // which during a scroll is a video being preloaded rather than the one under the
+        // finger. That is why the same clip saved three times while something else was on
+        // screen: the button was correct about *a* video and wrong about *which*.
+        //
+        // It is the same mistake the Instagram carousel had, fixed earlier the same day by
+        // asking the page control which slide was showing instead of assuming. Here the cell
+        // itself is the thing that knows.
+        //
+        // Several accessor names exist in the binary and which one this cell answers is not
+        // knowable from a global selector list -- that lesson has already cost this file
+        // three releases -- so each is tried behind -respondsToSelector: and **the one that
+        // answered is recorded**, so the next report names it instead of leaving it to be
+        // guessed again.
+        id model = nil;
+        for (NSString *name in @[@"awemeModel", @"aweme", @"model", @"currentAweme",
+                                 @"currentAwemeModel", @"itemModel", @"cellModel"]) {
+            SEL selector = NSSelectorFromString(name);
+            if (![self respondsToSelector:selector]) continue;
+
+            id candidate = ((id (*)(id, SEL))objc_msgSend)(self, selector);
+            if (!candidate) continue;
+
+            // A model, not a string or a number that happens to share the name.
+            if (![candidate respondsToSelector:@selector(video)]) continue;
+
+            model = candidate;
+            sciCellModelVia = name;
+            break;
+        }
+
+        SCITTMediaItem *item = nil;
+        if (model) {
+            [SCITTMedia captureModel:(AWEAwemeModel *)model];
+            item = [SCITTMedia recent].firstObject;
+        }
+
+        // No fallback to "the most recent anything". Saving the wrong video is worse than
+        // saving none: one is a missing feature, the other quietly hands you someone else's
+        // clip and looks like it worked.
         if (item) {
             objc_setAssociatedObject(button, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
@@ -551,6 +598,7 @@ NSString *SCITTButtonReport(void) {
         sciCellPresent ? @"—" : @"(absent)", (unsigned long)sciCellButtonsPlaced];
 
     if (sciCellSurfaceWorks) [out appendString:@"; rail standing down"];
+    [out appendFormat:@"; model via %@", sciCellModelVia ?: @"nothing answered"];
 
     [out appendFormat:@" | rail %@ — %lu placed",
         sciRailName ?: @"(absent)", (unsigned long)sciRailButtonsPlaced];
