@@ -1,5 +1,37 @@
 # Albrhi for TikTok — what changed
 
+## v0.6.2
+
+**A one-letter bug, and the first real attempt at HD.**
+
+A live property dump from a device settled both.
+
+**`downloadInfoModel` has a capital I.** Two candidate chains have read
+`downloadinfoModel` for as long as they have existed. Selectors are case-sensitive, so
+`-respondsToSelector:` answered NO every time and the chain moved past the one object on the
+model whose entire purpose is download information — silently, because a skipped chain looks
+exactly like a chain that was tried and had nothing.
+
+**`playURL` is the playback URL, which is why downloads came out SD.** It is what the app
+streams from, served at a bitrate chosen for smooth playback rather than for the best copy.
+NA9's binary carries `bitratePlayURL`, `bestURLtoDownloadFormat` and `downloadHDVideo:` —
+**none of which this chain had ever asked for.** `bitratePlayURL` names a *set* of variants
+rather than one stream, and is now tried ahead of `playURL`.
+
+**Which entry of that set is the best one is not yet known.** The array picker takes the
+first, as it does everywhere in this file, and the diagnostics line naming the resolved chain
+is what will say whether this is the HD copy or just a different one. Measure, then choose.
+
+Also corrected: a comment claiming `-playURIString` and `-URLList` are "gone". They are
+not — the device dump lists both. They were dropped for resolving the song rather than the
+video, which is a different fact and worth stating as the true one.
+
+Two known problems are **not** addressed here and are named so they are not mistaken for
+fixed: the button appearing on some videos and not others, which has the signature of the
+arranged-subview rebuild that cost the X tweak five releases; and the wrong video being
+saved, which is the same shape as the Instagram carousel bug — resolving from a remembered
+model instead of asking which cell is on screen.
+
 ## v0.6.1
 
 Asked directly how the two reference tweaks pin their own button. The answer is short

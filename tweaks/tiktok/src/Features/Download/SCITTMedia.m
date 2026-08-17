@@ -142,7 +142,9 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url) {
         // `-video` (sent by both reference tweaks) for the cases where it *is*
         // populated by the time a retry runs.
         //
-        // `-playURIString` and `-URLList` are gone, and that is a measured removal:
+        // `-playURIString` and `-URLList` are **not** absent -- a live property dump from a
+        // device lists both. They were dropped for resolving the wrong thing, which is a
+        // different fact and worth stating correctly:
         // `URLList` resolved 288 times of 706 and the file it produced was 972 KB of
         // `audio/mp4` with no video track at all. It is the *sound's* URL list. Every
         // one of those "successes" was the music, which is worse than resolving
@@ -150,6 +152,25 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url) {
         // link. `-h264URL` and `-downloadURL` were invented here and are gone too:
         // neither tweak sends them and neither binary carries them as strings.
         NSArray<NSArray<NSString *> *> *chains = @[
+            // Bitrate variants first, because `playURL` is the *playback* URL.
+            //
+            // "It downloads SD, not HD" has a plain cause: `playURL` is what the app streams
+            // from, and TikTok serves that at a bitrate chosen for smooth playback rather
+            // than for the best copy. NA9's binary carries `bitratePlayURL`,
+            // `bestURLtoDownloadFormat` and `downloadHDVideo:` -- none of which this chain
+            // has ever asked for -- and `bitratePlayURL` is the one that names a set of
+            // variants rather than a single stream.
+            //
+            // Tried before playURL so a build that has it wins, and left behind the guard
+            // every step here uses, so a build that does not is unaffected. **Which entry of
+            // that list is the best one is not known yet** -- the array picker takes the
+            // first, as it does everywhere else in this file -- so the diagnostics line for
+            // the resolved chain is what will say whether this is the HD copy or merely a
+            // different one. Measure, then choose; do not guess an ordering.
+            @[@"video", @"bitratePlayURL", @"bestURLtoDownload"],
+            @[@"video", @"bitratePlayURL", @"originURLList"],
+            @[@"video", @"bitratePlayURL", @"urlList"],
+
             @[@"video", @"playURL", @"bestURLtoDownload"],
             @[@"video", @"playURL", @"originURLList"],
             @[@"video", @"playURL", @"urlList"],
@@ -159,8 +180,16 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url) {
             @[@"video", @"playURLList", @"urlList"],
             @[@"video", @"bestURLtoDownload"],
             @[@"video", @"originURLList"],
-            @[@"downloadinfoModel", @"bestURLtoDownload"],
-            @[@"downloadinfoModel", @"originURLList"],
+            // downloadInfoModel, with a capital I.
+            //
+            // These two read `downloadinfoModel` for as long as they have existed, and a
+            // live property dump from a device settles it: the accessor is
+            // `downloadInfoModel`. Selectors are case-sensitive, so both lines were dead --
+            // -respondsToSelector: answered NO every time and the chain moved on without
+            // ever asking the one object on the model whose entire purpose is download
+            // information.
+            @[@"downloadInfoModel", @"bestURLtoDownload"],
+            @[@"downloadInfoModel", @"originURLList"],
             @[@"urlHolder", @"bestURLtoDownload"],
             @[@"playItem", @"bestURLtoDownload"],
         ];
