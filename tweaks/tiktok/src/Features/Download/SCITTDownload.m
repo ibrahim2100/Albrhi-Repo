@@ -4,6 +4,7 @@
 #import "modules/JGProgressHUD/JGProgressHUD.h"
 #import <UIKit/UIKit.h>
 #import <Photos/Photos.h>
+#import <AVFoundation/AVFoundation.h>
 
 @interface SCITTDownload () <NSURLSessionDownloadDelegate>
 @property (nonatomic, strong) SCITTMediaItem *item;
@@ -108,13 +109,6 @@ NSString *SCITTDownloadReport(void) {
 - (void)URLSession:(NSURLSession *)session
       downloadTask:(NSURLSessionDownloadTask *)task
 didFinishDownloadingToURL:(NSURL *)location {
-    // TikTok hands out a finished MP4 for a video and either an MP4 or an M4A for a
-    // song under this same URL shape. The path extension on the URL actually asked
-    // for is checked first and the response's own MIME type only when that is
-    // inconclusive -- a server that answers a generic or missing Content-Type for a
-    // link whose own path plainly ends `.mp4` was reported saving a real video as
-    // "sound saved", which MIME-only detection cannot tell apart from a genuine
-    // audio-only link with the same gap.
     // An HTTP error answers with a body like any other response, and NSURLSession
     // hands that body over as a perfectly successful download -- so a 403 on the
     // resolved link arrives here as an error page saved with a .mp4 name, which
@@ -130,46 +124,66 @@ didFinishDownloadingToURL:(NSURL *)location {
     }
 
     NSURL *sourceURL = task.originalRequest.URL ?: task.currentRequest.URL;
-    NSString *pathExtension = sourceURL.pathExtension.lowercaseString;
     NSString *mime = task.response.MIMEType.lowercaseString ?: @"";
+    unsigned long long bytes =
+        [[[NSFileManager defaultManager] attributesOfItemAtPath:location.path error:NULL] fileSize];
 
-    NSSet<NSString *> *videoExtensions = [NSSet setWithArray:@[@"mp4", @"mov", @"m4v", @"webm"]];
-    NSSet<NSString *> *audioExtensions = [NSSet setWithArray:@[@"m4a", @"mp3", @"aac", @"wav"]];
-
-    BOOL audioOnly;
-    if ([videoExtensions containsObject:pathExtension]) {
-        audioOnly = NO;
-    } else if ([audioExtensions containsObject:pathExtension]) {
-        audioOnly = YES;
-    } else {
-        audioOnly = [mime hasPrefix:@"audio/"];
-    }
-    NSString *extension = audioOnly ? @"m4a" : @"mp4";
-
-    NSString *name = [NSString stringWithFormat:@"tiktok-%@.%@",
-        [[NSUUID UUID] UUIDString], extension];
+    //
+    // **Asked of the file, not of its name.** Both the URL's path extension and the
+    // response's MIME type were tried in turn across two releases and both were wrong
+    // on a real device: a genuine video kept saving as "sound saved", which is the
+    // audio branch below being taken for a file that plainly has a video track. This
+    // project's own ground rule already covers exactly this -- "a non-nil object is not
+    // a working object; check that a thing can actually do its job, not that it is
+    // non-null" -- and the same applies to a file's kind. AVFoundation reading the
+    // downloaded file's own track list is the measurement; an extension on a URL that
+    // may carry query parameters, no path at all, or a CDN's own naming is a guess.
+    //
     NSURL *staged = [NSURL fileURLWithPath:
-        [NSTemporaryDirectory() stringByAppendingPathComponent:name]];
+        [NSTemporaryDirectory() stringByAppendingPathComponent:
+            [NSString stringWithFormat:@"tiktok-%@.mp4", [[NSUUID UUID] UUIDString]]]];
 
     [[NSFileManager defaultManager] removeItemAtURL:staged error:NULL];
 
     NSError *move = nil;
     if (![[NSFileManager defaultManager] moveItemAtURL:location toURL:staged error:&move]) {
+        SCITTRecordDownload([NSString stringWithFormat:@"could not stage the file: %@",
+            move.localizedDescription ?: @"no reason given"]);
+        [self finish:NO message:SCILocalized(@"save_failed")];
+        return;
+    }
+
+    AVURLAsset *asset = [AVURLAsset URLAssetWithURL:staged options:nil];
+    NSUInteger videoTracks = [asset tracksWithMediaType:AVMediaTypeVideo].count;
+    NSUInteger audioTracks = [asset tracksWithMediaType:AVMediaTypeAudio].count;
+    BOOL audioOnly = (videoTracks == 0 && audioTracks > 0);
+
+    // Neither kind of track at all is a file that is not media -- an error page, a
+    // truncated transfer, an HTML redirect that answered 200. Saying so is worth far
+    // more than handing it to Photos and reporting whatever Photos makes of it.
+    if (videoTracks == 0 && audioTracks == 0) {
+        [[NSFileManager defaultManager] removeItemAtURL:staged error:NULL];
+        SCITTRecordDownload([NSString stringWithFormat:
+            @"not playable media — %llu bytes, mime %@, no video or audio track (link: %@)",
+            bytes, mime.length ? mime : @"none", sourceURL.host ?: @"?"]);
         [self finish:NO message:SCILocalized(@"save_failed")];
         return;
     }
 
     // Photos has no concept of a bare audio file, so a song is kept in the app's own
-    // Documents instead of asking a library that would always refuse it -- no
-    // PHPhotoLibrary round trip needed for something that was never going there.
+    // Documents instead of asking a library that would always refuse it. Reached only
+    // when the file itself genuinely carries no video track.
     if (audioOnly) {
         NSURL *documents = [[[NSFileManager defaultManager]
             URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] firstObject];
-        NSURL *kept = [documents URLByAppendingPathComponent:staged.lastPathComponent];
+        NSURL *kept = [documents URLByAppendingPathComponent:
+            [staged.lastPathComponent.stringByDeletingPathExtension
+                stringByAppendingPathExtension:@"m4a"]];
         BOOL moved = [[NSFileManager defaultManager] moveItemAtURL:staged toURL:kept error:NULL];
         SCITTRecordDownload(moved
-            ? [NSString stringWithFormat:@"saved as audio (path .%@, mime %@)",
-                pathExtension.length ? pathExtension : @"none", mime.length ? mime : @"none"]
+            ? [NSString stringWithFormat:
+                @"saved as audio — the file really has no video track (%llu bytes, mime %@)",
+                bytes, mime.length ? mime : @"none"]
             : @"audio move failed");
         [self finish:moved message:SCILocalized(moved ? @"save_done_audio" : @"save_failed")];
         return;
@@ -180,7 +194,9 @@ didFinishDownloadingToURL:(NSURL *)location {
     } completionHandler:^(BOOL success, NSError *error) {
         [[NSFileManager defaultManager] removeItemAtURL:staged error:NULL];
         if (success) {
-            SCITTRecordDownload(@"saved to Photos");
+            SCITTRecordDownload([NSString stringWithFormat:
+                @"saved to Photos — %lu video / %lu audio track(s), %llu bytes",
+                (unsigned long)videoTracks, (unsigned long)audioTracks, bytes]);
             [self finish:YES message:SCILocalized(@"save_done")];
             return;
         }

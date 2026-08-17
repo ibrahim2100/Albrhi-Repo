@@ -1,5 +1,28 @@
 # Albrhi for TikTok — what changed
 
+## v0.4.12
+
+**"Sound saved" was never a failure message — it was the audio branch succeeding on a
+file that is actually a video.** Two releases guessed at a file's kind from its name:
+first the response's MIME type, then the URL's own path extension. Both were wrong on a
+real device, and both were guesses about a file that was already sitting on disk and
+could simply have been asked.
+
+`AVURLAsset` now reads the downloaded file's own track list, and *that* decides:
+a video track present means Photos, no video track and an audio track present means
+the Documents folder, and neither means the file is not playable media at all — an
+error page, a truncated transfer, an HTML redirect that answered 200 — which is now
+reported as such rather than handed to Photos to be refused for unrelated-sounding
+reasons.
+
+This is this project's own ground rule applied to a file instead of an object: *"a
+non-nil object is not a working object; check that a thing can actually do its job, not
+that it is non-null."* An extension on a URL that may carry query parameters, no path
+segment at all, or a CDN's own naming scheme is exactly the kind of proxy that rule
+exists to rule out. The "Last save attempt" row now reports the actual track counts and
+byte size alongside the outcome, so the next report is a measurement rather than an
+inference.
+
 ## v0.4.11
 
 **Two releases were spent fixing the wrong thing because this tweak's own diagnostic

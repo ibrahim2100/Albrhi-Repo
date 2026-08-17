@@ -16,9 +16,11 @@ TWEAK_NAME = AlbrhiTT
 
 $(TWEAK_NAME)_FILES = $(shell find src -type f \( -iname \*.x -o -iname \*.xm -o -iname \*.m \))
 
-# Photos for a saved video; AVFoundation is not linked yet because nothing here plays or
-# probes a stream -- add it the day a feature actually needs one, not before.
-$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore Photos
+# Photos for a saved video; AVFoundation to read a downloaded file's own track list,
+# which is the only reliable way to tell a video from an audio-only file -- an
+# extension on the URL and the response's own MIME type were both tried first and both
+# were wrong on a real device.
+$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore Photos AVFoundation
 
 # src/ on the include path, so a header is imported by the name it has rather than by
 # counting ../ from wherever the importing file happens to sit. See CLAUDE.md for what
