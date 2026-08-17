@@ -84,6 +84,20 @@ static NSURL *SCITTResolveChain(id model, NSArray<NSString *> *chain, NSString *
     return url;
 }
 
+/// `playURIString` answering a real object was the first chain to ever "resolve" --
+/// and the download that followed it failed outright, which a plain HTTP or HTTPS
+/// check would have caught before ever reaching the downloader. `NSURL URLWithString:`
+/// happily builds a URL object out of an internal resource identifier that is not a
+/// fetchable link at all -- this app almost certainly carries its own custom scheme or
+/// a bare opaque ID for exactly this property, the same way `AVFoundation` names
+/// carry `avkit_`/`_ttvideoengine_` prefixes on this same class. Treated as a failed
+/// step rather than a success, so the resolver moves on to try the next chain instead
+/// of handing the downloader something it can never fetch.
+static BOOL SCITTURLLooksDownloadable(NSURL *url) {
+    NSString *scheme = url.scheme.lowercaseString;
+    return [scheme isEqualToString:@"http"] || [scheme isEqualToString:@"https"];
+}
+
 + (NSURL *)resolveURLForModel:(AWEAwemeModel *)model {
     if (!model) return nil;
 
@@ -105,20 +119,26 @@ static NSURL *SCITTResolveChain(id model, NSArray<NSString *> *chain, NSString *
         // even though every capture so far has answered it nil; `+watchModel:` covers
         // the possibility that it is simply not populated yet at the moment a model is
         // first built, which construction-time capture alone cannot.
+        // playURIString and URLList are tried last, not first: playURIString has
+        // already been shown to resolve to *something* that is not an http(s) link
+        // (a download attempted against it failed outright), and URLList's own
+        // element type is not confirmed at all. The chains most likely to end at a
+        // real AWEURLModel -- and therefore at bestURLtoDownload, the one doubly-
+        // confirmed step in this whole file -- are tried first.
         NSArray<NSArray<NSString *> *> *chains = @[
             @[@"videoModel", @"playAddr", @"bestURLtoDownload"],
             @[@"video", @"playAddr", @"bestURLtoDownload"],
             @[@"video", @"bestURLtoDownload"],
+            @[@"downloadinfoModel", @"bestURLtoDownload"],
+            @[@"downloadinfoModel", @"playAddr", @"bestURLtoDownload"],
+            @[@"urlHolder", @"bestURLtoDownload"],
+            @[@"playItem", @"bestURLtoDownload"],
             @[@"video", @"playURL"],
             @[@"video", @"url"],
             @[@"playURL"],
             @[@"videoModel", @"playURL"],
-            @[@"downloadinfoModel", @"bestURLtoDownload"],
-            @[@"downloadinfoModel", @"playAddr", @"bestURLtoDownload"],
-            @[@"urlHolder", @"bestURLtoDownload"],
             @[@"urlHolder", @"url"],
             @[@"playURIString"],
-            @[@"playItem", @"bestURLtoDownload"],
             @[@"URLList"],
         ];
 
@@ -126,6 +146,12 @@ static NSURL *SCITTResolveChain(id model, NSArray<NSString *> *chain, NSString *
         for (NSArray<NSString *> *chain in chains) {
             NSString *failure = nil;
             NSURL *url = SCITTResolveChain(model, chain, &failure);
+            if (url && !SCITTURLLooksDownloadable(url)) {
+                failure = [NSString stringWithFormat:
+                    @"resolved to a non-http(s) link (%@) — treated as not downloadable",
+                    url.scheme ?: @"no scheme"];
+                url = nil;
+            }
             if (url) {
                 sciLastAttemptState = [NSString stringWithFormat:
                     @"resolved via %@", [chain componentsJoinedByString:@"."]];

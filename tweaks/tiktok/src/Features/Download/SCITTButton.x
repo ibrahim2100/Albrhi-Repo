@@ -8,50 +8,30 @@
 #import "../../SCILog.h"
 
 ///
-/// A button in the feed itself, not only a list on the status screen.
+/// A button in the feed itself, beside like/comment/share -- and only one at a time.
 ///
-/// **A device report settled the class question outright.** `AWEFeedViewTemplateCell`
-/// -- the class both NA9 and VibeTok's own symbol tables name, and the one this tweak
-/// hooked through v0.4.2 -- never actually fires on this build: its bind method was
-/// never called, which is why every placement attempt found nothing. The report's own
-/// "0 placed; above it: …" chain named the real ancestry instead, walked live from the
-/// interaction rail up to its actual table cell:
+/// **Both surfaces attached and placed real buttons** (a device report showed a cell
+/// overlay placing 3 and the interaction rail placing 9), which proved the classes and
+/// the hook points right. What it also showed was 4-6 buttons on screen scattered
+/// across it at once -- because TikTok keeps more than one cell alive at a time for
+/// smooth scrolling (the current one and its prefetched neighbours), and this file was
+/// showing a button on *every* alive cell's own rail rather than only the one actually
+/// on screen. Reported directly, and it is a real bug independent of anything about
+/// class names.
 ///
-///   TTKFeedInteractionStackView < TTKFeedInteractionMainView <
-///   TTKFeedInteractionRootView < UITableViewCellContentView <
-///   **AWEFeedViewCell** < AWENewFeedTableView < … < AWEFeedSlidingScrollView
+/// **The cell-overlay surface is dropped.** It was the fallback for a build where the
+/// rail turned out not to exist; this device's own report already proved the rail does,
+/// so carrying a second surface only doubled the scatter for no benefit. One surface,
+/// arranged in the rail beside TikTok's own icons -- which is also what was asked for.
 ///
-/// `AWEFeedViewCell` is in neither reference's own hook table -- this build has simply
-/// moved past what either tweak was written against, the same "the app rebuilt around
-/// a new name" situation this project's CLAUDE.md already documents for X's own
-/// action rail. It is confirmed the only way that matters here: read directly off a
-/// live view hierarchy on the device this tweak actually runs on.
+/// **Visibility is now restricted to whichever rail is actually centred in its own
+/// window.** Every alive cell's rail still runs `-layoutSubviews`, but only the one
+/// whose vertical centre sits within a quarter of the screen's height of the window's
+/// own centre shows its button; every other alive rail hides its own. Comparing centres
+/// in window coordinates costs nothing TikTok's view hierarchy does not already have
+/// (`-convertRect:toView:`) and needs no knowledge of which cell TikTok itself
+/// considers "current."
 ///
-/// **The fix drops per-cell precision rather than guess at another bind method.**
-/// Nothing above named which selector actually sets `AWEFeedViewCell`'s model, and
-/// guessing one the way `AWEFeedViewTemplateCell`'s was guessed is exactly what
-/// produced this bug. `-layoutSubviews` needs no such guess -- it is inherited from
-/// `UIView` and fires on any cell regardless of what TikTok calls its own bind method.
-/// The button reads `SCITTMedia`'s own most-recently-resolved item instead of a
-/// per-cell association, the same "download the newest capture" shortcut this
-/// project's own Locket quick-save button already takes and for the same reason: the
-/// ad filter's own diagnostics already confirm `SCITTMedia` is capturing real items
-/// (154 seen, 6 dropped, on the report that found this bug), so the newest one is
-/// almost always the video just watched.
-///
-/// Two surfaces, both reading the same source: a direct overlay on `AWEFeedViewCell`
-/// (primary; needs only that one class, now confirmed live) and an arranged subview of
-/// the interaction rail (secondary, kept because it does attach and run on this build
-/// -- the report's own "0 placed" for it, rather than silence, is what proved that).
-/// `AWEFeedViewTemplateCell` is hooked too, at zero cost if it never fires again: a
-/// `%hook` on a class that exists but is never reached simply never runs.
-///
-
-@interface AWEFeedViewCell : UIView
-@end
-
-@interface AWEFeedViewTemplateCell : UIView
-@end
 
 @interface TTKFeedInteractionStackView : UIStackView
 @end
@@ -60,14 +40,11 @@
 @end
 
 static const NSInteger kSCIRailButtonTag = 0x5C17;
-static const NSInteger kSCICellButtonTag = 0x5C18;
 static const void *kSCIItemKey = &kSCIItemKey;
 
-static BOOL sciCellHooked = NO;
 static BOOL sciRailPresent = NO;
 static NSString *sciRailName = nil;
 static NSUInteger sciRailButtonsPlaced = 0;
-static NSUInteger sciCellButtonsPlaced = 0;
 
 
 @interface SCITTButtonTarget : NSObject
@@ -96,66 +73,33 @@ static NSUInteger sciCellButtonsPlaced = 0;
 @end
 
 
-/// The primary surface: a round button drawn straight onto the cell, bottom-right,
-/// clear of the safe area. Shown whenever anything has been captured at all -- it does
-/// not try to be the specific video this cell holds, only the newest one seen, the
-/// same shortcut Locket's own quick-save button takes.
-static void SCITTPlaceCellButton(UIView *cell) {
-    if (!SCIPrefEnabled(SCIPrefDownloadButton)) return;
+/// Whether `view` is the one actually on screen right now, among however many of
+/// TikTok's own cells happen to be alive at once. A quarter of the window's own height
+/// is generous enough to survive the button's own position inside the rail (it is not
+/// pinned to the rail's exact centre) without also lighting up a neighbour cell that is
+/// only barely, momentarily visible during a fast scroll.
+static BOOL SCITTViewIsCentered(UIView *view) {
+    UIWindow *window = view.window;
+    if (!window || window.bounds.size.height <= 0) return NO;
 
-    SCITTMediaItem *item = [SCITTMedia recent].firstObject;
-    UIButton *button = (UIButton *)[cell viewWithTag:kSCICellButtonTag];
+    CGRect frameInWindow = [view convertRect:view.bounds toView:window];
+    CGFloat viewCenterY = CGRectGetMidY(frameInWindow);
+    CGFloat windowCenterY = CGRectGetMidY(window.bounds);
 
-    if (!item) {
-        button.hidden = YES;
-        return;
-    }
-
-    if (!button) {
-        button = [UIButton buttonWithType:UIButtonTypeSystem];
-        button.tag = kSCICellButtonTag;
-
-        UIImageSymbolConfiguration *config =
-            [UIImageSymbolConfiguration configurationWithPointSize:24
-                                                            weight:UIImageSymbolWeightSemibold];
-        [button setImage:[UIImage systemImageNamed:@"arrow.down.circle.fill" withConfiguration:config]
-                forState:UIControlStateNormal];
-        button.tintColor = [UIColor whiteColor];
-        button.layer.shadowColor = [UIColor blackColor].CGColor;
-        button.layer.shadowOpacity = 0.5;
-        button.layer.shadowRadius = 3;
-        button.layer.shadowOffset = CGSizeZero;
-
-        [button addTarget:[SCITTButtonTarget shared]
-                   action:@selector(tapped:)
-         forControlEvents:UIControlEventTouchUpInside];
-
-        [cell addSubview:button];
-        sciCellButtonsPlaced++;
-    }
-
-    button.hidden = NO;
-    objc_setAssociatedObject(button, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-
-    // Bottom-right, clear of TikTok's own interaction rail by a wide vertical margin
-    // rather than a guess at its exact height.
-    CGFloat side = 46.0;
-    CGFloat inset = 14.0;
-    CGFloat aboveBottom = 140.0;
-    CGRect bounds = cell.bounds;
-    button.frame = CGRectMake(bounds.size.width - side - inset,
-                               bounds.size.height - aboveBottom,
-                               side, side);
-
-    [cell bringSubviewToFront:button];
+    return fabs(viewCenterY - windowCenterY) < (window.bounds.size.height * 0.25);
 }
 
-/// The secondary surface: an arranged subview of the interaction rail.
 static void SCITTPlaceRailButton(UIStackView *stack) {
     if (!SCIPrefEnabled(SCIPrefDownloadButton)) return;
 
-    SCITTMediaItem *item = [SCITTMedia recent].firstObject;
     UIButton *existing = (UIButton *)[stack viewWithTag:kSCIRailButtonTag];
+
+    if (!SCITTViewIsCentered(stack)) {
+        existing.hidden = YES;
+        return;
+    }
+
+    SCITTMediaItem *item = [SCITTMedia recent].firstObject;
 
     if (existing) {
         existing.hidden = (item == nil);
@@ -189,29 +133,6 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
 
     sciRailButtonsPlaced++;
 }
-
-
-%group Cell
-
-%hook AWEFeedViewCell
-
-- (void)layoutSubviews {
-    %orig;
-    SCITTPlaceCellButton(self);
-}
-
-%end
-
-%hook AWEFeedViewTemplateCell
-
-- (void)layoutSubviews {
-    %orig;
-    SCITTPlaceCellButton(self);
-}
-
-%end
-
-%end
 
 
 %group RailA
@@ -253,21 +174,6 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
 
 
 void SCITTInstallButton(void) {
-    BOOL anyCell = NO;
-
-    if (NSClassFromString(@"AWEFeedViewCell") || NSClassFromString(@"AWEFeedViewTemplateCell")) {
-        %init(Cell);
-        anyCell = YES;
-    }
-
-    sciCellHooked = anyCell;
-    if (anyCell) {
-        SCILogV(@"in-feed button: cell overlay attached");
-    } else {
-        SCILogV(@"neither AWEFeedViewCell nor AWEFeedViewTemplateCell is in this build — no in-feed button");
-        return;
-    }
-
     if (NSClassFromString(@"TTKFeedInteractionStackView")) {
         %init(RailA);
         sciRailPresent = YES;
@@ -281,22 +187,15 @@ void SCITTInstallButton(void) {
             : @"TTKFeedRightInteractionStackView";
     }
 
-    if (!sciRailPresent) {
-        SCILogV(@"neither interaction rail is in this build — cell surface only");
+    if (sciRailPresent) {
+        SCILogV(@"in-feed button: attached to %@", sciRailName);
+    } else {
+        SCILogV(@"neither interaction rail is in this build — no in-feed button");
     }
 }
 
 NSString *SCITTButtonReport(void) {
-    if (!sciCellHooked) return @"neither AWEFeedViewCell nor AWEFeedViewTemplateCell is in this build";
-
-    NSMutableString *out = [NSMutableString stringWithFormat:
-        @"cell overlay — %lu placed", (unsigned long)sciCellButtonsPlaced];
-
-    if (!sciRailPresent) {
-        [out appendString:@"; no interaction rail in this build"];
-    } else {
-        [out appendFormat:@"; %@ — %lu placed", sciRailName ?: @"?", (unsigned long)sciRailButtonsPlaced];
-    }
-
-    return out;
+    if (!sciRailPresent) return @"no interaction rail in this build";
+    return [NSString stringWithFormat:@"%@ — %lu placed",
+        sciRailName ?: @"?", (unsigned long)sciRailButtonsPlaced];
 }

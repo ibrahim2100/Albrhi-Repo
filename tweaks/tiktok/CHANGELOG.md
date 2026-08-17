@@ -1,5 +1,34 @@
 # Albrhi for TikTok — what changed
 
+## v0.4.8
+
+Both problems reported against v0.4.7 were real progress, not new failures: the button
+attached and placed real instances on both surfaces (3 on the cell overlay, 9 on the
+rail), and resolution succeeded for the first time (`playURIString`). Two bugs
+followed directly from that success.
+
+**Scattered, duplicate buttons.** TikTok keeps more than one cell alive at once for
+smooth scrolling -- the one on screen and its prefetched neighbours -- and every alive
+cell's own rail was showing a button regardless of whether that cell was actually the
+one visible. Four to six buttons on screen at once was the two surfaces (cell overlay,
+interaction rail) each placing one per alive cell. The cell-overlay surface is dropped
+entirely -- it was a fallback for a build where the rail did not exist, and this
+device's own report already proved it does, so keeping both only doubled the scatter.
+The rail surface now checks whether its own view is actually centred in the window
+before showing anything (`-convertRect:toView:` against the window's own bounds,
+within a quarter of its height) and hides itself otherwise -- so of however many cells
+are alive, only the one on screen shows a button.
+
+**The download itself failed.** `playURIString` resolving to *something* was never the
+same claim as that something being a fetchable link, and `NSURL URLWithString:` builds
+a URL object out of almost any string without checking. The resolver now requires the
+scheme to be `http` or `https` before accepting a chain's answer, treating anything
+else (an internal resource identifier, most likely, on a property named this
+generically) as a failed step and moving on to the next candidate rather than handing
+the downloader something it can never fetch. Chain order was also reshuffled so paths
+most likely to reach a real `AWEURLModel` -- and therefore `bestURLtoDownload`, the one
+doubly-confirmed step in this whole file -- are tried before `playURIString`/`URLList`.
+
 ## v0.4.7
 
 The full `+candidateAccessorsOnAwemeModel` dump, read this time from the live class on

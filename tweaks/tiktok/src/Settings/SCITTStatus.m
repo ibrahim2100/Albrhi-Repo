@@ -191,13 +191,8 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
     pills.distribution = UIStackViewDistributionFillEqually;
 
     BOOL adsFilter = NSClassFromString(@"AWEAwemeModel") != nil;
-    // The cell overlay is the primary surface and needs only one of the two cell
-    // classes; the interaction rail is a second, optional surface, not a requirement
-    // for this pill to read as attached. AWEFeedViewCell is the one a live device
-    // report actually confirmed -- AWEFeedViewTemplateCell is kept alongside it in
-    // case some other surface still uses that name.
-    BOOL button = NSClassFromString(@"AWEFeedViewCell") != nil
-        || NSClassFromString(@"AWEFeedViewTemplateCell") != nil;
+    BOOL button = NSClassFromString(@"TTKFeedInteractionStackView") != nil
+        || NSClassFromString(@"TTKFeedRightInteractionStackView") != nil;
     BOOL bypass = NSClassFromString(@"TTAdSplashDeviceHelper") != nil;
 
     [pills addArrangedSubview:[self pillWithTitle:SCILocalized(@"pill_ads") on:adsFilter]];
