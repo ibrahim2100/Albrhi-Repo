@@ -510,6 +510,34 @@ variadic, and a two-arg hook drops the mode on every real `O_CREAT`, so `stat`+`
 it. Every hook is grouped and `%init`-ed from the `%ctor` after the panel gate, so "off"
 really means no hooks — a top-level ungrouped `%hookf` would install before the gate runs.
 
+**Build locally before pushing — the CI round trip is five minutes and the local one is
+under a minute.** This is set up on the owner's Mac and is **per machine**, so a different
+computer needs it again:
+
+```bash
+brew install ldid make dpkg          # dpkg is for dpkg-deb only; it cannot install here
+git clone --recursive https://github.com/theos/theos.git ~/theos
+# then the iPhoneOS16.2.sdk from xybp888/iOS-SDKs into ~/theos/sdks/ — the same SDK CI uses
+export THEOS=$HOME/theos
+export PATH="/opt/homebrew/opt/make/libexec/gnubin:$PATH"   # GNU make; Apple's fails Theos
+```
+
+Both exports belong in `~/.zshrc`, and `build.sh` may need `chmod +x`. Then the cycle is:
+
+```bash
+python3 tools/check.py && bash build.sh <tweak> rootless
+```
+
+**What it catches and what it does not, measured over one long session.** It caught a
+duplicated method, a missing header import, a stale reference to a class not yet written, a
+flag used above its own definition, and a hooked class needing a real `@interface` — every
+one of which would otherwise have been a five-minute CI failure. It caught **none** of:
+`cellClass` set to a string where Preferences wants a Class (crashed Settings), a
+constraint built from `bounds` at construction time, a `%new` parameter attribute, or a
+`objc_msgSend` cast to the wrong return type (crashed TikTok). Those compile perfectly.
+Compilation is the second of three gates; the third is a device, and there is no substitute
+for it — which is what the Diagnostics pages are for.
+
 **Run scripts before shipping them.** Three CI failures in a row came from shell
 one-liners that were never executed once locally. `tools/check.py` and a stubbed
 run of `tools/make-repo.sh` cost seconds.
@@ -1203,6 +1231,24 @@ and the others still run.
 
 ## CI, releases and the repo
 
+**A release that fails while "finalizing" leaves a worse state than one that fails outright,
+and this happened during a GitHub outage.** `softprops/action-gh-release` creates the release
+as a **draft**, uploads the assets, then publishes it. v1.36.0's upload succeeded and the
+publish step 503'd, which left: the tag pushed, both `.deb`s attached, and the release still a
+draft. Both halves of this repository's own machinery then work against recovery —
+`fetch-published-debs.sh` selects `.draft == false`, so the index cannot see it, and
+`buildsuite.yml` finds the tag already on the remote and prints "already released — building,
+not releasing", so a re-run never publishes it either. **The fix is to publish the draft by
+hand from the Releases page, then re-run so the index gathers it.** Worth guarding one day:
+the version gate could ask whether a *draft* of the same tag exists before concluding the
+release is done.
+
+**And the `deploy` failures in that same outage were not from these workflows.** `deploy-pages`
+was deliberately removed from all of them (see below); the failing job was GitHub's own
+auto-generated `pages-build-deployment`, which runs because Pages serves from a branch. Nothing
+was lost — the finished index is pushed to `gh-pages` before any of that, which is the whole
+reason the arrangement is shaped this way.
+
 **Nine workflows, one per thing that ships.**
 
 | workflow | builds | tags | publishes? |
@@ -1357,11 +1403,50 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.6.1** (four features, three-way privacy, one in-feed button in the
-rail and no download list at all; the link is resolved from `AWEVideoModel` at its own
-construction — the aweme model's `-video` is nil at that point and its `-URLList`
-resolves the *song*, which is what made 288 "successful" saves all audio)
-· suite **1.31.1**.
+source) · TikTok **0.12.1** · suite **1.37.1**.
+
+### TikTok, where it actually stands
+
+**Working, and confirmed on a device:** the ad filter, the three privacy switches, the
+jailbreak bypass, and the in-feed download button — which appears on every video, sits above
+the profile picture, and saves the clip actually being watched, as a real video file.
+
+Getting there took twelve releases and the errors are worth more than the result:
+
+- **The button belongs on `AWEFeedViewTemplateCell`, not on the interaction rails.**
+  `TTKFeedInteractionStackView` and `TTKFeedRightInteractionStackView` are stack views whose
+  arranged subviews TikTok rebuilds; a guest is swept out. Both rail hooks remain but stand
+  down whenever a cell button exists, and the report counts the two separately.
+- **The cell is a container, and the model belongs to the controller it hosts.**
+  `AWEFeedCellViewController.model`, reached through the cell's `-viewController`. The cell
+  has no aweme accessor of its own — which is why two releases of trying more names on it
+  found nothing, and why NA9 hooks `AWEAwemeBaseViewController` while putting its button on
+  the cell. Those are two halves of one design and I read them apart for four releases.
+- **The link comes from `AWEVideoModel.downloadNoWatermarkURL.originURLList`.** Confirmed
+  from the class's own accessor list printed by the device, after `downloadAddr` was guessed
+  at twice — from NA9's binary and from a framework-wide selector dump — and is on no class
+  here at all.
+
+**Still open: quality. Downloads are SD.** `bitrateModels`, `HDRBitrateModels`,
+`SDRBitrateModels` and `audioBitrateModels` are all on `AWEVideoModel`, each entry carrying
+`-bitRate`, `-gearName`, `-qualityType` and its own `-playAddr`. **0.12.0 tried to read them
+and crashed the app**; 0.12.1 reverted it whole. Two things must be settled before trying
+again, and both are measurements, not decisions:
+
+1. **`-bitRate`'s return type.** It was read through `objc_msgSend` cast to `long long`. A
+   framework dump gives *names, not signatures*, so nothing there says whether it is an
+   integer, a double or an `NSNumber *` — and the wrong cast is undefined behaviour, not a
+   wrong number. Ask the runtime instead: `property_getAttributes(class_getProperty(cls,
+   "bitRate"))` returns `Tq` / `Td` / `T@"NSNumber"`. **The next TikTok release should be a
+   diagnostic that prints those encodings and nothing else** — it cannot break anything, and
+   it supplies the one fact that is missing.
+2. **Where the read happens.** The crashing version ran during the aweme model's own `-init`,
+   where `-video` is half-built. Read it at **button-tap time** instead: the model is
+   finished, on screen, and the user is already waiting. Resolution at capture time is for
+   getting *a* link; choosing the best gear is a decision that belongs where the save is.
+
+**A crash is worse than SD** — that is why 0.12.1 exists, and it is the rule to keep if the
+HD attempt goes wrong again.
 
 - **CarPlay is built but not served.** The code is complete and compiles; the package is
   kept out of the APT index until its app bridging is confirmed on a device. Install it
