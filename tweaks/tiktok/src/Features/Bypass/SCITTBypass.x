@@ -31,6 +31,18 @@
 - (void)resetCollectMode;
 @end
 
+@interface IOSSecuritySuite : NSObject
+@end
+
+@interface AppsFlyerUtils : NSObject
+@end
+
+@interface IESLiveDeviceInfo : NSObject
+@end
+
+@interface TTInstallUtil : NSObject
+@end
+
 
 %group Bypass
 
@@ -107,6 +119,97 @@
         return;
     }
     [SCITTDiagnostics recordBypassAnswer:@"resetCollectMode"];
+}
+
+%end
+
+
+// A general-purpose jailbreak-detection library some apps vendor wholesale rather than
+// write their own checks -- confirmed present by class name in this build, cross-
+// validated between both newer reference tweaks.
+%hook IOSSecuritySuite
+
++ (BOOL)amIJailbroken {
+    if (!SCIPrefEnabled(SCIPrefBypass)) return %orig;
+    [SCITTDiagnostics recordBypassAnswer:@"amIJailbroken"];
+    return NO;
+}
+
+%end
+
+
+// AppsFlyer's own device-integrity check, asked with the option to skip its own more
+// advanced validation -- answered as an unmodified device either way.
+%hook AppsFlyerUtils
+
+- (BOOL)isJailbrokenWithSkipAdvancedJailbreakValidation:(BOOL)skip {
+    if (!SCIPrefEnabled(SCIPrefBypass)) return %orig;
+    [SCITTDiagnostics recordBypassAnswer:@"AppsFlyer isJailbroken"];
+    return NO;
+}
+
+%end
+
+
+// TikTok's own live-streaming device-info object, asked the same question its
+// download and signing checks are.
+%hook IESLiveDeviceInfo
+
+- (BOOL)isJailBroken {
+    if (!SCIPrefEnabled(SCIPrefBypass)) return %orig;
+    [SCITTDiagnostics recordBypassAnswer:@"IESLiveDeviceInfo isJailBroken"];
+    return NO;
+}
+
+%end
+
+
+%hook TTInstallUtil
+
++ (BOOL)isJailBroken {
+    if (!SCIPrefEnabled(SCIPrefBypass)) return %orig;
+    [SCITTDiagnostics recordBypassAnswer:@"TTInstallUtil isJailBroken"];
+    return NO;
+}
+
+%end
+
+
+// PIPOStoreKitHelper is deliberately left alone even though a reference tweak names an
+// -isJailBroken selector on it -- this project's own TikTok changelog (v0.1.0) already
+// drew the line at that class and its sibling PIPOIAPStoreManager, the same way
+// Check0verPlus was refused for Locket: it sits inside the in-app-purchase/StoreKit
+// surface, and one confirmed method on it is not enough reason to cross a boundary this
+// project set on purpose. If a jailbreak question genuinely needs answering there, it
+// is answered upstream by the six checks already hooked above -- TikTok never asks the
+// same question in only one place.
+
+
+// UIDevice grows a category method for this in both references' own binaries --
+// hooked as UIDevice itself rather than NSObject, since it is confirmed as a UIDevice
+// category selector specifically and not the plain-NSObject one below.
+%hook UIDevice
+
+- (BOOL)btd_isJailBroken {
+    if (!SCIPrefEnabled(SCIPrefBypass)) return %orig;
+    [SCITTDiagnostics recordBypassAnswer:@"btd_isJailBroken"];
+    return NO;
+}
+
+%end
+
+
+// A plain NSObject category some SDK in this app adds a bare `-jailbroken` accessor
+// through -- hooked on NSObject itself because that is where it is confirmed to
+// exist, not on a class none of the reference tweaks name. This only ever runs for
+// the object that already responds to the selector; it changes nothing for the
+// overwhelming majority of objects that never call it.
+%hook NSObject
+
+- (BOOL)jailbroken {
+    if (!SCIPrefEnabled(SCIPrefBypass)) return %orig;
+    [SCITTDiagnostics recordBypassAnswer:@"jailbroken"];
+    return NO;
 }
 
 %end

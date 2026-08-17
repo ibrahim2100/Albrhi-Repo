@@ -3,6 +3,7 @@
 #import "../../Prefs.h"
 #import "../../SCILog.h"
 #import "../../Diagnostics/SCITTDiagnostics.h"
+#import "../Download/SCITTMedia.h"
 
 ///
 /// One gate, at the model's own construction, rather than a view hidden after the fact.
@@ -18,6 +19,24 @@
 /// not by skipping construction, is deliberate: `-isAds` cannot be read before the
 /// model has actually decoded the dictionary that sets it.
 ///
+/// `isAd`/`isAdItem`/`isAdsOrPseudoAds` are checked the same way, each guarded by its
+/// own `-respondsToSelector:` — see TikTokHeaders.h for why those three are held to a
+/// lower confirmation bar than `isAds` itself, and why any one of the four is enough
+/// to drop the model rather than requiring all four to exist.
+///
+/// A kept, non-ad model is handed to SCITTMedia so its download URL can be resolved
+/// while the model is still alive -- the only point in this whole pipeline that ever
+/// sees the real object.
+///
+
+static BOOL SCITTModelIsAd(id built) {
+    if (!built) return NO;
+    if ([built respondsToSelector:@selector(isAds)] && [built isAds]) return YES;
+    if ([built respondsToSelector:@selector(isAd)] && [built isAd]) return YES;
+    if ([built respondsToSelector:@selector(isAdItem)] && [built isAdItem]) return YES;
+    if ([built respondsToSelector:@selector(isAdsOrPseudoAds)] && [built isAdsOrPseudoAds]) return YES;
+    return NO;
+}
 
 %group AdBlock
 
@@ -27,36 +46,95 @@
     id built = %orig;
     [SCITTDiagnostics recordModelsSeen:1 droppedAsAds:0];
 
-    if (!SCIPrefEnabled(SCIPrefHideAds)) return built;
-    if (!built || ![built respondsToSelector:@selector(isAds)]) return built;
-    if (![(AWEAwemeModel *)built isAds]) return built;
+    if (!SCIPrefEnabled(SCIPrefHideAds)) {
+        [SCITTMedia captureModel:built];
+        return built;
+    }
+    if (SCITTModelIsAd(built)) {
+        [SCITTDiagnostics recordModelsSeen:0 droppedAsAds:1];
+        return nil;
+    }
 
-    [SCITTDiagnostics recordModelsSeen:0 droppedAsAds:1];
-    return nil;
+    [SCITTMedia captureModel:built];
+    return built;
 }
 
 - (instancetype)init {
     id built = %orig;
 
-    if (!SCIPrefEnabled(SCIPrefHideAds)) return built;
-    if (!built || ![built respondsToSelector:@selector(isAds)]) return built;
-    if (![(AWEAwemeModel *)built isAds]) return built;
+    if (!SCIPrefEnabled(SCIPrefHideAds)) {
+        [SCITTMedia captureModel:built];
+        return built;
+    }
+    if (SCITTModelIsAd(built)) {
+        [SCITTDiagnostics recordModelsSeen:0 droppedAsAds:1];
+        return nil;
+    }
 
-    [SCITTDiagnostics recordModelsSeen:0 droppedAsAds:1];
-    return nil;
+    [SCITTMedia captureModel:built];
+    return built;
 }
 
+%end
+
+%end
+
+
+///
+/// The splash/launch ad is a separate surface from the feed -- a full-screen interstitial
+/// shown before the app is even usable, decided by a manager object rather than built from
+/// a model this tweak already refuses. Three class names are hooked because reference
+/// tweaks disagree on which one a given TikTok build actually ships; each is guarded by
+/// its own `NSClassFromString` check in the installer below, so a name absent from this
+/// build simply never attaches rather than failing to compile or crashing at runtime.
+///
+
+@interface AWESplashManager : NSObject
+@end
+
+@interface BDASplashManager : NSObject
+@end
+
+@interface TTAdSplashManager : NSObject
+@end
+
+%group Splash
+
+%hook AWESplashManager
+- (BOOL)isSplashDisabled { return YES; }
+- (BOOL)shouldShowSplash { return NO; }
+%end
+
+%hook BDASplashManager
+- (BOOL)isSplashDisabled { return YES; }
+- (BOOL)shouldShowSplash { return NO; }
+%end
+
+%hook TTAdSplashManager
+- (BOOL)isSplashDisabled { return YES; }
+- (BOOL)shouldShowSplash { return NO; }
 %end
 
 %end
 
 
 void SCITTInstallAdBlock(void) {
-    if (!NSClassFromString(@"AWEAwemeModel")) {
+    if (NSClassFromString(@"AWEAwemeModel")) {
+        %init(AdBlock);
+        SCILogV(@"ad filter attached to AWEAwemeModel");
+    } else {
         SCILogV(@"AWEAwemeModel is not in this build — no ad filter");
-        return;
     }
 
-    %init(AdBlock);
-    SCILogV(@"ad filter attached to AWEAwemeModel");
+    // Each hook in this group only fires from a class that answers %orig's own
+    // selector, so it is safe to %init the whole group even when only one of the
+    // three names exists in this build -- the other two simply never attach.
+    if (NSClassFromString(@"AWESplashManager") ||
+        NSClassFromString(@"BDASplashManager") ||
+        NSClassFromString(@"TTAdSplashManager")) {
+        %init(Splash);
+        SCILogV(@"splash-ad suppression attached");
+    } else {
+        SCILogV(@"no known splash-ad manager in this build");
+    }
 }

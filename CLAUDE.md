@@ -79,11 +79,15 @@ SoCuul under GPLv3. Original authorship is credited in-app, in the README and in
 package metadata — that is a licence obligation, not a courtesy. Never remove it.
 
 **A seventh tweak, for TikTok — `tweaks/tiktok`, package `com.albrhi.tiktok`, version
-0.2.0.** Not wired into `suite/control` yet, on purpose, until there is more to it than
-two features. Architecture was read from two unlicensed references, both by the same
-author family the X tweak's own control file already credits: BandarHL's original
+0.3.0.** Not wired into `suite/control` yet, on purpose, until it has been on a real
+device. Architecture was read from four unlicensed references: BandarHL's original
 [BHTikTok](https://github.com/BandarHL/BHTikTok) and al3raQe's maintained fork
-([github.com/al3raQe/BHTikTok](https://github.com/al3raQe/BHTikTok)) — read the same
+([github.com/al3raQe/BHTikTok](https://github.com/al3raQe/BHTikTok)), both by the same
+author family the X tweak's own control file already credits; and two compiled ones read
+later, **NA9 For TikTok** (a `.deb`) and **VibeTok** (a `.dylib`), both unstripped debug
+builds carrying the exact `_ungrouped$Class$selector` Logos symbol this project already
+uses to confirm a hook target precisely rather than by string co-occurrence — the same
+technique Locket's own bypass review first established. All four are read the same
 cautious way every unlicensed reference here is, for where TikTok is hookable, never for
 the code.
 
@@ -102,13 +106,31 @@ ad control; corrected in the same changelog entry that found it rather than sile
 
 Shipped in v0.2.0: an ad filter (`AWEAwemeModel`'s own `-isAds` mark, refused at
 `-init`/`-initWithDictionary:error:` after `%orig` builds the object, never as a view
-hidden afterward) and a jailbreak-detection bypass across six confirmed checks. **Not
-being built, regardless of what a class dump confirms**: `PIPOIAPStoreManager`/
-`PIPOStoreKitHelper`, an in-app-purchase fake — the same shape of thing
-`Check0verPlus.dylib` was for Locket, reviewed and refused there for taking money from
-the app's own developers rather than being a device tweak. Next: download, which needs
-`AWEURLModel`'s actual shape measured before anything is hooked — confirmed present, not
-yet confirmed in what form it answers.
+hidden afterward) and a jailbreak-detection bypass across six confirmed checks.
+
+**v0.3.0 added download and privacy, and widened both existing features, entirely from
+reading NA9's and VibeTok's own confirmed hook tables.** Download resolves
+`AWEAwemeModel.videoModel.playAddr.bestURLtoDownload` the moment a kept (non-ad) model
+finishes building — `-bestURLtoDownload` is confirmed twice over (a real string in the
+binary and NA9's own hooked selector), while `-videoModel`/`-playAddr` sit only in
+circumstantial string-table proximity the same way this tweak's own header already
+flagged, so `SCITTMedia.m` walks the chain behind `-respondsToSelector:` at each step
+and records which one failed rather than assuming it holds. Only the resolved URL is
+kept, never the model. Privacy stops three report-to-server calls cross-validated
+between both new references: a story's seen mark, a message's read-sync (its sibling
+local-only mark is deliberately left alone, the same local/receipt distinction
+Instagram's own story-seen feature draws), and a profile view. The ad filter now also
+checks `isAd`/`isAdItem`/`isAdsOrPseudoAds` alongside `-isAds`, plus a separate
+splash/launch-ad surface. Bypass gained six more confirmed checks.
+
+**`PIPOStoreKitHelper -isJailBroken`, named by a reference alongside the rest, was found
+and deliberately not hooked.** v0.1.0's own reading had already refused
+`PIPOIAPStoreManager`/`PIPOStoreKitHelper` as sitting inside the in-app-purchase surface
+— the same shape of thing `Check0verPlus.dylib` was for Locket, reviewed and refused
+there for taking money from the app's own developers rather than being a device tweak.
+One confirmed jailbreak-check method on that specific class was not treated as reason
+enough to cross a boundary this project had already drawn on purpose; the same question
+is already answered by the six other checks that are hooked.
 
 **Albrhi CarPlay's own architecture is informed by [carplay-cast](https://github.com/EthanArbuckle/carplay-cast)
 by Ethan Arbuckle, Apache-2.0** — read for its design (three components: a hook inside
@@ -1152,7 +1174,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.2.0** (not in the suite yet, two features) · suite **1.27.1**.
+source) · TikTok **0.3.0** (not in the suite yet, four features) · suite **1.27.1**.
 
 - **CarPlay is built but not served.** The code is complete and compiles; the package is
   kept out of the APT index until its app bridging is confirmed on a device. Install it

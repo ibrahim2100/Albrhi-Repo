@@ -4,13 +4,12 @@
 //
 //  Every TikTok class this tweak touches, declared once.
 //
-//  Confirmed real on TikTok 46.4.0 by scanning MusicallyCore.framework directly —
-//  Mach-O sections read by hand, the same way every other private class in this
-//  project is confirmed, not read out of BHTikTok's own source and trusted. Two
-//  names in BHTikTok's own reference (AWEPlayVideoPlayerController,
-//  TIKTOKProfileHeaderView) do not exist as exact strings on this build at all and
-//  are not declared here until their replacements are found and confirmed the same
-//  way.
+//  Confirmed real on TikTok 46.4.0 by reading MusicallyCore.framework's own Mach-O
+//  sections directly (class and selector name strings), and cross-checked against the
+//  exact `_ungrouped$Class$selector` Logos symbols two independent debug builds
+//  actually shipped -- NA9 For TikTok and VibeTok, both compiled with debug info
+//  intact. Where both agree on a class-and-selector pair, that pair is trusted more
+//  than either alone. Read for architecture only; no code is taken from either.
 //
 //  Copyright (C) Ibrahim Ismail AL-Rahn. GPLv3.
 //
@@ -18,10 +17,33 @@
 #import <Foundation/Foundation.h>
 
 /// The feed/detail model for one video. `-isAds` is the server's own mark for a
-/// promoted item, read here rather than guessed at: BHTikTok's own ad-hiding hook
-/// gates on exactly this property, and the property name itself is confirmed present
-/// as a string in this build's binary.
+/// promoted item, confirmed as a real property name in this build's own binary.
+///
+/// `-videoModel` is *not* in either reference's own `_ungrouped$` hook table -- neither
+/// tweak overrides it, they only call it -- so it is not confirmed the same way
+/// `-isAds` and `AWEURLModel`'s own methods are. It is declared here because the
+/// property name and its backing ivar (`_videoModel`) sit adjacent to `playAddr` and
+/// `bitratePlayAddr` in this build's own string table, which is circumstantial rather
+/// than a hooked selector. `SCITTDownload.x` checks `-respondsToSelector:` before ever
+/// sending it and records which step of the chain failed if one does, rather than
+/// assuming this holds.
+/// `isAd`, `isAdItem` and `isAdsOrPseudoAds` sit beside `isAds` in the same run of the
+/// binary's own string table -- the same circumstantial standard `-videoModel` is held
+/// to below, not a hooked selector either reference tweak overrides. `SCITTAdBlock.x`
+/// checks `-respondsToSelector:` before reading any of the four, and drops a model on
+/// any one of them answering YES rather than requiring all four to exist.
 @interface AWEAwemeModel : NSObject
 @property (nonatomic, readonly) BOOL isAds;
+@property (nonatomic, readonly) BOOL isAd;
+@property (nonatomic, readonly) BOOL isAdItem;
+@property (nonatomic, readonly) BOOL isAdsOrPseudoAds;
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary error:(NSError **)error;
+@end
+
+/// The URL container `AWEAwemeModel.videoModel.playAddr` resolves to.
+/// `-bestURLtoDownload` is confirmed twice over: present as a string in this build's
+/// own binary, and the exact selector both NA9 and VibeTok call to get a downloadable
+/// link (via `_ungrouped$AWEURLModel$bestURLtoDownload` in NA9's own symbol table).
+@interface AWEURLModel : NSObject
+- (nullable id)bestURLtoDownload;
 @end

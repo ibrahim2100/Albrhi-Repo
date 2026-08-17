@@ -16,6 +16,11 @@
 /// checks the way an unmodified phone would; touches nothing about payment.
 #define SCIPrefBypass           @"bypass"
 
+/// Stops the app telling TikTok's own servers a moment was seen: a story open, a
+/// message read, or a profile visited. Never touches what shows on this device's own
+/// screen -- only what gets reported back.
+#define SCIPrefPrivacy          @"privacy"
+
 #define SCIPrefVerboseLogging   @"verbose_logging"
 
 /// Albrhi Panel's per-app switch, asked first. Every feature here reads its setting

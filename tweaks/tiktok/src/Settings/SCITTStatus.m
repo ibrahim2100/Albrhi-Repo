@@ -3,12 +3,16 @@
 #import "../Prefs.h"
 #import "../Localization/SCILocalize.h"
 #import "../Diagnostics/SCITTDiagnostics.h"
+#import "../Features/Download/SCITTMedia.h"
+#import "../Features/Download/SCITTDownload.h"
 
 static const NSInteger kSCIRowAds = 0;
 static const NSInteger kSCIRowBypass = 1;
+static const NSInteger kSCIRowPrivacy = 2;
 
 @interface SCITTStatus ()
 @property (nonatomic, strong) UITextView *report;
+@property (nonatomic, strong) NSArray<SCITTMediaItem *> *items;
 @end
 
 @implementation SCITTStatus
@@ -56,6 +60,33 @@ static const NSInteger kSCIRowBypass = 1;
 
     UIView *adsRow = [self rowWithLabel:SCILocalized(@"row_ads") key:SCIPrefHideAds tag:kSCIRowAds];
     UIView *bypassRow = [self rowWithLabel:SCILocalized(@"row_bypass") key:SCIPrefBypass tag:kSCIRowBypass];
+    UIView *privacyRow = [self rowWithLabel:SCILocalized(@"row_privacy") key:SCIPrefPrivacy tag:kSCIRowPrivacy];
+
+    self.items = [SCITTMedia recent];
+
+    UILabel *mediaTitle = [[UILabel alloc] init];
+    mediaTitle.text = SCILocalized(@"media_title");
+    mediaTitle.font = [UIFont systemFontOfSize:15 weight:UIFontWeightSemibold];
+    mediaTitle.textColor = [UIColor colorWithWhite:1 alpha:0.6];
+
+    UIStackView *mediaStack = [[UIStackView alloc] initWithArrangedSubviews:@[mediaTitle]];
+    mediaStack.axis = UILayoutConstraintAxisVertical;
+    mediaStack.spacing = 10;
+
+    if (!self.items.count) {
+        UILabel *empty = [[UILabel alloc] init];
+        empty.text = SCILocalized(@"media_empty");
+        empty.textColor = [UIColor colorWithWhite:1 alpha:0.4];
+        empty.font = [UIFont systemFontOfSize:14 weight:UIFontWeightRegular];
+        empty.numberOfLines = 0;
+        [mediaStack addArrangedSubview:empty];
+    } else {
+        NSInteger index = 0;
+        for (SCITTMediaItem *item in self.items) {
+            [mediaStack addArrangedSubview:[self mediaRowForItem:item index:index]];
+            index++;
+        }
+    }
 
     self.report = [[UITextView alloc] init];
     self.report.editable = NO;
@@ -68,7 +99,7 @@ static const NSInteger kSCIRowBypass = 1;
     self.report.text = [SCITTDiagnostics report];
 
     UIStackView *stack = [[UIStackView alloc] initWithArrangedSubviews:
-        @[header, adsRow, bypassRow, self.report]];
+        @[header, adsRow, bypassRow, privacyRow, mediaStack, self.report]];
     stack.axis = UILayoutConstraintAxisVertical;
     stack.spacing = 16;
     stack.translatesAutoresizingMaskIntoConstraints = NO;
@@ -108,9 +139,41 @@ static const NSInteger kSCIRowBypass = 1;
 - (void)toggled:(UISwitch *)toggle {
     NSString *key = (toggle.tag == kSCIRowAds) ? SCIPrefHideAds
                    : (toggle.tag == kSCIRowBypass) ? SCIPrefBypass
+                   : (toggle.tag == kSCIRowPrivacy) ? SCIPrefPrivacy
                    : nil;
     if (!key) return;
     [[NSUserDefaults standardUserDefaults] setBool:toggle.on forKey:key];
+}
+
+/// One row: when it was seen, and a Save button tagged with its position in `self.items`
+/// -- the same array a tap reads back from, so the button never has to hold the item
+/// itself.
+- (UIView *)mediaRowForItem:(SCITTMediaItem *)item index:(NSInteger)index {
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    formatter.timeStyle = NSDateFormatterShortStyle;
+    formatter.dateStyle = NSDateFormatterNoStyle;
+
+    UILabel *label = [[UILabel alloc] init];
+    label.text = [formatter stringFromDate:item.seen];
+    label.textColor = [UIColor colorWithWhite:1 alpha:0.85];
+    label.font = [UIFont systemFontOfSize:14 weight:UIFontWeightRegular];
+
+    UIButton *save = [UIButton buttonWithType:UIButtonTypeSystem];
+    [save setTitle:SCILocalized(@"media_save") forState:UIControlStateNormal];
+    save.tintColor = SCIAccent();
+    save.tag = index;
+    [save addTarget:self action:@selector(saveTapped:) forControlEvents:UIControlEventTouchUpInside];
+
+    UIStackView *row = [[UIStackView alloc] initWithArrangedSubviews:@[label, save]];
+    row.axis = UILayoutConstraintAxisHorizontal;
+    row.distribution = UIStackViewDistributionEqualSpacing;
+    row.alignment = UIStackViewAlignmentCenter;
+    return row;
+}
+
+- (void)saveTapped:(UIButton *)button {
+    if (button.tag < 0 || (NSUInteger)button.tag >= self.items.count) return;
+    [SCITTDownload save:self.items[button.tag]];
 }
 
 - (void)close {

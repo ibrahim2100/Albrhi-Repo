@@ -1,5 +1,60 @@
 # Albrhi for TikTok — what changed
 
+## v0.3.0
+
+Two more references arrived — NA9 For TikTok's compiled `.deb` and VibeTok's compiled
+`.dylib` — both read the same way every closed reference in this project is: with the
+precise `_ungrouped$Class$selector` Logos debug-symbol table each carries (both are
+unstripped debug builds), which names the exact class-and-selector pairs each one
+actually hooks, not just what strings sit near each other. Read for where TikTok is
+hookable only; no code is taken from either.
+
+**Download.** `AWEAwemeModel.videoModel.playAddr.bestURLtoDownload` is the chain both
+references resolve a video's URL through. `-bestURLtoDownload` is confirmed twice over —
+present in this build's own binary and the exact selector NA9's own symbol table hooks.
+`-videoModel` and `-playAddr` are not in either reference's own hook table (neither
+overrides them, only calls them), so they are held to the lower, circumstantial bar this
+project's other "not a hooked selector" findings are — `SCITTMedia.m` walks the chain
+behind `-respondsToSelector:` at every step and records which one failed rather than
+assuming it holds. A kept (non-ad) model is captured the moment `AWEAwemeModel` finishes
+building, resolved synchronously, and only the resulting URL is kept — never the model
+itself, so nothing here extends how long a feed cell's own object stays alive. The
+status screen lists what has been captured with a Save button per item;
+`SCITTDownload.m` fetches and writes it into Photos, or into the app's own Documents for
+audio-only content Photos cannot hold, mirroring Locket's and X's own downloader almost
+exactly (`JGProgressHUD`, `PHPhotoLibrary requestAuthorizationForAccessLevel:`,
+`NSURLSessionDownloadDelegate`).
+
+**Privacy.** Three points where the app reports what was watched back to TikTok's own
+servers, cross-validated between both new references before being hooked:
+`TTKStoryMarkReadService -markAsRead:` (a story was opened), `AWEIMMessageReadComponent
+-p_markReadSyncToServerWithMessage:` (a DM was read — its sibling
+`-p_markMessageAsReadLocally:` is deliberately untouched, so the conversation's own
+unread badge keeps clearing normally on this device), and `TTKProfileViewsVisitor
+-reportProfileView` / `-p_shouldReportProfileView` (a profile was visited). New switch,
+off by nothing — on by default like the rest, in the status screen.
+
+**Ad filter widened.** `isAd`, `isAdItem` and `isAdsOrPseudoAds` join `-isAds` as marks
+`AWEAwemeModel` can carry — found sitting beside it in the same run of the binary's own
+string table, the same circumstantial standard `-videoModel` was already held to.
+`-respondsToSelector:` guards each independently; any one answering YES is enough to
+drop the model. A separate splash/launch-ad surface is suppressed too — three plausible
+manager class names (`AWESplashManager`, `BDASplashManager`, `TTAdSplashManager`) are
+each hooked behind their own `NSClassFromString` guard, since the references disagree on
+which name a given build actually ships and an absent class's hook simply never
+attaches.
+
+**Bypass widened.** Six more jailbreak-detection points, each confirmed present by class
+name and cross-validated between both new references: `IOSSecuritySuite +amIJailbroken`,
+`AppsFlyerUtils -isJailbrokenWithSkipAdvancedJailbreakValidation:`, `IESLiveDeviceInfo
+-isJailBroken`, `TTInstallUtil -isJailBroken`, `UIDevice -btd_isJailBroken`, and a bare
+`NSObject -jailbroken` category method. **`PIPOStoreKitHelper -isJailBroken`, also named
+by a reference, is deliberately left unhooked** — v0.1.0's own reading already refused
+`PIPOStoreKitHelper` and its sibling `PIPOIAPStoreManager` as sitting inside the
+in-app-purchase surface, the same boundary Locket's Check0verPlus review drew, and one
+confirmed method on that class is not reason enough to cross it. The other six checks
+already answer the same underlying question.
+
 ## v0.2.0
 
 The real IPA and a real class dump of TikTok 46.4.0 arrived, and every class this tweak
