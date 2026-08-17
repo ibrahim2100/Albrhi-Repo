@@ -18,7 +18,6 @@ static void SCIBuildTables(void) {
 
         @"section_controls": @"Controls",
         @"section_privacy": @"Privacy",
-        @"section_download": @"Download",
         @"section_status": @"Status",
 
         @"row_ads": @"Hide ads",
@@ -58,11 +57,6 @@ static void SCIBuildTables(void) {
         @"diag_privacy": @"Privacy",
         @"diag_privacy_none": @"Nothing asked yet.",
 
-        @"media_title": @"Ready to save",
-        @"media_empty": @"Nothing yet. Scroll the feed, then come back.",
-        @"media_save": @"Save",
-        @"media_footer": @"Tap a row to save it. Newest first.",
-
         @"save_working": @"Saving…",
         @"save_failed": @"Couldn't save it",
         @"save_done": @"Saved to Photos",
@@ -79,7 +73,6 @@ static void SCIBuildTables(void) {
 
         @"section_controls": @"التحكم",
         @"section_privacy": @"الخصوصية",
-        @"section_download": @"التحميل",
         @"section_status": @"الحالة",
 
         @"row_ads": @"إخفاء الإعلانات",
@@ -118,11 +111,6 @@ static void SCIBuildTables(void) {
 
         @"diag_privacy": @"الخصوصية",
         @"diag_privacy_none": @"لا شيء سُئل بعد.",
-
-        @"media_title": @"جاهز للحفظ",
-        @"media_empty": @"لا شيء بعد. مرّر بالفيد ثم ارجع.",
-        @"media_save": @"حفظ",
-        @"media_footer": @"اضغط على أي صف لحفظه. الأحدث أولاً.",
 
         @"save_working": @"جارِ الحفظ…",
         @"save_failed": @"تعذّر الحفظ",

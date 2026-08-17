@@ -1,5 +1,34 @@
 # Albrhi for TikTok — what changed
 
+## v0.5.1
+
+**The Download list is gone from the settings screen, on request.** It was a list of
+bare timestamps with a Save button each — a debugging aid wearing a feature's clothes.
+Nobody picks a video out of thirty unlabelled rows they cannot see; the in-feed button
+beside share is the whole interface, and a second, worse way to do the same thing only
+made the screen look unfinished. `SCITTMedia` still keeps its recent list because the
+button reads from it; it just has no UI of its own any more.
+
+**Two more confirmed ways out of an `AWEURLModel`, from a third pass over NA9's binary.**
+`_objc_msgSend$originURL` and `_objc_msgSend$originURLList` are both present as stub
+symbols — which the compiler emits only for a selector it actually saw being sent — so
+they meet exactly the same bar `-bestURLtoDownload` does, and all three are now tried
+in turn. That same pass also settled something the other way: `-playAddr` and
+`-bitratePlayAddr` are **not** sent anywhere in that binary. They appear only as plain
+strings, which is dictionary-key territory, so they now sit after the three confirmed
+selectors rather than in front of them.
+
+**And a finding deliberately not built.** NA9's download does not resolve a link from
+the app at all for its HD path — it fetches
+`https://tikwm.com/video/media/hdplay/<id>.mp4` from a third-party scraper service,
+keyed by the video's own ID. That is why its button has worked unchanged for years: it
+never depended on TikTok's internal model chain. It is not reproduced here, and the
+reason is the same line this project already drew at `app_attest_*` in the X tweak and
+at Check0verPlus in Locket: it would send what the user is watching to an unrelated
+third party, inside a tweak whose neighbouring feature exists specifically to stop
+watch activity being reported to servers. The owner can have it if they ask for it
+knowing that; it will not arrive quietly.
+
 ## v0.5.0
 
 **The 288 "successful" resolutions were all the song, not the video, and the file's own

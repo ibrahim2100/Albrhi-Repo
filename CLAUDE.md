@@ -131,6 +131,19 @@ Instagram's own story-seen feature draws), and a profile view. The ad filter now
 checks `isAd`/`isAdItem`/`isAdsOrPseudoAds` alongside `-isAds`, plus a separate
 splash/launch-ad surface. Bypass gained six more confirmed checks.
 
+**NA9's own download button works because it does not use TikTok's model chain at all,
+and that is deliberately not reproduced here.** Its HD path fetches
+`https://tikwm.com/video/media/hdplay/<id>.mp4` — a third-party scraper service, keyed
+by the video's own ID, found as a literal format string in its binary. That is why its
+button has been reliable for years across TikTok updates while this tweak spent eight
+releases chasing an internal accessor: there was never an internal accessor in that
+path to break. It is not built here for the same reason `app_attest_*` is not offered
+in the X tweak and `Check0verPlus` was refused for Locket: it would send what the user
+is watching to an unrelated third party, from inside a tweak whose neighbouring feature
+exists specifically to stop watch activity being reported to servers. **Worth knowing
+rather than rediscovering** — if the owner asks for it knowing the trade, that is their
+call, but it does not arrive quietly as "the fix".
+
 **`PIPOStoreKitHelper -isJailBroken`, named by a reference alongside the rest, was found
 and deliberately not hooked.** v0.1.0's own reading had already refused
 `PIPOIAPStoreManager`/`PIPOStoreKitHelper` as sitting inside the in-app-purchase surface
@@ -1246,11 +1259,11 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.5.0** (four features, three-way privacy, in-feed button in the
-rail, sectioned settings screen; the download link is resolved from `AWEVideoModel` at
-its own construction — the aweme model's `-video` is nil at that point and its
-`-URLList` resolves the *song*, which is what made 288 "successful" saves all audio)
-· suite **1.30.0**.
+source) · TikTok **0.5.1** (four features, three-way privacy, one in-feed button in the
+rail and no download list at all; the link is resolved from `AWEVideoModel` at its own
+construction — the aweme model's `-video` is nil at that point and its `-URLList`
+resolves the *song*, which is what made 288 "successful" saves all audio)
+· suite **1.30.1**.
 
 - **CarPlay is built but not served.** The code is complete and compiles; the package is
   kept out of the APT index until its app bridging is confirmed on a device. Install it

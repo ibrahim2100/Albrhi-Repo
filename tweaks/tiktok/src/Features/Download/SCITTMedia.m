@@ -232,9 +232,21 @@ static void SCITTAddResolved(NSURL *url) {
         // class by a device report ("chain ended at AWEURLModel"); -playAddr and
         // -bitratePlayAddr are tried after it because the reference tweaks name them
         // and one of them may be what a different build populates first.
+        // `-originURL` and `-originURLList` are new here and are **confirmed sent
+        // selectors**, not guesses: NA9's own binary carries
+        // `_objc_msgSend$originURL` and `_objc_msgSend$originURLList` stubs, which
+        // exist only for a selector the compiler saw actually being sent. They join
+        // `-bestURLtoDownload` (the same standard) as the three real ways to get a
+        // link out of an `AWEURLModel`. `-playAddr`/`-bitratePlayAddr` are **not**
+        // sent anywhere in that binary -- they appear as plain strings only, which is
+        // dictionary-key territory -- so they sit after the confirmed three rather
+        // than in front of them.
         NSArray<NSArray<NSString *> *> *chains = @[
             @[@"playURL", @"bestURLtoDownload"],
+            @[@"playURL", @"originURL"],
+            @[@"playURL", @"originURLList"],
             @[@"playAddr", @"bestURLtoDownload"],
+            @[@"playAddr", @"originURL"],
             @[@"bitratePlayAddr", @"bestURLtoDownload"],
             @[@"h264URL", @"bestURLtoDownload"],
             @[@"downloadURL", @"bestURLtoDownload"],

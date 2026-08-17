@@ -16,11 +16,17 @@
 /// shape the X tweak's own settings screen (SCITWSettings.m) already settled on.
 ///
 
+/// **The Download list is gone, on request, and its absence is the design.** It was a
+/// list of timestamps with a Save button each -- a debugging aid wearing a feature's
+/// clothes. Nobody opens a settings screen to pick a video out of thirty unlabelled
+/// rows they cannot see; the in-feed button beside share is the whole interface, and a
+/// second, worse way to do the same thing only made the screen look unfinished.
+/// `SCITTMedia` still keeps its recent list -- the button reads from it -- it just has
+/// no UI of its own any more.
 static const NSInteger kSCISectionControls = 0;
 static const NSInteger kSCISectionPrivacy = 1;
-static const NSInteger kSCISectionDownload = 2;
-static const NSInteger kSCISectionStatus = 3;
-static const NSInteger kSCISectionCount = 4;
+static const NSInteger kSCISectionStatus = 2;
+static const NSInteger kSCISectionCount = 3;
 
 static const NSInteger kSCIRowAds = 0;
 static const NSInteger kSCIRowDownloadButton = 1;
@@ -33,10 +39,6 @@ static const NSInteger kSCIRowPrivacyProfile = 2;
 static const NSInteger kSCIPrivacyRowCount = 3;
 
 static const NSInteger kSCIStatusRowCount = 8;
-
-@interface SCITTStatus ()
-@property (nonatomic, strong) NSArray<SCITTMediaItem *> *items;
-@end
 
 @implementation SCITTStatus
 
@@ -141,7 +143,6 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
 }
 
 - (void)reload {
-    self.items = [SCITTMedia recent];
     [self.tableView reloadData];
 }
 
@@ -331,7 +332,6 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == kSCISectionControls) return kSCIControlsRowCount;
     if (section == kSCISectionPrivacy) return kSCIPrivacyRowCount;
-    if (section == kSCISectionDownload) return self.items.count ?: 1;
     if (section == kSCISectionStatus) return kSCIStatusRowCount;
     return 0;
 }
@@ -339,13 +339,7 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     if (section == kSCISectionControls) return SCILocalized(@"section_controls");
     if (section == kSCISectionPrivacy) return SCILocalized(@"section_privacy");
-    if (section == kSCISectionDownload) return SCILocalized(@"section_download");
     if (section == kSCISectionStatus) return SCILocalized(@"section_status");
-    return nil;
-}
-
-- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
-    if (section == kSCISectionDownload && self.items.count) return SCILocalized(@"media_footer");
     return nil;
 }
 
@@ -364,13 +358,6 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
             [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
         [self fillPrivacyCell:cell row:indexPath.row];
-        return cell;
-    }
-
-    if (indexPath.section == kSCISectionDownload) {
-        UITableViewCell *cell =
-            [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
-        [self fillMediaCell:cell row:indexPath.row];
         return cell;
     }
 
@@ -483,29 +470,6 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
     cell.accessoryView = toggle;
 }
 
-- (void)fillMediaCell:(UITableViewCell *)cell row:(NSInteger)row {
-    if (!self.items.count) {
-        cell.textLabel.text = SCILocalized(@"media_empty");
-        cell.textLabel.numberOfLines = 0;
-        cell.textLabel.textColor = [UIColor secondaryLabelColor];
-        cell.selectionStyle = UITableViewCellSelectionStyleNone;
-        return;
-    }
-
-    SCITTMediaItem *item = self.items[row];
-
-    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-    formatter.timeStyle = NSDateFormatterShortStyle;
-    formatter.dateStyle = NSDateFormatterNoStyle;
-
-    cell.textLabel.text = SCILocalized(@"media_save");
-    cell.detailTextLabel.text = [formatter stringFromDate:item.seen];
-    cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
-    cell.imageView.image = SCITTBadge(@"arrow.down.circle.fill", SCIAccent());
-    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-    cell.selectionStyle = UITableViewCellSelectionStyleDefault;
-}
-
 - (void)fillStatusCell:(UITableViewCell *)cell row:(NSInteger)row {
     cell.detailTextLabel.numberOfLines = 0;
 
@@ -556,15 +520,6 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
             cell.imageView.image = SCITTBadge(@"eye.slash.fill", [UIColor systemTealColor]);
             break;
     }
-}
-
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    if (indexPath.section != kSCISectionDownload || !self.items.count) return;
-
-    // Saved on the tap, no confirmation sheet -- nothing destroyed, nothing sent
-    // anywhere, the same reasoning the X tweak's own media list uses for this.
-    [SCITTDownload save:self.items[indexPath.row]];
 }
 
 @end
