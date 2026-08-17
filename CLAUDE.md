@@ -313,6 +313,36 @@ player — clients Google has not migrated — which means impersonating a diffe
 signed requests, and the `n`-signature, from inside the official app while signed in to a
 real account. The counting hooks stay in `SCIYTSabr.x`; the switch was removed in 1.12.0.
 
+**The TikTok downloader is built on the wrong architecture, and the reference tweaks say so
+plainly once their *hooks* are read instead of their strings.** Five releases went into a
+500-line URL resolver that walks candidate accessor chains looking for a link. NA9 does not
+resolve anything. Its Logos symbols name exactly what it does:
+
+```
+AWEFeedViewTemplateCell$na9AddDownloadButton     the button goes on the FEED CELL
+AWEFeedViewTemplateCell$downloadVideo            it calls TikTok's own download
+AWEFeedViewTemplateCell$downloadProgress         and hooks the progress/finish callbacks
+AWEAwemeACLItem$setWatermarkType                 forcing the watermark off
+AWEAwemeModel$canDownload / isPreventDownload    forcing the permission
+```
+
+**It asks the app to download its own video.** That is why it gets the right clip at the right
+quality without a resolver: TikTok already knows which video is on screen and which URL is the
+download copy. Confirmed in 46.4.0: `AWEFeedViewTemplateCell`, `AWEAwemeACLItem`,
+`AWEAwemeBaseViewController`, `downloadVideo`, `downloadProgress` and `watermarkType` are all
+present; `downloadHDVideo`, `canDownload`, `isPreventDownload` and `AWEFeedViewTemplateNewCell`
+are **not** — NA9 was built against an older TikTok, so its list is a map, not a manifest.
+
+**And the button belongs on the cell, not on the interaction rail.** A cell hook fires once per
+video, so the button cannot be missing on some of them; its position is a frame this code owns
+rather than a slot in a stack whose arranged subviews TikTok rebuilds. Every symptom the rail
+placement produced -- appearing on some videos, drifting sideways, needing its size copied from
+neighbours -- is a consequence of being a guest in someone else's stack.
+
+**Reading a reference tweak's strings is not reading its technique.** Three releases were spent
+comparing selector *names* against ours before anyone dumped its Logos symbols, which took one
+command and answered the architecture question outright.
+
 **A diagnostic that does not date itself will be read as current, and three releases were
 aimed at one that was not.** TikTok's "last save attempt" line carried the identical byte
 count and media id across three reports; each was read as fresh proof that the newest download
