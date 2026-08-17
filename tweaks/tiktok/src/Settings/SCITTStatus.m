@@ -182,9 +182,10 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
     pills.distribution = UIStackViewDistributionFillEqually;
 
     BOOL adsFilter = NSClassFromString(@"AWEAwemeModel") != nil;
-    BOOL button = NSClassFromString(@"AWEFeedViewTemplateCell") != nil
-        && (NSClassFromString(@"TTKFeedInteractionStackView") != nil
-            || NSClassFromString(@"TTKFeedRightInteractionStackView") != nil);
+    // The cell overlay is the primary surface and needs only AWEFeedViewTemplateCell;
+    // the interaction rail is a second, optional surface, not a requirement for this
+    // pill to read as attached.
+    BOOL button = NSClassFromString(@"AWEFeedViewTemplateCell") != nil;
     BOOL bypass = NSClassFromString(@"TTAdSplashDeviceHelper") != nil;
 
     [pills addArrangedSubview:[self pillWithTitle:SCILocalized(@"pill_ads") on:adsFilter]];
@@ -330,8 +331,13 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
         return cell;
     }
 
+    // Subtitle, not Value1 -- Value1 lays its two labels side by side on one line by
+    // design, and several of these rows carry a long, dynamically-built diagnostic
+    // string (a comma list of hooks, a whole superview chain) that has nowhere to wrap
+    // to in that layout except on top of the title beside it. Subtitle stacks the note
+    // under the title instead, the same shape every other section on this screen uses.
     UITableViewCell *cell =
-        [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:nil];
+        [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     [self fillStatusCell:cell row:indexPath.row];
     return cell;

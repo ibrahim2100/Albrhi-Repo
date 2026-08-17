@@ -7,7 +7,7 @@
 #import "Features/Download/SCITTButton.h"
 #import "Settings/SCITTGesture.h"
 
-NSString *SCIVersionString = @"v0.4.1";  // AlbrhiTT
+NSString *SCIVersionString = @"v0.4.2";  // AlbrhiTT
 
 ///
 /// TESTED ON TikTok 46.4.0. Every class here was confirmed present in that build's own

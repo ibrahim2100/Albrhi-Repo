@@ -1,5 +1,33 @@
 # Albrhi for TikTok — what changed
 
+## v0.4.2
+
+v0.4.1's own fixes did not hold, reported directly against a real build: the settings
+text was still overlapping and the button still did not appear.
+
+**The overlap had a second, more direct cause than the row height fix addressed.** The
+Status section used `UITableViewCellStyleValue1` with a multi-line detail label —
+Value1 lays its title and detail side by side on one line by design, and several of
+these rows hold a long, dynamically-built diagnostic string (a comma list of hook
+names, a whole superview chain). Forcing that onto two lines in a layout built for one
+draws the wrapped text over the title beside it rather than under it. Switched to
+`UITableViewCellStyleSubtitle`, the same style already used everywhere else on this
+screen, which stacks a note under its title instead of beside it.
+
+**The button gained a second, primary placement that does not depend on the interaction
+rail at all.** Reported directly: NA9 For TikTok's own download button — its classic
+surface, not the sidebar one — has worked without interruption for years, drawn
+straight onto `AWEFeedViewTemplateCell` itself via `-layoutSubviews` calling its own
+`na9AddDownloadButton`. That is now this tweak's primary surface too: a button added
+as a direct subview of the cell, bottom-right, raised to the front on every layout
+pass the same way the X tweak's own `ImmersiveCardView` surface does for the identical
+reason (the video's own overlays are re-added as the cell renders, and a button under
+one of them is a button nobody can tap). It needs only `AWEFeedViewTemplateCell` to
+exist — nothing else has to be present for it to have a chance of showing. The
+interaction-rail surface (`TTKFeedInteractionStackView`/`TTKFeedRightInteractionStackView`)
+is kept as a second, optional surface exactly as NA9 also carries both. The Status
+screen's own report now names both surfaces and how many buttons each has placed.
+
 ## v0.4.1
 
 Three things reported directly after v0.4.0 shipped: the in-feed button still did not
