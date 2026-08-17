@@ -1,0 +1,27 @@
+Package: com.albrhi.tiktok
+Name: Albrhi for TikTok (rootless)
+Version: 0.1.0
+Architecture: iphoneos-arm64
+Description: Scaffold only — no features built yet. Do not install.
+ .
+ The tweak's own structure exists so the source checks and the build script have
+ something to run against while the real hooks are written; nothing here patches
+ TikTok yet. See CLAUDE.md for the plan.
+ .
+ Reference architecture read from BandarHL's and al3raQe's published BHTikTok source
+ (github.com/BandarHL/BHTikTok, github.com/al3raQe/BHTikTok) — no LICENSE file in
+ either, so this is architecture read only, the same cautious way this project treats
+ every unlicensed reference; no code is taken from it.
+ .
+ Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Author: Ibrahim Ismail AL-Rahn
+Section: Tweaks
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-tiktok.html
+SileoDepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-tiktok.json
+Depends: mobilesubstrate
+Conflicts: com.albrhi.tiktok.roothide
+Replaces: com.albrhi.tiktok.roothide
+Tag: role::enduser

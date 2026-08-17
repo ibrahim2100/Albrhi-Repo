@@ -78,6 +78,26 @@ The Instagram tweak is derived from [SCInsta](https://github.com/SoCuul/SCInsta)
 SoCuul under GPLv3. Original authorship is credited in-app, in the README and in the
 package metadata — that is a licence obligation, not a courtesy. Never remove it.
 
+**A seventh tweak, for TikTok, exists as a scaffold only — `tweaks/tiktok`, package
+`com.albrhi.tiktok`, version 0.1.0.** Structure and source layout only: Makefile,
+control, filter plist (`com.zhiliaoapp.musically`), bilingual localisation table, the
+panel gate — enough for `tools/check.py` and `./build.sh tiktok rootless` to run
+against, and nothing that patches TikTok yet. Not wired into `suite/control`, on
+purpose, until it does something. Two references were read for architecture, both
+unlicensed and both by the same author family the X tweak's own control file already
+credits: BandarHL's original [BHTikTok](https://github.com/BandarHL/BHTikTok) and
+al3raQe's maintained fork of the same
+([github.com/al3raQe/BHTikTok](https://github.com/al3raQe/BHTikTok)) — read the same
+cautious way every unlicensed reference here is, for where TikTok is hookable, never
+for the code. `tweaks/tiktok/CHANGELOG.md`'s v0.1.0 entry names every class that
+mattered from that reading, and names two that will not be built regardless of what a
+real class dump confirms: `PIPOIAPStoreManager`/`PIPOStoreKitHelper`, an in-app-purchase
+fake — the same shape of thing `Check0verPlus.dylib` was for Locket, reviewed and
+refused there for taking money from the app's own developers rather than being a device
+tweak. Waiting on a real class dump and IPA of the current TikTok build before any hook
+is written, so nothing here is carried over from a reference that may target a TikTok
+years older than today's.
+
 **Albrhi CarPlay's own architecture is informed by [carplay-cast](https://github.com/EthanArbuckle/carplay-cast)
 by Ethan Arbuckle, Apache-2.0** — read for its design (three components: a hook inside
 Apple's CarPlay dashboard process, a hook inside SpringBoard using its own live
