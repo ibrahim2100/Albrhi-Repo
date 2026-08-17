@@ -343,6 +343,19 @@ neighbours -- is a consequence of being a guest in someone else's stack.
 comparing selector *names* against ours before anyone dumped its Logos symbols, which took one
 command and answered the architecture question outright.
 
+**A correct principle enforced in the wrong place removes working features.** "Saving the wrong
+video is worse than saving none" is right about the *save*. Applied to the *button* -- hiding it
+whenever the preferred model lookup returned nil -- it shipped a TikTok build with no download
+button at all, replacing a button that worked and was merely sometimes wrong about which clip.
+Refusing a fallback belongs at the point of the irreversible action, never at the point that
+decides whether the user can reach it.
+
+**And a filter loop that only adds from inside itself cannot be asked for "everything".** The
+accessor dumper matched names from within its keyword loop, so an empty keyword list meant the
+body never ran: asking for an unfiltered dump returned nothing, which reads as "this class has
+no accessors" and is the opposite of the truth. Any predicate offered as optional needs the
+empty case written deliberately.
+
 **A diagnostic that does not date itself will be read as current, and three releases were
 aimed at one that was not.** TikTok's "last save attempt" line carried the identical byte
 count and media id across three reports; each was read as fresh proof that the newest download

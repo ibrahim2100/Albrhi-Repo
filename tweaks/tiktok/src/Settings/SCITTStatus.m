@@ -308,8 +308,15 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
         // and layout internals and nothing resembling a model: it was dumping a different
         // class from the one the button is on. Three reports printed that list and nobody
         // noticed it was the wrong object.
-        [SCITTMedia accessorsOnClassNamed:@"AWEFeedViewTemplateCell"
-                                  matching:@[@"model", @"aweme", @"item", @"data"]]];
+        // Unfiltered on purpose.
+        //
+        // The filter was model/aweme/item/data, and what came back was every UIKit and
+        // accessibility category that happens to contain "item" or "data" -- focusItem,
+        // pageItem, dataOwner -- and nothing whatever about a video. Which is itself the
+        // finding: **this cell has no aweme accessor of its own.** So the model is reached
+        // some other way, and a filter built from names I expected is the last thing that
+        // will show me the one I did not.
+        [SCITTMedia accessorsOnClassNamed:@"AWEFeedViewTemplateCell" matching:@[]]];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_media_candidates"),
         [SCITTMedia candidateAccessorsOnAwemeModel]];
 
@@ -538,8 +545,7 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
             // video it is actually attached to.
             cell.textLabel.text = SCILocalized(@"status_cell_accessors");
             cell.detailTextLabel.text =
-                [SCITTMedia accessorsOnClassNamed:@"AWEFeedViewTemplateCell"
-                                          matching:@[@"model", @"aweme", @"item", @"data"]];
+                [SCITTMedia accessorsOnClassNamed:@"AWEFeedViewTemplateCell" matching:@[]];
             cell.imageView.image = SCITTBadge(@"rectangle.on.rectangle", [UIColor systemPurpleColor]);
             break;
         case 6:

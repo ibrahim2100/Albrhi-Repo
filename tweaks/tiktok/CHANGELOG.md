@@ -1,5 +1,31 @@
 # Albrhi for TikTok — what changed
 
+## v0.10.1
+
+**0.10.0 hid the button. That was mine, and it is restored.**
+
+0.10.0 refused to fall back to the most recent capture, on the reasoning that saving the wrong
+video is worse than saving none. That reasoning is sound about the *save*. It was applied to the
+*button*: no accessor answered on this build, so the item was nil on every layout pass and
+`hidden` was set on every pass. **A correct principle enforced in the wrong place removed a
+working feature outright** — 0.9.0's button was visible and saved a real video, just not always
+the right one, and 0.10.0 traded that for nothing at all.
+
+The button is always visible now. The cell's own model is used when it can be found and the most
+recent capture stands in when it cannot, and **the report says which of the two supplied it**, so
+"saved the wrong clip" and "saved nothing" never look the same again.
+
+**And the accessor dump could not have answered the question it was asked.** Unfiltering it
+exposed a second bug: the match loop added a name only from *inside* the keyword loop, so an
+empty keyword list meant the body never ran and every class came back empty. Asking for "no
+filter" produced "no results" — the opposite of what it reads as. An empty filter now means
+everything, and a class with nothing to show says so plainly.
+
+That matters because the filtered list had already told us something and it was missed: it
+returned UIKit and accessibility categories containing "item" or "data" and **nothing about a
+video at all.** `AWEFeedViewTemplateCell` has no aweme accessor of its own. The model is reached
+another way, and the next report — unfiltered, for real this time — is what will show which.
+
 ## v0.10.0
 
 **Downloads work, and now they save the video you are actually watching.**

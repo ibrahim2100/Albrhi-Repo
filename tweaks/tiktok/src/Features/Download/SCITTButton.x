@@ -432,6 +432,9 @@ static BOOL sciCellPresent = NO;
 /// Which accessor the cell answered its model through, for the report.
 static NSString *sciCellModelVia = nil;
 
+/// YES when the item came from the cell itself rather than from the recent-capture list.
+static BOOL sciCellItemFromCell = NO;
+
 /// A hooked class that touches a property needs a real @interface, not the forward
 /// declaration Logos leaves behind -- rule 3 in check.py exists for this, and three builds
 /// have gone to it in three different shapes.
@@ -542,13 +545,30 @@ static NSString *sciCellModelVia = nil;
             item = [SCITTMedia recent].firstObject;
         }
 
-        // No fallback to "the most recent anything". Saving the wrong video is worse than
-        // saving none: one is a missing feature, the other quietly hands you someone else's
-        // clip and looks like it worked.
+        // Falls back, and **never hides the button** -- 0.10.0 did both the other way round
+        // and shipped a button nobody could see.
+        //
+        // The reasoning for refusing a fallback was that saving the wrong video is worse than
+        // saving none. That is true of the *save*, and it was applied to the *button*: no
+        // accessor answered on this build, so `item` was nil on every pass and `hidden` was
+        // set on every pass. A correct principle, enforced in the wrong place, removed a
+        // working feature outright.
+        //
+        // So the button is always visible, the cell's own model is used when it can be found,
+        // and the most recent capture stands in when it cannot. Which of the two supplied the
+        // item is recorded, so "it saved the wrong clip" and "it saved nothing" stay
+        // distinguishable in the next report instead of both being a blank button.
+        if (!item) {
+            item = [SCITTMedia recent].firstObject;
+            sciCellItemFromCell = NO;
+        } else {
+            sciCellItemFromCell = YES;
+        }
+
         if (item) {
             objc_setAssociatedObject(button, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
-        button.hidden = (item == nil);
+        button.hidden = NO;
     } @catch (NSException *exception) {
         // A button is a convenience; the feed is not. Anything thrown here costs the button.
         SCILogV(@"cell button: %@", exception.reason);
@@ -598,7 +618,9 @@ NSString *SCITTButtonReport(void) {
         sciCellPresent ? @"—" : @"(absent)", (unsigned long)sciCellButtonsPlaced];
 
     if (sciCellSurfaceWorks) [out appendString:@"; rail standing down"];
-    [out appendFormat:@"; model via %@", sciCellModelVia ?: @"nothing answered"];
+    [out appendFormat:@"; model via %@ (%@)",
+        sciCellModelVia ?: @"nothing answered",
+        sciCellItemFromCell ? @"from cell" : @"fell back to recent"];
 
     [out appendFormat:@" | rail %@ — %lu placed",
         sciRailName ?: @"(absent)", (unsigned long)sciRailButtonsPlaced];

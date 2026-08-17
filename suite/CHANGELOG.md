@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.35.1
+
+**TikTok: the download button was invisible in 1.35.0.** Restored. It also downloads again, and
+the report now distinguishes "saved the wrong clip" from "saved nothing".
+
+Includes TikTok 0.10.1.
+
 ## v1.35.0
 
 Includes TikTok 0.10.0 — **saving works, and saves the right video.** Downloads are real videos

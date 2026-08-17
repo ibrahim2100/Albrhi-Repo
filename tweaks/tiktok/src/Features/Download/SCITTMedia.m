@@ -524,6 +524,22 @@ static NSUInteger const kSCIMaxRetries = 10;
                               matching:@[@"video", @"play", @"url", @"media",
                                          @"cover", @"download", @"aweme"]];
 }
+/// Does `name` pass the filter -- **and an empty filter passes everything.**
+///
+/// The loop this replaces iterated the keyword list and added a name only from inside it, so
+/// an empty list meant the body never ran and every class came back with nothing. Asking for
+/// "no filter" produced "no results", which is the opposite of what it reads as, and the call
+/// that wanted an unfiltered dump would have failed silently.
+static BOOL SCITTNameMatches(NSString *name, NSArray<NSString *> *keywords) {
+    if (!keywords.count) return YES;
+
+    NSString *lower = name.lowercaseString;
+    for (NSString *keyword in keywords) {
+        if ([lower containsString:keyword.lowercaseString]) return YES;
+    }
+    return NO;
+}
+
 
 + (NSString *)accessorsOnClassNamed:(NSString *)className
                             matching:(NSArray<NSString *> *)keywords {
@@ -541,10 +557,7 @@ static NSUInteger const kSCIMaxRetries = 10;
         objc_property_t *props = class_copyPropertyList(walk, &propCount);
         for (unsigned int i = 0; i < propCount; i++) {
             NSString *name = [NSString stringWithUTF8String:property_getName(props[i])];
-            NSString *lower = name.lowercaseString;
-            for (NSString *keyword in keywords) {
-                if ([lower containsString:keyword]) { [names addObject:name]; break; }
-            }
+            if (SCITTNameMatches(name, keywords)) [names addObject:name];
         }
         if (props) free(props);
 
@@ -553,10 +566,7 @@ static NSUInteger const kSCIMaxRetries = 10;
         for (unsigned int i = 0; i < methodCount; i++) {
             NSString *name = NSStringFromSelector(method_getName(methods[i]));
             if ([name containsString:@":"]) continue; // getters only, no arguments
-            NSString *lower = name.lowercaseString;
-            for (NSString *keyword in keywords) {
-                if ([lower containsString:keyword]) { [names addObject:name]; break; }
-            }
+            if (SCITTNameMatches(name, keywords)) [names addObject:name];
         }
         if (methods) free(methods);
 
@@ -564,8 +574,10 @@ static NSUInteger const kSCIMaxRetries = 10;
     }
 
     if (!names.count) {
-        return [NSString stringWithFormat:@"%@: nothing matches %@",
-            className, [keywords componentsJoinedByString:@"/"]];
+        return keywords.count
+            ? [NSString stringWithFormat:@"%@: nothing matches %@",
+                className, [keywords componentsJoinedByString:@"/"]]
+            : [NSString stringWithFormat:@"%@: no accessors at all", className];
     }
     return [[names array] componentsJoinedByString:@", "];
 }
