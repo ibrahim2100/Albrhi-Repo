@@ -245,6 +245,22 @@ class-name one above, applied to accessors: read what exists, do not guess and c
 "fixed" three times against the wrong stage. The bug only surfaced once the code
 reported `raw → parsed → deduped` counts separately.
 
+**A diagnostic that reports the last event instead of a tally is not a diagnostic, and
+it will send you fixing what is not broken.** The TikTok tweak's own
+`SCITTMedia +lastAttemptState` recorded only the *most recent* resolution attempt — and
+resolution runs on every feed model, the overwhelming majority of which are asked a
+moment after construction, before their video data is populated. So the status row read
+`every chain failed — -video answered nil` for three releases while resolution was
+actually **working**: the in-feed button appears only when a URL has genuinely been
+resolved, and the same report said it had been placed. Two releases were spent chasing
+selector names that were already right, because one overwritten string outvoted a
+counter that did not exist yet. The fix is the same shape as the quality picker's above
+— count successes and attempts separately, name the chain that won, and show the last
+failure's own text only while nothing has ever succeeded. **When a report and an
+observable behaviour disagree, suspect the report**; and read every number on a
+diagnostic screen for whether it is a tally or a snapshot before believing what it
+implies.
+
 **A non-nil object is not a working object.** `IGMedia.video` returns a hollow
 `IGVideo` for photo posts. Check that a thing can actually do its job, not that it
 is non-null — see `hasPlayableVideo:` in `SCIMediaDownloader.m`.
@@ -1227,8 +1243,10 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.4.1** (four features, three-way privacy, in-feed button, sectioned
-settings screen — button placement unconfirmed on a real device) · suite **1.29.1**.
+source) · TikTok **0.4.11** (four features, three-way privacy, in-feed button in the
+rail, sectioned settings screen — the button is confirmed placing on a real device and
+resolution confirmed working; **download itself still failing, reason now recorded on
+the status screen rather than guessed at**) · suite **1.29.11**.
 
 - **CarPlay is built but not served.** The code is complete and compiles; the package is
   kept out of the APT index until its app bridging is confirmed on a device. Install it

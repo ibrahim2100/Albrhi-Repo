@@ -1,5 +1,41 @@
 # Albrhi for TikTok — what changed
 
+## v0.4.11
+
+**Two releases were spent fixing the wrong thing because this tweak's own diagnostic
+was actively misleading, and that is the real lesson here.** `+lastAttemptState`
+recorded only the *last* resolution attempt, and the overwhelming majority of attempts
+are brand-new models asked a moment after construction, before their video data is
+populated. So the row read "every chain failed — -video answered nil" while the feed
+button, which appears *only* when a URL has actually been resolved, was visibly
+appearing and being reported as placed. The failing line was the last of two hundred
+attempts, not the verdict on all of them; resolution has been working for at least two
+releases. Successes are now counted separately, the winning chain is named, and the
+last attempt's own detail is shown only while nothing has ever succeeded — a number
+that climbs cannot be drowned out the way one overwritten string could.
+
+The same pattern this project already documented for the YouTube tweak's SABR section
+("a report showing no interceptions had two readings, and those need opposite fixes"),
+repeated in a new place. A diagnostic that reports the last event rather than a tally
+is not a diagnostic.
+
+**The button's tilt was caused by v0.4.10's own fix.** A vertical `UIStackView` aligned
+`fill` — the default, and what TikTok's rail evidently uses — gives every arranged
+subview the stack's full width. Pinning this one to 34 points fought that: the
+constraint and the fill cannot both hold, and the loser reads as a button sitting off
+to one side of a column whose siblings are centred in full-width slots. The width
+constraint is removed; only the height is fixed, and the glyph is centred inside
+whatever width the stack gives it, exactly as every sibling icon already does.
+
+**The download failure now says what refused it.** "Couldn't save it" is all a user
+needs and nothing a fix can be built from: an HTTP 403 on the resolved link, a file
+Photos will not decode, and a zero-byte download that answered 200 all look identical
+from there. A non-2xx HTTP status is now caught before the file is ever handed to
+Photos (`NSURLSession` treats an error page as a perfectly successful download, which
+is how a 403 arrives as an unplayable `.mp4`), and the real reason — the status code,
+Photos' own error, or which extension/MIME pair decided a file was audio — is recorded
+and shown as its own "Last save attempt" Status row.
+
 ## v0.4.10
 
 Three things reported against v0.4.9, all in one round this time.

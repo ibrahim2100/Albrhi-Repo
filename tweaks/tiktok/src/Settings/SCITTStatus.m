@@ -32,7 +32,7 @@ static const NSInteger kSCIRowPrivacyMessages = 1;
 static const NSInteger kSCIRowPrivacyProfile = 2;
 static const NSInteger kSCIPrivacyRowCount = 3;
 
-static const NSInteger kSCIStatusRowCount = 7;
+static const NSInteger kSCIStatusRowCount = 8;
 
 @interface SCITTStatus ()
 @property (nonatomic, strong) NSArray<SCITTMediaItem *> *items;
@@ -299,6 +299,7 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
     [report appendFormat:@"%@: %@\n", SCILocalized(@"diag_ads"), [SCITTDiagnostics adFilterState]];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_button"), SCITTButtonReport()];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_media_resolve"), [SCITTMedia lastAttemptState]];
+    [report appendFormat:@"%@: %@\n", SCILocalized(@"status_download"), SCITTDownloadReport()];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_media_candidates"),
         [SCITTMedia candidateAccessorsOnAwemeModel]];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"diag_bypass"), [SCITTDiagnostics bypassState]];
@@ -535,11 +536,16 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
             cell.imageView.image = SCITTBadge(@"link", [UIColor systemPurpleColor]);
             break;
         case 4:
+            cell.textLabel.text = SCILocalized(@"status_download");
+            cell.detailTextLabel.text = SCITTDownloadReport();
+            cell.imageView.image = SCITTBadge(@"square.and.arrow.down", SCIAccent());
+            break;
+        case 5:
             cell.textLabel.text = SCILocalized(@"status_media_candidates");
             cell.detailTextLabel.text = [SCITTMedia candidateAccessorsOnAwemeModel];
             cell.imageView.image = SCITTBadge(@"magnifyingglass", [UIColor systemPurpleColor]);
             break;
-        case 5:
+        case 6:
             cell.textLabel.text = SCILocalized(@"diag_bypass");
             cell.detailTextLabel.text = [SCITTDiagnostics bypassState];
             cell.imageView.image = SCITTBadge(@"shield.lefthalf.filled", [UIColor systemIndigoColor]);

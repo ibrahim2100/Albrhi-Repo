@@ -119,17 +119,19 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
             forState:UIControlStateNormal];
     button.tintColor = [UIColor whiteColor];
 
-    // A plain UIButtonTypeSystem has no fixed size of its own -- its intrinsic
-    // content size comes from the glyph plus the system's own default content
-    // insets, which are not necessarily symmetric or the same width TikTok's own
-    // icons use. Reported as the button reading tilted/off-centre in the rail; a
-    // fixed square with the image centred and no default insets fighting it is the
-    // same shape every sibling icon in this stack already has.
+    // **The width constraint v0.4.10 added is what made this worse, not better.** A
+    // vertical UIStackView whose alignment is `fill` -- the default, and what TikTok's
+    // own rail evidently uses, since its icons span the rail's whole width -- gives
+    // every arranged subview the stack's full width. Pinning this one to 34 points
+    // fought that: the constraint and the fill cannot both hold, and the loser shows
+    // as a button sitting off to one side of a column whose other icons are centred in
+    // their own full-width slots. Only the height is constrained now; the width is
+    // left to the stack, and the glyph is centred inside whatever width that turns out
+    // to be -- which is precisely how every sibling icon in the rail already behaves.
     button.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
     button.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
     button.imageView.contentMode = UIViewContentModeScaleAspectFit;
     button.contentEdgeInsets = UIEdgeInsetsZero;
-    [button.widthAnchor constraintEqualToConstant:34].active = YES;
     [button.heightAnchor constraintEqualToConstant:34].active = YES;
 
     [button addTarget:[SCITTButtonTarget shared]

@@ -17,6 +17,24 @@
 /// downloaders keep the same set for the same reason.
 static NSMutableSet<SCITTDownload *> *_running = nil;
 
+/// What the last save attempt actually did, in the words of whatever refused it.
+///
+/// "Couldn't save it" on a HUD is all a user needs and nothing a fix can be built
+/// from: an HTTP 403 on the resolved link, a Photos library that will not decode the
+/// file, and a zero-byte download that answered 200 all look identical from there and
+/// need entirely different fixes. Recorded here and shown on the status screen for
+/// the same reason every other diagnostic in this tweak exists.
+static NSString *sciLastDownloadState = nil;
+
+void SCITTRecordDownload(NSString *state) {
+    sciLastDownloadState = state;
+    SCILogV(@"download: %@", state);
+}
+
+NSString *SCITTDownloadReport(void) {
+    return sciLastDownloadState ?: @"nothing saved yet";
+}
+
 @implementation SCITTDownload
 
 + (void)save:(SCITTMediaItem *)item {
@@ -97,6 +115,20 @@ didFinishDownloadingToURL:(NSURL *)location {
     // link whose own path plainly ends `.mp4` was reported saving a real video as
     // "sound saved", which MIME-only detection cannot tell apart from a genuine
     // audio-only link with the same gap.
+    // An HTTP error answers with a body like any other response, and NSURLSession
+    // hands that body over as a perfectly successful download -- so a 403 on the
+    // resolved link arrives here as an error page saved with a .mp4 name, which
+    // Photos then refuses for reasons that say nothing about the real cause.
+    if ([task.response isKindOfClass:[NSHTTPURLResponse class]]) {
+        NSInteger status = ((NSHTTPURLResponse *)task.response).statusCode;
+        if (status < 200 || status >= 300) {
+            [[NSFileManager defaultManager] removeItemAtURL:location error:NULL];
+            SCITTRecordDownload([NSString stringWithFormat:@"server answered HTTP %ld", (long)status]);
+            [self finish:NO message:SCILocalized(@"save_failed")];
+            return;
+        }
+    }
+
     NSURL *sourceURL = task.originalRequest.URL ?: task.currentRequest.URL;
     NSString *pathExtension = sourceURL.pathExtension.lowercaseString;
     NSString *mime = task.response.MIMEType.lowercaseString ?: @"";
@@ -135,6 +167,10 @@ didFinishDownloadingToURL:(NSURL *)location {
             URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] firstObject];
         NSURL *kept = [documents URLByAppendingPathComponent:staged.lastPathComponent];
         BOOL moved = [[NSFileManager defaultManager] moveItemAtURL:staged toURL:kept error:NULL];
+        SCITTRecordDownload(moved
+            ? [NSString stringWithFormat:@"saved as audio (path .%@, mime %@)",
+                pathExtension.length ? pathExtension : @"none", mime.length ? mime : @"none"]
+            : @"audio move failed");
         [self finish:moved message:SCILocalized(moved ? @"save_done_audio" : @"save_failed")];
         return;
     }
@@ -143,15 +179,28 @@ didFinishDownloadingToURL:(NSURL *)location {
         [PHAssetCreationRequest creationRequestForAssetFromVideoAtFileURL:staged];
     } completionHandler:^(BOOL success, NSError *error) {
         [[NSFileManager defaultManager] removeItemAtURL:staged error:NULL];
-        if (!success) SCILogV(@"photos refused: %@", error);
-        [self finish:success message:SCILocalized(success ? @"save_done" : @"save_failed")];
+        if (success) {
+            SCITTRecordDownload(@"saved to Photos");
+            [self finish:YES message:SCILocalized(@"save_done")];
+            return;
+        }
+        // Named, not just "couldn't save it". Photos refuses a video for reasons that
+        // need opposite fixes -- a file it will not decode, a permission narrower than
+        // it appeared, a zero-length download that answered 200 -- and the message
+        // shown so far could not tell any of them apart.
+        SCITTRecordDownload([NSString stringWithFormat:@"Photos refused: %@",
+            error.localizedDescription ?: @"no reason given"]);
+        [self finish:NO message:SCILocalized(@"save_failed")];
     }];
 }
 
 - (void)URLSession:(NSURLSession *)session
                     task:(NSURLSessionTask *)task
     didCompleteWithError:(NSError *)error {
-    if (error) [self finish:NO message:SCILocalized(@"save_failed")];
+    if (!error) return;
+    SCITTRecordDownload([NSString stringWithFormat:@"transfer failed: %@",
+        error.localizedDescription ?: @"no reason given"]);
+    [self finish:NO message:SCILocalized(@"save_failed")];
 }
 
 - (void)finish:(BOOL)success message:(NSString *)message {

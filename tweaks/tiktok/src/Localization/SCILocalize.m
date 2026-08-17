@@ -46,6 +46,7 @@ static void SCIBuildTables(void) {
         @"status_button": @"In-feed button",
         @"status_media_resolve": @"Video link resolution",
         @"status_media_candidates": @"Possible video accessors",
+        @"status_download": @"Last save attempt",
 
         @"diag_ads": @"Ad filter",
         @"diag_ads_none": @"Nothing seen yet. Scroll the feed, then come back.",
@@ -106,6 +107,7 @@ static void SCIBuildTables(void) {
         @"status_button": @"زر الواجهة",
         @"status_media_resolve": @"تحليل رابط الفيديو",
         @"status_media_candidates": @"دوال محتملة للفيديو",
+        @"status_download": @"آخر محاولة حفظ",
 
         @"diag_ads": @"فلتر الإعلانات",
         @"diag_ads_none": @"لا شيء بعد. مرّر بالفيد ثم ارجع.",

@@ -21,6 +21,22 @@ static NSMutableArray<SCITTMediaItem *> *sciRecent = nil;
 static NSUInteger const kSCIMediaCap = 30;
 static NSString *sciLastAttemptState = nil;
 
+///
+/// Successes counted and the winning chain remembered separately from the last
+/// attempt, and this distinction cost two releases of fixing the wrong thing.
+///
+/// `sciLastAttemptState` alone is overwritten by *every* attempt, and the overwhelming
+/// majority of attempts are brand-new models a moment after construction whose video
+/// data is not populated yet -- so the row read "every chain failed" while the feed
+/// button, which only ever appears when a URL has actually been resolved, was visibly
+/// appearing. The failing line was the last of two hundred attempts, not the verdict
+/// on all of them. A count of successes and the name of the chain that produced them
+/// cannot be drowned out that way.
+///
+static NSUInteger sciResolveSuccesses = 0;
+static NSUInteger sciResolveAttempts = 0;
+static NSString *sciWinningChain = nil;
+
 @implementation SCITTMedia
 
 /// A value however TikTok's own accessor hands it back, turned into a URL without
@@ -149,6 +165,8 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url) {
             @[@"URLList"],
         ];
 
+        sciResolveAttempts++;
+
         NSMutableArray<NSString *> *failures = [NSMutableArray array];
         for (NSArray<NSString *> *chain in chains) {
             NSString *failure = nil;
@@ -160,8 +178,10 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url) {
                 url = nil;
             }
             if (url) {
+                sciResolveSuccesses++;
+                sciWinningChain = [chain componentsJoinedByString:@"."];
                 sciLastAttemptState = [NSString stringWithFormat:
-                    @"resolved via %@", [chain componentsJoinedByString:@"."]];
+                    @"resolved via %@", sciWinningChain];
                 return url;
             }
             [failures addObject:[NSString stringWithFormat:@"%@: %@",
@@ -287,7 +307,26 @@ static NSUInteger const kSCIMaxRetries = 10;
 }
 
 + (NSString *)lastAttemptState {
-    return sciLastAttemptState ?: @"nothing captured yet";
+    if (!sciResolveAttempts) return @"nothing captured yet";
+
+    // Successes first and prominently -- see the note beside sciResolveSuccesses for
+    // why the last attempt's own text alone was actively misleading.
+    NSMutableString *out = [NSMutableString stringWithFormat:@"%lu resolved of %lu tried",
+        (unsigned long)sciResolveSuccesses, (unsigned long)sciResolveAttempts];
+
+    if (sciWinningChain) {
+        [out appendFormat:@"; via %@", sciWinningChain];
+    }
+    [out appendFormat:@"; %lu kept", (unsigned long)sciRecent.count];
+
+    // The last attempt's own detail is kept, but only after the counts, and only when
+    // nothing has ever succeeded -- once one chain works, two hundred lines about
+    // models that were merely asked too early say nothing worth the space.
+    if (!sciResolveSuccesses && sciLastAttemptState) {
+        [out appendFormat:@" — last: %@", sciLastAttemptState];
+    }
+
+    return out;
 }
 
 + (NSString *)candidateAccessorsOnAwemeModel {
