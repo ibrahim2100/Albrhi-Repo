@@ -11,7 +11,7 @@ code, comments and user-facing strings are English + Arabic.
 
 ## What this is
 
-Tweaks for jailbroken and sideloaded iOS. **Six of them**, three in one package and
+Tweaks for jailbroken and sideloaded iOS. **Seven of them**, four in one package and
 three standing on their own:
 
 | directory | package | what it patches |
@@ -19,8 +19,9 @@ three standing on their own:
 | `tweaks/instagram` | `com.albrhi.tweak` | Instagram, tested on **410.1.0** |
 | `tweaks/youtube` | `com.albrhi.youtube` | YouTube, tested on **21.30.5** |
 | `tweaks/twitter` | `com.albrhi.twitter` | X / Twitter, tested on **12.15** |
+| `tweaks/tiktok` | `com.albrhi.tiktok` | TikTok, tested on **46.4.0** |
 | `tweaks/panel` | `com.albrhi.panel` | the Settings app — the per-app switches |
-| `suite/` | **`com.albrhi`** | the three social-app tweaks and the panel, in one package |
+| `suite/` | **`com.albrhi`** | the four social-app tweaks and the panel, in one package |
 | `tweaks/locket` | `com.albrhi.locket` | Locket, tested on **2.46.1**, **released on its own** |
 | `tweaks/carplay` | `com.albrhi.carplay` | SpringBoard + Camera — CarPlay, **released on its own** |
 
@@ -79,8 +80,15 @@ SoCuul under GPLv3. Original authorship is credited in-app, in the README and in
 package metadata — that is a licence obligation, not a courtesy. Never remove it.
 
 **A seventh tweak, for TikTok — `tweaks/tiktok`, package `com.albrhi.tiktok`, version
-0.3.0.** Not wired into `suite/control` yet, on purpose, until it has been on a real
-device. Architecture was read from four unlicensed references: BandarHL's original
+0.3.0.** Wired into `suite/control` and `suite/DEBIAN/preinst` the same as Instagram,
+YouTube and X, on the owner's own instruction rather than waiting for a device report
+the way CarPlay's own withholding did — `com.albrhi` now bundles four social-app
+tweaks, `buildsuite.yml`'s own "holds every tweak" assertion checks for
+`AlbrhiTT.dylib`/`.plist` alongside the rest, and Albrhi Panel needed no code change at
+all for a TikTok row to appear: `SCIPanelScan` already draws every row from whichever
+`Albrhi*.plist` filters actually sit beside a dylib on the device, so a row is a
+consequence of `AlbrhiTT.plist` shipping, not a fact this panel had to be taught.
+Architecture was read from four unlicensed references: BandarHL's original
 [BHTikTok](https://github.com/BandarHL/BHTikTok) and al3raQe's maintained fork
 ([github.com/al3raQe/BHTikTok](https://github.com/al3raQe/BHTikTok)), both by the same
 author family the X tweak's own control file already credits; and two compiled ones read
@@ -144,9 +152,9 @@ why the display mechanism itself is not built yet.
 
 **`com.albrhi` is what people install for the social apps.** The individual packages are
 still built and still published, but the suite is the front door for Instagram, YouTube,
-X and the panel: one thing to install, one thing to update, and a new social-app tweak
-arrives inside it rather than as a second download. It declares `Conflicts` and
-`Replaces` on all eight of those individual identities (rootless and roothide) — and
+X, TikTok and the panel: one thing to install, one thing to update, and a new social-app
+tweak arrives inside it rather than as a second download. It declares `Conflicts` and
+`Replaces` on all ten of those individual identities (rootless and roothide) — and
 that is not enough on its own, see the ground rule below. CarPlay and Locket are
 deliberately not among them; see above for both.
 
@@ -384,9 +392,9 @@ discarding information you did not know you had is the failure mode, and it is s
 **The per-app switch is opt-in now: absence reads as *off*, and that reverses what this
 file used to argue.** The old reading — nothing written means on — was right while a package
 meant one tweak for one app: somebody who installed it deliberately should not have it
-silently disabled. `com.albrhi` ended that. One install carries Instagram, YouTube and X (Locket has since
-left the suite, but the reasoning does not change with the count), so reading silence as
-consent modifies apps the install never asked about.
+silently disabled. `com.albrhi` ended that. One install carries Instagram, YouTube, X and
+TikTok (Locket has since left the suite, but the reasoning does not change with the
+count), so reading silence as consent modifies apps the install never asked about.
 Nothing is patched until it is asked for, and the panel's footer says so in both languages
 rather than leaving a fresh install looking broken.
 
@@ -707,6 +715,14 @@ tweaks/
                              quoted posts and DMs
     src/Settings/            reached by a two-finger hold on X's own window, not by
                              hooking one of X's screens
+  tiktok/                  Albrhi for TikTok — com.albrhi.tiktok, in the suite
+    src/TikTokHeaders.h      every class this tweak touches, with which confirmation
+                             bar each one meets — a hooked-selector symbol table beats
+                             string-table proximity, and the header says which is which
+    src/Features/Download/   SCITTMedia resolves and holds only a URL, never the model;
+                             SCITTDownload saves it, mirroring Locket's own downloader
+    src/Features/Privacy/    three report-to-server calls withheld, local state untouched
+    src/Settings/            a two-finger hold shows switches and what has been captured
   locket/                  Albrhi for Locket — com.albrhi.locket, released on its own
                              (.no-suite marker) with its own self-contained sideload
                              dylib, built and verified in buildlocket.yml
@@ -1021,25 +1037,26 @@ and the others still run.
 
 ## CI, releases and the repo
 
-**Eight workflows, one per thing that ships.**
+**Nine workflows, one per thing that ships.**
 
 | workflow | builds | tags | publishes? |
 |---|---|---|---|
 | `buildtweak.yml` | Instagram | `v*` | manual build only |
 | `buildyoutube.yml` | YouTube | `youtube-v*` | manual build only |
 | `buildtwitter.yml` | X | `twitter-v*` | manual build only |
+| `buildtiktok.yml` | TikTok | — | manual build only |
 | `buildpanel.yml` | the Settings panel | its own namespace | manual build only |
 | `buildsuite.yml` | **`com.albrhi`**, the combined package | `v${SUITE_VERSION}` | yes |
 | `buildlocket.yml` | `com.albrhi.locket` | `locket-v*` | **yes** |
 | `buildcarplay.yml` | `com.albrhi.carplay` | `carplay-v*` | manual build only — withheld |
 | `build-dav1d.yml` | the AV1 decoder Instagram links | on demand | — |
 
-**Two workflows actually publish: `buildsuite.yml` and `buildlocket.yml`.** The three
-per-tweak workflows still bundled in the suite (Instagram, X, and YouTube's own) were
-reduced to manual, non-publishing builds once the suite became the front door for
-everything it bundles — a tweak that will not compile can block only its own build,
-never another tweak's release, but nothing short of the suite's own run ships anything
-they carry.
+**Two workflows actually publish: `buildsuite.yml` and `buildlocket.yml`.** The four
+per-tweak workflows still bundled in the suite (Instagram, X, YouTube's own, and
+TikTok's) were reduced to — or, for TikTok, started as — manual, non-publishing builds
+once the suite became the front door for everything it bundles: a tweak that will not
+compile can block only its own build, never another tweak's release, but nothing short
+of the suite's own run ships anything they carry.
 
 Locket and CarPlay are the two exceptions, because neither is bundled and nothing else
 would ever ship them. CarPlay is withheld: its workflow was reduced the same way as the
@@ -1174,7 +1191,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.3.0** (not in the suite yet, four features) · suite **1.27.1**.
+source) · TikTok **0.3.0** (four features) · suite **1.28.0**.
 
 - **CarPlay is built but not served.** The code is complete and compiles; the package is
   kept out of the APT index until its app bridging is confirmed on a device. Install it
