@@ -99,6 +99,65 @@ static id SCITTTry(id obj, NSString *name, NSString **outFailure) {
 /// Walks `model` through one candidate chain of selector names, converting the last
 /// step's answer to a URL. Returns nil and fills `outFailure` on the step that stopped
 /// it -- never a guess past a step that did not answer.
+///
+/// The highest-bitrate variant TikTok is offering, or nil.
+///
+/// **This is the HD question, and a chain of named accessors cannot answer it.** Every other
+/// step in this file walks a path and takes the first thing it finds; `bitrateModels` is a
+/// *list of alternatives* and the right one is chosen by comparing them, not by position.
+/// Taking `.firstObject` here -- which is what the generic walker would do -- is how you get
+/// whichever gear TikTok happened to list first, and that is the SD copy as often as not.
+///
+/// Each entry carries `-bitRate`, `-gearName`, `-qualityType` and its own `-playAddr`;
+/// all four are confirmed present in TikTok 46.4.0's own binary. The address is a URL model
+/// like every other, so the same `originURLList` / `urlList` reading applies to it.
+///
+/// Tried ahead of `downloadNoWatermarkURL`, which is what 0.11.0 settled on. That one is
+/// correct about the *watermark* and says nothing about the size, and the report will show
+/// which of the two won by the byte count alone.
+static NSURL *SCITTBestBitrateURL(id videoModel, NSString **outVia) {
+    SEL models = NSSelectorFromString(@"bitrateModels");
+    if (![videoModel respondsToSelector:models]) return nil;
+
+    id list = ((id (*)(id, SEL))objc_msgSend)(videoModel, models);
+    if (![list isKindOfClass:[NSArray class]] || ![(NSArray *)list count]) return nil;
+
+    id best = nil;
+    long long bestRate = -1;
+
+    for (id entry in (NSArray *)list) {
+        SEL rate = NSSelectorFromString(@"bitRate");
+        if (![entry respondsToSelector:rate]) continue;
+
+        long long value = ((long long (*)(id, SEL))objc_msgSend)(entry, rate);
+        if (value > bestRate) { bestRate = value; best = entry; }
+    }
+
+    if (!best) return nil;
+
+    SEL addr = NSSelectorFromString(@"playAddr");
+    if (![best respondsToSelector:addr]) return nil;
+
+    id urlModel = ((id (*)(id, SEL))objc_msgSend)(best, addr);
+    if (!urlModel) return nil;
+
+    for (NSString *name in @[@"originURLList", @"urlList", @"URLList"]) {
+        SEL selector = NSSelectorFromString(name);
+        if (![urlModel respondsToSelector:selector]) continue;
+
+        NSURL *url = SCITTURLFromValue(((id (*)(id, SEL))objc_msgSend)(urlModel, selector));
+        if (!url) continue;
+
+        if (outVia) {
+            *outVia = [NSString stringWithFormat:@"bitrateModels[%lld bps].playAddr.%@",
+                       bestRate, name];
+        }
+        return url;
+    }
+
+    return nil;
+}
+
 static NSURL *SCITTResolveChain(id model, NSArray<NSString *> *chain, NSString **outFailure) {
     id current = model;
     for (NSString *step in chain) {
@@ -233,6 +292,23 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url) {
         // back to, and the file itself gets to pick the winner.
         NSMutableArray<NSURL *> *found = [NSMutableArray array];
         NSMutableArray<NSString *> *failures = [NSMutableArray array];
+
+        // The best gear first, chosen by comparing bitrates rather than by taking the first
+        // entry -- see SCITTBestBitrateURL. Collected into the same list as everything else,
+        // at the front, so the downloader still gets to reject it if the file turns out not
+        // to be a video; being the highest bitrate on offer is not a promise about content.
+        SEL videoSel = NSSelectorFromString(@"video");
+        id videoModel = [model respondsToSelector:videoSel]
+            ? ((id (*)(id, SEL))objc_msgSend)(model, videoSel) : nil;
+
+        if (videoModel) {
+            NSString *via = nil;
+            NSURL *best = SCITTBestBitrateURL(videoModel, &via);
+            if (best && SCITTURLLooksDownloadable(best)) {
+                [found addObject:best];
+                sciWinningChain = via;
+            }
+        }
 
         for (NSArray<NSString *> *chain in chains) {
             NSString *failure = nil;

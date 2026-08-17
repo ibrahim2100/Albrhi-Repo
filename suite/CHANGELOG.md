@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.37.0
+
+Includes TikTok 0.12.0 — **downloads go for the highest-quality gear TikTok offers.** The video
+model carries a list of bitrate variants, and the tweak had been reading single URLs past it for
+four releases. The best one is now chosen by comparing bitrates rather than by taking whichever
+was listed first.
+
 ## v1.36.0
 
 Includes TikTok 0.11.0 — the download button finally knows which video it belongs to. The feed

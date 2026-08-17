@@ -1,5 +1,33 @@
 # Albrhi for TikTok — what changed
 
+## v0.12.0
+
+**HD: the best gear is chosen by comparing bitrates, not by taking the first one listed.**
+
+0.11.0 fixed the last correctness problem — `AWEFeedCellViewController.model` gives the video
+you are actually watching, and downloads are real videos of the right clip. What was left was
+quality, and `bitrateModels` had been sitting in the video model's accessor list untouched
+through four releases of chasing single URLs.
+
+**A chain of named accessors cannot answer this question.** Every other step in the resolver
+walks a path and takes the first thing it finds. `bitrateModels` is a *list of alternatives*
+and the right one is chosen by **comparing** them — taking `.firstObject`, which is what the
+generic walker does, yields whichever gear TikTok happened to list first, and that is the SD
+copy as often as not. So it gets its own reader.
+
+Each entry carries `-bitRate`, `-gearName`, `-qualityType` and its own `-playAddr`, all four
+confirmed in TikTok 46.4.0's binary. The highest `-bitRate` wins and its address is read the
+same way every other URL model is.
+
+It is tried **ahead of** `downloadNoWatermarkURL`, which 0.11.0 settled on: that one is correct
+about the *watermark* and says nothing about the size. And it goes into the same candidate list
+as everything else rather than short-circuiting, so the downloader can still reject it if the
+file turns out not to be a video — being the highest bitrate on offer is not a promise about
+what is inside.
+
+The report names the winner with its bitrate, so the next one says outright whether HD was
+found and at what rate — and the byte count says whether it mattered.
+
 ## v0.11.0
 
 **The cell is a container. The model belongs to the view controller it hosts.**
