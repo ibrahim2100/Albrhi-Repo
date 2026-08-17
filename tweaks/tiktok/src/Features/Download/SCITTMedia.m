@@ -231,7 +231,7 @@ static void SCITTAddResolved(NSURL *url) {
 static NSHashTable<AWEAwemeModel *> *sciPending = nil;
 static NSMapTable<AWEAwemeModel *, NSNumber *> *sciRetryCounts = nil;
 static NSTimer *sciRetryTimer = nil;
-static NSUInteger const kSCIMaxRetries = 6;
+static NSUInteger const kSCIMaxRetries = 10;
 
 + (void)watchModel:(AWEAwemeModel *)model {
     if (!model) return;
@@ -244,7 +244,7 @@ static NSUInteger const kSCIMaxRetries = 6;
 
     dispatch_async(dispatch_get_main_queue(), ^{
         if (sciRetryTimer) return;
-        sciRetryTimer = [NSTimer scheduledTimerWithTimeInterval:1.5
+        sciRetryTimer = [NSTimer scheduledTimerWithTimeInterval:2.0
                                                           repeats:YES
                                                             block:^(NSTimer *timer) {
             [SCITTMedia retryPending];

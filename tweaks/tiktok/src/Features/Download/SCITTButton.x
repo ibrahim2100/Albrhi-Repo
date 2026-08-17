@@ -119,6 +119,19 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
             forState:UIControlStateNormal];
     button.tintColor = [UIColor whiteColor];
 
+    // A plain UIButtonTypeSystem has no fixed size of its own -- its intrinsic
+    // content size comes from the glyph plus the system's own default content
+    // insets, which are not necessarily symmetric or the same width TikTok's own
+    // icons use. Reported as the button reading tilted/off-centre in the rail; a
+    // fixed square with the image centred and no default insets fighting it is the
+    // same shape every sibling icon in this stack already has.
+    button.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+    button.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
+    button.imageView.contentMode = UIViewContentModeScaleAspectFit;
+    button.contentEdgeInsets = UIEdgeInsetsZero;
+    [button.widthAnchor constraintEqualToConstant:34].active = YES;
+    [button.heightAnchor constraintEqualToConstant:34].active = YES;
+
     [button addTarget:[SCITTButtonTarget shared]
                action:@selector(tapped:)
      forControlEvents:UIControlEventTouchUpInside];

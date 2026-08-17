@@ -1,5 +1,33 @@
 # Albrhi for TikTok — what changed
 
+## v0.4.10
+
+Three things reported against v0.4.9, all in one round this time.
+
+**The button read tilted.** A plain `UIButtonTypeSystem` has no fixed size of its own
+— its intrinsic content size comes from the glyph plus the system's own default
+content insets, not necessarily the same width or centring TikTok's own icons use.
+Given an explicit 34×34 square, centred content, and its default edge insets zeroed
+out, it now sizes the same way its siblings in the rail do rather than however the
+system decided to pad a bare image button.
+
+**It still shows only sometimes.** This is not a new bug so much as the honest shape
+of the current approach: the button only shows when `SCITTMedia` has actually
+resolved something, and resolution itself is still inconsistent from one video to the
+next — the same report that asked about this also showed every chain failing outright
+for the video it was taken on. The retry window was widened (ten attempts over twenty
+seconds rather than six over nine) on the chance some of that inconsistency is still
+a timing question rather than a wrong name, but a resolver this unreliable will keep
+producing a button that shows unevenly until a chain proves itself consistently
+right.
+
+**A downloaded video saved as "sound saved."** MIME-type sniffing alone decided
+audio vs. video, and a server answering a missing or generic `Content-Type` for a
+link whose own path plainly ends `.mp4` is exactly what that cannot tell apart from a
+genuine audio-only link with the same gap. The URL's own path extension is now
+checked first (`.mp4`/`.mov`/`.m4v`/`.webm` → video, `.m4a`/`.mp3`/`.aac`/`.wav` →
+audio) and MIME type only decides when the extension itself is inconclusive.
+
 ## v0.4.9
 
 The centering fix worked — one button, reported placed once, no more scatter. Two

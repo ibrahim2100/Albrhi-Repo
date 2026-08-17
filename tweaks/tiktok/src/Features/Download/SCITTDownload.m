@@ -91,10 +91,27 @@ static NSMutableSet<SCITTDownload *> *_running = nil;
       downloadTask:(NSURLSessionDownloadTask *)task
 didFinishDownloadingToURL:(NSURL *)location {
     // TikTok hands out a finished MP4 for a video and either an MP4 or an M4A for a
-    // song under this same URL shape -- read from the response rather than assumed,
-    // the same way every other download feature in this project settles a file's kind.
+    // song under this same URL shape. The path extension on the URL actually asked
+    // for is checked first and the response's own MIME type only when that is
+    // inconclusive -- a server that answers a generic or missing Content-Type for a
+    // link whose own path plainly ends `.mp4` was reported saving a real video as
+    // "sound saved", which MIME-only detection cannot tell apart from a genuine
+    // audio-only link with the same gap.
+    NSURL *sourceURL = task.originalRequest.URL ?: task.currentRequest.URL;
+    NSString *pathExtension = sourceURL.pathExtension.lowercaseString;
     NSString *mime = task.response.MIMEType.lowercaseString ?: @"";
-    BOOL audioOnly = [mime hasPrefix:@"audio/"];
+
+    NSSet<NSString *> *videoExtensions = [NSSet setWithArray:@[@"mp4", @"mov", @"m4v", @"webm"]];
+    NSSet<NSString *> *audioExtensions = [NSSet setWithArray:@[@"m4a", @"mp3", @"aac", @"wav"]];
+
+    BOOL audioOnly;
+    if ([videoExtensions containsObject:pathExtension]) {
+        audioOnly = NO;
+    } else if ([audioExtensions containsObject:pathExtension]) {
+        audioOnly = YES;
+    } else {
+        audioOnly = [mime hasPrefix:@"audio/"];
+    }
     NSString *extension = audioOnly ? @"m4a" : @"mp4";
 
     NSString *name = [NSString stringWithFormat:@"tiktok-%@.%@",
