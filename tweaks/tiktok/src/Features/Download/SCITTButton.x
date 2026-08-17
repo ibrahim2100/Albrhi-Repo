@@ -522,21 +522,51 @@ static BOOL sciCellItemFromCell = NO;
         // three releases -- so each is tried behind -respondsToSelector: and **the one that
         // answered is recorded**, so the next report names it instead of leaving it to be
         // guessed again.
+        // The cell hosts a view controller, and the model is on that.
+        //
+        // An unfiltered dump of AWEFeedViewTemplateCell answered this in its first line:
+        // `viewController, feedTableViewCellMaskView, interactionConfigClass, pageContext,
+        // parentVC, ... setupViewController, layoutViewController, _addChildVC,
+        // vcContainerView`. The cell is a **container**. It has no aweme accessor of its own
+        // -- which is why every name tried on it answered nothing -- because the video is the
+        // controller's, not the cell's.
+        //
+        // And this is what NA9 has been saying all along: it hooks
+        // `AWEAwemeBaseViewController$viewDidLoad` and `$viewDidAppear`, not the cell. Its
+        // button lives on the cell and its *model* comes from the controller. Two facts that
+        // only made sense together.
+        //
+        // So the search runs on the cell first (harmless, and cheap if a build ever does put
+        // it there) and then on whatever controller the cell is hosting.
         id model = nil;
-        for (NSString *name in @[@"awemeModel", @"aweme", @"model", @"currentAweme",
-                                 @"currentAwemeModel", @"itemModel", @"cellModel"]) {
+
+        NSMutableArray *hosts = [NSMutableArray arrayWithObject:self];
+        for (NSString *name in @[@"viewController", @"parentVC"]) {
             SEL selector = NSSelectorFromString(name);
             if (![self respondsToSelector:selector]) continue;
+            id host = ((id (*)(id, SEL))objc_msgSend)(self, selector);
+            if (host) [hosts addObject:host];
+        }
 
-            id candidate = ((id (*)(id, SEL))objc_msgSend)(self, selector);
-            if (!candidate) continue;
+        for (id host in hosts) {
+            for (NSString *name in @[@"awemeModel", @"aweme", @"model", @"currentAweme",
+                                     @"currentAwemeModel", @"itemModel", @"cellModel"]) {
+                SEL selector = NSSelectorFromString(name);
+                if (![host respondsToSelector:selector]) continue;
 
-            // A model, not a string or a number that happens to share the name.
-            if (![candidate respondsToSelector:@selector(video)]) continue;
+                id candidate = ((id (*)(id, SEL))objc_msgSend)(host, selector);
+                if (!candidate) continue;
 
-            model = candidate;
-            sciCellModelVia = name;
-            break;
+                // A model, not a string or a number that happens to share the name.
+                if (![candidate respondsToSelector:@selector(video)]) continue;
+
+                model = candidate;
+                sciCellModelVia = (host == self)
+                    ? name
+                    : [NSString stringWithFormat:@"%@.%@", NSStringFromClass([host class]), name];
+                break;
+            }
+            if (model) break;
         }
 
         SCITTMediaItem *item = nil;

@@ -1,5 +1,31 @@
 # Albrhi for TikTok — what changed
 
+## v0.11.0
+
+**The cell is a container. The model belongs to the view controller it hosts.**
+
+Unfiltering the accessor dump answered it in its first line:
+`viewController, feedTableViewCellMaskView, interactionConfigClass, pageContext, parentVC,
+… setupViewController, layoutViewController, _addChildVC, vcContainerView`.
+
+`AWEFeedViewTemplateCell` has **no aweme accessor of its own** — which is why every name tried
+on it answered nothing, through two releases of trying more names. The video is the
+controller's, not the cell's.
+
+And this is what NA9 had been saying from the first symbol dump: it hooks
+`AWEAwemeBaseViewController$viewDidLoad` and `$viewDidAppear`, **not** the cell. Its button
+lives on the cell and its model comes from the controller — two facts that only made sense
+together, and I had been reading them apart.
+
+The model is now looked for on the cell first and then on whatever controller it hosts, and the
+report names which object and which accessor answered.
+
+**One thing this does not fix, and the report already names it:**
+`Photos refused: PHPhotosErrorDomain error 3302`. The link resolves and the file downloads;
+Photos then rejects it. That is a different failure from the earlier ones and worth its own
+look — `isCDNURLExpired` and `cdnURLExpiredTime` sit on the video model, so an expired CDN link
+returning an error page rather than a video is the first thing to rule out.
+
 ## v0.10.1
 
 **0.10.0 hid the button. That was mine, and it is restored.**

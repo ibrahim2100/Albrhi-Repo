@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.36.0
+
+Includes TikTok 0.11.0 — the download button finally knows which video it belongs to. The feed
+cell turned out to be a container that hosts a view controller, and the video model belongs to
+that controller rather than to the cell, which is why two releases of trying accessor names on
+the cell found nothing.
+
 ## v1.35.1
 
 **TikTok: the download button was invisible in 1.35.0.** Restored. It also downloads again, and
