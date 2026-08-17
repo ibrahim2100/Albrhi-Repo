@@ -123,10 +123,10 @@ Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Filename: debs/com.albrhi_1.27.1_iphoneos-arm64.deb
-Size: 1077244
-MD5sum: 3139b68a27fa21047a65eb120313997d
-SHA1: 30ba8e73b9aa9e9f63e475769ff8fa9ee9ac9c8f
-SHA256: 13026bc1735273576d5a635e8e1a8b5c6d870b2def32a942111d5bfee30def1e
+Size: 1086808
+MD5sum: 6963d818fbdf0ca58195a2e03d337c56
+SHA1: 31b105538b95d54b9f695b25dbaa1b2e04740e79
+SHA256: f6918ca5d070298d487e8ab06a31290b00c959948c44177874d229ba3b1870e5
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube and X, switched per app from Settings.
@@ -629,10 +629,10 @@ Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Filename: debs/com.albrhi.roothide_1.27.1_iphoneos-arm64e.deb
-Size: 1076828
-MD5sum: 9a7e8d46ace57dc37bf90f59e386bfc9
-SHA1: 45f882ad7767c80dc5ba2ca175dd798efccaa16e
-SHA256: 42ac9763118defac9e53b2d48035ee65b7b9ffe2966be1c13a4ab12b58200cb9
+Size: 1086462
+MD5sum: a9e1db4e95ae7272f9f98b179e1a25d3
+SHA1: 998acad523effe0baa61fdbb3d08acd118a60675
+SHA256: 0b5373a01f339e55baec850a284a4339b84b40a9f9f62d281017992a4f2bf6a0
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube and X, switched per app from Settings.
