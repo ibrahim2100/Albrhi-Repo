@@ -159,7 +159,7 @@ static void SCITTPlaceButton(UIStackView *stack) {
 
 - (void)configWithModel:(id)model {
     %orig;
-    if (SCIPrefEnabled(SCIPrefDownloadButton) && [model isKindOfClass:[AWEAwemeModel class]]) {
+    if (SCIPrefEnabled(SCIPrefDownloadButton) && [model isKindOfClass:NSClassFromString(@"AWEAwemeModel")]) {
         NSURL *url = [SCITTMedia resolveURLForModel:model];
         if (url) {
             SCITTMediaItem *item = [[SCITTMediaItem alloc] init];
@@ -174,7 +174,7 @@ static void SCITTPlaceButton(UIStackView *stack) {
 
 - (void)configureWithModel:(id)model {
     %orig;
-    if (SCIPrefEnabled(SCIPrefDownloadButton) && [model isKindOfClass:[AWEAwemeModel class]]) {
+    if (SCIPrefEnabled(SCIPrefDownloadButton) && [model isKindOfClass:NSClassFromString(@"AWEAwemeModel")]) {
         NSURL *url = [SCITTMedia resolveURLForModel:model];
         if (url) {
             SCITTMediaItem *item = [[SCITTMediaItem alloc] init];
