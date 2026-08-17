@@ -143,15 +143,30 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
     UIImageView *glyph = [[UIImageView alloc] initWithImage:
         [UIImage systemImageNamed:@"arrow.down.circle.fill" withConfiguration:config]];
     glyph.tintColor = [UIColor whiteColor];
-    glyph.contentMode = UIViewContentModeScaleAspectFit;
     glyph.translatesAutoresizingMaskIntoConstraints = NO;
     // The glyph must never intercept the tap meant for the button under it.
     glyph.userInteractionEnabled = NO;
     [button addSubview:glyph];
 
+    //
+    // **Centre constraints alone are what left it looking off to one side.** A button
+    // whose glyph is a *subview* rather than its own image has no intrinsic content
+    // size at all -- so in a stack whose alignment is not `fill`, it is laid out at
+    // zero width, and a glyph centred on a zero-width button hangs off the edge of it.
+    // That is the tilt, and it survived three attempts because every one of them
+    // adjusted the centring rather than the sizing.
+    //
+    // Pinning the glyph to all four edges instead gives the button a real intrinsic
+    // size -- the image's own -- so it measures correctly under any alignment, and
+    // `UIViewContentModeCenter` keeps the artwork unstretched inside whatever the stack
+    // then grants it.
+    //
+    glyph.contentMode = UIViewContentModeCenter;
     [NSLayoutConstraint activateConstraints:@[
-        [glyph.centerXAnchor constraintEqualToAnchor:button.centerXAnchor],
-        [glyph.centerYAnchor constraintEqualToAnchor:button.centerYAnchor],
+        [glyph.leadingAnchor constraintEqualToAnchor:button.leadingAnchor],
+        [glyph.trailingAnchor constraintEqualToAnchor:button.trailingAnchor],
+        [glyph.topAnchor constraintEqualToAnchor:button.topAnchor],
+        [glyph.bottomAnchor constraintEqualToAnchor:button.bottomAnchor],
     ]];
 
     // Same shadow TikTok's own white glyphs carry over bright video, so the button
@@ -217,6 +232,37 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
 }
 
 
+///
+/// **`-setHidden:` and `-setAlpha:` are hooked because NA9 hooks them, and reading why
+/// explained the last remaining complaint.** Those two are in its own symbol table
+/// alongside `-layoutSubviews` and `-didMoveToWindow` for both rails — and a tweak has
+/// no reason to hook them unless its button's visibility has to be *kept in step with
+/// the rail's own*. TikTok hides and fades this rail constantly: while a comment sheet
+/// is open, during a long-press, on a live cell, whenever the UI gets out of the video's
+/// way. A button that does not follow those transitions is a button that is sometimes
+/// there and sometimes not for no reason the user can see — which is precisely the
+/// "doesn't show on every video" report, arriving from the app's own behaviour rather
+/// than from any failure to place it.
+///
+/// Placement itself stays where it is: an arranged subview of the rail, so the stack
+/// lays it out. What these two add is the rail's own hidden/alpha state being applied to
+/// the button on every change, so it appears and fades exactly when its neighbours do.
+///
+static void SCITTSyncRailButton(UIStackView *stack) {
+    UIButton *button = (UIButton *)[stack viewWithTag:kSCIRailButtonTag];
+    if (!button) return;
+
+    // Never *shown* by this -- placement decides that, and only for the centred cell.
+    // This only ever propagates the rail going away or fading.
+    if (stack.isHidden || stack.alpha < 0.99) {
+        button.hidden = stack.isHidden;
+        button.alpha = stack.alpha;
+    } else if (SCITTViewIsCentered(stack)) {
+        button.alpha = 1.0;
+    }
+}
+
+
 %group RailA
 
 %hook TTKFeedInteractionStackView
@@ -229,6 +275,16 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
 - (void)didMoveToWindow {
     %orig;
     SCITTPlaceRailButton(self);
+}
+
+- (void)setHidden:(BOOL)hidden {
+    %orig;
+    SCITTSyncRailButton(self);
+}
+
+- (void)setAlpha:(CGFloat)alpha {
+    %orig;
+    SCITTSyncRailButton(self);
 }
 
 %end
@@ -248,6 +304,16 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
 - (void)didMoveToWindow {
     %orig;
     SCITTPlaceRailButton(self);
+}
+
+- (void)setHidden:(BOOL)hidden {
+    %orig;
+    SCITTSyncRailButton(self);
+}
+
+- (void)setAlpha:(CGFloat)alpha {
+    %orig;
+    SCITTSyncRailButton(self);
 }
 
 %end

@@ -1,5 +1,37 @@
 # Albrhi for TikTok — what changed
 
+## v0.6.1
+
+Asked directly how the two reference tweaks pin their own button. The answer is short
+and it explains both remaining complaints.
+
+**What they hook on the rail:**
+
+| | NA9 | VibeTok |
+|---|---|---|
+| `-layoutSubviews` | yes | yes |
+| `-didMoveToWindow` | yes | — |
+| `-setHidden:` | **yes** | — |
+| `-setAlpha:` | **yes** | — |
+
+`-setHidden:` and `-setAlpha:` are the two this project never had, and a tweak has no
+reason to hook them unless its button's visibility must be **kept in step with the
+rail's own**. TikTok hides and fades that rail constantly — while a comment sheet is
+open, during a long-press, whenever the UI gets out of the video's way. A button that
+does not follow those transitions is one that is sometimes there and sometimes not for
+no reason the user can see. That is the "doesn't show on every video" report: it was
+never a placement failure, it was the app's own behaviour going unmirrored. Both are
+hooked now, propagating hidden/alpha onto the button on every change.
+
+**And the tilt was a sizing bug, not a centring one — which is why three attempts at
+the centring never touched it.** v0.5.0 moved the glyph out of the button's own `image`
+into a subview held only by `centerXAnchor`/`centerYAnchor`. That leaves the button with
+**no intrinsic content size at all**, so in a stack whose alignment is not `fill` it is
+laid out at zero width — and a glyph centred on a zero-width button hangs off the edge
+of it. The glyph is now pinned to all four of the button's edges instead, which gives
+the button the image's own intrinsic size and makes it measure correctly under any
+alignment, with `UIViewContentModeCenter` keeping the artwork unstretched.
+
 ## v0.6.0
 
 **The rail's own contents, printed by v0.5.3's new report, settled the placement

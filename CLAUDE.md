@@ -1273,11 +1273,11 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.6.0** (four features, three-way privacy, one in-feed button in the
+source) · TikTok **0.6.1** (four features, three-way privacy, one in-feed button in the
 rail and no download list at all; the link is resolved from `AWEVideoModel` at its own
 construction — the aweme model's `-video` is nil at that point and its `-URLList`
 resolves the *song*, which is what made 288 "successful" saves all audio)
-· suite **1.31.0**.
+· suite **1.31.1**.
 
 - **CarPlay is built but not served.** The code is complete and compiles; the package is
   kept out of the APT index until its app bridging is confirmed on a device. Install it
