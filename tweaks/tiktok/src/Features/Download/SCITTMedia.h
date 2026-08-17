@@ -14,7 +14,20 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface SCITTMediaItem : NSObject
+/// The first candidate, kept for callers that only want one.
 @property (nonatomic, copy) NSURL *url;
+
+/// **Every** http(s) link the resolver found for this item, in the order the chains
+/// produced them -- not just the first.
+///
+/// One chain resolving is not the same as it resolving the *video*: `originURLList`
+/// resolved reliably for releases and every file it produced was `audio/mp4` with no
+/// video track. A single stored URL leaves nothing to fall back to when that happens.
+/// With the whole list kept, the downloader fetches candidates in turn and stops at
+/// the first whose downloaded file actually carries a video track -- the file itself
+/// deciding, which is the same standard v0.4.12 established for audio-vs-video.
+@property (nonatomic, copy) NSArray<NSURL *> *candidates;
+
 @property (nonatomic, copy) NSDate *seen;
 @end
 

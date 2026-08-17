@@ -46,6 +46,8 @@ static NSString *sciWinningChain = nil;
 /// link without putting a signed, account-scoped URL in a report meant to be pasted.
 static NSString *sciWinningURLShape = nil;
 
+static void SCITTAddResolvedList(NSArray<NSURL *> *urls);
+
 static NSString *SCITTURLShape(NSURL *url) {
     if (!url) return @"nil";
     return [NSString stringWithFormat:@"%@/…/%@",
@@ -165,26 +167,40 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url) {
 
         sciResolveAttempts++;
 
+        // **Every chain is run, not just up to the first that answers.** One chain
+        // resolving is not the same as it resolving the video: `originURLList` answered
+        // reliably for several releases and every file it produced was `audio/mp4` with
+        // no video track. Collecting all of them gives the downloader something to fall
+        // back to, and the file itself gets to pick the winner.
+        NSMutableArray<NSURL *> *found = [NSMutableArray array];
         NSMutableArray<NSString *> *failures = [NSMutableArray array];
+
         for (NSArray<NSString *> *chain in chains) {
             NSString *failure = nil;
             NSURL *url = SCITTResolveChain(model, chain, &failure);
             if (url && !SCITTURLLooksDownloadable(url)) {
-                failure = [NSString stringWithFormat:
-                    @"resolved to a non-http(s) link (%@) — treated as not downloadable",
+                failure = [NSString stringWithFormat:@"non-http(s) (%@)",
                     url.scheme ?: @"no scheme"];
                 url = nil;
             }
             if (url) {
-                sciResolveSuccesses++;
-                sciWinningChain = [chain componentsJoinedByString:@"."];
-                sciWinningURLShape = SCITTURLShape(url);
-                sciLastAttemptState = [NSString stringWithFormat:
-                    @"resolved via %@", sciWinningChain];
-                return url;
+                if (![found containsObject:url]) [found addObject:url];
+                if (!sciWinningChain) {
+                    sciWinningChain = [chain componentsJoinedByString:@"."];
+                    sciWinningURLShape = SCITTURLShape(url);
+                }
+                continue;
             }
             [failures addObject:[NSString stringWithFormat:@"%@: %@",
                 [chain componentsJoinedByString:@"."], failure ?: @"?"]];
+        }
+
+        if (found.count) {
+            sciResolveSuccesses++;
+            sciLastAttemptState = [NSString stringWithFormat:@"%lu candidate link(s)",
+                (unsigned long)found.count];
+            SCITTAddResolvedList(found);
+            return found.firstObject;
         }
 
         sciLastAttemptState = [NSString stringWithFormat:@"every chain failed — %@",
@@ -197,21 +213,29 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url) {
     }
 }
 
-static void SCITTAddResolved(NSURL *url) {
+static void SCITTAddResolvedList(NSArray<NSURL *> *urls) {
+    if (!urls.count) return;
     if (!sciRecent) sciRecent = [NSMutableArray array];
+
+    NSURL *primary = urls.firstObject;
 
     // Same video seen twice -- a recycled cell rebound, a scroll back up -- moves
     // to the front rather than duplicating.
     for (SCITTMediaItem *existing in [sciRecent copy]) {
-        if ([existing.url isEqual:url]) [sciRecent removeObject:existing];
+        if ([existing.url isEqual:primary]) [sciRecent removeObject:existing];
     }
 
     SCITTMediaItem *item = [[SCITTMediaItem alloc] init];
-    item.url = url;
+    item.url = primary;
+    item.candidates = urls;
     item.seen = [NSDate date];
     [sciRecent insertObject:item atIndex:0];
 
     while (sciRecent.count > kSCIMediaCap) [sciRecent removeLastObject];
+}
+
+static void SCITTAddResolved(NSURL *url) {
+    if (url) SCITTAddResolvedList(@[url]);
 }
 
 + (void)captureVideoModel:(id)videoModel {
@@ -274,7 +298,11 @@ static void SCITTAddResolved(NSURL *url) {
             @[@"bitratePlayAddr", @"bestURLtoDownload"],
         ];
 
+        // Every chain, same as the aweme path -- see the note there for why one
+        // answering is not the same as one answering with the video.
+        NSMutableArray<NSURL *> *found = [NSMutableArray array];
         NSMutableArray<NSString *> *failures = [NSMutableArray array];
+
         for (NSArray<NSString *> *chain in chains) {
             NSString *failure = nil;
             NSURL *url = SCITTResolveChain(videoModel, chain, &failure);
@@ -283,16 +311,24 @@ static void SCITTAddResolved(NSURL *url) {
                 url = nil;
             }
             if (url) {
-                sciResolveSuccesses++;
-                sciWinningChain = [NSString stringWithFormat:@"AWEVideoModel.%@",
-                    [chain componentsJoinedByString:@"."]];
-                sciWinningURLShape = SCITTURLShape(url);
-                sciLastAttemptState = [NSString stringWithFormat:@"resolved via %@", sciWinningChain];
-                SCITTAddResolved(url);
-                return;
+                if (![found containsObject:url]) [found addObject:url];
+                if (!sciWinningChain) {
+                    sciWinningChain = [NSString stringWithFormat:@"AWEVideoModel.%@",
+                        [chain componentsJoinedByString:@"."]];
+                    sciWinningURLShape = SCITTURLShape(url);
+                }
+                continue;
             }
             [failures addObject:[NSString stringWithFormat:@"%@: %@",
                 [chain componentsJoinedByString:@"."], failure ?: @"?"]];
+        }
+
+        if (found.count) {
+            sciResolveSuccesses++;
+            sciLastAttemptState = [NSString stringWithFormat:
+                @"AWEVideoModel — %lu candidate link(s)", (unsigned long)found.count];
+            SCITTAddResolvedList(found);
+            return;
         }
 
         sciLastAttemptState = [NSString stringWithFormat:@"AWEVideoModel — every chain failed: %@",

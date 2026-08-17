@@ -1,5 +1,45 @@
 # Albrhi for TikTok — what changed
 
+## v0.6.0
+
+**The rail's own contents, printed by v0.5.3's new report, settled the placement
+question by proving my own last fix impossible:**
+
+```
+TTKRightInteractionAreaBackgroundView | TikTokFeedInteractionBiz.PlayInteractionLikeView
+| TTKRightInteractionAreaBackgroundView ×4
+```
+
+TikTok wraps every icon except like in the *same* generically-named background view. No
+icon but like can be identified by class name at all, so v0.5.3's "find the one whose
+name mentions share" always failed and always fell through to appending at the very end
+— below the music disc, which is exactly what "way below the picture" was describing.
+That was a regression this file introduced; the index arithmetic it replaced was closer
+to right. Placement is one position before the end again, the button's height is now
+matched to a sibling's own measured height rather than a number picked here, and the
+assumption about rail order is printed in the report rather than buried in code.
+
+**Audio is no longer an outcome — it is a rejected candidate.** This is the real fix for
+"saved as audio". The resolver used to stop at the first chain that answered and keep
+one URL; `originURLList` answers reliably and answers with the *sound's* link, so there
+was nothing to fall back to and the same 972317-byte `audio/mp4` file was saved release
+after release. Now **every** chain is run and every http(s) link it produces is kept on
+the item. The downloader fetches them in turn and only accepts one whose downloaded file
+actually carries a video track — the file itself deciding, the same standard v0.4.12
+established. An audio-only file, a non-2xx status, an unplayable body, or a failed
+transfer each mean "wrong candidate, try the next" instead of "done, here is a song".
+Only when every candidate has been fetched and none had a video track does it give up,
+naming every link it rejected and why.
+
+**Also recorded, and still outstanding:** the button reads
+`[SCITTMedia recent].firstObject` — the most recently resolved link, which during a
+scroll belongs to a prefetched neighbour rather than the video on screen. `AWEFeedViewCell`
+was dumped for a model accessor to fix this properly and came back with nothing usable —
+only UIKit and framework-category internals (`_focusItemDeferralMode`, `nsli_superitem`,
+`ttket_dataProvider`…), no `model`/`aweme`/`item` of TikTok's own. That cell holds its
+model somewhere this dump does not reach, and the next attempt has to go at it from a
+different angle rather than a fifth keyword guess.
+
 ## v0.5.3
 
 `972317 bytes` — the *exact* same byte count as three releases ago, with the winning

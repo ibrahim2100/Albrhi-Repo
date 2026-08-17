@@ -10,6 +10,12 @@
 @property (nonatomic, strong) SCITTMediaItem *item;
 @property (nonatomic, strong) JGProgressHUD *hud;
 @property (nonatomic, strong) NSURLSession *session;
+
+/// Which of `item.candidates` is being fetched, and what the ones already tried
+/// turned out to be -- so a give-up message can name every link it rejected rather
+/// than only the last.
+@property (nonatomic, assign) NSUInteger candidateIndex;
+@property (nonatomic, strong) NSMutableArray<NSString *> *rejected;
 @end
 
 /// Kept alive by hand while it runs -- an NSURLSession retains its delegate, but
@@ -60,6 +66,8 @@ NSString *SCITTDownloadReport(void) {
 
     SCITTDownload *download = [[SCITTDownload alloc] init];
     download.item = item;
+    download.candidateIndex = 0;
+    download.rejected = [NSMutableArray array];
 
     UIView *host = [self host];
     if (host) {
@@ -78,8 +86,43 @@ NSString *SCITTDownloadReport(void) {
 
     @synchronized (_running) { [_running addObject:download]; }
 
-    [[download.session downloadTaskWithURL:item.url] resume];
-    SCILogV(@"downloading %@", item.url);
+    [download fetchCurrentCandidate];
+}
+
+/// The candidate list, or the single URL for an item that predates it.
+- (NSArray<NSURL *> *)links {
+    if (self.item.candidates.count) return self.item.candidates;
+    return self.item.url ? @[self.item.url] : @[];
+}
+
+- (void)fetchCurrentCandidate {
+    NSArray<NSURL *> *links = [self links];
+    if (self.candidateIndex >= links.count) {
+        // Every candidate fetched and every one of them turned out to be something
+        // other than a video. Naming all of them is the point: one rejected link says
+        // nothing, the whole list says which chain family to stop trusting.
+        SCITTRecordDownload([NSString stringWithFormat:@"no candidate was a video — %@",
+            [self.rejected componentsJoinedByString:@"; "]]);
+        [self finish:NO message:SCILocalized(@"save_failed")];
+        return;
+    }
+
+    NSURL *url = links[self.candidateIndex];
+    [[self.session downloadTaskWithURL:url] resume];
+    SCILogV(@"downloading candidate %lu/%lu: %@",
+        (unsigned long)(self.candidateIndex + 1), (unsigned long)links.count, url);
+}
+
+/// Records why this candidate was not it, then fetches the next one.
+- (void)rejectCandidate:(NSString *)reason {
+    NSArray<NSURL *> *links = [self links];
+    NSURL *url = self.candidateIndex < links.count ? links[self.candidateIndex] : nil;
+
+    [self.rejected addObject:[NSString stringWithFormat:@"%@ (%@)",
+        reason, url.lastPathComponent ?: @"?"]];
+
+    self.candidateIndex++;
+    [self fetchCurrentCandidate];
 }
 
 + (UIView *)host {
@@ -117,13 +160,11 @@ didFinishDownloadingToURL:(NSURL *)location {
         NSInteger status = ((NSHTTPURLResponse *)task.response).statusCode;
         if (status < 200 || status >= 300) {
             [[NSFileManager defaultManager] removeItemAtURL:location error:NULL];
-            SCITTRecordDownload([NSString stringWithFormat:@"server answered HTTP %ld", (long)status]);
-            [self finish:NO message:SCILocalized(@"save_failed")];
+            [self rejectCandidate:[NSString stringWithFormat:@"HTTP %ld", (long)status]];
             return;
         }
     }
 
-    NSURL *sourceURL = task.originalRequest.URL ?: task.currentRequest.URL;
     NSString *mime = task.response.MIMEType.lowercaseString ?: @"";
     unsigned long long bytes =
         [[[NSFileManager defaultManager] attributesOfItemAtPath:location.path error:NULL] fileSize];
@@ -163,29 +204,25 @@ didFinishDownloadingToURL:(NSURL *)location {
     // more than handing it to Photos and reporting whatever Photos makes of it.
     if (videoTracks == 0 && audioTracks == 0) {
         [[NSFileManager defaultManager] removeItemAtURL:staged error:NULL];
-        SCITTRecordDownload([NSString stringWithFormat:
-            @"not playable media — %llu bytes, mime %@, no video or audio track (link: %@)",
-            bytes, mime.length ? mime : @"none", sourceURL.host ?: @"?"]);
-        [self finish:NO message:SCILocalized(@"save_failed")];
+        [self rejectCandidate:[NSString stringWithFormat:@"not media, %llu bytes, %@",
+            bytes, mime.length ? mime : @"no mime"]];
         return;
     }
 
-    // Photos has no concept of a bare audio file, so a song is kept in the app's own
-    // Documents instead of asking a library that would always refuse it. Reached only
-    // when the file itself genuinely carries no video track.
+    //
+    // **Audio is now a rejected candidate, not an outcome.** This branch used to save
+    // the file into Documents and report "sound saved" -- which is exactly what a real
+    // device kept doing for a video, because `originURLList` reliably answers with the
+    // *sound's* link and there was nothing to fall back to. There is now: every chain's
+    // link is kept, so an audio-only file means "wrong candidate, try the next one"
+    // rather than "this video is a song". Only when every candidate has been fetched and
+    // every one of them lacked a video track is audio accepted as the honest answer --
+    // handled in -fetchCurrentCandidate's own exhausted branch, which names all of them.
+    //
     if (audioOnly) {
-        NSURL *documents = [[[NSFileManager defaultManager]
-            URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] firstObject];
-        NSURL *kept = [documents URLByAppendingPathComponent:
-            [staged.lastPathComponent.stringByDeletingPathExtension
-                stringByAppendingPathExtension:@"m4a"]];
-        BOOL moved = [[NSFileManager defaultManager] moveItemAtURL:staged toURL:kept error:NULL];
-        SCITTRecordDownload(moved
-            ? [NSString stringWithFormat:
-                @"saved as audio — the file really has no video track (%llu bytes, mime %@)",
-                bytes, mime.length ? mime : @"none"]
-            : @"audio move failed");
-        [self finish:moved message:SCILocalized(moved ? @"save_done_audio" : @"save_failed")];
+        [[NSFileManager defaultManager] removeItemAtURL:staged error:NULL];
+        [self rejectCandidate:[NSString stringWithFormat:@"audio only, %llu bytes, %@",
+            bytes, mime.length ? mime : @"no mime"]];
         return;
     }
 
@@ -214,9 +251,10 @@ didFinishDownloadingToURL:(NSURL *)location {
                     task:(NSURLSessionTask *)task
     didCompleteWithError:(NSError *)error {
     if (!error) return;
-    SCITTRecordDownload([NSString stringWithFormat:@"transfer failed: %@",
-        error.localizedDescription ?: @"no reason given"]);
-    [self finish:NO message:SCILocalized(@"save_failed")];
+    // A transfer that failed outright is a rejected candidate like any other -- the
+    // next link in the list may well be reachable when this one was not.
+    [self rejectCandidate:[NSString stringWithFormat:@"transfer failed: %@",
+        error.localizedDescription ?: @"no reason given"]];
 }
 
 - (void)finish:(BOOL)success message:(NSString *)message {

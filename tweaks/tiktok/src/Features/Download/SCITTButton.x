@@ -50,7 +50,7 @@ static NSUInteger sciRailButtonsPlaced = 0;
 /// found in it -- so a build whose icon naming does not match says so rather than
 /// silently landing the button somewhere odd.
 static NSString *sciRailContents = nil;
-static BOOL sciPlacedAfterShare = NO;
+static BOOL sciPlacedBeforeLast = NO;
 
 
 @interface SCITTButtonTarget : NSObject
@@ -132,9 +132,10 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
     // constraint below and whatever width the fill gives it, and the glyph sits in the
     // middle of that by construction rather than by any alignment property holding.
     //
+    // The height is constrained further down, from a sibling's own measured height
+    // rather than a number chosen here -- see the placement block.
     UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
     button.tag = kSCIRailButtonTag;
-    [button.heightAnchor constraintEqualToConstant:44].active = YES;
 
     UIImageSymbolConfiguration *config =
         [UIImageSymbolConfiguration configurationWithPointSize:27
@@ -167,36 +168,45 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
     objc_setAssociatedObject(button, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
     //
-    // **Placed by finding share, not by counting from the end.** "Second from last"
-    // assumed TikTok's rail ends with its spinning music disc -- an assumption about a
-    // layout this project has never actually read, and the button landed in the wrong
-    // place twice on the strength of it. The siblings' own class names are right here
-    // to be searched instead: TikTok names its rail icons for what they do, so the one
-    // whose class name mentions share is the one to sit under. Recorded for the report
-    // either way, so a build whose naming does not match says so instead of silently
-    // landing somewhere odd.
+    // **Searching the siblings for "share" cannot work, and a device report is what
+    // proved it.** The rail's arranged subviews came back as:
+    //
+    //   TTKRightInteractionAreaBackgroundView | PlayInteractionLikeView |
+    //   TTKRightInteractionAreaBackgroundView ×4
+    //
+    // TikTok wraps every icon except like in the *same* generically-named background
+    // view, so no icon but like can be identified by class name at all. The name search
+    // therefore always failed and always fell through to appending at the very end --
+    // below the music disc, which is what "way below the picture" was describing. That
+    // was a regression this file introduced; the index arithmetic it replaced was
+    // closer to right.
+    //
+    // So: one position before the end. On the six-item rail above that is between the
+    // fifth wrapper and the sixth, which is where the button belongs on TikTok's own
+    // avatar/like/comment/bookmark/share/disc order. It is still an assumption about
+    // that order -- but it is now a *recorded* one, printed in the report beside the
+    // rail's real contents, rather than one buried in code.
     //
     NSArray<UIView *> *siblings = stack.arrangedSubviews;
     NSMutableArray<NSString *> *names = [NSMutableArray array];
-    NSInteger shareIndex = -1;
-
-    for (NSUInteger i = 0; i < siblings.count; i++) {
-        NSString *name = NSStringFromClass([siblings[i] class]);
-        [names addObject:name];
-        if (shareIndex < 0 && [name.lowercaseString containsString:@"share"]) {
-            shareIndex = (NSInteger)i;
-        }
+    for (UIView *sibling in siblings) {
+        [names addObject:NSStringFromClass([sibling class])];
     }
     sciRailContents = [names componentsJoinedByString:@" | "];
 
-    if ([stack respondsToSelector:@selector(insertArrangedSubview:atIndex:)]) {
-        // Directly after share where it was found; otherwise at the very end, which is
-        // at least a predictable place rather than an arithmetic guess at one.
-        NSUInteger index = (shareIndex >= 0)
-            ? (NSUInteger)(shareIndex + 1)
-            : siblings.count;
-        [stack insertArrangedSubview:button atIndex:MIN(index, siblings.count)];
-        sciPlacedAfterShare = (shareIndex >= 0);
+    // Matched to a sibling's own height rather than a number picked here, so the button
+    // occupies the same vertical slot every other icon does instead of whatever 44
+    // points happens to look like on this rail.
+    UIView *reference = siblings.lastObject;
+    if (reference && reference.bounds.size.height > 8) {
+        [button.heightAnchor constraintEqualToConstant:reference.bounds.size.height].active = YES;
+    } else {
+        [button.heightAnchor constraintEqualToConstant:44].active = YES;
+    }
+
+    if (siblings.count >= 2 && [stack respondsToSelector:@selector(insertArrangedSubview:atIndex:)]) {
+        [stack insertArrangedSubview:button atIndex:siblings.count - 1];
+        sciPlacedBeforeLast = YES;
     } else if ([stack respondsToSelector:@selector(addArrangedSubview:)]) {
         [stack addArrangedSubview:button];
     } else {
@@ -272,8 +282,8 @@ NSString *SCITTButtonReport(void) {
     NSMutableString *out = [NSMutableString stringWithFormat:@"%@ — %lu placed",
         sciRailName ?: @"?", (unsigned long)sciRailButtonsPlaced];
 
-    [out appendFormat:@"; %@", sciPlacedAfterShare
-        ? @"after share" : @"share not found, appended at end"];
+    [out appendFormat:@"; %@", sciPlacedBeforeLast
+        ? @"one before last" : @"appended at end"];
 
     if (sciRailContents) [out appendFormat:@"; rail: %@", sciRailContents];
 
