@@ -19,14 +19,14 @@
 /// The feed/detail model for one video. `-isAds` is the server's own mark for a
 /// promoted item, confirmed as a real property name in this build's own binary.
 ///
-/// `-videoModel` is *not* in either reference's own `_ungrouped$` hook table -- neither
-/// tweak overrides it, they only call it -- so it is not confirmed the same way
-/// `-isAds` and `AWEURLModel`'s own methods are. It is declared here because the
-/// property name and its backing ivar (`_videoModel`) sit adjacent to `playAddr` and
-/// `bitratePlayAddr` in this build's own string table, which is circumstantial rather
-/// than a hooked selector. `SCITTDownload.x` checks `-respondsToSelector:` before ever
-/// sending it and records which step of the chain failed if one does, rather than
-/// assuming this holds.
+/// `-videoModel` was never more than circumstantial -- string-table proximity to
+/// `playAddr`/`bitratePlayAddr`, not a hooked selector either reference tweak
+/// overrides -- and a live device report has since confirmed it outright wrong on a
+/// real 46.4.0 install: `-respondsToSelector:@selector(videoModel)` answers NO.
+/// `SCITTMedia.m` no longer sends it as the only path; it tries several candidate
+/// chains in turn (including `-video`, `-playURL`, `-url` -- real selectors read from
+/// NA9's own `_objc_msgSend$…` message-send stubs, not guessed names) and records
+/// which one, if any, actually resolves on the device this tweak is running on.
 /// `isAd`, `isAdItem` and `isAdsOrPseudoAds` sit beside `isAds` in the same run of the
 /// binary's own string table -- the same circumstantial standard `-videoModel` is held
 /// to below, not a hooked selector either reference tweak overrides. `SCITTAdBlock.x`

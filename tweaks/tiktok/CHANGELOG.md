@@ -1,5 +1,26 @@
 # Albrhi for TikTok — what changed
 
+## v0.4.6
+
+Rather than wait on another device report to try one more guessed selector, NA9's own
+binary was read again -- not its `_ungrouped$` hook table this time, but its generic
+`_objc_msgSend$…` message-send stub symbols, which name every selector the binary
+actually sends anywhere, hook or not. Real candidates turned up: `-video` (no "Model"
+suffix), `-playURL`, `-url`, alongside `-bestURLtoDownload` itself (the one step that
+was always doubly confirmed). `awemeVideoModel` also appears as a plain string near
+`_videoModel`/`bitratePlayAddr` in the same table that misled this project the first
+time, and is deliberately not used here for that reason alone -- string proximity is
+exactly the standard that already failed once on this same question.
+
+`SCITTMedia.resolveURLForModel:` now tries seven candidate chains in order --
+`videoModel.playAddr.bestURLtoDownload` (the original, kept in case some path still
+uses it), `video.playAddr.bestURLtoDownload`, `video.bestURLtoDownload`,
+`video.playURL`, `video.url`, `playURL`, `videoModel.playURL` -- each guarded by
+`-respondsToSelector:` at every step, stopping at the first that resolves. When none
+do, `+lastAttemptState` now reports every chain's own failure point in one line
+instead of only the first, so the next report is decisive rather than another single
+data point.
+
 ## v0.4.5
 
 The answer came back: **"model has no -videoModel."** `-videoModel` was always this

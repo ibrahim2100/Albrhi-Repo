@@ -25,47 +25,87 @@ static NSURL *SCITTURLFromValue(id value) {
     return nil;
 }
 
+/// Sends `name` to `obj` if it answers, guarded the same way every step in this file
+/// already is. `outFailure` is set to why it did not, only when it did not.
+static id SCITTTry(id obj, NSString *name, NSString **outFailure) {
+    if (!obj) {
+        if (outFailure) *outFailure = @"nil object";
+        return nil;
+    }
+    SEL selector = NSSelectorFromString(name);
+    if (![obj respondsToSelector:selector]) {
+        if (outFailure) *outFailure = [NSString stringWithFormat:
+            @"%@ has no -%@", NSStringFromClass([obj class]), name];
+        return nil;
+    }
+    id result = ((id (*)(id, SEL))objc_msgSend)(obj, selector);
+    if (!result && outFailure) {
+        *outFailure = [NSString stringWithFormat:@"-%@ answered nil", name];
+    }
+    return result;
+}
+
+/// Walks `model` through one candidate chain of selector names, converting the last
+/// step's answer to a URL. Returns nil and fills `outFailure` on the step that stopped
+/// it -- never a guess past a step that did not answer.
+static NSURL *SCITTResolveChain(id model, NSArray<NSString *> *chain, NSString **outFailure) {
+    id current = model;
+    for (NSString *step in chain) {
+        NSString *failure = nil;
+        current = SCITTTry(current, step, &failure);
+        if (!current) {
+            if (outFailure) *outFailure = failure;
+            return nil;
+        }
+    }
+    NSURL *url = SCITTURLFromValue(current);
+    if (!url && outFailure) {
+        *outFailure = [NSString stringWithFormat:@"chain ended at %@, not a URL or string",
+            NSStringFromClass([current class])];
+    }
+    return url;
+}
+
 + (NSURL *)resolveURLForModel:(AWEAwemeModel *)model {
     if (!model) return nil;
 
     @try {
-        if (![model respondsToSelector:NSSelectorFromString(@"videoModel")]) {
-            sciLastAttemptState = @"model has no -videoModel";
-            return nil;
-        }
-        id video = ((id (*)(id, SEL))objc_msgSend)(model, NSSelectorFromString(@"videoModel"));
-        if (!video) {
-            sciLastAttemptState = @"-videoModel answered nil";
-            return nil;
+        // Several candidate paths, tried in order -- not because all are equally
+        // likely, but because a live device report is what actually tells this project
+        // which name a given build uses, and guessing exactly one path is what put a
+        // now-confirmed-wrong `-videoModel` here the first time. `bestURLtoDownload`
+        // is the one doubly-confirmed step (a real string in the binary and NA9's own
+        // hooked selector) and appears in every chain that plausibly reaches
+        // `AWEURLModel`; `-video`, `-playURL` and `-url` are read from NA9's own
+        // `_objc_msgSend$…` message-send stubs -- real selectors this binary actually
+        // sends, not guessed names, though not confirmed to be sent specifically to an
+        // aweme model the way `-isAds` and `AWEURLModel`'s own method are.
+        NSArray<NSArray<NSString *> *> *chains = @[
+            @[@"videoModel", @"playAddr", @"bestURLtoDownload"],
+            @[@"video", @"playAddr", @"bestURLtoDownload"],
+            @[@"video", @"bestURLtoDownload"],
+            @[@"video", @"playURL"],
+            @[@"video", @"url"],
+            @[@"playURL"],
+            @[@"videoModel", @"playURL"],
+        ];
+
+        NSMutableArray<NSString *> *failures = [NSMutableArray array];
+        for (NSArray<NSString *> *chain in chains) {
+            NSString *failure = nil;
+            NSURL *url = SCITTResolveChain(model, chain, &failure);
+            if (url) {
+                sciLastAttemptState = [NSString stringWithFormat:
+                    @"resolved via %@", [chain componentsJoinedByString:@"."]];
+                return url;
+            }
+            [failures addObject:[NSString stringWithFormat:@"%@: %@",
+                [chain componentsJoinedByString:@"."], failure ?: @"?"]];
         }
 
-        if (![video respondsToSelector:NSSelectorFromString(@"playAddr")]) {
-            sciLastAttemptState = [NSString stringWithFormat:
-                @"%@ has no -playAddr", NSStringFromClass([video class])];
-            return nil;
-        }
-        id playAddr = ((id (*)(id, SEL))objc_msgSend)(video, NSSelectorFromString(@"playAddr"));
-        if (!playAddr) {
-            sciLastAttemptState = @"-playAddr answered nil";
-            return nil;
-        }
-
-        if (![playAddr respondsToSelector:@selector(bestURLtoDownload)]) {
-            sciLastAttemptState = [NSString stringWithFormat:
-                @"%@ has no -bestURLtoDownload", NSStringFromClass([playAddr class])];
-            return nil;
-        }
-        id resolved = [playAddr bestURLtoDownload];
-        NSURL *url = SCITTURLFromValue(resolved);
-        if (!url) {
-            sciLastAttemptState = [NSString stringWithFormat:
-                @"-bestURLtoDownload answered %@, not a URL or string",
-                resolved ? NSStringFromClass([resolved class]) : @"nil"];
-            return nil;
-        }
-
-        sciLastAttemptState = @"resolved a download URL";
-        return url;
+        sciLastAttemptState = [NSString stringWithFormat:@"every chain failed — %@",
+            [failures componentsJoinedByString:@" | "]];
+        return nil;
     } @catch (NSException *exception) {
         sciLastAttemptState = [NSString stringWithFormat:@"threw: %@", exception.reason ?: @"?"];
         SCILogV(@"media resolve: %@", exception.reason);
