@@ -39,6 +39,12 @@
 @interface TTKFeedRightInteractionStackView : UIStackView
 @end
 
+/// YES once any cell button has been placed, which is what makes the rail stand down.
+///
+/// Declared up here rather than beside the cell hook: SCITTPlaceRailButton reads it and is
+/// defined earlier in the file, and C does not care that the two belong together.
+static BOOL sciCellSurfaceWorks = NO;
+
 static const NSInteger kSCIRailButtonTag = 0x5C17;
 static const void *kSCIItemKey = &kSCIItemKey;
 
@@ -97,6 +103,10 @@ static BOOL SCITTViewIsCentered(UIView *view) {
 
 static void SCITTPlaceRailButton(UIStackView *stack) {
     if (!SCIPrefEnabled(SCIPrefDownloadButton)) return;
+
+    // The cell surface wins when it works. Both are installed so that a build missing one
+    // still gets a button, but two buttons on one video is worse than either alone.
+    if (sciCellSurfaceWorks) return;
 
     UIButton *existing = (UIButton *)[stack viewWithTag:kSCIRailButtonTag];
 
@@ -386,6 +396,123 @@ static void SCITTSyncRailButton(UIStackView *stack) {
 %end
 
 
+
+///
+/// The button on the feed cell itself — which is where NA9 puts its own.
+///
+/// Its Logos symbols name the technique outright:
+/// `AWEFeedViewTemplateCell$na9AddDownloadButton`. **Not the interaction rail.** And every
+/// symptom the rail placement produced follows from being a guest in someone else's stack:
+///
+///   - it appeared on some videos and not others, because TikTok rebuilds the rail's
+///     arranged subviews and sweeps a guest out;
+///   - it drifted sideways, because a vertical stack positions each child by its own width;
+///   - it needed its size copied from neighbours, and those neighbours turned out to be
+///     invisible background containers rather than icons.
+///
+/// A cell hook has none of those problems. `-layoutSubviews` on the cell fires for every
+/// video the feed shows, so the button cannot be missing from some of them, and its frame is
+/// one this code owns outright.
+///
+/// `AWEFeedViewTemplateCell` is confirmed present in TikTok 46.4.0 -- checked in the app's
+/// own binary, not taken from NA9, whose `AWEFeedViewTemplateNewCell` is **not** in this
+/// build. A reference tweak's class list is a map, not a manifest.
+///
+/// The rail surfaces stay for now and the report counts both separately. Nothing is deleted
+/// on the strength of one device until this one is confirmed on it -- and while both are
+/// live, the rail stands down whenever a cell button exists, so there is never a second
+/// button on screen.
+///
+
+static const NSInteger kSCICellButtonTag = 0x5C18;
+static NSUInteger sciCellButtonsPlaced = 0;
+static BOOL sciCellPresent = NO;
+
+/// A hooked class that touches a property needs a real @interface, not the forward
+/// declaration Logos leaves behind -- rule 3 in check.py exists for this, and three builds
+/// have gone to it in three different shapes.
+@interface AWEFeedViewTemplateCell : UICollectionViewCell
+@end
+
+%group Cell
+
+%hook AWEFeedViewTemplateCell
+
+- (void)layoutSubviews {
+    %orig;
+
+    if (!SCIPrefEnabled(SCIPrefDownloadButton)) return;
+
+    @try {
+        UIView *host = self.contentView ?: (UIView *)self;
+
+        UIButton *button = (UIButton *)[host viewWithTag:kSCICellButtonTag];
+
+        if (!button) {
+            button = [UIButton buttonWithType:UIButtonTypeSystem];
+            button.tag = kSCICellButtonTag;
+
+            UIImageSymbolConfiguration *config =
+                [UIImageSymbolConfiguration configurationWithPointSize:27
+                                                                weight:UIImageSymbolWeightSemibold];
+            [button setImage:[UIImage systemImageNamed:@"arrow.down.circle.fill"
+                                     withConfiguration:config]
+                    forState:UIControlStateNormal];
+
+            // White with a shadow: the video underneath is arbitrary, and a shadow keeps the
+            // glyph readable over a bright frame without a plate competing with TikTok's own
+            // icons.
+            button.tintColor = [UIColor whiteColor];
+            button.layer.shadowColor = [UIColor blackColor].CGColor;
+            button.layer.shadowOpacity = 0.45;
+            button.layer.shadowRadius = 3;
+            button.layer.shadowOffset = CGSizeZero;
+
+            [button addTarget:[SCITTButtonTarget shared]
+                       action:@selector(tapped:)
+             forControlEvents:UIControlEventTouchUpInside];
+
+            [host addSubview:button];
+            sciCellButtonsPlaced++;
+            sciCellSurfaceWorks = YES;
+        }
+
+        // A frame, not constraints, and computed from the cell's own bounds every pass.
+        //
+        // Frames because this cell lays its own subviews out by hand and mixing a constraint
+        // into that is how the Instagram panel came down twice. Recomputed each pass because
+        // the value must not depend on a previous one -- the drifting title in the panel's
+        // new row was exactly that mistake, made earlier today.
+        CGFloat side = 44;
+        CGFloat right = 12;
+        CGRect b = host.bounds;
+        if (b.size.width <= 0 || b.size.height <= 0) return;
+
+        // Left of nothing, below the middle: the right edge is TikTok's own rail, so the
+        // button sits on it, under the share icon and above the spinning disc. Measured from
+        // the bottom so it holds whatever the cell's height turns out to be.
+        button.frame = CGRectMake(b.size.width - side - right,
+                                  b.size.height * 0.62,
+                                  side, side);
+
+        [host bringSubviewToFront:button];
+
+        SCITTMediaItem *item = [SCITTMedia recent].firstObject;
+        if (item) {
+            objc_setAssociatedObject(button, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        }
+        button.hidden = (item == nil);
+    } @catch (NSException *exception) {
+        // A button is a convenience; the feed is not. Anything thrown here costs the button.
+        SCILogV(@"cell button: %@", exception.reason);
+    }
+}
+
+%end
+
+%end
+
+
 void SCITTInstallButton(void) {
     if (NSClassFromString(@"TTKFeedInteractionStackView")) {
         %init(RailA);
@@ -400,6 +527,16 @@ void SCITTInstallButton(void) {
             : @"TTKFeedRightInteractionStackView";
     }
 
+    // The cell surface, which is where NA9 puts its button. Installed alongside the rails
+    // rather than instead of them, so a build where the cell class is missing still gets
+    // something -- and the rail stands down at runtime whenever a cell button exists, so two
+    // are never on screen at once.
+    if (NSClassFromString(@"AWEFeedViewTemplateCell")) {
+        %init(Cell);
+        sciCellPresent = YES;
+        SCILogV(@"in-feed button: attached to AWEFeedViewTemplateCell");
+    }
+
     if (sciRailPresent) {
         SCILogV(@"in-feed button: attached to %@", sciRailName);
     } else {
@@ -408,10 +545,15 @@ void SCITTInstallButton(void) {
 }
 
 NSString *SCITTButtonReport(void) {
-    if (!sciRailPresent) return @"no interaction rail in this build";
+    if (!sciRailPresent && !sciCellPresent) return @"no button surface in this build";
 
-    NSMutableString *out = [NSMutableString stringWithFormat:@"%@ — %lu placed",
-        sciRailName ?: @"?", (unsigned long)sciRailButtonsPlaced];
+    NSMutableString *out = [NSMutableString stringWithFormat:@"cell %@ %lu placed",
+        sciCellPresent ? @"—" : @"(absent)", (unsigned long)sciCellButtonsPlaced];
+
+    if (sciCellSurfaceWorks) [out appendString:@"; rail standing down"];
+
+    [out appendFormat:@" | rail %@ — %lu placed",
+        sciRailName ?: @"(absent)", (unsigned long)sciRailButtonsPlaced];
 
     [out appendFormat:@"; %@", sciPlacedBeforeLast
         ? @"one before last" : @"appended at end"];

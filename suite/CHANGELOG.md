@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.34.0
+
+Includes TikTok 0.9.0 — **the save button moves off TikTok's interaction rail and onto the feed
+cell itself**, which is where the reference tweak puts its own. The rail was rebuilt by TikTok
+between videos, which is why the button vanished on some of them and drifted sideways on the
+rest. A cell hook fires once per video and the position is ours. Downloads are unchanged; that
+is the next problem.
+
 ## v1.33.1
 
 Includes TikTok 0.8.1 — the save button's size is finally tied to the icons beside it rather

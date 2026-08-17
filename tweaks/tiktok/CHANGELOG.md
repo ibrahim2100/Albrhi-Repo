@@ -1,5 +1,40 @@
 # Albrhi for TikTok — what changed
 
+## v0.9.0
+
+**The button goes on the feed cell now, which is where the working tweak puts its own.**
+
+Dumping NA9's Logos symbols named the technique outright:
+`AWEFeedViewTemplateCell$na9AddDownloadButton`. **Not the interaction rail.** And every symptom
+the rail placement produced follows from being a guest in someone else's stack:
+
+- it appeared on some videos and not others, because TikTok rebuilds the rail's arranged
+  subviews and sweeps a guest out;
+- it drifted sideways, because a vertical stack positions each child by its own width;
+- it needed its size copied from its neighbours — and those neighbours turned out to be
+  invisible background containers, not icons.
+
+A cell hook has none of those. `-layoutSubviews` on the cell fires for **every video the feed
+shows**, so the button cannot be missing from some of them, and its frame is one this code owns
+outright rather than a slot in someone else's arrangement.
+
+`AWEFeedViewTemplateCell` was confirmed present in TikTok 46.4.0 from the app's own binary, not
+taken on trust from NA9 — whose `AWEFeedViewTemplateNewCell` is **not** in this build. A
+reference tweak's class list is a map, not a manifest.
+
+**Both surfaces ship, and they cannot both draw.** The rail hooks stay so a build missing the
+cell class still gets a button, but the rail stands down the moment a cell button exists — two
+buttons on one video is worse than either alone. The report counts them separately, so the next
+one says which surface is actually doing the work.
+
+The frame is recomputed from the cell's bounds on every pass, never from its own previous
+value. That is the drifting-title bug from the panel's new row, made earlier the same day, and
+not worth making twice.
+
+Nothing about the download changed. That is the next problem, and it has its own answer waiting
+in the same symbol dump: NA9 does not resolve URLs at all — it calls TikTok's own
+`downloadVideo` on the cell.
+
 ## v0.8.1
 
 **Three releases were aimed at a line that had not changed because nothing had happened.**
