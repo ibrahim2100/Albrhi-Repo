@@ -313,6 +313,24 @@ player — clients Google has not migrated — which means impersonating a diffe
 signed requests, and the `n`-signature, from inside the official app while signed in to a
 real account. The counting hooks stay in `SCIYTSabr.x`; the switch was removed in 1.12.0.
 
+**TikTok's classes are not in TikTok's binary either, and a competitor's selectors are not
+your build's.** `com.zhiliaoapp.musically` 46.4.0 ships a 91 KB executable and puts everything
+in `MusicallyCore.framework` — 785 MB, **1,032,816 selectors** in `__objc_methname`. Dumping
+that framework with `otool` (which *is* installed, contrary to what this file said for a
+while) settled in one pass what three releases of guessing could not: `bestURLtoDownload`,
+the first choice of seven candidate chains in the download resolver, **is not in this build at
+all** — so those chains had never once run. Nor is `bitratePlayURL`, which had been added an
+hour earlier as the HD fix on the strength of appearing in NA9's binary. NA9 was built
+against an older TikTok. **Reading a working tweak's selectors tells you what worked for its
+author, not what is in front of you** — the same mistake the X tweak's dead immersive class
+was, repeated in one day on a different app.
+
+**And "it saves SD" was one word.** `playAddr`/`playURL` is what the app *streams*, served at
+a bitrate chosen for smooth playback; `downloadAddr` is what TikTok serves for saving, and
+nothing in the tweak had ever asked for it. Confirmed alongside it, for later: `bitrateModels`
+(variants with `-bitRate`, `-gearName`, `-qualityType`, each with its own `-playAddr`),
+`HDRBitrateModels`, `SDRBitrateModels`, `allowDownloadWithoutWatermark`.
+
 **X's classes are not in X's binary, and a hook table built by scanning it is empty.**
 `com.atebits.Tweetie2` is 10,827 classes across 58 Mach-O images: the interface classes
 live in `T1Twitter.framework`, and `TFS*`/`TAE*`/`TFN*` in `TwitterSPMMigration` and

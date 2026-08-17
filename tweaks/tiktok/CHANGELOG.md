@@ -1,5 +1,46 @@
 # Albrhi for TikTok — what changed
 
+## v0.7.0
+
+**The download chain was mostly dead, and the app's own binary said so.**
+
+The owner supplied the full TikTok 46.4.0 IPA — decrypted, `cryptid 0`. TikTok's classes are
+not in its executable (91 KB), the same way X's are not in X's: they live in
+`MusicallyCore.framework`, 785 MB and **1,032,816 selectors**. Dumping `__objc_methname` out
+of it settled in one pass what three releases of guessing could not.
+
+**Three assumptions died:**
+
+- **`bestURLtoDownload` is not in this build at all** — and it was the first choice of nearly
+  every chain in this file. Seven chains have therefore been dead for as long as they have
+  existed, skipped silently, because a chain whose selector is absent looks exactly like a
+  chain that was tried and found nothing.
+- **`bitratePlayURL` is not there either** — which 0.6.2 added an hour earlier as *the* HD
+  fix, taken from NA9's binary. NA9 was built against an older TikTok. Reading a working
+  tweak's selectors is not confirming they exist in your build; that is precisely the trap
+  the X tweak's dead immersive class was, made twice in one day.
+- `bestURLtoDownloadFormat` and `downloadHDVideo:`, from the same source, are absent too.
+
+**What actually exists is a real quality ladder, and "it saves SD" was one word all along:**
+
+```
+video.downloadAddr    the DOWNLOAD address
+video.playAddrH264    codec-named playback address
+video.playAddr        generic playback address
+```
+
+`playAddr` is what the app *streams*, served at a bitrate chosen for smooth playback.
+`downloadAddr` is what TikTok serves for saving. Nothing in this file had ever asked for it.
+Each ends in a URL model whose confirmed accessors are `originURLList`, `urlList` and
+`URLList` — never `bestURLtoDownload`.
+
+Also confirmed present and worth a later release: `bitrateModels` (variants carrying
+`-bitRate`, `-gearName`, `-qualityType` and their own `-playAddr`), `HDRBitrateModels`,
+`SDRBitrateModels`, and `allowDownloadWithoutWatermark`.
+
+Still **not** fixed, and named so they are not read as done: the button appearing on some
+videos and not others, and the wrong video being saved.
+
 ## v0.6.2
 
 **A one-letter bug, and the first real attempt at HD.**

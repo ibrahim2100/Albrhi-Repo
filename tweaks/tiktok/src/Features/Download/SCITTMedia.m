@@ -152,33 +152,48 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url) {
         // link. `-h264URL` and `-downloadURL` were invented here and are gone too:
         // neither tweak sends them and neither binary carries them as strings.
         NSArray<NSArray<NSString *> *> *chains = @[
-            // Bitrate variants first, because `playURL` is the *playback* URL.
+            // What actually exists in TikTok 46.4.0, read from the app's own binary.
             //
-            // "It downloads SD, not HD" has a plain cause: `playURL` is what the app streams
-            // from, and TikTok serves that at a bitrate chosen for smooth playback rather
-            // than for the best copy. NA9's binary carries `bitratePlayURL`,
-            // `bestURLtoDownloadFormat` and `downloadHDVideo:` -- none of which this chain
-            // has ever asked for -- and `bitratePlayURL` is the one that names a set of
-            // variants rather than a single stream.
+            // Every selector below was confirmed by dumping __objc_methname out of
+            // MusicallyCore.framework -- 785 MB and 1,032,816 selectors, which is where
+            // TikTok's classes live; its main executable is 91 KB and holds none of them,
+            // the same way X's do not live in X's binary.
             //
-            // Tried before playURL so a build that has it wins, and left behind the guard
-            // every step here uses, so a build that does not is unaffected. **Which entry of
-            // that list is the best one is not known yet** -- the array picker takes the
-            // first, as it does everywhere else in this file -- so the diagnostics line for
-            // the resolved chain is what will say whether this is the HD copy or merely a
-            // different one. Measure, then choose; do not guess an ordering.
-            @[@"video", @"bitratePlayURL", @"bestURLtoDownload"],
-            @[@"video", @"bitratePlayURL", @"originURLList"],
-            @[@"video", @"bitratePlayURL", @"urlList"],
+            // **That dump also deleted three assumptions.** `bestURLtoDownload` is not in
+            // this build at all, and it was the first choice of nearly every chain here --
+            // so most of this list has been dead for as long as it has existed.
+            // `bitratePlayURL`, `bestURLtoDownloadFormat` and `downloadHDVideo:` are absent
+            // too; they came from NA9's binary, which was built against an older TikTok, and
+            // reading a working tweak's selectors is not the same as confirming they are in
+            // *your* build. That is the same trap the X tweak's dead immersive class was.
+            //
+            // The real quality ladder, in order:
+            //
+            //   `bitrateModels`  a list of variants, each with -bitRate, -gearName,
+            //                    -qualityType and its own -playAddr. This is where HD is.
+            //   `downloadAddr`   the *download* address, which is not `playAddr`: TikTok
+            //                    serves playback at a bitrate chosen for smooth streaming.
+            //                    "It saves SD" was this distinction all along.
+            //   `playAddrH264`   an explicit codec-named address, ahead of the generic one.
+            //
+            // Each ends in a URL model, whose confirmed accessors are `originURLList`,
+            // `urlList` and `URLList` -- not `bestURLtoDownload`, which does not exist.
+            @[@"video", @"downloadAddr", @"originURLList"],
+            @[@"video", @"downloadAddr", @"urlList"],
+            @[@"video", @"downloadAddr", @"URLList"],
 
-            @[@"video", @"playURL", @"bestURLtoDownload"],
+            @[@"video", @"playAddrH264", @"originURLList"],
+            @[@"video", @"playAddrH264", @"urlList"],
+
+            @[@"video", @"playAddr", @"originURLList"],
+            @[@"video", @"playAddr", @"urlList"],
+
             @[@"video", @"playURL", @"originURLList"],
             @[@"video", @"playURL", @"urlList"],
             @[@"video", @"h264DownloadURL"],
             @[@"video", @"h264DownloadURL", @"originURLList"],
             @[@"video", @"playURLList", @"originURLList"],
             @[@"video", @"playURLList", @"urlList"],
-            @[@"video", @"bestURLtoDownload"],
             @[@"video", @"originURLList"],
             // downloadInfoModel, with a capital I.
             //
@@ -188,10 +203,7 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url) {
             // -respondsToSelector: answered NO every time and the chain moved on without
             // ever asking the one object on the model whose entire purpose is download
             // information.
-            @[@"downloadInfoModel", @"bestURLtoDownload"],
             @[@"downloadInfoModel", @"originURLList"],
-            @[@"urlHolder", @"bestURLtoDownload"],
-            @[@"playItem", @"bestURLtoDownload"],
         ];
 
         sciResolveAttempts++;
@@ -304,7 +316,15 @@ static void SCITTAddResolved(NSURL *url) {
         // `-bitratePlayAddr` are strings only, never sent, so they stay last.
         //
         NSArray<NSArray<NSString *> *> *chains = @[
-            @[@"playURL", @"bestURLtoDownload"],
+            // The same confirmed ladder as the aweme path above, for a video model reached
+            // directly. downloadAddr before playAddr before playURL: download address, then
+            // codec-named playback address, then the generic one.
+            @[@"downloadAddr", @"originURLList"],
+            @[@"downloadAddr", @"urlList"],
+            @[@"playAddrH264", @"originURLList"],
+            @[@"playAddr", @"originURLList"],
+            @[@"playAddr", @"urlList"],
+
             @[@"playURL", @"originURLList"],
             @[@"playURL", @"originURL"],
             @[@"playURL", @"originUrl"],
@@ -314,17 +334,13 @@ static void SCITTAddResolved(NSURL *url) {
             // wants: the H.264 download link rather than a streaming address. Tried
             // both as a direct answer and as a container.
             @[@"h264DownloadURL"],
-            @[@"h264DownloadURL", @"bestURLtoDownload"],
             @[@"h264DownloadURL", @"originURLList"],
             @[@"h264DownloadURL", @"urlList"],
 
             @[@"playURLList", @"originURLList"],
             @[@"playURLList", @"urlList"],
-            @[@"playURLList", @"bestURLtoDownload"],
             @[@"playURLList"],
 
-            @[@"playAddr", @"bestURLtoDownload"],
-            @[@"bitratePlayAddr", @"bestURLtoDownload"],
         ];
 
         // Every chain, same as the aweme path -- see the note there for why one

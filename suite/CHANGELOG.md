@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.32.0
+
+Includes TikTok 0.7.0 — **downloads should be the real quality now.** The app's own binary
+showed that `playAddr` is the *streaming* address and `downloadAddr` is the one TikTok serves
+for saving, and nothing in the tweak had ever asked for the latter. It also showed that
+seven of the resolver's candidate chains were built on a selector this TikTok does not have,
+so they had never run at all.
+
 ## v1.31.2
 
 Includes TikTok 0.6.2 — a download chain that had been misspelled since it was written now
