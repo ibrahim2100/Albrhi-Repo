@@ -125,7 +125,21 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
 
     objc_setAssociatedObject(button, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
-    if ([stack respondsToSelector:@selector(addArrangedSubview:)]) {
+    // Second from the end, not appended after everything. TikTok's own rail is
+    // avatar, like, comment, bookmark, share, then a spinning record/music-disc icon
+    // last -- a layout this project has not confirmed against a class dump the way
+    // every hook target elsewhere in this tweak is, but is consistent and well known
+    // across TikTok's own app regardless of build. Appending at the very end landed
+    // the button after that disc rather than under share, which is what was reported.
+    // Inserting one position before the end puts it directly under share on that
+    // layout; if a future build's rail does not end with the disc, this simply lands
+    // one icon higher than intended rather than breaking anything.
+    NSUInteger count = stack.arrangedSubviews.count;
+    NSUInteger index = count > 0 ? count - 1 : 0;
+
+    if ([stack respondsToSelector:@selector(insertArrangedSubview:atIndex:)]) {
+        [stack insertArrangedSubview:button atIndex:index];
+    } else if ([stack respondsToSelector:@selector(addArrangedSubview:)]) {
         [stack addArrangedSubview:button];
     } else {
         [stack addSubview:button];

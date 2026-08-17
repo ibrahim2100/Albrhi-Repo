@@ -126,6 +126,13 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url) {
         // real AWEURLModel -- and therefore at bestURLtoDownload, the one doubly-
         // confirmed step in this whole file -- are tried first.
         NSArray<NSArray<NSString *> *> *chains = @[
+            // Confirmed on a real device, one hop at a time, from the previous
+            // report's own failures rather than guessed: -video answers a real
+            // AWEVideoModel (it used to answer nil; +watchModel:'s retry is why it no
+            // longer does), and AWEVideoModel -playURL answers a real AWEURLModel --
+            // "chain ended at AWEURLModel, not a URL or string" said so outright, one
+            // hop short of AWEURLModel's own doubly-confirmed -bestURLtoDownload.
+            @[@"video", @"playURL", @"bestURLtoDownload"],
             @[@"videoModel", @"playAddr", @"bestURLtoDownload"],
             @[@"video", @"playAddr", @"bestURLtoDownload"],
             @[@"video", @"bestURLtoDownload"],

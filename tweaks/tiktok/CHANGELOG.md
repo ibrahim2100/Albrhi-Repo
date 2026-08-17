@@ -1,5 +1,26 @@
 # Albrhi for TikTok — what changed
 
+## v0.4.9
+
+The centering fix worked — one button, reported placed once, no more scatter. Two
+things followed directly from the last full failure report.
+
+**The resolution chain was one hop short of a real answer, named by its own failure.**
+`-video` no longer answers nil (the retry timer's own doing) and returns a real
+`AWEVideoModel`; `video.playURL` was already being tried, and the report said exactly
+why it failed: `"chain ended at AWEURLModel, not a URL or string"` — `-playURL`
+answers a real `AWEURLModel`, one hop short of that class's own doubly-confirmed
+`-bestURLtoDownload`. `video.playURL.bestURLtoDownload` is now the first chain tried,
+built from that failure rather than another guess.
+
+**The button's position.** Reported as fixed under the wrong icon. TikTok's own rail
+is avatar, like, comment, bookmark, share, then a spinning record/music-disc last —
+not confirmed against a class dump the way this project holds every other hook target
+to, but a layout consistent across TikTok's own app regardless of build. Appending at
+the very end (what `-addArrangedSubview:` does) landed the button after that disc
+rather than under share. It is now inserted one position before the end instead,
+which puts it directly under share on that layout.
+
 ## v0.4.8
 
 Both problems reported against v0.4.7 were real progress, not new failures: the button
