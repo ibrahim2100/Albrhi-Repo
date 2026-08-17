@@ -32,7 +32,7 @@ static const NSInteger kSCIRowPrivacyMessages = 1;
 static const NSInteger kSCIRowPrivacyProfile = 2;
 static const NSInteger kSCIPrivacyRowCount = 3;
 
-static const NSInteger kSCIStatusRowCount = 6;
+static const NSInteger kSCIStatusRowCount = 7;
 
 @interface SCITTStatus ()
 @property (nonatomic, strong) NSArray<SCITTMediaItem *> *items;
@@ -496,6 +496,11 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
             cell.imageView.image = SCITTBadge(@"link", [UIColor systemPurpleColor]);
             break;
         case 4:
+            cell.textLabel.text = SCILocalized(@"status_media_candidates");
+            cell.detailTextLabel.text = [SCITTMedia candidateAccessorsOnAwemeModel];
+            cell.imageView.image = SCITTBadge(@"magnifyingglass", [UIColor systemPurpleColor]);
+            break;
+        case 5:
             cell.textLabel.text = SCILocalized(@"diag_bypass");
             cell.detailTextLabel.text = [SCITTDiagnostics bypassState];
             cell.imageView.image = SCITTBadge(@"shield.lefthalf.filled", [UIColor systemIndigoColor]);

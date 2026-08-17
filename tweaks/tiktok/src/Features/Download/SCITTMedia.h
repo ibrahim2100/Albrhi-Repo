@@ -50,6 +50,14 @@ NS_ASSUME_NONNULL_BEGIN
 /// if it did. For the status screen's own report.
 + (NSString *)lastAttemptState;
 
+/// Every property and no-argument method on `AWEAwemeModel` and its superclasses
+/// (up a few levels) whose name contains "video", "play", "url", "media", "cover",
+/// "download" or "aweme" -- read from the live runtime class on this exact device,
+/// not from a class dump taken somewhere else. For when a guessed accessor like
+/// `-videoModel` turns out not to exist on a build: this answers what the real one
+/// is actually named, on the build it needs to be named on.
++ (NSString *)candidateAccessorsOnAwemeModel;
+
 @end
 
 NS_ASSUME_NONNULL_END

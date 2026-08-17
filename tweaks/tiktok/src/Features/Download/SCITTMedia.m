@@ -2,6 +2,7 @@
 #import "../../TikTokHeaders.h"
 #import "../../SCILog.h"
 #import <objc/message.h>
+#import <objc/runtime.h>
 
 @implementation SCITTMediaItem
 @end
@@ -111,6 +112,50 @@ static NSURL *SCITTURLFromValue(id value) {
 
 + (NSString *)lastAttemptState {
     return sciLastAttemptState ?: @"nothing captured yet";
+}
+
++ (NSString *)candidateAccessorsOnAwemeModel {
+    Class cls = NSClassFromString(@"AWEAwemeModel");
+    if (!cls) return @"AWEAwemeModel not in this build";
+
+    NSArray<NSString *> *keywords =
+        @[@"video", @"play", @"url", @"media", @"cover", @"download", @"aweme"];
+    NSMutableOrderedSet<NSString *> *names = [NSMutableOrderedSet orderedSet];
+
+    // The chain from a model to its video may sit on a superclass rather than on
+    // AWEAwemeModel itself -- TikTok's own model hierarchy is not something this
+    // project has a class dump of, so a few levels up are read too rather than
+    // assuming the property lives on the exact class that was hooked.
+    Class walk = cls;
+    for (int depth = 0; walk && depth < 4; depth++) {
+        unsigned int propCount = 0;
+        objc_property_t *props = class_copyPropertyList(walk, &propCount);
+        for (unsigned int i = 0; i < propCount; i++) {
+            NSString *name = [NSString stringWithUTF8String:property_getName(props[i])];
+            NSString *lower = name.lowercaseString;
+            for (NSString *keyword in keywords) {
+                if ([lower containsString:keyword]) { [names addObject:name]; break; }
+            }
+        }
+        if (props) free(props);
+
+        unsigned int methodCount = 0;
+        Method *methods = class_copyMethodList(walk, &methodCount);
+        for (unsigned int i = 0; i < methodCount; i++) {
+            NSString *name = NSStringFromSelector(method_getName(methods[i]));
+            if ([name containsString:@":"]) continue; // getters only, no arguments
+            NSString *lower = name.lowercaseString;
+            for (NSString *keyword in keywords) {
+                if ([lower containsString:keyword]) { [names addObject:name]; break; }
+            }
+        }
+        if (methods) free(methods);
+
+        walk = class_getSuperclass(walk);
+    }
+
+    if (!names.count) return @"nothing on this class matches video/play/url/media";
+    return [[names array] componentsJoinedByString:@", "];
 }
 
 @end

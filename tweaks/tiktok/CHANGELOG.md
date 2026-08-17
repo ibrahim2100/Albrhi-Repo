@@ -1,5 +1,24 @@
 # Albrhi for TikTok — what changed
 
+## v0.4.5
+
+The answer came back: **"model has no -videoModel."** `-videoModel` was always this
+tweak's own weakest link -- the header has said so since v0.2.0, marked circumstantial
+because neither reference tweak's own hook table ever names it, only string-table
+proximity to `playAddr`/`bitratePlayAddr` suggested it. A live device now says outright
+it is wrong on this build.
+
+Guessing a replacement name would repeat the exact mistake that produced the
+`AWEFeedViewCell` bug two releases ago. Instead, `SCITTMedia` gained
+`+candidateAccessorsOnAwemeModel`, a new Status row that reads `AWEAwemeModel`'s own
+properties and no-argument methods straight off the *live runtime class on this exact
+device* — walking up a few superclasses too, since the accessor may not sit on
+`AWEAwemeModel` itself — and lists every one whose name contains "video", "play",
+"url", "media", "cover", "download" or "aweme". Not a class dump taken somewhere else:
+whatever this row lists is what the chain can actually be pointed at on the build that
+matters, the same "ask the device, not the assumption" principle Diagnostics pages use
+throughout this project.
+
 ## v0.4.4
 
 Still 0 placed on both surfaces after v0.4.3, on a device where the ad filter's own
