@@ -44,6 +44,7 @@ static void SCIBuildTables(void) {
         @"gate_off": @"Off — turn TikTok on in Settings › Albrhi",
 
         @"status_button": @"In-feed button",
+        @"status_media_resolve": @"Video link resolution",
 
         @"diag_ads": @"Ad filter",
         @"diag_ads_none": @"Nothing seen yet. Scroll the feed, then come back.",
@@ -101,6 +102,7 @@ static void SCIBuildTables(void) {
         @"gate_off": @"مغلق — فعّل تيك توك من الإعدادات › البرهي",
 
         @"status_button": @"زر الواجهة",
+        @"status_media_resolve": @"تحليل رابط الفيديو",
 
         @"diag_ads": @"فلتر الإعلانات",
         @"diag_ads_none": @"لا شيء بعد. مرّر بالفيد ثم ارجع.",

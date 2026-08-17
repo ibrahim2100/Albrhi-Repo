@@ -1,5 +1,23 @@
 # Albrhi for TikTok — what changed
 
+## v0.4.4
+
+Still 0 placed on both surfaces after v0.4.3, on a device where the ad filter's own
+count (122 feed items seen, 10 dropped) proves `AWEAwemeModel` construction is being
+reached. That count alone does not prove the *download* resolution chain succeeds for
+any of those models — `-configWithModel:`'s replacement, reading
+`[SCITTMedia recent].firstObject`, would show nothing whether the placement hooks
+never fire *or* fire correctly and simply have nothing resolved to show. Those need
+different fixes, and nothing on the report so far said which.
+
+`SCITTMedia` has carried exactly the diagnostic for this since v0.2.0 —
+`+lastAttemptState`, which records which step of `videoModel.playAddr.bestURLtoDownload`
+the chain last reached — and it was never wired into the settings screen. It is now, as
+its own Status row, separate from the button's own placement count. The next report
+names which of "no -videoModel", "-videoModel nil", "no -playAddr", "-playAddr nil", "no
+-bestURLtoDownload", a wrong return type, or "resolved a download URL" is actually
+happening, rather than leaving "0 placed" to mean any of them.
+
 ## v0.4.3
 
 **A real device report settled the button question outright.** The Status screen's

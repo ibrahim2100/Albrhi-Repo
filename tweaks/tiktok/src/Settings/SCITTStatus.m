@@ -32,7 +32,7 @@ static const NSInteger kSCIRowPrivacyMessages = 1;
 static const NSInteger kSCIRowPrivacyProfile = 2;
 static const NSInteger kSCIPrivacyRowCount = 3;
 
-static const NSInteger kSCIStatusRowCount = 5;
+static const NSInteger kSCIStatusRowCount = 6;
 
 @interface SCITTStatus ()
 @property (nonatomic, strong) NSArray<SCITTMediaItem *> *items;
@@ -487,6 +487,15 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
             cell.imageView.image = SCITTBadge(@"arrow.down.circle.fill", SCIAccent());
             break;
         case 3:
+            // What the resolution chain itself last did -- separate from whether a
+            // button ever got placed, because "0 placed" has two different causes
+            // (the hook never fires, or it fires and finds nothing to resolve) that
+            // need two different fixes, and this is the line that tells them apart.
+            cell.textLabel.text = SCILocalized(@"status_media_resolve");
+            cell.detailTextLabel.text = [SCITTMedia lastAttemptState];
+            cell.imageView.image = SCITTBadge(@"link", [UIColor systemPurpleColor]);
+            break;
+        case 4:
             cell.textLabel.text = SCILocalized(@"diag_bypass");
             cell.detailTextLabel.text = [SCITTDiagnostics bypassState];
             cell.imageView.image = SCITTBadge(@"shield.lefthalf.filled", [UIColor systemIndigoColor]);
