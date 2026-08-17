@@ -1,5 +1,21 @@
 # Albrhi Changelog
 
+## v1.31.2
+
+Includes TikTok 0.6.2 — a download chain that had been misspelled since it was written now
+actually runs (`downloadInfoModel`, with a capital I), and the first real attempt at HD:
+`playURL` is the *playback* stream, served at a bitrate chosen for smooth playback, so the
+bitrate variants are tried ahead of it. The button's random appearance and the wrong-video
+save are **not** fixed yet — see the TikTok changelog for why each is named rather than
+guessed at.
+
+> **Note on 1.28.0 – 1.31.1.** Those four releases moved `suite/control` without leaving
+> notes here. Their changes are recorded in the per-tweak changelogs (TikTok 0.4.x–0.6.1, X
+> up to 0.14.0, YouTube up to 1.20.0, Locket leaving the suite). This file is what the
+> release notes and the Sileo depiction are generated from, so the gap is visible to anyone
+> updating — it is left named rather than filled in with descriptions written after the fact
+> by someone who did not make those changes.
+
 ## v1.27.1
 
 **Settings crashed when opening the Albrhi page.** Fixed — 1.27.0 registered its new row
