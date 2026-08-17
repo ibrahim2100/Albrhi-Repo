@@ -8,6 +8,15 @@
 @end
 
 
+/// Private: a model whose resolution is still pending, retried on a timer. Not part
+/// of the public interface -- SCITTAdBlock.x only ever calls +captureModel:, which
+/// calls this itself when the first attempt finds nothing.
+@interface SCITTMedia ()
++ (void)watchModel:(AWEAwemeModel *)model;
++ (void)retryPending;
+@end
+
+
 static NSMutableArray<SCITTMediaItem *> *sciRecent = nil;
 static NSUInteger const kSCIMediaCap = 30;
 static NSString *sciLastAttemptState = nil;
@@ -22,6 +31,15 @@ static NSURL *SCITTURLFromValue(id value) {
     if (!value) return nil;
     if ([value isKindOfClass:[NSURL class]]) return value;
     if ([value isKindOfClass:[NSString class]]) return [NSURL URLWithString:value];
+    // A list of URLs/strings (several candidate chains from the live property dump
+    // end in one, e.g. -URLList) -- the first entry is the same choice this project's
+    // other "several plausible sources" pickers make elsewhere.
+    if ([value isKindOfClass:[NSArray class]]) {
+        for (id entry in (NSArray *)value) {
+            NSURL *url = SCITTURLFromValue(entry);
+            if (url) return url;
+        }
+    }
     return nil;
 }
 
@@ -80,6 +98,13 @@ static NSURL *SCITTResolveChain(id model, NSArray<NSString *> *chain, NSString *
         // `_objc_msgSend$…` message-send stubs -- real selectors this binary actually
         // sends, not guessed names, though not confirmed to be sent specifically to an
         // aweme model the way `-isAds` and `AWEURLModel`'s own method are.
+        // The second batch (downloadinfoModel, urlHolder, playURIString, playItem,
+        // URLList) is read from AWEAwemeModel's own live property list -- a runtime
+        // dump of this exact class on this exact device, not a string dump of a
+        // binary. `-video` itself is on that list too and is included above already,
+        // even though every capture so far has answered it nil; `+watchModel:` covers
+        // the possibility that it is simply not populated yet at the moment a model is
+        // first built, which construction-time capture alone cannot.
         NSArray<NSArray<NSString *> *> *chains = @[
             @[@"videoModel", @"playAddr", @"bestURLtoDownload"],
             @[@"video", @"playAddr", @"bestURLtoDownload"],
@@ -88,6 +113,13 @@ static NSURL *SCITTResolveChain(id model, NSArray<NSString *> *chain, NSString *
             @[@"video", @"url"],
             @[@"playURL"],
             @[@"videoModel", @"playURL"],
+            @[@"downloadinfoModel", @"bestURLtoDownload"],
+            @[@"downloadinfoModel", @"playAddr", @"bestURLtoDownload"],
+            @[@"urlHolder", @"bestURLtoDownload"],
+            @[@"urlHolder", @"url"],
+            @[@"playURIString"],
+            @[@"playItem", @"bestURLtoDownload"],
+            @[@"URLList"],
         ];
 
         NSMutableArray<NSString *> *failures = [NSMutableArray array];
@@ -113,32 +145,103 @@ static NSURL *SCITTResolveChain(id model, NSArray<NSString *> *chain, NSString *
     }
 }
 
+static void SCITTAddResolved(NSURL *url) {
+    if (!sciRecent) sciRecent = [NSMutableArray array];
+
+    // Same video seen twice -- a recycled cell rebound, a scroll back up -- moves
+    // to the front rather than duplicating.
+    for (SCITTMediaItem *existing in [sciRecent copy]) {
+        if ([existing.url isEqual:url]) [sciRecent removeObject:existing];
+    }
+
+    SCITTMediaItem *item = [[SCITTMediaItem alloc] init];
+    item.url = url;
+    item.seen = [NSDate date];
+    [sciRecent insertObject:item atIndex:0];
+
+    while (sciRecent.count > kSCIMediaCap) [sciRecent removeLastObject];
+}
+
 + (void)captureModel:(AWEAwemeModel *)model {
     if (!model) return;
 
     @try {
         NSURL *url = [self resolveURLForModel:model];
-        if (!url) return;
-
-        if (!sciRecent) sciRecent = [NSMutableArray array];
-
-        // Same video seen twice -- a recycled cell rebound, a scroll back up -- moves
-        // to the front rather than duplicating.
-        for (SCITTMediaItem *existing in [sciRecent copy]) {
-            if ([existing.url isEqual:url]) [sciRecent removeObject:existing];
+        if (url) {
+            SCITTAddResolved(url);
+            return;
         }
 
-        SCITTMediaItem *item = [[SCITTMediaItem alloc] init];
-        item.url = url;
-        item.seen = [NSDate date];
-        [sciRecent insertObject:item atIndex:0];
-
-        while (sciRecent.count > kSCIMediaCap) [sciRecent removeLastObject];
+        // Nothing resolved yet -- possibly because none of the tried names are right,
+        // possibly because the right one simply has not been populated on this model
+        // this early. `+watchModel:` cannot tell those apart either, but retrying
+        // costs nothing a first attempt has not already spent, and is the only way to
+        // find out which one it is without guessing a third time.
+        [self watchModel:model];
     } @catch (NSException *exception) {
         // A capture is a convenience; TikTok's own feed is not. Anything thrown here
         // costs this one row, never the app.
         sciLastAttemptState = [NSString stringWithFormat:@"threw: %@", exception.reason ?: @"?"];
         SCILogV(@"media capture: %@", exception.reason);
+    }
+}
+
+///
+/// A model whose first resolution attempt found nothing, watched weakly in case the
+/// answer was simply not populated yet at construction time -- `-video` itself
+/// existing on the live class but answering nil on every attempt so far is exactly
+/// the shape that would produce. Weak, so nothing here extends how long a feed cell's
+/// own model stays alive; a model that TikTok discards while still pending is simply
+/// dropped from the next retry pass rather than kept alive for it.
+///
+
+static NSHashTable<AWEAwemeModel *> *sciPending = nil;
+static NSMapTable<AWEAwemeModel *, NSNumber *> *sciRetryCounts = nil;
+static NSTimer *sciRetryTimer = nil;
+static NSUInteger const kSCIMaxRetries = 6;
+
++ (void)watchModel:(AWEAwemeModel *)model {
+    if (!model) return;
+
+    if (!sciPending) {
+        sciPending = [NSHashTable weakObjectsHashTable];
+        sciRetryCounts = [NSMapTable weakToStrongObjectsMapTable];
+    }
+    [sciPending addObject:model];
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (sciRetryTimer) return;
+        sciRetryTimer = [NSTimer scheduledTimerWithTimeInterval:1.5
+                                                          repeats:YES
+                                                            block:^(NSTimer *timer) {
+            [SCITTMedia retryPending];
+        }];
+    });
+}
+
++ (void)retryPending {
+    if (!sciPending.count) return;
+
+    for (AWEAwemeModel *model in [sciPending allObjects]) {
+        NSUInteger tries = [sciRetryCounts objectForKey:model].unsignedIntegerValue;
+
+        NSURL *url = [self resolveURLForModel:model];
+        if (url) {
+            SCITTAddResolved(url);
+            [sciPending removeObject:model];
+            [sciRetryCounts removeObjectForKey:model];
+            continue;
+        }
+
+        tries++;
+        if (tries >= kSCIMaxRetries) {
+            // Given up on this one -- almost certainly a photo post or something else
+            // with no video at all, not a resolution this project got wrong.
+            [sciPending removeObject:model];
+            [sciRetryCounts removeObjectForKey:model];
+        } else {
+            [sciRetryCounts setObject:@(tries) forKey:model];
+        }
     }
 }
 

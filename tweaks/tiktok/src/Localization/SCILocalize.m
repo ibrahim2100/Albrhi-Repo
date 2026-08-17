@@ -69,6 +69,7 @@ static void SCIBuildTables(void) {
         @"save_no_permission": @"Photos access is off",
 
         @"credit": @"Architecture read from BandarHL's and al3raQe's BHTikTok, NA9 For TikTok and VibeTok — none copied from.",
+        @"report_copied": @"Report copied",
     };
 
     _arTable = @{
@@ -128,6 +129,7 @@ static void SCIBuildTables(void) {
         @"save_no_permission": @"صلاحية الصور مغلقة",
 
         @"credit": @"البنية مقروءة من BHTikTok لـ BandarHL وal3raQe، وNA9 For TikTok وVibeTok — لا شيء منسوخ منها.",
+        @"report_copied": @"تم نسخ التقرير",
     };
 }
 

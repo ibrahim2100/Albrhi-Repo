@@ -107,6 +107,15 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
                                          target:self
                                          action:@selector(dismissSelf)];
 
+    // The Status section's own rows can each run to a long, dynamically-built string
+    // -- every candidate chain's own failure reason, every property name on the live
+    // class -- exactly the kind of thing somebody reporting a bug needs to paste
+    // whole rather than retype from a screenshot.
+    self.navigationItem.leftBarButtonItem =
+        [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction
+                                                        target:self
+                                                        action:@selector(copyReport)];
+
     self.tableView.sectionHeaderTopPadding = 0;
 
     // Every row here can carry a wrapped, multi-line note under its title. Without an
@@ -280,6 +289,41 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
 
 - (void)dismissSelf {
     [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+/// Everything the Status section shows, as plain text, on the pasteboard -- so a
+/// report is one paste instead of several photos of a scrolling screen.
+- (void)copyReport {
+    NSMutableString *report = [NSMutableString string];
+    [report appendFormat:@"Albrhi for TikTok %@\n", SCIVersionString];
+    [report appendFormat:@"app %@\n\n",
+        [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"] ?: @"?"];
+
+    [report appendFormat:@"%@: %@\n", SCILocalized(@"status_gate"),
+        SCIPanelAllowsThisApp() ? SCILocalized(@"gate_on") : SCILocalized(@"gate_off")];
+    [report appendFormat:@"%@: %@\n", SCILocalized(@"diag_ads"), [SCITTDiagnostics adFilterState]];
+    [report appendFormat:@"%@: %@\n", SCILocalized(@"status_button"), SCITTButtonReport()];
+    [report appendFormat:@"%@: %@\n", SCILocalized(@"status_media_resolve"), [SCITTMedia lastAttemptState]];
+    [report appendFormat:@"%@: %@\n", SCILocalized(@"status_media_candidates"),
+        [SCITTMedia candidateAccessorsOnAwemeModel]];
+    [report appendFormat:@"%@: %@\n", SCILocalized(@"diag_bypass"), [SCITTDiagnostics bypassState]];
+    [report appendFormat:@"%@: %@\n", SCILocalized(@"diag_privacy"), [SCITTDiagnostics privacyState]];
+
+    [UIPasteboard generalPasteboard].string = report;
+
+    UIImpactFeedbackGenerator *haptic =
+        [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
+    [haptic impactOccurred];
+
+    UIAlertController *alert =
+        [UIAlertController alertControllerWithTitle:nil
+                                             message:SCILocalized(@"report_copied")
+                                      preferredStyle:UIAlertControllerStyleAlert];
+    [self presentViewController:alert animated:YES completion:nil];
+
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.9 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [alert dismissViewControllerAnimated:YES completion:nil];
+    });
 }
 
 #pragma mark - Table

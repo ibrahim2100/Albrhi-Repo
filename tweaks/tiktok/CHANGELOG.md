@@ -1,5 +1,33 @@
 # Albrhi for TikTok — what changed
 
+## v0.4.7
+
+The full `+candidateAccessorsOnAwemeModel` dump, read this time from the live class on
+a real device rather than from either reference tweak's own binary, settled the
+`-video` question: it exists as a real property, and every attempt to read it so far
+has answered nil. Two readings are possible -- the wrong candidate, or the right one
+simply not populated yet at the moment a model is first built -- and this project has
+no way to tell them apart from a class dump alone.
+
+**So both are now covered.** Seven more candidate chains join the resolver, each read
+directly off that same live property list rather than guessed: `downloadinfoModel`,
+`urlHolder`, `playURIString`, `playItem`, `URLList` (now handled as a value that can
+itself be a list — the first entry that converts to a URL wins). And a model whose
+first resolution attempt finds nothing is no longer simply logged and discarded:
+`+watchModel:` holds it *weakly* — nothing here extends how long a feed cell's own
+model stays alive — and a repeating timer retries resolution on every pending model up
+to six times, in case the answer was only ever a timing question. A model still
+unresolved after six tries is assumed to genuinely have no video (a photo post, most
+likely) and dropped rather than retried forever.
+
+**A "copy report" button was asked for directly and added to the settings screen's
+navigation bar.** The Status section's own rows can each run to a long, dynamically
+built string — every candidate chain's own failure reason, every property name on the
+live class — exactly the kind of thing a bug report needs pasted whole rather than
+retyped from a screenshot. One tap copies gate state, ad filter counts, the button
+report, the resolution state, the full candidate list, and both bypass and privacy
+states to the pasteboard.
+
 ## v0.4.6
 
 Rather than wait on another device report to try one more guessed selector, NA9's own
