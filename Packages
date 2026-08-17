@@ -133,18 +133,18 @@ Name: Albrhi (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
 Package: com.albrhi
-Version: 1.29.9
+Version: 1.29.12
 Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 1588
 Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.tiktok, com.albrhi.tiktok.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.tiktok, com.albrhi.tiktok.roothide, com.albrhi.panel, com.albrhi.panel.roothide
-Filename: debs/com.albrhi_1.29.9_iphoneos-arm64.deb
-Size: 1097656
-MD5sum: 2684651317f6a56e112ceeb4229772d7
-SHA1: 8984dd202ddae340b3352450f238d70f8695c972
-SHA256: 8927d7aa8235ed2f1215c80e3c3abb9ca344ce1296ba8094a93a8036cd4a9caf
+Filename: debs/com.albrhi_1.29.12_iphoneos-arm64.deb
+Size: 1099406
+MD5sum: 8d16417f525307911e25fb302ddce43f
+SHA1: e6fbd3944f565d24b4f600e58d9752e64f691ce9
+SHA256: c657f0dea47a735800b16d123f62d773916c5bef2fd2d46b39894da3f118e1d3
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube, X and TikTok, switched per app from Settings.
@@ -666,18 +666,18 @@ Name: Albrhi (roothide)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
 
 Package: com.albrhi.roothide
-Version: 1.29.9
+Version: 1.29.12
 Architecture: iphoneos-arm64e
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Installed-Size: 1588
 Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.tiktok, com.albrhi.tiktok.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.tiktok, com.albrhi.tiktok.roothide, com.albrhi.panel, com.albrhi.panel.roothide
-Filename: debs/com.albrhi.roothide_1.29.9_iphoneos-arm64e.deb
-Size: 1097304
-MD5sum: a1cd8944f126f24cda71e000594c6fc9
-SHA1: 8befdb0bc70d8c701893f6f1315c3e1c7018b7e2
-SHA256: 49fbbc330bc393c41d0688d32e71f83f9ac3a15fb8fe1e57446579e4cdf35ac7
+Filename: debs/com.albrhi.roothide_1.29.12_iphoneos-arm64e.deb
+Size: 1099030
+MD5sum: d6a4486a716019913b4ed696c1a7c2de
+SHA1: e960f6e5a3207854fe3fded147156f39f4344686
+SHA256: 8df23b550e1691face2f223954b0b2a7868f2bdda9a31f0ba0d0e4ff8b4e2c72
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube, X and TikTok, switched per app from Settings.
