@@ -1,5 +1,33 @@
 # Albrhi for TikTok — what changed
 
+## v0.8.1
+
+**Three releases were aimed at a line that had not changed because nothing had happened.**
+
+"Last save attempt: no candidate was a video — audio only, 972317 bytes" appeared *identically*
+— same byte count, same media id — in the v0.7.0, v0.7.1 and v0.8.0 reports. It was read each
+time as fresh evidence that the newest chain had just saved audio. It was a **stale record**:
+no new attempt had been made at all, because the button was in the wrong place to be tapped.
+
+That record now states its own age. A line from before the current build was installed can no
+longer be mistaken for the last thing that ran, and "nothing saved yet" says *this launch*.
+
+**The button was still leaning right, and the reason was the fix.** 0.8.0 constrained its
+width to `reference.bounds.size.width` — and **bounds are zero at that moment**: the button is
+created and constrained before the rail has ever been laid out. The width fell through to its
+fallback and came out a square narrower than every icon beside it. The height had the same bug,
+hidden because its fallback of 44 happened to look deliberate.
+
+Both dimensions are now tied to the sibling's **anchors**, which resolve at layout time
+whatever the order of construction, so there is no moment at which a size can be read that
+does not exist yet.
+
+**And the rail report was conflating two stacks.** Both hooked stack views write into one
+string, so "appended at end" and the rail contents printed beside it could come from different
+objects — which is exactly how a report shows a rail containing `PlayInteractionLikeView`
+while also saying the anchor search found nothing. The rail line now names which stack it
+describes.
+
 ## v0.8.0
 
 **The device printed `AWEVideoModel`'s own accessors, and that answered both open questions.**

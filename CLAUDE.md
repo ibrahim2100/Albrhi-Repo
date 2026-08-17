@@ -313,6 +313,20 @@ player — clients Google has not migrated — which means impersonating a diffe
 signed requests, and the `n`-signature, from inside the official app while signed in to a
 real account. The counting hooks stay in `SCIYTSabr.x`; the switch was removed in 1.12.0.
 
+**A diagnostic that does not date itself will be read as current, and three releases were
+aimed at one that was not.** TikTok's "last save attempt" line carried the identical byte
+count and media id across three reports; each was read as fresh proof that the newest download
+chain had just saved audio. Nothing had happened at all -- the button was in the wrong place to
+be tapped, so no new attempt existed and the old string simply persisted. Any recorded state a
+report prints should say when it was recorded, or say plainly that it is from this launch;
+otherwise the absence of change is indistinguishable from a change that failed.
+
+**And a constraint built from `bounds` at construction time is built from zero.** The same
+button was sized from `reference.bounds` while being created -- before the rail had ever laid
+out -- so it came out a square narrower than its neighbours and drifted to one side. Anchor
+constraints resolve at layout time and cannot read a size that does not exist yet; a constant
+copied out of `bounds` in an initialiser always can.
+
 **A framework-wide selector dump says a name exists; it never says on what class.** This
 cost two rounds on TikTok's downloader. `downloadAddr` appears in MusicallyCore's
 `__objc_methname` and in NA9's binary, so it was tried first -- twice -- and it is **not on

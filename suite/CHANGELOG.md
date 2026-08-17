@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.33.1
+
+Includes TikTok 0.8.1 — the save button's size is finally tied to the icons beside it rather
+than to sizes read before anything had been laid out, which is why it kept leaning to one
+side. The report also stops presenting a stale save record as a fresh one, and names which of
+the two rails it is describing.
+
 ## v1.33.0
 
 Includes TikTok 0.8.0 — **downloads should finally be the video, at download quality, without

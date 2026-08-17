@@ -33,13 +33,30 @@ static NSMutableSet<SCITTDownload *> *_running = nil;
 /// the same reason every other diagnostic in this tweak exists.
 static NSString *sciLastDownloadState = nil;
 
+/// When it happened, and how long the process has been running.
+///
+/// **A stale record read as a fresh one cost three releases of misdiagnosis.** This line
+/// carried the identical byte count and media id across v0.7.0, v0.7.1 and v0.8.0 reports,
+/// and every one of those was read as evidence that the newest chain had just saved audio --
+/// when in fact no new attempt had been made at all, because the button was in the wrong
+/// place to be tapped. Three fixes were aimed at a sentence that had not changed because
+/// nothing had happened.
+///
+/// So the record says its own age. A line from a previous launch, or from minutes before the
+/// current build was installed, is now impossible to mistake for the last thing that ran.
+static NSDate *sciLastDownloadAt = nil;
+
 void SCITTRecordDownload(NSString *state) {
     sciLastDownloadState = state;
+    sciLastDownloadAt = [NSDate date];
     SCILogV(@"download: %@", state);
 }
 
 NSString *SCITTDownloadReport(void) {
-    return sciLastDownloadState ?: @"nothing saved yet";
+    if (!sciLastDownloadState) return @"nothing saved yet this launch";
+
+    NSTimeInterval ago = [[NSDate date] timeIntervalSinceDate:sciLastDownloadAt];
+    return [NSString stringWithFormat:@"%@ (%.0fs ago)", sciLastDownloadState, ago];
 }
 
 @implementation SCITTDownload

@@ -207,7 +207,14 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
     for (UIView *sibling in siblings) {
         [names addObject:NSStringFromClass([sibling class])];
     }
-    sciRailContents = [names componentsJoinedByString:@" | "];
+    // Named by which rail it is.
+    //
+    // Two stack views are hooked and both report into one string, so "appended at end" and
+    // the rail contents printed beside it could come from different objects -- which is
+    // exactly how a report can show a rail containing PlayInteractionLikeView while also
+    // saying the anchor search found nothing. They are separate lines now.
+    sciRailContents = [NSString stringWithFormat:@"%@ [%@]",
+        [names componentsJoinedByString:@" | "], NSStringFromClass([stack class])];
 
     // Matched to a sibling's own height rather than a number picked here, so the button
     // occupies the same vertical slot every other icon does instead of whatever 44
@@ -223,14 +230,26 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
     //
     // Both dimensions come from a sibling rather than from numbers chosen here, so the button
     // occupies the same slot TikTok's own icons do on whatever rail it lands in.
+    // Tied to the sibling's anchors, not to numbers copied out of its bounds.
+    //
+    // 0.8.0 read `reference.bounds` and constrained to those constants. **Bounds are zero at
+    // this moment** -- the button is created and constrained before the rail has ever been
+    // laid out -- so the width fell through to the fallback and the button came out a square
+    // narrower than every icon beside it. That is the "still leaning right", and it is the
+    // same bug the height had, hidden because the height fallback of 44 happened to be close
+    // enough to look deliberate.
+    //
+    // An anchor constraint is resolved at layout time, whatever the order of construction, so
+    // there is no moment at which it can read a size that does not exist yet.
     UIView *reference = siblings.lastObject;
-    CGFloat side = (reference && reference.bounds.size.height > 8)
-        ? reference.bounds.size.height : 44;
-    CGFloat wide = (reference && reference.bounds.size.width > 8)
-        ? reference.bounds.size.width : side;
 
-    [button.heightAnchor constraintEqualToConstant:side].active = YES;
-    [button.widthAnchor constraintEqualToConstant:wide].active = YES;
+    if (reference) {
+        [button.widthAnchor constraintEqualToAnchor:reference.widthAnchor].active = YES;
+        [button.heightAnchor constraintEqualToAnchor:reference.heightAnchor].active = YES;
+    } else {
+        [button.widthAnchor constraintEqualToConstant:44].active = YES;
+        [button.heightAnchor constraintEqualToConstant:44].active = YES;
+    }
 
     // And centred inside whatever width it is given, so the glyph sits on the same vertical
     // line as the icons above and below rather than against one edge of its own box.
