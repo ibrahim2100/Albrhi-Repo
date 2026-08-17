@@ -1,5 +1,28 @@
 # Albrhi for TikTok — what changed
 
+## v0.12.1
+
+**0.12.0 crashed TikTok. Reverted.**
+
+The HD picker is gone entirely rather than patched, and the tweak is back to 0.11.0's
+behaviour: the button appears on every video, in place, and saves the clip you are watching —
+at whatever quality `downloadNoWatermarkURL` gives.
+
+Two things in that reader could crash and I did not guard either properly:
+
+- `-bitRate`'s **return type was assumed.** It was read through `objc_msgSend` cast to
+  `long long`. If that property is a `double`, a `float` or an `NSNumber *`, the cast is
+  undefined behaviour — the value arrives in a different register or is a pointer read as an
+  integer. Nothing in the binary told me which it was, and I did not check.
+- It ran during **model construction**. Resolution is driven from the aweme model's own
+  `-init`, where `-video` is a half-built object. This repository's own rule says a `@try`
+  does not make that safe, and reading a list of sub-objects off a partially initialised
+  model is exactly the case that rule is about.
+
+**A crash is worse than SD**, and shipping the fix for a quality complaint at the cost of the
+app opening is not a trade worth making. HD comes back when the type is confirmed and the read
+happens somewhere the model is finished — not before.
+
 ## v0.12.0
 
 **HD: the best gear is chosen by comparing bitrates, not by taking the first one listed.**

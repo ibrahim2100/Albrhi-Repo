@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.37.1
+
+**TikTok crashed on 1.37.0. Fixed by reverting** the HD change that caused it. The button and
+downloads work as they did in 1.36.0 — right video, right clip — at the quality that release
+gave. HD returns when it can be done without risking the app.
+
+Includes TikTok 0.12.1.
+
 ## v1.37.0
 
 Includes TikTok 0.12.0 — **downloads go for the highest-quality gear TikTok offers.** The video
