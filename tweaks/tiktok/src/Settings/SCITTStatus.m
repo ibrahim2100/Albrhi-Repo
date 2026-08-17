@@ -38,7 +38,7 @@ static const NSInteger kSCIRowPrivacyMessages = 1;
 static const NSInteger kSCIRowPrivacyProfile = 2;
 static const NSInteger kSCIPrivacyRowCount = 3;
 
-static const NSInteger kSCIStatusRowCount = 8;
+static const NSInteger kSCIStatusRowCount = 9;
 
 @implementation SCITTStatus
 
@@ -301,6 +301,9 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_button"), SCITTButtonReport()];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_media_resolve"), [SCITTMedia lastAttemptState]];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_download"), SCITTDownloadReport()];
+    [report appendFormat:@"%@: %@\n", SCILocalized(@"status_cell_accessors"),
+        [SCITTMedia accessorsOnClassNamed:@"AWEFeedViewCell"
+                                  matching:@[@"model", @"aweme", @"item", @"data"]]];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_media_candidates"),
         [SCITTMedia candidateAccessorsOnAwemeModel]];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"diag_bypass"), [SCITTDiagnostics bypassState]];
@@ -505,11 +508,21 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
             cell.imageView.image = SCITTBadge(@"square.and.arrow.down", SCIAccent());
             break;
         case 5:
+            // The cell's own model accessor, which is what the button needs to stop
+            // saving whichever URL was resolved most recently and start saving the
+            // video it is actually attached to.
+            cell.textLabel.text = SCILocalized(@"status_cell_accessors");
+            cell.detailTextLabel.text =
+                [SCITTMedia accessorsOnClassNamed:@"AWEFeedViewCell"
+                                          matching:@[@"model", @"aweme", @"item", @"data"]];
+            cell.imageView.image = SCITTBadge(@"rectangle.on.rectangle", [UIColor systemPurpleColor]);
+            break;
+        case 6:
             cell.textLabel.text = SCILocalized(@"status_media_candidates");
             cell.detailTextLabel.text = [SCITTMedia candidateAccessorsOnAwemeModel];
             cell.imageView.image = SCITTBadge(@"magnifyingglass", [UIColor systemPurpleColor]);
             break;
-        case 6:
+        case 7:
             cell.textLabel.text = SCILocalized(@"diag_bypass");
             cell.detailTextLabel.text = [SCITTDiagnostics bypassState];
             cell.imageView.image = SCITTBadge(@"shield.lefthalf.filled", [UIColor systemIndigoColor]);

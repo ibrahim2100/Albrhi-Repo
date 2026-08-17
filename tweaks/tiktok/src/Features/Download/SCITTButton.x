@@ -46,6 +46,12 @@ static BOOL sciRailPresent = NO;
 static NSString *sciRailName = nil;
 static NSUInteger sciRailButtonsPlaced = 0;
 
+/// What the rail actually contained when the button was placed, and whether share was
+/// found in it -- so a build whose icon naming does not match says so rather than
+/// silently landing the button somewhere odd.
+static NSString *sciRailContents = nil;
+static BOOL sciPlacedAfterShare = NO;
+
 
 @interface SCITTButtonTarget : NSObject
 + (instancetype)shared;
@@ -160,20 +166,37 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
 
     objc_setAssociatedObject(button, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
-    // Second from the end, not appended after everything. TikTok's own rail is
-    // avatar, like, comment, bookmark, share, then a spinning record/music-disc icon
-    // last -- a layout this project has not confirmed against a class dump the way
-    // every hook target elsewhere in this tweak is, but is consistent and well known
-    // across TikTok's own app regardless of build. Appending at the very end landed
-    // the button after that disc rather than under share, which is what was reported.
-    // Inserting one position before the end puts it directly under share on that
-    // layout; if a future build's rail does not end with the disc, this simply lands
-    // one icon higher than intended rather than breaking anything.
-    NSUInteger count = stack.arrangedSubviews.count;
-    NSUInteger index = count > 0 ? count - 1 : 0;
+    //
+    // **Placed by finding share, not by counting from the end.** "Second from last"
+    // assumed TikTok's rail ends with its spinning music disc -- an assumption about a
+    // layout this project has never actually read, and the button landed in the wrong
+    // place twice on the strength of it. The siblings' own class names are right here
+    // to be searched instead: TikTok names its rail icons for what they do, so the one
+    // whose class name mentions share is the one to sit under. Recorded for the report
+    // either way, so a build whose naming does not match says so instead of silently
+    // landing somewhere odd.
+    //
+    NSArray<UIView *> *siblings = stack.arrangedSubviews;
+    NSMutableArray<NSString *> *names = [NSMutableArray array];
+    NSInteger shareIndex = -1;
+
+    for (NSUInteger i = 0; i < siblings.count; i++) {
+        NSString *name = NSStringFromClass([siblings[i] class]);
+        [names addObject:name];
+        if (shareIndex < 0 && [name.lowercaseString containsString:@"share"]) {
+            shareIndex = (NSInteger)i;
+        }
+    }
+    sciRailContents = [names componentsJoinedByString:@" | "];
 
     if ([stack respondsToSelector:@selector(insertArrangedSubview:atIndex:)]) {
-        [stack insertArrangedSubview:button atIndex:index];
+        // Directly after share where it was found; otherwise at the very end, which is
+        // at least a predictable place rather than an arithmetic guess at one.
+        NSUInteger index = (shareIndex >= 0)
+            ? (NSUInteger)(shareIndex + 1)
+            : siblings.count;
+        [stack insertArrangedSubview:button atIndex:MIN(index, siblings.count)];
+        sciPlacedAfterShare = (shareIndex >= 0);
     } else if ([stack respondsToSelector:@selector(addArrangedSubview:)]) {
         [stack addArrangedSubview:button];
     } else {
@@ -245,6 +268,14 @@ void SCITTInstallButton(void) {
 
 NSString *SCITTButtonReport(void) {
     if (!sciRailPresent) return @"no interaction rail in this build";
-    return [NSString stringWithFormat:@"%@ — %lu placed",
+
+    NSMutableString *out = [NSMutableString stringWithFormat:@"%@ — %lu placed",
         sciRailName ?: @"?", (unsigned long)sciRailButtonsPlaced];
+
+    [out appendFormat:@"; %@", sciPlacedAfterShare
+        ? @"after share" : @"share not found, appended at end"];
+
+    if (sciRailContents) [out appendFormat:@"; rail: %@", sciRailContents];
+
+    return out;
 }

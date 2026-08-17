@@ -37,6 +37,21 @@ static NSUInteger sciResolveSuccesses = 0;
 static NSUInteger sciResolveAttempts = 0;
 static NSString *sciWinningChain = nil;
 
+/// **The one fact never recorded, and the reason this went round in circles.** A chain
+/// name alone says which selectors answered, not *what* they answered with -- and the
+/// saved file kept coming back byte-identical (972317 bytes of `audio/mp4`) release
+/// after release, which only the URL itself could explain. A music CDN host and a video
+/// CDN host are told apart at a glance; "resolved via video.playURL.originURLList" is
+/// not. Truncated to host plus the last path component, so it identifies the *kind* of
+/// link without putting a signed, account-scoped URL in a report meant to be pasted.
+static NSString *sciWinningURLShape = nil;
+
+static NSString *SCITTURLShape(NSURL *url) {
+    if (!url) return @"nil";
+    return [NSString stringWithFormat:@"%@/…/%@",
+        url.host ?: @"?", url.lastPathComponent ?: @"?"];
+}
+
 @implementation SCITTMedia
 
 /// A value however TikTok's own accessor hands it back, turned into a URL without
@@ -163,6 +178,7 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url) {
             if (url) {
                 sciResolveSuccesses++;
                 sciWinningChain = [chain componentsJoinedByString:@"."];
+                sciWinningURLShape = SCITTURLShape(url);
                 sciLastAttemptState = [NSString stringWithFormat:
                     @"resolved via %@", sciWinningChain];
                 return url;
@@ -270,6 +286,7 @@ static void SCITTAddResolved(NSURL *url) {
                 sciResolveSuccesses++;
                 sciWinningChain = [NSString stringWithFormat:@"AWEVideoModel.%@",
                     [chain componentsJoinedByString:@"."]];
+                sciWinningURLShape = SCITTURLShape(url);
                 sciLastAttemptState = [NSString stringWithFormat:@"resolved via %@", sciWinningChain];
                 SCITTAddResolved(url);
                 return;
@@ -388,6 +405,9 @@ static NSUInteger const kSCIMaxRetries = 10;
     if (sciWinningChain) {
         [out appendFormat:@"; via %@", sciWinningChain];
     }
+    if (sciWinningURLShape) {
+        [out appendFormat:@"; link %@", sciWinningURLShape];
+    }
     [out appendFormat:@"; %lu kept", (unsigned long)sciRecent.count];
 
     // The last attempt's own detail is kept, but only after the counts, and only when
@@ -401,17 +421,21 @@ static NSUInteger const kSCIMaxRetries = 10;
 }
 
 + (NSString *)candidateAccessorsOnAwemeModel {
-    Class cls = NSClassFromString(@"AWEAwemeModel");
-    if (!cls) return @"AWEAwemeModel not in this build";
+    return [self accessorsOnClassNamed:@"AWEAwemeModel"
+                              matching:@[@"video", @"play", @"url", @"media",
+                                         @"cover", @"download", @"aweme"]];
+}
 
-    NSArray<NSString *> *keywords =
-        @[@"video", @"play", @"url", @"media", @"cover", @"download", @"aweme"];
++ (NSString *)accessorsOnClassNamed:(NSString *)className
+                            matching:(NSArray<NSString *> *)keywords {
+    Class cls = NSClassFromString(className);
+    if (!cls) return [NSString stringWithFormat:@"%@ not in this build", className];
+
     NSMutableOrderedSet<NSString *> *names = [NSMutableOrderedSet orderedSet];
 
-    // The chain from a model to its video may sit on a superclass rather than on
-    // AWEAwemeModel itself -- TikTok's own model hierarchy is not something this
-    // project has a class dump of, so a few levels up are read too rather than
-    // assuming the property lives on the exact class that was hooked.
+    // The accessor may sit on a superclass rather than on the named class itself --
+    // TikTok's own hierarchy is not something this project has a class dump of, so a
+    // few levels up are read too rather than assuming it is declared exactly here.
     Class walk = cls;
     for (int depth = 0; walk && depth < 4; depth++) {
         unsigned int propCount = 0;
@@ -440,7 +464,10 @@ static NSUInteger const kSCIMaxRetries = 10;
         walk = class_getSuperclass(walk);
     }
 
-    if (!names.count) return @"nothing on this class matches video/play/url/media";
+    if (!names.count) {
+        return [NSString stringWithFormat:@"%@: nothing matches %@",
+            className, [keywords componentsJoinedByString:@"/"]];
+    }
     return [[names array] componentsJoinedByString:@", "];
 }
 

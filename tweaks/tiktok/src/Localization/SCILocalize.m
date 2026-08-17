@@ -45,6 +45,7 @@ static void SCIBuildTables(void) {
         @"status_button": @"In-feed button",
         @"status_media_resolve": @"Video link resolution",
         @"status_media_candidates": @"Possible video accessors",
+        @"status_cell_accessors": @"Feed cell model accessors",
         @"status_download": @"Last save attempt",
 
         @"diag_ads": @"Ad filter",
@@ -100,6 +101,7 @@ static void SCIBuildTables(void) {
         @"status_button": @"زر الواجهة",
         @"status_media_resolve": @"تحليل رابط الفيديو",
         @"status_media_candidates": @"دوال محتملة للفيديو",
+        @"status_cell_accessors": @"دوال موديل خلية الفيد",
         @"status_download": @"آخر محاولة حفظ",
 
         @"diag_ads": @"فلتر الإعلانات",

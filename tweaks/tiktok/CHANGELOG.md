@@ -1,5 +1,36 @@
 # Albrhi for TikTok — what changed
 
+## v0.5.3
+
+`972317 bytes` — the *exact* same byte count as three releases ago, with the winning
+chain now reported as `video.playURL.originURLList`. An identical file from a
+differently-named chain means the chain name was never the useful fact, and this
+release stops guessing on three separate fronts by recording what was actually
+happening instead.
+
+**The resolved link is now in the report.** Every version of this diagnostic named which
+*selectors* answered and never once what they answered *with*. Host plus last path
+component is enough to tell a music CDN from a video CDN at a glance — and truncated
+deliberately, so a signed account-scoped URL does not end up in a pasted report.
+
+**The button's real design flaw, stated plainly.** It saves
+`[SCITTMedia recent].firstObject` — whichever URL was resolved *most recently*. During a
+scroll that is a prefetched neighbour several videos ahead, not the video on screen.
+That single fact explains both remaining complaints at once: it downloads the wrong
+thing, and it appears unevenly because it appears only when *something* has resolved
+recently. Fixing it needs the cell's own model accessor, which no reference tweak names
+because neither hooks `AWEFeedViewCell` — so a new Status row dumps that class's own
+`model`/`aweme`/`item`/`data` accessors from the live runtime, the same way the aweme
+model's were found. The next report names the accessor; the release after this one binds
+to it.
+
+**The button is now placed by finding share, not by counting from the end.** "Second
+from last" assumed TikTok's rail ends with its music disc — an assumption about a layout
+this project had never actually read, and it put the button in the wrong place twice. The
+siblings' class names were available the whole time: the one whose name mentions share is
+the one to sit under. The rail's full contents are recorded in the report either way, so a
+build whose naming does not match says so instead of landing somewhere odd.
+
 ## v0.5.2
 
 **VibeTok does have a download feature, and reading only NA9 is what kept this

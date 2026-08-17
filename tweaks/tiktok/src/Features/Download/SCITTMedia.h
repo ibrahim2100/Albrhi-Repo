@@ -69,6 +69,17 @@ NS_ASSUME_NONNULL_BEGIN
 /// is actually named, on the build it needs to be named on.
 + (NSString *)candidateAccessorsOnAwemeModel;
 
+/// The same live-runtime dump for any class by name, filtered by any keyword.
+///
+/// Written for `AWEFeedViewCell`: the in-feed button currently saves whichever URL was
+/// resolved *most recently*, which during a scroll is a prefetched neighbour rather
+/// than the video on screen -- that is why it downloads the wrong thing and appears
+/// inconsistently. Binding it to its own cell's model instead needs that cell's own
+/// model accessor, and no reference tweak names one because neither hooks this class.
+/// Asking the device is the only way left that is not a guess.
++ (NSString *)accessorsOnClassNamed:(NSString *)className
+                            matching:(NSArray<NSString *> *)keywords;
+
 @end
 
 NS_ASSUME_NONNULL_END
