@@ -109,30 +109,50 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
 
     if (!item) return;
 
-    UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
+    //
+    // **A plain image button was tried three ways and read tilted every time.** Set as
+    // the button's own image, `UIButton` positions it through `contentEdgeInsets`,
+    // `contentHorizontalAlignment` and its own `imageView` frame -- all of which
+    // iOS 15+ reinterprets through `UIButtonConfiguration` whether one was asked for
+    // or not, and none of which this project can confirm against TikTok's own rail
+    // metrics. Pinning a fixed width made it worse (it fought the stack's own fill
+    // alignment); leaving the width free was still off-centre.
+    //
+    // So the glyph is no longer the button's image at all. It is a separate
+    // `UIImageView` centred inside the button by two constraints of this file's own
+    // making -- `centerXAnchor` and `centerYAnchor` -- which nothing in `UIButton`'s
+    // internal layout or in the stack's alignment can reinterpret. The button itself
+    // keeps no intrinsic content, so the stack sizes it purely from the height
+    // constraint below and whatever width the fill gives it, and the glyph sits in the
+    // middle of that by construction rather than by any alignment property holding.
+    //
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
     button.tag = kSCIRailButtonTag;
+    [button.heightAnchor constraintEqualToConstant:44].active = YES;
 
     UIImageSymbolConfiguration *config =
-        [UIImageSymbolConfiguration configurationWithPointSize:26
+        [UIImageSymbolConfiguration configurationWithPointSize:27
                                                         weight:UIImageSymbolWeightSemibold];
-    [button setImage:[UIImage systemImageNamed:@"arrow.down.circle.fill" withConfiguration:config]
-            forState:UIControlStateNormal];
-    button.tintColor = [UIColor whiteColor];
+    UIImageView *glyph = [[UIImageView alloc] initWithImage:
+        [UIImage systemImageNamed:@"arrow.down.circle.fill" withConfiguration:config]];
+    glyph.tintColor = [UIColor whiteColor];
+    glyph.contentMode = UIViewContentModeScaleAspectFit;
+    glyph.translatesAutoresizingMaskIntoConstraints = NO;
+    // The glyph must never intercept the tap meant for the button under it.
+    glyph.userInteractionEnabled = NO;
+    [button addSubview:glyph];
 
-    // **The width constraint v0.4.10 added is what made this worse, not better.** A
-    // vertical UIStackView whose alignment is `fill` -- the default, and what TikTok's
-    // own rail evidently uses, since its icons span the rail's whole width -- gives
-    // every arranged subview the stack's full width. Pinning this one to 34 points
-    // fought that: the constraint and the fill cannot both hold, and the loser shows
-    // as a button sitting off to one side of a column whose other icons are centred in
-    // their own full-width slots. Only the height is constrained now; the width is
-    // left to the stack, and the glyph is centred inside whatever width that turns out
-    // to be -- which is precisely how every sibling icon in the rail already behaves.
-    button.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
-    button.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
-    button.imageView.contentMode = UIViewContentModeScaleAspectFit;
-    button.contentEdgeInsets = UIEdgeInsetsZero;
-    [button.heightAnchor constraintEqualToConstant:34].active = YES;
+    [NSLayoutConstraint activateConstraints:@[
+        [glyph.centerXAnchor constraintEqualToAnchor:button.centerXAnchor],
+        [glyph.centerYAnchor constraintEqualToAnchor:button.centerYAnchor],
+    ]];
+
+    // Same shadow TikTok's own white glyphs carry over bright video, so the button
+    // stays visible on a pale frame rather than disappearing into it.
+    glyph.layer.shadowColor = [UIColor blackColor].CGColor;
+    glyph.layer.shadowOpacity = 0.35;
+    glyph.layer.shadowRadius = 3;
+    glyph.layer.shadowOffset = CGSizeZero;
 
     [button addTarget:[SCITTButtonTarget shared]
                action:@selector(tapped:)

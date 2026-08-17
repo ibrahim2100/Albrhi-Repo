@@ -161,8 +161,13 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url) {
             @[@"playURL"],
             @[@"videoModel", @"playURL"],
             @[@"urlHolder", @"url"],
-            @[@"playURIString"],
-            @[@"URLList"],
+            // playURIString and URLList are gone, and this is a measured removal, not a
+            // tidy-up. `URLList` resolved 288 times of 706 -- and the file it produced
+            // was 972 KB of `audio/mp4` with no video track at all. It is the *sound's*
+            // URL list, not the video's. Every one of those "successes" was the music.
+            // `playURIString` was already rejected for answering a non-http(s) link.
+            // Leaving either in place would keep the button saving songs and reporting
+            // success, which is worse than resolving nothing.
         ];
 
         sciResolveAttempts++;
@@ -213,6 +218,54 @@ static void SCITTAddResolved(NSURL *url) {
     [sciRecent insertObject:item atIndex:0];
 
     while (sciRecent.count > kSCIMediaCap) [sciRecent removeLastObject];
+}
+
++ (void)captureVideoModel:(id)videoModel {
+    if (!videoModel) return;
+
+    @try {
+        sciResolveAttempts++;
+
+        // Only chains that end at AWEURLModel's own doubly-confirmed
+        // -bestURLtoDownload, sent to the video model itself rather than to an aweme
+        // model whose -video is nil at construction time. -playURL is confirmed on this
+        // class by a device report ("chain ended at AWEURLModel"); -playAddr and
+        // -bitratePlayAddr are tried after it because the reference tweaks name them
+        // and one of them may be what a different build populates first.
+        NSArray<NSArray<NSString *> *> *chains = @[
+            @[@"playURL", @"bestURLtoDownload"],
+            @[@"playAddr", @"bestURLtoDownload"],
+            @[@"bitratePlayAddr", @"bestURLtoDownload"],
+            @[@"h264URL", @"bestURLtoDownload"],
+            @[@"downloadURL", @"bestURLtoDownload"],
+        ];
+
+        NSMutableArray<NSString *> *failures = [NSMutableArray array];
+        for (NSArray<NSString *> *chain in chains) {
+            NSString *failure = nil;
+            NSURL *url = SCITTResolveChain(videoModel, chain, &failure);
+            if (url && !SCITTURLLooksDownloadable(url)) {
+                failure = [NSString stringWithFormat:@"non-http(s) (%@)", url.scheme ?: @"no scheme"];
+                url = nil;
+            }
+            if (url) {
+                sciResolveSuccesses++;
+                sciWinningChain = [NSString stringWithFormat:@"AWEVideoModel.%@",
+                    [chain componentsJoinedByString:@"."]];
+                sciLastAttemptState = [NSString stringWithFormat:@"resolved via %@", sciWinningChain];
+                SCITTAddResolved(url);
+                return;
+            }
+            [failures addObject:[NSString stringWithFormat:@"%@: %@",
+                [chain componentsJoinedByString:@"."], failure ?: @"?"]];
+        }
+
+        sciLastAttemptState = [NSString stringWithFormat:@"AWEVideoModel — every chain failed: %@",
+            [failures componentsJoinedByString:@" | "]];
+    } @catch (NSException *exception) {
+        sciLastAttemptState = [NSString stringWithFormat:@"threw: %@", exception.reason ?: @"?"];
+        SCILogV(@"video model capture: %@", exception.reason);
+    }
 }
 
 + (void)captureModel:(AWEAwemeModel *)model {

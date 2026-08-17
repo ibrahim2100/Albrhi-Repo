@@ -771,8 +771,11 @@ tweaks/
     src/TikTokHeaders.h      every class this tweak touches, with which confirmation
                              bar each one meets — a hooked-selector symbol table beats
                              string-table proximity, and the header says which is which
-    src/Features/Download/   SCITTMedia resolves and holds only a URL, never the model;
-                             SCITTDownload saves it, mirroring Locket's own downloader
+    src/Features/Download/   SCITTCapture hooks AWEVideoModel's own construction, which
+                             is the only point a real play URL exists; SCITTMedia
+                             resolves and holds only a URL, never the model; SCITTButton
+                             puts one button in the centred cell's rail; SCITTDownload
+                             saves it and asks AVFoundation what the file actually is
     src/Features/Privacy/    three report-to-server calls withheld, local state untouched
     src/Settings/            a two-finger hold shows switches and what has been captured
   locket/                  Albrhi for Locket — com.albrhi.locket, released on its own
@@ -1243,11 +1246,11 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.4.12** (four features, three-way privacy, in-feed button in the
-rail, sectioned settings screen — the button and URL resolution are both confirmed
-working on a real device; the download reached Photos only after the file's own
-AVFoundation track list, not its URL extension or MIME type, was made to decide
-video-vs-audio) · suite **1.29.12**.
+source) · TikTok **0.5.0** (four features, three-way privacy, in-feed button in the
+rail, sectioned settings screen; the download link is resolved from `AWEVideoModel` at
+its own construction — the aweme model's `-video` is nil at that point and its
+`-URLList` resolves the *song*, which is what made 288 "successful" saves all audio)
+· suite **1.30.0**.
 
 - **CarPlay is built but not served.** The code is complete and compiles; the package is
   kept out of the APT index until its app bridging is confirmed on a device. Install it

@@ -1,5 +1,37 @@
 # Albrhi for TikTok — what changed
 
+## v0.5.0
+
+**The 288 "successful" resolutions were all the song, not the video, and the file's own
+track list is what finally said so.** `-URLList` on `AWEAwemeModel` resolved 288 times
+out of 706 — and the file it produced was 972 KB of `audio/mp4` with no video track at
+all. It is the *sound's* URL list. Every save reporting "sound saved" was that chain
+being confidently, consistently wrong; v0.4.12's AVFoundation check is what turned an
+invisible wrong answer into a measurable one. `-URLList` and `-playURIString` are both
+removed rather than reordered: a chain that reliably resolves the wrong media is worse
+than one that resolves nothing.
+
+**The link comes from `AWEVideoModel`, caught at its own construction.** Every attempt
+so far went through the aweme model, and `AWEAwemeModel -video` is nil for the
+overwhelming majority of models at the moment they are built — a retry timer only
+partly papered over that. `AWEVideoModel` is confirmed real by the reports themselves
+(one said `"AWEVideoModel has no -playAddr"`, which only a real class can say; another
+said `video.playURL` ended `"at AWEURLModel"`, one hop short of that class's own
+doubly-confirmed `-bestURLtoDownload`). A new file, `SCITTCapture.x`, hooks
+`AWEVideoModel -init`/`-initWithDictionary:error:` and resolves
+`playURL.bestURLtoDownload` from it directly — by the time that object exists, the play
+URL is what it was built to carry, so there is nothing to wait for. `%orig` runs first
+and the return value is never altered; this reads, it does not filter.
+
+**The button's glyph is no longer the button's image.** A plain image button was tried
+three ways and read tilted every time: `contentEdgeInsets` and
+`contentHorizontalAlignment` are reinterpreted by `UIButtonConfiguration` on iOS 15+
+whether one was asked for or not, and a fixed width fought the stack's own fill
+alignment. The glyph is now a separate `UIImageView` centred inside the button by this
+file's own `centerXAnchor`/`centerYAnchor` constraints — which nothing in `UIButton`'s
+internal layout or in the stack's alignment can reinterpret. It sits in the middle by
+construction rather than by an alignment property holding.
+
 ## v0.4.12
 
 **"Sound saved" was never a failure message — it was the audio branch succeeding on a

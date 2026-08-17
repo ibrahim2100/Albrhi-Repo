@@ -41,6 +41,17 @@ NS_ASSUME_NONNULL_BEGIN
 /// set. Nil on anything the chain could not resolve.
 + (nullable NSURL *)resolveURLForModel:(AWEAwemeModel *)model;
 
+/// Resolves and keeps a URL from an `AWEVideoModel` directly, skipping the aweme model
+/// entirely.
+///
+/// **This is the path that actually works, and it exists because the aweme model's own
+/// `-video` is almost always nil when a model is built.** A device report confirmed
+/// `AWEVideoModel` is real (`"AWEVideoModel has no -playAddr"` named it outright) and
+/// that `-playURL` on it answers a real `AWEURLModel` -- one hop from that class's own
+/// doubly-confirmed `-bestURLtoDownload`. Catching the video model at its own
+/// construction needs no waiting for `-video` to be populated at all.
++ (void)captureVideoModel:(id)videoModel;
+
 /// Newest first, at most a small cap.
 + (NSArray<SCITTMediaItem *> *)recent;
 
