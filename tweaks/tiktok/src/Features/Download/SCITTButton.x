@@ -10,26 +10,45 @@
 ///
 /// A button in the feed itself, not only a list on the status screen.
 ///
-/// **Primary surface: a button drawn directly on the cell, the same shape NA9 For
-/// TikTok's own `AWEFeedViewTemplateCell -layoutSubviews` → `na9AddDownloadButton`
-/// mechanism uses** — its own author reports this exact surface working, unmodified,
-/// across several years of TikTok updates, which is a stronger confirmation than a
-/// string in a binary: it is what a real, long-running device actually renders. The
-/// cell itself is confirmed present in TikTok 46.4.0's own binary; positioning a
-/// button on it needs no other class to exist at all, unlike the sidebar surface below.
+/// **A device report settled the class question outright.** `AWEFeedViewTemplateCell`
+/// -- the class both NA9 and VibeTok's own symbol tables name, and the one this tweak
+/// hooked through v0.4.2 -- never actually fires on this build: its bind method was
+/// never called, which is why every placement attempt found nothing. The report's own
+/// "0 placed; above it: …" chain named the real ancestry instead, walked live from the
+/// interaction rail up to its actual table cell:
 ///
-/// **Secondary surface: the interaction rail**, `TTKFeedInteractionStackView` /
-/// `TTKFeedRightInteractionStackView`, which NA9 also hooks (`na9SidebarDownloadButtonTapped:`)
-/// as a second, newer button style, and which VibeTok independently touches for an
-/// unrelated reason. Kept as an extra surface in case a given build renders through it
-/// even where the cell overlay does not, the same "keep both, a %hook on an absent class
-/// never attaches" reasoning the X tweak's own immersive button already uses for two
-/// rail names.
+///   TTKFeedInteractionStackView < TTKFeedInteractionMainView <
+///   TTKFeedInteractionRootView < UITableViewCellContentView <
+///   **AWEFeedViewCell** < AWENewFeedTableView < … < AWEFeedSlidingScrollView
 ///
-/// Both surfaces read the same association, stashed on the cell the moment
-/// `-configWithModel:`/`-configureWithModel:` sets its model — two of NA9's own hooked
-/// selectors, so the argument itself needs no further confirmation.
+/// `AWEFeedViewCell` is in neither reference's own hook table -- this build has simply
+/// moved past what either tweak was written against, the same "the app rebuilt around
+/// a new name" situation this project's CLAUDE.md already documents for X's own
+/// action rail. It is confirmed the only way that matters here: read directly off a
+/// live view hierarchy on the device this tweak actually runs on.
 ///
+/// **The fix drops per-cell precision rather than guess at another bind method.**
+/// Nothing above named which selector actually sets `AWEFeedViewCell`'s model, and
+/// guessing one the way `AWEFeedViewTemplateCell`'s was guessed is exactly what
+/// produced this bug. `-layoutSubviews` needs no such guess -- it is inherited from
+/// `UIView` and fires on any cell regardless of what TikTok calls its own bind method.
+/// The button reads `SCITTMedia`'s own most-recently-resolved item instead of a
+/// per-cell association, the same "download the newest capture" shortcut this
+/// project's own Locket quick-save button already takes and for the same reason: the
+/// ad filter's own diagnostics already confirm `SCITTMedia` is capturing real items
+/// (154 seen, 6 dropped, on the report that found this bug), so the newest one is
+/// almost always the video just watched.
+///
+/// Two surfaces, both reading the same source: a direct overlay on `AWEFeedViewCell`
+/// (primary; needs only that one class, now confirmed live) and an arranged subview of
+/// the interaction rail (secondary, kept because it does attach and run on this build
+/// -- the report's own "0 placed" for it, rather than silence, is what proved that).
+/// `AWEFeedViewTemplateCell` is hooked too, at zero cost if it never fires again: a
+/// `%hook` on a class that exists but is never reached simply never runs.
+///
+
+@interface AWEFeedViewCell : UIView
+@end
 
 @interface AWEFeedViewTemplateCell : UIView
 @end
@@ -40,17 +59,15 @@
 @interface TTKFeedRightInteractionStackView : UIStackView
 @end
 
-static const NSInteger kSCIButtonTag = 0x5C17;
+static const NSInteger kSCIRailButtonTag = 0x5C17;
 static const NSInteger kSCICellButtonTag = 0x5C18;
 static const void *kSCIItemKey = &kSCIItemKey;
 
 static BOOL sciCellHooked = NO;
 static BOOL sciRailPresent = NO;
 static NSString *sciRailName = nil;
-static NSUInteger sciButtonsPlaced = 0;
+static NSUInteger sciRailButtonsPlaced = 0;
 static NSUInteger sciCellButtonsPlaced = 0;
-
-static NSString *sciNoItemChain = nil;
 
 
 @interface SCITTButtonTarget : NSObject
@@ -70,7 +87,7 @@ static NSString *sciNoItemChain = nil;
 - (void)tapped:(UIButton *)button {
     SCITTMediaItem *item = objc_getAssociatedObject(button, kSCIItemKey);
     if (!item) {
-        SCILogV(@"in-feed download button: nothing resolved for this cell yet");
+        SCILogV(@"in-feed download button: nothing captured yet");
         return;
     }
     [SCITTDownload save:item];
@@ -79,26 +96,14 @@ static NSString *sciNoItemChain = nil;
 @end
 
 
-/// Reads what `-configWithModel:`/`-configureWithModel:` stashed, walking up from any
-/// descendant view to whichever ancestor is the cell.
-static SCITTMediaItem *SCITTItemAboveView(UIView *view) {
-    for (UIView *ancestor = view; ancestor; ancestor = ancestor.superview) {
-        SCITTMediaItem *item = objc_getAssociatedObject(ancestor, kSCIItemKey);
-        if (item) return item;
-    }
-    return nil;
-}
-
 /// The primary surface: a round button drawn straight onto the cell, bottom-right,
-/// clear of the safe area. `self` in the caller is the cell itself, so the item is its
-/// own association -- no walk needed, the same shortcut the X tweak's own
-/// `ImmersiveCardView` surface takes for the identical reason ("no walk: the card
-/// answers -status, so it is its own model").
+/// clear of the safe area. Shown whenever anything has been captured at all -- it does
+/// not try to be the specific video this cell holds, only the newest one seen, the
+/// same shortcut Locket's own quick-save button takes.
 static void SCITTPlaceCellButton(UIView *cell) {
     if (!SCIPrefEnabled(SCIPrefDownloadButton)) return;
 
-    SCITTMediaItem *item = objc_getAssociatedObject(cell, kSCIItemKey);
-
+    SCITTMediaItem *item = [SCITTMedia recent].firstObject;
     UIButton *button = (UIButton *)[cell viewWithTag:kSCICellButtonTag];
 
     if (!item) {
@@ -132,9 +137,8 @@ static void SCITTPlaceCellButton(UIView *cell) {
     button.hidden = NO;
     objc_setAssociatedObject(button, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
-    // Bottom-right, clear of TikTok's own interaction rail (which sits in the same
-    // corner, stacked upward) by a wide vertical margin -- 140pt clears a five-icon
-    // rail with room to spare rather than guessing at its exact height.
+    // Bottom-right, clear of TikTok's own interaction rail by a wide vertical margin
+    // rather than a guess at its exact height.
     CGFloat side = 46.0;
     CGFloat inset = 14.0;
     CGFloat aboveBottom = 140.0;
@@ -143,20 +147,15 @@ static void SCITTPlaceCellButton(UIView *cell) {
                                bounds.size.height - aboveBottom,
                                side, side);
 
-    // Done every pass: TikTok's own overlays (caption, progress bar, rail) are added
-    // and re-added as the cell is configured, and a button under one of them is a
-    // button nobody can tap -- the same reason the X tweak's own card surface raises
-    // its button on every -layoutSubviews rather than once.
     [cell bringSubviewToFront:button];
 }
 
-/// The secondary surface: an arranged subview of the interaction rail, refreshed the
-/// same way the X tweak's own SCITWPlaceImmersiveButton refreshes its rail button.
+/// The secondary surface: an arranged subview of the interaction rail.
 static void SCITTPlaceRailButton(UIStackView *stack) {
     if (!SCIPrefEnabled(SCIPrefDownloadButton)) return;
 
-    UIButton *existing = (UIButton *)[stack viewWithTag:kSCIButtonTag];
-    SCITTMediaItem *item = SCITTItemAboveView(stack);
+    SCITTMediaItem *item = [SCITTMedia recent].firstObject;
+    UIButton *existing = (UIButton *)[stack viewWithTag:kSCIRailButtonTag];
 
     if (existing) {
         existing.hidden = (item == nil);
@@ -164,20 +163,10 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
         return;
     }
 
-    if (!item) {
-        if (!sciNoItemChain) {
-            NSMutableArray<NSString *> *chain = [NSMutableArray array];
-            for (UIView *ancestor = stack; ancestor && chain.count < 10; ancestor = ancestor.superview) {
-                [chain addObject:NSStringFromClass([ancestor class])];
-            }
-            sciNoItemChain = [chain componentsJoinedByString:@" < "];
-            SCILogV(@"in-feed button: nothing resolved above the rail — %@", sciNoItemChain);
-        }
-        return;
-    }
+    if (!item) return;
 
     UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
-    button.tag = kSCIButtonTag;
+    button.tag = kSCIRailButtonTag;
 
     UIImageSymbolConfiguration *config =
         [UIImageSymbolConfiguration configurationWithPointSize:26
@@ -198,49 +187,22 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
         [stack addSubview:button];
     }
 
-    sciButtonsPlaced++;
+    sciRailButtonsPlaced++;
 }
 
 
 %group Cell
 
+%hook AWEFeedViewCell
+
+- (void)layoutSubviews {
+    %orig;
+    SCITTPlaceCellButton(self);
+}
+
+%end
+
 %hook AWEFeedViewTemplateCell
-
-- (void)configWithModel:(id)model {
-    %orig;
-    if (!SCIPrefEnabled(SCIPrefDownloadButton)) return;
-    if (![model isKindOfClass:NSClassFromString(@"AWEAwemeModel")]) return;
-
-    NSURL *url = [SCITTMedia resolveURLForModel:model];
-    if (url) {
-        SCITTMediaItem *item = [[SCITTMediaItem alloc] init];
-        item.url = url;
-        item.seen = [NSDate date];
-        objc_setAssociatedObject(self, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    } else {
-        objc_setAssociatedObject(self, kSCIItemKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    }
-
-    SCITTPlaceCellButton(self);
-}
-
-- (void)configureWithModel:(id)model {
-    %orig;
-    if (!SCIPrefEnabled(SCIPrefDownloadButton)) return;
-    if (![model isKindOfClass:NSClassFromString(@"AWEAwemeModel")]) return;
-
-    NSURL *url = [SCITTMedia resolveURLForModel:model];
-    if (url) {
-        SCITTMediaItem *item = [[SCITTMediaItem alloc] init];
-        item.url = url;
-        item.seen = [NSDate date];
-        objc_setAssociatedObject(self, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    } else {
-        objc_setAssociatedObject(self, kSCIItemKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    }
-
-    SCITTPlaceCellButton(self);
-}
 
 - (void)layoutSubviews {
     %orig;
@@ -291,12 +253,18 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
 
 
 void SCITTInstallButton(void) {
-    if (NSClassFromString(@"AWEFeedViewTemplateCell")) {
+    BOOL anyCell = NO;
+
+    if (NSClassFromString(@"AWEFeedViewCell") || NSClassFromString(@"AWEFeedViewTemplateCell")) {
         %init(Cell);
-        sciCellHooked = YES;
-        SCILogV(@"in-feed button: bound to AWEFeedViewTemplateCell's own model");
+        anyCell = YES;
+    }
+
+    sciCellHooked = anyCell;
+    if (anyCell) {
+        SCILogV(@"in-feed button: cell overlay attached");
     } else {
-        SCILogV(@"AWEFeedViewTemplateCell is not in this build — no in-feed button");
+        SCILogV(@"neither AWEFeedViewCell nor AWEFeedViewTemplateCell is in this build — no in-feed button");
         return;
     }
 
@@ -319,17 +287,15 @@ void SCITTInstallButton(void) {
 }
 
 NSString *SCITTButtonReport(void) {
-    if (!sciCellHooked) return @"AWEFeedViewTemplateCell not in this build";
+    if (!sciCellHooked) return @"neither AWEFeedViewCell nor AWEFeedViewTemplateCell is in this build";
 
     NSMutableString *out = [NSMutableString stringWithFormat:
         @"cell overlay — %lu placed", (unsigned long)sciCellButtonsPlaced];
 
     if (!sciRailPresent) {
         [out appendString:@"; no interaction rail in this build"];
-    } else if (sciButtonsPlaced == 0 && sciNoItemChain) {
-        [out appendFormat:@"; %@ — 0 placed; above it: %@", sciRailName, sciNoItemChain];
     } else {
-        [out appendFormat:@"; %@ — %lu placed", sciRailName ?: @"?", (unsigned long)sciButtonsPlaced];
+        [out appendFormat:@"; %@ — %lu placed", sciRailName ?: @"?", (unsigned long)sciRailButtonsPlaced];
     }
 
     return out;

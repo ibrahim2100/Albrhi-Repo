@@ -1,5 +1,35 @@
 # Albrhi for TikTok — what changed
 
+## v0.4.3
+
+**A real device report settled the button question outright.** The Status screen's
+own "In-feed button" row, checked after v0.4.2, said: `cell overlay — 0 placed;
+TTKFeedInteractionStackView + TTKFeedRightInteractionStackView — 0 placed; above it:
+TTKFeedInteractionStackView < TTKFeedInteractionMainView < TTKFeedInteractionRootView
+< UITableViewCellContentView < AWEFeedViewCell < AWENewFeedTableView < … <
+AWEFeedSlidingScrollView`. The rail was attached and running — it is what walked that
+chain — and the chain names the real cell: **`AWEFeedViewCell`**, not
+`AWEFeedViewTemplateCell`, the class both NA9 and VibeTok's own symbol tables name and
+the one every placement attempt through v0.4.2 hooked. `AWEFeedViewCell` is in neither
+reference's own hook table at all; this build has moved past what either was written
+against. `-configWithModel:`/`-configureWithModel:` were therefore never called on a
+real cell, and the association they were meant to stash was never there for the rail
+or the overlay to read — which is the entire reason both surfaces reported zero.
+
+**The fix drops per-cell precision rather than guess at another bind method.** Nothing
+in the walked chain says which selector actually sets `AWEFeedViewCell`'s model, and
+guessing one is exactly what produced this bug the first time. `-layoutSubviews` needs
+no such guess — inherited from `UIView`, it fires regardless of what TikTok calls its
+own bind method. Both surfaces (the cell overlay and the rail) now show
+`[SCITTMedia recent].firstObject` — the newest video this tweak has actually resolved
+a link for — rather than a specific per-cell association. This is the same "download
+the newest capture" shortcut Locket's own quick-save button already takes, for the
+same reason: the ad filter's diagnostics already prove `SCITTMedia` is capturing real
+items (the report that found this bug also showed 154 feed items seen, 6 dropped),
+so the newest one is almost always the video just watched. `AWEFeedViewCell` is hooked
+alongside the older `AWEFeedViewTemplateCell` rather than replacing it, at zero cost
+if the older name never fires again on this build.
+
 ## v0.4.2
 
 v0.4.1's own fixes did not hold, reported directly against a real build: the settings
