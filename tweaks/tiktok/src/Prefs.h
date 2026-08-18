@@ -63,3 +63,36 @@ static inline BOOL SCIPrefEnabled(NSString *key) {
 /// thing the three privacy switches next to it exist to prevent, which is why it is a separate
 /// switch with the trade written into its own row rather than a quiet quality improvement.
 #define SCIPrefExternalHD       @"external_hd"
+
+/// Offer to lay the post's sound over a single saved picture and write it as a short video.
+///
+/// On by default, and it is an *offer* rather than a behaviour: the question only appears when the
+/// post actually has a resolvable sound and only for a single picture, so nothing about saving a
+/// whole album changes. Off means one picture saves as one picture, with no question.
+#define SCIPrefPhotoAudio       @"photo_audio"
+
+/// Ask before a like, and ask before a follow.
+///
+/// **Two switches rather than one, for the same reason privacy is three.** A like is a public act
+/// on a video and a follow is a lasting relationship with an account; somebody who keeps
+/// mis-tapping the heart while scrolling has no reason to be asked about the other.
+///
+/// Off by default, both: a confirmation changes what a tap does, and a tweak that silently puts a
+/// dialog in front of TikTok's own like button is a tweak that broke liking as far as anybody who
+/// did not ask for it is concerned.
+#define SCIPrefConfirmLike      @"confirm_like"
+#define SCIPrefConfirmFollow    @"confirm_follow"
+
+/// Place the download button from `AWEAwemeBaseViewController` instead of the feed cell.
+///
+/// **Off, and it has no row in Settings on purpose: it crashed TikTok three times.** It is the
+/// only surface that reaches direct messages and search, and the inheritance that makes it
+/// attractive is real — the feed, direct messages and photo albums are three subclasses of that
+/// one base. What has never held is placing a button from inside its `-setModel:` on this build.
+///
+/// Kept as a flag rather than deleted for two reasons: the code and its reasoning are worth more
+/// than the space they cost, and a flag can be turned on from the plist to test a fix on a device
+/// without shipping it to anyone. `%group`s that are never `%init`-ed do not compile, so the
+/// installation reads this key — which also means the compiler cannot fold the branch away and
+/// call it unreachable.
+#define SCIPrefBaseSurface      @"base_button_surface"

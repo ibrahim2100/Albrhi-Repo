@@ -1,5 +1,24 @@
 # Albrhi Changelog
 
+## v1.42.0
+
+**TikTok, confirmed on a device.** The download button sits above the profile picture on every
+video and no longer moves between videos; a photo post now saves the picture you are actually
+looking at; and one picture can be saved as a short video with the post's own sound over it.
+
+**Ask before liking, ask before following** — two new switches, both off unless you turn them on,
+with the question drawn in Albrhi's own dialog rather than a system alert.
+
+**The TikTok settings screen was rebuilt.** The diagnostics that made up two thirds of it moved to
+their own screen under Advanced, and the switches are grouped by what they do: Download, Watching,
+Confirmations, Privacy, Protection. When the Albrhi panel switch is off, the screen says so at the
+top in red instead of burying it.
+
+Saving pictures also works properly for the first time: Photos was refusing them because the file
+was announced under the wrong name.
+
+Includes TikTok 0.17.0.
+
 ## v1.41.2
 
 **TikTok: the quality attempt in 1.41.0 did not work, and this release says why rather than
@@ -94,7 +113,7 @@ guessing about which internal path gives the better quality, because the app onl
 quality list with what it happens to be streaming at the time.
 
 **New switch, off by default: HD from an outside service.** It fetches a 1080 copy from
-tikwm.com. Turning it on tells a service outside TikTok which video you are watching — the same
+an outside service. Turning it on tells a service outside TikTok which video you are watching — the same
 kind of reporting the privacy switches beside it exist to stop — so it is off until you choose
 it, and its row says so plainly.
 

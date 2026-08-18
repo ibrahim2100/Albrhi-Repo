@@ -1,5 +1,88 @@
 # Albrhi for TikTok — what changed
 
+## v0.17.0
+
+Confirmed on a device: the button sits above the profile picture on every video, photo posts save
+the picture you are actually looking at, and a picture can now be saved as a short video with the
+post's own sound over it.
+
+**The button's position was three positions.** It was inserted "straight after the last interaction
+view", with two fallbacks under that — and the rails genuinely differ from video to video (a like
+counter, a live badge, a music disc each change how many `PlayInteraction*` views and anonymous
+`TTKRightInteractionAreaBackgroundView` wrappers a rail holds), so those three code paths named
+three different heights. It goes at index 0 now: the top of the stack is the one position that
+needs nothing to be true about what is in it, and TikTok's own order puts the avatar first, so
+index 0 is above the profile picture on every video. The anchor search and its fallback are deleted
+rather than kept — a fallback here is a second position, and a second position was the bug.
+
+Nudged five points right by a transform rather than a constraint, so the slot the stack measured
+stays the size it measured. The press animation returns to that offset instead of to identity,
+which would have quietly undone the nudge on the first tap.
+
+**A new look for the button, shared with everything else this tweak draws:** a 38-point blurred
+disc with a hairline edge and a bold `arrow.down`. The filled-circle glyph was TikTok's own idiom,
+which made ours indistinguishable from like and share.
+
+**Ask before liking, ask before following.** Two switches, both off by default, each hooking the
+selectors both reference tweaks hook — with the type encodings read from *this* build's class
+metadata rather than assumed: `-onLikeButtonClicked` (`v16@0:8`),
+`-doubleTapLikeWithAnimation:` (`v24@0:8@16`), `-onFollowViewClicked:` (`v24@0:8@16`),
+`-p_didTapFollowButton` (`v16@0:8`). `%orig` is never captured in a block: the confirmed action is
+*replayed* — a flag is raised and the same selector re-sent — which also makes nesting safe, since
+an inner call sees the flag and asks nothing. When there is nowhere to present the question, the
+action happens: a confirmation that cannot be shown must not become a silent refusal.
+
+**The tweak's own dialog, replacing `UIAlertController` everywhere it asks something.** Dark blurred
+card, accent icon disc, 52-point rows, the answer filled in the accent colour. It is a view in the
+key window rather than a presented view controller, so TikTok already having something on screen
+cannot make a question fail.
+
+**The settings screen was two screens interleaved.** Fourteen of its rows were diagnostics sitting
+as peers of the six switches somebody opened it to change. The diagnostics moved to their own screen
+under Advanced, and what is left is grouped by the question a person arrives with: Download,
+Watching, Confirmations, Privacy, Protection. A row's preference key now travels on its own switch
+instead of being mapped back by a second `if` ladder, and every row is described once rather than in
+a row count plus two branches. The panel switch, when it is off, is a red banner at the top instead
+of the first line of a section nobody scrolls to — it is the one fact that explains why nothing else
+on the screen is doing anything.
+
+**Photo posts: the picture you are on.** `AWEPhotoAlbumModel.currentIndex` is not the live index —
+the class declares `initialIndex` beside it, which is the shape of a value set once. The paging
+controller is what knows: `AWEPlayPhotoAlbumViewController -currentIndex` (`Q16@0:8`), reached
+through the feed cell controller's `activePhotoAlbumController`. And it is read at the moment of the
+tap rather than when the button was made, which also fixes a recycled cell handing over a video ago's
+item.
+
+**A picture plus the post's sound, saved as a video.** `AWEAwemeModel.music` → `AWEMusicModel.playURL`,
+both read from class metadata. Written in two steps because neither API does both halves:
+`AVAssetWriter` draws the still into a video track, then a composition lays the trimmed sound over it
+and exports. The sound is optional in the export — a post whose music could not be fetched still
+produces a saveable clip. A file's extension is how AVFoundation picks a parser, and TikTok's music
+links carry none, so the first bytes name the container.
+
+**Photos saving worked for the first time, and the fix was the file name.** A data resource carries
+no type, so Photos infers one from the name — and the name came from the URL's last path component
+with `.jpg` bolted on, which announced a WebP as a JPEG and earned `PHPhotosErrorDomain 3302`. The
+bytes name themselves now. Pictures are also fetched through `NSURLSession` with browser headers
+instead of `+dataWithContentsOfURL:`, which cannot report an HTTP status at all — a 403 page and a
+photograph were both "some bytes".
+
+**Diagnostics that describe one call.** The photo chain's report is committed only on a successful
+extraction: it was being written by every model the resolver walks, so a single line was assembled
+from several different calls and described nothing that ever happened. The page index is read off the
+saved item rather than off a static that is reset constantly — the last report said "index unknown"
+and "via activePhotoAlbumController.currentIndex" in the same sentence, which is a report disagreeing
+with itself.
+
+**The reference credits left the settings screen, on request.** TikTok's four references carry no
+licence and nothing was copied from them; they are named in the repository and the changelog, which
+is where that belongs. The Instagram tweak is the opposite case — its credit is a term of GPLv3 and
+is not going anywhere.
+
+Also: the seconds offered for a clip read "0 seconds" because `%.0f` reads a `double` and `5` written
+as a literal is an `int` — the same family as the `objc_msgSend` casts that once crashed the app,
+since a format string is a callee with types of its own.
+
 ## v0.16.2
 
 **0.16.0's quality fix did not work, and the report says so plainly.** Reading `__playBSModel`
@@ -79,7 +162,7 @@ So Settings › Status gains one line: what TikTok's own picker
 bitrate beside it. If that list is larger than the one the download reads, the difference is the
 answer. Nothing about downloading changed in this release.
 
-Also confirmed again, from your own report: `tikwm HD` and `bitrateModels` resolved to the
+Also confirmed again, from your own report: the outside service and `bitrateModels` resolved to the
 *same file name*. That is the third independent confirmation that the external service returns
 the file this tweak already downloads.
 
@@ -129,7 +212,7 @@ only the last event.
 ## v0.14.4
 
 **A refused `HEAD` was sinking the very link you asked for.** Servers that will not answer a
-`HEAD` scored zero and dropped to the bottom — which included `tikwm.com`, so switching the
+`HEAD` scored zero and dropped to the bottom — which included the outside service, so switching the
 external HD option on changed nothing, and included the quality ladder's own address. The size
 is now asked a second way when the first fails: a one-byte range request is an ordinary `GET`,
 so any server that serves the file answers it, and `Content-Range` carries the total.
@@ -212,7 +295,7 @@ answer scores zero and sinks to the bottom rather than being dropped: a server t
 **And an optional HD path through an outside service, off by default.** NA9's HD button has
 been reliable for years for a reason that is not cleverness — it never touches TikTok's model
 chain at all, so there was never an internal accessor in that path to break. It asks
-`tikwm.com`, keyed by the post id.
+an outside service, keyed by the post id.
 
 That is a real trade and it is written into the switch's own row: turning it on tells a service
 unrelated to TikTok and unrelated to this tweak which video you are watching, which is the exact
@@ -842,7 +925,7 @@ selectors rather than in front of them.
 
 **And a finding deliberately not built.** NA9's download does not resolve a link from
 the app at all for its HD path — it fetches
-`https://tikwm.com/video/media/hdplay/<id>.mp4` from a third-party scraper service,
+an HD link from a third-party scraper service,
 keyed by the video's own ID. That is why its button has worked unchanged for years: it
 never depended on TikTok's internal model chain. It is not reproduced here, and the
 reason is the same line this project already drew at `app_attest_*` in the X tweak and

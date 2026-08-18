@@ -4,16 +4,17 @@
 
 ### iOS tweaks, built in the open — bilingual, native, and written to be read
 
-**العربية · English** · a working APT source · six tweaks, five in one package
+**العربية · English** · a working APT source · seven tweaks, five in one package
 
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B-lightgrey.svg)]()
 [![Rootless](https://img.shields.io/badge/rootless-supported-success.svg)](#-compatibility)
-[![Albrhi](https://img.shields.io/badge/Albrhi-1.10.0-blueviolet.svg)](suite/CHANGELOG.md)
-[![Instagram](https://img.shields.io/badge/Instagram-4.1.5-orange.svg)](tweaks/instagram/CHANGELOG.md)
-[![YouTube](https://img.shields.io/badge/YouTube-1.13.0-red.svg)](tweaks/youtube/CHANGELOG.md)
-[![X](https://img.shields.io/badge/X-0.6.2-black.svg)](tweaks/twitter/CHANGELOG.md)
-[![Locket](https://img.shields.io/badge/Locket-0.2.1-gold.svg)](tweaks/locket/CHANGELOG.md)
+[![Albrhi](https://img.shields.io/badge/Albrhi-1.42.0-blueviolet.svg)](suite/CHANGELOG.md)
+[![Instagram](https://img.shields.io/badge/Instagram-4.1.8-orange.svg)](tweaks/instagram/CHANGELOG.md)
+[![YouTube](https://img.shields.io/badge/YouTube-1.20.0-red.svg)](tweaks/youtube/CHANGELOG.md)
+[![X](https://img.shields.io/badge/X-0.14.0-black.svg)](tweaks/twitter/CHANGELOG.md)
+[![TikTok](https://img.shields.io/badge/TikTok-0.17.0-ff0050.svg)](tweaks/tiktok/CHANGELOG.md)
+[![Locket](https://img.shields.io/badge/Locket-0.4.1-gold.svg)](tweaks/locket/CHANGELOG.md)
 [![Based on](https://img.shields.io/badge/based%20on-SCInsta-lightblue.svg)](https://github.com/SoCuul/SCInsta)
 
 <br/>
@@ -32,9 +33,10 @@
 ## ⚡ Install
 
 **There is one package to install: `com.albrhi`, listed as *Albrhi*.** It carries the
-Instagram, YouTube, X and Locket tweaks and the Settings panel together — one thing to
+Instagram, YouTube, X and TikTok tweaks and the Settings panel together — one thing to
 install, one thing to update, and a new tweak arrives inside it rather than as a second
-download.
+download. **Locket is its own package** (`com.albrhi.locket`), served from the same source:
+installing it should not mean installing four social-app tweaks, and the reverse.
 
 **1 · Add the source**
 
@@ -100,15 +102,16 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 
 ### What is in here
 
-**Six tweaks. Five ship inside `com.albrhi`; one stands on its own.**
+**Seven tweaks. Five ship inside `com.albrhi`; two stand on their own.**
 
 | Tweak | Patches | Version | What it does |
 |---|---|---|---|
-| **Albrhi for Instagram** | Instagram | 4.1.5 | downloads, a quieter feed, watching without a seen receipt |
-| **Albrhi for YouTube** | YouTube | 1.13.0 | downloads with their own player, no ads, SponsorBlock, background playback |
-| **Albrhi for X** | X / Twitter | 0.6.2 | media downloads, and the feature switches X asks itself about |
-| **Albrhi for Locket** | Locket | 0.2.1 | saving a moment, and answering jailbreak checks as an ordinary phone would |
-| **Albrhi Panel** | Settings | 0.6.7 | the Albrhi page — one switch per patched app |
+| **Albrhi for Instagram** | Instagram | 4.1.8 | downloads, a quieter feed, watching without a seen receipt |
+| **Albrhi for YouTube** | YouTube | 1.20.0 | downloads with their own player, no ads, SponsorBlock, background playback |
+| **Albrhi for X** | X / Twitter | 0.14.0 | media downloads, and the feature switches X asks itself about |
+| **Albrhi for TikTok** | TikTok | 0.17.0 | a download button in the feed, photo posts, no ads, confirmations, privacy |
+| **Albrhi Panel** | Settings | 0.8.1 | the Albrhi page — one switch per patched app |
+| **Albrhi for Locket** | Locket | 0.4.1 | saving a moment, and answering jailbreak checks as an ordinary phone would — **its own package** |
 | **Albrhi CarPlay** | SpringBoard, Camera | 0.4.1 | any app on the car display, a dashboard wallpaper, an audio fix — **not served, see below** |
 
 Each is a self-contained Theos project under `tweaks/`, with its own sources, package
@@ -118,7 +121,12 @@ share is the build plumbing — the checks, the build script and the APT index.
 
 `com.albrhi` is the merge of the first five, built by `tools/make-suite.sh`, which picks up
 any `tweaks/*/control` automatically. A tweak leaves the merge only by carrying a
-`.no-suite` marker file in its directory.
+`.no-suite` marker file in its directory — Locket and CarPlay are the two that do.
+
+**Locket left the suite deliberately.** It shipped inside `com.albrhi` through 1.24.0 and was
+taken back out on request: its own package, its own releases, its own self-contained sideload
+dylib. Installing it does not mean installing anything else, and installing the suite does not
+mean carrying a jailbreak-detection bypass nobody asked about.
 
 **CarPlay is deliberately not in the suite, and is currently not served at all.** It patches
 SpringBoard and Camera for a car-display feature with no relationship to the social apps —
@@ -255,6 +263,54 @@ whether everything actually attached to *your* build. The report is also written
 
 ---
 
+## 🎵 Albrhi for TikTok
+
+### ⬇️ A download button in the feed
+A blurred disc with a down arrow, **above the profile picture** on every video, riding with
+TikTok's own rail as it fades and returns. It saves the clip you are watching — not the one
+before it — because the video is read from the controller the button is sitting inside at the
+moment you tap it, rather than from whatever was resolved most recently.
+
+Quality is **measured, not guessed**. Every link TikTok offers is collected and weighed by what
+it actually is: a watermarked copy loses to a clean one, an audio-only link loses to a video,
+and only then does size decide. Watermarking is refused at the source — the value is written,
+not the getter answered, so code reading it directly sees the same thing.
+
+Optionally, HD can be fetched from an outside service instead. **That switch is off, and it
+stays off unless you turn it on**, with the cost written on its own row: it tells a service
+outside TikTok which video you are watching, which is the exact thing the privacy switches
+beside it exist to prevent. On some videos it returns the original upload — 60fps where TikTok's
+own stream is 30 — and on others it is byte for byte the file the tweak already had.
+
+### 🖼️ Photo posts
+A photo post saves as photos. **It asks first**: the picture you are on, or all of them —
+and the picture you are on is the one the paging controller says is on screen, read at the tap.
+
+A single picture can also be saved **as a short video with the post's own sound over it** —
+five, ten or fifteen seconds — which is what a photo post actually was. The sound is optional
+in the export: a post whose music cannot be fetched still gives you the clip.
+
+### 🚫 Ads
+A feed item TikTok's own server marked as an ad is refused as the object is built, never hidden
+after the fact — and the splash ad on launch with it.
+
+### ✋ Confirmations
+Ask before a like — the heart *and* the double tap — and ask before a follow, on the feed and on
+a profile. Both off until you turn them on. If the question cannot be shown for any reason, the
+tap you made goes through: "ask me first" must never quietly become "liking is broken".
+
+### 🔒 Privacy
+Three separate switches, because they are three different reports to three different places: a
+story's seen mark, a message's read receipt, and a profile view. What shows on your own screen is
+never touched — only what gets sent back.
+
+### 🎛️ Also
+The seek bar under the video kept visible instead of fading a moment after playback starts · the
+jailbreak answered for as an unmodified phone would · a settings screen grouped by what you came
+to change, with the full diagnostic report one row away and copyable in a tap.
+
+---
+
 ## 🧩 Compatibility
 
 | | |
@@ -264,6 +320,7 @@ whether everything actually attached to *your* build. The report is also written
 | **Instagram** | Tested on **410, 439 and 441**, from one build *(other versions should work — see below)* |
 | **YouTube** | Tested on **21.30.5** |
 | **X / Twitter** | Tested on **12.15** |
+| **TikTok** | Tested on **46.4.0** |
 | **Locket** | Tested on **2.46.1** |
 | **Jailbreaks** | Rootless (Dopamine, palera1n) · roothide · rootful (unc0ver, checkra1n) |
 | **Sideloading** | Supported via the bundled FLEXing sub-project |
@@ -301,7 +358,7 @@ git submodule update --init --recursive
 ```
 
 The result lands in `tweaks/instagram/packages/`. Swap `instagram` for `youtube`, `twitter`,
-`locket`, `panel` or `carplay`, and `rootless` for `roothide`, `rootful` or `sideload`.
+`tiktok`, `locket`, `panel` or `carplay`, and `rootless` for `roothide`, `rootful` or `sideload`.
 
 **To build what people actually install**, merge the five into the suite:
 
@@ -334,7 +391,7 @@ Adding a tweak means adding a directory under `tweaks/` — `tools/check.py` fin
 checks it without being told, `./build.sh <name> rootless` builds it, and `make-suite.sh`
 pulls it into `com.albrhi` automatically. Joining the suite is the default and costs
 nothing but a version bump in `suite/control`; staying out of it takes a `.no-suite` marker
-file, which only CarPlay has.
+file, which Locket and CarPlay have.
 
 ### 🧰 The tools
 
@@ -343,6 +400,7 @@ repository's secrets except where noted.
 
 | | |
 |---|---|
+| **`objc-classes.py`** | Prints a class's real method list, declared property types, superclass and **type encodings**, read straight out of a Mach-O's ObjC metadata. It answers "does *this* class answer *this* selector, and with what signature" — a framework-wide selector dump answers neither, and this project lost three releases to that gap. No `class-dump` needed. |
 | **`check.py`** | Nineteen source checks, run before Theos so a typo fails in seconds rather than after a five-minute compile. Every rule comes from a build that actually broke: unbalanced `%hook`/`%end`, a hooked class touching `self` without an `@interface`, a fragile `%orig`, a localization key used but never defined, a `%new` parameter carrying an attribute. Run from the repo root it re-runs itself once per tweak. |
 | **`make-suite.sh`** | Merges every tweak without a `.no-suite` marker into `com.albrhi`. Checks the staged tree against the scheme it was asked for and refuses a mismatch — a "roothide" package built from a rootless staging tree installs as rootless, which cost two releases to learn. |
 | **`make-repo.sh`** | Builds the APT index from one or more package directories. Guards against two packages sharing name + version + architecture, and labels each rootful/rootless/roothide. Wipes `debs/` and rebuilds it on purpose, so a package removed from the source disappears from Sileo instead of lingering. |
@@ -388,6 +446,16 @@ same reason.
   that the device is unmodified, and answering them falsely is an account risk, not a
   privacy setting.
 
+**On TikTok** — the download button is in the feed itself, above the profile picture. **Hold two
+fingers anywhere** for the settings.
+
+- **Tap the button** to save what you are watching. A photo post asks whether you want the picture
+  you are on or all of them, and offers to save one picture as a short video with the post's sound.
+- The Status report — Advanced → *Status report* — names every number behind every feature and
+  copies the lot in one tap. It is the fastest way to report something that is not working.
+- **Ask before liking** and **ask before following** are off until you turn them on, under
+  Confirmations.
+
 **On Locket** — **hold two fingers** to see the moments available to save, and how many
 jailbreak checks were answered. The tweak hides the jailbreak from Locket's three detectors
 and does nothing else; it deliberately does **not** touch subscriptions.
@@ -414,6 +482,8 @@ anything or losing its settings. Reopen the app for the change to take effect.
 - [x] **Albrhi Panel** — one Settings page, a switch per patched app, read across the sandbox
 - [x] **`com.albrhi`** — the five in one package, so a new tweak arrives as an update rather than a download
 - [x] A save button and an end time on YouTube's own player layer
+- [x] **Albrhi for TikTok** — a download button in the feed, photo posts, confirmations, privacy
+- [x] Photo posts saved as photos, and one picture saved as a clip with the post's own sound
 - [ ] **Albrhi CarPlay confirmed on a device** — the code is written and withheld until it is
 - [ ] iOS 18 support for CarPlay, which needs an on-disk re-signing daemon rather than a runtime hook
 - [ ] Tie a SponsorBlock marker to the video its bar belongs to — today one global serves every bar
@@ -445,6 +515,10 @@ Issues and pull requests are welcome.
 - **[SponsorBlock](https://sponsor.ajay.app)** by Ajay Ramachandran — the segment database the YouTube tweak skips by, CC BY-NC-SA 4.0.
 - **[iSponsorBlock](https://github.com/Galactic-Dev/iSponsorBlock)** by Galactic Dev (GPLv3) — the YouTube tweak's coloured progress-bar markers are derived from it.
 - **[FLEXing](https://github.com/SoCuul/FLEXing)** — runtime debugging support.
+- **[BHTikTok](https://github.com/BandarHL/BHTikTok)** by BandarHL and the maintained fork by
+  [al3raQe](https://github.com/al3raQe/BHTikTok) — read for *where* TikTok is hookable, never for
+  code. Two compiled tweaks, NA9 For TikTok and VibeTok, were read the same cautious way and for
+  the same one question.
 - **Ibrahim Ismail AL-Rahn** — Albrhi rebuild, bilingual layer, download & transcode engine, and design.
 
 ---

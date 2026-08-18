@@ -98,12 +98,73 @@ for name in sorted(declared):
 #
 #    The pairing still means something: an %end without an opener, or an opener left
 #    unclosed, is the failure this catches, and both still fail.
+#
+#    **Braces inside literals had to stop counting, and a character literal is what proved it.**
+#    A byte sniffer testing `b[0] == '{'` for a JSON payload is ordinary, correct C -- and it made
+#    this rule report a structurally broken file, on code that compiled, because the counter read
+#    every `{` in the file including the one inside quotes. Comments and string literals carry the
+#    same hazard (a `}` in a comment, a brace in a format string), so all three are removed before
+#    counting rather than only the case that happened to be found.
+#    **And this needs a scanner, not four regular expressions, for the reason rule 5 already
+#    knew.** The first attempt stripped block comments, then line comments, then literals -- and
+#    `@"https://..."` inside a dictionary literal lost everything after the `//`, including the
+#    closing brace on that line, so removing false positives created two. A `//` inside a string
+#    and a quote inside a comment are the same problem from opposite sides, and only one pass that
+#    knows which state it is in can be right about both.
+def strip_literals(text):
+    out = []
+    state = 'code'
+    i, n = 0, len(text)
+    while i < n:
+        ch = text[i]
+        nxt = text[i + 1] if i + 1 < n else ''
+
+        if state == 'code':
+            if ch == '/' and nxt == '/':
+                state = 'line'
+            elif ch == '/' and nxt == '*':
+                state = 'block'
+                i += 2
+                continue
+            elif ch == '"':
+                state = 'string'
+            elif ch == "'":
+                state = 'char'
+            else:
+                out.append(ch)
+        elif state == 'line':
+            if ch == '\n':
+                state = 'code'
+                out.append(ch)
+        elif state == 'block':
+            if ch == '*' and nxt == '/':
+                state = 'code'
+                i += 2
+                continue
+            # Newlines are kept so the line number this rule reports still points at the real line.
+            if ch == '\n':
+                out.append(ch)
+        elif state in ('string', 'char'):
+            if ch == '\\':
+                i += 2
+                continue
+            if (state == 'string' and ch == '"') or (state == 'char' and ch == "'"):
+                state = 'code'
+            elif ch == '\n':
+                # An unterminated literal is rule 5's business, not this rule's; recover rather
+                # than swallowing the rest of the file.
+                state = 'code'
+                out.append(ch)
+        i += 1
+
+    return ''.join(out)
+
 for path in SRC:
     text = open(path, encoding='utf-8').read()
     hooks = len(re.findall(r'^%(hook|group|subclass)\b', text, re.M))
     ends = len(re.findall(r'^%end', text, re.M))
     depth, first_negative, line = 0, None, 1
-    for ch in text:
+    for ch in strip_literals(text):
         if ch == '\n':
             line += 1
         elif ch == '{':

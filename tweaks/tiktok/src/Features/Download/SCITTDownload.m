@@ -3,6 +3,8 @@
 #import "../../SCILog.h"
 #import <ImageIO/ImageIO.h>
 #import "../../UI/SCITTToast.h"
+#import "../../UI/SCITTSheet.h"
+#import "SCITTStillVideo.h"
 #import "../../Prefs.h"
 #import <UIKit/UIKit.h>
 #import <Photos/Photos.h>
@@ -76,60 +78,84 @@ NSString *SCITTDownloadReport(void) {
 
 + (void)askThenSavePhotos:(SCITTMediaItem *)item {
     NSArray<NSURL *> *all = item.photoURLs;
+    if (!all.count) return;
 
-    // One picture, or no idea which one is on screen: nothing to ask about.
+    NSUInteger index = (item.photoIndex < all.count) ? item.photoIndex : 0;
+    NSURL *current = all[index];
+
+    // **One picture is still a question now, and that is the change.** It used to save immediately
+    // whenever the post had a single image, because the only question then was "this one or all of
+    // them" and there was nothing to choose between. There is now: the post's sound can be laid
+    // over the picture and saved as a clip, which is a real choice about a one-picture post too.
     if (all.count < 2) {
-        [self savePhotos:all];
+        [self offerAudioForPicture:current item:item];
         return;
     }
 
-    NSURL *current = (item.photoIndex < all.count) ? all[item.photoIndex] : nil;
-    if (!current) {
-        [self savePhotos:all];
+    if (![SCITTSheet canPresent]) {
+        // Nowhere to ask. Saving the one on screen is the conservative answer: a post of sixteen
+        // arriving whole in Photos unasked is the complaint this exists to answer, and one more tap
+        // gets the rest.
+        [self savePhotos:@[current]];
         return;
     }
 
-    dispatch_async(dispatch_get_main_queue(), ^{
-        UIViewController *presenter = [self topViewController];
-        if (!presenter) {
-            // Nothing to present from. Saving the one on screen is the conservative answer:
-            // a post of sixteen arriving whole in Photos unasked is the complaint this exists
-            // to answer, and the user can tap again for the rest.
-            [self savePhotos:@[current]];
-            return;
-        }
+    NSString *allTitle = [NSString stringWithFormat:SCILocalized(@"photos_save_all"),
+                          (unsigned long)all.count];
 
-        UIAlertController *sheet = [UIAlertController
-            alertControllerWithTitle:SCILocalized(@"photos_ask_title")
-                             message:nil
-                      preferredStyle:UIAlertControllerStyleActionSheet];
+    [SCITTSheet showTitle:SCILocalized(@"photos_ask_title")
+                  message:[NSString stringWithFormat:SCILocalized(@"photos_ask_message"),
+                              (unsigned long)(index + 1), (unsigned long)all.count]
+                   symbol:@"photo.stack"
+                  actions:@[
+        [SCITTSheetAction title:SCILocalized(@"photos_save_this")
+                         symbol:@"photo"
+                        primary:YES
+                        handler:^{ [self offerAudioForPicture:current item:item]; }],
+        [SCITTSheetAction title:allTitle
+                         symbol:@"square.stack.3d.down.right"
+                        primary:NO
+                        handler:^{ [self savePhotos:all]; }],
+    ]
+                   cancel:SCILocalized(@"photos_cancel")];
+}
 
-        [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"photos_save_this")
-                                                  style:UIAlertActionStyleDefault
-                                                handler:^(UIAlertAction *action) {
-            [self savePhotos:@[current]];
-        }]];
+///
+/// **Every option read "0 seconds", and the cause is one this project has met twice before in
+/// another form.** `%.0f` reads a `double` out of the argument list, and `5` written as a literal is
+/// an `int` -- so the format read eight bytes where four had been pushed and printed whatever
+/// followed. Nothing warns: a variadic argument has no declared type to check against. It is the
+/// same family as the `objc_msgSend` casts that crashed the app, at a smaller scale: a value's type
+/// at the call site has to match the type the callee will read, and a format string is a callee.
+///
+/// Offers the post's sound over one picture, and saves the picture plainly if the answer is no.
+///
+/// **The offer is only made when there is actually a sound to offer.** A question whose answers all
+/// mean "save the picture" is not a question.
++ (void)offerAudioForPicture:(NSURL *)picture item:(SCITTMediaItem *)item {
+    if (!item.audioURL || !SCIPrefEnabled(SCIPrefPhotoAudio) || ![SCITTSheet canPresent]) {
+        [self savePhotos:@[picture]];
+        return;
+    }
 
-        NSString *allTitle = [NSString stringWithFormat:SCILocalized(@"photos_save_all"),
-                              (unsigned long)all.count];
-        [sheet addAction:[UIAlertAction actionWithTitle:allTitle
-                                                  style:UIAlertActionStyleDefault
-                                                handler:^(UIAlertAction *action) {
-            [self savePhotos:all];
-        }]];
-
-        [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"photos_cancel")
-                                                  style:UIAlertActionStyleCancel
-                                                handler:nil]];
-
-        // An action sheet with no anchor is a crash on iPad, and TikTok runs there.
-        sheet.popoverPresentationController.sourceView = presenter.view;
-        sheet.popoverPresentationController.sourceRect =
-            CGRectMake(CGRectGetMidX(presenter.view.bounds),
-                       CGRectGetMaxY(presenter.view.bounds) - 1, 1, 1);
-
-        [presenter presentViewController:sheet animated:YES completion:nil];
-    });
+    [SCITTSheet showTitle:SCILocalized(@"audio_ask_title")
+                  message:SCILocalized(@"audio_ask_message")
+                   symbol:@"music.note"
+                  actions:@[
+        [SCITTSheetAction title:[NSString stringWithFormat:SCILocalized(@"audio_seconds"), (double)5]
+                         symbol:nil primary:NO
+                        handler:^{ [self saveClipFromPicture:picture item:item seconds:5]; }],
+        [SCITTSheetAction title:[NSString stringWithFormat:SCILocalized(@"audio_seconds"), (double)10]
+                         symbol:nil primary:YES
+                        handler:^{ [self saveClipFromPicture:picture item:item seconds:10]; }],
+        [SCITTSheetAction title:[NSString stringWithFormat:SCILocalized(@"audio_seconds"), (double)15]
+                         symbol:nil primary:NO
+                        handler:^{ [self saveClipFromPicture:picture item:item seconds:15]; }],
+        [SCITTSheetAction title:SCILocalized(@"audio_picture_only")
+                         symbol:@"photo" primary:NO
+                        handler:^{ [self savePhotos:@[picture]]; }],
+    ]
+                   cancel:SCILocalized(@"photos_cancel")];
 }
 
 ///
@@ -447,6 +473,120 @@ static BOOL SCITTPerformPhotoChange(void (^changes)(void), NSString **outError) 
 }
 
 ///
+/// What a blob of bytes actually is, from its own first bytes.
+///
+/// Every format here is identified by its documented signature, and the two non-image answers
+/// matter as much as the image ones: a CDN that refuses a request answers with HTML or JSON, and
+/// that arrives as a perfectly successful download of something that is not a picture.
+static NSString *SCITTSniffImageKind(NSData *data) {
+    if (data.length < 12) return @"empty or truncated";
+
+    const unsigned char *b = (const unsigned char *)data.bytes;
+
+    if (b[0] == 0xFF && b[1] == 0xD8 && b[2] == 0xFF) return @"JPEG";
+    if (b[0] == 0x89 && b[1] == 'P' && b[2] == 'N' && b[3] == 'G') return @"PNG";
+    if (!memcmp(b, "GIF8", 4)) return @"GIF";
+    if (!memcmp(b, "RIFF", 4) && !memcmp(b + 8, "WEBP", 4)) return @"WebP";
+    // HEIC and its relatives: an ISO base-media file whose brand sits after the box length.
+    if (!memcmp(b + 4, "ftyp", 4)) {
+        if (!memcmp(b + 8, "heic", 4) || !memcmp(b + 8, "heix", 4) ||
+            !memcmp(b + 8, "mif1", 4) || !memcmp(b + 8, "msf1", 4)) return @"HEIC";
+        return [NSString stringWithFormat:@"ISO media (%.4s)", (const char *)(b + 8)];
+    }
+    if (b[0] == '<') return @"HTML or XML — not an image";
+    if (b[0] == '{' || b[0] == '[') return @"JSON — not an image";
+
+    return [NSString stringWithFormat:@"unknown (%02x %02x %02x %02x)", b[0], b[1], b[2], b[3]];
+}
+
+/// The file extension Photos needs to infer the type, or nil when the bytes are not a picture.
+static NSString *SCITTExtensionForImageKind(NSString *kind) {
+    if ([kind isEqualToString:@"JPEG"]) return @"jpg";
+    if ([kind isEqualToString:@"PNG"]) return @"png";
+    if ([kind isEqualToString:@"GIF"]) return @"gif";
+    if ([kind isEqualToString:@"WebP"]) return @"webp";
+    if ([kind isEqualToString:@"HEIC"]) return @"heic";
+    return nil;
+}
+
+///
+/// Downloads one picture, and says what happened when it does not arrive.
+///
+/// **`[NSData dataWithContentsOfURL:]` was the whole problem it hid.** It sends no headers worth
+/// having and, more to the point, it *cannot report an HTTP status*: a 403 page and a photograph
+/// are both "some bytes", so a CDN refusing the request was indistinguishable from a picture in an
+/// awkward format. The video path had browser headers from the start and the photo path never did.
+static NSData *SCITTFetchPhoto(NSURL *url, NSString **outNote) {
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+    request.timeoutInterval = 20;
+    SCITTAddBrowserHeaders(request);
+
+    __block NSData *body = nil;
+    __block NSString *note = nil;
+
+    dispatch_semaphore_t wait = dispatch_semaphore_create(0);
+    NSURLSessionDataTask *task = [[NSURLSession sharedSession]
+        dataTaskWithRequest:request
+          completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        NSHTTPURLResponse *http = [response isKindOfClass:[NSHTTPURLResponse class]]
+            ? (NSHTTPURLResponse *)response : nil;
+
+        if (error) {
+            note = error.localizedDescription;
+        } else if (http && (http.statusCode < 200 || http.statusCode > 299)) {
+            note = [NSString stringWithFormat:@"HTTP %ld (%@)",
+                    (long)http.statusCode, http.MIMEType ?: @"no type"];
+        } else if (!data.length) {
+            note = @"empty response";
+        } else {
+            body = data;
+            note = [NSString stringWithFormat:@"HTTP %ld, %@",
+                    (long)(http ? http.statusCode : 200), http.MIMEType ?: @"no type"];
+        }
+        dispatch_semaphore_signal(wait);
+    }];
+
+    [task resume];
+    dispatch_semaphore_wait(wait, dispatch_time(DISPATCH_TIME_NOW, 25ull * NSEC_PER_SEC));
+
+    if (outNote) *outNote = note ?: @"timed out";
+    return body;
+}
+
+///
+/// The post's sound, on disk with an extension `AVURLAsset` can act on.
+///
+/// **A file's extension is how AVFoundation decides which parser to open it with**, and TikTok's
+/// music links carry an opaque path with no extension at all -- an asset built from those bytes
+/// under the wrong name has no tracks and reads as "the post has no sound". So the first bytes name
+/// the container, the same way the photo save now names its own format, rather than the URL doing it.
+static NSURL *SCITTStageAudio(NSURL *remote) {
+    if (!remote) return nil;
+
+    NSString *note = nil;
+    NSData *data = SCITTFetchPhoto(remote, &note);
+    if (!data.length) {
+        SCILogV(@"clip audio: %@", note ?: @"nothing arrived");
+        return nil;
+    }
+
+    NSString *extension = @"mp3";
+    const unsigned char *b = (const unsigned char *)data.bytes;
+    if (data.length > 12) {
+        if (!memcmp(b + 4, "ftyp", 4)) extension = @"m4a";
+        else if (!memcmp(b, "ID3", 3) || (b[0] == 0xFF && (b[1] & 0xE0) == 0xE0)) extension = @"mp3";
+        else if (!memcmp(b, "OggS", 4)) extension = @"ogg";
+        else if (!memcmp(b, "RIFF", 4)) extension = @"wav";
+    }
+
+    NSURL *file = [NSURL fileURLWithPath:
+        [NSTemporaryDirectory() stringByAppendingPathComponent:
+            [NSString stringWithFormat:@"albrhi-sound-%@.%@", [[NSUUID UUID] UUIDString], extension]]];
+
+    return [data writeToURL:file atomically:YES] ? file : nil;
+}
+
+///
 /// Saves one downloaded picture, trying three ways and naming the one that worked.
 ///
 /// **`PHPhotosErrorDomain 3302` is Photos refusing the *format*, not the bytes** — it arrived
@@ -461,11 +601,21 @@ static BOOL SCITTPerformPhotoChange(void (^changes)(void), NSString **outError) 
 /// worked before any of this.
 static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
                                NSString **outHow, NSString **outError) {
-    NSString *name = source.lastPathComponent;
-    if (!name.pathExtension.length) name = [name stringByAppendingPathExtension:@"jpg"];
+    // **The file name is built from what the bytes are, not from what the URL is called.**
+    //
+    // A data resource carries no type of its own, so Photos infers one from the name -- and the
+    // name was being taken from the URL's last path component, which on TikTok's CDN is an opaque
+    // id with no extension or a misleading one. `.jpg` was then appended to whatever it was, so a
+    // WebP arrived announced as a JPEG, and a library told the wrong format is a library that
+    // refuses the file: `PHPhotosErrorDomain 3302`, which is exactly what came back. Two guesses
+    // (the name, and the extension bolted onto it) where the first four bytes are a fact.
+    NSString *kind = SCITTSniffImageKind(data);
+    NSString *extension = SCITTExtensionForImageKind(kind);
 
     PHAssetResourceCreationOptions *options = [[PHAssetResourceCreationOptions alloc] init];
-    options.originalFilename = name.length ? name : @"photo.jpg";
+    options.originalFilename = extension
+        ? [@"photo" stringByAppendingPathExtension:extension]
+        : (source.lastPathComponent.length ? source.lastPathComponent : @"photo");
 
     NSString *error = nil;
 
@@ -519,10 +669,102 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
     }
 
     if (outError) {
-        *outError = [NSString stringWithFormat:@"%@ [tried: as posted%@]",
-                     error ?: @"refused", image ? @", JPEG, UIImage" : @" only — undecodable"];
+        // **What the bytes actually are, named, because "undecodable" was a dead end three
+        // releases long.** A refusal has two completely different causes that produced the same
+        // sentence: a real picture in a format Photos will not take, and something that is not a
+        // picture at all -- an HTML error page or a JSON refusal from the CDN, which decodes to
+        // nothing and saves as nothing. One is a format problem and the other is a *download*
+        // problem, and no fourth fallback could have been chosen without knowing which.
+        *outError = [NSString stringWithFormat:@"%@ [%@, %lu bytes, named %@; tried: as posted%@]",
+                     error ?: @"refused", kind, (unsigned long)data.length,
+                     options.originalFilename,
+                     image ? @", JPEG, UIImage" : @" only — nothing could decode it"];
     }
     return NO;
+}
+
+///
+/// One picture plus the post's sound, saved as a video.
+///
+/// The picture and the sound are fetched through the same helper the photo save uses, so both
+/// carry browser headers and both report an HTTP status rather than "some bytes" -- the fix that
+/// made photo saving work at all. **The sound not arriving is not a failure of the clip**: the
+/// exporter lays down whatever audio it is given and writes the picture regardless, which is the
+/// same refusal-in-the-right-place rule that keeps the download button visible when a lookup fails.
++ (void)saveClipFromPicture:(NSURL *)picture
+                       item:(SCITTMediaItem *)item
+                    seconds:(NSTimeInterval)seconds {
+    [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelAddOnly
+                                               handler:^(PHAuthorizationStatus status) {
+        if (status != PHAuthorizationStatusAuthorized && status != PHAuthorizationStatusLimited) {
+            SCITTRecordDownload(@"Photos access refused");
+            [self report:SCILocalized(@"save_no_permission") ok:NO];
+            return;
+        }
+
+        // Indeterminate rather than a percentage: the work here is a download, a render and an
+        // export, and a bar that only knows about the first of the three tells the user the save is
+        // finished when it is a third done.
+        [SCITTToast showText:SCILocalized(@"audio_working") symbol:@"music.note" progress:-1];
+
+        dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+            NSString *note = nil;
+            NSData *stillData = SCITTFetchPhoto(picture, &note);
+            UIImage *still = stillData.length ? [UIImage imageWithData:stillData] : nil;
+
+            if (!still && stillData.length) {
+                // The same ImageIO path the photo save needed: `UIImage` declines formats the
+                // system can otherwise decode, and this is exactly the case it declines.
+                CGImageSourceRef source =
+                    CGImageSourceCreateWithData((__bridge CFDataRef)stillData, NULL);
+                if (source) {
+                    CGImageRef decoded = CGImageSourceCreateImageAtIndex(source, 0, NULL);
+                    if (decoded) {
+                        still = [UIImage imageWithCGImage:decoded];
+                        CGImageRelease(decoded);
+                    }
+                    CFRelease(source);
+                }
+            }
+
+            if (!still) {
+                SCITTRecordDownload([NSString stringWithFormat:@"clip — picture unusable (%@)",
+                    note ?: @"no data"]);
+                [self report:SCILocalized(@"save_failed") ok:NO];
+                return;
+            }
+
+            NSURL *audioFile = SCITTStageAudio(item.audioURL);
+
+            [SCITTStillVideo renderImage:still
+                                audioURL:audioFile
+                                 seconds:seconds
+                              completion:^(NSURL *file, NSString *failure) {
+                if (audioFile) [[NSFileManager defaultManager] removeItemAtURL:audioFile error:NULL];
+
+                if (!file) {
+                    SCITTRecordDownload([NSString stringWithFormat:@"clip — %@",
+                        failure ?: @"not written"]);
+                    [self report:SCILocalized(@"save_failed") ok:NO];
+                    return;
+                }
+
+                [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
+                    [PHAssetCreationRequest creationRequestForAssetFromVideoAtFileURL:file];
+                } completionHandler:^(BOOL success, NSError *error) {
+                    [[NSFileManager defaultManager] removeItemAtURL:file error:NULL];
+
+                    SCITTRecordDownload(success
+                        ? [NSString stringWithFormat:@"clip saved — %.0fs, %@ sound",
+                            seconds, audioFile ? @"with" : @"without"]
+                        : [NSString stringWithFormat:@"clip refused by Photos: %@",
+                            error.localizedDescription ?: @"no reason given"]);
+
+                    [self report:SCILocalized(success ? @"audio_done" : @"save_failed") ok:success];
+                }];
+            }];
+        });
+    }];
 }
 
 + (void)savePhotos:(NSArray<NSURL *> *)urls {
@@ -545,8 +787,15 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
             NSMutableSet<NSString *> *ways = [NSMutableSet set];
 
             for (NSURL *url in urls) {
-                NSData *data = [NSData dataWithContentsOfURL:url];
-                if (!data.length) { noData++; continue; }
+                NSString *fetchNote = nil;
+                NSData *data = SCITTFetchPhoto(url, &fetchNote);
+                if (!data.length) {
+                    noData++;
+                    // The reason travels with the count. "never downloaded" on its own has been on
+                    // this screen for releases and never once said why.
+                    if (!firstError) firstError = fetchNote;
+                    continue;
+                }
 
                 NSString *how = nil, *error = nil;
                 if (SCITTSavePhotoData(data, [UIImage imageWithData:data], url, &how, &error)) {

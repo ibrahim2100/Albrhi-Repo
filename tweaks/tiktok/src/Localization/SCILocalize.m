@@ -16,9 +16,33 @@ static void SCIBuildTables(void) {
         @"title": @"Albrhi for TikTok",
         @"done": @"Done",
 
-        @"section_controls": @"Controls",
         @"section_privacy": @"Privacy",
-        @"section_status": @"Status",
+
+        // The settings screen's own sections, named by what a person came here to change
+        // rather than by which part of the code owns them.
+        @"section_confirm": @"Confirmations",
+        @"row_confirm_like": @"Ask before liking",
+        @"row_confirm_like_note": @"Both the heart and the double tap on the video. It asks whichever way the like was about to happen.",
+        @"row_confirm_follow": @"Ask before following",
+        @"row_confirm_follow_note": @"The follow button on the feed and on a profile.",
+        @"confirm_like_title": @"Like this video?",
+        @"confirm_follow_title": @"Follow this account?",
+        @"confirm_yes": @"Yes",
+        @"status_confirm": @"Confirmations",
+
+        @"section_download": @"Download",
+        @"section_watching": @"Watching",
+        @"section_protection": @"Protection",
+        @"section_advanced": @"Advanced",
+
+        @"row_report": @"Status report",
+        @"row_report_note": @"Every number behind every feature, and one tap to copy the lot.",
+        @"report_title": @"Status report",
+        @"copy_report": @"Copy",
+
+        @"section_overview": @"Overview",
+        @"section_quality": @"Quality",
+        @"section_resolution": @"Link resolution",
 
         @"row_ads": @"Hide ads",
         @"row_ads_note": @"A feed item marked as an ad by TikTok's own server is never built into a cell.",
@@ -28,7 +52,7 @@ static void SCIBuildTables(void) {
         @"status_watermark": @"Watermark",
         @"status_measured": @"Measured link sizes",
         @"row_external_hd": @"HD from an outside service",
-        @"row_external_hd_note": @"Fetches the original upload through tikwm.com — measured at 60fps and three times the size where TikTok's own stream was 30fps. It tells a service outside TikTok which video you are watching. Off unless you turn it on.",
+        @"row_external_hd_note": @"Fetches the original upload through an outside service — measured at 60fps and three times the size where TikTok's own stream was 30fps. It tells a service outside TikTok which video you are watching. Off unless you turn it on.",
         @"status_gears": @"Quality gears offered",
         @"status_progress_bar": @"Seek bar",
         @"row_photo_download": @"Save photo posts",
@@ -70,6 +94,17 @@ static void SCIBuildTables(void) {
         @"diag_privacy": @"Privacy",
         @"diag_privacy_none": @"Nothing asked yet.",
 
+        @"photos_ask_message": @"You are on picture %lu of %lu.",
+        @"audio_ask_title": @"Add the sound?",
+        @"audio_ask_message": @"The picture is saved as a video with the post's sound over it.",
+        @"audio_seconds": @"%.0f seconds",
+        @"audio_picture_only": @"Picture only",
+        @"audio_working": @"Making the clip…",
+        @"audio_done": @"Clip saved to Photos",
+        @"row_photo_audio": @"Offer the sound with a picture",
+        @"row_photo_audio_note": @"Saving one picture asks whether to lay the post's sound over it and save a short video instead.",
+
+        @"status_photos": @"Photo post chain",
         @"photos_ask_title": @"This is a photo post",
         @"photos_save_this": @"Save this picture",
         @"photos_save_all": @"Save all %lu",
@@ -89,9 +124,31 @@ static void SCIBuildTables(void) {
         @"title": @"البرهي لتيك توك",
         @"done": @"تم",
 
-        @"section_controls": @"التحكم",
         @"section_privacy": @"الخصوصية",
-        @"section_status": @"الحالة",
+
+        @"section_confirm": @"التأكيدات",
+        @"row_confirm_like": @"اسألني قبل الإعجاب",
+        @"row_confirm_like_note": @"القلب والنقر المزدوج على الفيديو معاً. يسأل بأيّ الطريقتين كان الإعجاب سيحدث.",
+        @"row_confirm_follow": @"اسألني قبل المتابعة",
+        @"row_confirm_follow_note": @"زر المتابعة في الفيديو وفي صفحة الحساب.",
+        @"confirm_like_title": @"إعجاب بهذا الفيديو؟",
+        @"confirm_follow_title": @"متابعة هذا الحساب؟",
+        @"confirm_yes": @"نعم",
+        @"status_confirm": @"التأكيدات",
+
+        @"section_download": @"التحميل",
+        @"section_watching": @"المشاهدة",
+        @"section_protection": @"الحماية",
+        @"section_advanced": @"متقدّم",
+
+        @"row_report": @"تقرير الحالة",
+        @"row_report_note": @"كل رقم خلف كل ميزة، ونسخها كلها بلمسة.",
+        @"report_title": @"تقرير الحالة",
+        @"copy_report": @"نسخ",
+
+        @"section_overview": @"نظرة عامة",
+        @"section_quality": @"الجودة",
+        @"section_resolution": @"استخراج الرابط",
 
         @"row_ads": @"إخفاء الإعلانات",
         @"row_ads_note": @"أي عنصر يعلّمه سيرفر تيك توك نفسه كإعلان لا يُبنى ككائن أصلاً.",
@@ -101,7 +158,7 @@ static void SCIBuildTables(void) {
         @"status_watermark": @"العلامة المائية",
         @"status_measured": @"أحجام الروابط المقاسة",
         @"row_external_hd": @"HD من خدمة خارجية",
-        @"row_external_hd_note": @"يجلب النسخة الأصلية المرفوعة عبر tikwm.com — قيست بـ60 إطاراً وثلاثة أضعاف الحجم حيث كان بثّ تيك توك 30 إطاراً. يُعلم خدمة خارج تيك توك بالفيديو الذي تشاهده. مطفأ حتى تُشغّله بنفسك.",
+        @"row_external_hd_note": @"يجلب النسخة الأصلية المرفوعة عبر خدمة خارجية — قيست بـ60 إطاراً وثلاثة أضعاف الحجم حيث كان بثّ تيك توك 30 إطاراً. يُعلم خدمة خارج تيك توك بالفيديو الذي تشاهده. مطفأ حتى تُشغّله بنفسك.",
         @"status_gears": @"مستويات الجودة المتاحة",
         @"status_progress_bar": @"شريط التقدم",
         @"row_photo_download": @"حفظ منشورات الصور",
@@ -143,6 +200,17 @@ static void SCIBuildTables(void) {
         @"diag_privacy": @"الخصوصية",
         @"diag_privacy_none": @"لا شيء سُئل بعد.",
 
+        @"photos_ask_message": @"أنت على الصورة %lu من %lu.",
+        @"audio_ask_title": @"نضيف الصوت؟",
+        @"audio_ask_message": @"تُحفَظ الصورة فيديو وصوت المنشور فوقها.",
+        @"audio_seconds": @"%.0f ثانية",
+        @"audio_picture_only": @"الصورة فقط",
+        @"audio_working": @"يجهّز المقطع…",
+        @"audio_done": @"حُفِظ المقطع في الصور",
+        @"row_photo_audio": @"اعرض الصوت مع الصورة",
+        @"row_photo_audio_note": @"حفظ صورة واحدة يسأل إن أردت وضع صوت المنشور فوقها وحفظها فيديو قصير.",
+
+        @"status_photos": @"سلسلة منشور الصور",
         @"photos_ask_title": @"هذا منشور صور",
         @"photos_save_this": @"حفظ هذه الصورة",
         @"photos_save_all": @"حفظ الكل (%lu)",

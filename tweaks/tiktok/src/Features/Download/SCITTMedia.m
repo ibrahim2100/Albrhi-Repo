@@ -48,7 +48,7 @@ static NSString *sciWinningChain = nil;
 static NSString *sciWinningURLShape = nil;
 
 static void SCITTAddResolvedList(NSArray<NSURL *> *urls);
-static void SCITTAddPhotoPost(NSArray<NSURL *> *photos);
+static void SCITTAddPhotoPost(NSArray<NSURL *> *photos, NSURL *audio);
 
 static NSString *SCITTURLShape(NSURL *url) {
     if (!url) return @"nil";
@@ -127,6 +127,20 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url);
 /// The index the photo album is showing, recorded alongside the URLs it resolved.
 static NSUInteger sciPhotoIndex = NSNotFound;
 
+/// Every step of the photo chain, recorded as it is walked.
+///
+/// A photo post that saves one picture of several loses the others at exactly one of these steps,
+/// and a count of what was saved cannot say which. Written here rather than assembled later, so the
+/// report describes the walk that actually happened.
+static NSString *sciPhotoHolder = nil;
+static NSString *sciPhotoListVia = nil;
+static NSString *sciPhotoElement = nil;
+static NSUInteger sciPhotoListCount = 0;
+static NSUInteger sciPhotoResolved = 0;
+
+/// Where the live index came from, or why it did not.
+static NSString *sciPhotoIndexVia = nil;
+
 static NSArray<NSURL *> *SCITTPhotoURLsFromModel(id model) {
     if (!model) return nil;
 
@@ -151,6 +165,8 @@ static NSArray<NSURL *> *SCITTPhotoURLsFromModel(id model) {
     // knows which picture the swipe is on. Read here, beside the list it indexes into, so the
     // two can never disagree about which post they describe.
     sciPhotoIndex = NSNotFound;
+    NSString *chainHolder = NSStringFromClass([holder class]);
+    NSString *chainVia = nil;
     SEL current = NSSelectorFromString(@"currentIndex");
     if (holder != model && [holder respondsToSelector:current]) {
         NSInteger index = ((NSInteger (*)(id, SEL))objc_msgSend)(holder, current);
@@ -165,6 +181,7 @@ static NSArray<NSURL *> *SCITTPhotoURLsFromModel(id model) {
         id value = ((id (*)(id, SEL))objc_msgSend)(holder, selector);
         if ([value isKindOfClass:[NSArray class]] && [(NSArray *)value count]) {
             list = value;
+            chainVia = name;
             break;
         }
     }
@@ -209,7 +226,19 @@ static NSArray<NSURL *> *SCITTPhotoURLsFromModel(id model) {
         }
     }
 
-    return urls.count ? urls : nil;
+    if (!urls.count) return nil;
+
+    // **Committed only on success, and that is a correction to the first version of this
+    // diagnostic.** These are written by every model the resolver walks, and virtually all of them
+    // are ordinary videos with no album at all -- so a report read one line built from several
+    // different calls: `AWEAwemeModel → photos ×0 (empty) → 6 link(s)`, which describes nothing that
+    // ever happened. A record of the last *successful* chain is one call's worth of truth.
+    sciPhotoHolder = chainHolder;
+    sciPhotoListVia = chainVia;
+    sciPhotoListCount = list.count;
+    sciPhotoElement = NSStringFromClass([list.firstObject class]);
+    sciPhotoResolved = urls.count;
+    return urls;
 }
 
 ///
@@ -708,7 +737,45 @@ static void SCITTAddResolvedList(NSArray<NSURL *> *urls) {
 /// *alternative links to one file* -- it takes `firstObject` as the primary and keeps the
 /// rest as fallbacks -- and a six-picture post handed to it would save one picture and record
 /// a success. Different meaning, different door.
-static void SCITTAddPhotoPost(NSArray<NSURL *> *photos) {
+///
+/// The post's own sound, resolved the same guarded way every other chain here is.
+///
+/// `AWEAwemeModel.music : AWEMusicModel` and `AWEMusicModel.playURL : AWEURLModel` are both read
+/// from this build's own class metadata rather than from a name that appears somewhere in the
+/// framework -- the distinction that cost this project three releases. `addedSoundMusicInfo` is
+/// tried second because a post can carry a sound added after the fact, which is the one the app
+/// plays when it is there.
+static NSURL *SCITTAudioURLFromModel(id model) {
+    if (!model) return nil;
+
+    for (NSString *name in @[@"music", @"addedSoundMusicInfo"]) {
+        SEL selector = NSSelectorFromString(name);
+        if (![model respondsToSelector:selector]) continue;
+
+        id music = ((id (*)(id, SEL))objc_msgSend)(model, selector);
+        if (!music) continue;
+
+        for (NSString *link in @[@"playURL", @"fullSongPlayURL"]) {
+            SEL linkSel = NSSelectorFromString(link);
+            if (![music respondsToSelector:linkSel]) continue;
+
+            id urlModel = ((id (*)(id, SEL))objc_msgSend)(music, linkSel);
+            if (!urlModel) continue;
+
+            for (NSString *listName in @[@"originURLList", @"URLList", @"urlList"]) {
+                SEL listSel = NSSelectorFromString(listName);
+                if (![urlModel respondsToSelector:listSel]) continue;
+
+                NSURL *url = SCITTURLFromValue(((id (*)(id, SEL))objc_msgSend)(urlModel, listSel));
+                if (url) return url;
+            }
+        }
+    }
+
+    return nil;
+}
+
+static void SCITTAddPhotoPost(NSArray<NSURL *> *photos, NSURL *audio) {
     if (!photos.count) return;
     if (!sciRecent) sciRecent = [NSMutableArray array];
 
@@ -722,6 +789,7 @@ static void SCITTAddPhotoPost(NSArray<NSURL *> *photos) {
     item.url = primary;
     item.photoURLs = photos;
     item.photoIndex = (sciPhotoIndex < photos.count) ? sciPhotoIndex : NSNotFound;
+    item.audioURL = audio;
     item.seen = [NSDate date];
     [sciRecent insertObject:item atIndex:0];
 
@@ -902,6 +970,83 @@ static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **ou
     return links.count ? links : nil;
 }
 
++ (void)refreshPhotoIndexFromController:(id)controller {
+    SCITTMediaItem *item = sciRecent.firstObject;
+    if (!controller || !item.photoURLs.count) return;
+
+    // Every candidate is read through its own real type encoding rather than a cast chosen here:
+    // `currentIndex` is `Q` on the paging controller and `q` on the album model, and this project
+    // has already crashed an app by assuming the width of a property it had only seen the name of.
+    NSArray<NSArray<NSString *> *> *routes = @[
+        @[@"activePhotoAlbumController", @"currentIndex"],
+        @[@"cachedPhotoAlbumController", @"currentIndex"],
+        @[@"", @"photoClearModeCurrentPage"],
+    ];
+
+    for (NSArray<NSString *> *route in routes) {
+        id target = controller;
+
+        if (route.firstObject.length) {
+            SEL hop = NSSelectorFromString(route.firstObject);
+            if (![controller respondsToSelector:hop]) continue;
+            target = ((id (*)(id, SEL))objc_msgSend)(controller, hop);
+            if (!target) continue;
+        }
+
+        NSString *name = route.lastObject;
+        SEL selector = NSSelectorFromString(name);
+        if (![target respondsToSelector:selector]) continue;
+
+        Method method = class_getInstanceMethod([target class], selector);
+        const char *types = method ? method_getTypeEncoding(method) : NULL;
+        if (!types) continue;
+
+        NSUInteger index = NSNotFound;
+        if (types[0] == 'Q') {
+            index = (NSUInteger)((unsigned long long (*)(id, SEL))objc_msgSend)(target, selector);
+        } else if (types[0] == 'q') {
+            long long value = ((long long (*)(id, SEL))objc_msgSend)(target, selector);
+            if (value >= 0) index = (NSUInteger)value;
+        } else {
+            // An encoding this does not recognise loses rather than being guessed at, the same rule
+            // the bitrate read follows.
+            continue;
+        }
+
+        if (index >= item.photoURLs.count) continue;
+
+        item.photoIndex = index;
+        sciPhotoIndex = index;
+        sciPhotoIndexVia = [NSString stringWithFormat:@"%@%@ (%c)",
+            route.firstObject.length ? [route.firstObject stringByAppendingString:@"."] : @"",
+            name, types[0]];
+        return;
+    }
+
+    sciPhotoIndexVia = @"nothing live answered";
+}
+
++ (NSString *)photoReport {
+    if (!sciPhotoHolder) return @"no photo post seen yet";
+
+    SCITTMediaItem *item = sciRecent.firstObject;
+
+    return [NSString stringWithFormat:
+        @"%@ → %@ ×%lu (%@) → %lu link(s); showing index %@ via %@",
+        sciPhotoHolder,
+        sciPhotoListVia ?: @"no list accessor answered",
+        (unsigned long)sciPhotoListCount,
+        sciPhotoElement ?: @"empty",
+        (unsigned long)sciPhotoResolved,
+        // **Read off the item, not off the static, and the last report is why.** That line said
+        // `index unknown via activePhotoAlbumController.currentIndex (Q)` -- two halves of one
+        // sentence disagreeing, because the static is reset at the top of every resolution and the
+        // resolver runs constantly, while the *item* keeps the index the tap actually used. The
+        // saved picture was right; only the report was wrong, which is the more dangerous of the two.
+        item.photoIndex == NSNotFound ? @"unknown" : @(item.photoIndex),
+        sciPhotoIndexVia ?: @"not asked"];
+}
+
 + (NSString *)gearLadder {
     return sciGearLadder ?: @"no video has been asked for its gears yet this launch";
 }
@@ -929,7 +1074,7 @@ static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **ou
         if (SCIPrefEnabled(SCIPrefPhotoDownload)) {
             NSArray<NSURL *> *photos = SCITTPhotoURLsFromModel(model);
             if (photos.count) {
-                SCITTAddPhotoPost(photos);
+                SCITTAddPhotoPost(photos, SCITTAudioURLFromModel(model));
                 sciLastAttemptState = [NSString stringWithFormat:@"settled photo post — %lu picture(s)",
                     (unsigned long)photos.count];
                 return;
@@ -972,7 +1117,7 @@ static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **ou
         if (SCIPrefEnabled(SCIPrefPhotoDownload)) {
             NSArray<NSURL *> *photos = SCITTPhotoURLsFromModel(model);
             if (photos.count) {
-                SCITTAddPhotoPost(photos);
+                SCITTAddPhotoPost(photos, SCITTAudioURLFromModel(model));
                 sciLastAttemptState = [NSString stringWithFormat:@"photo post — %lu picture(s)",
                     (unsigned long)photos.count];
                 return;

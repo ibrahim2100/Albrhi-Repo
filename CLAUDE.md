@@ -1489,9 +1489,64 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.16.2** · suite **1.41.2**.
+source) · TikTok **0.17.0** · suite **1.42.0**.
 
 ### TikTok, where it actually stands
+
+**0.17.0, confirmed on a device: the button, photo posts and the picture-plus-sound clip all
+work.** What that release cost is six lessons, and every one is a shape this file already knew in
+another form:
+
+**A position chosen by searching the container is as many positions as the container has shapes.**
+The button was inserted "after the last interaction view", with two fallbacks under it — three code
+paths — and TikTok's rails genuinely differ per video (a like counter, a live badge, a music disc).
+So it landed under the like icon on one video and above the avatar on the next, and the search was
+not failing. **Index 0 is the one position that requires nothing to be true about the contents**,
+and both fallbacks were deleted rather than kept: a fallback here is a second position, and a
+second position was the bug.
+
+**A live index read at construction time is a stale index.** `AWEPhotoAlbumModel.currentIndex` is
+not what the swipe updates — the class declares `initialIndex` beside it, which is the shape of a
+value set once — and the paging controller is what knows
+(`AWEPlayPhotoAlbumViewController -currentIndex`, `Q16@0:8`, via the cell controller's
+`activePhotoAlbumController`). The deeper fix was *when*: the item is re-resolved in the tap handler
+now, not read from what was stashed when the button was made, which also stops a recycled cell
+handing over a video ago's item.
+
+**A format string is a callee with types.** Every clip length read `0 seconds`, because `%.0f` reads
+a `double` and `5` written as a literal is an `int`. Nothing warns — a variadic argument has no
+declared type to check — and it is the same family as the `objc_msgSend` casts that crashed this app
+twice, at a smaller scale.
+
+**A data resource has no type, so Photos infers one from the file name — and the name was a
+guess.** It came from the URL's last path component with `.jpg` appended, which announced a WebP as
+a JPEG and earned `PHPhotosErrorDomain 3302` for releases. **The first four bytes are a fact**;
+naming the file from them is what made photo saving work at all. Alongside it, `+dataWithContentsOfURL:`
+was replaced with `NSURLSession` — not for the headers, but because **it cannot report an HTTP
+status**, so a 403 page and a photograph were both "some bytes".
+
+**A diagnostic written by every call describes no call.** The photo-chain row was set on every model
+the resolver walks — overwhelmingly ordinary videos — so one report read
+`AWEAwemeModel → photos ×0 (empty) → 6 link(s)`, three fragments of three different calls. It is
+committed only on a successful extraction now. The same release then shipped a second instance of
+it: the row said `index unknown via activePhotoAlbumController.currentIndex (Q)` — one sentence
+disagreeing with itself — because the index was printed from a static that is reset constantly while
+the saved item held the real one. **Print state from the object that kept it, not from the last
+thing that touched a global.**
+
+**`%orig` is never captured in a block, and the replacement is a replay.** A confirmation answers
+after the hooked method has returned, so the obvious shape is calling `%orig` from the alert handler
+— the fragile Logos construct this file warns about. Instead a flag is raised and the same selector
+re-sent to the same object; the hook passes it through. Nesting becomes safe by construction, since
+an inner call sees the flag. And **a confirmation that cannot be presented lets the action
+through** — refusing instead would turn "ask me first" into "liking is broken", the same
+right-principle-wrong-place mistake as hiding the download button when a lookup failed.
+
+**And two rules about screens, both learned by shipping the opposite.** A settings screen with
+fourteen diagnostic rows among six switches is two screens interleaved, not one long screen — the
+diagnostics now sit one row away under Advanced. And a system `UIAlertController` over TikTok's feed
+reads as an error from the app: the tweak's own sheet (`SCITTSheet`, a view in the key window, so no
+presentation state can conflict) is what makes a question look deliberate.
 
 **Working, and confirmed on a device:** the ad filter, the three privacy switches, the
 jailbreak bypass, and the in-feed download button — which appears on every video, sits above

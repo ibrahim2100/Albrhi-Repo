@@ -122,11 +122,19 @@ def methods(list_vm):
             d, = struct.unpack('<i', e[:4])
             # name field points at a selector-reference slot, which holds the real pointer
             ptr = u64(list_vm + 8 + i*entsize + d)
-            out.append(cstr(ptr))
+            # **The types field, printed because a selector's existence says nothing about its
+            # signature.** This project crashed TikTok by declaring a hook's arguments from their
+            # names: the real encoding had a `^q` out-parameter where an `NSInteger` was written and
+            # a `void` return where `id` was. The second field of a method_t is a relative pointer
+            # to that encoding, and it costs nothing to read while we are already here.
+            t, = struct.unpack('<i', e[4:8]) if len(e) >= 8 else (0,)
+            types = cstr(list_vm + 8 + i*entsize + 4 + t) if t else ''
+            out.append((cstr(ptr), types))
         else:
             p, = struct.unpack('<Q', e[:8])
-            out.append(cstr(p))
-    return [m for m in out if m]
+            t = unchain(struct.unpack('<Q', e[8:16])[0]) if len(e) >= 16 else 0
+            out.append((cstr(p), cstr(t) if t else ''))
+    return [m for m in out if m[0]]
 
 addr, size = sections[('__DATA', '__objc_classlist')] if ('__DATA','__objc_classlist') in sections \
     else sections[('__DATA_CONST', '__objc_classlist')]
@@ -174,5 +182,7 @@ for n in sys.argv[2:]:
     if ps:
         print('  -- properties (name : declared type) --')
         print('  ' + '\n  '.join(ps))
-    print('  -- methods --')
-    print('  ' + '\n  '.join(ms))
+    print('  -- methods (selector  type encoding) --')
+    width = max([len(m[0]) for m in ms] or [0])
+    for sel, types in ms:
+        print('  %-*s  %s' % (width, sel, types or '?'))

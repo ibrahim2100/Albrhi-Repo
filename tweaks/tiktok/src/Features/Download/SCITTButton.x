@@ -50,6 +50,13 @@ static const NSInteger kSCIRailButtonTag = 0x5C17;
 static const void *kSCIItemKey = &kSCIItemKey;
 
 static BOOL sciRailPresent = NO;
+
+/// Decided once at install, not discovered at the first successful placement.
+///
+/// The previous arrangement let whichever surface happened to run first become the owner, which
+/// is how a video ended up with two buttons and how the rail's own fixes were never reached.
+/// Ownership is a decision, so it is made in one place before anything is on screen.
+static BOOL sciRailIsOwner = NO;
 static NSString *sciRailName = nil;
 static NSUInteger sciRailButtonsPlaced = 0;
 
@@ -57,8 +64,36 @@ static NSUInteger sciRailButtonsPlaced = 0;
 /// found in it -- so a build whose icon naming does not match says so rather than
 /// silently landing the button somewhere odd.
 static NSString *sciRailContents = nil;
-static BOOL sciPlacedBeforeLast = NO;
 
+/// How the button entered the rail, in the rail's own terms.
+///
+/// This replaced a `BOOL` reading "one before last" or "appended at end", which had become a
+/// sentence the code could no longer make false: the position is index 0 now, and a flag nothing
+/// ever sets to YES reports the other branch forever. A diagnostic that cannot disagree with the
+/// code is worse than no diagnostic, because it is read as confirmation.
+static NSString *sciRailPlacement = nil;
+
+
+/// A few points to the right of where the stack puts it, and a transform rather than a constraint.
+///
+/// The rail's own icons are wider than this button's disc — TikTok's like icon carries a counter
+/// under it — so the stack centres the button on a column that reads slightly left of the artwork
+/// beside it. A translation moves the drawing without touching the layout, so the slot the stack
+/// measured stays exactly the size it measured, and nothing about the arrangement shifts.
+static const CGFloat kSCIRailNudgeX = 5;
+
+/// The button's resting transform, in one place because the press animation has to return to it.
+///
+/// A press that ends at `CGAffineTransformIdentity` would quietly undo the nudge the first time
+/// anybody tapped — the button would jump left and stay there — which is the kind of bug that
+/// looks like a placement failure and is not one.
+static inline CGAffineTransform SCITTRailRest(void) {
+    return CGAffineTransformMakeTranslation(kSCIRailNudgeX, 0);
+}
+
+/// Defined below, beside the placement it also serves -- declared here because the tap handler above
+/// it needs the same answer.
+static SCITTMediaItem *SCITTItemForRail(UIView *rail);
 
 @interface SCITTButtonTarget : NSObject
 + (instancetype)shared;
@@ -76,7 +111,7 @@ static BOOL sciPlacedBeforeLast = NO;
 
 - (void)pressed:(UIButton *)button {
     [UIView animateWithDuration:0.12 animations:^{
-        button.transform = CGAffineTransformMakeScale(0.86, 0.86);
+        button.transform = CGAffineTransformScale(SCITTRailRest(), 0.86, 0.86);
         button.alpha = 0.75;
     }];
 }
@@ -88,13 +123,19 @@ static BOOL sciPlacedBeforeLast = NO;
           initialSpringVelocity:0
                         options:UIViewAnimationOptionAllowUserInteraction
                      animations:^{
-        button.transform = CGAffineTransformIdentity;
+        button.transform = SCITTRailRest();
         button.alpha = 1;
     } completion:nil];
 }
 
 - (void)tapped:(UIButton *)button {
-    SCITTMediaItem *item = objc_getAssociatedObject(button, kSCIItemKey);
+    // **Resolved again, here, rather than trusting what was stashed when the button was made.**
+    // A cell is recycled and a photo album is swiped, and both happen after placement: the stashed
+    // item can be a video ago, and its recorded page index certainly can. Asking the controller the
+    // button is currently inside costs one responder walk and is the only reading that describes
+    // what is on screen at the moment of the tap. The stash stays as the fallback for a button whose
+    // chain no longer reaches a controller.
+    SCITTMediaItem *item = SCITTItemForRail(button) ?: objc_getAssociatedObject(button, kSCIItemKey);
     if (!item) {
         SCILogV(@"in-feed download button: nothing captured yet");
         return;
@@ -105,39 +146,115 @@ static BOOL sciPlacedBeforeLast = NO;
 @end
 
 
-/// Whether `view` is the one actually on screen right now, among however many of
-/// TikTok's own cells happen to be alive at once. A quarter of the window's own height
-/// is generous enough to survive the button's own position inside the rail (it is not
-/// pinned to the rail's exact centre) without also lighting up a neighbour cell that is
-/// only barely, momentarily visible during a fast scroll.
-static BOOL SCITTViewIsCentered(UIView *view) {
-    UIWindow *window = view.window;
-    if (!window || window.bounds.size.height <= 0) return NO;
+// `SCITTViewIsCentered` was here: a test for whether a rail sat within a quarter of the window's
+// height of its centre, used to decide which video's button to show. It is deleted rather than
+// left unused, because a helper nobody calls is a claim that its idea still applies.
+//
+// The idea does not. It was answering "which video is on screen" with geometry, when a rail can be
+// asked outright which video it belongs to -- see `SCITTItemForRail`. During a scroll two rails
+// passed the test at once and at rest the visible one could fail it, which is exactly the
+// "sometimes one, sometimes two, sometimes none" that followed.
 
-    CGRect frameInWindow = [view convertRect:view.bounds toView:window];
-    CGFloat viewCenterY = CGRectGetMidY(frameInWindow);
-    CGFloat windowCenterY = CGRectGetMidY(window.bounds);
+/// Which rail class is allowed to place a button, decided at install.
+static Class sciRailOwnerClass = nil;
 
-    return fabs(viewCenterY - windowCenterY) < (window.bounds.size.height * 0.25);
+///
+/// The video a given rail belongs to, by asking rather than by guessing.
+///
+/// A `UIView`'s responder chain runs up through its superviews to the view controller that owns
+/// them, so a rail can find the controller showing it without knowing anything about TikTok's cell
+/// structure. That controller answers `-model`, and the model is the video whose rail this is.
+///
+/// **Every guard here is one this file has already paid for.** `-respondsToSelector:` because a
+/// selector's presence on one class says nothing about another; `-isKindOfClass:` because `model`
+/// is declared `AWEAwemeModel` on a base and a subclass may return something else — that exact
+/// assumption crashed the direct-message screen; and a bounded walk, because a loop whose exit
+/// depends on a hierarchy TikTok owns is not ours to trust.
+/// The view controller showing the video this view belongs to, or nil.
+///
+/// Split out of `SCITTItemForRail` because the *tap* needs it too, not only the placement: a photo
+/// album's live page index lives on that controller and changes with every swipe, so reading it when
+/// the button was created answers a question about a picture the user has since scrolled past.
+static UIViewController *SCITTOwningController(UIView *view) {
+    SEL modelSel = NSSelectorFromString(@"model");
+    Class awemeClass = NSClassFromString(@"AWEAwemeModel");
+
+    UIResponder *responder = view;
+
+    for (NSInteger step = 0; step < 12 && responder; step++) {
+        responder = responder.nextResponder;
+        if (![responder isKindOfClass:[UIViewController class]]) continue;
+        if (![responder respondsToSelector:modelSel]) continue;
+
+        id model = ((id (*)(id, SEL))objc_msgSend)(responder, modelSel);
+        if (!model || (awemeClass && ![model isKindOfClass:awemeClass])) continue;
+
+        return (UIViewController *)responder;
+    }
+
+    return nil;
+}
+
+static SCITTMediaItem *SCITTItemForRail(UIView *rail) {
+    UIViewController *owner = SCITTOwningController(rail);
+    if (!owner) {
+        // Nothing in the chain owns a video. Falling back to the most recent capture would be the
+        // old wrong-video bug, so the answer is no item and therefore no button on this rail.
+        return nil;
+    }
+
+    id model = ((id (*)(id, SEL))objc_msgSend)(owner, NSSelectorFromString(@"model"));
+
+    // Settled: this controller is on screen showing this video, so the deeper questions --
+    // the bitrate ladder, the URL models -- are safe to ask here.
+    [SCITTMedia captureSettledModel:(AWEAwemeModel *)model];
+    [SCITTMedia refreshPhotoIndexFromController:owner];
+    return [SCITTMedia recent].firstObject;
 }
 
 static void SCITTPlaceRailButton(UIStackView *stack) {
     if (!SCIPrefEnabled(SCIPrefDownloadButton)) return;
 
-    // The cell surface wins when it works. Both are installed so that a build missing one
-    // still gets a button, but two buttons on one video is worse than either alone.
-    if (sciCellSurfaceWorks) return;
+    // **The rail owns the button now, and this guard is why it never did.**
+    //
+    // Everything below was written to make a rail button behave — sized from a real sibling,
+    // inserted after the last `PlayInteraction` view rather than between two backgrounds,
+    // shown only for the centred cell, and following the rail's own `hidden`/`alpha` so it fades
+    // exactly when its neighbours do. None of it ever ran: `sciCellSurfaceWorks` is set the first
+    // time the cell places one, which happens first, so this returned immediately for release
+    // after release. **Fixes that are never reached are indistinguishable from fixes that do not
+    // work**, and this file carried a set of them for weeks.
+    //
+    // The owner is the rail because that is what was actually asked for: a button that belongs to
+    // TikTok's own column and rides up and down with it, instead of one pinned to a spot on the
+    // cell that only happens to look right in the feed. The cell surface stands down — see its
+    // own group — and stays as the fallback for a build where neither rail class exists.
+
+    // Only the rail class chosen at install may place. Both were hooked, and on a build that has
+    // both, one cell carries both — so one video grew two buttons, which is half of "sometimes one,
+    // sometimes two".
+    if (sciRailOwnerClass && ![stack isKindOfClass:sciRailOwnerClass]) return;
 
     UIButton *existing = (UIButton *)[stack viewWithTag:kSCIRailButtonTag];
 
-    if (!SCITTViewIsCentered(stack)) {
-        existing.hidden = YES;
-        return;
-    }
-
-    SCITTMediaItem *item = [SCITTMedia recent].firstObject;
+    // **The other half was hiding by geometry.**
+    //
+    // `SCITTViewIsCentered` asks whether a rail sits within a quarter of the window's height of
+    // its centre. During a scroll two rails satisfy that at once, and at rest the visible one can
+    // fail it — so a button appeared twice, or not at all, for reasons no user could see. The
+    // guess existed to answer "is this the video on screen", and it was only ever needed because
+    // the item came from `[SCITTMedia recent]`, which is whatever model TikTok built most
+    // recently — a preloading neighbour as often as the one under the thumb.
+    //
+    // **A rail can simply be asked which video it belongs to.** Its own responder chain reaches
+    // the controller hosting it, and that controller holds the model. Then every rail gets a
+    // correct button, an offscreen rail's button is offscreen because its rail is, and no
+    // geometric threshold decides anything.
+    SCITTMediaItem *item = SCITTItemForRail(stack);
 
     if (existing) {
+        // Visibility follows the rail itself, which is synced separately. Hidden here only when
+        // there is genuinely nothing to save.
         existing.hidden = (item == nil);
         if (item) objc_setAssociatedObject(existing, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         return;
@@ -167,11 +284,40 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
     UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
     button.tag = kSCIRailButtonTag;
 
+    // **A new design, and it is the download banner's design.** The filled circle glyph was
+    // TikTok's own idiom, which made ours indistinguishable from like and share; the banner this
+    // button summons is a dark blurred capsule, so giving the button the same material makes the
+    // two read as one feature rather than two additions by different hands.
+    //
+    // A fixed 38-point disc centred in the button, not pinned to its edges: the button's own size
+    // comes from a sibling icon and varies, and a corner radius cannot follow a height that is
+    // decided later without another layout hook to keep it in step.
+    UIBlurEffect *effect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemThinMaterialDark];
+    UIVisualEffectView *disc = [[UIVisualEffectView alloc] initWithEffect:effect];
+
+    disc.layer.cornerRadius = 19;
+    disc.layer.cornerCurve = kCACornerCurveContinuous;
+    disc.clipsToBounds = YES;
+
+    // The hairline is what holds the shape over a bright frame, where blur alone goes pale.
+    disc.layer.borderWidth = 0.5;
+    disc.layer.borderColor = [UIColor colorWithWhite:1 alpha:0.35].CGColor;
+    disc.userInteractionEnabled = NO;
+    disc.translatesAutoresizingMaskIntoConstraints = NO;
+    [button addSubview:disc];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [disc.centerXAnchor constraintEqualToAnchor:button.centerXAnchor],
+        [disc.centerYAnchor constraintEqualToAnchor:button.centerYAnchor],
+        [disc.widthAnchor constraintEqualToConstant:38],
+        [disc.heightAnchor constraintEqualToConstant:38],
+    ]];
+
     UIImageSymbolConfiguration *config =
-        [UIImageSymbolConfiguration configurationWithPointSize:27
-                                                        weight:UIImageSymbolWeightSemibold];
+        [UIImageSymbolConfiguration configurationWithPointSize:17
+                                                        weight:UIImageSymbolWeightBold];
     UIImageView *glyph = [[UIImageView alloc] initWithImage:
-        [UIImage systemImageNamed:@"arrow.down.circle.fill" withConfiguration:config]];
+        [UIImage systemImageNamed:@"arrow.down" withConfiguration:config]];
     glyph.tintColor = [UIColor whiteColor];
     glyph.translatesAutoresizingMaskIntoConstraints = NO;
     // The glyph must never intercept the tap meant for the button under it.
@@ -273,54 +419,67 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
     // there is no moment at which it can read a size that does not exist yet.
     UIView *reference = siblings.lastObject;
 
-    if (reference) {
-        [button.widthAnchor constraintEqualToAnchor:reference.widthAnchor].active = YES;
-        [button.heightAnchor constraintEqualToAnchor:reference.heightAnchor].active = YES;
-    } else {
-        [button.widthAnchor constraintEqualToConstant:44].active = YES;
-        [button.heightAnchor constraintEqualToConstant:44].active = YES;
-    }
-
+    // **The constraints used to be activated here, and that is what crashed the app.**
+    //
+    // A constraint between two views is only legal once they share an ancestor. `reference` is
+    // already inside the stack; `button` is not added until the placement block below — so
+    // activating a width tied to a sibling raised immediately and took TikTok with it. The comment
+    // that used to sit here reasoned carefully about *bounds being zero at this moment* and never
+    // asked the prior question: **are these two views in the same hierarchy yet?**
+    //
+    // Both are now activated after insertion, which is the only order in which they can be
+    // resolved at all. The sizing intent is unchanged, and it is still anchors rather than numbers
+    // copied out of `bounds` — that part was right and stays.
+    //
     // And centred inside whatever width it is given, so the glyph sits on the same vertical
     // line as the icons above and below rather than against one edge of its own box.
     button.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
     button.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
 
-    // Beside a real interaction view, not "one before last".
+    // **Index 0 — above the avatar — and the reason is that every other index is a question
+    // about the rail's contents, which differ from video to video.**
     //
-    // A device report dumped what this rail actually holds, and most of it is not buttons:
+    // "Sometimes under the like icon, sometimes above the profile picture" is exactly what the
+    // search below it used to produce, and the search was not failing: the rails genuinely differ.
+    // A video with a like counter, a live badge, a pinned-comment row or a music disc has a
+    // different number of `PlayInteraction*` views and a different number of anonymous
+    // `TTKRightInteractionAreaBackgroundView` wrappers around them, so "straight after the last
+    // interaction view" names a different height on each one — and the two fallbacks under it
+    // named two more. Three code paths, three positions, one button.
     //
-    //   TTKRightInteractionAreaBackgroundView | TikTokFeedInteractionBiz.PlayInteractionLikeView
-    //   | TTKRightInteractionAreaBackgroundView x4
-    //
-    // The interactive elements are `PlayInteraction*` views (Swift, module
-    // TikTokFeedInteractionBiz); the rest are background containers. Inserting before the
-    // last item therefore dropped the button between two backgrounds -- which is exactly the
-    // "not centred, not aligned with the icons" that was reported, and no amount of sizing
-    // would have fixed it, because the neighbours it was being sized against are not icons.
-    //
-    // So the anchor is the *last* view whose class names an interaction, and the button goes
-    // straight after it. Matched on the name rather than the class object because these are
-    // Swift types in a submodule -- the mangled name is not something to hardcode when the
-    // substring is unambiguous and already in the report.
-    NSInteger anchor = NSNotFound;
-    for (NSInteger i = 0; i < (NSInteger)siblings.count; i++) {
-        NSString *cls = NSStringFromClass([siblings[(NSUInteger)i] class]);
-        if ([cls containsString:@"PlayInteraction"] || [cls containsString:@"InteractionButton"]) {
-            anchor = i;
-        }
-    }
-
-    if (anchor != NSNotFound && [stack respondsToSelector:@selector(insertArrangedSubview:atIndex:)]) {
-        [stack insertArrangedSubview:button atIndex:(NSUInteger)(anchor + 1)];
-    } else if (siblings.count >= 2 && [stack respondsToSelector:@selector(insertArrangedSubview:atIndex:)]) {
-        // No interaction view found: keep the old behaviour rather than inventing a new one.
-        [stack insertArrangedSubview:button atIndex:siblings.count - 1];
-        sciPlacedBeforeLast = YES;
+    // The top of the stack is the one position that needs nothing to be true about what is in it.
+    // TikTok's rail order is avatar first, so index 0 is above the profile picture on every video
+    // — which is also where it was asked to be. The anchor search and its "one before last"
+    // fallback are both gone rather than kept as a fallback: a fallback here is a second position,
+    // and a second position is the bug.
+    if ([stack respondsToSelector:@selector(insertArrangedSubview:atIndex:)]) {
+        [stack insertArrangedSubview:button atIndex:0];
+        sciRailPlacement = @"arranged at index 0 (above avatar)";
     } else if ([stack respondsToSelector:@selector(addArrangedSubview:)]) {
         [stack addArrangedSubview:button];
+        sciRailPlacement = @"appended (no insertAtIndex:)";
     } else {
         [stack addSubview:button];
+        sciRailPlacement = @"plain subview (not arranged)";
+    }
+
+    // The resting offset, applied once. A transform survives every layout pass the stack runs, so
+    // there is nothing to reapply and nothing to keep in step.
+    button.transform = SCITTRailRest();
+
+    // Sized only now that it is in the hierarchy, and only if the insertion actually happened —
+    // a constraint to a sibling is meaningless, and fatal, before there is a common ancestor.
+    if (button.superview) {
+        button.translatesAutoresizingMaskIntoConstraints = NO;
+
+        if (reference && reference.superview == button.superview) {
+            [button.widthAnchor constraintEqualToAnchor:reference.widthAnchor].active = YES;
+            [button.heightAnchor constraintEqualToAnchor:reference.heightAnchor].active = YES;
+        } else {
+            // No usable sibling: fixed points, which the stack can satisfy on its own.
+            [button.widthAnchor constraintEqualToConstant:44].active = YES;
+            [button.heightAnchor constraintEqualToConstant:44].active = YES;
+        }
     }
 
     sciRailButtonsPlaced++;
@@ -347,14 +506,14 @@ static void SCITTSyncRailButton(UIStackView *stack) {
     UIButton *button = (UIButton *)[stack viewWithTag:kSCIRailButtonTag];
     if (!button) return;
 
-    // Never *shown* by this -- placement decides that, and only for the centred cell.
-    // This only ever propagates the rail going away or fading.
-    if (stack.isHidden || stack.alpha < 0.99) {
-        button.hidden = stack.isHidden;
-        button.alpha = stack.alpha;
-    } else if (SCITTViewIsCentered(stack)) {
-        button.alpha = 1.0;
-    }
+    // **The button's visibility is the rail's visibility, and nothing else decides it.**
+    //
+    // This used to restore the button only when a geometric test said the rail was near the
+    // window's centre — the same guess that made the button come and go — so a fade that TikTok
+    // then reversed left the button behind at whatever alpha it had. The rail is the authority: it
+    // is hidden exactly when its own icons are, and it belongs to one video by construction.
+    button.hidden = stack.isHidden;
+    button.alpha = stack.alpha;
 }
 
 
@@ -480,10 +639,13 @@ static BOOL sciCellItemFromCell = NO;
 
     if (!SCIPrefEnabled(SCIPrefDownloadButton)) return;
 
-    // The base controller covers the feed as well, so once it has placed a button anywhere this
-    // surface would only add a second one on top of it. Kept rather than deleted: if the base
-    // class ever disappears from a TikTok build, this is what still works.
-    if (sciBaseWorks) return;
+    // **Stands down for the rail, which is the owner.** One video, one placer -- that single
+    // ownership is the whole reason the reference tweaks are stable and three of ours were not.
+    //
+    // Still installed rather than deleted, because it is the only surface that needs nothing from
+    // TikTok's own column: if a future build renames both rail classes, this keeps a button on
+    // screen instead of leaving none.
+    if (sciBaseWorks || sciRailIsOwner) return;
 
     @try {
         UIView *host = self.contentView ?: (UIView *)self;
@@ -658,20 +820,45 @@ static BOOL sciCellItemFromCell = NO;
 static UIButton *SCITTMakeDownloadButton(void) {
     UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
 
+    // **A new design, and it is the same design as the banner.** A filled glyph floating with a
+    // drop shadow was borrowed from nothing and matched nothing: TikTok's rail is filled white
+    // glyphs, so ours disappeared into it, and the download banner it belongs to is a dark
+    // blurred capsule. Giving the button that same material makes the two read as one feature
+    // instead of two additions by different hands.
+    //
+    // A disc of blur, a hairline ring, and a plain downward arrow — not the filled circle glyph,
+    // which drew a second circle inside the first one.
+    UIBlurEffect *effect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemThinMaterialDark];
+    UIVisualEffectView *disc = [[UIVisualEffectView alloc] initWithEffect:effect];
+
+    disc.frame = CGRectMake(0, 0, 44, 44);
+    disc.layer.cornerRadius = 22;
+    disc.layer.cornerCurve = kCACornerCurveContinuous;
+    disc.clipsToBounds = YES;
+
+    // The ring is what separates it from a bright video frame, where blur alone goes pale.
+    disc.layer.borderWidth = 0.5;
+    disc.layer.borderColor = [UIColor colorWithWhite:1 alpha:0.35].CGColor;
+
+    // Never takes the touch — the button underneath must, or the disc would swallow every tap.
+    disc.userInteractionEnabled = NO;
+    disc.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    [button insertSubview:disc atIndex:0];
+
     UIImageSymbolConfiguration *config =
-        [UIImageSymbolConfiguration configurationWithPointSize:27
-                                                        weight:UIImageSymbolWeightSemibold];
-    [button setImage:[UIImage systemImageNamed:@"arrow.down.circle.fill"
-                             withConfiguration:config]
+        [UIImageSymbolConfiguration configurationWithPointSize:17
+                                                        weight:UIImageSymbolWeightBold];
+    [button setImage:[UIImage systemImageNamed:@"arrow.down" withConfiguration:config]
             forState:UIControlStateNormal];
 
-    // White with a shadow rather than a plate: the frame underneath is arbitrary, and a shadow
-    // keeps the glyph readable over a bright one without competing with TikTok's own controls.
     button.tintColor = [UIColor whiteColor];
+
+    // A soft shadow under the disc rather than around the glyph: it lifts the whole control off
+    // the video without outlining the arrow.
     button.layer.shadowColor = [UIColor blackColor].CGColor;
-    button.layer.shadowOpacity = 0.35;
-    button.layer.shadowRadius = 3;
-    button.layer.shadowOffset = CGSizeZero;
+    button.layer.shadowOpacity = 0.25;
+    button.layer.shadowRadius = 6;
+    button.layer.shadowOffset = CGSizeMake(0, 2);
 
     [button addTarget:[SCITTButtonTarget shared]
                action:@selector(tapped:)
@@ -799,6 +986,21 @@ static void SCITTPlaceBaseButton(UIViewController *controller) {
     SCITTMediaItem *item = [SCITTMedia recent].firstObject;
     if (!item) return;
 
+    // Anything an older build's cell surface left behind is removed. An upgrade must not inherit
+    // a second button that nothing owns any more.
+    //
+    // **This was a `while` loop and it froze the app.** `-viewWithTag:` searches the receiver as
+    // well as its subviews, so a tagged view that `-removeFromSuperview` does not take out of
+    // that search — the host itself, or one re-added by another pass — is found again forever, and
+    // a spin on the main thread is killed by the watchdog and reported as a crash. **An
+    // unbounded loop over a hierarchy someone else owns is never safe**: the exit condition
+    // depends on their code, not ours.
+    for (NSInteger sweep = 0; sweep < 4; sweep++) {
+        UIView *stale = [host viewWithTag:kSCICellButtonTag];
+        if (!stale || stale == host) break;
+        [stale removeFromSuperview];
+    }
+
     UIButton *button = (UIButton *)[host viewWithTag:kSCIBaseButtonTag];
 
     if (!button) {
@@ -879,11 +1081,51 @@ static void SCITTPlaceBaseButton(UIViewController *controller) {
 %end
 
 void SCITTInstallButton(void) {
-    // Installed first: it is the surface that covers every screen, and the cell hook below
-    // stands down wherever it succeeds so one video never grows two buttons.
-    if (NSClassFromString(@"AWEAwemeBaseViewController")) {
+    // **One owner, chosen here, and the others are never installed at all.**
+    //
+    // The button appeared twice and three times and came and went, because two surfaces were both
+    // placing one: the base controller and the feed cell, on different hosts, each looking only
+    // for *its own* tag. "Stand down once the other succeeds" cannot fix that — buttons already
+    // added stay added, and nothing owns the answer to "is there a button here".
+    //
+    // **Reading NA9 again settled the architecture, and I had it backwards.**
+    // `na9AddDownloadButton` exists on `AWEFeedViewTemplateCell` and `AWEFeedViewTemplateNewCell`
+    // — cells, and nothing else. On `AWEAwemeBaseViewController` it has only
+    // `na9UniversalDownloadTapped`: a *tap handler*. So the reference places from exactly one kind
+    // of object and uses the base class to answer the tap. **That single ownership is why it is
+    // stable and this was not.**
+    //
+    // The base is the placer here rather than the cell, because it is the only one that reaches
+    // direct messages and search. The cell and rail surfaces are therefore not installed when it
+    // exists — not installed, which is a different thing from standing down.
+    // **Not installed. The base surface crashed TikTok three times and it is switched off.**
+    //
+    // Everything above about ownership and about the inheritance chain is correct and worth
+    // keeping — the feed, direct messages and photo albums really are three subclasses of one
+    // base, and one owner really is why the references are stable. What is *not* established is
+    // that placing a button from inside `-setModel:` on that base is safe on this build, and
+    // three attempts each found a new way for it not to be: a hooked method the class does not
+    // declare, a model class that is not `AWEAwemeModel` on every subclass, and an unbounded
+    // sweep over a hierarchy TikTok owns.
+    //
+    // **A missing button in direct messages is a smaller cost than an app that dies**, and that
+    // is this project's own rule, written down when a crash was traded for SD quality. The cell
+    // surface below was stable for many releases and becomes the owner again.
+    //
+    // Reaching the other screens is still worth doing, and the next attempt should not start from
+    // this one: NA9 places from cells and hooks `AWEAwemeDetailViewController` and
+    // `AWENewAwemeDetailViewController` for the screens a search or a profile opens. That is a
+    // different surface from the base, with a `%hook` per concrete class rather than one on a
+    // shared parent — narrower, and each one checkable before it ships.
+    //
+    // The key is read rather than a constant folded into the branch, because a `%group` that is
+    // never `%init`-ed does not compile at all — Logos says so outright — and because a flag in
+    // the plist can be turned on to test a fix on one device without shipping it to anyone.
+    if (SCIPrefEnabled(SCIPrefBaseSurface) &&
+        NSClassFromString(@"AWEAwemeBaseViewController")) {
         %init(Base);
         sciBasePresent = YES;
+        sciBaseWorks = YES;
     }
 
     if (NSClassFromString(@"TTKFeedInteractionStackView")) {
@@ -899,10 +1141,24 @@ void SCITTInstallButton(void) {
             : @"TTKFeedRightInteractionStackView";
     }
 
-    // The cell surface, which is where NA9 puts its button. Installed alongside the rails
-    // rather than instead of them, so a build where the cell class is missing still gets
-    // something -- and the rail stands down at runtime whenever a cell button exists, so two
-    // are never on screen at once.
+    // **Ownership is decided here, before anything is on screen.**
+    //
+    // If a rail exists it owns the button, because that is what makes it behave like one of
+    // TikTok's own: the stack lays it out, so it rides up and down with the column instead of
+    // sitting at a fixed spot on the cell that only looks right in the feed. VibeTok does exactly
+    // this and nothing else -- its whole button is `TTKFeedInteractionStackView` plus
+    // `layoutSubviews`, `buttonTouchDown` and `buttonTouchUp` -- and that narrowness is the
+    // stability, not a better technique.
+    sciRailIsOwner = sciRailPresent;
+
+    // **One rail class places, not both.** A build carrying both hooks one cell twice, and that is
+    // literally where "sometimes two buttons" came from. The right-hand rail is preferred when it
+    // exists because it is the column TikTok draws beside the video; the other is the fallback.
+    sciRailOwnerClass = NSClassFromString(@"TTKFeedRightInteractionStackView")
+        ?: NSClassFromString(@"TTKFeedInteractionStackView");
+
+    // The cell surface, which is where NA9 puts its button. Installed as the fallback for a build
+    // with no rail class, and standing down whenever there is one.
     if (NSClassFromString(@"AWEFeedViewTemplateCell")) {
         %init(Cell);
         sciCellPresent = YES;
@@ -955,8 +1211,7 @@ NSString *SCITTButtonReport(void) {
     [out appendFormat:@" | rail %@ — %lu placed",
         sciRailName ?: @"(absent)", (unsigned long)sciRailButtonsPlaced];
 
-    [out appendFormat:@"; %@", sciPlacedBeforeLast
-        ? @"one before last" : @"appended at end"];
+    [out appendFormat:@"; %@", sciRailPlacement ?: @"not placed yet"];
 
     if (sciRailContents) [out appendFormat:@"; rail: %@", sciRailContents];
 

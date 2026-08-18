@@ -57,6 +57,14 @@ NS_ASSUME_NONNULL_BEGIN
 /// stamps a watermark on every download. Only the name knows.
 @property (nonatomic, copy) NSArray<NSString *> *candidateOrigins;
 
+/// The post's own sound, when it has one and it could be resolved.
+///
+/// `AWEAwemeModel.music` is an `AWEMusicModel` and its `playURL` is an `AWEURLModel` -- both
+/// confirmed on this build by class metadata, not by name. Kept beside `photoURLs` because that is
+/// the only feature that uses it: a photo post's music is most of what the post was, and a saved
+/// picture without it is half the thing.
+@property (nonatomic, copy, nullable) NSURL *audioURL;
+
 @property (nonatomic, copy) NSDate *seen;
 @end
 
@@ -97,6 +105,26 @@ NS_ASSUME_NONNULL_BEGIN
 /// reported verbatim, and a report then distinguishes "the picker chose wrong" from "there was
 /// nothing better on offer".
 + (NSString *)gearLadder;
+
+/// What the last photo post actually looked like, in the album's own terms.
+///
+/// **"saved 1 of 1" on a post of several is two different bugs and the count cannot tell them
+/// apart:** the album handed over one picture, or it handed over several and only one survived URL
+/// extraction. This reports the holder class, the list accessor that answered, how many entries it
+/// held, how many produced a link, the element class, and the index the app says is on screen --
+/// which is every step where the number could be lost.
+/// Updates the newest captured photo post with the picture the album is *currently* showing.
+///
+/// **`AWEPhotoAlbumModel.currentIndex` is not the live index, and a device report is what said so:**
+/// the album on screen was on picture four and the save took the first. The class declares
+/// `initialIndex` beside it, which is the shape of a value set once when the post is built rather
+/// than one that follows a swipe. The paging view controller is what actually knows --
+/// `AWEPlayPhotoAlbumViewController -currentIndex` (`Q16@0:8`), reached from the feed cell
+/// controller's own `activePhotoAlbumController` -- so the question is asked of the object that is
+/// doing the paging, at the moment the button is tapped rather than when the model was captured.
++ (void)refreshPhotoIndexFromController:(id)controller;
+
++ (NSString *)photoReport;
 
 /// The same resolution `captureModel:` runs, without touching the recent list --
 /// for a caller that already has a model in hand and needs its URL right now, such
