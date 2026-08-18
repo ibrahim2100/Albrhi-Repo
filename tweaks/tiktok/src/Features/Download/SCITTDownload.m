@@ -139,7 +139,7 @@ static JGProgressHUD *sciPhotoHUD = nil;
 /// A `HEAD` costs one round trip and answers the only question that has ever mattered here.
 /// Every previous attempt at quality compared *names* -- which chain, which gear, which
 /// accessor -- and a name is a claim about a file. `Content-Length` is the file.
-static long long SCITTMeasure(NSURL *url) {
+static long long SCITTMeasure(NSURL *url, NSString **outKind) {
     if (!url) return 0;
 
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
@@ -147,6 +147,7 @@ static long long SCITTMeasure(NSURL *url) {
     request.timeoutInterval = 8;
 
     __block long long length = 0;
+    __block NSString *kind = nil;
     dispatch_semaphore_t wait = dispatch_semaphore_create(0);
 
     NSURLSessionDataTask *task = [[NSURLSession sharedSession]
@@ -154,13 +155,40 @@ static long long SCITTMeasure(NSURL *url) {
           completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         NSHTTPURLResponse *http = [response isKindOfClass:[NSHTTPURLResponse class]]
             ? (NSHTTPURLResponse *)response : nil;
-        if (http.statusCode >= 200 && http.statusCode < 300) length = response.expectedContentLength;
+        if (http.statusCode >= 200 && http.statusCode < 300) {
+            length = response.expectedContentLength;
+
+            // **The type was in the response all along and 0.14.0 threw it away.** Measuring
+            // by size alone chose a 0.9 MB `audio/mpeg` over an .mp4 whose HEAD was refused --
+            // saving the music, which this project has already recorded as worse than saving
+            // nothing. Size only ever settles a tie *between videos*.
+            kind = response.MIMEType.lowercaseString;
+        }
         dispatch_semaphore_signal(wait);
     }];
     [task resume];
 
     dispatch_semaphore_wait(wait, dispatch_time(DISPATCH_TIME_NOW, 10ull * NSEC_PER_SEC));
+
+    if (outKind) *outKind = kind;
     return length > 0 ? length : 0;
+}
+
+/// How a candidate ranks before its size is even looked at.
+///
+/// 2 answered as video, 1 would not say, 0 answered as audio. Audio never wins on size, no
+/// matter how much larger it is, and a link whose server refuses `HEAD` still outranks it
+/// because refusing to answer is not evidence of being the wrong thing.
+static NSInteger SCITTKindRank(NSString *kind, NSURL *url) {
+    NSString *extension = url.pathExtension.lowercaseString;
+
+    if ([kind hasPrefix:@"audio/"] ||
+        [@[@"mp3", @"m4a", @"aac", @"wav"] containsObject:extension]) return 0;
+
+    if ([kind hasPrefix:@"video/"] ||
+        [@[@"mp4", @"mov", @"m4v"] containsObject:extension]) return 2;
+
+    return 1;
 }
 
 /// The last measurement, for the settings screen.
@@ -186,17 +214,25 @@ NSString *SCITTMeasuredReport(void) {
 
     NSMutableArray<NSURL *> *measured = [NSMutableArray array];
     NSMutableDictionary<NSURL *, NSNumber *> *sizes = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSURL *, NSNumber *> *ranks = [NSMutableDictionary dictionary];
     NSMutableArray<NSString *> *report = [NSMutableArray array];
 
     for (NSURL *url in links) {
-        long long size = SCITTMeasure(url);
+        NSString *kind = nil;
+        long long size = SCITTMeasure(url, &kind);
+        NSInteger rank = SCITTKindRank(kind, url);
+
         sizes[url] = @(size);
+        ranks[url] = @(rank);
         [measured addObject:url];
-        [report addObject:[NSString stringWithFormat:@"%@ %.1f MB",
-                           url.path.lastPathComponent ?: @"?", size / 1048576.0]];
+        [report addObject:[NSString stringWithFormat:@"%@ %.1f MB %@",
+                           url.path.lastPathComponent ?: @"?", size / 1048576.0,
+                           kind ?: (rank == 0 ? @"audio?" : @"type unknown")]];
     }
 
+    // Kind first, size second. A bigger audio file is still the wrong file.
     [measured sortUsingComparator:^NSComparisonResult(NSURL *a, NSURL *b) {
+        if (![ranks[a] isEqual:ranks[b]]) return [ranks[b] compare:ranks[a]];
         return [sizes[b] compare:sizes[a]];
     }];
 

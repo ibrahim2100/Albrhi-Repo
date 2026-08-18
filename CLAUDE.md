@@ -1468,7 +1468,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.14.0** · suite **1.39.0**.
+source) · TikTok **0.14.1** · suite **1.39.1**.
 
 ### TikTok, where it actually stands
 
@@ -1537,6 +1537,20 @@ collected and `HEAD`-ed, and the largest wins. Every earlier quality attempt her
 which accessor was better; `Content-Length` ends the argument, and a link that refuses `HEAD`
 scores zero and sinks rather than being dropped, because a server that refuses `HEAD` still
 serves `GET`.
+
+**Measuring by size alone reintroduced the audio bug this project had already paid for once.**
+0.14.0's `HEAD` gave both `Content-Length` and `Content-Type`, and only the first was kept —
+so a 0.9 MB `audio/mpeg` beat an `.mp4` whose server answered 400, and the save was the music.
+**A measurement is only better than a guess when it measures the right quantity**: kind decides
+first, size settles ties between videos, and a link that refuses `HEAD` still outranks a known
+audio one, because refusing to answer is not evidence of being the wrong thing.
+
+**And a photo post carries a video model too.** TikTok renders a slideshow as a video, so
+putting the video branch first in `+captureSettledModel:` meant a photo post always saved a
+video — the picture branch was never reached. The rule is an ordering, not a test: a post that
+has pictures is a photo post whatever else it carries, and both entry points must ask in that
+order. Worth noting both faults were found by the diagnostics added in the same release that
+caused them; a report that names what it chose is what makes a regression visible in one round.
 
 **The tikwm.com path is now shipped, as a switch, off by default — and this file's earlier
 refusal was not wrong, it was a different question.** It was refused as *the fix*, arriving

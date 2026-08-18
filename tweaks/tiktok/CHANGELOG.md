@@ -1,5 +1,21 @@
 # Albrhi for TikTok — what changed
 
+## v0.14.1
+
+**Two faults, both introduced by 0.14.0 itself, both caught by its own new report.**
+
+**The measurement picked the music.** One video offered an `.mp4` whose server refused `HEAD`
+(measured 0.0 MB) and an `.mp3` of 0.9 MB — and "largest wins" took the audio. The type was in
+the same response the size came from and was thrown away. Kind now decides before size: a link
+that answers as audio never wins however much bigger it is, one that answers as video wins over
+one that will not say, and size only settles ties between videos. Refusing to answer `HEAD` is
+not evidence of being the wrong thing, so an unmeasurable link still outranks a known audio one.
+
+**A photo post saved a video.** TikTok renders a photo slideshow as a video too, so the video
+links resolved first and the tap never reached the picture branch. Pictures are checked first
+now, the same order the other entry point already used: a post that has pictures is a photo
+post, whatever else it also carries.
+
 ## v0.14.0
 
 **Quality stops being a guess about names and becomes a measurement.** Your report showed the

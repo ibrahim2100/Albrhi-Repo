@@ -823,6 +823,21 @@ static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **ou
         id videoModel = [model respondsToSelector:videoSel]
             ? ((id (*)(id, SEL))objc_msgSend)(model, videoSel) : nil;
 
+        // Pictures first, exactly as `+captureModel:` does -- and 0.14.0 lost this by trying
+        // the video links first and returning. A photo post *has* a video model here (TikTok
+        // renders the slideshow as one), so the video branch always won and a photo post saved
+        // a video. The ordering is the whole fix: a post that has pictures is a photo post,
+        // whatever else it also happens to carry.
+        if (SCIPrefEnabled(SCIPrefPhotoDownload)) {
+            NSArray<NSURL *> *photos = SCITTPhotoURLsFromModel(model);
+            if (photos.count) {
+                SCITTAddPhotoPost(photos);
+                sciLastAttemptState = [NSString stringWithFormat:@"settled photo post — %lu picture(s)",
+                    (unsigned long)photos.count];
+                return;
+            }
+        }
+
         if (videoModel) {
             NSString *via = nil;
             NSArray<NSURL *> *links = SCITTAllLinksForVideoModel(videoModel, &via);

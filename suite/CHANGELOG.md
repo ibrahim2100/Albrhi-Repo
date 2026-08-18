@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.39.1
+
+**TikTok: two fixes to yesterday's download change.** Picking the largest file could pick the
+music when the video's own link would not report its size — the file's type now decides before
+its size, so audio never wins. And a photo post could save a video, because TikTok also renders
+a slideshow as one; pictures are checked first now.
+
+Includes TikTok 0.14.1.
+
 ## v1.39.0
 
 **TikTok downloads now pick the biggest file, not the best-guessed name.** Every link TikTok
