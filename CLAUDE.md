@@ -1652,8 +1652,22 @@ ladder or `bitrateModels` is a filtered subset and the player is handed more. **
 that by probing the player's own picker instead of inferring**, which is the discipline this file
 demands and which the previous two releases skipped.
 
-**The tikwm "HD" file is byte for byte the file this tweak already downloads, and that was
-measured, not argued.** Querying the service for a video taken from a real device report:
+**Corrected twice, and the second correction reverses the first: the external service returns
+the *original upload*, and on some videos that is dramatically better.** A later device report
+took tikwm's file at **13.9 MB against `bitrateModels`' 4.5**, and the saved clip came out at
+**60 fps while every gear in TikTok's own ladder reported 30**. So TikTok streams a re-encoded
+30 fps copy and the service hands back what the creator uploaded — which explains the size, the
+frame rate, and NA9's "1080 60fps" in one stroke.
+
+**The paragraph below is still true of the video it was measured on, and that is exactly the
+problem with it.** One sample where `hd_size` matched our bytes became "the external route adds
+nothing", stated as a general fact. That is the same error as calling `bitrateModels` a reduced
+copy from one snapshot — **twice in one session, generalising a behaviour from n=1**. Keep both
+findings side by side: sometimes identical, sometimes three times the file and double the frame
+rate, and nothing observed so far says which video will be which.
+
+**On one video the tikwm "HD" file was byte for byte the file this tweak already downloads, and
+that was measured, not argued.** Querying the service for a video taken from a real device report:
 `wm_size` 8,399,664 (the watermarked copy the ranking already refuses), `size` 4,567,673, and
 `hd_size` **3,786,622** — precisely the 3,786,622 bytes the tweak had saved through
 `bitrateModels`. **So "NA9 gets 1080 60fps" is not a better pipeline; when the ladder tops out at
