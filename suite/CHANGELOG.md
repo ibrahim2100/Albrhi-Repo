@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.40.0
+
+**TikTok: the optional external HD source is asked properly now — and measured against.** It
+needed a real API request rather than a direct link, which is why it never worked. Measured on a
+real video, the file it returns is byte for byte identical to the one Albrhi already downloads,
+so the switch stays off by default and is no longer presented as a quality upgrade.
+
+Includes TikTok 0.15.0.
+
 ## v1.39.5
 
 **TikTok: the external HD source now actually answers.** It was declining requests that did not

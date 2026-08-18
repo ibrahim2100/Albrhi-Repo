@@ -156,6 +156,61 @@ static void SCITTAddBrowserHeaders(NSMutableURLRequest *request) {
     [request setValue:@"*/*" forHTTPHeaderField:@"Accept"];
 }
 
+///
+/// Asks the external service for its HD link, or nil.
+///
+/// **`…/video/media/hdplay/<id>.mp4` is not an endpoint on its own** — it answers 400 for an id
+/// the service has not been asked about, which is why the link measured 0.0 MB in two device
+/// reports and why no `User-Agent` fixed it. The service is an API: one JSON request names the
+/// links, and the shortcut only works afterwards. NA9 parses JSON for this call rather than
+/// fetching a URL, which is the detail its binary was showing and I first read as decoration.
+///
+/// **Worth knowing before enabling it: for the video measured from a real report, `hd_size` was
+/// 3,786,622 bytes — byte for byte the file this tweak already downloads internally.** The
+/// external route is not a better file there; it is the same file fetched by a route that also
+/// tells a third party what is being watched. Kept because it was asked for and because other
+/// videos may differ, and it stays off by default.
+static NSURL *SCITTExternalHDLink(NSString *identifier) {
+    NSString *address = [NSString stringWithFormat:
+        @"https://tikwm.com/api/?url=https://www.tiktok.com/@/video/%@&hd=1", identifier];
+
+    NSURL *endpoint = [NSURL URLWithString:address];
+    if (!endpoint) return nil;
+
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:endpoint];
+    request.timeoutInterval = 12;
+    SCITTAddBrowserHeaders(request);
+
+    __block NSURL *resolved = nil;
+    dispatch_semaphore_t wait = dispatch_semaphore_create(0);
+
+    NSURLSessionDataTask *task = [[NSURLSession sharedSession]
+        dataTaskWithRequest:request
+          completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        if (data.length) {
+            id json = [NSJSONSerialization JSONObjectWithData:data options:0 error:NULL];
+            id payload = [json isKindOfClass:[NSDictionary class]] ? json[@"data"] : nil;
+
+            if ([payload isKindOfClass:[NSDictionary class]]) {
+                // `hdplay` first, then the plain copy: both are watermark-free there, and the
+                // second is still better than nothing when a post has no HD variant at all.
+                for (NSString *key in @[@"hdplay", @"play"]) {
+                    NSString *link = payload[key];
+                    if ([link isKindOfClass:[NSString class]] && link.length) {
+                        resolved = [NSURL URLWithString:link];
+                        if (resolved) break;
+                    }
+                }
+            }
+        }
+        dispatch_semaphore_signal(wait);
+    }];
+    [task resume];
+
+    dispatch_semaphore_wait(wait, dispatch_time(DISPATCH_TIME_NOW, 15ull * NSEC_PER_SEC));
+    return resolved;
+}
+
 static long long SCITTMeasure(NSURL *url, NSString **outKind) {
     if (!url) return 0;
 
@@ -590,9 +645,7 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
             // watching -- the exact thing the three privacy switches beside it exist to stop.
             // Off unless someone turns it on, and its own row says what it does before they do.
             if (SCIPrefEnabled(SCIPrefExternalHD) && item.itemID.length) {
-                NSString *address = [NSString stringWithFormat:
-                    @"https://tikwm.com/video/media/hdplay/%@.mp4", item.itemID];
-                NSURL *external = [NSURL URLWithString:address];
+                NSURL *external = SCITTExternalHDLink(item.itemID);
                 if (external) {
                     [links insertObject:external atIndex:0];
                     [origins insertObject:@"tikwm HD" atIndex:0];

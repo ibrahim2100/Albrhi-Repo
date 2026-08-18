@@ -1468,7 +1468,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.14.5** · suite **1.39.5**.
+source) · TikTok **0.15.0** · suite **1.40.0**.
 
 ### TikTok, where it actually stands
 
@@ -1557,11 +1557,27 @@ one doing the work — answered silently, so the screen read `0 cleared` for two
 instance of this family here, after the last-event snapshot and the mislabelled parallel array:
 **before believing a zero, check that the counter sits on the path that executes.**
 
-**An unauthenticated `NSURLSession` request is not a browser, and some services only answer
-browsers.** `tikwm.com` refused `HEAD` *and* a range `GET`, measuring 0.0 MB twice, while the
-same URL works in a browser — and NA9 sets headers and handles redirects for that exact call,
-which is what its binary was telling us all along. A default `User-Agent` is a thing being sent,
-not a thing being omitted.
+**The tikwm "HD" file is byte for byte the file this tweak already downloads, and that was
+measured, not argued.** Querying the service for a video taken from a real device report:
+`wm_size` 8,399,664 (the watermarked copy the ranking already refuses), `size` 4,567,673, and
+`hd_size` **3,786,622** — precisely the 3,786,622 bytes the tweak had saved through
+`bitrateModels`. **So "NA9 gets 1080 60fps" is not a better pipeline; when the ladder tops out at
+720 that is the upload's ceiling and no service invents pixels.** The switch stays because it was
+asked for and other videos may differ, but it is not the answer to quality and must not be
+described as one.
+
+**And `…/video/media/hdplay/<id>.mp4` is not an endpoint** — it answers 400 for an id the service
+has not been asked about. It is an API: one JSON request names the links and the shortcut works
+only afterwards. NA9 parses JSON for exactly this call, which its binary showed plainly and which
+was read here as decoration for two releases. **A reference's request shape is part of its
+technique, not incidental.**
+
+**A `User-Agent` was the wrong diagnosis, and testing it took one command.** The theory was that
+`tikwm.com` only answers browsers; a direct `curl` with and without a browser `User-Agent`
+returned 400 both times. Sending a real `User-Agent` is kept (it costs nothing and is correct on
+its own terms) but it fixed nothing, and **the fix was to test the hypothesis from this machine
+before shipping a release built on it** — the same discipline this file already demands of
+shell scripts.
 
 **A switch the user turned on is a decision, not an input to a ranking.** The external HD link
 was competing on measured size and losing to internal links; it now takes precedence when it

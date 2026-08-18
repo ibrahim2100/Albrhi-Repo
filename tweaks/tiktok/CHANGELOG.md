@@ -1,5 +1,27 @@
 # Albrhi for TikTok — what changed
 
+## v0.15.0
+
+**The external HD service was being asked the wrong way, and the answer changes what the feature
+is worth.**
+
+`…/video/media/hdplay/<id>.mp4` is not an endpoint on its own — it answers 400 for an id the
+service has not been asked about, which is exactly why it measured 0.0 MB in two reports and why
+no `User-Agent` fixed it. It is an API: one JSON request names the links, and the shortcut only
+works afterwards. That is what NA9's JSON parsing was for, and it was read here as decoration
+first. The switch now makes the real request.
+
+**And for the video from your own report, the external HD file is byte for byte the file this
+tweak already downloads.** Queried directly: `wm_size` 8,399,664 — the watermarked copy this
+build correctly refuses; `size` 4,567,673; and `hd_size` **3,786,622**, which is precisely the
+3,786,622 bytes the tweak saved through `bitrateModels`. So for that video the external route is
+not a better file. It is the same file, fetched by a route that also tells a third party what is
+being watched.
+
+The switch stays, off by default, because it was asked for and because other videos may differ —
+but it is no longer sold as the thing that unlocks quality. When 720 is the ceiling, it is the
+upload's ceiling.
+
 ## v0.14.5
 
 **Ranking works — your report proved it.** The links measured 3.6, 3.0, 8.0 and 4.4 MB, and the
