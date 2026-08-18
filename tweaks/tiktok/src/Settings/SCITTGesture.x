@@ -2,6 +2,7 @@
 #import <objc/runtime.h>
 #import "SCITTGesture.h"
 #import "SCITTStatus.h"
+#import "../UI/SCITTWelcome.h"
 #import "../SCILog.h"
 
 ///
@@ -52,6 +53,18 @@ static void SCITTAttachGesture(UIWindow *window) {
 
     [window addGestureRecognizer:hold];
     SCILogV(@"gesture attached to %@", window);
+
+    // **The welcome screen rides on this hook rather than adding one of its own.** It needs exactly
+    // what the gesture needs -- a real window, once, at launch -- and a second `%hook UIWindow` for
+    // the same moment would be two things to keep in step for no gain.
+    //
+    // Delayed, because a window becoming key is the start of TikTok putting its own screen up, not
+    // the end: appearing in the middle of that is how a first-run screen ends up behind a splash.
+    // The screen decides for itself whether it has ever been shown.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.5 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [SCITTWelcome showIfNeeded];
+    });
 }
 
 

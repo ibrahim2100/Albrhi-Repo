@@ -1,6 +1,7 @@
 #import "SCITTStatus.h"
 #import "SCITTReport.h"
 #import "SCITTBadge.h"
+#import "../UI/SCITTWelcome.h"
 #import "../Tweak.h"
 #import "../Prefs.h"
 #import "../Localization/SCILocalize.h"
@@ -42,6 +43,12 @@ static NSString *const kSCIRowIcon = @"icon";
 static NSString *const kSCIRowColor = @"color";
 static NSString *const kSCIRowPref = @"pref";
 static NSString *const kSCIRowWarns = @"warns";
+
+/// Which screen a link row leads to. Named rather than inferred from the row's title, because a
+/// title is a translated string and comparing against one is a bug waiting for the other language.
+static NSString *const kSCIRowDestination = @"destination";
+static NSString *const kSCIDestinationReport = @"report";
+static NSString *const kSCIDestinationWelcome = @"welcome";
 
 static NSString *const kSCISectionTitle = @"section";
 static NSString *const kSCISectionRows = @"rows";
@@ -231,7 +238,19 @@ static const void *kSCIPrefKeyAssoc = &kSCIPrefKeyAssoc;
             kSCISectionTitle: SCILocalized(@"section_advanced"),
             kSCISectionRows: @[
                 @{
+                    // The welcome screen is shown once ever, which makes it easy to lose. This is
+                    // the way back to it -- and the only reason it is under Advanced rather than at
+                    // the top is that somebody who wants it has already seen it once.
                     kSCIRowKind: kSCIKindLink,
+                    kSCIRowDestination: kSCIDestinationWelcome,
+                    kSCIRowTitle: SCILocalized(@"row_welcome"),
+                    kSCIRowNote: SCILocalized(@"row_welcome_note"),
+                    kSCIRowIcon: @"sparkles",
+                    kSCIRowColor: SCIAccent(),
+                },
+                @{
+                    kSCIRowKind: kSCIKindLink,
+                    kSCIRowDestination: kSCIDestinationReport,
                     kSCIRowTitle: SCILocalized(@"row_report"),
                     kSCIRowNote: SCILocalized(@"row_report_note"),
                     kSCIRowIcon: @"stethoscope",
@@ -559,6 +578,15 @@ static const void *kSCIPrefKeyAssoc = &kSCIPrefKeyAssoc;
 
     NSDictionary *row = [self rowAt:indexPath];
     if (![row[kSCIRowKind] isEqualToString:kSCIKindLink]) return;
+
+    if ([row[kSCIRowDestination] isEqualToString:kSCIDestinationWelcome]) {
+        // Dismissed first: the welcome screen draws into the key window, so leaving this sheet up
+        // would put it behind the settings it was asked for from.
+        [self dismissViewControllerAnimated:YES completion:^{
+            [SCITTWelcome show];
+        }];
+        return;
+    }
 
     SCITTReport *report = [[SCITTReport alloc] initWithStyle:UITableViewStyleInsetGrouped];
     [self.navigationController pushViewController:report animated:YES];

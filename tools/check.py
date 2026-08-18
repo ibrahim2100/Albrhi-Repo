@@ -353,7 +353,13 @@ def reachable_headers(path, seen=None):
 
 
 for path in SRC:
-    text = open(path, encoding='utf-8').read()
+    # Comments and string literals stripped first, using the same scanner rule 2 needs.
+    #
+    # **A name in a comment is not a use of it**, and this rule failed a build for exactly that: a
+    # file explaining *why* it does not use `SCITTSheet` was told to import `SCITTSheet.h`. Prose
+    # about the code is most of what this project writes, so a rule that reads prose as code will
+    # cry wolf here more often than anywhere else.
+    text = strip_literals(open(path, encoding='utf-8').read())
     visible = reachable_headers(path)
 
     for symbol, headers in SYMBOL_HEADERS.items():

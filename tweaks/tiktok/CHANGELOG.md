@@ -1,5 +1,21 @@
 # Albrhi for TikTok — what changed
 
+## v0.17.1
+
+**A first-run screen.** Everything this tweak adds is either invisible until you look for it — the
+two-finger hold that opens the settings — or easy to mistake for TikTok's own, like the download
+button in the rail. So it says both once, in the same dark blurred card the rest of the tweak is
+drawn in, and then never again.
+
+**Once ever, not once per version.** The stored value is the version that showed it, so a later
+release *can* decide to say something if it genuinely needs to — but an ordinary update stays
+silent. A screen that returns after every update is one people learn to dismiss without reading,
+which costs the one time it mattered. Settings › Advanced has a row that brings it back.
+
+It also says the one thing that otherwise reads as "the tweak is broken": when Albrhi's own panel
+switch is off for TikTok, nothing here is patched, and the screen says so in orange rather than
+leaving a fresh install looking dead. Shown only when it is actually off.
+
 ## v0.17.0
 
 Confirmed on a device: the button sits above the profile picture on every video, photo posts save

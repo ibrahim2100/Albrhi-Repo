@@ -1,5 +1,17 @@
 # Albrhi Changelog
 
+## v1.42.1
+
+**TikTok now welcomes you once, after installing.** A short screen saying what was added and where
+to find it — the download button, photo posts, and the two-finger hold that opens the settings. It
+appears once, not after every update, and Settings › Advanced brings it back.
+
+**Albrhi for Locket has been removed from this source.** It was separated from the package earlier
+and is now separated entirely, on request: it is no longer built here and no longer served. If you
+have it installed it keeps working, and it will not receive updates from this source.
+
+Includes TikTok 0.17.1.
+
 ## v1.42.0
 
 **TikTok, confirmed on a device.** The download button sits above the profile picture on every

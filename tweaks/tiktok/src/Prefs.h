@@ -71,6 +71,12 @@ static inline BOOL SCIPrefEnabled(NSString *key) {
 /// whole album changes. Off means one picture saves as one picture, with no question.
 #define SCIPrefPhotoAudio       @"photo_audio"
 
+/// The version that showed the welcome screen, or nothing if it has never been shown.
+///
+/// A string rather than a BOOL: it costs the same and it answers a question a later release might
+/// actually have -- which build this person met first -- where a BOOL only ever answers "yes".
+#define SCIPrefWelcomeSeen      @"welcome_seen_version"
+
 /// Ask before a like, and ask before a follow.
 ///
 /// **Two switches rather than one, for the same reason privacy is three.** A like is a public act
