@@ -434,6 +434,7 @@ static BOOL sciBasePresent = NO;
 static BOOL sciBaseWorks = NO;
 static NSMutableSet<NSString *> *sciBaseSurfaces = nil;
 static NSMutableSet<NSString *> *sciBaseSkipped = nil;
+static BOOL sciBaseAnchoredToRail = NO;
 
 static const NSInteger kSCICellButtonTag = 0x5C18;
 static NSUInteger sciCellButtonsPlaced = 0;
@@ -690,6 +691,37 @@ static UIButton *SCITTMakeDownloadButton(void) {
 @end
 
 
+
+///
+/// TikTok's own interaction rail inside a controller's view, or nil.
+///
+/// **A fraction of the screen height is a guess, and it was wrong the moment the screen
+/// changed.** 0.38 clears the avatar in the feed and lands on top of it when a video is opened
+/// from search, because that layout is not the feed's. The rail is the thing the button has to
+/// clear, so the button is placed relative to *it* — and when it cannot be found, the old
+/// fraction still applies rather than the button vanishing.
+///
+/// Searched by class name rather than by a hardcoded list, because the two rails this project
+/// already knows about (`TTKFeedInteractionStackView`, `TTKFeedRightInteractionStackView`) are
+/// clearly not the only ones — a third on the search screen would otherwise need finding all
+/// over again. Depth-limited: a full walk of a deep hierarchy on every bind is the kind of cost
+/// that has already crashed this tweak once.
+static UIView *SCITTFindInteractionRail(UIView *view, NSInteger depth) {
+    if (!view || depth <= 0) return nil;
+
+    for (UIView *child in view.subviews) {
+        NSString *name = NSStringFromClass([child class]);
+        if ([name containsString:@"InteractionStackView"] ||
+            [name containsString:@"InteractionRail"]) {
+            if (child.bounds.size.height > 40) return child;
+        }
+
+        UIView *found = SCITTFindInteractionRail(child, depth - 1);
+        if (found) return found;
+    }
+    return nil;
+}
+
 static void SCITTPlaceBaseButton(UIViewController *controller) {
     if (!SCIPrefEnabled(SCIPrefDownloadButton)) return;
 
@@ -752,9 +784,30 @@ static void SCITTPlaceBaseButton(UIViewController *controller) {
     // Recomputed every pass from the host's own bounds, never from the button's last frame:
     // a value derived from its own previous output drifts, which is exactly what the panel's
     // subtitle row did.
-    CGFloat side = 44, right = 12;
+    CGFloat side = 44, right = 12, gap = 10;
     CGRect b = host.bounds;
-    button.frame = CGRectMake(b.size.width - side - right, b.size.height * 0.38, side, side);
+
+    // Anchored above TikTok's own rail, so the button sits where the rail ends on whatever
+    // screen this is — and horizontally centred on the rail, so it lines up with like and share
+    // instead of being pinned to an edge the rail does not touch.
+    UIView *rail = SCITTFindInteractionRail(host, 6);
+
+    if (rail && rail.bounds.size.height > 0) {
+        CGRect frame = [rail convertRect:rail.bounds toView:host];
+        CGFloat centreX = CGRectGetMidX(frame) - side / 2;
+        CGFloat top = CGRectGetMinY(frame) - side - gap;
+
+        // Never above the safe area, and never off the left edge if the rail sits oddly.
+        top = MAX(top, host.safeAreaInsets.top + gap);
+        centreX = MAX(0, MIN(centreX, b.size.width - side));
+
+        button.frame = CGRectMake(centreX, top, side, side);
+        sciBaseAnchoredToRail = YES;
+    } else {
+        button.frame = CGRectMake(b.size.width - side - right, b.size.height * 0.38, side, side);
+        sciBaseAnchoredToRail = NO;
+    }
+
     [host bringSubviewToFront:button];
 
     // Re-associated on every bind, because the controller is reused and the button is not:
@@ -849,6 +902,9 @@ NSString *SCITTButtonReport(void) {
     } else if (sciBasePresent) {
         [out appendString:@" — no screen has bound a model yet"];
     }
+
+    [out appendFormat:@"; %@", sciBaseAnchoredToRail
+        ? @"anchored above the rail" : @"no rail found — using the height fraction"];
 
     if (sciBaseSkipped.count) {
         [out appendFormat:@"; skipped %@",
