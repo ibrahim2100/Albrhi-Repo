@@ -1,5 +1,21 @@
 # Albrhi for TikTok — what changed
 
+## v0.16.1
+
+**0.15.1's probe crashed TikTok repeatedly. The hook is gone.**
+
+It hooked the player's selection method with a signature written from the selector name alone —
+`(double)duration`, `(NSInteger)trategyType`, returning `id` — and none of that was read from the
+runtime. A `%hook` whose argument types do not match the real method does not fail politely: the
+arguments arrive in the wrong registers and of the wrong widths, and the process dies. It is the
+same mistake as the guessed `long long` cast on `-bitRate` that crashed 0.12.0, made again in the
+one file whose entire purpose was to stop guessing.
+
+Nothing is lost by removing it. **The probe already answered its question** — `bitrateModels`
+carries the same gear names at a quarter of the player's bitrate — and 0.16.0 acts on that by
+reading `__playBSModel` from the video model this tweak already holds, which needs no hook at
+all. The measurement was worth it; shipping it without checking the signature was not.
+
 ## v0.16.0
 
 **The probe found it, and it is one cause for both complaints.** Put side by side on your

@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.41.1
+
+**TikTok crashed often on 1.40.1. Fixed by removing the cause.** That release added a diagnostic
+that attached to one of TikTok's own methods incorrectly. It has been removed entirely — it had
+already told us what we needed, and the quality fix in this release does not depend on it.
+
+Includes TikTok 0.16.1.
+
 ## v1.41.0
 
 **TikTok: downloads were taking a reduced copy of the right quality.** Measured on-device, the

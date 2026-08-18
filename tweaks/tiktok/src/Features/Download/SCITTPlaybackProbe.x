@@ -2,134 +2,36 @@
 //  SCITTPlaybackProbe.x
 //  Albrhi for TikTok
 //
-//  Reading the ladder from where the player sees it, rather than where we happen to catch it.
+//  Retired. Kept as a file so its lesson stays where the mistake was made.
 //
 //  Copyright (C) Ibrahim Ismail AL-Rahn. GPLv3.
 //
 
 #import <Foundation/Foundation.h>
-#import <objc/runtime.h>
-#import <objc/message.h>
 #import "SCITTPlaybackProbe.h"
-#import "../../SCILog.h"
 
 ///
-/// TikTok's own gear picker.
+/// **This probe crashed TikTok repeatedly and the hook is gone.**
 ///
-/// **This exists because every gear this tweak has ever seen was named `lower` or `lowest`** —
-/// not one `normal_720`, not one `adapt_higher_` — across every device report. Either that is
-/// the whole ladder, or `bitrateModels` is a filtered subset and the player is handed something
-/// larger. `AWEVideoPlayBitrateControler` is where the app chooses, so it is where the question
-/// is answerable; `_HDRBitrateFilterGears` and `bitrateFilterList` on the video model say a
-/// filter exists at all.
+/// It hooked `AWEVideoPlayBitrateControler`'s selection method with a signature I wrote from
+/// the selector name alone — `(double)duration`, `(NSInteger)trategyType`, returning `id`. None
+/// of that was read from the runtime. **A `%hook` whose argument types do not match the real
+/// method does not fail politely**: the arguments arrive in the wrong registers and of the
+/// wrong widths, and the process dies. It is the same mistake as reading `-bitRate` through a
+/// guessed `long long` cast, which crashed 0.12.0 and is written down in this project's own
+/// rules — made again, in the one file whose whole purpose was to stop guessing.
 ///
-/// Observation only. It records what passes through and changes nothing — the download path is
-/// untouched by this file, deliberately, because two releases were spent acting on inferences
-/// that a single measurement would have settled first.
-@interface AWEVideoPlayBitrateControler : NSObject
-@end
-
-static NSString *sciOffered = nil;
-static NSString *sciChosen = nil;
-static BOOL sciAttached = NO;
-
-static NSString *SCITTDescribeGear(id entry) {
-    if (!entry) return @"nil";
-
-    NSString *gear = nil;
-    SEL gearSel = NSSelectorFromString(@"gearName");
-    if ([entry respondsToSelector:gearSel]) {
-        id value = ((id (*)(id, SEL))objc_msgSend)(entry, gearSel);
-        if ([value isKindOfClass:[NSString class]]) gear = value;
-    }
-
-    id rate = nil;
-    SEL rateSel = NSSelectorFromString(@"bitrate");
-    if ([entry respondsToSelector:rateSel]) {
-        rate = ((id (*)(id, SEL))objc_msgSend)(entry, rateSel);
-    }
-
-    // The audio the gear points at, which is the other half of the complaint: the app plays a
-    // separate stream and the muxed file we download carries whatever audio was baked into it.
-    NSString *audio = @"no selectedAudio";
-    SEL audioSel = NSSelectorFromString(@"selectedAudio");
-    if ([entry respondsToSelector:audioSel]) {
-        id selected = ((id (*)(id, SEL))objc_msgSend)(entry, audioSel);
-        if (selected) {
-            SEL metaSel = NSSelectorFromString(@"audioMeta");
-            id meta = [selected respondsToSelector:metaSel]
-                ? ((id (*)(id, SEL))objc_msgSend)(selected, metaSel) : nil;
-
-            id audioRate = nil;
-            SEL bitrateSel = NSSelectorFromString(@"bitrate");
-            if ([meta respondsToSelector:bitrateSel]) {
-                audioRate = @(((long long (*)(id, SEL))objc_msgSend)(meta, bitrateSel));
-            }
-
-            SEL mapSel = NSSelectorFromString(@"urlMap");
-            id map = [meta respondsToSelector:mapSel]
-                ? ((id (*)(id, SEL))objc_msgSend)(meta, mapSel) : nil;
-
-            audio = [NSString stringWithFormat:@"audio %@ bps, urlMap %@",
-                     audioRate ?: @"?",
-                     [map isKindOfClass:[NSDictionary class]] && [map count] ? @"present" : @"empty"];
-        }
-    }
-
-    return [NSString stringWithFormat:@"%@ @ %@ (%@)", gear ?: @"?", rate ?: @"?", audio];
-}
-
-%group Probe
-
-%hook AWEVideoPlayBitrateControler
-
-- (id)willSelectBitrateFromModels:(NSArray *)models
-                         duration:(double)duration
-                     trategyType:(NSInteger)type
-                 autoBitrateModel:(id)autoModel {
-    id picked = %orig;
-
-    @try {
-        NSMutableArray<NSString *> *described = [NSMutableArray array];
-        for (id entry in models) [described addObject:SCITTDescribeGear(entry)];
-
-        sciOffered = [NSString stringWithFormat:@"%lu offered: %@",
-                      (unsigned long)models.count,
-                      [described componentsJoinedByString:@", "]];
-        sciChosen = SCITTDescribeGear(picked);
-    } @catch (NSException *exception) {
-        SCILogV(@"playback probe: %@", exception.reason);
-    }
-
-    return picked;
-}
-
-%end
-
-%end
-
+/// A hook of that kind needs `method_getTypeEncoding` on the real method, compared against what
+/// is about to be declared, and must stand down on any mismatch. Nothing here needs it now:
+/// **the probe already answered its question** — `bitrateModels` carries the same gear names at
+/// a quarter of the player's bitrate — and 0.16.0 reads the player's own models from
+/// `__playBSModel` on the video model this tweak already holds, which requires no hook at all.
+///
+/// The measurement was worth it. Shipping it without checking the signature was not.
 void SCITTInstallPlaybackProbe(void) {
-    Class controller = NSClassFromString(@"AWEVideoPlayBitrateControler");
-    if (!controller) {
-        SCILogV(@"playback probe: AWEVideoPlayBitrateControler is not in this build");
-        return;
-    }
-
-    // The selector's real spelling includes the app's own typo, `trategyType`. Checked rather
-    // than assumed: a %hook on a method a class does not have attaches nothing and reports
-    // nothing, which would read here as "the player never selects".
-    if (!class_getInstanceMethod(controller,
-            NSSelectorFromString(@"willSelectBitrateFromModels:duration:trategyType:autoBitrateModel:"))) {
-        SCILogV(@"playback probe: the selection method is not on this class");
-        return;
-    }
-
-    %init(Probe);
-    sciAttached = YES;
+    // Nothing. Deliberately.
 }
 
 NSString *SCITTPlaybackReport(void) {
-    if (!sciAttached) return @"not attached — the player's own picker was not found";
-    if (!sciOffered) return @"attached, nothing selected yet this launch";
-    return [NSString stringWithFormat:@"%@ — player took %@", sciOffered, sciChosen ?: @"?"];
+    return @"retired — it crashed the app, and 0.16.0 reads the player's own ladder directly";
 }

@@ -1468,7 +1468,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.16.0** · suite **1.41.0**.
+source) · TikTok **0.16.1** · suite **1.41.1**.
 
 ### TikTok, where it actually stands
 
@@ -1556,6 +1556,20 @@ watermark hook incremented only at the setter, which this build never calls; the
 one doing the work — answered silently, so the screen read `0 cleared` for two releases. Third
 instance of this family here, after the last-event snapshot and the mislabelled parallel array:
 **before believing a zero, check that the counter sits on the path that executes.**
+
+**A `%hook` with a guessed method signature crashes the process, and it is the same mistake as
+a guessed cast.** 0.15.1's probe declared `willSelectBitrateFromModels:duration:trategyType:
+autoBitrateModel:` as `(double)`, `(NSInteger)`, returning `id`, none of it read from the
+runtime — arguments then arrive in the wrong registers and of the wrong widths, and TikTok died
+repeatedly. **This project had already written down the identical lesson for `-bitRate`'s cast
+in 0.12.0**, and it was repeated in the one file whose whole purpose was to stop guessing.
+
+Before hooking a method whose signature is not documented: `method_getTypeEncoding` on the real
+method, compare it against what is about to be declared, and stand down on any mismatch —
+`class_getInstanceMethod` returning non-NULL proves the selector exists and says nothing about
+its types. And note what made this expensive rather than merely wrong: the probe was shipped to
+a device before its own preconditions were checked, so **the cost of a bad measurement is paid by
+the person running it.**
 
 **`bitrateModels` is a reduced copy of the playback ladder — same gear names, a quarter of the
 bitrate — and that single fact explains every quality complaint in this tweak's history.** The
