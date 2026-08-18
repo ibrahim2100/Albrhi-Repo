@@ -574,6 +574,27 @@ variadic, and a two-arg hook drops the mode on every real `O_CREAT`, so `stat`+`
 it. Every hook is grouped and `%init`-ed from the `%ctor` after the panel gate, so "off"
 really means no hooks — a top-level ungrouped `%hookf` would install before the gate runs.
 
+**The owner's phone is roothide, not rootless, and the local setup needs a second Theos for
+it.** The two flavours are not interchangeable — a rootless package carries everything under
+`var/jb` and a roothide one does not, because roothide decides its prefix on the device — and
+**Theos settles that when it stages, so the flavour is chosen by which Theos builds it**, never
+by the control file. The `roothide` package scheme exists only in the roothide fork
+(`vendor/mod/roothide`), so stock Theos answers `'roothide' package scheme does not exist`:
+
+```bash
+git clone --recursive https://github.com/roothide/theos.git ~/theos-roothide
+cp -R ~/theos/sdks/. ~/theos-roothide/sdks/        # same SDK, not fetched twice
+```
+
+`tools/build-local.sh` builds roothide by default for that reason, points `THEOS` at the fork
+itself, and then **proves the flavour from the staged paths rather than the filename** — 1.0.2
+shipped a "roothide" package built from a rootless tree and it installed as rootless, because
+that is what it was. It refuses to copy a mismatch out.
+
+**While the source is paused, builds go to `~/Desktop/Albrhi-TikTok` and versions do not move.**
+A version number means something was published; nothing is being published during a measurement
+loop, and bumping one per attempt turns the changelog into a list of guesses.
+
 **Build locally before pushing — the CI round trip is five minutes and the local one is
 under a minute.** This is set up on the owner's Mac and is **per machine**, so a different
 computer needs it again:
