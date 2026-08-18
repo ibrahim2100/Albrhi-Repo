@@ -5,10 +5,11 @@
 #import "Features/Bypass/SCITTBypass.h"
 #import "Features/Privacy/SCITTPrivacy.h"
 #import "Features/Download/SCITTButton.h"
+#import "Features/Interface/SCITTProgressBar.h"
 #import "Features/Download/SCITTCapture.h"
 #import "Settings/SCITTGesture.h"
 
-NSString *SCIVersionString = @"v0.12.1";  // AlbrhiTT
+NSString *SCIVersionString = @"v0.13.0";  // AlbrhiTT
 
 ///
 /// TESTED ON TikTok 46.4.0. Every class here was confirmed present in that build's own
@@ -21,6 +22,15 @@ NSString *SCIVersionString = @"v0.12.1";  // AlbrhiTT
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{
         SCIPrefHideAds: @YES,
         SCIPrefDownloadButton: @YES,
+
+        // The progress bar and photo saving, both on.
+        //
+        // Unlike the two YouTube overlay switches, these act on classes confirmed in TikTok
+        // 46.4.0's own binary rather than on names read from another tweak, so there is no
+        // "ask before assuming" reason to default them off -- and a progress bar nobody can
+        // find is a feature nobody has.
+        SCIPrefProgressBar: @YES,
+        SCIPrefPhotoDownload: @YES,
         SCIPrefBypass: @YES,
         SCIPrefPrivacyStory: @YES,
         SCIPrefPrivacyMessages: @YES,
@@ -46,4 +56,5 @@ NSString *SCIVersionString = @"v0.12.1";  // AlbrhiTT
     SCITTInstallPrivacy();
     SCITTInstallCapture();
     SCITTInstallButton();
+    SCITTInstallProgressBar();
 }

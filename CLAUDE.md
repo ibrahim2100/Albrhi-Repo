@@ -1403,7 +1403,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.12.1** · suite **1.37.1**.
+source) · TikTok **0.13.0** · suite **1.38.0**.
 
 ### TikTok, where it actually stands
 
@@ -1427,23 +1427,40 @@ Getting there took twelve releases and the errors are worth more than the result
   at twice — from NA9's binary and from a framework-wide selector dump — and is on no class
   here at all.
 
-**Still open: quality. Downloads are SD.** `bitrateModels`, `HDRBitrateModels`,
-`SDRBitrateModels` and `audioBitrateModels` are all on `AWEVideoModel`, each entry carrying
-`-bitRate`, `-gearName`, `-qualityType` and its own `-playAddr`. **0.12.0 tried to read them
-and crashed the app**; 0.12.1 reverted it whole. Two things must be settled before trying
-again, and both are measurements, not decisions:
+**Quality: settled in 0.13.0, and the fix is the two measurements this file had already
+written down rather than a new idea.** `bitrateModels` is a *list of alternatives* and the
+right one is chosen by comparing them — every other resolver here walks a path and takes what
+it finds, which is why "it saves SD" survived every chain reporting success. 0.12.0 tried and
+crashed the app; 0.13.0 does it with both of that release's mistakes answered:
 
-1. **`-bitRate`'s return type.** It was read through `objc_msgSend` cast to `long long`. A
-   framework dump gives *names, not signatures*, so nothing there says whether it is an
-   integer, a double or an `NSNumber *` — and the wrong cast is undefined behaviour, not a
-   wrong number. Ask the runtime instead: `property_getAttributes(class_getProperty(cls,
-   "bitRate"))` returns `Tq` / `Td` / `T@"NSNumber"`. **The next TikTok release should be a
-   diagnostic that prints those encodings and nothing else** — it cannot break anything, and
-   it supplies the one fact that is missing.
-2. **Where the read happens.** The crashing version ran during the aweme model's own `-init`,
-   where `-video` is half-built. Read it at **button-tap time** instead: the model is
-   finished, on screen, and the user is already waiting. Resolution at capture time is for
-   getting *a* link; choosing the best gear is a decision that belongs where the save is.
+1. **`-bitRate`'s type is read from the runtime, never assumed.**
+   `property_getAttributes(class_getProperty(cls, "bitRate"))` gives the real encoding and the
+   value is read through a matching cast — `q`/`l`, `i`/`s`, `Q`/`L`/`I`, `d`, `f`, `@`. An
+   encoding not in that list scores **zero** rather than being guessed at, so an unreadable
+   variant loses a comparison instead of crashing a process. A framework dump gives names, not
+   signatures; the runtime gives signatures.
+2. **The ladder is only read for a settled model, and that is a second entry point, not a
+   flag.** `+captureModel:` is called from the aweme model's own `-init` hooks, where `-video`
+   is half-built — the exact object 0.12.0 walked. `+captureSettledModel:` is called only by
+   the feed cell's button, holding `AWEFeedCellViewController.model`: an object the app has
+   finished with and is showing on screen. "Is this safe to walk" is a fact about the *caller*,
+   so it is expressed as which function the caller may call. A parameter would let a future
+   caller answer it wrongly, and that is precisely the mistake being guarded against.
+
+Failure at any step falls through to the ordinary chains, which already produce a working file.
+
+**Photo posts were never downloadable at all, and nothing said so.** A photo post has no
+`-video`, so every chain reported failure and the button had nothing to offer — indistinguishable
+from a broken resolver, and read as one for a while. Images come from `imagePostInfo` →
+`images`/`imageList` → `displayImage` → `originURLList`/`urlList`, saved one at a time with the
+result reported as "saved N of M": a post of twelve where two fail is not a failed download, and
+a single yes/no would have called it one.
+
+**The seek bar needed no drawing.** TikTok already has `AWEFeedPlayerBottomProgressBar` and
+merely hides it outside a drag, so the feature is refusing the hide — `-setHidden:` answered
+`NO`, `-setAlpha:` refusing zero. Nothing positioned, nothing added to a view hierarchy, so none
+of this file's placement lessons apply. Worth noticing before building a bar: the app often
+already has the view and is only choosing not to show it.
 
 **A crash is worse than SD** — that is why 0.12.1 exists, and it is the rule to keep if the
 HD attempt goes wrong again.

@@ -61,8 +61,71 @@ NSString *SCITTDownloadReport(void) {
 
 @implementation SCITTDownload
 
+/// Saves every picture of a photo post, in order.
+///
+/// Fetched on a background queue because +dataWithContentsOfURL: blocks until each picture
+/// arrives, and a post can hold eight of them -- doing that on the main thread would freeze
+/// the feed for the whole download.
+///
+/// **Each picture is imported in its own change block.** One block for all of them would make
+/// a single failure discard the entire post, and a post where seven of eight arrived is worth
+/// keeping the seven. The counter reports both numbers for the same reason: "saved 6 of 8" and
+/// "saved nothing" are different problems.
++ (void)savePhotos:(NSArray<NSURL *> *)urls {
+    [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelAddOnly
+                                               handler:^(PHAuthorizationStatus status) {
+        if (status != PHAuthorizationStatusAuthorized &&
+            status != PHAuthorizationStatusLimited) {
+            SCITTRecordDownload(@"Photos access refused");
+            return;
+        }
+
+        dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+            __block NSUInteger saved = 0;
+
+            for (NSURL *url in urls) {
+                NSData *data = [NSData dataWithContentsOfURL:url];
+                UIImage *image = data.length ? [UIImage imageWithData:data] : nil;
+                if (!image) continue;
+
+                dispatch_semaphore_t wait = dispatch_semaphore_create(0);
+
+                [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
+                    [PHAssetChangeRequest creationRequestForAssetFromImage:image];
+                } completionHandler:^(BOOL ok, NSError *error) {
+                    if (ok) saved++;
+                    else SCILogV(@"photo save: %@", error.localizedDescription);
+                    dispatch_semaphore_signal(wait);
+                }];
+
+                // Waited on deliberately, one at a time. Photos serialises change requests
+                // anyway, and firing eight at once produces eight interleaved completions
+                // whose ordering in the album is then whatever the library felt like.
+                dispatch_semaphore_wait(wait, dispatch_time(DISPATCH_TIME_NOW, 30ull * NSEC_PER_SEC));
+            }
+
+            SCITTRecordDownload([NSString stringWithFormat:@"photo post — saved %lu of %lu",
+                (unsigned long)saved, (unsigned long)urls.count]);
+        });
+    }];
+}
+
+
+
 + (void)save:(SCITTMediaItem *)item {
     if (!item.url) return;
+
+    // A photo post takes an entirely different path: several images, saved as images.
+    //
+    // The video path downloads to a temporary file and asks Photos to import it as a video,
+    // and handing it a JPEG produces exactly the PHPhotosErrorDomain refusal that has already
+    // appeared in one report -- Photos rejecting a file it was told was the wrong kind. The
+    // two are separated here rather than inside the importer, so neither has to ask what the
+    // other is doing.
+    if (item.photoURLs.count) {
+        [self savePhotos:item.photoURLs];
+        return;
+    }
 
     [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelAddOnly
                                                 handler:^(PHAuthorizationStatus status) {

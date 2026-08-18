@@ -4,6 +4,7 @@
 #import "../Localization/SCILocalize.h"
 #import "../Diagnostics/SCITTDiagnostics.h"
 #import "../Features/Download/SCITTMedia.h"
+#import "../Features/Interface/SCITTProgressBar.h"
 #import "../Features/Download/SCITTDownload.h"
 #import "../Features/Download/SCITTButton.h"
 
@@ -30,15 +31,17 @@ static const NSInteger kSCISectionCount = 3;
 
 static const NSInteger kSCIRowAds = 0;
 static const NSInteger kSCIRowDownloadButton = 1;
-static const NSInteger kSCIRowBypass = 2;
-static const NSInteger kSCIControlsRowCount = 3;
+static const NSInteger kSCIRowPhotoDownload = 2;
+static const NSInteger kSCIRowProgressBar = 3;
+static const NSInteger kSCIRowBypass = 4;
+static const NSInteger kSCIControlsRowCount = 5;
 
 static const NSInteger kSCIRowPrivacyStory = 0;
 static const NSInteger kSCIRowPrivacyMessages = 1;
 static const NSInteger kSCIRowPrivacyProfile = 2;
 static const NSInteger kSCIPrivacyRowCount = 3;
 
-static const NSInteger kSCIStatusRowCount = 9;
+static const NSInteger kSCIStatusRowCount = 10;
 
 @implementation SCITTStatus
 
@@ -424,6 +427,18 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
         note = SCILocalized(@"row_download_button_note");
         icon = @"arrow.down.circle.fill";
         color = SCIAccent();
+    } else if (row == kSCIRowPhotoDownload) {
+        key = SCIPrefPhotoDownload;
+        title = SCILocalized(@"row_photo_download");
+        note = SCILocalized(@"row_photo_download_note");
+        icon = @"photo.on.rectangle.angled";
+        color = [UIColor systemPinkColor];
+    } else if (row == kSCIRowProgressBar) {
+        key = SCIPrefProgressBar;
+        title = SCILocalized(@"row_progress_bar");
+        note = SCILocalized(@"row_progress_bar_note");
+        icon = @"slider.horizontal.below.rectangle";
+        color = [UIColor systemBlueColor];
     } else {
         key = SCIPrefBypass;
         title = SCILocalized(@"row_bypass");
@@ -439,6 +454,8 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
 - (void)controlToggled:(UISwitch *)toggle {
     NSString *key = (toggle.tag == kSCIRowAds) ? SCIPrefHideAds
                    : (toggle.tag == kSCIRowDownloadButton) ? SCIPrefDownloadButton
+                   : (toggle.tag == kSCIRowPhotoDownload) ? SCIPrefPhotoDownload
+                   : (toggle.tag == kSCIRowProgressBar) ? SCIPrefProgressBar
                    : (toggle.tag == kSCIRowBypass) ? SCIPrefBypass
                    : nil;
     if (!key) return;
@@ -554,6 +571,14 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
             cell.imageView.image = SCITTBadge(@"magnifyingglass", [UIColor systemPurpleColor]);
             break;
         case 7:
+            // Three states, not two: the class may be absent from this build, present and
+            // switched off, or working -- and only the first is a reason to change any code.
+            cell.textLabel.text = SCILocalized(@"status_progress_bar");
+            cell.detailTextLabel.text = SCITTProgressBarReport();
+            cell.imageView.image = SCITTBadge(@"slider.horizontal.below.rectangle",
+                                              [UIColor systemBlueColor]);
+            break;
+        case 8:
             cell.textLabel.text = SCILocalized(@"diag_bypass");
             cell.detailTextLabel.text = [SCITTDiagnostics bypassState];
             cell.imageView.image = SCITTBadge(@"shield.lefthalf.filled", [UIColor systemIndigoColor]);

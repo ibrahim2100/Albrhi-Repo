@@ -1,5 +1,42 @@
 # Albrhi for TikTok — what changed
 
+## v0.13.0
+
+Three things asked for by name: the progress bar, HD, and photo posts.
+
+**A seek bar under every video.** TikTok has one — `AWEFeedPlayerBottomProgressBar` — and
+hides it, showing it only while you are dragging. The switch keeps it on screen: `-setHidden:`
+is answered with `NO` and `-setAlpha:` refuses to fade it to nothing, so nothing has to be
+drawn and nothing has to be positioned. On by default, with its own switch under Controls
+and its own line in Status — which distinguishes "not in this build" from "switched off"
+from "working", since only the first is a reason to change any code.
+
+**Photo posts save as photos.** They were being ignored entirely: a photo post has no
+`-video`, so every download chain here reported failure and the button had nothing to offer.
+The images come from `imagePostInfo` → `images`/`imageList` → `displayImage` →
+`originURLList`/`urlList`, and they are saved one at a time, each as its own entry in Photos,
+with the result reported as "saved N of M" rather than as a single yes or no — a post of
+twelve images where two fail is not a failed download.
+
+**HD, and why it took two attempts.** Downloads were SD because `downloadNoWatermarkURL` is
+one link and `bitrateModels` is a list of alternatives — the right one is *chosen* by
+comparing them, and nothing here had ever compared anything. 0.12.0 tried and crashed the app.
+Both of that release's mistakes are fixed as measurements rather than as guesses:
+
+- **The type of `-bitRate` is asked for, not assumed.** `property_getAttributes` returns the
+  real encoding — `q`, `d`, `@"NSNumber"` — and the value is read through a cast that matches
+  it. An encoding this does not recognise scores zero instead of being guessed at, so an
+  unreadable variant simply loses and the download still happens.
+- **The ladder is read when the model is finished, not while it is being built.** There are
+  two entry points now: `+captureModel:`, called from the aweme model's own `-init` hooks
+  where `-video` is half-built and only the shallow chains are safe, and
+  `+captureSettledModel:`, called by the feed cell's button for a model the app has finished
+  with and is currently showing. "Is this object safe to walk" is a fact about the caller, so
+  it is a second entry point and not a flag a future caller could answer wrongly.
+
+If the ladder gives nothing, the ordinary chain runs exactly as it did in 0.12.1. A crash is
+worse than SD; that rule has not moved.
+
 ## v0.12.1
 
 **0.12.0 crashed TikTok. Reverted.**

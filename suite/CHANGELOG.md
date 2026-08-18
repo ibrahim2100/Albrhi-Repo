@@ -1,5 +1,23 @@
 # Albrhi Changelog
 
+## v1.38.0
+
+**TikTok: a progress bar, photo posts, and HD.**
+
+A seek bar stays under every video instead of appearing only while you drag, with its own
+switch. Photo posts save as photos, every image in the post, each its own entry
+in Photos; they used to be skipped entirely because they have no video to find. And downloads
+pick the highest-quality copy TikTok offers rather than the first one it lists, which is what
+"it saves SD" was.
+
+HD crashed the app once, in 1.37.0. It is back because both reasons it crashed were settled by
+measurement rather than patched: the bitrate value's type is read from the runtime instead of
+assumed, and the quality list is only ever consulted for a video already on screen, never for a
+model still being built. If anything about that fails, the download still happens at the old
+quality.
+
+Includes TikTok 0.13.0.
+
 ## v1.37.1
 
 **TikTok crashed on 1.37.0. Fixed by reverting** the HD change that caused it. The button and

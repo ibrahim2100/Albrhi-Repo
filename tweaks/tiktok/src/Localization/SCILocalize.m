@@ -24,6 +24,11 @@ static void SCIBuildTables(void) {
         @"row_ads_note": @"A feed item marked as an ad by TikTok's own server is never built into a cell.",
         @"row_download_button": @"Download button in the feed",
         @"row_download_button_note": @"A button beside like, comment and share on the video on screen.",
+        @"status_progress_bar": @"Seek bar",
+        @"row_photo_download": @"Save photo posts",
+        @"row_photo_download_note": @"A photo post saves every image in it, each one its own entry in Photos.",
+        @"row_progress_bar": @"Always show the seek bar",
+        @"row_progress_bar_note": @"TikTok hides the bar under the video unless you are dragging it. This keeps it there.",
         @"row_bypass": @"Hide the jailbreak",
         @"row_bypass_note": @"Answers TikTok's own device checks the way an unmodified phone would.",
 
@@ -81,6 +86,11 @@ static void SCIBuildTables(void) {
         @"row_ads_note": @"أي عنصر يعلّمه سيرفر تيك توك نفسه كإعلان لا يُبنى ككائن أصلاً.",
         @"row_download_button": @"زر تحميل في الواجهة",
         @"row_download_button_note": @"زر بجانب اللايك والتعليق والمشاركة على الفيديو المعروض.",
+        @"status_progress_bar": @"شريط التقدم",
+        @"row_photo_download": @"حفظ منشورات الصور",
+        @"row_photo_download_note": @"منشور الصور يُحفَظ بكل صوره، كل صورة كعنصر مستقل في الصور.",
+        @"row_progress_bar": @"إظهار شريط التقدم دائماً",
+        @"row_progress_bar_note": @"تيك توك يخفي الشريط أسفل الفيديو إلا أثناء سحبه. هذا يبقيه ظاهراً.",
         @"row_bypass": @"إخفاء الجيلبريك",
         @"row_bypass_note": @"يجاوب على فحوصات تيك توك للجهاز كأنه جهاز غير معدَّل.",
 

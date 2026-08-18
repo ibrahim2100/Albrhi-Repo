@@ -38,3 +38,19 @@ static inline BOOL SCIPrefEnabled(NSString *key) {
     if (!SCIPanelAllowsThisApp()) return NO;
     return [[NSUserDefaults standardUserDefaults] boolForKey:key];
 }
+
+/// The playback progress bar, kept visible.
+///
+/// TikTok fades its own bar out a moment after a video starts and only brings it back while
+/// you are scrubbing, so there is normally no way to see how far through a clip you are.
+/// NA9 keeps it up by answering `-setHidden:` and `-setAlpha:` on
+/// `AWEFeedPlayerBottomProgressBar`, which is the same shape of fix as this project's other
+/// "answer the question rather than fight the view" hooks.
+#define SCIPrefProgressBar      @"show_progress_bar"
+
+/// Saving the pictures from a photo post, not just video.
+///
+/// A TikTok photo post carries `imagePostInfo` / `imageList` / `images`, each confirmed in
+/// the app's own binary. The download button already knows which model it belongs to, so
+/// this is about what it does with a model whose media is pictures.
+#define SCIPrefPhotoDownload    @"photo_download"

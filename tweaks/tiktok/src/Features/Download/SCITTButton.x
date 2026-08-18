@@ -571,7 +571,9 @@ static BOOL sciCellItemFromCell = NO;
 
         SCITTMediaItem *item = nil;
         if (model) {
-            [SCITTMedia captureModel:(AWEAwemeModel *)model];
+            // The settled entry point: this model came from the cell's own view controller,
+            // so it is finished and on screen, and may be asked for the bitrate ladder.
+            [SCITTMedia captureSettledModel:(AWEAwemeModel *)model];
             item = [SCITTMedia recent].firstObject;
         }
 

@@ -28,6 +28,14 @@ NS_ASSUME_NONNULL_BEGIN
 /// deciding, which is the same standard v0.4.12 established for audio-vs-video.
 @property (nonatomic, copy) NSArray<NSURL *> *candidates;
 
+/// The pictures of a photo post, in order, or empty for an ordinary video.
+///
+/// A TikTok photo post is not a video with a still: it is a list of images the app pages
+/// through, and saving it means saving all of them. Kept as its own array rather than
+/// squeezed into `candidates` -- those are *alternative* links to one thing, and treating a
+/// six-picture post as six fallbacks for one file would save the first and call it done.
+@property (nonatomic, copy) NSArray<NSURL *> *photoURLs;
+
 @property (nonatomic, copy) NSDate *seen;
 @end
 
@@ -47,6 +55,19 @@ NS_ASSUME_NONNULL_BEGIN
 /// independent reference tweaks both call. A step that does not answer is recorded,
 /// not guessed past.
 + (void)captureModel:(AWEAwemeModel *)model;
+
+/// The same, for a model that is known to be **finished**.
+///
+/// `+captureModel:` is called from `AWEAwemeModel`'s own `-init` hooks, where `-video` is
+/// half-built — 0.12.0 crashed the app by walking a list of sub-objects off exactly that. The
+/// feed cell's button reaches its model through `AWEFeedCellViewController.model`, which is an
+/// object the app has finished with and is currently showing, and only that path may ask the
+/// deeper questions: the bitrate ladder, and anything else that means touching the model's
+/// children rather than one accessor.
+///
+/// Two entry points rather than a flag, because "is this object safe to walk" is a fact about
+/// the *caller*, and a parameter would let a future caller answer it wrongly.
++ (void)captureSettledModel:(AWEAwemeModel *)model;
 
 /// The same resolution `captureModel:` runs, without touching the recent list --
 /// for a caller that already has a model in hand and needs its URL right now, such

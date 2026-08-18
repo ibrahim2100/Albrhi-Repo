@@ -1,4 +1,5 @@
 #import "SCITTMedia.h"
+#import "../../Prefs.h"   // SCIPrefEnabled, SCIPrefPhotoDownload
 #import "../../TikTokHeaders.h"
 #import "../../SCILog.h"
 #import <objc/message.h>
@@ -47,6 +48,7 @@ static NSString *sciWinningChain = nil;
 static NSString *sciWinningURLShape = nil;
 
 static void SCITTAddResolvedList(NSArray<NSURL *> *urls);
+static void SCITTAddPhotoPost(NSArray<NSURL *> *photos);
 
 static NSString *SCITTURLShape(NSURL *url) {
     if (!url) return @"nil";
@@ -99,6 +101,186 @@ static id SCITTTry(id obj, NSString *name, NSString **outFailure) {
 /// Walks `model` through one candidate chain of selector names, converting the last
 /// step's answer to a URL. Returns nil and fills `outFailure` on the step that stopped
 /// it -- never a guess past a step that did not answer.
+// Declared ahead of use: the photo resolver below needs it and it is defined further down,
+// beside the URL helpers it belongs with. A flag used above its own definition is what
+// check.py's rule caught in the panel yesterday, and C does not care that two things belong
+// together.
+static BOOL SCITTURLLooksDownloadable(NSURL *url);
+
+///
+/// Every picture of a photo post, in order, or nil for an ordinary video.
+///
+/// A TikTok photo post carries its pictures on the aweme model, not on the video model:
+/// `imagePostInfo` holds them, and `images` / `imageList` are the two names the list itself
+/// answers to. All four are confirmed in TikTok 46.4.0's own binary, and each entry is a URL
+/// model read exactly like every other one here -- `originURLList`, then `urlList`, then
+/// `URLList`.
+///
+/// **Order matters and the first entry is not enough.** Every other resolver in this file
+/// looks for one link and stops; a photo post is six or eight separate pictures, and taking
+/// the first would save one and look like it worked. So this collects all of them and the
+/// caller saves the lot.
+///
+/// Read defensively at every step, the same as the URL chains: a name that does not answer is
+/// stepped over rather than assumed, because the accessor list says a name exists somewhere
+/// and never says on what.
+static NSArray<NSURL *> *SCITTPhotoURLsFromModel(id model) {
+    if (!model) return nil;
+
+    id holder = model;
+
+    SEL info = NSSelectorFromString(@"imagePostInfo");
+    if ([model respondsToSelector:info]) {
+        id posted = ((id (*)(id, SEL))objc_msgSend)(model, info);
+        if (posted) holder = posted;
+    }
+
+    NSArray *list = nil;
+    for (NSString *name in @[@"images", @"imageList", @"displayImageList"]) {
+        SEL selector = NSSelectorFromString(name);
+        if (![holder respondsToSelector:selector]) continue;
+
+        id value = ((id (*)(id, SEL))objc_msgSend)(holder, selector);
+        if ([value isKindOfClass:[NSArray class]] && [(NSArray *)value count]) {
+            list = value;
+            break;
+        }
+    }
+    if (!list.count) return nil;
+
+    NSMutableArray<NSURL *> *urls = [NSMutableArray array];
+
+    for (id entry in list) {
+        id urlModel = entry;
+
+        // An entry may itself be the URL model, or may wrap one under -displayImage.
+        SEL display = NSSelectorFromString(@"displayImage");
+        if ([entry respondsToSelector:display]) {
+            id inner = ((id (*)(id, SEL))objc_msgSend)(entry, display);
+            if (inner) urlModel = inner;
+        }
+
+        for (NSString *name in @[@"originURLList", @"urlList", @"URLList"]) {
+            SEL selector = NSSelectorFromString(name);
+            if (![urlModel respondsToSelector:selector]) continue;
+
+            NSURL *url = SCITTURLFromValue(((id (*)(id, SEL))objc_msgSend)(urlModel, selector));
+            if (url && SCITTURLLooksDownloadable(url)) {
+                [urls addObject:url];
+                break;
+            }
+        }
+    }
+
+    return urls.count ? urls : nil;
+}
+
+///
+/// Reads `-bitRate` without guessing its type.
+///
+/// **This is what crashed the app in 0.12.0.** It was read through `objc_msgSend` cast to
+/// `long long`. A framework selector dump gives *names, not signatures*, so nothing there says
+/// whether the property is an integer, a double or an `NSNumber *` -- and the wrong cast is
+/// undefined behaviour, not a wrong number: the value arrives in a different register, or a
+/// pointer is read as an integer.
+///
+/// So the type is asked for at runtime rather than assumed. `property_getAttributes` returns
+/// an encoding whose first letter after `T` is the type: `q` long long, `i` int, `d` double,
+/// `f` float, `@` an object. Each is then read through a cast that matches, and an encoding
+/// this does not recognise returns 0 rather than a guess -- a variant that cannot be compared
+/// simply loses, which costs quality and never stability.
+static double SCITTBitRateOf(id entry) {
+    if (!entry) return 0;
+
+    SEL selector = NSSelectorFromString(@"bitRate");
+    if (![entry respondsToSelector:selector]) return 0;
+
+    objc_property_t property = class_getProperty([entry class], "bitRate");
+    const char *attributes = property ? property_getAttributes(property) : NULL;
+
+    // No property entry means a plain method, whose type this cannot read either. Treated as
+    // unknown for the same reason: not comparing is a worse download, and guessing is a crash.
+    if (!attributes || attributes[0] != 'T') return 0;
+
+    switch (attributes[1]) {
+        case 'q': case 'l':
+            return (double)((long long (*)(id, SEL))objc_msgSend)(entry, selector);
+        case 'i': case 's':
+            return (double)((int (*)(id, SEL))objc_msgSend)(entry, selector);
+        case 'Q': case 'L': case 'I':
+            return (double)((unsigned long long (*)(id, SEL))objc_msgSend)(entry, selector);
+        case 'd':
+            return ((double (*)(id, SEL))objc_msgSend)(entry, selector);
+        case 'f':
+            return (double)((float (*)(id, SEL))objc_msgSend)(entry, selector);
+        case '@': {
+            id boxed = ((id (*)(id, SEL))objc_msgSend)(entry, selector);
+            return [boxed respondsToSelector:@selector(doubleValue)] ? [boxed doubleValue] : 0;
+        }
+        default:
+            return 0;
+    }
+}
+
+///
+/// The highest-bitrate variant TikTok offers for this video, or nil.
+///
+/// **A chain of named accessors cannot answer this.** Every other resolver here walks a path
+/// and takes the first thing it finds; `bitrateModels` is a list of *alternatives* and the
+/// right one is chosen by comparing them. Taking `firstObject` yields whichever gear TikTok
+/// listed first, which is the SD copy as often as not -- and that is why downloads were SD
+/// while every chain reported success.
+///
+/// Each entry carries `-bitRate`, `-gearName`, `-qualityType` and its own `-playAddr`, all
+/// four confirmed in TikTok 46.4.0's binary. The address is a URL model like any other.
+///
+/// **Only ever called for a settled model** -- see `+captureSettledModel:`. Walking a list of
+/// sub-objects off a model still inside its own `-init` is the other half of what 0.12.0 got
+/// wrong, and no amount of type safety fixes that one.
+static NSURL *SCITTBestBitrateURL(id videoModel, NSString **outVia) {
+    if (!videoModel) return nil;
+
+    SEL models = NSSelectorFromString(@"bitrateModels");
+    if (![videoModel respondsToSelector:models]) return nil;
+
+    id list = ((id (*)(id, SEL))objc_msgSend)(videoModel, models);
+    if (![list isKindOfClass:[NSArray class]] || ![(NSArray *)list count]) return nil;
+
+    id best = nil;
+    double bestRate = -1;
+
+    for (id entry in (NSArray *)list) {
+        double rate = SCITTBitRateOf(entry);
+        if (rate > bestRate) { bestRate = rate; best = entry; }
+    }
+
+    // Every variant answered 0 -- an unreadable type, or a list of something else entirely.
+    // Falling through to the ordinary chains is right: they already produce a working file.
+    if (!best || bestRate <= 0) return nil;
+
+    SEL addr = NSSelectorFromString(@"playAddr");
+    if (![best respondsToSelector:addr]) return nil;
+
+    id urlModel = ((id (*)(id, SEL))objc_msgSend)(best, addr);
+    if (!urlModel) return nil;
+
+    for (NSString *name in @[@"originURLList", @"urlList", @"URLList"]) {
+        SEL selector = NSSelectorFromString(name);
+        if (![urlModel respondsToSelector:selector]) continue;
+
+        NSURL *url = SCITTURLFromValue(((id (*)(id, SEL))objc_msgSend)(urlModel, selector));
+        if (!url || !SCITTURLLooksDownloadable(url)) continue;
+
+        if (outVia) {
+            *outVia = [NSString stringWithFormat:@"bitrateModels[%.0f bps].playAddr.%@",
+                       bestRate, name];
+        }
+        return url;
+    }
+
+    return nil;
+}
+
 static NSURL *SCITTResolveChain(id model, NSArray<NSString *> *chain, NSString **outFailure) {
     id current = model;
     for (NSString *step in chain) {
@@ -293,6 +475,31 @@ static void SCITTAddResolvedList(NSArray<NSURL *> *urls) {
     while (sciRecent.count > kSCIMediaCap) [sciRecent removeLastObject];
 }
 
+/// A photo post: its own entry, holding every picture.
+///
+/// Deliberately not folded into SCITTAddResolvedList. That function treats its array as
+/// *alternative links to one file* -- it takes `firstObject` as the primary and keeps the
+/// rest as fallbacks -- and a six-picture post handed to it would save one picture and record
+/// a success. Different meaning, different door.
+static void SCITTAddPhotoPost(NSArray<NSURL *> *photos) {
+    if (!photos.count) return;
+    if (!sciRecent) sciRecent = [NSMutableArray array];
+
+    NSURL *primary = photos.firstObject;
+
+    for (SCITTMediaItem *existing in [sciRecent copy]) {
+        if ([existing.url isEqual:primary]) [sciRecent removeObject:existing];
+    }
+
+    SCITTMediaItem *item = [[SCITTMediaItem alloc] init];
+    item.url = primary;
+    item.photoURLs = photos;
+    item.seen = [NSDate date];
+    [sciRecent insertObject:item atIndex:0];
+
+    while (sciRecent.count > kSCIMediaCap) [sciRecent removeLastObject];
+}
+
 static void SCITTAddResolved(NSURL *url) {
     if (url) SCITTAddResolvedList(@[url]);
 }
@@ -402,10 +609,57 @@ static void SCITTAddResolved(NSURL *url) {
     }
 }
 
++ (void)captureSettledModel:(AWEAwemeModel *)model {
+    if (!model) return;
+
+    // The best gear, asked for only here.
+    //
+    // This entry point exists because the caller -- the feed cell's button, holding
+    // AWEFeedCellViewController.model -- has an object the app has finished building and is
+    // currently showing on screen. +captureModel: is called from -init hooks where the same
+    // walk crashed the app in 0.12.0, and no amount of care inside this function would make
+    // that safe.
+    @try {
+        SEL videoSel = NSSelectorFromString(@"video");
+        id videoModel = [model respondsToSelector:videoSel]
+            ? ((id (*)(id, SEL))objc_msgSend)(model, videoSel) : nil;
+
+        if (videoModel) {
+            NSString *via = nil;
+            NSURL *best = SCITTBestBitrateURL(videoModel, &via);
+            if (best) {
+                SCITTAddResolved(best);
+                sciWinningChain = via;
+                sciLastAttemptState = [NSString stringWithFormat:@"settled — %@", via];
+                return;
+            }
+        }
+    } @catch (NSException *exception) {
+        // Falls through to the ordinary path rather than giving up: the chains below already
+        // produce a working file, and losing quality is not a reason to lose the download.
+        SCILogV(@"bitrate: %@", exception.reason);
+    }
+
+    [self captureModel:model];
+}
+
 + (void)captureModel:(AWEAwemeModel *)model {
     if (!model) return;
 
     @try {
+        // Pictures first, because a photo post has no video to resolve and the chains below
+        // would all fail on it -- which is what "the button does nothing on photo posts"
+        // would have looked like, indistinguishable from every other resolution failure.
+        if (SCIPrefEnabled(SCIPrefPhotoDownload)) {
+            NSArray<NSURL *> *photos = SCITTPhotoURLsFromModel(model);
+            if (photos.count) {
+                SCITTAddPhotoPost(photos);
+                sciLastAttemptState = [NSString stringWithFormat:@"photo post — %lu picture(s)",
+                    (unsigned long)photos.count];
+                return;
+            }
+        }
+
         NSURL *url = [self resolveURLForModel:model];
         if (url) {
             SCITTAddResolved(url);

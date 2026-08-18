@@ -17,6 +17,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// Fetches the video and puts it in Photos, showing progress over whatever is on screen.
 + (void)save:(SCITTMediaItem *)item;
 
+/// Saves every picture of a photo post. Called by +save: when the item carries pictures
+/// rather than a video; declared so check.py can see the implementation has a home.
++ (void)savePhotos:(NSArray<NSURL *> *)urls;
+
 @end
 
 /// What the last save attempt actually did, in the words of whatever refused it --
