@@ -129,10 +129,15 @@ static NSArray<NSURL *> *SCITTPhotoURLsFromModel(id model) {
 
     id holder = model;
 
-    SEL info = NSSelectorFromString(@"imagePostInfo");
-    if ([model respondsToSelector:info]) {
+    // `AWEAwemeModel` answers `-images` itself -- it has no `imagePostInfo` in this build at
+    // all, which is why 0.13.0 found nothing. The wrapper is still tried first because a
+    // build that does have one would put the list inside it, and asking costs a
+    // -respondsToSelector: that already answers NO here.
+    for (NSString *wrapper in @[@"imagePostInfo", @"photoAlbum"]) {
+        SEL info = NSSelectorFromString(wrapper);
+        if (![model respondsToSelector:info]) continue;
         id posted = ((id (*)(id, SEL))objc_msgSend)(model, info);
-        if (posted) holder = posted;
+        if (posted) { holder = posted; break; }
     }
 
     NSArray *list = nil;
@@ -153,14 +158,21 @@ static NSArray<NSURL *> *SCITTPhotoURLsFromModel(id model) {
     for (id entry in list) {
         id urlModel = entry;
 
-        // An entry may itself be the URL model, or may wrap one under -displayImage.
-        SEL display = NSSelectorFromString(@"displayImage");
-        if ([entry respondsToSelector:display]) {
-            id inner = ((id (*)(id, SEL))objc_msgSend)(entry, display);
-            if (inner) urlModel = inner;
+        // An `AWEImageModel` is not a URL model and answers none of the list accessors below.
+        // It holds three of them -- one per appearance -- and the light one is the picture as
+        // posted. `displayImage` was tried in 0.13.0 and is on no class here; every image then
+        // fell through to the list accessors on the wrong object and the post looked empty.
+        for (NSString *inner in @[@"lightURLModel", @"localURLModel", @"darkURLModel",
+                                  @"displayImage"]) {
+            SEL selector = NSSelectorFromString(inner);
+            if (![entry respondsToSelector:selector]) continue;
+            id resolved = ((id (*)(id, SEL))objc_msgSend)(entry, selector);
+            if (resolved) { urlModel = resolved; break; }
         }
 
-        for (NSString *name in @[@"originURLList", @"urlList", @"URLList"]) {
+        // `URLList` with that casing is what AWEURLModel declares; the lowercase spelling is
+        // kept only because a different build might use it, and it costs one failed question.
+        for (NSString *name in @[@"originURLList", @"URLList", @"urlList"]) {
             SEL selector = NSSelectorFromString(name);
             if (![urlModel respondsToSelector:selector]) continue;
 
@@ -192,10 +204,29 @@ static NSArray<NSURL *> *SCITTPhotoURLsFromModel(id model) {
 static double SCITTBitRateOf(id entry) {
     if (!entry) return 0;
 
-    SEL selector = NSSelectorFromString(@"bitRate");
-    if (![entry respondsToSelector:selector]) return 0;
+    // `bitrate`, not `bitRate` -- and this cost 0.13.0 the whole feature.
+    //
+    // The entries in `-bitrateModels` are `AWEVideoBSModel`, whose own method list (read out
+    // of MusicallyCore's class metadata, not out of a framework-wide name dump) says
+    // `bitrate`, all lowercase. `bitRate` belongs to a *different* class in this same binary,
+    // `TTKECVideoBitModel`, which is nowhere near the feed -- so the name existed, answered a
+    // string search, and was on the wrong object. Exactly the shape of `downloadinfoModel`'s
+    // capital I and of `downloadAddr` before it.
+    //
+    // Both are tried, in the order this build actually uses, and the one the object answers
+    // is the one whose type is then read.
+    NSString *name = nil;
+    SEL selector = NULL;
+    for (NSString *candidate in @[@"bitrate", @"bitRate"]) {
+        SEL trial = NSSelectorFromString(candidate);
+        if (![entry respondsToSelector:trial]) continue;
+        name = candidate;
+        selector = trial;
+        break;
+    }
+    if (!selector) return 0;
 
-    objc_property_t property = class_getProperty([entry class], "bitRate");
+    objc_property_t property = class_getProperty([entry class], name.UTF8String);
     const char *attributes = property ? property_getAttributes(property) : NULL;
 
     // No property entry means a plain method, whose type this cannot read either. Treated as
@@ -258,13 +289,33 @@ static NSURL *SCITTBestBitrateURL(id videoModel, NSString **outVia) {
     // Falling through to the ordinary chains is right: they already produce a working file.
     if (!best || bestRate <= 0) return nil;
 
-    SEL addr = NSSelectorFromString(@"playAddr");
-    if (![best respondsToSelector:addr]) return nil;
+    // `AWEVideoBSModel` carries both: `playAddr`, an AWEURLModel, and `playURLList`, the
+    // plain array. Either answers the question, so whichever this build populated is used.
+    id urlModel = nil;
+    for (NSString *addr in @[@"playAddr", @"playURLList"]) {
+        SEL selector = NSSelectorFromString(addr);
+        if (![best respondsToSelector:selector]) continue;
+        id value = ((id (*)(id, SEL))objc_msgSend)(best, selector);
+        if (!value) continue;
 
-    id urlModel = ((id (*)(id, SEL))objc_msgSend)(best, addr);
+        // An array here is already the list; anything else is a URL model to ask.
+        if ([value isKindOfClass:[NSArray class]]) {
+            NSURL *url = SCITTURLFromValue(value);
+            if (url && SCITTURLLooksDownloadable(url)) {
+                if (outVia) {
+                    *outVia = [NSString stringWithFormat:@"bitrateModels[%.0f bps].%@",
+                               bestRate, addr];
+                }
+                return url;
+            }
+            continue;
+        }
+        urlModel = value;
+        break;
+    }
     if (!urlModel) return nil;
 
-    for (NSString *name in @[@"originURLList", @"urlList", @"URLList"]) {
+    for (NSString *name in @[@"originURLList", @"URLList", @"urlList"]) {
         SEL selector = NSSelectorFromString(name);
         if (![urlModel respondsToSelector:selector]) continue;
 

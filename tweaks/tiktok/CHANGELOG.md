@@ -1,5 +1,25 @@
 # Albrhi for TikTok — what changed
 
+## v0.13.1
+
+**Both new features in 0.13.0 were one wrong name each, and the binary settled both.**
+
+HD never ran. The entries in `-bitrateModels` are `AWEVideoBSModel`, and that class calls its
+rate **`bitrate`**, all lowercase — 0.13.0 asked for `bitRate`, every entry answered
+`-respondsToSelector:` with NO, every one scored zero, and the comparison fell through to the
+ordinary chain. `bitRate` is a real name in this binary; it belongs to `TTKECVideoBitModel`,
+which is nowhere near the feed. A name existing and a name being answered are different facts,
+and this is the third release in this project to pay for confusing them.
+
+Photo posts found nothing. `AWEAwemeModel` has no `imagePostInfo` at all in this build — it
+answers `-images` itself — and its entries are `AWEImageModel`, which is not a URL model and
+has no `displayImage`. The links are one level further in, under `lightURLModel` /
+`localURLModel` / `darkURLModel`, each an `AWEURLModel` with `originURLList`.
+
+Neither was guessed at this time. `tools/objc-classes.py` reads the class metadata out of
+MusicallyCore and prints what a class actually answers, so "is this selector on this class" is
+a question the binary answers in one command instead of a release.
+
 ## v0.13.0
 
 Three things asked for by name: the progress bar, HD, and photo posts.

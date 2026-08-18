@@ -1,0 +1,136 @@
+import struct, sys#!/usr/bin/env python3
+"""Print the real method list of a class, read from a Mach-O binary's ObjC metadata.
+
+    python3 tools/objc-classes.py <binary> <ClassName> [ClassName...]
+
+**Why this exists rather than a selector dump.** `otool -s __TEXT __objc_methname` lists every
+selector name in an image and says nothing about which class answers which -- and this project
+has lost releases to exactly that gap three times: `downloadAddr` (a real name, on no class we
+touch), `bestURLtoDownload` (in a reference tweak's older build, absent here), and `bitRate`
+(real, but on `TTKECVideoBitModel`, while the feed's `AWEVideoBSModel` says `bitrate`). A name
+existing is not a name being answered. This walks `__objc_classlist` instead, so what it prints
+is class membership.
+
+**The one non-obvious mechanic: chained fixups.** In a modern arm64 image the quadwords in
+`__DATA`/`__DATA_CONST` are not pointers. The low 36 bits are the target address and the high
+bits are the fixup's own metadata, so every pointer read out of those sections has to be masked
+before it means anything -- unmasked, the class list parses as one entry and the answer looks
+like "not in this binary", which is a *wrong* answer rather than a failure.
+
+Reading class metadata is also why no `class-dump` is needed: it parses what the runtime would.
+"""
+
+
+
+if len(sys.argv) < 3:
+    sys.exit(__doc__)
+
+path = sys.argv[1]
+want = set(sys.argv[2:])
+
+f = open(path, 'rb')
+hdr = f.read(0x8000)
+ncmds, = struct.unpack('<I', hdr[16:20])
+
+segs = []          # (vmaddr, vmsize, fileoff)
+sections = {}      # (seg,sect) -> (addr, size)
+off = 32
+for _ in range(ncmds):
+    cmd, size = struct.unpack('<II', hdr[off:off+8])
+    if cmd == 0x19:
+        segname = hdr[off+8:off+24].rstrip(b'\0').decode()
+        vmaddr, vmsize, fileoff, filesize = struct.unpack('<QQQQ', hdr[off+24:off+56])
+        segs.append((vmaddr, vmsize, fileoff))
+        nsects, = struct.unpack('<I', hdr[off+64:off+68])
+        so = off+72
+        for _ in range(nsects):
+            sect = hdr[so:so+16].rstrip(b'\0').decode()
+            seg = hdr[so+16:so+32].rstrip(b'\0').decode()
+            addr, sz = struct.unpack('<QQ', hdr[so+32:so+48])
+            sections[(seg, sect)] = (addr, sz)
+            so += 80
+    off += size
+
+MASK = (1<<36) - 1
+def unchain(v):
+    # Chained fixups: the stored quadword is not a pointer. Its low bits are the target's
+    # unslid runtime address and the high bits are the fixup's own metadata, so every
+    # pointer read out of __DATA/__DATA_CONST has to be masked before it means anything.
+    return v & MASK
+
+def foff(vm):
+    vm = unchain(vm)
+    for vmaddr, vmsize, fo in segs:
+        if vmaddr <= vm < vmaddr + vmsize:
+            return fo + (vm - vmaddr)
+    return None
+
+def read(vm, n):
+    o = foff(vm)
+    if o is None: return None
+    f.seek(o); return f.read(n)
+
+def cstr(vm):
+    o = foff(vm)
+    if o is None: return None
+    f.seek(o); b = f.read(256)
+    return b.split(b'\0')[0].decode('ascii', 'ignore')
+
+def u64(vm):
+    b = read(vm, 8)
+    return struct.unpack('<Q', b)[0] if b else 0
+
+def methods(list_vm):
+    """objc_method_list: uint32 entsize, uint32 count, then entries.
+    entsize & 0x80000000 means relative (int32 offsets) -- what a modern arm64 binary uses."""
+    if not list_vm: return []
+    h = read(list_vm, 8)
+    if not h: return []
+    entsize, count = struct.unpack('<II', h)
+    rel = bool(entsize & 0x80000000)
+    entsize &= 0xffff
+    out = []
+    if count > 20000: return []
+    body = read(list_vm + 8, entsize * count) or b''
+    for i in range(count):
+        e = body[i*entsize:(i+1)*entsize]
+        if len(e) < 4: break
+        if rel:
+            d, = struct.unpack('<i', e[:4])
+            # name field points at a selector-reference slot, which holds the real pointer
+            ptr = u64(list_vm + 8 + i*entsize + d)
+            out.append(cstr(ptr))
+        else:
+            p, = struct.unpack('<Q', e[:8])
+            out.append(cstr(p))
+    return [m for m in out if m]
+
+addr, size = sections[('__DATA', '__objc_classlist')] if ('__DATA','__objc_classlist') in sections \
+    else sections[('__DATA_CONST', '__objc_classlist')]
+blob = read(addr, size)
+found = {}
+for i in range(size // 8):
+    cls_vm, = struct.unpack('<Q', blob[i*8:(i+1)*8])
+    cls_vm = unchain(cls_vm)
+    if not cls_vm: continue
+    c = read(cls_vm, 40)
+    if not c: continue
+    data_vm, = struct.unpack('<Q', c[32:40])
+    data_vm = unchain(data_vm) & ~7
+    ro = read(data_vm, 72)
+    if not ro: continue
+    name_vm, = struct.unpack('<Q', ro[24:32])
+    name_vm = unchain(name_vm)
+    name = cstr(name_vm)
+    if name in want:
+        methods_vm, = struct.unpack('<Q', ro[32:40])
+        methods_vm = unchain(methods_vm)
+        found[name] = sorted(set(methods(methods_vm)))
+
+for n in sys.argv[2:]:
+    print('===', n, '===')
+    ms = found.get(n)
+    if ms is None:
+        print('  NOT IN THIS BINARY')
+    else:
+        print('  ' + '\n  '.join(ms))

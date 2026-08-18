@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.38.1
+
+**TikTok: photo posts and HD actually work now.** Both were shipped in 1.38.0 against one
+misspelled accessor each — the quality list was asked for a property whose real name differs by
+a single capital letter, and photo posts were looked for one level away from where they live.
+Neither was guessed at this time: both names were read out of TikTok's own binary.
+
+Includes TikTok 0.13.1.
+
 ## v1.38.0
 
 **TikTok: a progress bar, photo posts, and HD.**

@@ -379,6 +379,28 @@ cost two rounds on TikTok's downloader. `downloadAddr` appears in MusicallyCore'
 a global name list as class membership was not. When the question is "does *this* class answer
 *this* selector", the device answers it and a 785 MB dump does not.
 
+**A framework-wide selector dump says a name exists; only class metadata says who answers
+it — and `tools/objc-classes.py` reads that in one command.** This project has now lost three
+releases to the same gap: `downloadAddr` (a real name, on no class here), `bestURLtoDownload`
+(real in a reference tweak's older build, absent in ours), and — in 0.13.0, after both of those
+were already written down — `bitRate`, which is a real name in MusicallyCore belonging to
+`TTKECVideoBitModel`, while the feed's own `AWEVideoBSModel` calls it **`bitrate`**. Every
+bitrate entry answered `-respondsToSelector:` with NO, scored zero, and the whole HD comparison
+fell through silently to the SD chain. In the same release photo posts found nothing because
+`AWEAwemeModel` has no `imagePostInfo` in this build (it answers `-images` itself) and
+`AWEImageModel` has no `displayImage` (the links sit under `lightURLModel`/`localURLModel`/
+`darkURLModel`, each an `AWEURLModel` with `originURLList`).
+
+The tool walks `__objc_classlist` and prints a class's real method list, so it answers class
+membership rather than name existence, and it needs no `class-dump`. **Its one non-obvious
+mechanic is worth knowing before trusting any similar script: in a modern arm64 image the
+quadwords in `__DATA`/`__DATA_CONST` are not pointers** — chained fixups put the target in the
+low 36 bits and the fixup's own metadata in the high bits. Unmasked, the class list parses as a
+single entry and every lookup reports "not in this binary", which is a confidently *wrong*
+answer rather than a visible failure. `otool -s` has a matching trap: it prints little-endian
+words, so piping its hex through a naive decoder yields scrambled text that greps as clean
+absence.
+
 **TikTok's classes are not in TikTok's binary either, and a competitor's selectors are not
 your build's.** `com.zhiliaoapp.musically` 46.4.0 ships a 91 KB executable and puts everything
 in `MusicallyCore.framework` — 785 MB, **1,032,816 selectors** in `__objc_methname`. Dumping
@@ -1340,6 +1362,7 @@ checks → version → decide → [build ×2 + dylib] → release → repo index
 | file | purpose |
 |---|---|
 | `check.py` | pre-build source checks (above) |
+| `objc-classes.py` | prints a class's real method list out of a Mach-O binary's ObjC metadata — the answer to "does *this* class answer *this* selector", which a selector dump cannot give |
 | `make-repo.sh` | builds the APT index from one or more package directories (space-separated, one per tweak); guards against two packages sharing name+version+architecture, and labels each package rootful/rootless/roothide |
 | `make-depiction.py` | Sileo native depiction + HTML fallback, generated from the changelog so it cannot go stale |
 | `make-logo.py` | repo icon, rasterised in pure Python; drop `tools/logo.png` in to override |
@@ -1403,7 +1426,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.13.0** · suite **1.38.0**.
+source) · TikTok **0.13.1** · suite **1.38.1**.
 
 ### TikTok, where it actually stands
 
