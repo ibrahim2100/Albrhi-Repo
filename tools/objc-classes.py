@@ -80,6 +80,29 @@ def u64(vm):
     b = read(vm, 8)
     return struct.unpack('<Q', b)[0] if b else 0
 
+def properties(list_vm):
+    """objc_property_list: uint32 entsize, uint32 count, then {name, attributes} pointer pairs.
+
+    Worth having next to the method list: the attribute string carries the declared *type*
+    (`T@"AWEURLModel"`), which is the one thing a method name alone never tells you -- and
+    following an accessor onto the wrong class is this project's most repeated bug."""
+    if not list_vm: return []
+    h = read(list_vm, 8)
+    if not h: return []
+    entsize, count = struct.unpack('<II', h)
+    if count > 20000: return []
+    body = read(list_vm + 8, entsize * count) or b''
+    out = []
+    for i in range(count):
+        e = body[i*entsize:(i+1)*entsize]
+        if len(e) < 16: break
+        n, a = struct.unpack('<QQ', e[:16])
+        name, attrs = cstr(unchain(n)), cstr(unchain(a))
+        if not name: continue
+        typ = attrs.split(',')[0][1:] if attrs and attrs.startswith('T') else '?'
+        out.append('%s : %s' % (name, typ))
+    return out
+
 def methods(list_vm):
     """objc_method_list: uint32 entsize, uint32 count, then entries.
     entsize & 0x80000000 means relative (int32 offsets) -- what a modern arm64 binary uses."""
@@ -123,14 +146,19 @@ for i in range(size // 8):
     name_vm = unchain(name_vm)
     name = cstr(name_vm)
     if name in want:
-        methods_vm, = struct.unpack('<Q', ro[32:40])
-        methods_vm = unchain(methods_vm)
-        found[name] = sorted(set(methods(methods_vm)))
+        methods_vm = unchain(struct.unpack('<Q', ro[32:40])[0])
+        props_vm = unchain(struct.unpack('<Q', ro[64:72])[0])
+        found[name] = (sorted(set(methods(methods_vm))), sorted(set(properties(props_vm))))
 
 for n in sys.argv[2:]:
     print('===', n, '===')
-    ms = found.get(n)
-    if ms is None:
+    entry = found.get(n)
+    if entry is None:
         print('  NOT IN THIS BINARY')
-    else:
-        print('  ' + '\n  '.join(ms))
+        continue
+    ms, ps = entry
+    if ps:
+        print('  -- properties (name : declared type) --')
+        print('  ' + '\n  '.join(ps))
+    print('  -- methods --')
+    print('  ' + '\n  '.join(ms))

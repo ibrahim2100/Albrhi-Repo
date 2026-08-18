@@ -140,8 +140,12 @@ static NSArray<NSURL *> *SCITTPhotoURLsFromModel(id model) {
         if (posted) { holder = posted; break; }
     }
 
+    // `photos` first: a photo post in this build is an `AWEPhotoAlbumModel` reached through
+    // `-photoAlbum`, and its list is called `photos`. 0.13.1 reached the album correctly and
+    // then asked it for `images`, which is the *other* container's name -- so the wrapper was
+    // right, the list accessor was not, and the post read as empty for a second release.
     NSArray *list = nil;
-    for (NSString *name in @[@"images", @"imageList", @"displayImageList"]) {
+    for (NSString *name in @[@"photos", @"images", @"imageList", @"displayImageList"]) {
         SEL selector = NSSelectorFromString(name);
         if (![holder respondsToSelector:selector]) continue;
 
@@ -162,8 +166,16 @@ static NSArray<NSURL *> *SCITTPhotoURLsFromModel(id model) {
         // It holds three of them -- one per appearance -- and the light one is the picture as
         // posted. `displayImage` was tried in 0.13.0 and is on no class here; every image then
         // fell through to the list accessors on the wrong object and the post looked empty.
-        for (NSString *inner in @[@"lightURLModel", @"localURLModel", @"darkURLModel",
-                                  @"displayImage"]) {
+        // Two element classes, one per container, and their URL accessors share no names.
+        //
+        // `AWEPhotoAlbumPhoto` (from `photoAlbum.photos`) carries the picture at four
+        // qualities; `originPhotoURL` is the one as posted, and the thumbnail is last because
+        // saving a preview instead of a photo is the same class of mistake as saving SD.
+        // `AWEImageModel` (from `-images`) instead names its by appearance.
+        for (NSString *inner in @[@"originPhotoURL", @"ownerWatermarkedPhotoURL",
+                                  @"userWatermarkedPhotoURL", @"dynamicImageURL",
+                                  @"lightURLModel", @"localURLModel", @"darkURLModel",
+                                  @"thumbnailPhotoURL", @"displayImage"]) {
             SEL selector = NSSelectorFromString(inner);
             if (![entry respondsToSelector:selector]) continue;
             id resolved = ((id (*)(id, SEL))objc_msgSend)(entry, selector);
@@ -268,6 +280,17 @@ static double SCITTBitRateOf(id entry) {
 /// **Only ever called for a settled model** -- see `+captureSettledModel:`. Walking a list of
 /// sub-objects off a model still inside its own `-init` is the other half of what 0.12.0 got
 /// wrong, and no amount of type safety fixes that one.
+///
+/// Every gear the last settled video offered, newest first.
+///
+/// **"Is 720 the highest TikTok has" is not a question this code can answer by reasoning.** It
+/// is a fact about one video on one account, and the only place it exists is the ladder the app
+/// itself was handed. So the ladder is recorded verbatim -- each gear's own `gearName`, which
+/// encodes the resolution, beside its bitrate, with the chosen one marked -- and the settings
+/// screen prints it. A report then says what was available, not just what was taken, which is
+/// the difference between "the picker chose wrong" and "there was nothing better".
+static NSString *sciGearLadder = nil;
+
 static NSURL *SCITTBestBitrateURL(id videoModel, NSString **outVia) {
     if (!videoModel) return nil;
 
@@ -279,11 +302,36 @@ static NSURL *SCITTBestBitrateURL(id videoModel, NSString **outVia) {
 
     id best = nil;
     double bestRate = -1;
+    NSUInteger bestIndex = NSNotFound;
+
+    NSMutableArray<NSString *> *ladder = [NSMutableArray array];
 
     for (id entry in (NSArray *)list) {
         double rate = SCITTBitRateOf(entry);
-        if (rate > bestRate) { bestRate = rate; best = entry; }
+
+        // `gearName` is a declared NSString property on AWEVideoBSModel and encodes the
+        // resolution ("…_720_…"), which is the part of this report a person can read.
+        NSString *gear = nil;
+        SEL gearSel = NSSelectorFromString(@"gearName");
+        if ([entry respondsToSelector:gearSel]) {
+            id value = ((id (*)(id, SEL))objc_msgSend)(entry, gearSel);
+            if ([value isKindOfClass:[NSString class]]) gear = value;
+        }
+
+        [ladder addObject:[NSString stringWithFormat:@"%@ @ %.0f",
+                           gear ?: NSStringFromClass([entry class]), rate]];
+
+        if (rate > bestRate) {
+            bestRate = rate;
+            best = entry;
+            bestIndex = ladder.count - 1;
+        }
     }
+
+    sciGearLadder = [NSString stringWithFormat:@"%lu gear(s): %@ — took %@",
+                     (unsigned long)ladder.count,
+                     [ladder componentsJoinedByString:@", "],
+                     bestIndex == NSNotFound ? @"none" : ladder[bestIndex]];
 
     // Every variant answered 0 -- an unreadable type, or a list of something else entirely.
     // Falling through to the ordinary chains is right: they already produce a working file.
@@ -658,6 +706,10 @@ static void SCITTAddResolved(NSURL *url) {
         sciLastAttemptState = [NSString stringWithFormat:@"threw: %@", exception.reason ?: @"?"];
         SCILogV(@"video model capture: %@", exception.reason);
     }
+}
+
++ (NSString *)gearLadder {
+    return sciGearLadder ?: @"no video has been asked for its gears yet this launch";
 }
 
 + (void)captureSettledModel:(AWEAwemeModel *)model {

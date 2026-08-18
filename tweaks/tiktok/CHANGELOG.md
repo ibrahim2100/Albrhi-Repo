@@ -1,5 +1,21 @@
 # Albrhi for TikTok — what changed
 
+## v0.13.2
+
+**Photo posts: the wrapper was right and the list accessor was not.** A photo post in this build
+is an `AWEPhotoAlbumModel` reached through `-photoAlbum`, and its list is called `photos` —
+0.13.1 reached the album correctly and then asked it for `images`, which is the *other*
+container's name, so every post read as empty for a second release. The elements are
+`AWEPhotoAlbumPhoto`, whose picture-as-posted is `originPhotoURL`; the thumbnail is tried last,
+because saving a preview instead of a photo is the same mistake as saving SD.
+
+**Quality now reports the whole ladder, not just the pick.** A download coming out at 720 has
+two completely different causes — the picker chose wrong, or 720 was everything TikTok offered
+for that video — and the saved file looks identical either way. Settings › Status now lists
+every gear the app was handed, each with its own `gearName` and bitrate, and marks the one
+taken. That is a fact about one video on one account, so it is reported rather than reasoned
+about.
+
 ## v0.13.1
 
 **Both new features in 0.13.0 were one wrong name each, and the binary settled both.**

@@ -41,7 +41,7 @@ static const NSInteger kSCIRowPrivacyMessages = 1;
 static const NSInteger kSCIRowPrivacyProfile = 2;
 static const NSInteger kSCIPrivacyRowCount = 3;
 
-static const NSInteger kSCIStatusRowCount = 10;
+static const NSInteger kSCIStatusRowCount = 11;
 
 @implementation SCITTStatus
 
@@ -579,6 +579,13 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
                                               [UIColor systemBlueColor]);
             break;
         case 8:
+            // The ladder, not just the pick. "720 is not HD" and "720 was all there was"
+            // look identical from the saved file, and only one of them is a bug here.
+            cell.textLabel.text = SCILocalized(@"status_gears");
+            cell.detailTextLabel.text = [SCITTMedia gearLadder];
+            cell.imageView.image = SCITTBadge(@"square.stack.3d.up", [UIColor systemOrangeColor]);
+            break;
+        case 9:
             cell.textLabel.text = SCILocalized(@"diag_bypass");
             cell.detailTextLabel.text = [SCITTDiagnostics bypassState];
             cell.imageView.image = SCITTBadge(@"shield.lefthalf.filled", [UIColor systemIndigoColor]);

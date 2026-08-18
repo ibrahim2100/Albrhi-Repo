@@ -1,5 +1,15 @@
 # Albrhi Changelog
 
+## v1.38.2
+
+**TikTok: photo posts save, and the quality report says what was on offer.** Photo posts were
+being looked for under the wrong list name inside the right object. And when a download comes
+out at 720, Settings › Status now shows every quality TikTok actually offered for that video
+with the chosen one marked — so "the picker chose wrong" and "there was nothing better" stop
+looking the same.
+
+Includes TikTok 0.13.2.
+
 ## v1.38.1
 
 **TikTok: photo posts and HD actually work now.** Both were shipped in 1.38.0 against one

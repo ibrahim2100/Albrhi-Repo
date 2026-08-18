@@ -391,6 +391,19 @@ fell through silently to the SD chain. In the same release photo posts found not
 `AWEImageModel` has no `displayImage` (the links sit under `lightURLModel`/`localURLModel`/
 `darkURLModel`, each an `AWEURLModel` with `originURLList`).
 
+**And the same tool then found the same mistake one level deeper, twice in two releases.** A
+photo post is an `AWEPhotoAlbumModel` under `-photoAlbum` whose list is `photos` — 0.13.1 fixed
+the *wrapper* and kept asking it for `images`, so the post still read as empty. Elements are
+`AWEPhotoAlbumPhoto` (`originPhotoURL` as posted, `thumbnailPhotoURL` a preview), not
+`AWEImageModel`. Reading declared property *types* is what settles a chain rather than a single
+hop, which is why the tool prints them: `photoAlbum : @"AWEPhotoAlbumModel"` names the next
+class to ask about, and a chain confirmed hop by hop is the only kind that has ever worked here.
+
+**A quality number on its own is not a diagnosis.** "It saves 720" has two causes that produce
+an identical file — the picker chose wrong, or 720 was the whole ladder — so the Status screen
+reports every gear offered with the chosen one marked. Same shape as the `raw → parsed →
+deduped` counts the quality picker needed, and as the tally-versus-snapshot rule above.
+
 The tool walks `__objc_classlist` and prints a class's real method list, so it answers class
 membership rather than name existence, and it needs no `class-dump`. **Its one non-obvious
 mechanic is worth knowing before trusting any similar script: in a modern arm64 image the
@@ -1426,7 +1439,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.13.1** · suite **1.38.1**.
+source) · TikTok **0.13.2** · suite **1.38.2**.
 
 ### TikTok, where it actually stands
 

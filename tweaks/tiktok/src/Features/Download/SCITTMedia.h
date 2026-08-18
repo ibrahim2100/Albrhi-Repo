@@ -69,6 +69,14 @@ NS_ASSUME_NONNULL_BEGIN
 /// the *caller*, and a parameter would let a future caller answer it wrongly.
 + (void)captureSettledModel:(AWEAwemeModel *)model;
 
+/// Every quality gear the last settled video offered, with the chosen one marked.
+///
+/// For the settings screen. "Is this the highest TikTok has" is a fact about one video on one
+/// account, not something this code can reason its way to — so the ladder the app was handed is
+/// reported verbatim, and a report then distinguishes "the picker chose wrong" from "there was
+/// nothing better on offer".
++ (NSString *)gearLadder;
+
 /// The same resolution `captureModel:` runs, without touching the recent list --
 /// for a caller that already has a model in hand and needs its URL right now, such
 /// as the in-feed button binding itself to a cell the moment that cell's model is
