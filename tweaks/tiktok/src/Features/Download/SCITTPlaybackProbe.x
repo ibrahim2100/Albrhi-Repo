@@ -2,36 +2,57 @@
 //  SCITTPlaybackProbe.x
 //  Albrhi for TikTok
 //
-//  Retired. Kept as a file so its lesson stays where the mistake was made.
+//  Reading a method's real signature before anyone hooks it.
 //
 //  Copyright (C) Ibrahim Ismail AL-Rahn. GPLv3.
 //
 
 #import <Foundation/Foundation.h>
+#import <objc/runtime.h>
 #import "SCITTPlaybackProbe.h"
 
+static NSString *sciEncoding = nil;
+
 ///
-/// **This probe crashed TikTok repeatedly and the hook is gone.**
+/// **No hook. This reads a type encoding and nothing else.**
 ///
-/// It hooked `AWEVideoPlayBitrateControler`'s selection method with a signature I wrote from
-/// the selector name alone — `(double)duration`, `(NSInteger)trategyType`, returning `id`. None
-/// of that was read from the runtime. **A `%hook` whose argument types do not match the real
-/// method does not fail politely**: the arguments arrive in the wrong registers and of the
-/// wrong widths, and the process dies. It is the same mistake as reading `-bitRate` through a
-/// guessed `long long` cast, which crashed 0.12.0 and is written down in this project's own
-/// rules — made again, in the one file whose whole purpose was to stop guessing.
+/// 0.15.1 hooked `AWEVideoPlayBitrateControler`'s selection method with a signature invented
+/// from the selector name — `(double)duration`, `(NSInteger)trategyType`, returning `id` — and
+/// TikTok crashed repeatedly. Arguments of the wrong width arrive in the wrong registers; there
+/// is no polite failure. `class_getInstanceMethod` returning non-NULL proves the selector
+/// exists and says nothing whatever about its types.
 ///
-/// A hook of that kind needs `method_getTypeEncoding` on the real method, compared against what
-/// is about to be declared, and must stand down on any mismatch. Nothing here needs it now:
-/// **the probe already answered its question** — `bitrateModels` carries the same gear names at
-/// a quarter of the player's bitrate — and 0.16.0 reads the player's own models from
-/// `__playBSModel` on the video model this tweak already holds, which requires no hook at all.
+/// So the missing step is taken on its own, with no hook installed and therefore no way to
+/// crash: `method_getTypeEncoding` gives the real signature, and the settings screen prints it.
+/// A future release can then declare exactly that and refuse to install on any mismatch.
 ///
-/// The measurement was worth it. Shipping it without checking the signature was not.
+/// **Why this is still worth asking.** 0.16.0 tried to reach the player's ladder without a hook
+/// by reading `__playBSModel` and its siblings off the video model — and the device answered
+/// that each returns a *single* gear at the same low bitrate as `bitrateModels`, not the
+/// four-times-larger list the player is handed. The high-bitrate models are not on the object
+/// this tweak holds, so the only place they have ever been observed is that method's argument.
 void SCITTInstallPlaybackProbe(void) {
-    // Nothing. Deliberately.
+    Class controller = NSClassFromString(@"AWEVideoPlayBitrateControler");
+    if (!controller) {
+        sciEncoding = @"AWEVideoPlayBitrateControler is not in this build";
+        return;
+    }
+
+    SEL selector = NSSelectorFromString(
+        @"willSelectBitrateFromModels:duration:trategyType:autoBitrateModel:");
+
+    Method method = class_getInstanceMethod(controller, selector);
+    if (!method) {
+        sciEncoding = @"the class is here; that selector is not on it";
+        return;
+    }
+
+    const char *encoding = method_getTypeEncoding(method);
+    sciEncoding = encoding
+        ? [NSString stringWithFormat:@"%s (%u args)", encoding, method_getNumberOfArguments(method)]
+        : @"the method is here and reports no type encoding";
 }
 
 NSString *SCITTPlaybackReport(void) {
-    return @"retired — it crashed the app, and 0.16.0 reads the player's own ladder directly";
+    return sciEncoding ?: @"not read yet this launch";
 }

@@ -1,5 +1,26 @@
 # Albrhi for TikTok — what changed
 
+## v0.16.2
+
+**0.16.0's quality fix did not work, and the report says so plainly.** Reading `__playBSModel`
+and its three siblings off the video model returned **one object each**, at the same low bitrate
+`bitrateModels` already carries — `331,128`, not the `1,512,265` the player was offered. Each
+deduplicated straight back into the existing ladder. The high-bitrate models are simply not on
+the object this tweak holds, so there was nothing there to find and no third accessor to guess
+at next.
+
+The only place they have ever been observed is the argument of the player's own selection
+method — the method whose hook crashed the app in 0.15.1, because its signature was invented
+from its name.
+
+**So this release takes the step that was skipped, on its own, with no hook and therefore no way
+to crash:** `method_getTypeEncoding` on the real method, printed in Settings › Status. A hook can
+then declare exactly that and stand down on any mismatch. `class_getInstanceMethod` returning
+non-NULL proves a selector exists and says nothing about its types; that distinction is what
+0.15.1 cost.
+
+Nothing else changed. The reading is a single runtime query at launch.
+
 ## v0.16.1
 
 **0.15.1's probe crashed TikTok repeatedly. The hook is gone.**

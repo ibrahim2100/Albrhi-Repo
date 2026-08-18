@@ -1468,7 +1468,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.16.1** · suite **1.41.1**.
+source) · TikTok **0.16.2** · suite **1.41.2**.
 
 ### TikTok, where it actually stands
 
@@ -1556,6 +1556,15 @@ watermark hook incremented only at the setter, which this build never calls; the
 one doing the work — answered silently, so the screen read `0 cleared` for two releases. Third
 instance of this family here, after the last-event snapshot and the mislabelled parallel array:
 **before believing a zero, check that the counter sits on the path that executes.**
+
+**`__playBSModel` is not the player's ladder either — it is one gear at the same low bitrate.**
+0.16.0 tried to reach the high-bitrate models without a hook by reading `__playBSModel`,
+`__playBSModelV2`, `awe_playBSModel` and `ttk_playBSModel` off the video model. The device
+answered `×1` for each, at `331,128` — the same number `bitrateModels` already carried, so every
+one deduplicated back into the existing ladder. **The four-times-larger list is not on the object
+this tweak holds at all**, which closes that line of attack rather than suggesting a fifth
+accessor to try. The only place it has ever been observed is the argument of the player's own
+selection method.
 
 **A `%hook` with a guessed method signature crashes the process, and it is the same mistake as
 a guessed cast.** 0.15.1's probe declared `willSelectBitrateFromModels:duration:trategyType:

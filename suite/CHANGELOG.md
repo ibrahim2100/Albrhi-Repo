@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.41.2
+
+**TikTok: the quality attempt in 1.41.0 did not work, and this release says why rather than
+guessing again.** The higher-quality list is not reachable from where Albrhi was looking. This
+adds one harmless reading needed to reach it safely next time, and changes nothing else.
+
+Includes TikTok 0.16.2.
+
 ## v1.41.1
 
 **TikTok crashed often on 1.40.1. Fixed by removing the cause.** That release added a diagnostic
