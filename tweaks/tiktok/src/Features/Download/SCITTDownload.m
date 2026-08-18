@@ -338,7 +338,18 @@ NSString *SCITTMeasuredReport(void) {
 /// watermark on every download — which is what a device report showed. Nothing measurable in
 /// the response says this; only the name does.
 static BOOL SCITTOriginIsWatermarked(NSString *origin) {
-    return [origin isEqualToString:@"downloadURL"] || [origin isEqualToString:@"h264DownloadURL"];
+    // **`h264DownloadURL` is no longer assumed watermarked — that was a guess from its name.**
+    //
+    // It measured 7.2 MB against tikwm's 5.3 and `bitrateModels`' 2.9 on the same video, and it
+    // lost only because this function said so. Nothing was ever checked: `h264` names a *codec*,
+    // and the two accessors that do state their nature state it plainly —
+    // `downloadNoWatermarkURL` says there is none, `downloadURL` says it is the download copy.
+    // `h264DownloadURL` says neither, and VibeTok uses it as its primary link.
+    //
+    // So it competes on size now, and the saved file answers the question the name could not.
+    // If it comes back stamped, this list gains it again — with a device report behind it that
+    // time rather than a reading of English.
+    return [origin isEqualToString:@"downloadURL"];
 }
 
 + (NSArray<NSURL *> *)orderByMeasuredSize:(NSArray<NSURL *> *)links
