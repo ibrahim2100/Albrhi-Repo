@@ -1594,6 +1594,12 @@ runtime — arguments then arrive in the wrong registers and of the wrong widths
 repeatedly. **This project had already written down the identical lesson for `-bitRate`'s cast
 in 0.12.0**, and it was repeated in the one file whose whole purpose was to stop guessing.
 
+**The real encoding, once the device was asked:
+`v48@0:8@16d24^q32@40`** — returning `void`, and `trategyType` is **`^q`, a pointer to a long
+long**, an out-parameter. 0.15.1 declared `id` and `NSInteger`: a wrong return type, and a value
+written where a pointer belongs, which writes through whatever integer happened to be in that
+register. That is not a subtle mismatch, and one runtime query would have shown it.
+
 Before hooking a method whose signature is not documented: `method_getTypeEncoding` on the real
 method, compare it against what is about to be declared, and stand down on any mismatch —
 `class_getInstanceMethod` returning non-NULL proves the selector exists and says nothing about
@@ -1601,8 +1607,23 @@ its types. And note what made this expensive rather than merely wrong: the probe
 a device before its own preconditions were checked, so **the cost of a bad measurement is paid by
 the person running it.**
 
-**`bitrateModels` is a reduced copy of the playback ladder — same gear names, a quarter of the
-bitrate — and that single fact explains every quality complaint in this tweak's history.** The
+**Correction: `bitrateModels` is not a reduced *copy* — it is the same list read at a different
+*time*, and the numbers arrive later.** The paragraph below was written from one report where the
+two lists were printed side by side, and it was stated as structure. A later report on the same
+build disproved it: `bitrateModels` came back reading `adapt_lower_720_1 @ 1,448,977` — the
+million-scale figure, from `bitrateModels` itself, with no probe involved. So the ladder is
+populated progressively, and a read that happens before the app has fetched the real gears sees
+placeholder numbers. **"Two different lists" and "one list, read too early" produce identical
+evidence in a single snapshot**, which is the tally-versus-snapshot trap again, one level up: a
+claim about structure needs the same value observed twice at different moments before it is a
+structure at all.
+
+What follows is kept because the *comparison* was real and worth recording, with that correction
+standing in front of it:
+
+**`bitrateModels` looked like a reduced copy of the playback ladder — same gear names, a quarter
+of the bitrate — and that single fact seemed to explain every quality complaint in this tweak's
+history.** The
 0.15.1 probe printed both lists on one screen: `adapt_lower_720_1` reads **373,349** through
 `bitrateModels` and **1,512,265** in what TikTok hands its own picker; `adapt_540_1`, 308,455
 against 1,015,884. So "it saves 720 and it looks worse than the app" was true in both halves at
