@@ -701,8 +701,14 @@ static void SCITTPlaceBaseButton(UIViewController *controller) {
     id model = ((id (*)(id, SEL))objc_msgSend)(controller, modelSel);
     if (!model) return;
 
-    // Settled: this controller is showing the video, so the deeper questions are safe here.
-    [SCITTMedia captureSettledModel:(AWEAwemeModel *)model];
+    // Resolved once per model, not once per call. Walking the ladder is not free, and this used
+    // to run on every layout pass -- the cost of that was the crash, not a detail of it.
+    static const void *kSCIResolvedKey = &kSCIResolvedKey;
+    if (objc_getAssociatedObject(controller, kSCIResolvedKey) != model) {
+        [SCITTMedia captureSettledModel:(AWEAwemeModel *)model];
+        objc_setAssociatedObject(controller, kSCIResolvedKey, model,
+                                 OBJC_ASSOCIATION_ASSIGN);
+    }
 
     SCITTMediaItem *item = [SCITTMedia recent].firstObject;
     if (!item) return;
@@ -740,12 +746,21 @@ static void SCITTPlaceBaseButton(UIViewController *controller) {
 
 - (void)setModel:(id)model {
     %orig;
-    SCITTPlaceBaseButton((UIViewController *)self);
-}
 
-- (void)viewDidLayoutSubviews {
-    %orig;
-    SCITTPlaceBaseButton((UIViewController *)self);
+    // **`-viewDidLayoutSubviews` was hooked here too, and it caused crashes.** Two mistakes in
+    // one line: the class does not implement it -- its own method list is `loadView`,
+    // `setModel:`, `viewDidLoad` -- and it fires on every layout pass, so the full ladder walk
+    // ran continuously on the main thread while scrolling. Hooking a method a class does not
+    // declare, at a frequency nobody measured, is the same family of error as the guessed
+    // signature that crashed 0.15.1: *check what the class actually has, and how often it runs.*
+    //
+    // `-setModel:` is declared on this class and fires once per video. Placement is deferred to
+    // the next runloop turn because the view may not be loaded at bind time, and asking for it
+    // here would build it earlier than TikTok intends.
+    __weak UIViewController *controller = (UIViewController *)self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (controller) SCITTPlaceBaseButton(controller);
+    });
 }
 
 %end

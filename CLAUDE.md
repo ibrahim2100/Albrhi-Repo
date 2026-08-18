@@ -1587,6 +1587,18 @@ this tweak holds at all**, which closes that line of attack rather than suggesti
 accessor to try. The only place it has ever been observed is the argument of the player's own
 selection method.
 
+**`%hook` on a method the class does not declare, fired at a rate nobody measured, crashes it
+too.** The universal button surface hooked `-viewDidLayoutSubviews` on
+`AWEAwemeBaseViewController` — whose own method list is `loadView`, `setModel:`, `viewDidLoad`
+and nothing else — and did a full quality-ladder walk inside it, on the main thread, on every
+layout pass while scrolling. **Two unchecked assumptions, one crash**: that the method was there,
+and that running it was cheap. `-setModel:` is declared on the class, fires once per video, and
+is the bind point anyway.
+
+The general rule now has two halves: before hooking, ask what the class *actually declares*
+(`tools/objc-classes.py`) **and how often the method runs**. Frequency is part of a hook's cost
+and has never been checked here until it cost something.
+
 **A `%hook` with a guessed method signature crashes the process, and it is the same mistake as
 a guessed cast.** 0.15.1's probe declared `willSelectBitrateFromModels:duration:trategyType:
 autoBitrateModel:` as `(double)`, `(NSInteger)`, returning `id`, none of it read from the
