@@ -1087,6 +1087,18 @@ the releases — and both take the `albrhi-pages` concurrency group. Two workflo
 today, genuinely racing for `gh-pages` rather than hypothetically; every word below is
 what that costs, and CarPlay will be a third if it is ever un-withheld.
 
+**And a package can be removed from the source by *someone else* releasing, which is the same
+failure arriving from the opposite direction.** The gather looked at the newest 40 releases
+outright, and the suite publishes constantly — so `locket-v0.4.1`, still Locket's current release
+and perfectly healthy, was pushed to position 66 by the suite's own version history and stopped
+being gathered. **The source served no Locket at all, and nothing failed**: no red build, no
+warning, just a package that quietly stopped being mentioned. One global window means the fastest
+publisher starves every slower one, invisibly. The window is per *tag namespace* now (`v*`,
+`locket-v*`, and whatever a future tweak adds) — which is exactly the boundary a separate publisher
+already has, so it needed no new bookkeeping. Worth checking after adding a third publisher, and
+worth remembering as the general shape: **a bounded scan shared between producers is a starvation
+bug waiting for one of them to speed up.**
+
 **That same design is why a package is not removed from the source by not releasing it.**
 Building the index from the releases means the releases *are* the source: a workflow that
 goes quiet keeps being gathered from what it published before, at the last version it

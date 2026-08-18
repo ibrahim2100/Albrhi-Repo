@@ -124,9 +124,28 @@ com.albrhi.twitter          com.albrhi.twitter.roothide
 com.albrhi.panel            com.albrhi.panel.roothide
 "
 
-# How far back to look. Bounded, because every push rebuilds the index and walking
-# the entire release history each time would cost more the longer the project lives.
-SCAN=40
+# How far back to look, **per tag namespace**, and that qualifier is the whole fix.
+#
+# It used to be the newest 40 releases outright, and Locket silently fell out of the source
+# because of it: the suite publishes constantly, so `locket-v0.4.1` -- perfectly healthy, still
+# the current release -- had been pushed to position 66 by the suite's own version history and
+# stopped being gathered. **The source had no Locket in it at all, and nothing failed.**
+#
+# That is the same class of failure this script's own header warns about, arriving from the
+# opposite direction: it says a package is not removed by not releasing it, and this was a
+# package removed by *someone else* releasing. One global window means the fastest publisher
+# starves every slower one, and the starvation is invisible -- the index simply stops
+# mentioning a package that is still perfectly current.
+#
+# So the window is per namespace: `v*` (the suite), `locket-v*`, and anything a future tweak
+# adds. A namespace of its own is exactly what a separate publisher already has -- see the
+# tag-namespace rule in CLAUDE.md -- so grouping by it needs no new bookkeeping.
+SCAN=15
+
+# How many releases to ask the API for. Larger than the window because the window is applied
+# per namespace afterwards, and a slow publisher's newest release can sit a long way down one
+# combined listing.
+FETCH=100
 
 is_withheld() {
     local candidate="$1" withheld
@@ -142,8 +161,17 @@ trap 'rm -rf "$staging"' EXIT
 
 # Newest first, and prereleases included -- /releases/latest skips those, and this
 # project's releases have been published as prereleases before.
-tags=$(gh api "repos/${REPO}/releases?per_page=${SCAN}" \
-       --jq '.[] | select(.draft == false) | .tag_name')
+# The namespace is the tag up to its version: `locket-v0.4.1` -> `locket`, `v1.42.0` -> the
+# suite's own unnamed one. Newest first within each, then the newest SCAN of each are kept.
+tags=$(gh api "repos/${REPO}/releases?per_page=${FETCH}" \
+       --jq '.[] | select(.draft == false) | .tag_name' \
+     | awk -v keep="$SCAN" '
+           {
+               namespace = $0
+               sub(/-?v[0-9].*$/, "", namespace)
+               if (namespace == "") namespace = "(suite)"
+               if (++seen[namespace] <= keep) print
+           }')
 
 if [ -z "$tags" ]; then
     echo "::warning::No published releases found in ${REPO}"
