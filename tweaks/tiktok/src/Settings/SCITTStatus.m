@@ -304,6 +304,13 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_button"), SCITTButtonReport()];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_media_resolve"), [SCITTMedia lastAttemptState]];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_download"), SCITTDownloadReport()];
+
+    // The copyable report is built here and the table is built below, from two separate
+    // lists -- so a row added to one is silently missing from the other. That is exactly what
+    // happened to the gear ladder: it was added to the table, asked for by name, and the
+    // report that came back had never contained it. Anything added to one belongs in both.
+    [report appendFormat:@"%@: %@\n", SCILocalized(@"status_gears"), [SCITTMedia gearLadder]];
+    [report appendFormat:@"%@: %@\n", SCILocalized(@"status_progress_bar"), SCITTProgressBarReport()];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_cell_accessors"),
         // AWEFeedViewTemplateCell -- the class the feed actually uses.
         //

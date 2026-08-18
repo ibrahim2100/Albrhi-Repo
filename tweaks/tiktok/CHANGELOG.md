@@ -1,5 +1,24 @@
 # Albrhi for TikTok — what changed
 
+## v0.13.3
+
+**The report and the settings table were built from two separate lists, and the row asked for
+by name was in only one of them.** The gear ladder added in 0.13.2 appeared in the table and
+never in the copyable report — so a report sent to be read for it could not contain it. Both
+new rows are in both places now.
+
+**Photo posts resolve; the save was failing silently.** "saved 0 of 1" collapsed three
+unrelated causes into one number: the download failing, the bytes arriving and not decoding,
+and Photos refusing the write. Each is counted separately now and the first real error message
+is kept. TikTok serves these as WebP and HEIC, so when `UIImage` cannot decode the bytes they
+are handed to Photos as the original resource instead — which also keeps the file exactly as
+posted rather than re-encoding it.
+
+**Quality compares three ladders, not one.** `AWEVideoModel` declares `bitrateModels`,
+`SDRBitrateModels` and `HDRBitrateModels`; only the first was ever read. A gear missing from one
+list is not a gear the app does not have. All three are gathered and compared together, and the
+report names which list the winner came from.
+
 ## v0.13.2
 
 **Photo posts: the wrapper was right and the list accessor was not.** A photo post in this build

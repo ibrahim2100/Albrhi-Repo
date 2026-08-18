@@ -83,18 +83,45 @@ NSString *SCITTDownloadReport(void) {
         dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
             __block NSUInteger saved = 0;
 
+            // "saved 0 of 1" collapsed three unrelated failures into one number.
+            //
+            // The download can fail, the bytes can arrive and not decode, or Photos can
+            // refuse the write -- and each needs a different fix, while the report said only
+            // that nothing arrived. Counted separately, and the first real error message is
+            // kept, because a cause named once is worth more than a count of three.
+            __block NSUInteger noData = 0, noDecode = 0, refused = 0;
+            __block NSString *firstError = nil;
+
             for (NSURL *url in urls) {
                 NSData *data = [NSData dataWithContentsOfURL:url];
-                UIImage *image = data.length ? [UIImage imageWithData:data] : nil;
-                if (!image) continue;
+                if (!data.length) { noData++; continue; }
+
+                UIImage *image = [UIImage imageWithData:data];
 
                 dispatch_semaphore_t wait = dispatch_semaphore_create(0);
 
                 [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
-                    [PHAssetChangeRequest creationRequestForAssetFromImage:image];
+                    if (image) {
+                        [PHAssetChangeRequest creationRequestForAssetFromImage:image];
+                        return;
+                    }
+
+                    // Undecodable by UIImage is not undecodable by Photos. TikTok serves
+                    // these as WebP and HEIC, and handing the library the original bytes
+                    // lets it do its own decode -- and keeps the file as posted rather than
+                    // re-encoding it, which is the better outcome even when both work.
+                    PHAssetCreationRequest *request = [PHAssetCreationRequest creationRequestForAsset];
+                    [request addResourceWithType:PHAssetResourceTypePhoto data:data options:nil];
                 } completionHandler:^(BOOL ok, NSError *error) {
-                    if (ok) saved++;
-                    else SCILogV(@"photo save: %@", error.localizedDescription);
+                    if (ok) {
+                        saved++;
+                    } else if (image) {
+                        refused++;
+                        if (!firstError) firstError = error.localizedDescription;
+                    } else {
+                        noDecode++;
+                        if (!firstError) firstError = error.localizedDescription;
+                    }
                     dispatch_semaphore_signal(wait);
                 }];
 
@@ -104,8 +131,14 @@ NSString *SCITTDownloadReport(void) {
                 dispatch_semaphore_wait(wait, dispatch_time(DISPATCH_TIME_NOW, 30ull * NSEC_PER_SEC));
             }
 
-            SCITTRecordDownload([NSString stringWithFormat:@"photo post — saved %lu of %lu",
-                (unsigned long)saved, (unsigned long)urls.count]);
+            NSMutableString *note = [NSMutableString stringWithFormat:@"photo post — saved %lu of %lu",
+                (unsigned long)saved, (unsigned long)urls.count];
+            if (noData) [note appendFormat:@"; %lu never downloaded", (unsigned long)noData];
+            if (noDecode) [note appendFormat:@"; %lu were not an image", (unsigned long)noDecode];
+            if (refused) [note appendFormat:@"; %lu refused by Photos", (unsigned long)refused];
+            if (firstError) [note appendFormat:@" (%@)", firstError];
+
+            SCITTRecordDownload(note);
         });
     }];
 }

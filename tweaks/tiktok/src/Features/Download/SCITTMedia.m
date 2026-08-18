@@ -294,11 +294,26 @@ static NSString *sciGearLadder = nil;
 static NSURL *SCITTBestBitrateURL(id videoModel, NSString **outVia) {
     if (!videoModel) return nil;
 
-    SEL models = NSSelectorFromString(@"bitrateModels");
-    if (![videoModel respondsToSelector:models]) return nil;
+    // Three ladders, not one. `AWEVideoModel` declares `bitrateModels`, `SDRBitrateModels`
+    // and `HDRBitrateModels` -- all three confirmed properties -- and only the first was ever
+    // read. A gear missing from one list is not a gear the app does not have, so they are
+    // gathered together and compared as a single ladder; whichever list the winner came from
+    // is named in the report.
+    NSMutableArray *list = [NSMutableArray array];
+    NSMutableArray<NSString *> *sources = [NSMutableArray array];
 
-    id list = ((id (*)(id, SEL))objc_msgSend)(videoModel, models);
-    if (![list isKindOfClass:[NSArray class]] || ![(NSArray *)list count]) return nil;
+    for (NSString *name in @[@"bitrateModels", @"SDRBitrateModels", @"HDRBitrateModels"]) {
+        SEL models = NSSelectorFromString(name);
+        if (![videoModel respondsToSelector:models]) continue;
+
+        id value = ((id (*)(id, SEL))objc_msgSend)(videoModel, models);
+        if (![value isKindOfClass:[NSArray class]] || ![(NSArray *)value count]) continue;
+
+        [list addObjectsFromArray:(NSArray *)value];
+        [sources addObject:[NSString stringWithFormat:@"%@×%lu",
+                            name, (unsigned long)[(NSArray *)value count]]];
+    }
+    if (!list.count) return nil;
 
     id best = nil;
     double bestRate = -1;
@@ -328,8 +343,9 @@ static NSURL *SCITTBestBitrateURL(id videoModel, NSString **outVia) {
         }
     }
 
-    sciGearLadder = [NSString stringWithFormat:@"%lu gear(s): %@ — took %@",
+    sciGearLadder = [NSString stringWithFormat:@"%lu gear(s) from %@: %@ — took %@",
                      (unsigned long)ladder.count,
+                     [sources componentsJoinedByString:@" + "],
                      [ladder componentsJoinedByString:@", "],
                      bestIndex == NSNotFound ? @"none" : ladder[bestIndex]];
 

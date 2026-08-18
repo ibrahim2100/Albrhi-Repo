@@ -399,6 +399,20 @@ the *wrapper* and kept asking it for `images`, so the post still read as empty. 
 hop, which is why the tool prints them: `photoAlbum : @"AWEPhotoAlbumModel"` names the next
 class to ask about, and a chain confirmed hop by hop is the only kind that has ever worked here.
 
+**A copyable report and the screen it mirrors are two lists, and a row added to one is
+silently absent from the other.** `SCITTStatus` builds its report text in one method and its
+table in another. The gear ladder went into the table, the user was asked to send that row, and
+the report they sent had never contained it — a whole round trip spent on a row that did not
+exist where it was being looked for. Anything added to one belongs in both, and this is the
+same shape as the depiction that was written only into a Pages artifact.
+
+**"saved 0 of 1" is a count, not a cause.** Photo saving fails three unrelated ways — the
+download, the decode, the library refusing the write — and one number cannot say which, so
+nothing could be fixed from it. Counted separately with the first real error kept. The decode
+one had a real fix behind it: TikTok serves photos as WebP and HEIC, and bytes `UIImage` will
+not decode can still be handed to Photos as the original resource, which also stops the save
+re-encoding a file that was already fine.
+
 **A quality number on its own is not a diagnosis.** "It saves 720" has two causes that produce
 an identical file — the picker chose wrong, or 720 was the whole ladder — so the Status screen
 reports every gear offered with the chosen one marked. Same shape as the `raw → parsed →
@@ -1439,7 +1453,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.13.2** · suite **1.38.2**.
+source) · TikTok **0.13.3** · suite **1.38.3**.
 
 ### TikTok, where it actually stands
 

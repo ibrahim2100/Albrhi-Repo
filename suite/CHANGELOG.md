@@ -1,5 +1,16 @@
 # Albrhi Changelog
 
+## v1.38.3
+
+**TikTok: photo saving says why it failed, and quality looks at every list TikTok offers.**
+Photo posts were being found and then failing to save with nothing explaining it — the three
+different causes are now named, and images TikTok serves as WebP or HEIC are handed to Photos
+as-is instead of being re-encoded. Quality now compares all three of the app's quality lists
+rather than only the first. And the diagnostics report was missing two rows the settings screen
+had, including the one for quality.
+
+Includes TikTok 0.13.3.
+
 ## v1.38.2
 
 **TikTok: photo posts save, and the quality report says what was on offer.** Photo posts were
