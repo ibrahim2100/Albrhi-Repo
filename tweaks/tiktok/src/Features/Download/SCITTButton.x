@@ -74,6 +74,25 @@ static BOOL sciPlacedBeforeLast = NO;
     return shared;
 }
 
+- (void)pressed:(UIButton *)button {
+    [UIView animateWithDuration:0.12 animations:^{
+        button.transform = CGAffineTransformMakeScale(0.86, 0.86);
+        button.alpha = 0.75;
+    }];
+}
+
+- (void)released:(UIButton *)button {
+    [UIView animateWithDuration:0.24
+                          delay:0
+         usingSpringWithDamping:0.6
+          initialSpringVelocity:0
+                        options:UIViewAnimationOptionAllowUserInteraction
+                     animations:^{
+        button.transform = CGAffineTransformIdentity;
+        button.alpha = 1;
+    } completion:nil];
+}
+
 - (void)tapped:(UIButton *)button {
     SCITTMediaItem *item = objc_getAssociatedObject(button, kSCIItemKey);
     if (!item) {
@@ -657,6 +676,19 @@ static UIButton *SCITTMakeDownloadButton(void) {
     [button addTarget:[SCITTButtonTarget shared]
                action:@selector(tapped:)
      forControlEvents:UIControlEventTouchUpInside];
+
+    // **Pressed state, because the finger should get an answer before the network does.** Even
+    // with the banner now showing on the tap, the first acknowledgement a control can give costs
+    // no work at all: it shrinks under the thumb and comes back. TikTok's own rail buttons do
+    // this, so a button that stayed perfectly still read as dead even when it had fired.
+    [button addTarget:[SCITTButtonTarget shared]
+               action:@selector(pressed:)
+     forControlEvents:UIControlEventTouchDown];
+
+    [button addTarget:[SCITTButtonTarget shared]
+               action:@selector(released:)
+     forControlEvents:UIControlEventTouchUpInside | UIControlEventTouchUpOutside |
+                      UIControlEventTouchCancel];
 
     return button;
 }

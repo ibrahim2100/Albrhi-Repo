@@ -2,7 +2,7 @@
 #import "../../Localization/SCILocalize.h"
 #import "../../SCILog.h"
 #import <ImageIO/ImageIO.h>
-#import "modules/JGProgressHUD/JGProgressHUD.h"
+#import "../../UI/SCITTToast.h"
 #import "../../Prefs.h"
 #import <UIKit/UIKit.h>
 #import <Photos/Photos.h>
@@ -10,7 +10,6 @@
 
 @interface SCITTDownload () <NSURLSessionDownloadDelegate>
 @property (nonatomic, strong) SCITTMediaItem *item;
-@property (nonatomic, strong) JGProgressHUD *hud;
 @property (nonatomic, strong) NSURLSession *session;
 
 /// Which of `item.candidates` is being fetched, and what the ones already tried
@@ -74,7 +73,6 @@ NSString *SCITTDownloadReport(void) {
 /// keeping the seven. The counter reports both numbers for the same reason: "saved 6 of 8" and
 /// "saved nothing" are different problems.
 /// The HUD for a photo-post save, held while the images go one at a time.
-static JGProgressHUD *sciPhotoHUD = nil;
 
 + (void)askThenSavePhotos:(SCITTMediaItem *)item {
     NSArray<NSURL *> *all = item.photoURLs;
@@ -539,20 +537,7 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
             return;
         }
 
-        // The same HUD the video path shows. A save with no indicator at all is
-        // indistinguishable from a button that does nothing, which is how working code got
-        // reported as broken.
-        dispatch_async(dispatch_get_main_queue(), ^{
-            UIView *host = [self host];
-            if (!host) return;
-
-            JGProgressHUD *hud = [[JGProgressHUD alloc] initWithStyle:JGProgressHUDStyleDark];
-            hud.indicatorView = [[JGProgressHUDPieIndicatorView alloc] init];
-            hud.textLabel.text = SCILocalized(@"save_working");
-            hud.progress = 0;
-            [hud showInView:host];
-            sciPhotoHUD = hud;
-        });
+        [SCITTToast showText:SCILocalized(@"save_working") symbol:@"photo" progress:0];
 
         dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
             NSUInteger saved = 0, noData = 0, refused = 0;
@@ -573,9 +558,9 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
                 }
 
                 NSUInteger done = saved + noData + refused;
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [sciPhotoHUD setProgress:(float)done / (float)urls.count animated:YES];
-                });
+                [SCITTToast showText:SCILocalized(@"save_working")
+                              symbol:@"photo"
+                            progress:(CGFloat)done / (CGFloat)urls.count];
             }
 
             // Counted apart, because a download that never arrived and a library that refused
@@ -594,9 +579,6 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
 
             NSUInteger finalSaved = saved;
             dispatch_async(dispatch_get_main_queue(), ^{
-                [sciPhotoHUD dismiss];
-                sciPhotoHUD = nil;
-
                 NSString *message = urls.count > 1
                     ? [NSString stringWithFormat:SCILocalized(@"photos_saved_count"),
                        (unsigned long)finalSaved, (unsigned long)urls.count]
@@ -623,6 +605,12 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
         [self askThenSavePhotos:item];
         return;
     }
+
+    // **Shown on the tap, before anything slow.** The gap the owner reported was not a stall in
+    // the download -- it was the Photos permission callback plus a `HEAD` for every candidate
+    // link, up to ten seconds each, all of it ahead of the first pixel of feedback. The work was
+    // running; nothing said so. **A button must answer the finger, not the network.**
+    [SCITTToast showText:SCILocalized(@"save_working") symbol:@"arrow.down.circle" progress:-1];
 
     [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelAddOnly
                                                 handler:^(PHAuthorizationStatus status) {
@@ -686,15 +674,9 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
     download.candidateIndex = 0;
     download.rejected = [NSMutableArray array];
 
-    UIView *host = [self host];
-    if (host) {
-        JGProgressHUD *hud = [[JGProgressHUD alloc] initWithStyle:JGProgressHUDStyleDark];
-        hud.indicatorView = [[JGProgressHUDPieIndicatorView alloc] init];
-        hud.textLabel.text = SCILocalized(@"save_working");
-        hud.progress = 0;
-        [hud showInView:host];
-        download.hud = hud;
-    }
+    // The banner is already on screen from the tap; this only gives it a real fraction to show
+    // now that a transfer exists to measure.
+    [SCITTToast showText:SCILocalized(@"save_working") symbol:@"arrow.down.circle" progress:0];
 
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
     download.session = [NSURLSession sessionWithConfiguration:configuration
@@ -762,7 +744,9 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
     if (expected <= 0) return;
     double fraction = (double)written / (double)expected;
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self.hud setProgress:(float)fraction animated:YES];
+        [SCITTToast showText:SCILocalized(@"save_working")
+                      symbol:@"arrow.down.circle"
+                    progress:(CGFloat)fraction];
     });
 }
 
@@ -876,8 +860,9 @@ didFinishDownloadingToURL:(NSURL *)location {
 
 - (void)finish:(BOOL)success message:(NSString *)message {
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self.hud dismissAnimated:NO];
-        self.hud = nil;
+        // Left to `+report:` below, which turns the banner into its finished state rather than
+        // taking it away and putting a second one back.
+
 
         [SCITTDownload report:message ok:success];
 
@@ -887,17 +872,7 @@ didFinishDownloadingToURL:(NSURL *)location {
 }
 
 + (void)report:(NSString *)message ok:(BOOL)ok {
-    UIView *host = [self host];
-    if (!host) return;
-
-    JGProgressHUD *hud = [[JGProgressHUD alloc] initWithStyle:JGProgressHUDStyleDark];
-    hud.indicatorView = ok
-        ? [[JGProgressHUDSuccessIndicatorView alloc] init]
-        : [[JGProgressHUDErrorIndicatorView alloc] init];
-    hud.textLabel.text = message;
-
-    [hud showInView:host];
-    [hud dismissAfterDelay:2.0];
+    [SCITTToast finishWithText:message ok:ok];
 }
 
 @end
