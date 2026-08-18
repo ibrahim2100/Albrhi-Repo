@@ -1468,7 +1468,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.14.2** · suite **1.39.2**.
+source) · TikTok **0.14.3** · suite **1.39.3**.
 
 ### TikTok, where it actually stands
 
@@ -1537,6 +1537,19 @@ collected and `HEAD`-ed, and the largest wins. Every earlier quality attempt her
 which accessor was better; `Content-Length` ends the argument, and a link that refuses `HEAD`
 scores zero and sinks rather than being dropped, because a server that refuses `HEAD` still
 serves `GET`.
+
+**Both reference tweaks fetch HD from `tikwm.com`, and reading their binaries settled that it
+is not one author's shortcut.** `https://tikwm.com/video/media/hdplay/%@.mp4` is a literal
+string in NA9 *and* in VibeTok, and NA9 carries the non-HD `…/play/%@.mp4` beside it — so the
+reliability people attribute to those buttons is the external service, not a better internal
+chain. Recorded so the question is not reopened as if an undiscovered accessor exists.
+
+**What the same read confirmed about our own chains, which is the more useful half.** VibeTok
+sends exactly `photoAlbum` → `photos` → `originPhotoURL` → `originURLList`, and NA9 sends both
+that and the `imagePostInfo`/`images`/`displayImage` family — which is what this tweak settled
+on in 0.13.2 after two wrong releases. Both also *ask* which picture (`na9ShowPhotoDownloadSheet:`),
+which 0.14.0 arrived at independently. And NA9's `downloadMusic:` shows the `.mp3` is a
+deliberate separate feature there, not the accident it was here.
 
 **A measurement can only rank what it can see, and "which copy is watermarked" is not in the
 response.** Ranking candidates by size took `downloadURL` — TikTok's *watermarked* save copy,

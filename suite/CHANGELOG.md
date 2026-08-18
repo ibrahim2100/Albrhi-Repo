@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.39.3
+
+**TikTok: the watermark is refused from both sides, and posts marked "no download" save anyway.**
+
+Includes TikTok 0.14.3.
+
 ## v1.39.2
 
 **TikTok: downloads without the watermark.** Picking the largest file was picking TikTok's

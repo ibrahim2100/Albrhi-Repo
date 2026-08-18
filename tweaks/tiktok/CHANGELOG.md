@@ -1,5 +1,18 @@
 # Albrhi for TikTok — what changed
 
+## v0.14.3
+
+**Read both reference tweaks' actual hook tables and closed what they cover and we did not.**
+
+The watermark is answered at **both** ends now — the setter and the getter — which is what NA9
+does, and the reason holds: the setter covers every reader of a stored value, but a value TikTok
+never sets keeps whatever it decoded from the response.
+
+TikTok's own two download-permission flags are forced open. NA9 hooks `-canDownload` and
+`-isPreventDownload`; **neither exists on this build**. The real names here are `preventDownload`
+and `disableDownload`, read from the app's own class metadata — the fourth time in this tweak
+that a working reference's selectors turned out not to be ours.
+
 ## v0.14.2
 
 **"Largest wins" was stamping a watermark on every download, and no measurement could have

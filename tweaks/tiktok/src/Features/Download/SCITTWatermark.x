@@ -12,6 +12,7 @@
 #import "../../Prefs.h"
 #import "../../Localization/SCILocalize.h"
 #import "../../SCILog.h"
+#import "../../TikTokHeaders.h"
 
 ///
 /// The class that carries a post's watermark decision.
@@ -21,10 +22,22 @@
 /// `allowDownloadWithoutWatermark` and `preventDownload` beside it. NA9 hooks the same setter,
 /// which is a second confirmation of the target rather than the source of it.
 @interface AWEAwemeACLItem : NSObject
-@property (nonatomic, assign) NSUInteger watermarkType;
+// Declared as a method, not a property: the hook below overrides the getter by that name, and
+// a @property here would make the two the same declaration twice over.
+- (NSUInteger)watermarkType;
 @end
 
+//
+// `AWEAwemeModel` comes from TikTokHeaders.h, which every file here already shares.
+//
+// **The permission flags' names differ from what the references use, and that matters.** NA9
+// hooks `-canDownload` and `-isPreventDownload`; neither is on this class in 46.4.0. This build
+// declares `preventDownload` and `disableDownload`, confirmed from its own class metadata --
+// the same "a working tweak's selectors are not your build's" trap this project has now hit
+// four times.
+
 static NSUInteger sciForced = 0;
+static NSUInteger sciPermitted = 0;
 static BOOL sciAttached = NO;
 
 %group Watermark
@@ -45,6 +58,31 @@ static BOOL sciAttached = NO;
     %orig(0);
 }
 
+- (NSUInteger)watermarkType {
+    if (!SCIPrefEnabled(SCIPrefDownloadButton)) return %orig;
+
+    // Both ends, because NA9 hooks both and the reason is sound: the setter covers every
+    // reader of the stored value, but a value TikTok never sets keeps whatever it decoded from
+    // the response. Answering the getter as well costs nothing and closes that case.
+    return 0;
+}
+
+%end
+
+%hook AWEAwemeModel
+
+- (BOOL)preventDownload {
+    if (!SCIPrefEnabled(SCIPrefDownloadButton)) return %orig;
+    sciPermitted++;
+    return NO;
+}
+
+- (BOOL)disableDownload {
+    if (!SCIPrefEnabled(SCIPrefDownloadButton)) return %orig;
+    sciPermitted++;
+    return NO;
+}
+
 %end
 
 %end
@@ -62,5 +100,6 @@ void SCITTInstallWatermarkHooks(void) {
 NSString *SCITTWatermarkReport(void) {
     if (!sciAttached) return @"AWEAwemeACLItem is not in this build";
     if (!SCIPrefEnabled(SCIPrefDownloadButton)) return @"attached, download switched off";
-    return [NSString stringWithFormat:@"attached — %lu cleared", (unsigned long)sciForced];
+    return [NSString stringWithFormat:@"attached — %lu cleared, %lu permitted",
+            (unsigned long)sciForced, (unsigned long)sciPermitted];
 }
