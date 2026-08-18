@@ -226,6 +226,38 @@ static NSArray<NSURL *> *SCITTPhotoURLsFromModel(id model) {
 /// `f` float, `@` an object. Each is then read through a cast that matches, and an encoding
 /// this does not recognise returns 0 rather than a guess -- a variant that cannot be compared
 /// simply loses, which costs quality and never stability.
+///
+/// A declared integer property, read through the encoding the runtime reports.
+///
+/// The same discipline `SCITTBitRateOf` uses and for the same reason: 0.12.0 crashed the app by
+/// casting a property whose type it had assumed. An encoding this does not recognise returns 0,
+/// which costs a line in a report and never a process.
+static long long SCITTIntegerOf(id entry, NSString *name) {
+    SEL selector = NSSelectorFromString(name);
+    if (![entry respondsToSelector:selector]) return 0;
+
+    objc_property_t property = class_getProperty([entry class], name.UTF8String);
+    const char *attributes = property ? property_getAttributes(property) : NULL;
+    if (!attributes || attributes[0] != 'T') return 0;
+
+    switch (attributes[1]) {
+        case 'q': case 'l':
+            return ((long long (*)(id, SEL))objc_msgSend)(entry, selector);
+        case 'i': case 's': case 'c': case 'B':
+            return (long long)((int (*)(id, SEL))objc_msgSend)(entry, selector);
+        case 'Q': case 'L': case 'I':
+            return (long long)((unsigned long long (*)(id, SEL))objc_msgSend)(entry, selector);
+        case 'd':
+            return (long long)((double (*)(id, SEL))objc_msgSend)(entry, selector);
+        case '@': {
+            id boxed = ((id (*)(id, SEL))objc_msgSend)(entry, selector);
+            return [boxed respondsToSelector:@selector(longLongValue)] ? [boxed longLongValue] : 0;
+        }
+        default:
+            return 0;
+    }
+}
+
 static double SCITTBitRateOf(id entry) {
     if (!entry) return 0;
 
@@ -374,8 +406,21 @@ static NSURL *SCITTBestBitrateURL(id videoModel, NSString **outVia) {
         // gears three times over -- and they are separate objects, so `containsObject:` would
         // not have caught it. A ladder that repeats itself is a report nobody can read, and
         // being read is the whole point of this line.
-        NSString *label = [NSString stringWithFormat:@"%@ @ %.0f",
-                           gear ?: NSStringFromClass([entry class]), rate];
+        // **Frame rate and codec, beside the bitrate — because the owner noticed the saved
+        // clips sit under 30 fps and neither the gear name nor the byte count says a word about
+        // it.** Both are declared properties on `AWEVideoBSModel` (`fps : q`, `isBytevc1 : q`),
+        // so this is a plain read, not a guess: `SCITTIntegerOf` asks the runtime for the real
+        // encoding first, exactly as the bitrate read does, and answers 0 for anything it cannot
+        // type rather than inventing a cast. If the ladder turns out to hold a 60 fps gear we are
+        // not taking, that is the next fix; if every gear is 30, the source is 30 and there is
+        // nothing here to win.
+        long long fps = SCITTIntegerOf(entry, @"fps");
+        long long hevc = SCITTIntegerOf(entry, @"isBytevc1");
+
+        NSString *label = [NSString stringWithFormat:@"%@ @ %.0f%@%@",
+                           gear ?: NSStringFromClass([entry class]), rate,
+                           fps > 0 ? [NSString stringWithFormat:@", %lldfps", fps] : @"",
+                           hevc > 0 ? @", hevc" : @", h264"];
         if ([ladder containsObject:label]) {
             if (rate > bestRate) { bestRate = rate; best = entry; }
             continue;
