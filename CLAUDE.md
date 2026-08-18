@@ -1468,7 +1468,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.14.3** · suite **1.39.3**.
+source) · TikTok **0.14.4** · suite **1.39.4**.
 
 ### TikTok, where it actually stands
 
@@ -1550,6 +1550,23 @@ that and the `imagePostInfo`/`images`/`displayImage` family — which is what th
 on in 0.13.2 after two wrong releases. Both also *ask* which picture (`na9ShowPhotoDownloadSheet:`),
 which 0.14.0 arrived at independently. And NA9's `downloadMusic:` shows the `.mp3` is a
 deliberate separate feature there, not the accident it was here.
+
+**"Unmeasurable" is not "worst", and treating it as worst disabled a feature the user had
+switched on.** `tikwm.com` refuses `HEAD`, so the external HD link scored zero and sank below
+every internal one — the switch was on and changed nothing. A one-byte range request is a plain
+`GET` and any server that serves the file answers it, with the total in `Content-Range`. **Ask
+the same question a second way before concluding the answer is no.**
+
+**A parallel array must be walked in lockstep, never re-found by value.** The origins list was
+indexed with `-indexOfObject:` while the links list had the external address inserted at the
+front, so every label named the *previous* link's accessor — a report that stayed entirely
+plausible while being wrong throughout. Worse than no labels, and the same shape as the tally
+that reported the last event.
+
+**A fallback that is only reachable when the primary succeeds is not a fallback.** Photo saving
+re-encoded to JPEG when Photos refused the format — but the re-encode needed `UIImage` to have
+decoded the bytes, and the case it existed for is exactly when `UIImage` returns nil. `ImageIO`
+decodes what `UIImage` declines. Check what a fallback *depends on*, not just when it fires.
 
 **A measurement can only rank what it can see, and "which copy is watermarked" is not in the
 response.** Ranking candidates by size took `downloadURL` — TikTok's *watermarked* save copy,

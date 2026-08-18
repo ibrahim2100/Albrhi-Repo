@@ -1,5 +1,25 @@
 # Albrhi for TikTok — what changed
 
+## v0.14.4
+
+**A refused `HEAD` was sinking the very link you asked for.** Servers that will not answer a
+`HEAD` scored zero and dropped to the bottom — which included `tikwm.com`, so switching the
+external HD option on changed nothing, and included the quality ladder's own address. The size
+is now asked a second way when the first fails: a one-byte range request is an ordinary `GET`,
+so any server that serves the file answers it, and `Content-Range` carries the total.
+
+**Every link was labelled with the previous link's accessor.** The origins list was searched by
+value instead of walked in step, so inserting the external HD address at the front shifted every
+label by one — the report stayed plausible while naming the wrong thing. The two arrays are now
+grown, shrunk and read together.
+
+**Photos: `UIImage` was the only decoder, and its failure disabled the fallback that existed for
+exactly that case.** When it returns nil, the JPEG re-encode and the plain-image paths were both
+skipped and only the untouched bytes were offered — which is why 3302 came back after "three"
+attempts. `CGImageSourceCreateWithData` reads formats `UIImage` declines, so the re-encode is now
+reachable whenever anything can read the file at all. And the error line names which attempts
+actually ran instead of implying all of them did.
+
 ## v0.14.3
 
 **Read both reference tweaks' actual hook tables and closed what they cover and we did not.**

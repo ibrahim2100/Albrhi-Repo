@@ -1,6 +1,7 @@
 #import "SCITTDownload.h"
 #import "../../Localization/SCILocalize.h"
 #import "../../SCILog.h"
+#import <ImageIO/ImageIO.h>
 #import "modules/JGProgressHUD/JGProgressHUD.h"
 #import "../../Prefs.h"
 #import <UIKit/UIKit.h>
@@ -174,6 +175,52 @@ static long long SCITTMeasure(NSURL *url, NSString **outKind) {
     return length > 0 ? length : 0;
 }
 
+///
+/// The same question asked a second way, for servers that refuse `HEAD`.
+///
+/// **A refused `HEAD` was scoring zero and sinking a link to the bottom — including the
+/// external HD link the user deliberately switched on**, which is the whole point of that
+/// switch, and including `bitrateModels`' own address. A one-byte range request is a `GET`, so
+/// a server that serves the file at all answers it, and `Content-Range: bytes 0-0/12345` gives
+/// the total in its last field.
+static long long SCITTMeasureByRange(NSURL *url, NSString **outKind) {
+    if (!url) return 0;
+
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+    request.timeoutInterval = 8;
+    [request setValue:@"bytes=0-0" forHTTPHeaderField:@"Range"];
+
+    __block long long length = 0;
+    __block NSString *kind = nil;
+    dispatch_semaphore_t wait = dispatch_semaphore_create(0);
+
+    NSURLSessionDataTask *task = [[NSURLSession sharedSession]
+        dataTaskWithRequest:request
+          completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        NSHTTPURLResponse *http = [response isKindOfClass:[NSHTTPURLResponse class]]
+            ? (NSHTTPURLResponse *)response : nil;
+        if (http.statusCode >= 200 && http.statusCode < 300) {
+            kind = response.MIMEType.lowercaseString;
+
+            NSString *range = http.allHeaderFields[@"Content-Range"];
+            NSString *total = [[range componentsSeparatedByString:@"/"] lastObject];
+            length = total.longLongValue;
+
+            // A server that ignores the range and sends the file answers the question too.
+            if (length <= 0 && response.expectedContentLength > 0) {
+                length = response.expectedContentLength;
+            }
+        }
+        dispatch_semaphore_signal(wait);
+    }];
+    [task resume];
+
+    dispatch_semaphore_wait(wait, dispatch_time(DISPATCH_TIME_NOW, 12ull * NSEC_PER_SEC));
+
+    if (outKind) *outKind = kind;
+    return length > 0 ? length : 0;
+}
+
 /// How a candidate ranks before its size is even looked at.
 ///
 /// 2 answered as video, 1 would not say, 0 answered as audio. Audio never wins on size, no
@@ -233,11 +280,22 @@ static BOOL SCITTOriginIsWatermarked(NSString *origin) {
     for (NSURL *url in links) {
         NSString *kind = nil;
         long long size = SCITTMeasure(url, &kind);
+        if (size <= 0) {
+            NSString *rangeKind = nil;
+            size = SCITTMeasureByRange(url, &rangeKind);
+            if (rangeKind.length) kind = rangeKind;
+        }
         NSInteger rank = SCITTKindRank(kind, url);
 
         // A clean video outranks a watermarked one whatever the sizes say; among equals, size
         // decides. Three tiers rather than two, so a watermarked video still beats an unknown.
-        NSUInteger index = [links indexOfObject:url];
+        //
+        // **The index is the loop's own, not a search.** `-indexOfObject:` was used here and it
+        // silently mislabelled every link the moment the external HD address was inserted at
+        // the front: the origins list still described the original order, so each label named
+        // the previous link's accessor. A parallel array must be walked in lockstep with the
+        // thing it parallels, never re-found.
+        NSUInteger index = [links indexOfObjectIdenticalTo:url];
         NSString *origin = index < origins.count ? origins[index] : nil;
         if (rank == 2 && SCITTOriginIsWatermarked(origin)) rank = 1;
 
@@ -330,6 +388,24 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
         return YES;
     }
 
+    // **Decoding through ImageIO rather than only UIImage.** A device report came back with
+    // 3302 after all three attempts, which means the image was nil and only the first ran:
+    // `UIImage` will not decode some of what TikTok serves, and the JPEG fallback was therefore
+    // unreachable exactly when it was needed. `CGImageSourceCreateWithData` reads every format
+    // the system has a decoder for, including the ones UIImage declines, so the re-encode path
+    // is now available whenever anything at all can read the bytes.
+    if (!image) {
+        CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef)data, NULL);
+        if (source) {
+            CGImageRef decoded = CGImageSourceCreateImageAtIndex(source, 0, NULL);
+            if (decoded) {
+                image = [UIImage imageWithCGImage:decoded];
+                CGImageRelease(decoded);
+            }
+            CFRelease(source);
+        }
+    }
+
     if (image) {
         NSData *jpeg = UIImageJPEGRepresentation(image, 0.95);
         if (jpeg.length) {
@@ -353,7 +429,10 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
         }
     }
 
-    if (outError) *outError = error;
+    if (outError) {
+        *outError = [NSString stringWithFormat:@"%@ [tried: as posted%@]",
+                     error ?: @"refused", image ? @", JPEG, UIImage" : @" only — undecodable"];
+    }
     return NO;
 }
 
@@ -468,6 +547,13 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
         dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
             NSMutableArray<NSURL *> *links = [item.candidates mutableCopy] ?: [NSMutableArray array];
 
+            // Grown and shrunk together with `links`, because a parallel array that is only
+            // sometimes updated is worse than none: the labels stay plausible while naming the
+            // wrong thing, which is exactly what a device report showed.
+            NSMutableArray<NSString *> *origins =
+                [item.candidateOrigins mutableCopy] ?: [NSMutableArray array];
+            while (origins.count < links.count) [origins addObject:@"?"];
+
             // The one link in this tweak that leaves TikTok, and only on request.
             //
             // NA9's HD button has been reliable for years across TikTok updates for a reason
@@ -483,11 +569,13 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
                 NSString *address = [NSString stringWithFormat:
                     @"https://tikwm.com/video/media/hdplay/%@.mp4", item.itemID];
                 NSURL *external = [NSURL URLWithString:address];
-                if (external) [links insertObject:external atIndex:0];
+                if (external) {
+                    [links insertObject:external atIndex:0];
+                    [origins insertObject:@"tikwm HD" atIndex:0];
+                }
             }
 
-            NSArray<NSURL *> *ordered = [self orderByMeasuredSize:links
-                                                          origins:item.candidateOrigins];
+            NSArray<NSURL *> *ordered = [self orderByMeasuredSize:links origins:origins];
             if (ordered.count) {
                 item.candidates = ordered;
                 item.url = ordered.firstObject;

@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.39.4
+
+**TikTok: the HD switch actually does something now.** The external HD source refuses the quick
+size check every other link answers, so it was being ranked last and never used — the size is now
+asked a second way. Photo saving also gained a second decoder for the formats iOS declines, and
+the diagnostics no longer mislabel which link came from where.
+
+Includes TikTok 0.14.4.
+
 ## v1.39.3
 
 **TikTok: the watermark is refused from both sides, and posts marked "no download" save anyway.**
