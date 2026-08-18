@@ -107,11 +107,14 @@ OWNER_TWEAK="${5:-}"
 # suite/control declares Conflicts on, so the package and the source now say the same
 # thing.
 #
-# **Locket left this list.** It left the suite entirely -- suite/control no longer
-# declares Conflicts or Replaces on com.albrhi.locket or its roothide flavour, and
-# tweaks/locket carries a .no-suite marker so make-suite.sh does not bundle it. A
-# package no longer inside the suite has no reason to be withheld on the suite's
-# account, and buildlocket.yml publishes it independently now -- see that file.
+# **Locket is back on this list, and this time permanently.** It left the suite first, then
+# left the repository: tweaks/locket and buildlocket.yml are both gone, on the owner's
+# instruction to isolate it completely. Deleting a tweak does not stop the source serving it
+# -- that is the whole point of the paragraph above -- because five published `locket-v*`
+# releases still exist and this script builds the index from what is *published*. Without
+# these two lines the source would go on offering Locket 0.4.1 forever, from a tweak whose
+# source is no longer in the tree to fix. The releases stay as history; the source stops
+# mentioning them.
 #
 # Matched exactly, against the archive's own Package field. Every flavour has to be named
 # because rootless and roothide are separate package identities: listing only the first
@@ -122,14 +125,18 @@ com.albrhi.tweak            com.albrhi.tweak.roothide
 com.albrhi.youtube          com.albrhi.youtube.roothide
 com.albrhi.twitter          com.albrhi.twitter.roothide
 com.albrhi.panel            com.albrhi.panel.roothide
+com.albrhi.locket           com.albrhi.locket.roothide
 "
 
 # How far back to look, **per tag namespace**, and that qualifier is the whole fix.
 #
 # It used to be the newest 40 releases outright, and Locket silently fell out of the source
 # because of it: the suite publishes constantly, so `locket-v0.4.1` -- perfectly healthy, still
-# the current release -- had been pushed to position 66 by the suite's own version history and
-# stopped being gathered. **The source had no Locket in it at all, and nothing failed.**
+# the current release then -- had been pushed to position 66 by the suite's own version history
+# and stopped being gathered. **The source had no Locket in it at all, and nothing failed.**
+# (Locket is deliberately withheld now, for an unrelated reason -- see the list above. The bug
+# this fixes was never about Locket; it was about any slower publisher, and the next one will
+# hit it identically.)
 #
 # That is the same class of failure this script's own header warns about, arriving from the
 # opposite direction: it says a package is not removed by not releasing it, and this was a

@@ -4,7 +4,7 @@
 
 ### iOS tweaks, built in the open — bilingual, native, and written to be read
 
-**العربية · English** · a working APT source · seven tweaks, five in one package
+**العربية · English** · a working APT source · six tweaks, five in one package
 
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B-lightgrey.svg)]()
@@ -14,7 +14,6 @@
 [![YouTube](https://img.shields.io/badge/YouTube-1.20.0-red.svg)](tweaks/youtube/CHANGELOG.md)
 [![X](https://img.shields.io/badge/X-0.14.0-black.svg)](tweaks/twitter/CHANGELOG.md)
 [![TikTok](https://img.shields.io/badge/TikTok-0.17.0-ff0050.svg)](tweaks/tiktok/CHANGELOG.md)
-[![Locket](https://img.shields.io/badge/Locket-0.4.1-gold.svg)](tweaks/locket/CHANGELOG.md)
 [![Based on](https://img.shields.io/badge/based%20on-SCInsta-lightblue.svg)](https://github.com/SoCuul/SCInsta)
 
 <br/>
@@ -35,8 +34,7 @@
 **There is one package to install: `com.albrhi`, listed as *Albrhi*.** It carries the
 Instagram, YouTube, X and TikTok tweaks and the Settings panel together — one thing to
 install, one thing to update, and a new tweak arrives inside it rather than as a second
-download. **Locket is its own package** (`com.albrhi.locket`), served from the same source:
-installing it should not mean installing four social-app tweaks, and the reverse.
+download.
 
 **1 · Add the source**
 
@@ -102,7 +100,7 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 
 ### What is in here
 
-**Seven tweaks. Five ship inside `com.albrhi`; two stand on their own.**
+**Six tweaks. Five ship inside `com.albrhi`; one stands on its own.**
 
 | Tweak | Patches | Version | What it does |
 |---|---|---|---|
@@ -111,7 +109,6 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 | **Albrhi for X** | X / Twitter | 0.14.0 | media downloads, and the feature switches X asks itself about |
 | **Albrhi for TikTok** | TikTok | 0.17.0 | a download button in the feed, photo posts, no ads, confirmations, privacy |
 | **Albrhi Panel** | Settings | 0.8.1 | the Albrhi page — one switch per patched app |
-| **Albrhi for Locket** | Locket | 0.4.1 | saving a moment, and answering jailbreak checks as an ordinary phone would — **its own package** |
 | **Albrhi CarPlay** | SpringBoard, Camera | 0.4.1 | any app on the car display, a dashboard wallpaper, an audio fix — **not served, see below** |
 
 Each is a self-contained Theos project under `tweaks/`, with its own sources, package
@@ -121,12 +118,13 @@ share is the build plumbing — the checks, the build script and the APT index.
 
 `com.albrhi` is the merge of the first five, built by `tools/make-suite.sh`, which picks up
 any `tweaks/*/control` automatically. A tweak leaves the merge only by carrying a
-`.no-suite` marker file in its directory — Locket and CarPlay are the two that do.
+`.no-suite` marker file in its directory — CarPlay is the only one that does.
 
-**Locket left the suite deliberately.** It shipped inside `com.albrhi` through 1.24.0 and was
-taken back out on request: its own package, its own releases, its own self-contained sideload
-dylib. Installing it does not mean installing anything else, and installing the suite does not
-mean carrying a jailbreak-detection bypass nobody asked about.
+**Albrhi for Locket was removed from this repository**, on the owner's instruction to isolate it
+completely: it left the suite first, then left the project. Its five `locket-v*` releases stay on
+the releases page as history, and the source no longer serves them — deleting a tweak does not
+stop an index built from published releases from offering it, so `com.albrhi.locket` is named in
+`WITHHELD_PACKAGES` as well.
 
 **CarPlay is deliberately not in the suite, and is currently not served at all.** It patches
 SpringBoard and Camera for a car-display feature with no relationship to the social apps —
@@ -321,7 +319,6 @@ to change, with the full diagnostic report one row away and copyable in a tap.
 | **YouTube** | Tested on **21.30.5** |
 | **X / Twitter** | Tested on **12.15** |
 | **TikTok** | Tested on **46.4.0** |
-| **Locket** | Tested on **2.46.1** |
 | **Jailbreaks** | Rootless (Dopamine, palera1n) · roothide · rootful (unc0ver, checkra1n) |
 | **Sideloading** | Supported via the bundled FLEXing sub-project |
 
@@ -358,7 +355,7 @@ git submodule update --init --recursive
 ```
 
 The result lands in `tweaks/instagram/packages/`. Swap `instagram` for `youtube`, `twitter`,
-`tiktok`, `locket`, `panel` or `carplay`, and `rootless` for `roothide`, `rootful` or `sideload`.
+`tiktok`, `panel` or `carplay`, and `rootless` for `roothide`, `rootful` or `sideload`.
 
 **To build what people actually install**, merge the five into the suite:
 
@@ -391,7 +388,7 @@ Adding a tweak means adding a directory under `tweaks/` — `tools/check.py` fin
 checks it without being told, `./build.sh <name> rootless` builds it, and `make-suite.sh`
 pulls it into `com.albrhi` automatically. Joining the suite is the default and costs
 nothing but a version bump in `suite/control`; staying out of it takes a `.no-suite` marker
-file, which Locket and CarPlay have.
+file, which only CarPlay has.
 
 ### 🧰 The tools
 
@@ -456,10 +453,6 @@ fingers anywhere** for the settings.
 - **Ask before liking** and **ask before following** are off until you turn them on, under
   Confirmations.
 
-**On Locket** — **hold two fingers** to see the moments available to save, and how many
-jailbreak checks were answered. The tweak hides the jailbreak from Locket's three detectors
-and does nothing else; it deliberately does **not** touch subscriptions.
-
 **Everywhere** — Settings → **Albrhi** is the one page listing every app Albrhi patches,
 with a switch each. Turn one off and that tweak stops loading entirely, without uninstalling
 anything or losing its settings. Reopen the app for the change to take effect.
@@ -478,7 +471,7 @@ anything or losing its settings. Reopen the app for the change to take effect.
 - [x] Self-publishing APT source with a browser control panel
 - [x] **Albrhi for YouTube** — a second tweak in this repository, sharing none of Instagram's runtime
 - [x] Video downloads on YouTube, without bundling a media library to convert them
-- [x] **Albrhi for X** and **Albrhi for Locket** — the fourth and fifth tweaks
+- [x] **Albrhi for X** — the fourth tweak
 - [x] **Albrhi Panel** — one Settings page, a switch per patched app, read across the sandbox
 - [x] **`com.albrhi`** — the five in one package, so a new tweak arrives as an update rather than a download
 - [x] A save button and an end time on YouTube's own player layer

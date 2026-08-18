@@ -22,22 +22,26 @@ three standing on their own:
 | `tweaks/tiktok` | `com.albrhi.tiktok` | TikTok, tested on **46.4.0** |
 | `tweaks/panel` | `com.albrhi.panel` | the Settings app — the per-app switches |
 | `suite/` | **`com.albrhi`** | the four social-app tweaks and the panel, in one package |
-| `tweaks/locket` | `com.albrhi.locket` | Locket, tested on **2.46.1**, **released on its own** |
 | `tweaks/carplay` | `com.albrhi.carplay` | SpringBoard + Camera — CarPlay, **released on its own** |
 
-**Locket is not in `com.albrhi` either, and unlike CarPlay this was a deliberate reversal
-of an earlier decision, not a case that never belonged.** It shipped inside the suite
-through 1.24.0. The owner asked for it back out: its own package, its own releases, its
-own self-contained sideload dylib, entirely separate from the other three apps — so that
-installing it does not mean installing anything else, and installing the suite does not
-mean carrying a jailbreak-detection bypass nobody asked for. Reversing it took three
-things, mirroring what bringing a tweak *into* the suite would undo: `suite/control` lost
-Locket's identities from `Conflicts` and `Replaces` (and its own `▍LOCKET` paragraph),
-`suite/DEBIAN/preinst` stopped removing `com.albrhi.locket` on install, and
-`tweaks/locket` gained the same `.no-suite` marker CarPlay already uses so
-`make-suite.sh` skips it. Unlike CarPlay, Locket is not withheld — `buildlocket.yml`
-publishes for real, on its own tag namespace (`locket-v*`), the same two-publisher
-discipline described below.
+**Locket is gone from this repository entirely, and the removal has two halves for a reason
+worth keeping.** It was first taken out of the suite on request (its own package, its own
+`locket-v*` releases, its own workflow), and then out of the project altogether on the
+instruction to isolate it completely: `tweaks/locket/` and `.github/workflows/buildlocket.yml`
+are both deleted.
+
+**Deleting a tweak does not stop the source serving it, and that is the trap this file already
+warned about from the other side.** `fetch-published-debs.sh` builds the index from what is
+*published*, so five `locket-v*` releases would go on being gathered and offered forever, at
+0.4.1, from a tweak whose source is no longer in the tree to fix. So `com.albrhi.locket` and
+`com.albrhi.locket.roothide` are named in `WITHHELD_PACKAGES` **as well as** the directory being
+removed. Both flavours, because they are separate package identities. The releases stay as
+history; the source stops mentioning them.
+
+The reasoning Locket contributed to this project is kept where it is referenced below — the
+bypass-versus-payment line, the `%ctor` gate for self-contained builds, the `SELFCONTAINED`
+makefile lesson — because those were paid for once and apply to whatever comes next. What is
+gone is the tweak, not what it taught.
 
 **CarPlay is not in `com.albrhi`, on purpose.** It patches SpringBoard and Camera for a
 car-display feature with no relationship to the social apps the suite bundles —
@@ -51,8 +55,8 @@ workflow, `buildcarplay.yml`.
 Its app bridging has never been confirmed working on a device: 0.3.0 and 0.4.0 each
 looked finished and were not, and 0.4.1's fixes for what a real iOS 16.1 report found
 missing are themselves unobserved. Serving the package offers an update to people whose
-only report so far is that it does not work, so `buildsuite.yml` and `buildlocket.yml`
-are the only two workflows that publish anything while CarPlay stays withheld.
+only report so far is that it does not work. With Locket removed, `buildsuite.yml` is now
+the **only** workflow that publishes anything at all.
 
 **Withholding took two changes, not one, and the reason is the whole architecture of the
 gather.** Switching off a publisher removes nothing: `fetch-published-debs.sh` builds the
@@ -218,8 +222,10 @@ still built and still published, but the suite is the front door for Instagram, 
 X, TikTok and the panel: one thing to install, one thing to update, and a new social-app
 tweak arrives inside it rather than as a second download. It declares `Conflicts` and
 `Replaces` on all ten of those individual identities (rootless and roothide) — and
-that is not enough on its own, see the ground rule below. CarPlay and Locket are
-deliberately not among them; see above for both.
+that is not enough on its own, see the ground rule below. CarPlay is deliberately not among
+them, and neither is Locket: its identities were taken out of `Conflicts`/`Replaces` when it
+left the suite, and its removal from the repository does not put them back — the suite has no
+business deleting a package it never carried.
 
 The repository doubles as an **APT source**: it builds itself, publishes releases,
 and serves a Sileo/Zebra repo from GitHub Pages.
@@ -1002,17 +1008,6 @@ tweaks/
                              saves it and asks AVFoundation what the file actually is
     src/Features/Privacy/    three report-to-server calls withheld, local state untouched
     src/Settings/            a two-finger hold shows switches and what has been captured
-  locket/                  Albrhi for Locket — com.albrhi.locket, released on its own
-                             (.no-suite marker) with its own self-contained sideload
-                             dylib, built and verified in buildlocket.yml
-    src/Features/Bypass/     hides the jailbreak from Locket's three detectors; SCILKShield
-                             owns the path/scheme/env list, the .x holds only thin hooks
-    src/Features/Media/      saving a moment: captured at NSURLSession because a moment is a
-                             Swift struct no ObjC hook can read, filtered to the storage
-                             blobs and away from the public asset buckets
-    src/Settings/            a two-finger hold shows the moments to save, then how many
-                             checks were answered
-    src/UI/                  the first-run welcome screen
   panel/                   Albrhi Panel — com.albrhi.panel
                            an Albrhi page in the Settings app, one switch per patched
                            app. It writes; the tweaks read — and how they read it is a
@@ -1056,21 +1051,21 @@ Most new tweaks belong inside `com.albrhi`, and need no workflow of their own at
 the default and costs nothing but a version bump in `suite/control`.
 
 A tweak only earns its **own publishing workflow** when it has nothing to do with what
-the suite bundles — CarPlay and Locket are the two that have, for different reasons
-(CarPlay never belonged; Locket left on request). `buildlocket.yml` is the one to copy
-now: its own version gate, its own tag namespace (`locket-v*`, so two packages' versions
-can never be confused on one releases page), its own assets including a self-contained
-sideload dylib, and a `.no-suite` marker file in the tweak's directory so `make-suite.sh`
-does not also pull it into the combined package. `buildcarplay.yml` still holds the same
-shape in its git history (as of the commit that withheld it) for the same reason.
+the suite bundles — CarPlay is the one that has. The shape to copy is in git history:
+`buildlocket.yml` as of the commit before it was deleted, and `buildcarplay.yml` as of the
+commit that withheld it. What that shape is: its own version gate, its own tag namespace
+(`carplay-v*`, `locket-v*` — so two packages' versions can never be confused on one releases
+page), its own assets including a self-contained sideload dylib, and a `.no-suite` marker file
+in the tweak's directory so `make-suite.sh` does not also pull it into the combined package.
 Separate workflows rather than one job per tweak, so a tweak that will not compile can
 never block another tweak's release.
 
 **The `.no-suite` marker keeps a tweak out of the package; it does not keep
 `buildsuite.yml` from running on that tweak's commits, and those are two different
 things.** `buildsuite.yml`'s own trigger watched `tweaks/**`, which matches
-`tweaks/locket/**` and `tweaks/carplay/**` just as much as any bundled tweak's directory
-— so a commit touching only Locket rebuilt Instagram, YouTube, X and the panel anyway,
+`tweaks/carplay/**` (and, while it existed, `tweaks/locket/**`) just as much as any bundled
+tweak's directory — so a commit touching only a standalone tweak rebuilt Instagram, YouTube, X
+and the panel anyway,
 every single time, for a package that commit could never change. Reported plainly as
 confusion ("ليش بعد كل تحديث يتم اعادة بناء البانل؟"), and it was worth taking at face
 value: the workflow really was doing something it had no reason to do. Fixed with `!`
@@ -1081,7 +1076,7 @@ tweak needs a line in both places, not just the marker file.
 **The one thing two publishers cannot help sharing is the APT index, and that was the
 trap.** `make-repo.sh` wipes `debs/` and rebuilds it on purpose, so an index built from
 one tweak's build output would erase the other tweak from the source. Both `buildsuite.yml`
-and `buildlocket.yml` therefore build the index from what is **published** —
+and any second publisher therefore build the index from what is **published** —
 `tools/fetch-published-debs.sh` gathers the newest three versions of every package from
 the releases — and both take the `albrhi-pages` concurrency group. Two workflows publish
 today, genuinely racing for `gh-pages` rather than hypothetically; every word below is
@@ -1356,27 +1351,26 @@ reason the arrangement is shaped this way.
 | `buildtiktok.yml` | TikTok | — | manual build only |
 | `buildpanel.yml` | the Settings panel | its own namespace | manual build only |
 | `buildsuite.yml` | **`com.albrhi`**, the combined package | `v${SUITE_VERSION}` | yes |
-| `buildlocket.yml` | `com.albrhi.locket` | `locket-v*` | **yes** |
 | `buildcarplay.yml` | `com.albrhi.carplay` | `carplay-v*` | manual build only — withheld |
 | `build-dav1d.yml` | the AV1 decoder Instagram links | on demand | — |
 
-**Two workflows actually publish: `buildsuite.yml` and `buildlocket.yml`.** The four
-per-tweak workflows still bundled in the suite (Instagram, X, YouTube's own, and
-TikTok's) were reduced to — or, for TikTok, started as — manual, non-publishing builds
-once the suite became the front door for everything it bundles: a tweak that will not
-compile can block only its own build, never another tweak's release, but nothing short
-of the suite's own run ships anything they carry.
+**One workflow publishes: `buildsuite.yml`.** The four per-tweak workflows for what the suite
+bundles (Instagram, X, YouTube's own, and TikTok's) were reduced to — or, for TikTok, started as
+— manual, non-publishing builds once the suite became the front door: a tweak that will not
+compile can block only its own build, never another tweak's release, but nothing short of the
+suite's own run ships anything they carry.
 
-Locket and CarPlay are the two exceptions, because neither is bundled and nothing else
-would ever ship them. CarPlay is withheld: its workflow was reduced the same way as the
-bundled tweaks' and its package is skipped by the gather, until its app bridging is
-confirmed on a device — see the top of this file for what that took and how to undo it.
-Locket is not withheld — it publishes for real, the same shape CarPlay's own workflow
-had before it was withheld (that history is the actual template `buildlocket.yml` was
-rewritten from). **Two real publishers is exactly what the `albrhi-pages` concurrency
-group exists for.** Keep the group on every workflow that publishes: a third one added
-without it is what would let two runs write `gh-pages` at once, which is what the
-arrangement below stops.
+CarPlay is the one exception that still has a publishing workflow at all, and it is withheld
+until its app bridging is confirmed on a device — see the top of this file for what that took and
+how to undo it. **Locket was the second real publisher and is gone**: removed from the repository
+outright, with its package names in `WITHHELD_PACKAGES` so the index stops offering the releases
+it already made.
+
+**Keep the `albrhi-pages` concurrency group on every workflow that publishes anyway.** It is the
+one thing that stops two runs writing `gh-pages` at once, and the arrangement below — a shared
+gather, a stated-and-checked index, a run folding in its own build — exists because two
+publishers really did race. That is history rather than the current state, and every word of it
+becomes live again the moment a second publisher returns.
 
 ### Publishing Pages: what three releases established
 
@@ -1499,8 +1493,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
-its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
+Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
 source) · TikTok **0.17.0** · suite **1.42.0**.
 
 ### TikTok, where it actually stands

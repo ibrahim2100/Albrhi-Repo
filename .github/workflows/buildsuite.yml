@@ -25,16 +25,16 @@ on:
         paths:
             # Anything that changes what ends up in the package, which is now every
             # tweak this workflow actually bundles -- Instagram, YouTube, X and the
-            # panel. Locket and CarPlay are excluded on purpose: neither is in the
-            # package (.no-suite marks both), so a commit that only touches one of
-            # them has nothing for this workflow to do, and running it anyway is
-            # exactly the confusion a report named directly -- a Locket-only push
-            # rebuilding Instagram, YouTube, X and the panel for no reason, on every
-            # single commit. Keep this list in step with tools/make-suite.sh's own
-            # skip list; a third standalone tweak needs its own '!' line here too.
+            # panel. CarPlay is excluded on purpose: it is not in the package
+            # (.no-suite marks it), so a commit that only touches it has nothing for
+            # this workflow to do, and running it anyway is exactly the confusion a
+            # report named directly -- a standalone tweak's push rebuilding Instagram,
+            # YouTube, X, TikTok and the panel for no reason, on every single commit.
+            # Keep this list in step with tools/make-suite.sh's own skip list; another
+            # standalone tweak needs its own '!' line here too. Locket's line was
+            # removed with the tweak itself.
             - 'suite/**'
             - 'tweaks/**'
-            - '!tweaks/locket/**'
             - '!tweaks/carplay/**'
             - 'shared/**'
             - 'tools/**'
