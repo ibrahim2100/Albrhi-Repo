@@ -21,6 +21,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// rather than a video; declared so check.py can see the implementation has a home.
 + (void)savePhotos:(NSArray<NSURL *> *)urls;
 
+/// What the candidate links measured, and which one was taken.
+///
+/// For the settings screen: a quality report built from *names* could never say whether the
+/// chosen link was actually the biggest file, and this one is measured.
+extern NSString *SCITTMeasuredReport(void);
+
 @end
 
 /// What the last save attempt actually did, in the words of whatever refused it --

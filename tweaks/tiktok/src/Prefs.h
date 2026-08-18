@@ -54,3 +54,12 @@ static inline BOOL SCIPrefEnabled(NSString *key) {
 /// the app's own binary. The download button already knows which model it belongs to, so
 /// this is about what it does with a model whose media is pictures.
 #define SCIPrefPhotoDownload    @"photo_download"
+
+/// Fetch HD from tikwm.com, a third-party service, instead of from TikTok.
+///
+/// **Off by default and it stays off unless a person turns it on, deliberately.** This is the
+/// one feature here that sends anything about what you are watching outside the app: the video
+/// id goes to a service with no relationship to TikTok or to this tweak. That is the exact
+/// thing the three privacy switches next to it exist to prevent, which is why it is a separate
+/// switch with the trade written into its own row rather than a quiet quality improvement.
+#define SCIPrefExternalHD       @"external_hd"

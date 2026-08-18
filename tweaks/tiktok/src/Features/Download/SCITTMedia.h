@@ -43,6 +43,13 @@ NS_ASSUME_NONNULL_BEGIN
 /// `currentIndex`, so the answer is read from the app rather than inferred from the view.
 @property (nonatomic, assign) NSUInteger photoIndex;
 
+/// TikTok's own id for this post, or nil.
+///
+/// Only used by the optional external-HD switch, which is keyed by it. Recorded whether or not
+/// that switch is on, because capture must not depend on a preference it would then have to be
+/// re-run to pick up — but it is *sent* nowhere unless the switch is on.
+@property (nonatomic, copy) NSString *itemID;
+
 @property (nonatomic, copy) NSDate *seen;
 @end
 

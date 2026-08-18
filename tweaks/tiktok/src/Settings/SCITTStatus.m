@@ -33,15 +33,16 @@ static const NSInteger kSCIRowAds = 0;
 static const NSInteger kSCIRowDownloadButton = 1;
 static const NSInteger kSCIRowPhotoDownload = 2;
 static const NSInteger kSCIRowProgressBar = 3;
-static const NSInteger kSCIRowBypass = 4;
-static const NSInteger kSCIControlsRowCount = 5;
+static const NSInteger kSCIRowExternalHD = 4;
+static const NSInteger kSCIRowBypass = 5;
+static const NSInteger kSCIControlsRowCount = 6;
 
 static const NSInteger kSCIRowPrivacyStory = 0;
 static const NSInteger kSCIRowPrivacyMessages = 1;
 static const NSInteger kSCIRowPrivacyProfile = 2;
 static const NSInteger kSCIPrivacyRowCount = 3;
 
-static const NSInteger kSCIStatusRowCount = 11;
+static const NSInteger kSCIStatusRowCount = 12;
 
 @implementation SCITTStatus
 
@@ -310,6 +311,7 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
     // happened to the gear ladder: it was added to the table, asked for by name, and the
     // report that came back had never contained it. Anything added to one belongs in both.
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_gears"), [SCITTMedia gearLadder]];
+    [report appendFormat:@"%@: %@\n", SCILocalized(@"status_measured"), SCITTMeasuredReport()];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_progress_bar"), SCITTProgressBarReport()];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_cell_accessors"),
         // AWEFeedViewTemplateCell -- the class the feed actually uses.
@@ -446,6 +448,12 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
         note = SCILocalized(@"row_progress_bar_note");
         icon = @"slider.horizontal.below.rectangle";
         color = [UIColor systemBlueColor];
+    } else if (row == kSCIRowExternalHD) {
+        key = SCIPrefExternalHD;
+        title = SCILocalized(@"row_external_hd");
+        note = SCILocalized(@"row_external_hd_note");
+        icon = @"antenna.radiowaves.left.and.right";
+        color = [UIColor systemOrangeColor];
     } else {
         key = SCIPrefBypass;
         title = SCILocalized(@"row_bypass");
@@ -463,6 +471,7 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
                    : (toggle.tag == kSCIRowDownloadButton) ? SCIPrefDownloadButton
                    : (toggle.tag == kSCIRowPhotoDownload) ? SCIPrefPhotoDownload
                    : (toggle.tag == kSCIRowProgressBar) ? SCIPrefProgressBar
+                   : (toggle.tag == kSCIRowExternalHD) ? SCIPrefExternalHD
                    : (toggle.tag == kSCIRowBypass) ? SCIPrefBypass
                    : nil;
     if (!key) return;
@@ -593,6 +602,13 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
             cell.imageView.image = SCITTBadge(@"square.stack.3d.up", [UIColor systemOrangeColor]);
             break;
         case 9:
+            // What the links actually measured. Every other quality line here is a claim
+            // about a name -- which chain, which gear -- and this one is a byte count.
+            cell.textLabel.text = SCILocalized(@"status_measured");
+            cell.detailTextLabel.text = SCITTMeasuredReport();
+            cell.imageView.image = SCITTBadge(@"ruler", [UIColor systemGreenColor]);
+            break;
+        case 10:
             cell.textLabel.text = SCILocalized(@"diag_bypass");
             cell.detailTextLabel.text = [SCITTDiagnostics bypassState];
             cell.imageView.image = SCITTBadge(@"shield.lefthalf.filled", [UIColor systemIndigoColor]);

@@ -9,7 +9,7 @@
 #import "Features/Download/SCITTCapture.h"
 #import "Settings/SCITTGesture.h"
 
-NSString *SCIVersionString = @"v0.13.5";  // AlbrhiTT
+NSString *SCIVersionString = @"v0.14.0";  // AlbrhiTT
 
 ///
 /// TESTED ON TikTok 46.4.0. Every class here was confirmed present in that build's own
@@ -31,6 +31,9 @@ NSString *SCIVersionString = @"v0.13.5";  // AlbrhiTT
         // find is a feature nobody has.
         SCIPrefProgressBar: @YES,
         SCIPrefPhotoDownload: @YES,
+        // Off, and it is the one default here that is a decision rather than a taste: turning
+        // it on sends the post id to a service outside TikTok.
+        SCIPrefExternalHD: @NO,
         SCIPrefBypass: @YES,
         SCIPrefPrivacyStory: @YES,
         SCIPrefPrivacyMessages: @YES,

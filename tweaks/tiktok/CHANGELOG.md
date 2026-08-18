@@ -1,5 +1,29 @@
 # Albrhi for TikTok — what changed
 
+## v0.14.0
+
+**Quality stops being a guess about names and becomes a measurement.** Your report showed the
+ladder holding a single `comet_lowest_540_1` where an earlier one held five gears up to 720 —
+TikTok only populates the gears it is currently streaming, so preferring the ladder takes the
+worse file exactly when the app has not fetched the better one. Preferring
+`downloadNoWatermarkURL` instead would be the same mistake pointing the other way. Every link
+the video model offers is now collected — the best gear, the two download copies, the play
+URL — and each is measured with a `HEAD` request before saving. The largest file wins, and
+Settings › Status prints what each one measured and which was taken. A link that will not
+answer scores zero and sinks to the bottom rather than being dropped: a server that refuses
+`HEAD` still serves `GET`.
+
+**And an optional HD path through an outside service, off by default.** NA9's HD button has
+been reliable for years for a reason that is not cleverness — it never touches TikTok's model
+chain at all, so there was never an internal accessor in that path to break. It asks
+`tikwm.com`, keyed by the post id.
+
+That is a real trade and it is written into the switch's own row: turning it on tells a service
+unrelated to TikTok and unrelated to this tweak which video you are watching, which is the exact
+thing the three privacy switches beside it exist to stop. It is off unless you turn it on, it is
+never the quiet default, and with it on the external link is measured against the internal ones
+like any other candidate rather than being trusted because it is external.
+
 ## v0.13.5
 
 **`PHPhotosErrorDomain 3302` is Photos refusing the format, not the download.** It arrived for

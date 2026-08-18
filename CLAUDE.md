@@ -1468,7 +1468,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.13.5** · suite **1.38.5**.
+source) · TikTok **0.14.0** · suite **1.39.0**.
 
 ### TikTok, where it actually stands
 
@@ -1526,6 +1526,26 @@ merely hides it outside a drag, so the feature is refusing the hide — `-setHid
 `NO`, `-setAlpha:` refusing zero. Nothing positioned, nothing added to a view hierarchy, so none
 of this file's placement lessons apply. Worth noticing before building a bar: the app often
 already has the view and is only choosing not to show it.
+
+**The quality ladder is not stable between videos, and that killed the "prefer the ladder"
+design.** One report showed five gears topping out at 720; the next showed a single
+`comet_lowest_540_1`. TikTok populates only the gears it is streaming, so preferring the ladder
+takes the worse file precisely when the app has not fetched the better one — and preferring
+`downloadNoWatermarkURL` instead is the same mistake pointing the other way. **No name is
+reliable, so 0.14.0 stopped comparing names and started comparing bytes**: every link is
+collected and `HEAD`-ed, and the largest wins. Every earlier quality attempt here argued about
+which accessor was better; `Content-Length` ends the argument, and a link that refuses `HEAD`
+scores zero and sinks rather than being dropped, because a server that refuses `HEAD` still
+serves `GET`.
+
+**The tikwm.com path is now shipped, as a switch, off by default — and this file's earlier
+refusal was not wrong, it was a different question.** It was refused as *the fix*, arriving
+quietly; the owner then asked for it knowing the trade, which is exactly the case the refusal
+reserved. It stays off unless someone turns it on, its own row states that enabling it tells an
+unrelated service what they are watching, and with it on the external link is measured against
+the internal ones rather than trusted for being external. The line this project keeps is not
+"never touch a third party" — it is that a privacy cost is never paid on the user's behalf
+without them being told.
 
 **The ladder answered the quality question, and the answer was that nothing was wrong.** A
 device report listed five gears topping out at `adapt_lower_720_1` — so 720 was TikTok's own

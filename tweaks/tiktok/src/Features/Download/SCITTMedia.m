@@ -593,6 +593,9 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url) {
     }
 }
 
+/// The post id belonging to the links about to be recorded.
+static NSString *sciPendingItemID = nil;
+
 static void SCITTAddResolvedList(NSArray<NSURL *> *urls) {
     if (!urls.count) return;
     if (!sciRecent) sciRecent = [NSMutableArray array];
@@ -608,6 +611,7 @@ static void SCITTAddResolvedList(NSArray<NSURL *> *urls) {
     SCITTMediaItem *item = [[SCITTMediaItem alloc] init];
     item.url = primary;
     item.candidates = urls;
+    item.itemID = sciPendingItemID;
     item.seen = [NSDate date];
     [sciRecent insertObject:item atIndex:0];
 
@@ -749,6 +753,57 @@ static void SCITTAddResolved(NSURL *url) {
     }
 }
 
+///
+/// Every link this video model can offer, best guess first.
+///
+/// **The ladder was being preferred blind, and a device report showed why that is wrong**: on
+/// one video it held five gears topping out at 720, and on the next it held exactly one,
+/// `comet_lowest_540_1` — TikTok only populates the gears it is streaming. Preferring that over
+/// `downloadNoWatermarkURL`, which is the copy TikTok serves for *saving*, means taking the
+/// worse file whenever the app happens not to have fetched the better gears yet.
+///
+/// So nothing is preferred here. All of them are collected, and which one is actually largest
+/// is measured with a HEAD request before the save, by the downloader.
+static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **outVia) {
+    if (!videoModel) return nil;
+
+    NSMutableArray<NSURL *> *links = [NSMutableArray array];
+
+    NSString *via = nil;
+    NSURL *best = SCITTBestBitrateURL(videoModel, &via);
+    if (best) [links addObject:best];
+
+    // The app's own save copies come first among the plain accessors: `downloadNoWatermarkURL`
+    // is what TikTok itself hands out for a download, watermark-free.
+    for (NSString *name in @[@"downloadNoWatermarkURL", @"downloadURL", @"h264DownloadURL",
+                             @"playURL"]) {
+        SEL selector = NSSelectorFromString(name);
+        if (![videoModel respondsToSelector:selector]) continue;
+
+        id urlModel = ((id (*)(id, SEL))objc_msgSend)(videoModel, selector);
+        if (!urlModel) continue;
+
+        for (NSString *list in @[@"originURLList", @"URLList", @"urlList"]) {
+            SEL inner = NSSelectorFromString(list);
+            if (![urlModel respondsToSelector:inner]) continue;
+
+            NSURL *url = SCITTURLFromValue(((id (*)(id, SEL))objc_msgSend)(urlModel, inner));
+            if (url && SCITTURLLooksDownloadable(url) && ![links containsObject:url]) {
+                [links addObject:url];
+            }
+            break;
+        }
+    }
+
+    if (outVia) {
+        *outVia = links.count
+            ? [NSString stringWithFormat:@"%lu candidate(s)%@",
+               (unsigned long)links.count, via ? [@", ladder: " stringByAppendingString:via] : @""]
+            : nil;
+    }
+    return links.count ? links : nil;
+}
+
 + (NSString *)gearLadder {
     return sciGearLadder ?: @"no video has been asked for its gears yet this launch";
 }
@@ -770,9 +825,14 @@ static void SCITTAddResolved(NSURL *url) {
 
         if (videoModel) {
             NSString *via = nil;
-            NSURL *best = SCITTBestBitrateURL(videoModel, &via);
-            if (best) {
-                SCITTAddResolved(best);
+            NSArray<NSURL *> *links = SCITTAllLinksForVideoModel(videoModel, &via);
+            if (links.count) {
+                SEL idSel = NSSelectorFromString(@"itemID");
+                id identifier = [model respondsToSelector:idSel]
+                    ? ((id (*)(id, SEL))objc_msgSend)(model, idSel) : nil;
+                sciPendingItemID = [identifier isKindOfClass:[NSString class]] ? identifier : nil;
+
+                SCITTAddResolvedList(links);
                 sciWinningChain = via;
                 sciLastAttemptState = [NSString stringWithFormat:@"settled — %@", via];
                 return;

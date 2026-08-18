@@ -2,6 +2,7 @@
 #import "../../Localization/SCILocalize.h"
 #import "../../SCILog.h"
 #import "modules/JGProgressHUD/JGProgressHUD.h"
+#import "../../Prefs.h"
 #import <UIKit/UIKit.h>
 #import <Photos/Photos.h>
 #import <AVFoundation/AVFoundation.h>
@@ -130,6 +131,84 @@ static JGProgressHUD *sciPhotoHUD = nil;
 
         [presenter presentViewController:sheet animated:YES completion:nil];
     });
+}
+
+///
+/// The measured byte length of a link, or 0 if it will not say.
+///
+/// A `HEAD` costs one round trip and answers the only question that has ever mattered here.
+/// Every previous attempt at quality compared *names* -- which chain, which gear, which
+/// accessor -- and a name is a claim about a file. `Content-Length` is the file.
+static long long SCITTMeasure(NSURL *url) {
+    if (!url) return 0;
+
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+    request.HTTPMethod = @"HEAD";
+    request.timeoutInterval = 8;
+
+    __block long long length = 0;
+    dispatch_semaphore_t wait = dispatch_semaphore_create(0);
+
+    NSURLSessionDataTask *task = [[NSURLSession sharedSession]
+        dataTaskWithRequest:request
+          completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        NSHTTPURLResponse *http = [response isKindOfClass:[NSHTTPURLResponse class]]
+            ? (NSHTTPURLResponse *)response : nil;
+        if (http.statusCode >= 200 && http.statusCode < 300) length = response.expectedContentLength;
+        dispatch_semaphore_signal(wait);
+    }];
+    [task resume];
+
+    dispatch_semaphore_wait(wait, dispatch_time(DISPATCH_TIME_NOW, 10ull * NSEC_PER_SEC));
+    return length > 0 ? length : 0;
+}
+
+/// The last measurement, for the settings screen.
+static NSString *sciMeasured = nil;
+
+NSString *SCITTMeasuredReport(void) {
+    return sciMeasured ?: @"nothing measured yet this launch";
+}
+
+///
+/// Reorders an item's candidate links so the largest file is tried first.
+///
+/// **This replaces guessing which chain is better with asking.** TikTok populates the quality
+/// ladder only with the gears it is currently streaming -- one report showed five gears up to
+/// 720, the next showed a single `comet_lowest_540_1` -- so preferring the ladder takes the
+/// worse file exactly when the app has not fetched the better one. Preferring
+/// `downloadNoWatermarkURL` instead would be the same mistake pointing the other way. Neither
+/// name is reliable; the byte count is.
+///
+/// Runs off the main thread and is skipped entirely if there is only one link.
++ (NSArray<NSURL *> *)orderByMeasuredSize:(NSArray<NSURL *> *)links {
+    if (links.count < 2) return links;
+
+    NSMutableArray<NSURL *> *measured = [NSMutableArray array];
+    NSMutableDictionary<NSURL *, NSNumber *> *sizes = [NSMutableDictionary dictionary];
+    NSMutableArray<NSString *> *report = [NSMutableArray array];
+
+    for (NSURL *url in links) {
+        long long size = SCITTMeasure(url);
+        sizes[url] = @(size);
+        [measured addObject:url];
+        [report addObject:[NSString stringWithFormat:@"%@ %.1f MB",
+                           url.path.lastPathComponent ?: @"?", size / 1048576.0]];
+    }
+
+    [measured sortUsingComparator:^NSComparisonResult(NSURL *a, NSURL *b) {
+        return [sizes[b] compare:sizes[a]];
+    }];
+
+    // A link that would not answer scores 0 and sinks to the bottom rather than being dropped:
+    // a server that refuses HEAD still serves GET, and losing a working link to a measurement
+    // that failed would be the same class of mistake as hiding the button when a lookup
+    // returned nil.
+    sciMeasured = [NSString stringWithFormat:@"%@ — took %@",
+                   [report componentsJoinedByString:@", "],
+                   measured.firstObject.path.lastPathComponent ?: @"?"];
+
+    return measured;
 }
 
 + (UIViewController *)topViewController {
@@ -321,13 +400,45 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
 
     [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelAddOnly
                                                 handler:^(PHAuthorizationStatus status) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (status != PHAuthorizationStatusAuthorized &&
-                status != PHAuthorizationStatusLimited) {
+        if (status != PHAuthorizationStatusAuthorized &&
+            status != PHAuthorizationStatusLimited) {
+            dispatch_async(dispatch_get_main_queue(), ^{
                 [self report:SCILocalized(@"save_no_permission") ok:NO];
-                return;
+            });
+            return;
+        }
+
+        // Measured off the main thread: it is one HEAD per link and the feed keeps scrolling.
+        dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+            NSMutableArray<NSURL *> *links = [item.candidates mutableCopy] ?: [NSMutableArray array];
+
+            // The one link in this tweak that leaves TikTok, and only on request.
+            //
+            // NA9's HD button has been reliable for years across TikTok updates for a reason
+            // that is not cleverness: it never touches the app's model chain at all, so there
+            // was never an internal accessor in that path to break. It asks tikwm.com, keyed
+            // by the post id.
+            //
+            // The cost is the whole reason this is a switch and not the default: it tells a
+            // service unrelated to TikTok and unrelated to this tweak which video you are
+            // watching -- the exact thing the three privacy switches beside it exist to stop.
+            // Off unless someone turns it on, and its own row says what it does before they do.
+            if (SCIPrefEnabled(SCIPrefExternalHD) && item.itemID.length) {
+                NSString *address = [NSString stringWithFormat:
+                    @"https://tikwm.com/video/media/hdplay/%@.mp4", item.itemID];
+                NSURL *external = [NSURL URLWithString:address];
+                if (external) [links insertObject:external atIndex:0];
             }
-            [self start:item];
+
+            NSArray<NSURL *> *ordered = [self orderByMeasuredSize:links];
+            if (ordered.count) {
+                item.candidates = ordered;
+                item.url = ordered.firstObject;
+            }
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self start:item];
+            });
         });
     }];
 }

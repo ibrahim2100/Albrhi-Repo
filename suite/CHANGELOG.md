@@ -1,5 +1,19 @@
 # Albrhi Changelog
 
+## v1.39.0
+
+**TikTok downloads now pick the biggest file, not the best-guessed name.** Every link TikTok
+offers for a video is measured before saving and the largest one is taken — which ends the
+guessing about which internal path gives the better quality, because the app only fills its
+quality list with what it happens to be streaming at the time.
+
+**New switch, off by default: HD from an outside service.** It fetches a 1080 copy from
+tikwm.com. Turning it on tells a service outside TikTok which video you are watching — the same
+kind of reporting the privacy switches beside it exist to stop — so it is off until you choose
+it, and its row says so plainly.
+
+Includes TikTok 0.14.0.
+
 ## v1.38.5
 
 **TikTok: photos that Photos refused now save.** Some photo posts failed with an error that
