@@ -71,6 +71,74 @@ NSString *SCITTDownloadReport(void) {
 /// a single failure discard the entire post, and a post where seven of eight arrived is worth
 /// keeping the seven. The counter reports both numbers for the same reason: "saved 6 of 8" and
 /// "saved nothing" are different problems.
+/// The HUD for a photo-post save, held while the images go one at a time.
+static JGProgressHUD *sciPhotoHUD = nil;
+
++ (void)askThenSavePhotos:(SCITTMediaItem *)item {
+    NSArray<NSURL *> *all = item.photoURLs;
+
+    // One picture, or no idea which one is on screen: nothing to ask about.
+    if (all.count < 2) {
+        [self savePhotos:all];
+        return;
+    }
+
+    NSURL *current = (item.photoIndex < all.count) ? all[item.photoIndex] : nil;
+    if (!current) {
+        [self savePhotos:all];
+        return;
+    }
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIViewController *presenter = [self topViewController];
+        if (!presenter) {
+            // Nothing to present from. Saving the one on screen is the conservative answer:
+            // a post of sixteen arriving whole in Photos unasked is the complaint this exists
+            // to answer, and the user can tap again for the rest.
+            [self savePhotos:@[current]];
+            return;
+        }
+
+        UIAlertController *sheet = [UIAlertController
+            alertControllerWithTitle:SCILocalized(@"photos_ask_title")
+                             message:nil
+                      preferredStyle:UIAlertControllerStyleActionSheet];
+
+        [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"photos_save_this")
+                                                  style:UIAlertActionStyleDefault
+                                                handler:^(UIAlertAction *action) {
+            [self savePhotos:@[current]];
+        }]];
+
+        NSString *allTitle = [NSString stringWithFormat:SCILocalized(@"photos_save_all"),
+                              (unsigned long)all.count];
+        [sheet addAction:[UIAlertAction actionWithTitle:allTitle
+                                                  style:UIAlertActionStyleDefault
+                                                handler:^(UIAlertAction *action) {
+            [self savePhotos:all];
+        }]];
+
+        [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"photos_cancel")
+                                                  style:UIAlertActionStyleCancel
+                                                handler:nil]];
+
+        // An action sheet with no anchor is a crash on iPad, and TikTok runs there.
+        sheet.popoverPresentationController.sourceView = presenter.view;
+        sheet.popoverPresentationController.sourceRect =
+            CGRectMake(CGRectGetMidX(presenter.view.bounds),
+                       CGRectGetMaxY(presenter.view.bounds) - 1, 1, 1);
+
+        [presenter presentViewController:sheet animated:YES completion:nil];
+    });
+}
+
++ (UIViewController *)topViewController {
+    UIView *host = [self host];
+    UIViewController *controller = host.window.rootViewController;
+    while (controller.presentedViewController) controller = controller.presentedViewController;
+    return controller;
+}
+
 + (void)savePhotos:(NSArray<NSURL *> *)urls {
     [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelAddOnly
                                                handler:^(PHAuthorizationStatus status) {
@@ -79,6 +147,21 @@ NSString *SCITTDownloadReport(void) {
             SCITTRecordDownload(@"Photos access refused");
             return;
         }
+
+        // The same HUD the video path shows. Photos saved with no indicator at all was the
+        // other half of the report: it worked, and nothing on screen said so, which is
+        // indistinguishable from a button that does nothing.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            UIView *host = [self host];
+            if (!host) return;
+
+            JGProgressHUD *hud = [[JGProgressHUD alloc] initWithStyle:JGProgressHUDStyleDark];
+            hud.indicatorView = [[JGProgressHUDPieIndicatorView alloc] init];
+            hud.textLabel.text = SCILocalized(@"save_working");
+            hud.progress = 0;
+            [hud showInView:host];
+            sciPhotoHUD = hud;
+        });
 
         dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
             __block NSUInteger saved = 0;
@@ -129,6 +212,11 @@ NSString *SCITTDownloadReport(void) {
                 // anyway, and firing eight at once produces eight interleaved completions
                 // whose ordering in the album is then whatever the library felt like.
                 dispatch_semaphore_wait(wait, dispatch_time(DISPATCH_TIME_NOW, 30ull * NSEC_PER_SEC));
+
+                NSUInteger done = saved + noData + noDecode + refused;
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [sciPhotoHUD setProgress:(float)done / (float)urls.count animated:YES];
+                });
             }
 
             NSMutableString *note = [NSMutableString stringWithFormat:@"photo post — saved %lu of %lu",
@@ -139,6 +227,17 @@ NSString *SCITTDownloadReport(void) {
             if (firstError) [note appendFormat:@" (%@)", firstError];
 
             SCITTRecordDownload(note);
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [sciPhotoHUD dismiss];
+                sciPhotoHUD = nil;
+
+                NSString *message = urls.count > 1
+                    ? [NSString stringWithFormat:SCILocalized(@"photos_saved_count"),
+                       (unsigned long)saved, (unsigned long)urls.count]
+                    : SCILocalized(saved ? @"save_done" : @"save_failed");
+                [self report:message ok:(saved == urls.count)];
+            });
         });
     }];
 }
@@ -156,7 +255,7 @@ NSString *SCITTDownloadReport(void) {
     // two are separated here rather than inside the importer, so neither has to ask what the
     // other is doing.
     if (item.photoURLs.count) {
-        [self savePhotos:item.photoURLs];
+        [self askThenSavePhotos:item];
         return;
     }
 

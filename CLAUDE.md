@@ -413,6 +413,13 @@ one had a real fix behind it: TikTok serves photos as WebP and HEIC, and bytes `
 not decode can still be handed to Photos as the original resource, which also stops the save
 re-encoding a file that was already fine.
 
+**Saving the whole post is a decision, and it was being made silently.** A photo post of
+sixteen saved all sixteen on one tap. The fix is not a guess about intent: `AWEPhotoAlbumModel`
+tracks the swipe in `currentIndex`, so the app already knows which picture is on screen — ask,
+and default to that one when there is nowhere to present the question. **And a save with no
+indicator is indistinguishable from a button that does nothing**, which is how "it saves
+correctly" and "nothing happens" were reported about the same working code.
+
 **A quality number on its own is not a diagnosis.** "It saves 720" has two causes that produce
 an identical file — the picker chose wrong, or 720 was the whole ladder — so the Status screen
 reports every gear offered with the chosen one marked. Same shape as the `raw → parsed →
@@ -1453,7 +1460,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.13.3** · suite **1.38.3**.
+source) · TikTok **0.13.4** · suite **1.38.4**.
 
 ### TikTok, where it actually stands
 
@@ -1511,6 +1518,14 @@ merely hides it outside a drag, so the feature is refusing the hide — `-setHid
 `NO`, `-setAlpha:` refusing zero. Nothing positioned, nothing added to a view hierarchy, so none
 of this file's placement lessons apply. Worth noticing before building a bar: the app often
 already has the view and is only choosing not to show it.
+
+**The ladder answered the quality question, and the answer was that nothing was wrong.** A
+device report listed five gears topping out at `adapt_lower_720_1` — so 720 was TikTok's own
+ceiling for that video and the picker was already taking the best. It also showed
+`bitrateModels`, `SDRBitrateModels` and `HDRBitrateModels` are the *same five gears* on this
+build, printed three times: gathering all three costs nothing and stays, but the report
+deduplicates. Worth noting what the row bought — it ended a line of inquiry rather than opening
+one, which is what a good diagnostic does.
 
 **A crash is worse than SD** — that is why 0.12.1 exists, and it is the rule to keep if the
 HD attempt goes wrong again.

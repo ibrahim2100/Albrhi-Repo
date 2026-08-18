@@ -65,6 +65,11 @@ static void SCIBuildTables(void) {
         @"diag_privacy": @"Privacy",
         @"diag_privacy_none": @"Nothing asked yet.",
 
+        @"photos_ask_title": @"This is a photo post",
+        @"photos_save_this": @"Save this picture",
+        @"photos_save_all": @"Save all %lu",
+        @"photos_cancel": @"Cancel",
+        @"photos_saved_count": @"Saved %lu of %lu",
         @"save_working": @"Saving…",
         @"save_failed": @"Couldn't save it",
         @"save_done": @"Saved to Photos",
@@ -128,6 +133,11 @@ static void SCIBuildTables(void) {
         @"diag_privacy": @"الخصوصية",
         @"diag_privacy_none": @"لا شيء سُئل بعد.",
 
+        @"photos_ask_title": @"هذا منشور صور",
+        @"photos_save_this": @"حفظ هذه الصورة",
+        @"photos_save_all": @"حفظ الكل (%lu)",
+        @"photos_cancel": @"إلغاء",
+        @"photos_saved_count": @"حُفظت %lu من %lu",
         @"save_working": @"جارِ الحفظ…",
         @"save_failed": @"تعذّر الحفظ",
         @"save_done": @"تم الحفظ في الصور",

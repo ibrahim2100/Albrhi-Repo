@@ -1,5 +1,17 @@
 # Albrhi Changelog
 
+## v1.38.4
+
+**TikTok: photo posts ask which picture, and show that they are saving.** A post of sixteen
+used to save all sixteen silently; now tapping offers the picture you are looking at or the
+whole post, and a progress indicator appears either way.
+
+On quality: a device report settled it — 720 was the highest TikTok offered for that video, so
+nothing was being chosen wrongly. The quality row now reads cleanly instead of repeating the
+same gears three times.
+
+Includes TikTok 0.13.4.
+
 ## v1.38.3
 
 **TikTok: photo saving says why it failed, and quality looks at every list TikTok offers.**

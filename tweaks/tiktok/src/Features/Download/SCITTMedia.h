@@ -36,6 +36,13 @@ NS_ASSUME_NONNULL_BEGIN
 /// six-picture post as six fallbacks for one file would save the first and call it done.
 @property (nonatomic, copy) NSArray<NSURL *> *photoURLs;
 
+/// Which of `photoURLs` the album was showing when this was captured, or `NSNotFound`.
+///
+/// A photo post of sixteen saved all sixteen without asking, which is not what tapping a
+/// download button on one picture means. `AWEPhotoAlbumModel` tracks the swipe itself in
+/// `currentIndex`, so the answer is read from the app rather than inferred from the view.
+@property (nonatomic, assign) NSUInteger photoIndex;
+
 @property (nonatomic, copy) NSDate *seen;
 @end
 

@@ -1,5 +1,24 @@
 # Albrhi for TikTok — what changed
 
+## v0.13.4
+
+**A photo post asks which picture you meant.** A post of sixteen saved all sixteen without a
+word, which is not what tapping a download button on one picture means. Tapping now offers the
+picture on screen or the whole post — and which one is on screen is read from
+`AWEPhotoAlbumModel.currentIndex`, the app's own record of the swipe, not guessed from the view.
+With nothing to present the question from, it saves the one on screen: a whole post arriving
+unasked is the complaint, and the rest is one more tap away.
+
+**And it shows the same progress the video save does.** Photos were saving correctly with
+nothing on screen to say so — which looks exactly like a button that does nothing. The pie HUD
+now advances per picture and ends with "Saved N of M".
+
+**720 was TikTok's ceiling, not a bad pick — and the ladder proved it.** A device report listed
+`adapt_lower_720_1` as the top of five gears, so the picker was already taking the best on
+offer. The same report showed the three quality lists are identical on this build, printing the
+same five gears three times; they are still all read, but the ladder is deduplicated so the row
+can be read at a glance.
+
 ## v0.13.3
 
 **The report and the settings table were built from two separate lists, and the row asked for

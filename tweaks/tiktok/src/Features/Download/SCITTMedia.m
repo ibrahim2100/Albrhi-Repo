@@ -124,6 +124,9 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url);
 /// Read defensively at every step, the same as the URL chains: a name that does not answer is
 /// stepped over rather than assumed, because the accessor list says a name exists somewhere
 /// and never says on what.
+/// The index the photo album is showing, recorded alongside the URLs it resolved.
+static NSUInteger sciPhotoIndex = NSNotFound;
+
 static NSArray<NSURL *> *SCITTPhotoURLsFromModel(id model) {
     if (!model) return nil;
 
@@ -144,6 +147,16 @@ static NSArray<NSURL *> *SCITTPhotoURLsFromModel(id model) {
     // `-photoAlbum`, and its list is called `photos`. 0.13.1 reached the album correctly and
     // then asked it for `images`, which is the *other* container's name -- so the wrapper was
     // right, the list accessor was not, and the post read as empty for a second release.
+    // `currentIndex` is a declared property on AWEPhotoAlbumModel and is how the app itself
+    // knows which picture the swipe is on. Read here, beside the list it indexes into, so the
+    // two can never disagree about which post they describe.
+    sciPhotoIndex = NSNotFound;
+    SEL current = NSSelectorFromString(@"currentIndex");
+    if (holder != model && [holder respondsToSelector:current]) {
+        NSInteger index = ((NSInteger (*)(id, SEL))objc_msgSend)(holder, current);
+        if (index >= 0) sciPhotoIndex = (NSUInteger)index;
+    }
+
     NSArray *list = nil;
     for (NSString *name in @[@"photos", @"images", @"imageList", @"displayImageList"]) {
         SEL selector = NSSelectorFromString(name);
@@ -333,13 +346,24 @@ static NSURL *SCITTBestBitrateURL(id videoModel, NSString **outVia) {
             if ([value isKindOfClass:[NSString class]]) gear = value;
         }
 
-        [ladder addObject:[NSString stringWithFormat:@"%@ @ %.0f",
-                           gear ?: NSStringFromClass([entry class]), rate]];
+        // Deduplicated by what the gear *is*, not by object identity.
+        //
+        // On this build the three lists are identical -- a device report printed the same five
+        // gears three times over -- and they are separate objects, so `containsObject:` would
+        // not have caught it. A ladder that repeats itself is a report nobody can read, and
+        // being read is the whole point of this line.
+        NSString *label = [NSString stringWithFormat:@"%@ @ %.0f",
+                           gear ?: NSStringFromClass([entry class]), rate];
+        if ([ladder containsObject:label]) {
+            if (rate > bestRate) { bestRate = rate; best = entry; }
+            continue;
+        }
+        [ladder addObject:label];
 
         if (rate > bestRate) {
             bestRate = rate;
             best = entry;
-            bestIndex = ladder.count - 1;
+            bestIndex = ladder.count - 1;   // the label just appended
         }
     }
 
@@ -609,6 +633,7 @@ static void SCITTAddPhotoPost(NSArray<NSURL *> *photos) {
     SCITTMediaItem *item = [[SCITTMediaItem alloc] init];
     item.url = primary;
     item.photoURLs = photos;
+    item.photoIndex = (sciPhotoIndex < photos.count) ? sciPhotoIndex : NSNotFound;
     item.seen = [NSDate date];
     [sciRecent insertObject:item atIndex:0];
 
