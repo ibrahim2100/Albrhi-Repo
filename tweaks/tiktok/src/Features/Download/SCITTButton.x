@@ -425,6 +425,15 @@ static void SCITTSyncRailButton(UIStackView *stack) {
 /// button on screen.
 ///
 
+// The base surface state, declared up here because the cell group below reads it in order
+// to stand down. Declaration before use is not a matter of taste in C, and the compiler
+// said so on the first build.
+static const NSInteger kSCIBaseButtonTag = 0x5C19;
+static NSUInteger sciBaseButtonsPlaced = 0;
+static BOOL sciBasePresent = NO;
+static BOOL sciBaseWorks = NO;
+static NSMutableSet<NSString *> *sciBaseSurfaces = nil;
+
 static const NSInteger kSCICellButtonTag = 0x5C18;
 static NSUInteger sciCellButtonsPlaced = 0;
 static BOOL sciCellPresent = NO;
@@ -449,6 +458,11 @@ static BOOL sciCellItemFromCell = NO;
     %orig;
 
     if (!SCIPrefEnabled(SCIPrefDownloadButton)) return;
+
+    // The base controller covers the feed as well, so once it has placed a button anywhere this
+    // surface would only add a second one on top of it. Kept rather than deleted: if the base
+    // class ever disappears from a TikTok build, this is what still works.
+    if (sciBaseWorks) return;
 
     @try {
         UIView *host = self.contentView ?: (UIView *)self;
@@ -612,7 +626,140 @@ static BOOL sciCellItemFromCell = NO;
 %end
 
 
+
+///
+/// One download button, built the same way wherever it lands.
+///
+/// The rail and the cell each grew their own copy of this. A third copy for the base controller
+/// would be a third place to fix a colour, so the new surface uses a shared maker; the two older
+/// ones are left exactly as they are, because refactoring code that is working on a device is
+/// not what this session is for.
+static UIButton *SCITTMakeDownloadButton(void) {
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
+
+    UIImageSymbolConfiguration *config =
+        [UIImageSymbolConfiguration configurationWithPointSize:27
+                                                        weight:UIImageSymbolWeightSemibold];
+    [button setImage:[UIImage systemImageNamed:@"arrow.down.circle.fill"
+                             withConfiguration:config]
+            forState:UIControlStateNormal];
+
+    // White with a shadow rather than a plate: the frame underneath is arbitrary, and a shadow
+    // keeps the glyph readable over a bright one without competing with TikTok's own controls.
+    button.tintColor = [UIColor whiteColor];
+    button.layer.shadowColor = [UIColor blackColor].CGColor;
+    button.layer.shadowOpacity = 0.35;
+    button.layer.shadowRadius = 3;
+    button.layer.shadowOffset = CGSizeZero;
+
+    [button addTarget:[SCITTButtonTarget shared]
+               action:@selector(tapped:)
+     forControlEvents:UIControlEventTouchUpInside];
+
+    return button;
+}
+
+//
+// ─────────────────────────────────────────────────────────────────────────────
+// The universal surface: one controller every video screen inherits from.
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// **The button was on the feed's cell, so it existed only in the feed.** Opening a video from a
+// direct message or from search gave no button at all, which is what the owner reported.
+//
+// The binary answers where it should live instead, and the answer is one class:
+//
+//     AWEFeedCellViewController              -> AWEAwemeBaseViewController
+//     AWEIMChatRoomVideoDetailCellController -> AWEIMChatRoomDMMediaDetailCellController
+//                                            -> AWEAwemeBaseViewController
+//     TTKPhotoAlbumFeedCellController        -> AWEAwemeBaseViewController
+//
+// The feed, direct messages and photo albums are three subclasses of one base — read from the
+// class metadata's superclass pointer, not guessed — and that base declares both things this
+// needs as typed properties: `model : AWEAwemeModel` and `view : TTKFeedInteractionRootView`.
+// NA9's own `na9UniversalDownloadTapped` on this exact class says its author reached the same
+// conclusion; the inheritance chain is why, and it is checkable rather than borrowed.
+//
+// **`-setModel:` is the bind point, not `-viewDidLoad`.** A recycled controller loads its view
+// once and is handed a new model for every video after that — the same lesson `-didMoveToWindow`
+// cost the X tweak, where buttons appeared on the first screenful and never again.
+//
+@interface AWEAwemeBaseViewController : UIViewController
+@property (nonatomic, strong) AWEAwemeModel *model;
+@end
+
+
+static void SCITTPlaceBaseButton(UIViewController *controller) {
+    if (!SCIPrefEnabled(SCIPrefDownloadButton)) return;
+
+    UIView *host = controller.viewIfLoaded;
+    if (!host || host.bounds.size.width <= 0 || host.bounds.size.height <= 0) return;
+
+    SEL modelSel = NSSelectorFromString(@"model");
+    if (![controller respondsToSelector:modelSel]) return;
+
+    id model = ((id (*)(id, SEL))objc_msgSend)(controller, modelSel);
+    if (!model) return;
+
+    // Settled: this controller is showing the video, so the deeper questions are safe here.
+    [SCITTMedia captureSettledModel:(AWEAwemeModel *)model];
+
+    SCITTMediaItem *item = [SCITTMedia recent].firstObject;
+    if (!item) return;
+
+    UIButton *button = (UIButton *)[host viewWithTag:kSCIBaseButtonTag];
+
+    if (!button) {
+        button = SCITTMakeDownloadButton();
+        button.tag = kSCIBaseButtonTag;
+        [host addSubview:button];
+
+        sciBaseButtonsPlaced++;
+        sciBaseWorks = YES;
+
+        if (!sciBaseSurfaces) sciBaseSurfaces = [NSMutableSet set];
+        [sciBaseSurfaces addObject:NSStringFromClass([controller class])];
+    }
+
+    // Recomputed every pass from the host's own bounds, never from the button's last frame:
+    // a value derived from its own previous output drifts, which is exactly what the panel's
+    // subtitle row did.
+    CGFloat side = 44, right = 12;
+    CGRect b = host.bounds;
+    button.frame = CGRectMake(b.size.width - side - right, b.size.height * 0.38, side, side);
+    [host bringSubviewToFront:button];
+
+    // Re-associated on every bind, because the controller is reused and the button is not:
+    // a stale association is how the same clip saved three times while another was on screen.
+    objc_setAssociatedObject(button, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+%group Base
+
+%hook AWEAwemeBaseViewController
+
+- (void)setModel:(id)model {
+    %orig;
+    SCITTPlaceBaseButton((UIViewController *)self);
+}
+
+- (void)viewDidLayoutSubviews {
+    %orig;
+    SCITTPlaceBaseButton((UIViewController *)self);
+}
+
+%end
+
+%end
+
 void SCITTInstallButton(void) {
+    // Installed first: it is the surface that covers every screen, and the cell hook below
+    // stands down wherever it succeeds so one video never grows two buttons.
+    if (NSClassFromString(@"AWEAwemeBaseViewController")) {
+        %init(Base);
+        sciBasePresent = YES;
+    }
+
     if (NSClassFromString(@"TTKFeedInteractionStackView")) {
         %init(RailA);
         sciRailPresent = YES;
@@ -644,11 +791,28 @@ void SCITTInstallButton(void) {
 }
 
 NSString *SCITTButtonReport(void) {
-    if (!sciRailPresent && !sciCellPresent) return @"no button surface in this build";
+    if (!sciRailPresent && !sciCellPresent && !sciBasePresent) {
+        return @"no button surface in this build";
+    }
 
-    NSMutableString *out = [NSMutableString stringWithFormat:@"cell %@ %lu placed",
+    // **The base surface leads the line because it is the one that answers the complaint.**
+    // "No button in a DM" and "no button in search" are questions about which *screens* got one,
+    // and only this line names them — a count alone would have said "3 placed" while two screens
+    // had none, which is the shape of report this project has already been misled by.
+    NSMutableString *out = [NSMutableString stringWithFormat:@"base %@ — %lu placed",
+        sciBasePresent ? @"—" : @"(absent)", (unsigned long)sciBaseButtonsPlaced];
+
+    if (sciBaseSurfaces.count) {
+        [out appendFormat:@" on %@",
+            [[sciBaseSurfaces allObjects] componentsJoinedByString:@", "]];
+    } else if (sciBasePresent) {
+        [out appendString:@" — no screen has bound a model yet"];
+    }
+
+    [out appendFormat:@" | cell %@ %lu placed",
         sciCellPresent ? @"—" : @"(absent)", (unsigned long)sciCellButtonsPlaced];
 
+    if (sciBaseWorks) [out appendString:@" (standing down)"];
     if (sciCellSurfaceWorks) [out appendString:@"; rail standing down"];
     [out appendFormat:@"; model via %@ (%@)",
         sciCellModelVia ?: @"nothing answered",

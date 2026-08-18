@@ -145,10 +145,23 @@ for i in range(size // 8):
     name_vm, = struct.unpack('<Q', ro[24:32])
     name_vm = unchain(name_vm)
     name = cstr(name_vm)
+    # The superclass pointer is the second quadword of the class object, and it answers the one
+    # question a method list cannot: whether several surfaces share a base worth hooking once.
+    super_vm = unchain(struct.unpack('<Q', c[8:16])[0])
+    super_name = None
+    if super_vm:
+        sc = read(super_vm, 40)
+        if sc:
+            sdata = unchain(struct.unpack('<Q', sc[32:40])[0]) & ~7
+            sro = read(sdata, 72)
+            if sro:
+                super_name = cstr(unchain(struct.unpack('<Q', sro[24:32])[0]))
+
     if name in want:
         methods_vm = unchain(struct.unpack('<Q', ro[32:40])[0])
         props_vm = unchain(struct.unpack('<Q', ro[64:72])[0])
-        found[name] = (sorted(set(methods(methods_vm))), sorted(set(properties(props_vm))))
+        found[name] = (sorted(set(methods(methods_vm))), sorted(set(properties(props_vm))),
+                       super_name)
 
 for n in sys.argv[2:]:
     print('===', n, '===')
@@ -156,7 +169,8 @@ for n in sys.argv[2:]:
     if entry is None:
         print('  NOT IN THIS BINARY')
         continue
-    ms, ps = entry
+    ms, ps, super_name = entry
+    print('  superclass:', super_name or '?')
     if ps:
         print('  -- properties (name : declared type) --')
         print('  ' + '\n  '.join(ps))
