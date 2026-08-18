@@ -449,7 +449,20 @@ static NSURL *SCITTResolveChain(id model, NSArray<NSString *> *chain, NSString *
 /// of handing the downloader something it can never fetch.
 static BOOL SCITTURLLooksDownloadable(NSURL *url) {
     NSString *scheme = url.scheme.lowercaseString;
-    return [scheme isEqualToString:@"http"] || [scheme isEqualToString:@"https"];
+    if (![scheme isEqualToString:@"http"] && ![scheme isEqualToString:@"https"]) return NO;
+
+    // The music is never the answer, and it was getting in as a candidate.
+    //
+    // A report showed the recorded link as `sf77-ies-music-sg.tiktokcdn.com/….mp3` -- the
+    // sound, not the video. Ordering by measured type catches it before the save, but a
+    // candidate that is audio by its own address should never have been on the list: it makes
+    // the diagnostics lie about what was resolved, and it is one HEAD request wasted proving
+    // what the URL already said.
+    NSString *extension = url.pathExtension.lowercaseString;
+    if ([@[@"mp3", @"m4a", @"aac", @"wav"] containsObject:extension]) return NO;
+    if ([url.host.lowercaseString containsString:@"-music-"]) return NO;
+
+    return YES;
 }
 
 + (NSURL *)resolveURLForModel:(AWEAwemeModel *)model {
@@ -596,6 +609,9 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url) {
 /// The post id belonging to the links about to be recorded.
 static NSString *sciPendingItemID = nil;
 
+/// Which accessor produced each of the links about to be recorded.
+static NSArray<NSString *> *sciPendingOrigins = nil;
+
 static void SCITTAddResolvedList(NSArray<NSURL *> *urls) {
     if (!urls.count) return;
     if (!sciRecent) sciRecent = [NSMutableArray array];
@@ -612,6 +628,7 @@ static void SCITTAddResolvedList(NSArray<NSURL *> *urls) {
     item.url = primary;
     item.candidates = urls;
     item.itemID = sciPendingItemID;
+    item.candidateOrigins = sciPendingOrigins;
     item.seen = [NSDate date];
     [sciRecent insertObject:item atIndex:0];
 
@@ -764,14 +781,26 @@ static void SCITTAddResolved(NSURL *url) {
 ///
 /// So nothing is preferred here. All of them are collected, and which one is actually largest
 /// is measured with a HEAD request before the save, by the downloader.
-static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **outVia) {
+static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **outVia,
+                                                    NSArray<NSString *> **outOrigins) {
     if (!videoModel) return nil;
 
     NSMutableArray<NSURL *> *links = [NSMutableArray array];
 
+    // Which accessor each link came from, kept alongside it.
+    //
+    // **Size alone cannot tell a watermarked copy from a clean one, and it reliably picks the
+    // wrong one**: `downloadURL` is TikTok's watermarked save copy and is usually the largest
+    // file on offer, so "take the biggest" stamps a watermark on every download. The name the
+    // link came from is the only thing that knows, so it travels with it.
+    NSMutableArray<NSString *> *origins = [NSMutableArray array];
+
     NSString *via = nil;
     NSURL *best = SCITTBestBitrateURL(videoModel, &via);
-    if (best) [links addObject:best];
+    if (best) {
+        [links addObject:best];
+        [origins addObject:@"bitrateModels"];
+    }
 
     // The app's own save copies come first among the plain accessors: `downloadNoWatermarkURL`
     // is what TikTok itself hands out for a download, watermark-free.
@@ -790,11 +819,13 @@ static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **ou
             NSURL *url = SCITTURLFromValue(((id (*)(id, SEL))objc_msgSend)(urlModel, inner));
             if (url && SCITTURLLooksDownloadable(url) && ![links containsObject:url]) {
                 [links addObject:url];
+                [origins addObject:name];
             }
             break;
         }
     }
 
+    if (outOrigins) *outOrigins = origins;
     if (outVia) {
         *outVia = links.count
             ? [NSString stringWithFormat:@"%lu candidate(s)%@",
@@ -840,8 +871,10 @@ static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **ou
 
         if (videoModel) {
             NSString *via = nil;
-            NSArray<NSURL *> *links = SCITTAllLinksForVideoModel(videoModel, &via);
+            NSArray<NSString *> *origins = nil;
+            NSArray<NSURL *> *links = SCITTAllLinksForVideoModel(videoModel, &via, &origins);
             if (links.count) {
+                sciPendingOrigins = origins;
                 SEL idSel = NSSelectorFromString(@"itemID");
                 id identifier = [model respondsToSelector:idSel]
                     ? ((id (*)(id, SEL))objc_msgSend)(model, idSel) : nil;

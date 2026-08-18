@@ -4,6 +4,7 @@
 #import "../Localization/SCILocalize.h"
 #import "../Diagnostics/SCITTDiagnostics.h"
 #import "../Features/Download/SCITTMedia.h"
+#import "../Features/Download/SCITTWatermark.h"
 #import "../Features/Interface/SCITTProgressBar.h"
 #import "../Features/Download/SCITTDownload.h"
 #import "../Features/Download/SCITTButton.h"
@@ -42,7 +43,7 @@ static const NSInteger kSCIRowPrivacyMessages = 1;
 static const NSInteger kSCIRowPrivacyProfile = 2;
 static const NSInteger kSCIPrivacyRowCount = 3;
 
-static const NSInteger kSCIStatusRowCount = 12;
+static const NSInteger kSCIStatusRowCount = 13;
 
 @implementation SCITTStatus
 
@@ -312,6 +313,7 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
     // report that came back had never contained it. Anything added to one belongs in both.
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_gears"), [SCITTMedia gearLadder]];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_measured"), SCITTMeasuredReport()];
+    [report appendFormat:@"%@: %@\n", SCILocalized(@"status_watermark"), SCITTWatermarkReport()];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_progress_bar"), SCITTProgressBarReport()];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_cell_accessors"),
         // AWEFeedViewTemplateCell -- the class the feed actually uses.
@@ -609,6 +611,11 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
             cell.imageView.image = SCITTBadge(@"ruler", [UIColor systemGreenColor]);
             break;
         case 10:
+            cell.textLabel.text = SCILocalized(@"status_watermark");
+            cell.detailTextLabel.text = SCITTWatermarkReport();
+            cell.imageView.image = SCITTBadge(@"drop.fill", [UIColor systemCyanColor]);
+            break;
+        case 11:
             cell.textLabel.text = SCILocalized(@"diag_bypass");
             cell.detailTextLabel.text = [SCITTDiagnostics bypassState];
             cell.imageView.image = SCITTBadge(@"shield.lefthalf.filled", [UIColor systemIndigoColor]);

@@ -1,5 +1,26 @@
 # Albrhi for TikTok — what changed
 
+## v0.14.2
+
+**"Largest wins" was stamping a watermark on every download, and no measurement could have
+caught it.** `downloadURL` and `h264DownloadURL` are TikTok's *watermarked* save copies and are
+usually the biggest files on offer, while `downloadNoWatermarkURL` and the quality ladder's own
+address are clean. Nothing in the HTTP response says which is which — only the accessor the link
+came from knows, so that name now travels with the link. A clean video outranks a watermarked
+one whatever the sizes say; size still decides between equals, and a watermarked video still
+beats a link that would not identify itself.
+
+**And the watermark decision is answered at its source.** `AWEAwemeACLItem.watermarkType` — the
+property TikTok itself consults, confirmed in this build's own class metadata — is forced to
+zero at its setter rather than at a getter, because the app reads that value by more than one
+path and a stored zero is true for all of them. Settings › Status reports whether it attached
+and how many decisions it cleared.
+
+**The music is no longer a candidate.** One report recorded the resolved link as an `.mp3` from
+TikTok's music CDN. Ordering by type kept it out of the actual save, but it should never have
+been on the list: it made the diagnostics describe the wrong file, and a URL that says `.mp3` in
+its own address needs no request to disprove.
+
 ## v0.14.1
 
 **Two faults, both introduced by 0.14.0 itself, both caught by its own new report.**

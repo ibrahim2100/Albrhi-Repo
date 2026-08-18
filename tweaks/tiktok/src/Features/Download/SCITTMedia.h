@@ -50,6 +50,13 @@ NS_ASSUME_NONNULL_BEGIN
 /// re-run to pick up — but it is *sent* nowhere unless the switch is on.
 @property (nonatomic, copy) NSString *itemID;
 
+/// Which accessor each entry of `candidates` came from, in the same order.
+///
+/// The downloader needs it to prefer a clean copy over a watermarked one: `downloadURL` is
+/// TikTok's watermarked save copy and is usually the *largest* file, so ranking by size alone
+/// stamps a watermark on every download. Only the name knows.
+@property (nonatomic, copy) NSArray<NSString *> *candidateOrigins;
+
 @property (nonatomic, copy) NSDate *seen;
 @end
 

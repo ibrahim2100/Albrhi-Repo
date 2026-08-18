@@ -1468,7 +1468,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.14.1** · suite **1.39.1**.
+source) · TikTok **0.14.2** · suite **1.39.2**.
 
 ### TikTok, where it actually stands
 
@@ -1537,6 +1537,18 @@ collected and `HEAD`-ed, and the largest wins. Every earlier quality attempt her
 which accessor was better; `Content-Length` ends the argument, and a link that refuses `HEAD`
 scores zero and sinks rather than being dropped, because a server that refuses `HEAD` still
 serves `GET`.
+
+**A measurement can only rank what it can see, and "which copy is watermarked" is not in the
+response.** Ranking candidates by size took `downloadURL` — TikTok's *watermarked* save copy,
+and reliably the largest file — so every download came out stamped. No amount of measuring fixes
+that: the only thing that knows is the accessor name the link came from, so the origin now
+travels beside each URL and clean beats watermarked before size is consulted at all. Pair this
+with the audio lesson above: **size answers "which is bigger", never "which is right"**, and
+each new wrong-file report has been a different property that size cannot see.
+
+Separately, `AWEAwemeACLItem.watermarkType` is forced to zero **at its setter**, not at a getter
+— the same reason `-bypassOnesie` failed in the YouTube tweak: code that reads the ivar directly
+never passes through a getter hook, while a stored value is true for every reader.
 
 **Measuring by size alone reintroduced the audio bug this project had already paid for once.**
 0.14.0's `HEAD` gave both `Content-Length` and `Content-Type`, and only the first was kept —

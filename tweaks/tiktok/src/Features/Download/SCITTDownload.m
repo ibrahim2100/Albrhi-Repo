@@ -209,7 +209,20 @@ NSString *SCITTMeasuredReport(void) {
 /// name is reliable; the byte count is.
 ///
 /// Runs off the main thread and is skipped entirely if there is only one link.
-+ (NSArray<NSURL *> *)orderByMeasuredSize:(NSArray<NSURL *> *)links {
+///
+/// Whether a link's own accessor name says it carries TikTok's watermark.
+///
+/// `downloadURL` and `h264DownloadURL` are the app's *watermarked* save copies;
+/// `downloadNoWatermarkURL` and the bitrate ladder's `playAddr` are the clean ones. The
+/// watermarked file is usually the largest on offer, so ranking by size alone stamps a
+/// watermark on every download — which is what a device report showed. Nothing measurable in
+/// the response says this; only the name does.
+static BOOL SCITTOriginIsWatermarked(NSString *origin) {
+    return [origin isEqualToString:@"downloadURL"] || [origin isEqualToString:@"h264DownloadURL"];
+}
+
++ (NSArray<NSURL *> *)orderByMeasuredSize:(NSArray<NSURL *> *)links
+                                 origins:(NSArray<NSString *> *)origins {
     if (links.count < 2) return links;
 
     NSMutableArray<NSURL *> *measured = [NSMutableArray array];
@@ -222,15 +235,22 @@ NSString *SCITTMeasuredReport(void) {
         long long size = SCITTMeasure(url, &kind);
         NSInteger rank = SCITTKindRank(kind, url);
 
+        // A clean video outranks a watermarked one whatever the sizes say; among equals, size
+        // decides. Three tiers rather than two, so a watermarked video still beats an unknown.
+        NSUInteger index = [links indexOfObject:url];
+        NSString *origin = index < origins.count ? origins[index] : nil;
+        if (rank == 2 && SCITTOriginIsWatermarked(origin)) rank = 1;
+
         sizes[url] = @(size);
         ranks[url] = @(rank);
         [measured addObject:url];
         [report addObject:[NSString stringWithFormat:@"%@ %.1f MB %@",
                            url.path.lastPathComponent ?: @"?", size / 1048576.0,
-                           kind ?: (rank == 0 ? @"audio?" : @"type unknown")]];
+                           origin ?: (kind ?: @"?")]];
     }
 
-    // Kind first, size second. A bigger audio file is still the wrong file.
+    // Kind first, size second. A bigger audio file is still the wrong file, and a bigger
+    // watermarked file is still a watermarked file.
     [measured sortUsingComparator:^NSComparisonResult(NSURL *a, NSURL *b) {
         if (![ranks[a] isEqual:ranks[b]]) return [ranks[b] compare:ranks[a]];
         return [sizes[b] compare:sizes[a]];
@@ -466,7 +486,8 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
                 if (external) [links insertObject:external atIndex:0];
             }
 
-            NSArray<NSURL *> *ordered = [self orderByMeasuredSize:links];
+            NSArray<NSURL *> *ordered = [self orderByMeasuredSize:links
+                                                          origins:item.candidateOrigins];
             if (ordered.count) {
                 item.candidates = ordered;
                 item.url = ordered.firstObject;

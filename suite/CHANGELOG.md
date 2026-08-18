@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.39.2
+
+**TikTok: downloads without the watermark.** Picking the largest file was picking TikTok's
+watermarked copy, which is usually the biggest one — the clean copy now wins regardless of size,
+and the watermark is also switched off at the setting the app itself reads. Plus the video's
+music track can no longer be mistaken for the video.
+
+Includes TikTok 0.14.2.
+
 ## v1.39.1
 
 **TikTok: two fixes to yesterday's download change.** Picking the largest file could pick the
