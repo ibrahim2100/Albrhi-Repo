@@ -330,26 +330,27 @@ NSString *SCITTMeasuredReport(void) {
 ///
 /// Runs off the main thread and is skipped entirely if there is only one link.
 ///
-/// Whether a link's own accessor name says it carries TikTok's watermark.
 ///
-/// `downloadURL` and `h264DownloadURL` are the app's *watermarked* save copies;
-/// `downloadNoWatermarkURL` and the bitrate ladder's `playAddr` are the clean ones. The
-/// watermarked file is usually the largest on offer, so ranking by size alone stamps a
-/// watermark on every download — which is what a device report showed. Nothing measurable in
-/// the response says this; only the name does.
-static BOOL SCITTOriginIsWatermarked(NSString *origin) {
-    // **`h264DownloadURL` is no longer assumed watermarked — that was a guess from its name.**
-    //
-    // It measured 7.2 MB against tikwm's 5.3 and `bitrateModels`' 2.9 on the same video, and it
-    // lost only because this function said so. Nothing was ever checked: `h264` names a *codec*,
-    // and the two accessors that do state their nature state it plainly —
-    // `downloadNoWatermarkURL` says there is none, `downloadURL` says it is the download copy.
-    // `h264DownloadURL` says neither, and VibeTok uses it as its primary link.
-    //
-    // So it competes on size now, and the saved file answers the question the name could not.
-    // If it comes back stamped, this list gains it again — with a device report behind it that
-    // time rather than a reading of English.
-    return [origin isEqualToString:@"downloadURL"];
+/// Whether a link should lose to a smaller one from a better source.
+///
+/// Two reasons, and the second was learned the expensive way:
+///
+/// **`downloadURL` is TikTok's watermarked save copy**, and reliably the largest file on offer,
+/// so ranking by size alone stamps a watermark on every download.
+///
+/// **`h264DownloadURL` is a compatibility transcode, and being bigger is exactly why it looks
+/// worse.** It was demoted on a guess from its name, then promoted to test that guess — and the
+/// device answered: it won at 7.2 MB against 5.3 and 2.9, saved 7,561,985 bytes, and the picture
+/// was *worse than before*. TikTok's own gears say why — `AWEVideoBSModel` declares `codec` and
+/// `isBytevc1`, so the modern stream is HEVC and `h264` is the fallback re-encode for players
+/// that cannot take it. H.264 needs far more bits for the same picture, so a larger H.264 file
+/// and a smaller HEVC one are not comparable at all.
+///
+/// **That is the third time size answered the wrong question here** — first audio, then the
+/// watermark, now the codec. Bytes compare two encodings of the same thing; they say nothing
+/// about which thing, or which encoder.
+static BOOL SCITTOriginIsDemoted(NSString *origin) {
+    return [origin isEqualToString:@"downloadURL"] || [origin isEqualToString:@"h264DownloadURL"];
 }
 
 + (NSArray<NSURL *> *)orderByMeasuredSize:(NSArray<NSURL *> *)links
@@ -381,7 +382,7 @@ static BOOL SCITTOriginIsWatermarked(NSString *origin) {
         // thing it parallels, never re-found.
         NSUInteger index = [links indexOfObjectIdenticalTo:url];
         NSString *origin = index < origins.count ? origins[index] : nil;
-        if (rank == 2 && SCITTOriginIsWatermarked(origin)) rank = 1;
+        if (rank == 2 && SCITTOriginIsDemoted(origin)) rank = 1;
 
         // Switching the external HD source on is a request for *that source*, not a hint to be
         // outvoted by an internal link that happens to measure larger. It ranks above them all

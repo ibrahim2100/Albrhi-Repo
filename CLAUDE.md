@@ -1695,6 +1695,19 @@ re-encoded to JPEG when Photos refused the format — but the re-encode needed `
 decoded the bytes, and the case it existed for is exactly when `UIImage` returns nil. `ImageIO`
 decodes what `UIImage` declines. Check what a fallback *depends on*, not just when it fires.
 
+**A bigger file is a worse file when the codec differs, and this is the third time size answered
+the wrong question.** `h264DownloadURL` was demoted on a guess from its name, then promoted to
+test that guess — the honest experiment — and the device answered plainly: it won at 7.2 MB
+against 5.3 and 2.9, saved 7,561,985 bytes, and the owner reported the picture as *worse than
+before*. `AWEVideoBSModel` declares `codec` and `isBytevc1`, so TikTok's modern stream is HEVC and
+`h264DownloadURL` is the compatibility re-encode; H.264 needs far more bits for the same picture,
+so a larger H.264 file and a smaller HEVC one are not comparable quantities at all.
+
+First audio, then the watermark, now the codec: **bytes compare two encodings of the same thing,
+and never say which thing or which encoder.** The demotion is back, under a name that says what
+it means (`SCITTOriginIsDemoted`) and with both reasons written down — one guessed and confirmed,
+one guessed, tested, and found true for a completely different reason than the one assumed.
+
 **A measurement can only rank what it can see, and "which copy is watermarked" is not in the
 response.** Ranking candidates by size took `downloadURL` — TikTok's *watermarked* save copy,
 and reliably the largest file — so every download came out stamped. No amount of measuring fixes
