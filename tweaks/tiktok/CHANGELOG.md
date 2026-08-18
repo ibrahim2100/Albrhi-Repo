@@ -1,5 +1,29 @@
 # Albrhi for TikTok — what changed
 
+## v0.16.0
+
+**The probe found it, and it is one cause for both complaints.** Put side by side on your
+device, the ladder this tweak reads and the ladder TikTok hands its own player carry **the same
+gear names at four times the bitrate**:
+
+| gear | what `bitrateModels` says | what the player is offered |
+|---|---|---|
+| `adapt_lower_720_1` | 373,349 | **1,512,265** |
+| `adapt_540_1` | 308,455 | **1,015,884** |
+| `lower_540_1` | 197,536 | **584,415** |
+
+So every download has been taking a *reduced copy of the correct gear* — a 720 at a quarter of
+the bitrate the app plays. That is the picture and the sound at once, and it also disproves the
+theory in 0.15.1: none of the player's gears carries a `selectedAudio`, so the audio is muxed
+there too and simply follows the bitrate. The separate-audio-stream idea was wrong, and the
+probe is what showed it rather than another release built on it.
+
+The player's models live on `__playBSModel` and its siblings on the same video model this tweak
+already holds, so they are now read first — from the same object, with no cross-video risk.
+Each is a method rather than a declared property, so nothing states its type: every one is asked
+behind `-respondsToSelector:` and accepted only if it looks like a gear list, meaning an array
+whose members answer `playAddr`. If none does, the old ladder is used exactly as before.
+
 ## v0.15.1
 
 **A measurement, not a fix — deliberately.** The report says the audio and the picture are both

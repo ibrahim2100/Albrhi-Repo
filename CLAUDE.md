@@ -1468,7 +1468,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.15.1** · suite **1.40.1**.
+source) · TikTok **0.16.0** · suite **1.41.0**.
 
 ### TikTok, where it actually stands
 
@@ -1556,6 +1556,21 @@ watermark hook incremented only at the setter, which this build never calls; the
 one doing the work — answered silently, so the screen read `0 cleared` for two releases. Third
 instance of this family here, after the last-event snapshot and the mislabelled parallel array:
 **before believing a zero, check that the counter sits on the path that executes.**
+
+**`bitrateModels` is a reduced copy of the playback ladder — same gear names, a quarter of the
+bitrate — and that single fact explains every quality complaint in this tweak's history.** The
+0.15.1 probe printed both lists on one screen: `adapt_lower_720_1` reads **373,349** through
+`bitrateModels` and **1,512,265** in what TikTok hands its own picker; `adapt_540_1`, 308,455
+against 1,015,884. So "it saves 720 and it looks worse than the app" was true in both halves at
+once — the right gear, a quarter of the data. The player's models live on `__playBSModel` and
+siblings on the *same* video model, which is why 0.16.0 reads them from that object rather than
+from the probe's arguments: no cross-video risk.
+
+**And the probe disproved the theory it was built to test, which is the point of a probe.** Not
+one of the player's gears carries a `selectedAudio`, so audio is muxed there too and simply
+follows the bitrate. The paragraph below was the standing hypothesis and is kept as a record of
+what the structure *permits* rather than what this build *does* — a distinction worth keeping,
+since the class declarations really do describe two streams:
 
 **The download takes a muxed streaming copy; the app plays video and audio as two streams, and
 that is why the saved audio sounds worse.** `AWEVideoBSModel` — the gear entry — declares

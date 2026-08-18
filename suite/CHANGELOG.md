@@ -1,5 +1,15 @@
 # Albrhi Changelog
 
+## v1.41.0
+
+**TikTok: downloads were taking a reduced copy of the right quality.** Measured on-device, the
+quality list Albrhi was reading carries the same quality names as the one TikTok's own player
+uses, at a quarter of the bitrate — so a "720" download was a 720 at a quarter of the detail the
+app shows. Albrhi now reads the player's own list first. This is the cause of both the soft
+picture and the poor sound.
+
+Includes TikTok 0.16.0.
+
 ## v1.40.1
 
 **TikTok: a diagnostic for the quality complaint, and nothing else.** Downloads sound and look

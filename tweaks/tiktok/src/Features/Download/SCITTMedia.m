@@ -315,12 +315,34 @@ static NSURL *SCITTBestBitrateURL(id videoModel, NSString **outVia) {
     NSMutableArray *list = [NSMutableArray array];
     NSMutableArray<NSString *> *sources = [NSMutableArray array];
 
-    for (NSString *name in @[@"bitrateModels", @"SDRBitrateModels", @"HDRBitrateModels"]) {
+    // **The playback ladder first, because `bitrateModels` is not it.**
+    //
+    // A device probe put the two side by side and they carry the *same gear names at four
+    // times the bitrate*: `adapt_lower_720_1` reads 373,349 through `bitrateModels` and
+    // 1,512,265 in the list TikTok hands its own picker. So every download so far has taken a
+    // reduced copy of the right gear — which is exactly one cause for both complaints, the
+    // picture and the sound, since none of these gears carries a separate audio track.
+    //
+    // `__playBSModel` and its siblings are where the player's own models live. They are
+    // methods rather than declared properties, so nothing states their type: each is asked
+    // behind `-respondsToSelector:`, and whatever comes back is accepted only if it looks like
+    // a gear list — an array whose members answer `playAddr`. Anything else is stepped over.
+    for (NSString *name in @[@"__playBSModel", @"__playBSModelV2", @"awe_playBSModel",
+                             @"ttk_playBSModel",
+                             @"bitrateModels", @"SDRBitrateModels", @"HDRBitrateModels"]) {
         SEL models = NSSelectorFromString(name);
         if (![videoModel respondsToSelector:models]) continue;
 
         id value = ((id (*)(id, SEL))objc_msgSend)(videoModel, models);
+
+        // A single gear rather than a list is still a gear.
+        if (value && ![value isKindOfClass:[NSArray class]]) {
+            value = [value respondsToSelector:NSSelectorFromString(@"playAddr")] ? @[value] : nil;
+        }
         if (![value isKindOfClass:[NSArray class]] || ![(NSArray *)value count]) continue;
+
+        id first = [(NSArray *)value firstObject];
+        if (![first respondsToSelector:NSSelectorFromString(@"playAddr")]) continue;
 
         [list addObjectsFromArray:(NSArray *)value];
         [sources addObject:[NSString stringWithFormat:@"%@×%lu",
