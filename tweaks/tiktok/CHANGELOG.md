@@ -1,5 +1,27 @@
 # Albrhi for TikTok — what changed
 
+## v0.15.1
+
+**A measurement, not a fix — deliberately.** The report says the audio and the picture are both
+noticeably worse than what the app plays, and there are two candidate explanations that would
+lead to opposite changes. Two releases have already been spent acting on an inference a single
+measurement would have settled, so this one only measures.
+
+Two facts are behind it. Every gear this tweak has ever seen, across every report, is named
+`lower` or `lowest` — not one `normal_720`, not one `adapt_higher_` — which is either the whole
+ladder or a filtered subset. And each gear carries `selectedAudio`, a pointer to a *separate*
+audio stream with its own bitrate and its own links, which is not the audio baked into the muxed
+file the download takes.
+
+So Settings › Status gains one line: what TikTok's own picker
+(`AWEVideoPlayBitrateControler`) is handed, and which entry it chooses, with each gear's audio
+bitrate beside it. If that list is larger than the one the download reads, the difference is the
+answer. Nothing about downloading changed in this release.
+
+Also confirmed again, from your own report: `tikwm HD` and `bitrateModels` resolved to the
+*same file name*. That is the third independent confirmation that the external service returns
+the file this tweak already downloads.
+
 ## v0.15.0
 
 **The external HD service was being asked the wrong way, and the answer changes what the feature

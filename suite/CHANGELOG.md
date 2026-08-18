@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.40.1
+
+**TikTok: a diagnostic for the quality complaint, and nothing else.** Downloads sound and look
+worse than the app's own playback, and there are two possible causes that need opposite fixes —
+so this release adds one line reporting what TikTok's own player is offered and what it picks,
+and changes nothing about downloading until that says which cause it is.
+
+Includes TikTok 0.15.1.
+
 ## v1.40.0
 
 **TikTok: the optional external HD source is asked properly now — and measured against.** It

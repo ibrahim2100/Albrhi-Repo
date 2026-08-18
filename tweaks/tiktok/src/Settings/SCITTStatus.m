@@ -5,6 +5,7 @@
 #import "../Diagnostics/SCITTDiagnostics.h"
 #import "../Features/Download/SCITTMedia.h"
 #import "../Features/Download/SCITTWatermark.h"
+#import "../Features/Download/SCITTPlaybackProbe.h"
 #import "../Features/Interface/SCITTProgressBar.h"
 #import "../Features/Download/SCITTDownload.h"
 #import "../Features/Download/SCITTButton.h"
@@ -43,7 +44,7 @@ static const NSInteger kSCIRowPrivacyMessages = 1;
 static const NSInteger kSCIRowPrivacyProfile = 2;
 static const NSInteger kSCIPrivacyRowCount = 3;
 
-static const NSInteger kSCIStatusRowCount = 13;
+static const NSInteger kSCIStatusRowCount = 14;
 
 @implementation SCITTStatus
 
@@ -314,6 +315,7 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_gears"), [SCITTMedia gearLadder]];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_measured"), SCITTMeasuredReport()];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_watermark"), SCITTWatermarkReport()];
+    [report appendFormat:@"%@: %@\n", SCILocalized(@"status_playback"), SCITTPlaybackReport()];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_progress_bar"), SCITTProgressBarReport()];
     [report appendFormat:@"%@: %@\n", SCILocalized(@"status_cell_accessors"),
         // AWEFeedViewTemplateCell -- the class the feed actually uses.
@@ -616,6 +618,13 @@ static UIImage *SCITTBadge(NSString *symbolName, UIColor *color) {
             cell.imageView.image = SCITTBadge(@"drop.fill", [UIColor systemCyanColor]);
             break;
         case 11:
+            // The ladder as the *player* sees it, beside the one the download reads. If the two
+            // disagree, that difference is the quality question answered rather than argued.
+            cell.textLabel.text = SCILocalized(@"status_playback");
+            cell.detailTextLabel.text = SCITTPlaybackReport();
+            cell.imageView.image = SCITTBadge(@"waveform", [UIColor systemPurpleColor]);
+            break;
+        case 12:
             cell.textLabel.text = SCILocalized(@"diag_bypass");
             cell.detailTextLabel.text = [SCITTDiagnostics bypassState];
             cell.imageView.image = SCITTBadge(@"shield.lefthalf.filled", [UIColor systemIndigoColor]);

@@ -1468,7 +1468,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.15.0** · suite **1.40.0**.
+source) · TikTok **0.15.1** · suite **1.40.1**.
 
 ### TikTok, where it actually stands
 
@@ -1556,6 +1556,21 @@ watermark hook incremented only at the setter, which this build never calls; the
 one doing the work — answered silently, so the screen read `0 cleared` for two releases. Third
 instance of this family here, after the last-event snapshot and the mislabelled parallel array:
 **before believing a zero, check that the counter sits on the path that executes.**
+
+**The download takes a muxed streaming copy; the app plays video and audio as two streams, and
+that is why the saved audio sounds worse.** `AWEVideoBSModel` — the gear entry — declares
+`selectedAudio : AWEAudioBSModel`, whose `audioMeta` carries its own `bitrate`, `codecType`,
+`quality` and `urlMap`. So a gear *points at* an audio track rather than containing one, and
+`playAddr` is a prepared fallback whose audio is whatever was baked in. The arithmetic agrees: a
+top gear of ~550 kbps is the total for both tracks.
+
+**And every gear ever seen here is named `lower` or `lowest`** — never `normal_720`, never
+`adapt_higher_` — across every device report, while `AWEVideoModel` declares
+`_HDRBitrateFilterGears` and `bitrateFilterList` and `AWEVideoPlayBitrateControler` has
+`willSelectBitrateFromModels:duration:trategyType:autoBitrateModel:`. Either that is the whole
+ladder or `bitrateModels` is a filtered subset and the player is handed more. **0.15.1 answers
+that by probing the player's own picker instead of inferring**, which is the discipline this file
+demands and which the previous two releases skipped.
 
 **The tikwm "HD" file is byte for byte the file this tweak already downloads, and that was
 measured, not argued.** Querying the service for a video taken from a real device report:
