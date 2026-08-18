@@ -37,7 +37,16 @@ static CVPixelBufferRef SCITTPixelBufferForImage(UIImage *image, CGSize size) {
                                                  (size_t)size.width, (size_t)size.height,
                                                  8, CVPixelBufferGetBytesPerRow(buffer),
                                                  space,
-                                                 kCGImageAlphaNoneSkipFirst);
+                                                 // Cast written out, because the parameter is a
+                                                 // `CGBitmapInfo` and the constant is a
+                                                 // `CGImageAlphaInfo` -- two enums that share a bit
+                                                 // field by design. **CI's clang rejects the implicit
+                                                 // conversion under `-Wimplicit-enum-enum-cast` and
+                                                 // the local one does not**, which is the first time
+                                                 // this project has hit a warning that exists on one
+                                                 // toolchain and not the other: a clean local build
+                                                 // is not proof of a clean CI build.
+                                                 (CGBitmapInfo)kCGImageAlphaNoneSkipFirst);
     if (context) {
         // Filled black first: a picture with transparency or one that does not fill an even-sized
         // canvas would otherwise carry whatever was in the buffer's memory.
