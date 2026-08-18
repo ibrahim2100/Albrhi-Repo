@@ -1468,7 +1468,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.14.4** · suite **1.39.4**.
+source) · TikTok **0.14.5** · suite **1.39.5**.
 
 ### TikTok, where it actually stands
 
@@ -1550,6 +1550,22 @@ that and the `imagePostInfo`/`images`/`displayImage` family — which is what th
 on in 0.13.2 after two wrong releases. Both also *ask* which picture (`na9ShowPhotoDownloadSheet:`),
 which 0.14.0 arrived at independently. And NA9's `downloadMusic:` shows the `.mp3` is a
 deliberate separate feature there, not the accident it was here.
+
+**A counter that does not count the path that runs reports working code as broken.** The
+watermark hook incremented only at the setter, which this build never calls; the getter — the
+one doing the work — answered silently, so the screen read `0 cleared` for two releases. Third
+instance of this family here, after the last-event snapshot and the mislabelled parallel array:
+**before believing a zero, check that the counter sits on the path that executes.**
+
+**An unauthenticated `NSURLSession` request is not a browser, and some services only answer
+browsers.** `tikwm.com` refused `HEAD` *and* a range `GET`, measuring 0.0 MB twice, while the
+same URL works in a browser — and NA9 sets headers and handles redirects for that exact call,
+which is what its binary was telling us all along. A default `User-Agent` is a thing being sent,
+not a thing being omitted.
+
+**A switch the user turned on is a decision, not an input to a ranking.** The external HD link
+was competing on measured size and losing to internal links; it now takes precedence when it
+answers, and keeps its ordinary rank when it does not, so an unavailable service costs nothing.
 
 **"Unmeasurable" is not "worst", and treating it as worst disabled a feature the user had
 switched on.** `tikwm.com` refuses `HEAD`, so the external HD link scored zero and sank below

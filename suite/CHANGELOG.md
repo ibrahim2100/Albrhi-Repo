@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.39.5
+
+**TikTok: the external HD source now actually answers.** It was declining requests that did not
+look like they came from a browser, so it never won the comparison — and when it is switched on
+it now takes precedence rather than competing on file size. Downloads without it are confirmed
+working: the clean copy is chosen over the larger watermarked one.
+
+Includes TikTok 0.14.5.
+
 ## v1.39.4
 
 **TikTok: the HD switch actually does something now.** The external HD source refuses the quick

@@ -140,12 +140,29 @@ static JGProgressHUD *sciPhotoHUD = nil;
 /// A `HEAD` costs one round trip and answers the only question that has ever mattered here.
 /// Every previous attempt at quality compared *names* -- which chain, which gear, which
 /// accessor -- and a name is a claim about a file. `Content-Length` is the file.
+///
+/// Headers a plain `NSURLSession` request does not send.
+///
+/// The external HD service answered neither `HEAD` nor a range `GET` and measured 0.0 MB twice
+/// over — while the same address works in a browser. NA9 sets request headers and installs a
+/// redirect delegate for the same call, which is evidence rather than decoration: the service
+/// declines a request that does not look like a browser. Applied to every measurement because
+/// TikTok's own CDN does not mind, and a second code path for one host is a second thing to
+/// get wrong.
+static void SCITTAddBrowserHeaders(NSMutableURLRequest *request) {
+    [request setValue:@"Mozilla/5.0 (iPhone; CPU iPhone OS 16_1 like Mac OS X) AppleWebKit/605.1.15"
+                       " (KHTML, like Gecko) Version/16.1 Mobile/15E148 Safari/604.1"
+   forHTTPHeaderField:@"User-Agent"];
+    [request setValue:@"*/*" forHTTPHeaderField:@"Accept"];
+}
+
 static long long SCITTMeasure(NSURL *url, NSString **outKind) {
     if (!url) return 0;
 
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     request.HTTPMethod = @"HEAD";
     request.timeoutInterval = 8;
+    SCITTAddBrowserHeaders(request);
 
     __block long long length = 0;
     __block NSString *kind = nil;
@@ -189,6 +206,7 @@ static long long SCITTMeasureByRange(NSURL *url, NSString **outKind) {
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     request.timeoutInterval = 8;
     [request setValue:@"bytes=0-0" forHTTPHeaderField:@"Range"];
+    SCITTAddBrowserHeaders(request);
 
     __block long long length = 0;
     __block NSString *kind = nil;
@@ -298,6 +316,12 @@ static BOOL SCITTOriginIsWatermarked(NSString *origin) {
         NSUInteger index = [links indexOfObjectIdenticalTo:url];
         NSString *origin = index < origins.count ? origins[index] : nil;
         if (rank == 2 && SCITTOriginIsWatermarked(origin)) rank = 1;
+
+        // Switching the external HD source on is a request for *that source*, not a hint to be
+        // outvoted by an internal link that happens to measure larger. It ranks above them all
+        // when it answers at all — and when it does not answer, it keeps its ordinary rank and
+        // loses on the merits, so a service that is down costs the download nothing.
+        if ([origin isEqualToString:@"tikwm HD"] && size > 0) rank = 3;
 
         sizes[url] = @(size);
         ranks[url] = @(rank);

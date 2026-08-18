@@ -1,5 +1,26 @@
 # Albrhi for TikTok — what changed
 
+## v0.14.5
+
+**Ranking works — your report proved it.** The links measured 3.6, 3.0, 8.0 and 4.4 MB, and the
+one taken was the 3.6 MB clean copy over the 8.0 MB watermarked one, saved at exactly 3,786,622
+bytes. That is the intended behaviour and it is now confirmed rather than assumed.
+
+**The external HD service refuses a request that does not look like a browser.** It answered
+neither `HEAD` nor a range `GET` and measured 0.0 MB twice over, while the same address works in
+a browser — and NA9 sets request headers and installs a redirect handler for the very same call,
+which is evidence, not decoration. Measurements now carry a normal `User-Agent`.
+
+**And switching that source on is a request for it, not a hint.** It was being outvoted by
+whichever internal link happened to measure larger. When it answers at all it now ranks above
+them; when it does not, it keeps its ordinary rank and loses on the merits, so a service that is
+down costs the download nothing.
+
+**"0 cleared" was a counter that did not count the path that runs.** Only the watermark setter
+incremented, and on this build TikTok never calls it — the getter, which does the work, answered
+silently. Working code reported as not working, which is the same failure as a tally that records
+only the last event.
+
 ## v0.14.4
 
 **A refused `HEAD` was sinking the very link you asked for.** Servers that will not answer a

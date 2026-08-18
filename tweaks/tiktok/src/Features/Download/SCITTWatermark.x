@@ -61,6 +61,13 @@ static BOOL sciAttached = NO;
 - (NSUInteger)watermarkType {
     if (!SCIPrefEnabled(SCIPrefDownloadButton)) return %orig;
 
+    // Counted here as well as at the setter, and this was a real gap: the device reported
+    // "0 cleared" while the getter was very likely answering thousands of times, because only
+    // the setter incremented. A counter that does not count the path that actually runs says
+    // "not working" about working code -- the same failure as the tally that recorded only the
+    // last event.
+    sciForced++;
+
     // Both ends, because NA9 hooks both and the reason is sound: the setter covers every
     // reader of the stored value, but a value TikTok never sets keeps whatever it decoded from
     // the response. Answering the getter as well costs nothing and closes that case.
