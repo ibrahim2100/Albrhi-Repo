@@ -433,6 +433,7 @@ static NSUInteger sciBaseButtonsPlaced = 0;
 static BOOL sciBasePresent = NO;
 static BOOL sciBaseWorks = NO;
 static NSMutableSet<NSString *> *sciBaseSurfaces = nil;
+static NSMutableSet<NSString *> *sciBaseSkipped = nil;
 
 static const NSInteger kSCICellButtonTag = 0x5C18;
 static NSUInteger sciCellButtonsPlaced = 0;
@@ -692,6 +693,11 @@ static UIButton *SCITTMakeDownloadButton(void) {
 static void SCITTPlaceBaseButton(UIViewController *controller) {
     if (!SCIPrefEnabled(SCIPrefDownloadButton)) return;
 
+    // The cell path has been wrapped since it was written; this one was not, and that is why a
+    // wrong model class became a crash instead of a missing button. A download button is a
+    // convenience and TikTok is not -- nothing in here is worth taking the app down for.
+    @try {
+
     UIView *host = controller.viewIfLoaded;
     if (!host || host.bounds.size.width <= 0 || host.bounds.size.height <= 0) return;
 
@@ -700,6 +706,22 @@ static void SCITTPlaceBaseButton(UIViewController *controller) {
 
     id model = ((id (*)(id, SEL))objc_msgSend)(controller, modelSel);
     if (!model) return;
+
+    // **The class of `model` was assumed, and the DM screen crashed on it.** `model` is declared
+    // `AWEAwemeModel` on the base, but a subclass may return something else entirely -- a direct
+    // message carries its own model -- and everything downstream sends `-video`, walks a bitrate
+    // ladder and reads URL models off it. Handing that a different object is the 0.12.0 crash
+    // again, arrived at from a different direction: **a declared property type describes the
+    // base, not what every subclass actually returns.**
+    //
+    // Recorded as well as checked, so a screen that is skipped says which class it had rather
+    // than silently having no button.
+    if (![model isKindOfClass:NSClassFromString(@"AWEAwemeModel")]) {
+        if (!sciBaseSkipped) sciBaseSkipped = [NSMutableSet set];
+        [sciBaseSkipped addObject:[NSString stringWithFormat:@"%@ has %@",
+            NSStringFromClass([controller class]), NSStringFromClass([model class])]];
+        return;
+    }
 
     // Resolved once per model, not once per call. Walking the ladder is not free, and this used
     // to run on every layout pass -- the cost of that was the crash, not a detail of it.
@@ -738,6 +760,10 @@ static void SCITTPlaceBaseButton(UIViewController *controller) {
     // Re-associated on every bind, because the controller is reused and the button is not:
     // a stale association is how the same clip saved three times while another was on screen.
     objc_setAssociatedObject(button, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+    } @catch (NSException *exception) {
+        SCILogV(@"base button: %@", exception.reason);
+    }
 }
 
 %group Base
@@ -822,6 +848,11 @@ NSString *SCITTButtonReport(void) {
             [[sciBaseSurfaces allObjects] componentsJoinedByString:@", "]];
     } else if (sciBasePresent) {
         [out appendString:@" — no screen has bound a model yet"];
+    }
+
+    if (sciBaseSkipped.count) {
+        [out appendFormat:@"; skipped %@",
+            [[sciBaseSkipped allObjects] componentsJoinedByString:@", "]];
     }
 
     [out appendFormat:@" | cell %@ %lu placed",
