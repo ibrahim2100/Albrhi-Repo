@@ -1652,6 +1652,12 @@ ladder or `bitrateModels` is a filtered subset and the player is handed more. **
 that by probing the player's own picker instead of inferring**, which is the discipline this file
 demands and which the previous two releases skipped.
 
+**Confirmed on a device: the tweak now saves 1080 at 60 fps — the quality this whole line of
+work was about.** It comes from the external switch, which means it comes with the privacy cost
+stated on its own row; **internal-only downloads remain 720 at 30 fps**, because that is what
+TikTok streams to the app and no accessor here was ever hiding anything better. Both halves
+matter when describing this feature: the quality is real, and so is where it comes from.
+
 **Corrected twice, and the second correction reverses the first: the external service returns
 the *original upload*, and on some videos that is dramatically better.** A later device report
 took tikwm's file at **13.9 MB against `bitrateModels`' 4.5**, and the saved clip came out at
