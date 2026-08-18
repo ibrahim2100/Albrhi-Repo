@@ -1,5 +1,22 @@
 # Albrhi for TikTok — what changed
 
+## v0.13.5
+
+**`PHPhotosErrorDomain 3302` is Photos refusing the format, not the download.** It arrived for
+two pictures that `UIImage` had already decoded perfectly well, which rules out bad bytes — and
+the cause is that data handed to Photos carries no file name, so the library has to guess the
+type, and TikTok serves these as WebP, which it will not take. That is also why one post saved
+and another did not: the criterion was never how the post was found, only what format its
+pictures happened to be in.
+
+A picture is now tried three ways and the report names the one that worked:
+
+1. **the original bytes, with their own file name** — the only path that saves the picture
+   exactly as posted, with no re-encoding;
+2. **re-encoded as JPEG**, if Photos refuses the format — a real loss in quality, and worth
+   taking over saving nothing;
+3. the plain image request, which is what worked before any of this.
+
 ## v0.13.4
 
 **A photo post asks which picture you meant.** A post of sixteen saved all sixteen without a

@@ -413,6 +413,14 @@ one had a real fix behind it: TikTok serves photos as WebP and HEIC, and bytes `
 not decode can still be handed to Photos as the original resource, which also stops the save
 re-encoding a file that was already fine.
 
+**A Photos error is not a download error, and 3302 says which.** `PHPhotosErrorDomain 3302`
+came back for pictures `UIImage` had already decoded, which rules out the bytes — it is the
+library refusing the *format*. Data handed to Photos carries no file name, so it has to guess
+the type, and TikTok serves some pictures as WebP. `PHAssetResourceCreationOptions.originalFilename`
+is what tells it, and the save now falls back to a JPEG re-encode when the format is still
+refused. Two posts behaving differently had nothing to do with where they were found, which is
+what the user's own "what is the criterion" was asking — the answer was in the error code.
+
 **Saving the whole post is a decision, and it was being made silently.** A photo post of
 sixteen saved all sixteen on one tap. The fix is not a guess about intent: `AWEPhotoAlbumModel`
 tracks the swipe in `currentIndex`, so the app already knows which picture is on screen — ask,
@@ -1460,7 +1468,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Locket **0.4.1** (released on
 its own, not in the suite) · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.13.4** · suite **1.38.4**.
+source) · TikTok **0.13.5** · suite **1.38.5**.
 
 ### TikTok, where it actually stands
 

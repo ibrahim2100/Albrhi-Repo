@@ -139,18 +139,104 @@ static JGProgressHUD *sciPhotoHUD = nil;
     return controller;
 }
 
+///
+/// One change request, run and waited on, reporting whether Photos accepted it.
+///
+/// Photos serialises change requests anyway, so waiting costs nothing and buys ordering: eight
+/// fired at once produce eight interleaved completions and an album in whatever order the
+/// library felt like.
+static BOOL SCITTPerformPhotoChange(void (^changes)(void), NSString **outError) {
+    __block BOOL ok = NO;
+    __block NSString *failure = nil;
+
+    dispatch_semaphore_t wait = dispatch_semaphore_create(0);
+
+    [[PHPhotoLibrary sharedPhotoLibrary] performChanges:changes
+                                      completionHandler:^(BOOL success, NSError *error) {
+        ok = success;
+        if (!success) failure = error.localizedDescription;
+        dispatch_semaphore_signal(wait);
+    }];
+
+    dispatch_semaphore_wait(wait, dispatch_time(DISPATCH_TIME_NOW, 30ull * NSEC_PER_SEC));
+
+    if (outError) *outError = failure;
+    return ok;
+}
+
+///
+/// Saves one downloaded picture, trying three ways and naming the one that worked.
+///
+/// **`PHPhotosErrorDomain 3302` is Photos refusing the *format*, not the bytes** — it arrived
+/// for images `UIImage` had already decoded perfectly well, which rules out a bad download. The
+/// cause is that a data resource carries no file name, so the library has to guess the type,
+/// and TikTok serves these as WebP, which it will not take.
+///
+/// So the original bytes are offered *with* their own file name first — that is the only path
+/// that saves the picture exactly as posted, no re-encode. If Photos still refuses the format,
+/// the decoded image is re-encoded as JPEG, which it always accepts and which is a real loss
+/// worth taking over saving nothing. The plain image request is kept last as the path that
+/// worked before any of this.
+static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
+                               NSString **outHow, NSString **outError) {
+    NSString *name = source.lastPathComponent;
+    if (!name.pathExtension.length) name = [name stringByAppendingPathExtension:@"jpg"];
+
+    PHAssetResourceCreationOptions *options = [[PHAssetResourceCreationOptions alloc] init];
+    options.originalFilename = name.length ? name : @"photo.jpg";
+
+    NSString *error = nil;
+
+    if (SCITTPerformPhotoChange(^{
+        PHAssetCreationRequest *request = [PHAssetCreationRequest creationRequestForAsset];
+        [request addResourceWithType:PHAssetResourceTypePhoto data:data options:options];
+    }, &error)) {
+        if (outHow) *outHow = @"as posted";
+        return YES;
+    }
+
+    if (image) {
+        NSData *jpeg = UIImageJPEGRepresentation(image, 0.95);
+        if (jpeg.length) {
+            PHAssetResourceCreationOptions *asJPEG = [[PHAssetResourceCreationOptions alloc] init];
+            asJPEG.originalFilename = @"photo.jpg";
+
+            if (SCITTPerformPhotoChange(^{
+                PHAssetCreationRequest *request = [PHAssetCreationRequest creationRequestForAsset];
+                [request addResourceWithType:PHAssetResourceTypePhoto data:jpeg options:asJPEG];
+            }, &error)) {
+                if (outHow) *outHow = @"re-encoded as JPEG";
+                return YES;
+            }
+        }
+
+        if (SCITTPerformPhotoChange(^{
+            [PHAssetChangeRequest creationRequestForAssetFromImage:image];
+        }, &error)) {
+            if (outHow) *outHow = @"via UIImage";
+            return YES;
+        }
+    }
+
+    if (outError) *outError = error;
+    return NO;
+}
+
 + (void)savePhotos:(NSArray<NSURL *> *)urls {
     [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelAddOnly
                                                handler:^(PHAuthorizationStatus status) {
         if (status != PHAuthorizationStatusAuthorized &&
             status != PHAuthorizationStatusLimited) {
             SCITTRecordDownload(@"Photos access refused");
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self report:SCILocalized(@"save_no_permission") ok:NO];
+            });
             return;
         }
 
-        // The same HUD the video path shows. Photos saved with no indicator at all was the
-        // other half of the report: it worked, and nothing on screen said so, which is
-        // indistinguishable from a button that does nothing.
+        // The same HUD the video path shows. A save with no indicator at all is
+        // indistinguishable from a button that does nothing, which is how working code got
+        // reported as broken.
         dispatch_async(dispatch_get_main_queue(), ^{
             UIView *host = [self host];
             if (!host) return;
@@ -164,79 +250,53 @@ static JGProgressHUD *sciPhotoHUD = nil;
         });
 
         dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-            __block NSUInteger saved = 0;
-
-            // "saved 0 of 1" collapsed three unrelated failures into one number.
-            //
-            // The download can fail, the bytes can arrive and not decode, or Photos can
-            // refuse the write -- and each needs a different fix, while the report said only
-            // that nothing arrived. Counted separately, and the first real error message is
-            // kept, because a cause named once is worth more than a count of three.
-            __block NSUInteger noData = 0, noDecode = 0, refused = 0;
-            __block NSString *firstError = nil;
+            NSUInteger saved = 0, noData = 0, refused = 0;
+            NSString *firstError = nil;
+            NSMutableSet<NSString *> *ways = [NSMutableSet set];
 
             for (NSURL *url in urls) {
                 NSData *data = [NSData dataWithContentsOfURL:url];
                 if (!data.length) { noData++; continue; }
 
-                UIImage *image = [UIImage imageWithData:data];
+                NSString *how = nil, *error = nil;
+                if (SCITTSavePhotoData(data, [UIImage imageWithData:data], url, &how, &error)) {
+                    saved++;
+                    if (how) [ways addObject:how];
+                } else {
+                    refused++;
+                    if (!firstError) firstError = error;
+                }
 
-                dispatch_semaphore_t wait = dispatch_semaphore_create(0);
-
-                [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
-                    if (image) {
-                        [PHAssetChangeRequest creationRequestForAssetFromImage:image];
-                        return;
-                    }
-
-                    // Undecodable by UIImage is not undecodable by Photos. TikTok serves
-                    // these as WebP and HEIC, and handing the library the original bytes
-                    // lets it do its own decode -- and keeps the file as posted rather than
-                    // re-encoding it, which is the better outcome even when both work.
-                    PHAssetCreationRequest *request = [PHAssetCreationRequest creationRequestForAsset];
-                    [request addResourceWithType:PHAssetResourceTypePhoto data:data options:nil];
-                } completionHandler:^(BOOL ok, NSError *error) {
-                    if (ok) {
-                        saved++;
-                    } else if (image) {
-                        refused++;
-                        if (!firstError) firstError = error.localizedDescription;
-                    } else {
-                        noDecode++;
-                        if (!firstError) firstError = error.localizedDescription;
-                    }
-                    dispatch_semaphore_signal(wait);
-                }];
-
-                // Waited on deliberately, one at a time. Photos serialises change requests
-                // anyway, and firing eight at once produces eight interleaved completions
-                // whose ordering in the album is then whatever the library felt like.
-                dispatch_semaphore_wait(wait, dispatch_time(DISPATCH_TIME_NOW, 30ull * NSEC_PER_SEC));
-
-                NSUInteger done = saved + noData + noDecode + refused;
+                NSUInteger done = saved + noData + refused;
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [sciPhotoHUD setProgress:(float)done / (float)urls.count animated:YES];
                 });
             }
 
+            // Counted apart, because a download that never arrived and a library that refused
+            // the file need different fixes and one number said only that nothing happened.
             NSMutableString *note = [NSMutableString stringWithFormat:@"photo post — saved %lu of %lu",
                 (unsigned long)saved, (unsigned long)urls.count];
+            if (ways.count) {
+                [note appendFormat:@" (%@)",
+                    [[ways allObjects] componentsJoinedByString:@", "]];
+            }
             if (noData) [note appendFormat:@"; %lu never downloaded", (unsigned long)noData];
-            if (noDecode) [note appendFormat:@"; %lu were not an image", (unsigned long)noDecode];
             if (refused) [note appendFormat:@"; %lu refused by Photos", (unsigned long)refused];
             if (firstError) [note appendFormat:@" (%@)", firstError];
 
             SCITTRecordDownload(note);
 
+            NSUInteger finalSaved = saved;
             dispatch_async(dispatch_get_main_queue(), ^{
                 [sciPhotoHUD dismiss];
                 sciPhotoHUD = nil;
 
                 NSString *message = urls.count > 1
                     ? [NSString stringWithFormat:SCILocalized(@"photos_saved_count"),
-                       (unsigned long)saved, (unsigned long)urls.count]
-                    : SCILocalized(saved ? @"save_done" : @"save_failed");
-                [self report:message ok:(saved == urls.count)];
+                       (unsigned long)finalSaved, (unsigned long)urls.count]
+                    : SCILocalized(finalSaved ? @"save_done" : @"save_failed");
+                [self report:message ok:(finalSaved == urls.count)];
             });
         });
     }];

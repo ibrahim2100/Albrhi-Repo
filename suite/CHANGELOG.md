@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.38.5
+
+**TikTok: photos that Photos refused now save.** Some photo posts failed with an error that
+looked like a broken download and was really the Photos library rejecting the file format —
+TikTok serves some pictures as WebP, and nothing was telling Photos what it was being handed.
+Pictures are now saved as posted where possible, and converted where the library insists.
+
+Includes TikTok 0.13.5.
+
 ## v1.38.4
 
 **TikTok: photo posts ask which picture, and show that they are saving.** A post of sixteen
