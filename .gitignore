@@ -66,3 +66,4 @@ __pycache__/
 # Staging tree for the combined package, rebuilt by tools/make-suite.sh
 .suite-stage/
 /packages/
+tweaks/*/shared/
