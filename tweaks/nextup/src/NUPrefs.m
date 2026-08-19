@@ -68,7 +68,24 @@ BOOL NUPrefBool(NSString *key, BOOL def) {
     return NUReadCF(key, def, /*fresh=*/NO);
 }
 
-BOOL NUMasterEnabled(void) { return NUPrefBool(@"Enabled", YES); }
+///
+/// **Opt-in, and this is the port's own change to upstream's behaviour.**
+///
+/// NextUp 3 fails open: no plist means every switch reads YES, so a fresh install works
+/// immediately. That is right for a tweak somebody installed on purpose, one app, one
+/// feature — and it is the reading this repository already abandoned once, for a reason
+/// that applies here harder than it did there. `SCIPanelGate.h` states it: absence must
+/// read as *off*, because Albrhi installs across apps the user never asked about.
+///
+/// This one injects into SpringBoard and five media apps and draws into the Lock Screen.
+/// Defaulting all of that on the moment the package lands is the opposite of what this
+/// project promises, and it was reported as wrong on the first install.
+///
+/// Only the master is flipped. The surfaces and the per-app switches keep upstream's
+/// YES, so turning the one switch on gives a working tweak rather than a scavenger hunt
+/// through nine more — and turning it off still stops everything, which is what the
+/// switch is for.
+BOOL NUMasterEnabled(void) { return NUPrefBool(@"Enabled", NO); }
 
 void NUPrefsObserve(dispatch_block_t onChange) {
     static int token;

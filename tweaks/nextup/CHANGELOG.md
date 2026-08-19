@@ -1,5 +1,37 @@
 # Albrhi NextUp — what changed
 
+## v0.1.1
+
+Two reports from the first install. One confirms a large piece works, one is a real
+mistake of this port's own.
+
+**Everything defaulted to on, and that is wrong here.** Upstream fails open: no plist
+means every switch reads YES, which is right for a tweak somebody installed deliberately
+for one app. This repository abandoned that reading once already and wrote down why —
+`SCIPanelGate.h` states that absence must read as *off*, because Albrhi installs across
+apps nobody asked about. It applies harder here than where it was written: this one
+injects into SpringBoard and five media apps and draws on the Lock Screen. Defaulting all
+of that on the moment the package lands is the opposite of what this project promises.
+
+The master switch is now opt-in. The surfaces and the per-app switches keep upstream's
+YES, so turning that one switch on gives a working tweak rather than a hunt through nine
+more — and turning it off still stops everything. The panel page reads *and publishes*
+the same split, because a screen showing the master as on while the tweak reads it as off
+would be worse than either default alone.
+
+**The settings page appearing at all is the confirmation worth naming.** It means the
+package installed, the dylib is where the filter says, and `SCIPanelScan` collapsed a
+seven-process filter into one row that pushes to a real page. That whole path works.
+
+**Logging is compiled in, deliberately, while this port is unproven.** Upstream strips
+`NULog` from FINALPACKAGE builds — correct for a tweak that works, and it left this one
+unable to say anything at all when the first install came back "it didn't work": no log,
+no os_log line, nothing to read. `-DDEBUG=1` is now in the Makefile. It gates exactly two
+things and neither changes behaviour: the log, and the interface drift probes in each
+provider's constructor that name the private class or selector missing after an app
+update. Logs land in `/var/mobile/nu/nextup3-<process>.log`, one per injected process.
+To be removed once the tweak is confirmed on a device.
+
 ## v0.1.0 — packaging notes
 
 The port compiles: ten thousand lines built clean for arm64 and arm64e, linked, signed,

@@ -62,6 +62,23 @@ export NU_PTRAUTH_CFLAGS
 AlbrhiNU_CFLAGS += -fobjc-arc -DDISABLE_ROOTLESS_COMPAT_WARNING \
 	-Wno-deprecated-declarations -Wno-nullability-completeness \
 	-Wno-unused-function -Wno-unused-value
+
+#
+# **-DDEBUG in a release build, deliberately, while this port is unproven.**
+#
+# Upstream compiles NULog out of FINALPACKAGE builds, which is the right default for a
+# tweak that works. It left this port with no way to say anything at all on a device:
+# the first install came back "it didn't work" and there was nothing to read — no log,
+# no os_log line, nothing. That is the one thing an untested port cannot afford.
+#
+# DEBUG here gates exactly two things and neither changes behaviour: NULog (os_log plus
+# the file NULogFile.m writes) and the interface drift probes in each provider's %ctor,
+# which name the private class or selector that went missing after an app update. Both
+# are precisely what a first device report needs.
+#
+# Remove this once the tweak is confirmed working on a device.
+#
+AlbrhiNU_CFLAGS += -DDEBUG=1
 AlbrhiNU_LOGOSFLAGS = --c warnings=none
 
 #
