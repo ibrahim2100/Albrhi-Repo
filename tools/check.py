@@ -755,12 +755,10 @@ en_keys, ar_keys, used = set(), set(), set()
 # quiet this check would be a file that earns nothing, which this project already has a
 # ground rule against. Arabic is required either way, so an .lproj tree without ar.lproj
 # still fails.
-LPROJ_ROOTS = [d for d in glob.glob('bundle/Resources') if os.path.isdir(d)]
 LPROJ_LANGS = set()
-for _root in LPROJ_ROOTS:
-    for _d in glob.glob(os.path.join(_root, '*.lproj')):
-        if glob.glob(os.path.join(_d, '*.strings')):
-            LPROJ_LANGS.add(os.path.basename(_d).split('.')[0])
+for _d in glob.glob('layout/**/*.lproj', recursive=True) + glob.glob('bundle/**/*.lproj', recursive=True):
+    if glob.glob(os.path.join(_d, '*.strings')):
+        LPROJ_LANGS.add(os.path.basename(_d).split('.')[0])
 
 if not os.path.isfile(LOC_PATH):
     if LPROJ_LANGS:

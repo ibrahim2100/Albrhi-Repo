@@ -59,14 +59,15 @@ export NU_PTRAUTH_CFLAGS
 
 include $(ROOT)/shared/tweak.mk
 
-# The localisation bundle: resources only, no executable.
+# The localisation bundle ships through layout/, not as a Theos subproject.
 #
 # NULocalization.h finds its .strings by walking up from this dylib's own path to
 # <jbroot>/Library/PreferenceBundles/NUPrefs.bundle — the one lookup that resolves on
 # rootful, rootless and roothide alike. Upstream shipped that bundle as its Settings
-# pane; this port's settings live in Albrhi Panel instead, so the bundle is kept for
-# the twenty-seven .lproj tables alone. The name is upstream's because the path is
-# compiled into the header, and Arabic is one of the tables — this repository's own
-# bilingual rule is satisfied by shipping it rather than by a second string file.
-SUBPROJECTS += bundle
-include $(THEOS_MAKE_PATH)/aggregate.mk
+# pane; this port's settings live in Albrhi Panel instead, so what is left is 27 .lproj
+# tables and an Info.plist with no executable named in it.
+#
+# A BUNDLE subproject was the obvious way to do that and the wrong one: it exists to
+# compile and link something, and this has no sources at all. layout/ is copied into the
+# package verbatim, which is exactly the job — and it drops the aggregate.mk include that
+# would otherwise sit after shared/tweak.mk has already pulled in tweak.mk.
