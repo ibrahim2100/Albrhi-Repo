@@ -1,5 +1,20 @@
 # Albrhi NextUp — what changed
 
+## v0.1.5
+
+**A ceiling on the log file, which had none.**
+
+Every line did `seekToEndOfFile`, forever. That is harmless while the switch is off — which it now
+is by default — and it is not harmless the moment somebody turns it on to chase something and
+forgets: SpringBoard runs for days and appends a line per track change. **A diagnostic that can
+fill a phone is a bug of its own**, and "they will remember to turn it off" is not a design.
+
+Half a megabyte, checked with a `stat` every 64 lines rather than every line, so the cost is
+nothing while the log is on and nothing at all while it is off. Truncated rather than rotated: a
+second file is a second thing to find, ask for and delete, and what matters in a log that has run
+that long is what the process is doing *now*. The truncation writes itself into the file, so a
+short log is never mistaken for a quiet process.
+
 ## v0.1.4
 
 **The log is compiled in and switched off, instead of always writing.**

@@ -47,6 +47,25 @@ BOOL NULogEnabled(void) {
 static NSString *gNULogPath = nil;
 static pthread_mutex_t gNULogLock = PTHREAD_MUTEX_INITIALIZER;
 
+///
+/// **The file was append-only with no ceiling, and that is only harmless while the switch is off.**
+///
+/// `seekToEndOfFile` on every line, forever: turn the log on to chase something, forget it, and
+/// SpringBoard -- which runs for days -- keeps appending a line per track change until the disk
+/// notices. A diagnostic that can fill a phone is a bug of its own, and "the user will remember to
+/// turn it off" is not a design.
+///
+/// Half a megabyte is far more than any session anybody reads, and the check is a `stat` every 64
+/// lines rather than every line: the cost is then nothing while the log is on and nothing at all
+/// while it is off.
+///
+/// Truncated rather than rotated. A second file is a second thing to find, ask for and delete, and
+/// the interesting part of a log that has run this long is what it is doing *now* -- the truncation
+/// says so in the file itself, so a short log is never mistaken for a quiet process.
+///
+static const unsigned long long kNULogMaxBytes = 512 * 1024;
+static const int kNULogCheckEvery = 64;
+
 // First writable candidate wins, and we remember it for the process lifetime.
 // The shared /var/mobile/nu directory is preferred so the display-side logs
 // (SpringBoard + MediaRemoteUI, the two that matter most for the UI work) land
@@ -93,6 +112,7 @@ void NULogWritev(const char *cfmt, va_list ap) {
             df = [NSDateFormatter new];
             df.dateFormat = @"HH:mm:ss.SSS";
         });
+
         NSString *stamped = [NSString stringWithFormat:@"%@ [%d] %@\n",
                              [df stringFromDate:NSDate.date], getpid(), line];
 
@@ -102,6 +122,17 @@ void NULogWritev(const char *cfmt, va_list ap) {
         // exactly when the log matters most (SpringBoard survives many deploys).
         NSFileManager *fm = NSFileManager.defaultManager;
         if (![fm fileExistsAtPath:path]) [fm createFileAtPath:path contents:nil attributes:nil];
+
+        static int sinceCheck = 0;
+        if (sinceCheck++ % kNULogCheckEvery == 0) {
+            NSDictionary *attributes = [fm attributesOfItemAtPath:path error:NULL];
+            if ([attributes fileSize] > kNULogMaxBytes) {
+                NSString *note = [NSString stringWithFormat:
+                    @"%@ [%d] --- log passed %lluKB, truncated ---\n",
+                    [df stringFromDate:NSDate.date], getpid(), kNULogMaxBytes / 1024];
+                [[note dataUsingEncoding:NSUTF8StringEncoding] writeToFile:path atomically:NO];
+            }
+        }
 
         NSFileHandle *fh = [NSFileHandle fileHandleForWritingAtPath:path];
         if (!fh) return;
