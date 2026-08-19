@@ -22,7 +22,7 @@
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "Built and checked against `tools/check.py`, but this port has not yet run on a real phone. It injects into SpringBoard — have a way back in (SSH, or a package manager reachable from safe mode) before the first install.",
+          "markdown": "Confirmed working on iOS 16.1: the row is drawn and the queue is read. It injects into SpringBoard — have a way back in (SSH, or a package manager reachable from safe mode) before the first install of any build. On a jailbreak with per-app tweak injection, the media apps need injection enabled or the row stays empty: the display side is up and no provider answers it.",
           "useSpacing": true
         },
         {
@@ -150,6 +150,31 @@
         },
         {
           "class": "DepictionTableTextView",
+          "title": "Apple Music",
+          "text": "Full support"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Apple Podcasts",
+          "text": "Full support"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "YouTube Music",
+          "text": "Full support, built against 9.28.4"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "YouTube",
+          "text": "Full support, built against 21.32.4 — a playlist or mix has a real queue; a standalone video has none, so the autoplay suggestion is shown instead, which can be played but not skipped or re-ordered. Its cover is 16:9 rather than square"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Spotify",
+          "text": "Full support, built against 9.1.62"
+        },
+        {
+          "class": "DepictionTableTextView",
           "title": "Ported from",
           "text": "NextUp 3 by Yves (github.com/Yves000/NextUp3), GPLv3"
         },
@@ -161,7 +186,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Tested on",
-          "text": "not yet validated on-device"
+          "text": "iOS 16.1, confirmed on-device"
         },
         {
           "class": "DepictionSeparatorView"
