@@ -1,0 +1,190 @@
+{
+  "minVersion": "0.1",
+  "class": "DepictionTabView",
+  "tintColor": "#FF375F",
+  "tabs": [
+    {
+      "class": "DepictionStackView",
+      "tabname": "Details",
+      "views": [
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "**See and skip what plays next, from the Lock Screen** — the title, artist and cover of the coming track, under the now-playing controls. Tap the cover to play it now.\n\nA port of NextUp 3 by Yves, under the GNU GPL v3. Its own package: this has nothing to do with the social apps the combined Albrhi package patches.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 12
+        },
+        {
+          "class": "DepictionHeaderView",
+          "title": "Beta"
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "Built and checked against `tools/check.py`, but this port has not yet run on a real phone. It injects into SpringBoard — have a way back in (SSH, or a package manager reachable from safe mode) before the first install.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSeparatorView"
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "What plays next, without opening the app",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "A row under the now-playing controls showing the next track — its title, artist and cover — on the Lock Screen, in Control Center and in the Dynamic Island. Tap the cover to play it now, or skip it, without ever opening the app.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 8
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "Five apps, each read properly",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "Apple Music, Apple Podcasts, YouTube, YouTube Music and Spotify. Each one is read through that app's own playback queue, so the row shows what the app itself would play next rather than a guess at it.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 8
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "Settings inside Albrhi",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "Settings › Albrhi › Albrhi NextUp: a master switch, one per surface and one per app. Changes apply immediately, without a respring.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 8
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "A port, not an original",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "This is NextUp 3 by Yves (github.com/Yves000/NextUp3), carried over under the GNU GPL v3 — the same licence this project ships under. The design, the research and nearly all of the implementation are his work; this port replaced the settings pane and rebranded the package.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 8
+        }
+      ]
+    },
+    {
+      "class": "DepictionStackView",
+      "tabname": "What's New",
+      "views": [
+        {
+          "class": "DepictionSubheaderView",
+          "title": "v0.1.0 — packaging notes",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **`shared/tweak.mk` was appending JGProgressHUD, `SCIPanelGate.m` and `SCISubstrateShim.m`**\n• **An unclosed parenthesis in `control`**\n• **`layout/DEBIAN/postinst` was mode 644.**\n• **`build.sh`'s roothide identity swap assumed `Conflicts` named nothing but the other flavour.**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "v0.1.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **Duplicate `@interface`**\n• **\"Both a property and a method\"**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        }
+      ]
+    },
+    {
+      "class": "DepictionStackView",
+      "tabname": "Info",
+      "views": [
+        {
+          "class": "DepictionTableTextView",
+          "title": "Version",
+          "text": "0.1.0"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Developer",
+          "text": "Ibrahim Ismail AL-Rahn"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Ported from",
+          "text": "NextUp 3 by Yves (github.com/Yves000/NextUp3), GPLv3"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Licence",
+          "text": "GNU GPL v3"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Tested on",
+          "text": "not yet validated on-device"
+        },
+        {
+          "class": "DepictionSeparatorView"
+        },
+        {
+          "class": "DepictionTableButtonView",
+          "title": "Source code",
+          "action": "https://github.com/ibrahim2100/Albrhi-Repo",
+          "openExternal": true
+        },
+        {
+          "class": "DepictionTableButtonView",
+          "title": "Report an issue",
+          "action": "https://github.com/ibrahim2100/Albrhi-Repo/issues/new",
+          "openExternal": true
+        },
+        {
+          "class": "DepictionTableButtonView",
+          "title": "Instagram — @Ib.11p",
+          "action": "https://instagram.com/Ib.11p",
+          "openExternal": true
+        },
+        {
+          "class": "DepictionTableButtonView",
+          "title": "Telegram — @Ib11p",
+          "action": "https://t.me/Ib11p",
+          "openExternal": true
+        },
+        {
+          "class": "DepictionSeparatorView"
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "_Free and open source under the GNU GPL v3. A port of NextUp 3 by Yves (github.com/Yves000/NextUp3); the original design and nearly all of the implementation are his work. Not affiliated with, endorsed by or sponsored by Apple, Google or Spotify._",
+          "useSpacing": true
+        }
+      ]
+    }
+  ]
+}
