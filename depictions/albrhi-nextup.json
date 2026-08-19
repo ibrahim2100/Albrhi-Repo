@@ -92,6 +92,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.1.2",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **The sandbox profile was never applied, and that alone is \"it didn't work at all\".**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.1.1",
           "useBoldText": true
         },
@@ -117,20 +131,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.1.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **Duplicate `@interface`**\n• **\"Both a property and a method\"**",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -141,7 +141,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.1.1"
+          "text": "0.1.2"
         },
         {
           "class": "DepictionTableTextView",
