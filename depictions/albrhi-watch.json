@@ -1,0 +1,186 @@
+{
+  "minVersion": "0.1",
+  "class": "DepictionTabView",
+  "tintColor": "#FF375F",
+  "tabs": [
+    {
+      "class": "DepictionStackView",
+      "tabname": "Details",
+      "views": [
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "**Pair an Apple Watch running a watchOS your iPhone does not officially support** — setup completes, and companion apps install.\n\nIts own package: this has nothing to do with the social apps the combined Albrhi package patches.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 12
+        },
+        {
+          "class": "DepictionHeaderView",
+          "title": "Beta"
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "The pairing core is proven upstream; this packaging of it, with its switches and settings page, has not yet run on a phone. It injects into SpringBoard — have a way back in before the first install.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSeparatorView"
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "Pair a newer watch",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "iOS refuses to pair with an Apple Watch whose watchOS is newer than it expects. Albrhi Watch answers those compatibility questions the way a supported pairing would, so setup completes.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 8
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "Install companion apps",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "Apps that refuse to install onto a newer watchOS are answered as compatible, so the Watch app can put them on the wrist.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 8
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "Switched on deliberately",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "Off until you turn it on in Settings › Albrhi › Albrhi Watch, with three separate switches so one answer can be turned off without removing the tweak, and a restart button under them because the answers are installed while SpringBoard starts.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 8
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "It tells you what it did",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "Which classes were found on your build, how many times each answer was given, and the watch version it read against your iPhone — because a pairing that fails looks exactly like a tweak that never loaded.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 8
+        }
+      ]
+    },
+    {
+      "class": "DepictionStackView",
+      "tabname": "What's New",
+      "views": [
+        {
+          "class": "DepictionSubheaderView",
+          "title": "v0.1.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **A master switch, off until it is turned on.**\n• **Three switches rather than one**\n• **Every answer is counted.**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        }
+      ]
+    },
+    {
+      "class": "DepictionStackView",
+      "tabname": "Info",
+      "views": [
+        {
+          "class": "DepictionTableTextView",
+          "title": "Version",
+          "text": "0.1.0"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Developer",
+          "text": "Ibrahim Ismail AL-Rahn"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Pairing core",
+          "text": "watched by 34306 (github.com/34306/watched), MIT"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Answers",
+          "text": "pairing compatibility, watch capabilities, companion app installation"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Settings",
+          "text": "Settings › Albrhi › Albrhi Watch"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Licence",
+          "text": "GNU GPL v3"
+        },
+        {
+          "class": "DepictionTableTextView",
+          "title": "Tested on",
+          "text": "not yet validated on-device"
+        },
+        {
+          "class": "DepictionSeparatorView"
+        },
+        {
+          "class": "DepictionTableButtonView",
+          "title": "Source code",
+          "action": "https://github.com/ibrahim2100/Albrhi-Repo",
+          "openExternal": true
+        },
+        {
+          "class": "DepictionTableButtonView",
+          "title": "Report an issue",
+          "action": "https://github.com/ibrahim2100/Albrhi-Repo/issues/new",
+          "openExternal": true
+        },
+        {
+          "class": "DepictionTableButtonView",
+          "title": "Instagram — @Ib.11p",
+          "action": "https://instagram.com/Ib.11p",
+          "openExternal": true
+        },
+        {
+          "class": "DepictionTableButtonView",
+          "title": "Telegram — @Ib11p",
+          "action": "https://t.me/Ib11p",
+          "openExternal": true
+        },
+        {
+          "class": "DepictionSeparatorView"
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "_Free and open source. The pairing core is watched by 34306, used under the MIT licence, whose text ships with the package. Not affiliated with, endorsed by or sponsored by Apple._",
+          "useSpacing": true
+        }
+      ]
+    }
+  ]
+}
