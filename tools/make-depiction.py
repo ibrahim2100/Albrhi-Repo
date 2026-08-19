@@ -280,12 +280,28 @@ TWEAKS = {
         'html_tagline': '<strong>See and skip what plays next, from the Lock '
                         'Screen</strong> — a GPLv3 port of NextUp 3 by Yves.',
         'app': 'SpringBoard, Music, Podcasts, YouTube, YouTube Music and Spotify',
-        'tested': 'not yet validated on-device',
-        'tested_note': 'Built and checked against `tools/check.py`, but this port has '
-                       'not yet run on a real phone. It injects into SpringBoard — '
-                       'have a way back in (SSH, or a package manager reachable from '
-                       'safe mode) before the first install.',
-        'rows': [('Ported from', 'NextUp 3 by Yves (github.com/Yves000/NextUp3), '
+        'tested': 'iOS 16.1, confirmed on-device',
+        'tested_note': 'Confirmed working on iOS 16.1: the row is drawn and the queue '
+                       'is read. It injects into SpringBoard — have a way back in '
+                       '(SSH, or a package manager reachable from safe mode) before '
+                       'the first install of any build. On a jailbreak with per-app '
+                       'tweak injection, the media apps need injection enabled or the '
+                       'row stays empty: the display side is up and no provider '
+                       'answers it.',
+        # One row per app, because "which apps" and "which build of them" is the
+        # question this tweak is actually asked -- a provider is written against one
+        # app version's private classes, so the number is what someone checks first
+        # when a row goes blank after an update.
+        'rows': [('Apple Music', 'Full support'),
+                 ('Apple Podcasts', 'Full support'),
+                 ('YouTube Music', 'Full support, built against 9.28.4'),
+                 ('YouTube', 'Full support, built against 21.32.4 — a playlist or mix '
+                             'has a real queue; a standalone video has none, so the '
+                             'autoplay suggestion is shown instead, which can be '
+                             'played but not skipped or re-ordered. Its cover is 16:9 '
+                             'rather than square'),
+                 ('Spotify', 'Full support, built against 9.1.62'),
+                 ('Ported from', 'NextUp 3 by Yves (github.com/Yves000/NextUp3), '
                                  'GPLv3')],
         'footer_html': 'GPLv3 · a port of NextUp 3 by Yves, used under the same '
                        'licence · not affiliated with Apple, Google or Spotify.',

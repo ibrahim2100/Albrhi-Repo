@@ -11,6 +11,11 @@ above.
 header with the mark, a line saying what it does, and a pill showing whether it is on — plus an
 icon on every switch.
 
+Each app row also says which build of that app it was written against — YouTube 21.32.4, YouTube
+Music 9.28.4, Spotify 9.1.62 — and the footer explains the one app that behaves differently:
+YouTube has a real queue for a playlist or mix, but a standalone video has none, so its own
+autoplay suggestion is shown instead.
+
 Includes Panel 0.9.2.
 
 ## v1.45.0

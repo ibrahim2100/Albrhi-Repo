@@ -3,6 +3,7 @@
 #import <notify.h>
 #import "../Localization/SCILocalize.h"
 #import "../SCIPanelBadge.h"
+#import "../SCIPanelAppCell.h"
 #import "../SCIPanelHeader.h"
 
 ///
@@ -150,6 +151,24 @@ static const size_t kSCINUToggleCount = sizeof(kSCINUToggles) / sizeof(kSCINUTog
                             key:(NSString *)key
                          symbol:(NSString *)symbol
                           tint:(UIColor *)tint {
+    return [self nuSwitchTitled:title key:key symbol:symbol tint:tint support:nil];
+}
+
+///
+/// **The version each app was built against, on the app's own row.**
+///
+/// This is the one fact that explains a row going blank after an app update, and it lived
+/// nowhere a user could see it -- the provider is written against a specific build's private
+/// classes, so "YouTube Music 9.28.4" is not trivia, it is the line somebody reads when the row
+/// stops appearing. The apps list on the root page already carries exactly this shape for the
+/// same reason, down to the cell class: a version under a name, in the row it is about, instead
+/// of a second section repeating the list.
+///
+- (PSSpecifier *)nuSwitchTitled:(NSString *)title
+                            key:(NSString *)key
+                         symbol:(NSString *)symbol
+                          tint:(UIColor *)tint
+                        support:(NSString *)support {
     PSSpecifier *row = [PSSpecifier preferenceSpecifierNamed:title
                                                        target:self
                                                           set:@selector(setNuValue:specifier:)
@@ -167,6 +186,13 @@ static const size_t kSCINUToggleCount = sizeof(kSCINUToggles) / sizeof(kSCINUTog
     // glyph -- an app's own icon is not this bundle's to draw, and a wrong-looking
     // imitation is worse than an honest symbol.
     if (symbol.length) [row setProperty:SCIPanelBadgeImage(symbol, tint) forKey:@"iconImage"];
+
+    if (support.length) {
+        [row setProperty:support forKey:@"sciSubtitle"];
+        // A Class, not its name: Preferences takes this property as a Class and sends class
+        // messages to it, and handing it an NSString killed Settings once already.
+        [row setProperty:[SCIPanelAppCell class] forKey:@"cellClass"];
+    }
     return row;
 }
 
@@ -201,23 +227,28 @@ static const size_t kSCINUToggleCount = sizeof(kSCINUToggles) / sizeof(kSCINUTog
     [specifiers addObject:[self nuSwitchTitled:SCILocalized(@"nextup_app_music")
                                            key:@"enabledMusic"
                                         symbol:@"music.note"
-                                          tint:[UIColor systemPinkColor]]];
+                                          tint:[UIColor systemPinkColor]
+                                       support:SCILocalized(@"nextup_support_music")]];
     [specifiers addObject:[self nuSwitchTitled:SCILocalized(@"nextup_app_podcasts")
                                            key:@"enabledPodcasts"
                                         symbol:@"mic.fill"
-                                          tint:[UIColor systemPurpleColor]]];
+                                          tint:[UIColor systemPurpleColor]
+                                       support:SCILocalized(@"nextup_support_podcasts")]];
     [specifiers addObject:[self nuSwitchTitled:SCILocalized(@"nextup_app_youtube")
                                            key:@"enabledYouTube"
                                         symbol:@"play.rectangle.fill"
-                                          tint:[UIColor systemRedColor]]];
+                                          tint:[UIColor systemRedColor]
+                                       support:SCILocalized(@"nextup_support_youtube")]];
     [specifiers addObject:[self nuSwitchTitled:SCILocalized(@"nextup_app_youtube_music")
                                            key:@"enabledYouTubeMusic"
                                         symbol:@"music.note.list"
-                                          tint:[UIColor systemRedColor]]];
+                                          tint:[UIColor systemRedColor]
+                                       support:SCILocalized(@"nextup_support_youtube_music")]];
     [specifiers addObject:[self nuSwitchTitled:SCILocalized(@"nextup_app_spotify")
                                            key:@"enabledSpotify"
                                         symbol:@"waveform"
-                                          tint:[UIColor systemGreenColor]]];
+                                          tint:[UIColor systemGreenColor]
+                                       support:SCILocalized(@"nextup_support_spotify")]];
 
     [specifiers addObject:[self nuGroupTitled:nil footer:SCILocalized(@"nextup_credit")]];
 

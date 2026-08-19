@@ -31,6 +31,14 @@ row wanted is found before the reading starts. The pill is rebuilt when the mast
 than only when the page is reopened; a header that kept saying "On" over a switch that had just
 been turned off is the screen-disagreeing-with-itself failure this page was fixed for once already.
 
+**And each app row now says which build of that app it was written against** — YouTube 21.32.4,
+YouTube Music 9.28.4, Spotify 9.1.62 — in the row it is about, on the same cell the root list uses
+for exactly this. A provider reads one app version's private classes, so that number is not trivia:
+it is what somebody checks first when a row goes blank after an app update. The section's footer
+carries the one real difference between the apps, which no version number can state — YouTube has a
+queue for a playlist or a mix, and for a standalone video it has none, so what is shown is YouTube's
+own autoplay suggestion: playable, not skippable, and 16:9 rather than square.
+
 The apps carry a symbol for what they play rather than a brand glyph: an app's own icon is not
 this bundle's to draw, and an imitation that looks nearly right is worse than an honest symbol.
 

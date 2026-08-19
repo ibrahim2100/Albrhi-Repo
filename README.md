@@ -4,16 +4,17 @@
 
 ### iOS tweaks, built in the open — bilingual, native, and written to be read
 
-**العربية · English** · a working APT source · six tweaks, five in one package
+**العربية · English** · a working APT source · seven tweaks, five in one package
 
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B-lightgrey.svg)]()
 [![Rootless](https://img.shields.io/badge/rootless-supported-success.svg)](#-compatibility)
-[![Albrhi](https://img.shields.io/badge/Albrhi-1.42.0-blueviolet.svg)](suite/CHANGELOG.md)
-[![Instagram](https://img.shields.io/badge/Instagram-4.1.8-orange.svg)](tweaks/instagram/CHANGELOG.md)
+[![Albrhi](https://img.shields.io/badge/Albrhi-1.46.0-blueviolet.svg)](suite/CHANGELOG.md)
+[![Instagram](https://img.shields.io/badge/Instagram-4.1.10-orange.svg)](tweaks/instagram/CHANGELOG.md)
 [![YouTube](https://img.shields.io/badge/YouTube-1.20.0-red.svg)](tweaks/youtube/CHANGELOG.md)
 [![X](https://img.shields.io/badge/X-0.14.0-black.svg)](tweaks/twitter/CHANGELOG.md)
-[![TikTok](https://img.shields.io/badge/TikTok-0.17.0-ff0050.svg)](tweaks/tiktok/CHANGELOG.md)
+[![TikTok](https://img.shields.io/badge/TikTok-0.17.1-ff0050.svg)](tweaks/tiktok/CHANGELOG.md)
+[![NextUp](https://img.shields.io/badge/NextUp-0.1.3-FF375F.svg)](tweaks/nextup/CHANGELOG.md)
 [![Based on](https://img.shields.io/badge/based%20on-SCInsta-lightblue.svg)](https://github.com/SoCuul/SCInsta)
 
 <br/>
@@ -100,15 +101,16 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 
 ### What is in here
 
-**Six tweaks. Five ship inside `com.albrhi`; one stands on its own.**
+**Seven tweaks. Five ship inside `com.albrhi`; two stand on their own.**
 
 | Tweak | Patches | Version | What it does |
 |---|---|---|---|
-| **Albrhi for Instagram** | Instagram | 4.1.8 | downloads, a quieter feed, watching without a seen receipt |
+| **Albrhi for Instagram** | Instagram | 4.1.10 | downloads, a quieter feed, watching without a seen receipt |
 | **Albrhi for YouTube** | YouTube | 1.20.0 | downloads with their own player, no ads, SponsorBlock, background playback |
 | **Albrhi for X** | X / Twitter | 0.14.0 | media downloads, and the feature switches X asks itself about |
-| **Albrhi for TikTok** | TikTok | 0.17.0 | a download button in the feed, photo posts, no ads, confirmations, privacy |
-| **Albrhi Panel** | Settings | 0.8.1 | the Albrhi page — one switch per patched app |
+| **Albrhi for TikTok** | TikTok | 0.17.1 | a download button in the feed, photo posts, no ads, confirmations, privacy |
+| **Albrhi Panel** | Settings | 0.9.2 | the Albrhi page — one switch per patched app, and a page per tweak |
+| **Albrhi NextUp** | SpringBoard, Music, Podcasts, YouTube, YT Music, Spotify | 0.1.3 | what plays next, on the Lock Screen — **its own package** |
 | **Albrhi CarPlay** | SpringBoard, Camera | 0.4.1 | any app on the car display, a dashboard wallpaper, an audio fix — **not served, see below** |
 
 Each is a self-contained Theos project under `tweaks/`, with its own sources, package
@@ -118,7 +120,7 @@ share is the build plumbing — the checks, the build script and the APT index.
 
 `com.albrhi` is the merge of the first five, built by `tools/make-suite.sh`, which picks up
 any `tweaks/*/control` automatically. A tweak leaves the merge only by carrying a
-`.no-suite` marker file in its directory — CarPlay is the only one that does.
+`.no-suite` marker file in its directory — CarPlay and NextUp are the two that do.
 
 **Albrhi for Locket was removed from this repository**, on the owner's instruction to isolate it
 completely: it left the suite first, then left the project. Its five `locket-v*` releases stay on
@@ -309,6 +311,47 @@ to change, with the full diagnostic report one row away and copyable in a tap.
 
 ---
 
+## ⏭️ Albrhi NextUp
+
+### What plays next, without opening the app
+A row under the now-playing controls — the next track's title, artist and cover — on the
+**Lock Screen**, in **Control Center** and in the **Dynamic Island**. Tap the cover to play it
+now, or skip it, without ever opening the app that is playing.
+
+### Five apps, each read from its own queue
+| App | Support |
+|---|---|
+| **Apple Music** | Full |
+| **Apple Podcasts** | Full |
+| **YouTube Music** | Full — built against **9.28.4** |
+| **YouTube** | Full — built against **21.32.4**. A playlist or mix has a real queue; a standalone video has none, so YouTube's own **autoplay suggestion** is shown instead — playable, but not skippable or re-orderable, and its cover is 16:9 rather than square |
+| **Spotify** | Full — built against **9.1.62** |
+
+Each row shows what that app itself would play next, read from the app's own playback queue —
+not a guess. The version beside an app is the build its reader was written against: a newer app
+usually still works, and when a row goes blank after an update, that number is the first thing
+to check. The same table is on the package's depiction and under each switch in Settings.
+
+### Settings
+**Settings › Albrhi › Albrhi NextUp** — a master switch, one per surface, and one per app.
+Changes apply immediately, with no respring. **The master is off until you turn it on**, which is
+this port's own change to the original: Albrhi does not patch anything you did not ask for, and
+this one injects into SpringBoard and five media apps.
+
+> **A port, not an original.** Albrhi NextUp is [NextUp 3](https://github.com/Yves000/NextUp3) by
+> **Yves**, used and redistributed under the GNU GPL v3 — the same licence this project ships
+> under, which is what makes carrying the code over lawful where an unlicensed tweak may only be
+> read for architecture. The design, the private-API research and very nearly all of the
+> implementation are Yves's work. This port replaced the Settings pane with a page inside Albrhi
+> Panel and rebranded the package; the feature itself is not this project's invention.
+
+> **It injects into SpringBoard.** A wrong hook there takes the home screen with it — have a way
+> back in (SSH, or a package manager reachable from safe mode) before installing any build. On a
+> jailbreak with per-app tweak injection, the five media apps need injection enabled too, or the
+> row stays empty: the display side is up and no provider answers it.
+
+---
+
 ## 🧩 Compatibility
 
 | | |
@@ -319,6 +362,7 @@ to change, with the full diagnostic report one row away and copyable in a tap.
 | **YouTube** | Tested on **21.30.5** |
 | **X / Twitter** | Tested on **12.15** |
 | **TikTok** | Tested on **46.4.0** |
+| **NextUp** | iOS **14.2–26**, confirmed on **16.1** · Music, Podcasts, YouTube **21.32.4**, YT Music **9.28.4**, Spotify **9.1.62** |
 | **Jailbreaks** | Rootless (Dopamine, palera1n) · roothide · rootful (unc0ver, checkra1n) |
 | **Sideloading** | Supported via the bundled FLEXing sub-project |
 
@@ -355,7 +399,7 @@ git submodule update --init --recursive
 ```
 
 The result lands in `tweaks/instagram/packages/`. Swap `instagram` for `youtube`, `twitter`,
-`tiktok`, `panel` or `carplay`, and `rootless` for `roothide`, `rootful` or `sideload`.
+`tiktok`, `panel`, `nextup` or `carplay`, and `rootless` for `roothide`, `rootful` or `sideload`.
 
 **To build what people actually install**, merge the five into the suite:
 
@@ -477,6 +521,7 @@ anything or losing its settings. Reopen the app for the change to take effect.
 - [x] A save button and an end time on YouTube's own player layer
 - [x] **Albrhi for TikTok** — a download button in the feed, photo posts, confirmations, privacy
 - [x] Photo posts saved as photos, and one picture saved as a clip with the post's own sound
+- [x] **Albrhi NextUp** — a GPLv3 port of NextUp 3, configured from the panel, published on its own
 - [ ] **Albrhi CarPlay confirmed on a device** — the code is written and withheld until it is
 - [ ] iOS 18 support for CarPlay, which needs an on-disk re-signing daemon rather than a runtime hook
 - [ ] Tie a SponsorBlock marker to the video its bar belongs to — today one global serves every bar
@@ -507,6 +552,8 @@ Issues and pull requests are welcome.
 - **[dav1d](https://code.videolan.org/videolan/dav1d)** by VideoLAN — the AV1 decoder behind on-device transcoding.
 - **[SponsorBlock](https://sponsor.ajay.app)** by Ajay Ramachandran — the segment database the YouTube tweak skips by, CC BY-NC-SA 4.0.
 - **[iSponsorBlock](https://github.com/Galactic-Dev/iSponsorBlock)** by Galactic Dev (GPLv3) — the YouTube tweak's coloured progress-bar markers are derived from it.
+- **[NextUp 3](https://github.com/Yves000/NextUp3)** by **Yves** (GPLv3) — Albrhi NextUp is a port of it; the design and nearly all of the implementation are his.
+- **[LightMessaging](https://github.com/rpetrich/libhooker)** by Ryan Petrich and **[libSandy](https://github.com/opa334/libSandy)** by opa334 — the cross-process messaging and sandbox profile NextUp needs.
 - **[FLEXing](https://github.com/SoCuul/FLEXing)** — runtime debugging support.
 - **[BHTikTok](https://github.com/BandarHL/BHTikTok)** by BandarHL and the maintained fork by
   [al3raQe](https://github.com/al3raQe/BHTikTok) — read for *where* TikTok is hookable, never for
