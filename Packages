@@ -143,10 +143,10 @@ Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.tiktok, com.albrhi.tiktok.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.tiktok, com.albrhi.tiktok.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Filename: debs/com.albrhi_1.44.0_iphoneos-arm64.deb
-Size: 1158362
-MD5sum: 4c4670b1a7ab82f253a4c830a5f80b22
-SHA1: f10b21855d158714c63bf836c35c5ca799bc08ce
-SHA256: 5e81a35b047b575df0f318cfbaab21af0beaed73cbbac62fd930f3e21a4ed0ca
+Size: 1158372
+MD5sum: e09be4c9fdabe46a2adcebbf27330adc
+SHA1: 541f06381dd0755b480458eee4f7c47e1085103d
+SHA256: 4a60edc8de13b34d7e1a57e2a8a88c91e5dcf18063212fea8903f8a5735b5423
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube, X and TikTok, switched per app from Settings.
@@ -452,9 +452,9 @@ Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.tiktok, com.albrhi.tiktok.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Filename: debs/com.albrhi.roothide_1.44.0_iphoneos-arm64e.deb
 Size: 1158082
-MD5sum: 6af2843381d8375379ff8c9ff087144f
-SHA1: cf4384c4a15b7696bcdb4e7f56f64d3ab873365f
-SHA256: 6f58ab84b3da2258a281646c522b73f35cb4df6747ba9f24850cd1c68dff0cd0
+MD5sum: f1c0dfd24639854d7300346cb00de340
+SHA1: c51a7dae9eafccd566492b89cca94cd91a496479
+SHA256: 5bd53a875a74c3bc619884106b65e29dff3a1bbe9c288023460588004b7891be
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube, X and TikTok, switched per app from Settings.
