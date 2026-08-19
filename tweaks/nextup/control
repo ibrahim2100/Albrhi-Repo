@@ -1,0 +1,45 @@
+Package: com.albrhi.nextup
+Name: Albrhi NextUp (rootless)
+Version: 0.1.0
+Architecture: iphoneos-arm64
+Description: See and skip what plays next, from the Lock Screen.
+ .
+ ▍WHAT PLAYS NEXT, WITHOUT OPENING THE APP
+ A row under the now-playing controls showing the next track — its title, artist and
+ cover — on the Lock Screen, in Control Center and in the Dynamic Island. Tap the cover
+ to play it now, or skip it without ever opening the app.
+ .
+ ▍FIVE APPS
+ Apple Music, Apple Podcasts, YouTube, YouTube Music and Spotify. Each reads that app's
+ own playback queue, so the row shows what the app itself would play next — not a guess.
+ .
+ ▍SETTINGS IN ALBRHI
+ Settings › Albrhi › Albrhi NextUp: a master switch, one per surface (Lock Screen,
+ Dynamic Island, Control Center) and one per app. Changes apply immediately, without a
+ respring.
+ .
+ iOS 14.2 through 26. Every hook is chosen at runtime from the iOS version and the host
+ process, so one build serves all of them.
+ .
+ ▍CREDIT — THIS IS A PORT, NOT AN ORIGINAL
+ Albrhi NextUp is a port of NextUp 3 by Yves (github.com/Yves000/NextUp3), used and
+ redistributed under the GNU GPL v3 — the same licence this project ships under, which
+ is what makes carrying the code over lawful where an unlicensed tweak could only be
+ read for architecture. The original design, the private-API research and very nearly
+ all of the implementation are Yves's work. What this port changes: the Settings pane
+ was replaced by a page inside Albrhi Panel, and the package was rebranded. Nothing
+ about the feature itself is this project's invention.
+ .
+ Ported and maintained by Ibrahim Ismail AL-Rahn. Free and open source under the GNU
+ GPL v3; the full licence text ships with the source.
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Author: Yves <github.com/Yves000> (original NextUp 3), ported by Ibrahim Ismail AL-Rahn
+Section: Tweaks
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-nextup.html
+SileoDepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-nextup.json
+Depends: mobilesubstrate, preferenceloader, com.opa334.libsandy
+Conflicts: com.albrhi.nextup.roothide, com.yves.nextup3
+Replaces: com.albrhi.nextup.roothide
+Tag: role::enduser

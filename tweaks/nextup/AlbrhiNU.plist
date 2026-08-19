@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+
+<plist version="1.0">
+<dict>
+    <!-- Nothing pinned here. Six of the seven targets are Apple or Google apps whose
+         CFBundleVersion does not track a single App Store number the way Instagram's
+         does, and the tweak is written against the private class stacks of specific
+         builds rather than against a version string. Upstream pins YouTube 21.32.4 and
+         YouTube Music 9.28.4 in its own headers, and a DEBUG-only probe in each
+         provider hook logs which class or selector went missing after an app update
+         instead of leaving the row silently blank. -->
+
+    <key>Filter</key>
+    <dict>
+        <key>Bundles</key>
+        <array>
+            <!-- The display side. MediaRemoteUI draws the now-playing UI that the
+                 Lock Screen and Control Center host; SpringBoard owns the Lock Screen
+                 and Dynamic Island hooks themselves. -->
+            <string>com.apple.MediaRemoteUI</string>
+            <string>com.apple.springboard</string>
+
+            <!-- The providers: one per media app, each reading that app's own queue
+                 and serving it over a mach service. -->
+            <string>com.apple.Music</string>
+            <string>com.apple.podcasts</string>
+            <string>com.google.ios.youtube</string>
+            <string>com.google.ios.youtubemusic</string>
+            <string>com.spotify.client</string>
+        </array>
+    </dict>
+
+    <!-- Read by Albrhi Panel's SCIPanelScan, not by MobileSubstrate.
+         Seven Bundles targets would otherwise become seven rows in Settings > Albrhi
+         ("Music", "SpringBoard", "Spotify" and so on), as if this project patched
+         seven separate apps rather than running one feature across the processes it
+         needs. The same collapse CarPlay already uses, and for the same reason: the
+         master switch, the three surface switches and the five per-app switches
+         cannot fit in one plain switch cell, so the row pushes to a real page. -->
+    <key>SCIPanelGroupIdentifier</key>
+    <string>com.albrhi.nextup</string>
+    <key>SCIPanelGroupName</key>
+    <string>Albrhi NextUp</string>
+    <key>SCIPanelDetailController</key>
+    <string>SCINUSettingsController</string>
+</dict>
+</plist>

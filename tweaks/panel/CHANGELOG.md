@@ -1,5 +1,27 @@
 # Albrhi Panel Changelog
 
+## v0.9.0
+
+**A settings page for Albrhi NextUp**, reached from the single row `SCIPanelScan`
+collapses that tweak's seven-process filter down to — the second tweak to use the
+grouped-row mechanism CarPlay introduced, and the first time it has served a tweak with
+more than three switches: a master, three surfaces (Lock Screen, Dynamic Island, Control
+Center) and five apps.
+
+**It writes to the ported tweak's own preference domain, not the panel's.** Every other
+page here writes to `com.albrhi.panel`; this one writes to `com.yves.nextup3` and
+publishes that tweak's own `notify_state` token, because the reader compiled into
+Albrhi NextUp has those names built in and is upstream's code kept unchanged. Rebranding
+the domain would have produced a page whose switches all appear to work and change
+nothing — the exact failure `SCIPanelGate.h` already documents from the other direction.
+
+Both channels are written on every toggle: CFPreferences for the value that survives a
+reboot, the notify token for the one that takes effect without a respring.
+
+**A row's preference key travels on its own specifier.** Fifteen switches mapped back to
+keys by a second `if` ladder is how a switch ends up writing the wrong preference; here
+adding a row costs one line and nothing anywhere else.
+
 ## v0.8.1
 
 **Settings crashed the moment the Albrhi page was opened.** 0.8.0's fault, and the fix is

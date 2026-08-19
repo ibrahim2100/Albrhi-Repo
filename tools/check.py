@@ -77,6 +77,18 @@ def report(msg):
 #
 # The colon in the pattern keeps class extensions @interface Foo () and categories
 # @interface Foo (Bar) out of it; only real declarations count.
+#
+# **Two declarations are only a build failure when the compiler sees both at once.**
+# Reporting every cross-file pair cried wolf twelve times on the first tweak that
+# declares the same private Apple class in two providers that never share a
+# translation unit -- NUMusicProvider.m imports neither NUPrivate.h nor the header
+# that does, so clang never sees the pair and upstream builds clean. The rule now
+# resolves each compiled unit's transitive quoted-import closure and reports a class
+# only when one closure holds two of its declarations, which is exactly when clang
+# would say "duplicate interface definition". The original Instagram bug it was
+# written for -- a feature redeclaring IGCoreTextView while importing
+# InstagramHeaders.h, which does too -- is still caught, because there both land in
+# that .xm's own closure.
 declared = collections.defaultdict(list)
 
 for path in HDR + SRC:
@@ -84,10 +96,51 @@ for path in HDR + SRC:
     for name in re.findall(r'^@interface\s+(\w+)\s*:', text, re.M):
         declared[name].append(path)
 
+# basename -> real paths, so a quoted import resolves without replaying every -I flag.
+_by_base = collections.defaultdict(list)
+for _p in HDR + SRC:
+    _by_base[os.path.basename(_p)].append(_p)
+
+_imports_cache = {}
+
+
+def _direct_imports(path):
+    """Quoted #imports of `path`, resolved to files inside this tweak."""
+    if path in _imports_cache:
+        return _imports_cache[path]
+    out = []
+    try:
+        text = open(path, encoding='utf-8').read()
+    except OSError:
+        text = ''
+    for raw in re.findall(r'^\s*#\s*(?:import|include)\s+"([^"]+)"', text, re.M):
+        out += _by_base.get(os.path.basename(raw), [])
+    _imports_cache[path] = out
+    return out
+
+
+def _closure(path):
+    """`path` plus every project header it pulls in, transitively."""
+    seen, stack = {path}, [path]
+    while stack:
+        for nxt in _direct_imports(stack.pop()):
+            if nxt not in seen:
+                seen.add(nxt)
+                stack.append(nxt)
+    return seen
+
+
+_units = [_closure(p) for p in SRC]
+
 for name in sorted(declared):
-    places = declared[name]
-    if len(places) > 1:
-        report('duplicate @interface %s in %s' % (name, ', '.join(sorted(set(places)))))
+    places = sorted(set(declared[name]))
+    if len(places) < 2:
+        continue
+    for unit in _units:
+        clash = [p for p in places if p in unit]
+        if len(clash) > 1:
+            report('duplicate @interface %s in %s' % (name, ', '.join(clash)))
+            break
 
 # 2. Brace balance and %hook/%end pairing.
 #
@@ -519,15 +572,23 @@ for path in SRC:
 #     And the other half of the same failure: a property whose name is also a method in the
 #     same file. That one needs no knowledge of UIKit at all -- `close` as a property made
 #     -close its getter, and the compiler rejected the real -close for returning void.
+#
+#     **Only a void return is the bug, and reading that provenance again is what fixed
+#     this rule.** Writing `- (UIFont *)font` for a declared `UIFont *font` property is not
+#     a mistake, it is how you hand-implement an accessor, and the rule flagged seven of
+#     them on the first tweak that does it -- all legitimate, all building clean upstream.
+#     What cannot ever be a getter is a method returning void, which is exactly the -close
+#     case this was written for. Narrowed to that, the original failure is still caught and
+#     a normal custom getter is left alone.
 for path in SRC:
     text = open(path, encoding='utf-8').read()
 
     properties = set(re.findall(r'@property[^;]*?[\s*](\w+);', text))
-    methods = set(re.findall(r'^-\s*\([^)]*\)\s*(\w+)\s*[{;]', text, re.M))
+    void_methods = set(re.findall(r'^-\s*\(\s*void\s*\)\s*(\w+)\s*[{;]', text, re.M))
 
-    for name in sorted(properties & methods):
-        report('%s in %s is both a property and a method — the method becomes the '
-               'property\'s getter and will not compile' % (name, path))
+    for name in sorted(properties & void_methods):
+        report('%s in %s is both a property and a void method — the method becomes the '
+               'property\'s getter, and a getter cannot return void' % (name, path))
 
 # 14. `self.property` inside a %group whose class is bound at load.
 #
@@ -687,11 +748,31 @@ LOC_PATH = 'src/Localization/SCILocalize.m'
 loc = ''
 en_keys, ar_keys, used = set(), set(), set()
 
+
+# A tweak may satisfy the bilingual rule the other way: a real .lproj tree, which is
+# what a port of an upstream tweak arrives carrying. The rule is "every tweak here is
+# bilingual", not "every tweak uses SCILocalize.m" -- and a stub table written only to
+# quiet this check would be a file that earns nothing, which this project already has a
+# ground rule against. Arabic is required either way, so an .lproj tree without ar.lproj
+# still fails.
+LPROJ_ROOTS = [d for d in glob.glob('bundle/Resources') if os.path.isdir(d)]
+LPROJ_LANGS = set()
+for _root in LPROJ_ROOTS:
+    for _d in glob.glob(os.path.join(_root, '*.lproj')):
+        if glob.glob(os.path.join(_d, '*.strings')):
+            LPROJ_LANGS.add(os.path.basename(_d).split('.')[0])
+
 if not os.path.isfile(LOC_PATH):
-    # Reported rather than raised: a tweak with no bilingual table breaks a
-    # convention this project treats as a rule, and a traceback would say so far
-    # less clearly than a named failure among the others.
-    report('no localization table at %s — every tweak here is bilingual' % LOC_PATH)
+    if LPROJ_LANGS:
+        if 'ar' not in LPROJ_LANGS or 'en' not in LPROJ_LANGS:
+            report('%d .lproj tables but %s missing — every tweak here is bilingual'
+                   % (len(LPROJ_LANGS),
+                      ' and '.join(l for l in ('en', 'ar') if l not in LPROJ_LANGS)))
+    else:
+        # Reported rather than raised: a tweak with no bilingual table breaks a
+        # convention this project treats as a rule, and a traceback would say so far
+        # less clearly than a named failure among the others.
+        report('no localization table at %s — every tweak here is bilingual' % LOC_PATH)
 else:
     loc = open(LOC_PATH, encoding='utf-8').read()
     en = loc[loc.index('_enTable = @{'):loc.index('_arTable = @{')]

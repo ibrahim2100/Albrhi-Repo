@@ -11,8 +11,8 @@ code, comments and user-facing strings are English + Arabic.
 
 ## What this is
 
-Tweaks for jailbroken and sideloaded iOS. **Seven of them**, four in one package and
-three standing on their own:
+Tweaks for jailbroken and sideloaded iOS. **Eight of them**, four in one package and
+four standing on their own:
 
 | directory | package | what it patches |
 |---|---|---|
@@ -23,6 +23,17 @@ three standing on their own:
 | `tweaks/panel` | `com.albrhi.panel` | the Settings app — the per-app switches |
 | `suite/` | **`com.albrhi`** | the four social-app tweaks and the panel, in one package |
 | `tweaks/carplay` | `com.albrhi.carplay` | SpringBoard + Camera — CarPlay, **released on its own** |
+| `tweaks/nextup` | `com.albrhi.nextup` | SpringBoard + 5 media apps — what plays next, **a GPLv3 port, released on its own** |
+
+**Albrhi NextUp is a port, and that is the first thing to know about it.** It is
+[NextUp 3](https://github.com/Yves000/NextUp3) by Yves, carried over under the GNU GPL
+v3 — the same licence this repository ships under, which is precisely what separates it
+from the unlicensed TikTok references that may only be read for architecture. Attribution
+is a licence obligation here exactly as SCInsta's is for Instagram: it is in `control`,
+in the changelog, in the panel page's own footer, and it does not come out. Nearly all of
+the implementation is Yves's; what this project changed is the settings pane and the
+package identity, and `tweaks/nextup/CHANGELOG.md` lists every change rather than letting
+the port read like original work.
 
 **Locket is gone from this repository entirely, and the removal has two halves for a reason
 worth keeping.** It was first taken out of the suite on request (its own package, its own
@@ -1056,6 +1067,23 @@ tweaks/
     common/                  shared between the two binaries of this one tweak
                              (SCILog.h, the bridged-app-list reader) — distinct from
                              shared/ above, which every *tweak* draws from
+  nextup/                  Albrhi NextUp — com.albrhi.nextup, a GPLv3 port of
+                           NextUp 3 by Yves. Kept as a near-verbatim copy on purpose,
+                           NU* prefix and all, so it can still be diffed against
+                           upstream; the port's own additions live in one file
+    src/                     the providers (one per media app, each reading that app's
+                             own queue) and the display side, in one binary gated at
+                             runtime on host process and iOS major
+    src/hooks/               eight display-side files covering iOS 14.2 through 26 —
+                             the version spread is why they are split by surface
+    src/NUAlbrhi.m           everything this port adds, in one place, so the rest of
+                             the tree stays a clean copy
+    bundle/                  NUPrefs.bundle: resources only. Upstream's Settings pane
+                             is gone (the page lives in the panel now) but the name and
+                             path are load-bearing — NULocalization.h compiles them in
+                             — and 27 .lproj tables including Arabic ride on it
+    layout/                  the libSandy profile that lets a sandboxed app register
+                             the mach service the display side looks up
 suite/
   control                  com.albrhi — the combined package everyone installs
   DEBIAN/preinst           removes the individual packages, because dpkg will not
@@ -1315,6 +1343,29 @@ A check that cries wolf gets ignored. Four of these produced false positives on
 first writing and were tightened before landing. If you add a rule, prove it fails
 when it should by reintroducing the bug.
 
+**Two more were narrowed when Albrhi NextUp arrived, and the shape of both mistakes is
+the same: a rule that tested a proxy instead of the condition.** A port of an
+outside tweak is the hardest thing this file has ever been run against, because it was
+written entirely against code that grew up under it — nineteen findings, every one of
+them wrong, on sources that build clean upstream.
+
+- **Rule 1 compared files, when the compiler compares translation units.** Twelve
+  duplicate-`@interface` reports for classes declared in two files that never meet:
+  `NUMusicProvider.m` imports neither `NUPrivate.h` nor the header that does. It now
+  resolves each compiled unit's transitive quoted-import closure and reports only a pair
+  that actually lands in one of them — which still catches the Instagram bug it was
+  written for, where the redeclaring `.xm` imports the header that also declares it.
+- **Rule 13's sibling asked "same name", when the bug was "wrong type".** Seven ordinary
+  hand-written getters (`- (UIFont *)font` for a `UIFont *font` property) reported as
+  fatal. Its own comment already named the real failure — `- (void)close` could not be
+  `close`'s getter *because a getter cannot return void* — so it now fires on a void
+  return and leaves a normal custom accessor alone.
+
+Both were fixed in the rule, never in the code being checked, and the six pre-existing
+tweaks were re-run as the oracle after each edit. **When a rule fires on imported code
+that demonstrably builds, suspect the rule** — and read the provenance comment, which in
+both of these already described a narrower condition than the code was testing.
+
 **Rule 16 is the clearest instance of both halves of that, and of the oracle worth
 reusing.** Its first pattern put a non-greedy `[\w\s*<>,]*?` before the capture, which
 ate into the name itself: `NSString *page = …` was reported as `age`, matched nothing
@@ -1372,7 +1423,7 @@ auto-generated `pages-build-deployment`, which runs because Pages serves from a 
 was lost — the finished index is pushed to `gh-pages` before any of that, which is the whole
 reason the arrangement is shaped this way.
 
-**Nine workflows, one per thing that ships.**
+**Ten workflows, one per thing that ships.**
 
 | workflow | builds | tags | publishes? |
 |---|---|---|---|
@@ -1380,6 +1431,7 @@ reason the arrangement is shaped this way.
 | `buildyoutube.yml` | YouTube | `youtube-v*` | manual build only |
 | `buildtwitter.yml` | X | `twitter-v*` | manual build only |
 | `buildtiktok.yml` | TikTok | — | manual build only |
+| `buildnextup.yml` | `com.albrhi.nextup` | — | manual build only — withheld |
 | `buildpanel.yml` | the Settings panel | its own namespace | manual build only |
 | `buildsuite.yml` | **`com.albrhi`**, the combined package | `v${SUITE_VERSION}` | yes |
 | `buildcarplay.yml` | `com.albrhi.carplay` | `carplay-v*` | manual build only — withheld |
@@ -1524,8 +1576,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.17.1** · suite **1.43.1**.
+Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.0** · CarPlay **0.4.1** (withheld from the
+source) · TikTok **0.17.1** · NextUp **0.1.0** (a GPLv3 port, withheld — never run on a
+device, and it injects into SpringBoard) · suite **1.43.1**.
 
 ### TikTok, where it actually stands
 

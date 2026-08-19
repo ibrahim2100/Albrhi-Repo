@@ -25,8 +25,9 @@ on:
         paths:
             # Anything that changes what ends up in the package, which is now every
             # tweak this workflow actually bundles -- Instagram, YouTube, X and the
-            # panel. CarPlay is excluded on purpose: it is not in the package
-            # (.no-suite marks it), so a commit that only touches it has nothing for
+            # panel. CarPlay and NextUp are excluded on purpose: neither is in the
+            # package (.no-suite marks both), so a commit that only touches one has
+            # nothing for
             # this workflow to do, and running it anyway is exactly the confusion a
             # report named directly -- a standalone tweak's push rebuilding Instagram,
             # YouTube, X, TikTok and the panel for no reason, on every single commit.
@@ -36,6 +37,7 @@ on:
             - 'suite/**'
             - 'tweaks/**'
             - '!tweaks/carplay/**'
+            - '!tweaks/nextup/**'
             - 'shared/**'
             - 'tools/**'
             - 'extra-debs/**'
