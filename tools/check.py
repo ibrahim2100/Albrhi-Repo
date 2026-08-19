@@ -1067,6 +1067,36 @@ if os.path.isfile('control'):
                    'the file line by line and refuses to package it: %s'
                    % (_n, _line.strip()))
 
+# 21. A maintainer script in layout/DEBIAN that is not marked executable.
+#
+#     Theos refuses to package one: "maintainer script 'postinst' has bad permissions
+#     644 (must be >=0555 and <=0775)". Another failure that arrives only after a full
+#     clean build, and another one this project met on its first tweak to ship layout/
+#     scripts at all.
+#
+#     **Read from the git index, not from the working tree.** This repository is
+#     developed on Windows, where the filesystem carries no executable bit and a
+#     `chmod +x` is silently a no-op -- os.access(X_OK) would happily report success
+#     while git stored 100644 and CI got a file it would not run. The index is what is
+#     actually committed, so the index is what is checked. suite/DEBIAN/ is exempt:
+#     make-suite.sh chmods those during staging, which is why the suite never hit this.
+_debian_dir = os.path.join('layout', 'DEBIAN')
+if os.path.isdir(_debian_dir):
+    try:
+        _listing = subprocess.run(['git', 'ls-files', '-s', _debian_dir],
+                                  capture_output=True, text=True, check=True).stdout
+    except Exception:
+        _listing = ''
+
+    for _row in _listing.splitlines():
+        _mode, _rest = _row.split(' ', 1)
+        _name = os.path.basename(_rest.split('\t')[-1])
+        if _name in ('preinst', 'postinst', 'prerm', 'postrm', 'extrainst_') \
+                and not _mode.endswith('755'):
+            report('layout/DEBIAN/%s is mode %s in git — Theos refuses to package a '
+                   'maintainer script that is not executable (git update-index '
+                   '--chmod=+x)' % (_name, _mode))
+
 print('keys: %d EN / %d AR   orphans: %d' % (len(en_keys), len(ar_keys), len(en_keys - used)))
 print('version: %s' % control_version)
 print()
