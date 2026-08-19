@@ -844,8 +844,24 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
                 //
                 NSArray<NSURL *> *ordered = group;
                 if (groups.count == 1 && group.count > 1) {
-                    NSMutableArray<NSURL *> *sorted = [group mutableCopy];
+                    //
+                    // **Clean before watermarked, and size only decides inside each of those.**
+                    //
+                    // Sorting the whole list by bytes put `userWatermarkedPhotoURL` first and saved
+                    // the watermark back — at the identical 1170×2080, because a watermarked copy is
+                    // the same picture re-encoded with something painted on it, and that is usually
+                    // the *larger* file. So measuring alone made the picture worse.
+                    //
+                    // CLAUDE.md already says this about the video path, in these words: size answers
+                    // "which is bigger", never "which is right", and each wrong-file report has been
+                    // a different property size cannot see — the audio track, the watermark, the
+                    // codec. This is the fourth, one layer down, made by the same hand that wrote
+                    // the rule. **Kind decides first; bytes settle ties inside a kind.**
+                    //
+                    NSMutableArray<NSURL *> *clean = [NSMutableArray array];
+                    NSMutableArray<NSURL *> *stamped = [NSMutableArray array];
                     NSMutableDictionary<NSString *, NSNumber *> *sizes = [NSMutableDictionary dictionary];
+
                     for (NSURL *candidate in group) {
                         long long bytes = SCITTMeasure(candidate, NULL);
                         if (bytes <= 0) bytes = SCITTMeasureByRange(candidate, NULL);
@@ -853,11 +869,22 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
                         // to be measured is not evidence of being small, and this project has
                         // already disabled a working feature by treating it as such.
                         sizes[candidate.absoluteString] = @(bytes > 0 ? bytes : LLONG_MAX / 2);
+
+                        NSString *origin = [SCITTMedia photoOriginFor:candidate] ?: @"";
+                        // Only the accessor's name knows this. Nothing measurable about the bytes
+                        // says whether a watermark is painted into them.
+                        BOOL watermarked = [origin rangeOfString:@"watermark"
+                                                         options:NSCaseInsensitiveSearch].location != NSNotFound;
+                        [(watermarked ? stamped : clean) addObject:candidate];
                     }
-                    [sorted sortUsingComparator:^NSComparisonResult(NSURL *a, NSURL *b) {
+
+                    NSComparator biggestFirst = ^NSComparisonResult(NSURL *a, NSURL *b) {
                         return [sizes[b.absoluteString] compare:sizes[a.absoluteString]];
-                    }];
-                    ordered = sorted;
+                    };
+                    [clean sortUsingComparator:biggestFirst];
+                    [stamped sortUsingComparator:biggestFirst];
+
+                    ordered = [clean arrayByAddingObjectsFromArray:stamped];
                 }
 
                 BOOL done = NO;

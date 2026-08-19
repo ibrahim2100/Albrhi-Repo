@@ -1934,6 +1934,14 @@ and never say which thing or which encoder.** The demotion is back, under a name
 it means (`SCITTOriginIsDemoted`) and with both reasons written down — one guessed and confirmed,
 one guessed, tested, and found true for a completely different reason than the one assumed.
 
+**And the same mistake was made a fourth time, in photos, by the hand that wrote this
+paragraph.** TikTok photo variants were sorted by measured bytes and the largest downloaded —
+which is `userWatermarkedPhotoURL`, at the identical 1170×2080, because a watermarked copy is the
+same picture re-encoded with something painted on it. The measurement was right and the outcome
+was worse. **Kind decides first; bytes settle ties inside a kind** — clean variants ordered by size
+among themselves, watermarked ones among themselves, and the clean list walked first whatever the
+sizes say. Reading a rule is not the same as applying it in a new place.
+
 **A measurement can only rank what it can see, and "which copy is watermarked" is not in the
 response.** Ranking candidates by size took `downloadURL` — TikTok's *watermarked* save copy,
 and reliably the largest file — so every download came out stamped. No amount of measuring fixes

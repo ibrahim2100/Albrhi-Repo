@@ -1,5 +1,25 @@
 # Albrhi for TikTok — what changed
 
+## v0.17.7
+
+**Measuring alone brought the watermark back, and the rule against that is already written in this
+project's own notes.**
+
+0.17.6 sorted every variant by measured bytes and downloaded the largest. The next report:
+`userWatermarkedPhotoURL 1170×2080` — the watermark, at the identical size, because a watermarked
+copy is the same picture re-encoded with something painted on it, and that is usually the **larger**
+file. The measurement was correct and the outcome was worse.
+
+CLAUDE.md says this about the video path, in these words: **size answers "which is bigger", never
+"which is right"** — and every wrong-file report there has been a different property that size
+cannot see: the audio track, the watermark, the codec. This is the fourth, one layer down, made by
+the same hand that wrote the rule down.
+
+**Kind decides first; bytes settle ties inside a kind.** Clean variants are ordered largest-first
+among themselves, watermarked ones the same among themselves, and the clean list is walked first
+whatever the sizes say. Only the accessor's name knows which is which — nothing measurable about
+the bytes says whether a watermark is painted into them.
+
 ## v0.17.6
 
 **A clean save at full size — and a report that could not prove it was the biggest one.**

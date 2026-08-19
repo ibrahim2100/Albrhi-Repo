@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.48.4
+
+**The watermark came back in 1.48.3 and is gone again.** Picking the largest version of a picture
+picks the watermarked one, because a watermarked copy is the same image with something painted on
+it and weighs more. Size now only decides between versions of the same kind: every clean version is
+tried before any watermarked one.
+
+Includes TikTok 0.17.7.
+
 ## v1.48.3
 
 **TikTok now picks the largest readable version of a single saved picture** rather than the first
