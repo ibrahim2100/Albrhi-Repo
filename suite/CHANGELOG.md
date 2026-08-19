@@ -1,5 +1,32 @@
 # Albrhi Changelog
 
+## v1.44.0
+
+**Settings › Albrhi gained a page for Albrhi NextUp**, a new tweak released on its own that
+shows what plays next on the Lock Screen. The row only appears if you have that tweak
+installed, so nothing changes here otherwise.
+
+Includes Panel 0.9.0.
+
+## v1.43.1
+
+**Saving a video from an Instagram repost now saves the video.** 1.43.0 stopped it saving the
+cover picture; this one makes it actually download. The check that decided whether a video was
+available looked in three places while the download itself looks in four — so a video whose only
+copy was in the fourth was refused by a test the download would have passed.
+
+Includes Instagram 4.1.10.
+
+## v1.43.0
+
+**A repost no longer saves as a picture.** Instagram stores a repost as a reference rather than
+as the post itself, so its video is not ready at the moment you tap save — and the download read
+"no video right now" as "this is a photo" and saved the cover image instead. It now tells the two
+apart, and says so plainly when a video genuinely is not ready yet rather than handing back a
+different file than the one you asked for.
+
+Includes Instagram 4.1.9.
+
 ## v1.42.1
 
 **TikTok now welcomes you once, after installing.** A short screen saying what was added and where

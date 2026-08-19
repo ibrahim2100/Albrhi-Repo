@@ -1578,7 +1578,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.0** · CarPlay **0.4.1** (withheld from the
 source) · TikTok **0.17.1** · NextUp **0.1.0** (a GPLv3 port, withheld — never run on a
-device, and it injects into SpringBoard) · suite **1.43.1**.
+device, and it injects into SpringBoard) · suite **1.44.0**.
 
 ### TikTok, where it actually stands
 
