@@ -57,7 +57,30 @@ AlbrhiNU_CFLAGS = -Isrc -Isrc/hooks -I$(ROOT)/vendor/LightMessaging -I$(ROOT)/ve
 NU_PTRAUTH_CFLAGS := $(shell $(TARGET_CC) -x objective-c -fsyntax-only -fno-ptrauth-objc-class-ro /dev/null >/dev/null 2>&1 && echo -fno-ptrauth-objc-class-ro)
 export NU_PTRAUTH_CFLAGS
 
-include $(ROOT)/shared/tweak.mk
+# The warning suppressions shared/tweak.mk hands every other tweak, kept because this
+# code is someone else's and should not have to satisfy our taste in warnings to build.
+AlbrhiNU_CFLAGS += -fobjc-arc -DDISABLE_ROOTLESS_COMPAT_WARNING \
+	-Wno-deprecated-declarations -Wno-nullability-completeness \
+	-Wno-unused-function -Wno-unused-value
+AlbrhiNU_LOGOSFLAGS = --c warnings=none
+
+#
+# **This is the one tweak here that does not include shared/tweak.mk, and the reason is
+# what that file would add rather than what it configures.**
+#
+# It appends three things to every tweak unconditionally: the whole JGProgressHUD module
+# (twelve source files), shared/src/SCIPanelGate.m and shared/src/SCISubstrateShim.m.
+# Albrhi NextUp uses none of them — it reads its own preferences through NUPrefs, draws
+# no HUD, and is never built self-contained — so all three were being compiled into a
+# dylib that loads into SpringBoard purely because the include was the habit. Code
+# written against a 15.0 deployment target was also being compiled at this tweak's 14.2,
+# which is a class of failure nothing here needed to risk.
+#
+# The flags that *are* worth having are copied above rather than inherited, so this file
+# says plainly what it builds with. Anything genuinely shared that a future tweak needs
+# belongs in shared/tweak.mk; this one needed the opposite of sharing.
+#
+include $(THEOS_MAKE_PATH)/tweak.mk
 
 # The localisation bundle ships through layout/, not as a Theos subproject.
 #

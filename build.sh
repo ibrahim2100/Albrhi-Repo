@@ -211,8 +211,27 @@ def sub(pattern, replacement, body):
 
 text = sub(r'^Package: %s$' % re.escape(package), 'Package: %s.roothide' % package, text)
 text = sub(r'^Name: .*$', 'Name: %s' % roothide_name, text)
-text = sub(r'^Conflicts: %s\.roothide$' % re.escape(package), 'Conflicts: %s' % package, text)
-text = sub(r'^Replaces: %s\.roothide$' % re.escape(package), 'Replaces: %s' % package, text)
+
+# Conflicts and Replaces are *lists*, and only this package's own other flavour is
+# swapped inside them.
+#
+# These used to anchor the whole field -- `^Conflicts: <pkg>.roothide$` -- which held
+# only while every tweak conflicted with nothing but its own opposite flavour. Albrhi
+# NextUp is the first that must also conflict with a third-party package (the upstream
+# tweak it is a port of: both register the same mach service names), and a second entry
+# in the list made the anchored pattern match zero times and stop the build with
+# "expected exactly one". Matching the identifier as a list element instead leaves every
+# other entry exactly where it was.
+def swap_in_list(field, body):
+    pattern = r'^(%s:[^\n]*?)\b%s\.roothide\b' % (field, re.escape(package))
+    body, count = re.subn(pattern, lambda m: m.group(1) + package, body, flags=re.M)
+    if count != 1:
+        raise SystemExit('control: expected exactly one %s entry for %s.roothide, found %d'
+                         % (field, package, count))
+    return body
+
+text = swap_in_list('Conflicts', text)
+text = swap_in_list('Replaces', text)
 
 open('control', 'w', encoding='utf-8').write(text)
 PY
