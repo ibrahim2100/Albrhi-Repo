@@ -1,5 +1,27 @@
 # Albrhi NextUp — what changed
 
+## v0.1.2
+
+**The sandbox profile was never applied, and that alone is "it didn't work at all".**
+
+Five of the seven injected processes are ordinary sandboxed apps. Each one registers a
+mach service so the display side can ask it what plays next, and an app sandbox does not
+permit that on its own — a libSandy profile grants it, applied from every `%ctor` before
+any message is sent. Without it every lookup is refused and the row has nothing to show
+on any surface, which is exactly the shape of the first report.
+
+The profile is applied through `dlopen` on libsandy, and when the plain name does not
+resolve — a jailbreak whose root is a randomised directory — the fallback finds the root
+from this dylib's own path. That fallback looked for `/usr/lib/`, because upstream stages
+its dylib into `<jbroot>/usr/lib/TweakInject/`. **Theos stages this package into
+`<jbroot>/Library/MobileSubstrate/DynamicLibraries/` instead**, where that substring does
+not occur at all, so the fallback found nothing and returned quietly.
+
+Nothing about that is device-specific and it needed no log to find: unpacking the
+published `.deb` and reading the paths it actually installs is what showed it. Worth
+naming, because the same file already contained the answer — `NULocalization.h` derives
+the root from *both* staging shapes, and only this copy of the pattern was left with one.
+
 ## v0.1.1
 
 Two reports from the first install. One confirms a large piece works, one is a real

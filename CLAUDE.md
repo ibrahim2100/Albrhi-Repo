@@ -761,6 +761,25 @@ unconditionally under `#ifdef SCI_SELFCONTAINED`, restoring the older "installed
 deliberately" reading for the one case that is still true of. Every tweak's own `%ctor`
 needed no change, because every tweak already asks this one function and nothing else.
 
+**A path derived from where a file *used to* be installed is a guess, and the package
+itself is the thing that answers it.** Albrhi NextUp came back "it didn't work at all",
+and the cause was readable from this machine with no device and no log: unpack the
+published `.deb` and look at the paths. Five of its seven processes are sandboxed apps
+that must register a mach service, which needs a libSandy profile applied from `%ctor`;
+the profile is found by `dlopen`, and the fallback for a randomised jbroot derived the
+root by searching this dylib's own path for `/usr/lib/`, because upstream stages into
+`<jbroot>/usr/lib/TweakInject/`. Theos stages *this* package into
+`<jbroot>/Library/MobileSubstrate/DynamicLibraries/`. The substring is simply not there,
+the fallback returned quietly, every lookup was denied, and the row was dead everywhere.
+
+Two things generalise. **A ported tweak inherits its upstream's assumptions about its own
+installed layout, and packaging is exactly what a port changes** — so any path built from
+`dladdr` on the tweak's own address is worth re-reading against the staged tree the first
+time it is packaged here. And **the same derivation existed twice in that tweak and only
+one copy was wrong**: `NULocalization.h` handled both staging shapes, `NUShared.h` handled
+one, and the file with the bug carried a comment saying it used the same pattern as the
+file without it. A comment claiming two things match is not a check that they do.
+
 **A sleep is a guess about how long something takes.** Three releases went into a Pages
 deploy that "hung", and each time the fix was to ask the thing itself instead: which mode
 Pages is in, whether the build is `built` or `errored`, whether the live URL is serving
@@ -1591,7 +1610,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 ## Known state
 
 Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.17.1** · NextUp **0.1.1** (a GPLv3 port; **published**, on request,
+source) · TikTok **0.17.1** · NextUp **0.1.2** (a GPLv3 port; **published**, on request,
 rather than withheld — it compiles and packages, the settings page is confirmed working
 on a device, and the row itself is not yet: it injects into SpringBoard, so logging is
 compiled into the release while that is still true) · suite **1.45.0**.

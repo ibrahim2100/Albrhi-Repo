@@ -170,14 +170,31 @@ static inline BOOL NUApplySandbox(void) {
 
     void *h = dlopen("libsandy.dylib", RTLD_LAZY);
     // roothide's jbroot is randomised; resolve libsandy relative to our own
-    // dylib path (…/<jbroot>/usr/lib/TweakInject/NextUp3.dylib).
+    // dylib path. **Both staging shapes have to be handled, and this port is the
+    // reason that is not a hypothetical**: upstream stages into
+    // …/<jbroot>/usr/lib/TweakInject/, so looking for "/usr/lib/" found the
+    // jbroot every time. Theos stages this package into
+    // …/<jbroot>/Library/MobileSubstrate/DynamicLibraries/ instead — confirmed by
+    // unpacking the published .deb — where that substring does not occur at all,
+    // so the fallback never ran and the profile was never applied on a jailbreak
+    // whose plain dlopen misses. No profile means every mach lookup is denied,
+    // which is the row silently dead on every surface: "it didn't work at all".
+    // NULocalization.h in this same tweak already derived the root from both
+    // shapes; only this copy of the pattern was left with one.
     if (!h) {
         Dl_info info; memset(&info, 0, sizeof(info));
         if (dladdr((const void *)&NUApplySandbox, &info) && info.dli_fname) {
             NSString *self = @(info.dli_fname);
-            NSRange r = [self rangeOfString:@"/usr/lib/" options:NSBackwardsSearch];
+            NSString *root = nil;
+            NSRange r = [self rangeOfString:@"/Library/MobileSubstrate/" options:NSBackwardsSearch];
             if (r.location != NSNotFound) {
-                NSString *lib = [[self substringToIndex:NSMaxRange(r)] stringByAppendingString:@"libsandy.dylib"];
+                root = [self substringToIndex:r.location];
+            } else {
+                r = [self rangeOfString:@"/usr/lib/" options:NSBackwardsSearch];
+                if (r.location != NSNotFound) root = [self substringToIndex:r.location];
+            }
+            if (root) {
+                NSString *lib = [root stringByAppendingString:@"/usr/lib/libsandy.dylib"];
                 h = dlopen(lib.fileSystemRepresentation, RTLD_LAZY);
                 NULog("libSandy dlopen(%{public}@) = %p", lib, h);
             }
