@@ -14,8 +14,8 @@ Description: See and skip what plays next, from the Lock Screen.
  own playback queue, so the row shows what the app itself would play next — not a guess.
  .
  ▍SETTINGS IN ALBRHI
- Settings › Albrhi › Albrhi NextUp: a master switch, one per surface (Lock Screen,
- Dynamic Island, Control Center) and one per app. Changes apply immediately, without a
+ Settings › Albrhi › Albrhi NextUp: a master switch, one per surface — Lock Screen,
+ Dynamic Island, Control Center — and one per app. Changes apply immediately, without a
  respring.
  .
  iOS 14.2 through 26. Every hook is chosen at runtime from the iOS version and the host

@@ -1048,6 +1048,25 @@ for path in [p for p in SRC if p.endswith(('.x', '.xm'))]:
                        % (path, n, written.strip()))
 
 
+# 20. A parenthesis left open at the end of a line in `control`.
+#
+#     Theos validates the control file itself and stops packaging with "control file
+#     contains an unclosed parentheses" -- it reads the Description field line by line,
+#     so a parenthetical opened on one line and closed on the next is unbalanced as far
+#     as it is concerned even though the sentence reads perfectly.
+#
+#     Cost a full CI round on Albrhi NextUp, and it cost it *after* a clean compile and
+#     link of ten thousand lines for two architectures: the whole build succeeded and
+#     then died at the packaging step over a wrapped sentence. Every other control here
+#     happened to balance its parentheses per line, which is exactly why nothing caught
+#     this until a description was written long enough to wrap inside one.
+if os.path.isfile('control'):
+    for _n, _line in enumerate(open('control', encoding='utf-8'), 1):
+        if _line.count('(') != _line.count(')'):
+            report('control:%d has an unbalanced parenthesis on one line — Theos reads '
+                   'the file line by line and refuses to package it: %s'
+                   % (_n, _line.strip()))
+
 print('keys: %d EN / %d AR   orphans: %d' % (len(en_keys), len(ar_keys), len(en_keys - used)))
 print('version: %s' % control_version)
 print()
