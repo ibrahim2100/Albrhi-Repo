@@ -105,7 +105,7 @@
         %init(YouTubeMusicProvider);
         [[NUYouTubeMusicProvider shared] startServer];
         NULog("loaded into YouTube Music (provider)");
-#ifdef DEBUG
+#ifdef NU_LOGGING
         // Interface drift probe (dev builds only): the provider is pinned against
         // YTM 9.28.4's private YT* stack. After an app update, a missing
         // class/selector here is the first thing to check when the row goes blank.

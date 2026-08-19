@@ -4,7 +4,25 @@
 #import <dlfcn.h>
 #import <notify.h>
 
-#ifdef DEBUG
+///
+/// **The log is compiled in and switched off, rather than compiled out.**
+///
+/// Upstream strips it from FINALPACKAGE builds, which is right for a tweak that works; this port
+/// shipped with `-DDEBUG=1` instead, because its first install came back "it didn't work" with
+/// nothing to read. Both of those are wrong now that it is confirmed on a device: a build that
+/// cannot say anything is undiagnosable, and a build that always writes leaves the names of what
+/// you listen to in a file on disk, forever, from a package whose neighbour in the same source
+/// exists to stop watching being reported at all.
+///
+/// So the sinks stay in the binary and `NULogEnabled()` decides, from a preference that is off
+/// until somebody turns it on in Settings › Albrhi › Albrhi NextUp. Read once per process, at the
+/// first line anything tries to write: a log switch is used by turning it on, reproducing, and
+/// reading — the reopen is part of that anyway, and nothing is paid on the hot path for a switch
+/// that is off.
+///
+#define NU_LOGGING 1
+
+#ifdef NU_LOGGING
 // Two sinks on purpose: os_log for a normal `log stream` on a device where that
 // works, and a plain per-process file (NULogFile.m) for the ones where it does
 // not — on the iOS 18 and iOS 26 test targets on-device `oslog` renders every
@@ -19,9 +37,14 @@ void NULogWritev(const char *fmt, va_list ap);
 static inline void NULogWrite(const char *fmt, ...) {
     va_list ap; va_start(ap, fmt); NULogWritev(fmt, ap); va_end(ap);
 }
+/// Whether anything is written at all. Defined in NULogFile.m; reads the preference once.
+BOOL NULogEnabled(void);
+
 #define NULog(fmt, ...) do { \
-    os_log(OS_LOG_DEFAULT, "[NextUp3] " fmt, ##__VA_ARGS__); \
-    NULogWrite(fmt, ##__VA_ARGS__); \
+    if (NULogEnabled()) { \
+        os_log(OS_LOG_DEFAULT, "[NextUp3] " fmt, ##__VA_ARGS__); \
+        NULogWrite(fmt, ##__VA_ARGS__); \
+    } \
 } while (0)
 #else
 // Compile logging out of release (FINALPACKAGE) builds, but keep the arguments
@@ -154,16 +177,33 @@ static inline uint64_t NUSuggestingGet(void) {
 // denied for the life of the process (row dead on every surface until a respring).
 // A failed apply stays retryable; NUNextUpManager retries from its query path once
 // a lookup is refused.
-static inline BOOL NUApplySandbox(void) {
-    static BOOL applied = NO;
-    static BOOL announced = NO;
-    if (applied) return YES;
+/// **Process-wide, not per translation unit — and that is a fix, not a style choice.**
+///
+/// These were `static` locals inside this `static inline` function, so every file that included
+/// this header got its own pair: the announce line and the whole dlopen/applyProfile ran once per
+/// *compiled unit* rather than once per process. A device log showed the cost plainly — fifty
+/// `ctor:` lines and fifty `applyProfile` calls across three SpringBoard launches, a hundred of
+/// the file's hundred and seventy-four lines saying the same thing sixteen times. Defined once in
+/// NULogFile.m and shared, the announce is one line and the profile is applied once.
+///
+/// The retry semantics are unchanged: only success is remembered, because at boot SpringBoard
+/// starts before libSandy's service and a failure cached as "done" would leave every mach lookup
+/// denied for the life of the process.
+extern BOOL gNUSandboxApplied;
+extern BOOL gNUSandboxAnnounced;
 
-    if (!announced) {
-        announced = YES;
+/// The port's own version, so a log names the build that wrote it.
+extern NSString *SCIVersionString;
+
+static inline BOOL NUApplySandbox(void) {
+    if (gNUSandboxApplied) return YES;
+
+    if (!gNUSandboxAnnounced) {
+        gNUSandboxAnnounced = YES;
         // First line every injected process writes — the "are we loaded at all,
         // and into what" marker for a new iOS version / new jailbreak.
-        NULog("ctor: proc=%{public}@ os=%{public}@",
+        NULog("ctor: Albrhi NextUp %{public}@ proc=%{public}@ os=%{public}@",
+              SCIVersionString,
               NSProcessInfo.processInfo.processName,
               NSProcessInfo.processInfo.operatingSystemVersionString);
     }
@@ -204,11 +244,11 @@ static inline BOOL NUApplySandbox(void) {
     if (applyProfile) {
         int r = applyProfile(kNUSandyProfile);
         NULog("libSandy applyProfile(%s) = %d (0=ok)", kNUSandyProfile, r);
-        applied = (r == 0);
+        gNUSandboxApplied = (r == 0);
     } else {
         NULog("libSandy not available (h=%p)", h);
     }
-    return applied;
+    return gNUSandboxApplied;
 }
 
 // Keys in the archived next-up dictionary.

@@ -64,21 +64,19 @@ AlbrhiNU_CFLAGS += -fobjc-arc -DDISABLE_ROOTLESS_COMPAT_WARNING \
 	-Wno-unused-function -Wno-unused-value
 
 #
-# **-DDEBUG in a release build, deliberately, while this port is unproven.**
+# **The log is compiled in and switched off at runtime, not compiled out.**
 #
-# Upstream compiles NULog out of FINALPACKAGE builds, which is the right default for a
-# tweak that works. It left this port with no way to say anything at all on a device:
-# the first install came back "it didn't work" and there was nothing to read — no log,
-# no os_log line, nothing. That is the one thing an untested port cannot afford.
+# This shipped with `-DDEBUG=1` because the first install came back "it didn't work" with nothing
+# to read: upstream strips NULog from FINALPACKAGE builds, which is right for a tweak that works
+# and left this port mute. It is confirmed on iOS 16.1 now, and always-on logging is the wrong
+# answer in the other direction — it writes the names of what you are listening to into a file on
+# disk, forever, from a package whose neighbour in this same source exists to stop watching being
+# reported at all.
 #
-# DEBUG here gates exactly two things and neither changes behaviour: NULog (os_log plus
-# the file NULogFile.m writes) and the interface drift probes in each provider's %ctor,
-# which name the private class or selector that went missing after an app update. Both
-# are precisely what a first device report needs.
+# So NU_LOGGING is defined in NUShared.h and `NULogEnabled()` reads a preference that is off until
+# somebody turns it on in Settings. Nothing is compiled out, nothing is written by default, and a
+# device can still be asked what it is doing.
 #
-# Remove this once the tweak is confirmed working on a device.
-#
-AlbrhiNU_CFLAGS += -DDEBUG=1
 AlbrhiNU_LOGOSFLAGS = --c warnings=none
 
 #

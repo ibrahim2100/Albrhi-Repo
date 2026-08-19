@@ -1,5 +1,38 @@
 # Albrhi NextUp — what changed
 
+## v0.1.4
+
+**The log is compiled in and switched off, instead of always writing.**
+
+0.1.1 added `-DDEBUG=1` because the first install came back "it didn't work" with nothing to read.
+That was right then and wrong now: the port is confirmed on iOS 16.1, and an always-on log writes
+what each process is doing — **including the titles of what is playing** — into `/var/mobile/nu/`,
+forever, from a package whose neighbour in this same source exists to stop watching being reported
+at all. Compiling it back out would have made the next report undiagnosable, which is the trap
+that produced the flag in the first place.
+
+So both sinks stay in the binary and `NULogEnabled()` decides, from a preference that is **off**
+until it is turned on in Settings › Albrhi › Albrhi NextUp › Advanced. Read once per process, at
+the first line anything tries to write: a log switch is used by turning it on, reproducing and
+reading, and the reopen is already part of that. Nothing is paid per line for a switch that is off.
+The interface-drift probes follow the log rather than a build flag, so they are available exactly
+when somebody is looking.
+
+**And the `%ctor` announce and the sandbox profile now run once per process rather than once per
+translation unit.** `NUApplySandbox()` is `static inline` in a header and kept its state in
+`static` locals, so every file that included it got its own pair. A device log showed the cost:
+fifty `ctor:` lines and fifty `applyProfile` calls across three SpringBoard launches — a hundred
+of that file's hundred and seventy-four lines saying the same thing sixteen times over. The
+retry semantics are unchanged, since only success was ever cached.
+
+**The first line now names the build.** A log with no version in it is read as current, which is
+the mistake this project has already paid for in another tweak: `ctor: Albrhi NextUp v0.1.4 …`.
+
+The settings page's per-row default also travels on the row now instead of being inferred from the
+key's name. `[key isEqualToString:@"Enabled"]` was a list of opt-in keys written as a comparison —
+correct while there was one, and wrong the moment the log switch arrived, which would have
+defaulted *on*.
+
 ## v0.1.3
 
 **0.1.1 made the master switch opt-in and this republished it as on, which put the whole

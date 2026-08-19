@@ -73,7 +73,7 @@
         %init(SpotifyProvider);
         [[NUSpotifyProvider shared] startServer];
         NULog("loaded into Spotify (provider)");
-#ifdef DEBUG
+#ifdef NU_LOGGING
         // Interface drift probe (dev builds only): the provider is pinned against
         // Spotify 9.1.62's private SPT* facade. After an app update, a missing
         // class/selector here is the first thing to check when the row goes blank.

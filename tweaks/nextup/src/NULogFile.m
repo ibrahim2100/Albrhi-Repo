@@ -1,4 +1,4 @@
-// Dev-only file sink for NULog (DEBUG builds only — see NUShared.h).
+// The file sink for NULog, written only while the log switch is on (see NUShared.h).
 //
 // Why this exists: on the iOS 18 and iOS 26 test targets
 // `oslog` on-device cannot decode our os_log format strings — every
@@ -15,8 +15,32 @@
 //
 // Release (FINALPACKAGE) builds compile this to nothing.
 #import "NUShared.h"
+#import "NUPrefs.h"
 
-#ifdef DEBUG
+/// Shared by every translation unit -- see NUApplySandbox() in NUShared.h for what having one
+/// copy per unit actually cost.
+BOOL gNUSandboxApplied = NO;
+BOOL gNUSandboxAnnounced = NO;
+
+///
+/// Whether anything is written, read once per process from the tweak's own preferences.
+///
+/// **Once, deliberately.** A log switch is used by turning it on, reproducing the problem and
+/// reading the file — reopening the app is already part of that, so re-reading the preference on
+/// every line would buy nothing and put a preference read on a path that runs inside media
+/// callbacks. And when the switch is off this is one already-decided BOOL, which is what makes
+/// leaving the sinks compiled in cost nothing.
+///
+BOOL NULogEnabled(void) {
+    static BOOL enabled = NO;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        enabled = NUPrefBool(@"verboseLogging", NO);
+    });
+    return enabled;
+}
+
+#ifdef NU_LOGGING
 
 #import <pthread.h>
 
@@ -91,4 +115,4 @@ void NULogWritev(const char *cfmt, va_list ap) {
     }
 }
 
-#endif  // DEBUG
+#endif  // NU_LOGGING

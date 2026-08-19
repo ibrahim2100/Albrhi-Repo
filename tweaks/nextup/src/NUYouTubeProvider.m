@@ -137,7 +137,7 @@ static const NSUInteger kNUYTMaxNavigableIndex = 100000;
     if (!artURL) { @try { artURL = NUYTLargestThumbURL(r.background); } @catch (__unused NSException *e) {} }
     if (!artURL) artURL = NUYTThumbnailURLForVideoId(videoId);
     if (title.length == 0) return nil;
-#ifdef DEBUG
+#ifdef NU_LOGGING
     NULog("yt autoplay: title='%{public}@' vid='%{public}@' art=%{public}@",
           title, videoId, artURL ?: @"(none)");
 #endif
@@ -373,7 +373,7 @@ static const CFTimeInterval kNUYTLockScreenSuppressWindow = 0.5;
 // Queue shape at snapshot time (DEBUG only). Separates "no controller captured" from
 // "controller but empty queue" from "index found but renderer unreadable".
 - (void)logQueueShapeForIndex:(NSUInteger)nextIdx resolved:(BOOL)resolved {
-#ifdef DEBUG
+#ifdef NU_LOGGING
     YTQueueController *qc = self.controller;
     unsigned long apCount = 0, headerOffset = 0; BOOL hasNext = NO;
     @try { apCount = (unsigned long)qc.autoplayItemCount; } @catch (__unused NSException *e) {}
