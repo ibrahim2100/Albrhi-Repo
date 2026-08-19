@@ -135,6 +135,28 @@ YOUTUBE_FEATURES = [
      'it is readable even if nothing else worked.'),
 ]
 
+NEXTUP_FEATURES = [
+    ('What plays next, without opening the app',
+     'A row under the now-playing controls showing the next track — its title, artist '
+     'and cover — on the Lock Screen, in Control Center and in the Dynamic Island. Tap '
+     'the cover to play it now, or skip it, without ever opening the app.'),
+
+    ('Five apps, each read properly',
+     'Apple Music, Apple Podcasts, YouTube, YouTube Music and Spotify. Each one is read '
+     'through that app\'s own playback queue, so the row shows what the app itself '
+     'would play next rather than a guess at it.'),
+
+    ('Settings inside Albrhi',
+     'Settings › Albrhi › Albrhi NextUp: a master switch, one per surface and one per '
+     'app. Changes apply immediately, without a respring.'),
+
+    ('A port, not an original',
+     'This is NextUp 3 by Yves (github.com/Yves000/NextUp3), carried over under the GNU '
+     'GPL v3 — the same licence this project ships under. The design, the research and '
+     'nearly all of the implementation are his work; this port replaced the settings '
+     'pane and rebranded the package.'),
+]
+
 CARPLAY_FEATURES = [
     ('The problem',
      'CarPlay audio is playing over your car\'s speakers. Camera opens, recording '
@@ -243,6 +265,34 @@ TWEAKS = {
                       'derived from iSponsorBlock by Galactic Dev, GPLv3. Not '
                       'affiliated with, endorsed by or sponsored by YouTube or '
                       'Google._',
+    },
+    'nextup': {
+        'slug': 'albrhi-nextup',                 # matches control's Depiction URLs
+        'title': 'Albrhi NextUp',
+        'accent': '#FF375F',
+        'features': NEXTUP_FEATURES,
+        'tagline': '**See and skip what plays next, from the Lock Screen** — the '
+                   'title, artist and cover of the coming track, under the '
+                   'now-playing controls. Tap the cover to play it now.\n\nA port of '
+                   'NextUp 3 by Yves, under the GNU GPL v3. Its own package: this has '
+                   'nothing to do with the social apps the combined Albrhi package '
+                   'patches.',
+        'html_tagline': '<strong>See and skip what plays next, from the Lock '
+                        'Screen</strong> — a GPLv3 port of NextUp 3 by Yves.',
+        'app': 'SpringBoard, Music, Podcasts, YouTube, YouTube Music and Spotify',
+        'tested': 'not yet validated on-device',
+        'tested_note': 'Built and checked against `tools/check.py`, but this port has '
+                       'not yet run on a real phone. It injects into SpringBoard — '
+                       'have a way back in (SSH, or a package manager reachable from '
+                       'safe mode) before the first install.',
+        'rows': [('Ported from', 'NextUp 3 by Yves (github.com/Yves000/NextUp3), '
+                                 'GPLv3')],
+        'footer_html': 'GPLv3 · a port of NextUp 3 by Yves, used under the same '
+                       'licence · not affiliated with Apple, Google or Spotify.',
+        'disclaimer': '_Free and open source under the GNU GPL v3. A port of NextUp 3 '
+                      'by Yves (github.com/Yves000/NextUp3); the original design and '
+                      'nearly all of the implementation are his work. Not affiliated '
+                      'with, endorsed by or sponsored by Apple, Google or Spotify._',
     },
     'carplay': {
         'slug': 'albrhi-carplay',                # matches control's Depiction URLs

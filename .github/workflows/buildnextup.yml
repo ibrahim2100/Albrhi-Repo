@@ -318,7 +318,10 @@ jobs:
                 # what was actually built. From the tweak's own directory, because the
                 # generator reads CHANGELOG.md relative to its working directory.
                 PAGES_DIR="$(pwd)/pages"
-                ( cd main/tweaks/nextup && python3 ../../tools/make-depiction.py "$PAGES_DIR" "$NU_VERSION" "$REPO_URL" albrhi-nextup )
+                # The last argument is make-depiction.py's own registry *key*, not the
+                # slug — the slug it writes (albrhi-nextup, matching control's Depiction
+                # URLs) is looked up from that key inside the generator.
+                ( cd main/tweaks/nextup && python3 ../../tools/make-depiction.py "$PAGES_DIR" "$NU_VERSION" "$REPO_URL" nextup )
 
                 ls -la pages/depictions
 
