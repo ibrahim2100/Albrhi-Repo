@@ -36,7 +36,6 @@ on:
             # removed with the tweak itself.
             - 'suite/**'
             - 'tweaks/**'
-            - '!tweaks/carplay/**'
             - '!tweaks/nextup/**'
             - 'shared/**'
             - 'tools/**'

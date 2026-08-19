@@ -310,31 +310,6 @@ TWEAKS = {
                       'nearly all of the implementation are his work. Not affiliated '
                       'with, endorsed by or sponsored by Apple, Google or Spotify._',
     },
-    'carplay': {
-        'slug': 'albrhi-carplay',                # matches control's Depiction URLs
-        'title': 'Albrhi CarPlay',
-        'accent': '#0A84FF',
-        'features': CARPLAY_FEATURES,
-        'tagline': '**Keeps your car\'s speakers in high quality while Camera is '
-                   'recording**, instead of dropping to phone-call quality the '
-                   'moment a microphone is needed too.\n\nA first release, and its '
-                   'own package — CarPlay has nothing to do with the social apps '
-                   'the combined Albrhi package patches.',
-        'html_tagline': '<strong>Keeps your car\'s speakers in high quality while '
-                        'Camera is recording</strong> — a first release.',
-        'app': 'SpringBoard and Camera',
-        'tested': 'not yet validated on-device',
-        'tested_note': 'Written and checked against `tools/check.py`, but not yet '
-                       'run on a real phone in a real car. Treat the first install '
-                       'as the test.',
-        'rows': [('Architecture informed by', 'carplay-cast by Ethan Arbuckle, '
-                                               'Apache-2.0')],
-        'footer_html': 'GPLv3 · architecture informed by carplay-cast by Ethan '
-                       'Arbuckle (Apache-2.0) · not affiliated with Apple or any '
-                       'car manufacturer.',
-        'disclaimer': '_Free and open source. Not affiliated with, endorsed by or '
-                      'sponsored by Apple or any car manufacturer._',
-    },
 }
 
 if tweak not in TWEAKS:

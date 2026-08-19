@@ -22,7 +22,6 @@ four standing on their own:
 | `tweaks/tiktok` | `com.albrhi.tiktok` | TikTok, tested on **46.4.0** |
 | `tweaks/panel` | `com.albrhi.panel` | the Settings app — the per-app switches |
 | `suite/` | **`com.albrhi`** | the four social-app tweaks and the panel, in one package |
-| `tweaks/carplay` | `com.albrhi.carplay` | SpringBoard + Camera — CarPlay, **released on its own** |
 | `tweaks/nextup` | `com.albrhi.nextup` | SpringBoard + 5 media apps — what plays next, **a GPLv3 port, released on its own** |
 
 **Albrhi NextUp is a port, and that is the first thing to know about it.** It is
@@ -54,41 +53,18 @@ bypass-versus-payment line, the `%ctor` gate for self-contained builds, the `SEL
 makefile lesson — because those were paid for once and apply to whatever comes next. What is
 gone is the tweak, not what it taught.
 
-**CarPlay is not in `com.albrhi`, on purpose.** It patches SpringBoard and Camera for a
-car-display feature with no relationship to the social apps the suite bundles —
-installing Albrhi should not mean installing something for a car nobody asked about.
-`tools/make-suite.sh` skips any `tweaks/*/` directory that carries a `.no-suite` marker
-file, which is the only thing that keeps a tweak out of the merge; CarPlay is the first
-to have one. It has its own package, its own release tag (`carplay-v*`) and its own
-workflow, `buildcarplay.yml`.
+**Albrhi CarPlay was removed from this repository**, to be rebuilt from scratch in one of its
+own. It was never in `com.albrhi` — it patched SpringBoard and Camera for a car feature with no
+relationship to the social apps — and it was withheld from the source as well, having never been
+confirmed on a device. The removal is recorded in full further down; the mechanism half of it is
+the same one Locket needed and is the reason `WITHHELD_PACKAGES` exists: **deleting a tweak
+removes nothing from a source built out of published releases.** `com.albrhi.carplay` and
+`com.albrhi.carplay.roothide` stay named there, both flavours, or the index goes on offering
+0.4.1 forever from a tree that no longer holds its source.
 
-**CarPlay is currently withheld from the source, deliberately, and this is reversible.**
-Its app bridging has never been confirmed working on a device: 0.3.0 and 0.4.0 each
-looked finished and were not, and 0.4.1's fixes for what a real iOS 16.1 report found
-missing are themselves unobserved. Serving the package offers an update to people whose
-only report so far is that it does not work. With Locket removed, `buildsuite.yml` is now
-the **only** workflow that publishes anything at all.
-
-**Withholding took two changes, not one, and the reason is the whole architecture of the
-gather.** Switching off a publisher removes nothing: `fetch-published-debs.sh` builds the
-index from what is **published**, which is exactly what lets two workflows write one
-index safely — and exactly what means a package whose workflow goes quiet keeps being
-gathered from its old releases and served forever at its last version. So:
-
-- `buildcarplay.yml` lost its `push:` trigger, its release gate and step, its gather and
-  its Pages steps — `workflow_dispatch` only now, building both flavours to an artifact
-  and stopping, like the other five per-tweak workflows.
-- `fetch-published-debs.sh` names `com.albrhi.carplay` and `com.albrhi.carplay.roothide`
-  in `WITHHELD_PACKAGES` and skips them on the way in — in the release gather, in the
-  fold-in of a run's own build, and in the version assertion, which would otherwise
-  demand the very package the gather was told to drop. **Both flavours are listed
-  because they are separate package identities**; naming only the first would withhold
-  rootless and go on serving roothide.
-
-Undo both together to publish again. Doing only the first republishes nothing — the
-gather would drop the package the run had just released, and the run's own guard would
-then fail it for publishing a source older than its release, correctly. Both files carry
-this note from their own side.
+`tools/make-suite.sh` skips any `tweaks/*/` directory carrying a `.no-suite` marker file, which is
+the only thing that keeps a tweak out of the merge. **NextUp is the one that has it now**; CarPlay
+was the first, and its marker left with it.
 
 The Instagram tweak is derived from [SCInsta](https://github.com/SoCuul/SCInsta) by
 SoCuul under GPLv3. Original authorship is credited in-app, in the README and in the
@@ -218,23 +194,13 @@ immediately after stashing the resolved item. Whether this actually surfaces the
 is still unconfirmed; the Status section's own report was widened from a bare count to
 four distinct states so the next report names which one instead of only "no button."
 
-**Albrhi CarPlay's own architecture is informed by [carplay-cast](https://github.com/EthanArbuckle/carplay-cast)
-by Ethan Arbuckle, Apache-2.0** — read for its design (three components: a hook inside
-Apple's CarPlay dashboard process, a hook inside SpringBoard using its own live
-scene-hosting machinery to put an app's view on the external screen, and a small
-per-app orientation lock), not copied from. **CarBridge, a paid commercial tweak
-(`Tag: cydia::commercial`) that solves the same problem, is deliberately not a
-reference here** — this project reads open, licensed source for a technique, not a
-competitor's paid binary to clone it feature by feature. See the ground rule below for
-why the display mechanism itself is not built yet.
-
 **`com.albrhi` is what people install for the social apps.** The individual packages are
 still built and still published, but the suite is the front door for Instagram, YouTube,
 X, TikTok and the panel: one thing to install, one thing to update, and a new social-app
 tweak arrives inside it rather than as a second download. It declares `Conflicts` and
 `Replaces` on all ten of those individual identities (rootless and roothide) — and
-that is not enough on its own, see the ground rule below. CarPlay is deliberately not among
-them, and neither is Locket: its identities were taken out of `Conflicts`/`Replaces` when it
+that is not enough on its own, see the ground rule below. Neither CarPlay nor Locket is among
+them: its identities were taken out of `Conflicts`/`Replaces` when it
 left the suite, and its removal from the repository does not put them back — the suite has no
 business deleting a package it never carried.
 
@@ -725,11 +691,11 @@ rather than leaving a fresh install looking broken.
 **One question, three answers, in three processes — and two of them agreeing is not
 enough.** `SCIPanelGate` decides whether the dylib acts; `SCIPanelRoot -isOnForSpecifier:`
 draws the row in Settings; `SCICPSettingsController -enabledForSpecifier:` draws the same
-row on CarPlay's own page. All three read `app_enabled_<bundleid>` from separate code, and
+row on a tweak's own detail page. All three read `app_enabled_<bundleid>` from separate code, and
 the first sweep found only the first two. Leaving the third at YES would have drawn
-CarPlay's switch on while the gate held it off — a screen actively lying, which is worse
+a tweak's switch on while the gate held it off — a screen actively lying, which is worse
 than one that merely surprises. Grep `app_enabled_` before changing this default again;
-sub-feature keys (CarPlay's audio fix) are a different question and stay defaulted on,
+sub-feature keys (a tweak's own sub-options) are a different question and stay defaulted on,
 because they sit *inside* a tweak already opted into.
 
 **Persistence needed no code.** The value lives in the panel's plist, which dpkg leaves
@@ -786,208 +752,41 @@ Pages is in, whether the build is `built` or `errored`, whether the live URL is 
 the version just built. Every time a sleep was replaced with a question, the answer came
 back immediately and was right. See the CI section for what that turned into.
 
-**CarPlay's app display was deliberately not built at first, and the reason is worth
-keeping explicit even though a first cut now exists (see below).** Putting another
-app's live view onto the CarPlay screen by walking through private SpringBoard
-classes — `SBSceneManagerCoordinator`, `SBApplicationSceneHandleRequest`,
-`SBAppViewController`, `SBDeviceApplicationSceneEntity`, read about in
-`carplay-cast`'s source but never confirmed against a real device — is exactly the
-shape of mistake this project's Instagram-section rule warns about (a class dump says
-what exists, not what renders) with higher stakes: a wrong hook in a normal app's
-process crashes that app; a wrong hook in SpringBoard can take down the whole
-home-screen experience and force a respring. `SCICPScreenWatch` (0.1.0) was
-deliberately the smallest possible first step for exactly that reason: `UIScreen.screens`
-and the two public connect/disconnect notifications, nothing private, nothing that
-mutates anything.
+**Albrhi CarPlay is gone from this repository, and what it learned is kept in one place rather
+than in the eight sections it used to occupy.** It patched SpringBoard and Camera to put an
+ordinary app on the car display, plus a dashboard wallpaper and a recording-audio fix. **It never
+ran on a device**: 0.3.0 and 0.4.0 each looked finished and were not, and 0.4.1's fixes for what a
+real iOS 16.1 report found missing were themselves never observed. The owner's decision is to
+rebuild it from scratch in a repository of its own — which is the right shape for it, because a
+wrong hook there takes the home screen with it and that risk has no business riding along with a
+source that updates for a download button.
 
-**What actually shipped in 0.3.0 took a different, lower-risk architecture instead of
-that SpringBoard-scene-hosting path — see `carsurf` below for why, and CHANGELOG.md
-for the release note.** The two are not the same mechanism, and the SpringBoard-scene-
-hosting path above is retained here as a record of what was studied and *not* built,
-not as a plan still pending.
+**What it established, for whoever builds the next one:**
 
-**A second, more current reference for the app-display feature: `carsurf` by pavunato
-(github.com/pavunato/carsurf), studied 2026-08-14 — no LICENSE file, so this is read for
-architecture the same cautious way `carplay-cast` is, not copied from.** It targets iOS
-15-18 specifically and says outright that the `SBSceneManagerCoordinator`-family
-SpringBoard scene-hosting path above is the *old* CarBridge-era mechanism, abandoned
-because CarPlay's UI moved out of SpringBoard into its own process (`CarPlaySupport`
-pre-18, `CarKit` on 18+) sometime after iOS 13. Worth recording because it changes where
-the risk actually sits, not just the technique:
+- **The display mechanism is the app patching itself, not SpringBoard reaching into another app.**
+  A dylib in the target app rewrites its own incoming CarPlay scene role to the ordinary
+  `UIWindowSceneSessionRoleApplication`; UIKit then resolves the app's real Info.plist scene
+  configuration. A bug crashes that one app rather than SpringBoard. `carplay-cast`'s
+  `SBSceneManagerCoordinator` scene-hosting path is the *old* CarBridge-era mechanism, abandoned
+  once CarPlay's UI moved out of SpringBoard.
+- **Admission is decided by LaunchServices on iOS 15–17 and by CarKit on 18+**, and one build must
+  gate on the version: running the 16/17 LaunchServices hooks on 18 puts SpringBoard into safe
+  mode. On 15–17 the answer is the typed entitlement getters plus `-entitlementValuesForKeys:`,
+  whose result is a private `LSBundleInfoCachedValues` — **tag that object, never replace it**, and
+  the tag set must hold weak references.
+- **An app that ships its own CarPlay interface must be left alone.** Rewriting a template scene
+  after CarPlay has built one throws inside `+[UIScene _sceneForFBSScene:…]` and kills the app on
+  every launch.
+- **`carsurf` by pavunato is the current reference and carries a "do not retry" table**, every row
+  of which cost a device recovery: no global `LSBundleInfoCachedValues` swizzle, nothing hooked in
+  `carkitd`, no fabricated entitlement dictionaries, no forcing `launchUsingTemplateUI = NO` on a
+  genuinely native template app — and a visible icon is never proof, a real `UIWindowScene` is. It
+  has **no LICENSE file**, so it is read for architecture only, the same line this project keeps
+  for the unlicensed TikTok references and the opposite of what GPLv3 allowed for NextUp.
+- Two lessons from it are general and stay below in their own sections: **an XML comment cannot
+  contain `--`** (check.py rule 18), and **a space-separated `TWEAK_NAME` builds two binaries**
+  (`shared/tweak.mk`).
 
-- **The scene is built by the target app patching itself, not by SpringBoard
-  reaching into another app.** A dylib injected into *every enabled app*
-  (`CSApp.dylib`) rewrites its own incoming CarPlay scene role from
-  `CPTemplateApplicationSceneSessionRoleApplication` to the ordinary
-  `UIWindowSceneSessionRoleApplication` (`CSSceneBridge.m`) — UIKit then resolves the
-  app's real Info.plist window-scene configuration and hands it to the app's own scene
-  delegate. The app renders its actual phone UI on the car screen without knowing the
-  display is a car. A bug here crashes the one app that carries the dylib, not
-  SpringBoard — a materially smaller blast radius than hooking SpringBoard's own
-  scene-hosting machinery to project a *different* app's view, which is what the
-  `carplay-cast`-derived approach above would require.
-- **SpringBoard's own dylib (`CSSystem.dylib`) only ever answers admission
-  questions, never builds a scene itself:** it spoofs the CarPlay-capability
-  entitlement getters on `LSBundleProxy`/`CARAppEntitlements` (iOS 16/17,
-  `CSEntitlementSpoof.m`/`CSSceneManifestSpoof.m`) or promotes a
-  `CRCarPlayAppPolicyEvaluator` policy object per bundle (iOS 18,
-  `CSCarKitPolicy.m`) so the app CarPlay already decided to admit is told it may show
-  on the dashboard. Every hook is a guarded swizzle through the same pattern this
-  project already uses (`CSSwizzleInstanceMethod` returns NO and installs nothing if
-  the class/selector is absent — never adds a method the framework does not expect)
-  and is wrapped in `@try/@catch` that degrades to "not spoofed" rather than crashing.
-- **iOS 18 moved the actual admission gate somewhere no runtime hook can reach.**
-  `+[CRCarPlayAppDeclaration requiredEntitlementKeys]` reads code-signed entitlements
-  at app-registration time, outside any process a tweak injects into — confirmed by
-  hooking every entitlement accessor and observing none is ever consulted for a
-  non-CarPlay app on that release. So on iOS 18 the app's binary genuinely has to
-  carry `SBStarkCapable` on disk; a root daemon (`carsurf-helperd`) re-signs the
-  binary, adds its cdhash to the jailbreak's trustcache, and re-registers it with
-  LaunchServices — reversibly, keeping a backup and restoring it when the app is
-  disabled. An app already carrying real Apple-issued `com.apple.developer.carplay-*`
-  entitlements is *never* re-signed (confirmed the hard way: doing so once produced a
-  SIGKILL-on-every-launch app recoverable only by reinstalling from the App Store).
-- **Apps with no scene manifest at all get a different mechanism: transplant, not
-  render-twice.** `CSMirror.m` moves the app's one root view controller onto a new
-  window built on the car scene, and back onto the phone window on disconnect — chosen
-  specifically because a view controller can only belong to one window, so this is the
-  only way to get real touch/keyboard/gesture/modal support without hand-forwarding
-  events into a `CALayerHost` mirror.
-- **The two admission mechanisms above are gated by the *daemon's own recorded
-  outcome*, not by the user's enabled/disabled toggle.** An app can be enabled in
-  Settings and still not promoted if the on-disk patch failed, or — the common case —
-  if an App Store update silently re-signed the binary and stripped the entitlement
-  since the daemon last checked. The daemon re-verifies every enabled app on every
-  preference change and at boot rather than trusting its own past success, which is
-  what makes that self-heal instead of silently and permanently falling off CarPlay.
-
-**Albrhi CarPlay 0.3.0 (2026-08-14) follows this architecture, in original code informed
-by it — not copied from an unlicensed source.** Scoped down from the full picture above
-on purpose, after the user chose the lower-risk starting point explicitly over building
-everything at once:
-
-- The scene-role rewrite (`AlbrhiCPApp.dylib`, filtered onto every app that links UIKit
-  the same `com.apple.UIKit`/`UIKitCore` way `CSApp.plist` does) hooks only two
-  selectors — both public, documented UIKit API
-  (`-[UISceneConfiguration initWithName:sessionRole:]`, `-[UISceneSession role]`) — and
-  is gated per-app on a comma-separated bundle-identifier list the user edits from
-  Settings › Albrhi CarPlay, not a private-API multi-scene force or a manifest-lookup
-  fallback.
-- The admission spoof (`SCICPAdmissionSpoof.m`, SpringBoard-side) answers only
-  `CARCapableApp`/`SBStarkCapable` on `LSBundleProxy`'s two `entitlementValueForKey:...`
-  getters — the iOS 16/17 runtime path. **No on-disk code-signing daemon, no
-  trustcache, no `CRCarPlayAppPolicyEvaluator` hook** — so this release is explicitly
-  known to do nothing on iOS 18, where carsurf's own measurement says the real
-  admission gate is unreachable without exactly that daemon. Building it is future
-  work, deliberately not bundled into the first cut.
-- Apps with no scene manifest (carsurf's `CSMirror.m`/transplant case) and forcing
-  multi-scene support on an app that has not declared it are both left out for the same
-  reason — smaller surface first, confirm it, then extend it.
-
-Not validated on-device, more than any other release in this project (see CHANGELOG.md).
-The two references remain differently licensed (`carplay-cast`, Apache-2.0; `carsurf`, no
-stated license) and this implementation is written fresh from both, not lifted from
-either.
-
-**0.3.0's admission spoof implemented roughly a third of what carsurf's own
-architecture actually needs, and a real device report on iOS 16.1 is what showed
-which third was missing.** Answering `LSBundleProxy`'s two direct entitlement getters
-was not enough, and each of the following, on its own, is enough to keep an app off
-the dashboard entirely — fixed in 0.4.1:
-
-- **SpringBoard's own app-library code does not ask entitlement questions one key at
-  a time.** It calls `-entitlementValuesForKeys:` in bulk, and on a real device that
-  does not return an `NSDictionary` — it returns a private `LSBundleInfoCachedValues`
-  object, read afterward through its own accessor family
-  (`-boolForKey:`/`-objectForKey:`/…). `SCICPAdmissionSpoof.m` now tags that object
-  when it belongs to a bridged bundle (never replaces it — replacing it is exactly
-  what aborted `carsurf`'s own SpringBoard hook into safe mode on iOS 18, per its own
-  documented war story) and answers capability keys for tagged objects only.
-- **Nothing told CarPlay a bridged app was worth attempting a scene for in the first
-  place.** CarPlay reads what `LSBundleProxy` says an app's own `Info.plist`
-  declares — `UIApplicationSceneManifest`, `SBStarkLaunchModes` — *before* the app
-  is ever launched, to decide whether to try at all. A new file,
-  `SCICPSceneManifestSpoof.m`, adds a `UIWindowSceneSessionRoleCarPlay`
-  configuration to a bridged bundle's declared manifest, preserving every
-  configuration the app already has.
-- **Multi-scene support was never forced.** Virtually every modern app carries
-  *some* scene manifest (Xcode has defaulted to one since iOS 13) without ever
-  opting into `UIApplicationSupportsMultipleScenes` — almost nothing needs a second
-  window on the phone itself. Left unforced, the phone scene and the car scene
-  cannot coexist, so CarPlay connects the app's *existing* session rather than a
-  second one — which reads as "it only runs in the car now, and the phone can't
-  open it." **The user reported this exact behavior from CarBridge itself with
-  YouTube**, which settles that it is this class of app's known limitation, not a
-  bug unique to this implementation — `SCICPInstallMultiSceneForce` in
-  `SCICPSceneHooks.x` (a guarded manual swizzle on the private
-  `UIApplicationSceneManifest -supportsMultipleScenes`, the same reason
-  `LSBundleProxy` is hooked by hand rather than blind `%hook`) forces it on for a
-  bridged app, which is the most this project can do without also building the
-  transplant mechanism `carsurf`'s own `CSMirror.m` uses for apps that cannot hold
-  two scenes no matter what is forced.
-
-None of this was guessed at when it was first skipped — the fuller mechanism was
-already documented above, from reading `carsurf`'s own source, when 0.3.0 shipped
-only the entitlement-getter piece of it deliberately, to confirm a smaller surface
-first. What a real device actually needed is what turned "deliberately smaller"
-into "actually incomplete," and the fix is the rest of the same, already-documented
-architecture — not a new one.
-
-**The dashboard wallpaper (0.4.0) came from a different kind of source: Apple's own
-compiled system apps, not a third party's tweak.** The user supplied two `.ipa` files
-they said they pulled from Apple directly — `CarPlayWallpaper.app` and
-`CarPlaySplashScreen.app`, both `Info.plist`-confirmed as `com.apple.CarPlayWallpaper`
-and `com.apple.CarPlaySplashScreen`, both `SBAppTags: hidden` (no user-facing entry
-point of their own — an unusual combination that says the OS ships a feature no Settings
-screen ever exposes turning on). Read the same way every other private API in this
-project is: Mach-O sections read directly (no `otool`/`class-dump` on this development
-machine — a small Python script parses `__objc_classname`/`__objc_methname` and
-`LC_LOAD_DYLIB` load commands by hand), not a class dump of a competitor's paid binary.
-That distinction is the whole reason this was fair to read at all — see the Instagram
-section's SCInsta credit and the CarBridge refusal earlier in this file for why the same
-action is not always the same decision.
-
-**What the binary said, plainly:** `CPWRootViewController` resolves a
-`wallpaperIdentifier` string into a `UIImage` (through private classes
-`_CRSUIWallpaperPreferences`/`_CRSUIWallpaperSceneSettings`, both living in
-`BaseBoardUI.framework` per the load-command list — the same private framework that
-backs the iPhone's own Home Screen wallpaper system, confirming CarPlay's dashboard
-wallpaper is not a separate feature but a second *scene* inside the OS's one wallpaper
-system) and assigns it to `self.imageView.image` inside one private method,
-`-_updateWallpaperImage`. *Where* the identifier itself comes from — which class decides
-it, whether any preference actually exposes choosing it — was not answered by two 90KB
-app binaries alone; `CarKit.framework` and `CarPlayUIServices.framework`, both linked but
-neither present to read, are where that logic actually lives.
-
-**So the hook does not try to answer that question at all — it intercepts the very last
-step instead.** `SCICPWallpaperHooks.x` hooks `-_updateWallpaperImage` on
-`CPWRootViewController` itself (forward-declared, matching this file's own rule about
-`@interface`s for touched properties), calls `%orig` so Apple's own resolution runs
-unchanged, and only then overwrites `imageView.image` with a user-chosen photo if one has
-been set — never touching the identifier, the preferences classes, or how CarKit decides
-anything. This is injected into `com.apple.CarPlayWallpaper` as a third target process
-for `AlbrhiCP.dylib` (alongside SpringBoard and Camera) rather than a fourth dylib: it is
-one hook in one file, not a second injection *scope* the way the app-bridging dylib
-needed. A mistake here is scoped to one ordinary app process, same severity class as the
-Camera hook — nowhere near SpringBoard's blast radius.
-
-The image itself travels as a plain file
-(`/var/mobile/Library/Preferences/AlbrhiCP-wallpaper.jpg`, written by the panel's new
-`PHPickerViewController`-based picker, re-encoded to JPEG so the reading side never has
-to guess at a HEIC decode) rather than a `CFPreferences` value — the same "a jailbroken
-device permits the real file path" reasoning `SCIPanelGate.h` already documents, just for
-an image instead of a plist.
-
-**The recording-audio fix needed no private API at all.** CarPlay audio dropping to
-phone-call quality the moment Camera starts recording is `AVAudioSession` asking for
-`AllowBluetooth` (HFP, which carries a microphone) instead of also asking for
-`AllowBluetoothA2DP` (the high-quality profile) — both are public, documented category
-options, and an app can request both at once. Separately, forcing `-setPreferredInput:`
-to the built-in mic keeps the *input* off Bluetooth entirely, without asking the *output*
-to leave A2DP. Two ordinary calls, no jailbreak-specific behavior, hooked on
-`AVCaptureSession -startRunning`/`-stopRunning` — the same hook point any camera-feature
-tweak uses, hooked here for what happens to a fully separate audio session rather than to
-the capture itself.
 
 **Albrhi Panel assumed one filter names one app, and CarPlay is the counterexample.**
 `SCIPanelScan` turned every `Bundles` entry in a filter plist into its own row, so
@@ -1073,19 +872,9 @@ tweaks/
                            an Albrhi page in the Settings app, one switch per patched
                            app. It writes; the tweaks read — and how they read it is a
                            ground rule above, not a detail.
-    src/CarPlay/             CarPlay's own settings page, pushed to from one row the
-                             panel collapses its two-process filter down to — see
+    src/NextUp/              Albrhi NextUp's own settings page, pushed to from the one row
+                             the panel collapses its seven-process filter down to — see
                              SCIPanelScan's SCIPanelGroupIdentifier handling
-  carplay/                 Albrhi CarPlay — com.albrhi.carplay, two dylibs (a first
-                           for this repo)
-    src/                     AlbrhiCP: SpringBoard (screen watch, admission spoof)
-                             and Camera (the recording-audio fix)
-    appsrc/                  AlbrhiCPApp: every app that links UIKit, filtered by
-                             framework identity rather than a bundle id — the scene
-                             role rewrite that actually shows an app on the dashboard
-    common/                  shared between the two binaries of this one tweak
-                             (SCILog.h, the bridged-app-list reader) — distinct from
-                             shared/ above, which every *tweak* draws from
   nextup/                  Albrhi NextUp — com.albrhi.nextup, a GPLv3 port of
                            NextUp 3 by Yves. Kept as a near-verbatim copy on purpose,
                            NU* prefix and all, so it can still be diffed against
@@ -1129,9 +918,9 @@ Most new tweaks belong inside `com.albrhi`, and need no workflow of their own at
 the default and costs nothing but a version bump in `suite/control`.
 
 A tweak only earns its **own publishing workflow** when it has nothing to do with what
-the suite bundles — CarPlay is the one that has. The shape to copy is in git history:
-`buildlocket.yml` as of the commit before it was deleted, and `buildcarplay.yml` as of the
-commit that withheld it. What that shape is: its own version gate, its own tag namespace
+the suite bundles — NextUp is the one that has. `buildnextup.yml` is the shape to copy, and two
+more sit in git history: `buildlocket.yml` as of the commit before it was deleted, and
+`buildcarplay.yml` as of the same for CarPlay. What that shape is: its own version gate, its own tag namespace
 (`carplay-v*`, `locket-v*` — so two packages' versions can never be confused on one releases
 page), its own assets including a self-contained sideload dylib, and a `.no-suite` marker file
 in the tweak's directory so `make-suite.sh` does not also pull it into the combined package.
@@ -1453,7 +1242,6 @@ reason the arrangement is shaped this way.
 | `buildnextup.yml` | `com.albrhi.nextup` | — | manual build only — withheld |
 | `buildpanel.yml` | the Settings panel | its own namespace | manual build only |
 | `buildsuite.yml` | **`com.albrhi`**, the combined package | `v${SUITE_VERSION}` | yes |
-| `buildcarplay.yml` | `com.albrhi.carplay` | `carplay-v*` | manual build only — withheld |
 | `build-dav1d.yml` | the AV1 decoder Instagram links | on demand | — |
 
 **One workflow publishes: `buildsuite.yml`.** The four per-tweak workflows for what the suite
@@ -1609,8 +1397,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.3** · CarPlay **0.4.1**
-(withheld from the source) · TikTok **0.17.2** · NextUp **0.1.4** · suite **1.47.0**.
+Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.4** · TikTok **0.17.7** ·
+NextUp **0.1.5** · suite **1.49.0**. **CarPlay is gone** — removed from this repository, to be
+rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being
 absent.** It said Panel 0.9.1 and suite 1.45.0 while the source served 0.9.2 and 1.46.0, and

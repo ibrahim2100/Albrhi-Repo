@@ -1,5 +1,17 @@
 # Albrhi Changelog
 
+## v1.49.0
+
+**Albrhi CarPlay has been removed from this project.** It put an ordinary app on the car display,
+and it never ran on a device across three releases; it is going to be rebuilt from scratch in a
+repository of its own, where a tweak that can take the home screen with it does not share a source
+with a download button. If you installed it from one of its releases it keeps working, and it will
+not receive updates from this source.
+
+The Albrhi page no longer shows a row for a tweak whose settings page is not installed.
+
+Includes Panel 0.9.4.
+
 ## v1.48.4
 
 **The watermark came back in 1.48.3 and is gone again.** Picking the largest version of a picture

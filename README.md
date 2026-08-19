@@ -4,7 +4,7 @@
 
 ### iOS tweaks, built in the open — bilingual, native, and written to be read
 
-**العربية · English** · a working APT source · seven tweaks, five in one package
+**العربية · English** · a working APT source · six tweaks, five in one package
 
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B-lightgrey.svg)]()
@@ -101,7 +101,7 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 
 ### What is in here
 
-**Seven tweaks. Five ship inside `com.albrhi`; two stand on their own.**
+**Six tweaks. Five ship inside `com.albrhi`; one stands on its own.**
 
 | Tweak | Patches | Version | What it does |
 |---|---|---|---|
@@ -111,7 +111,6 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 | **Albrhi for TikTok** | TikTok | 0.17.1 | a download button in the feed, photo posts, no ads, confirmations, privacy |
 | **Albrhi Panel** | Settings | 0.9.2 | the Albrhi page — one switch per patched app, and a page per tweak |
 | **Albrhi NextUp** | SpringBoard, Music, Podcasts, YouTube, YT Music, Spotify | 0.1.3 | what plays next, on the Lock Screen — **its own package** |
-| **Albrhi CarPlay** | SpringBoard, Camera | 0.4.1 | any app on the car display, a dashboard wallpaper, an audio fix — **not served, see below** |
 
 Each is a self-contained Theos project under `tweaks/`, with its own sources, package
 identity and version number, and **they never meet at runtime**: an injection filter binds
@@ -120,7 +119,7 @@ share is the build plumbing — the checks, the build script and the APT index.
 
 `com.albrhi` is the merge of the first five, built by `tools/make-suite.sh`, which picks up
 any `tweaks/*/control` automatically. A tweak leaves the merge only by carrying a
-`.no-suite` marker file in its directory — CarPlay and NextUp are the two that do.
+`.no-suite` marker file in its directory — NextUp is the one that does.
 
 **Albrhi for Locket was removed from this repository**, on the owner's instruction to isolate it
 completely: it left the suite first, then left the project. Its five `locket-v*` releases stay on
@@ -128,12 +127,14 @@ the releases page as history, and the source no longer serves them — deleting 
 stop an index built from published releases from offering it, so `com.albrhi.locket` is named in
 `WITHHELD_PACKAGES` as well.
 
-**CarPlay is deliberately not in the suite, and is currently not served at all.** It patches
-SpringBoard and Camera for a car-display feature with no relationship to the social apps —
-installing Albrhi should not mean installing something for a car nobody asked about. It is
-also withheld from the source entirely until its app bridging is confirmed on a real device:
-0.3.0 and 0.4.0 each looked finished and were not. Build it yourself, or take the artifact
-from a manual run of `buildcarplay.yml`.
+**Albrhi CarPlay was removed from this repository.** It patched SpringBoard and Camera to put an
+app on the car display, and it never ran on a device: 0.3.0 and 0.4.0 each looked finished and were
+not, and 0.4.1's fixes for what a real iOS 16.1 report found missing were themselves never observed.
+A tweak that takes the home screen with it when a hook is wrong does not belong in a source that
+updates for a download button, so it is going to be rebuilt from scratch in a repository of its own.
+Its `carplay-v*` releases stay on the releases page as history, and the source no longer serves
+them — deleting a tweak does not stop an index built from published releases from offering it, so
+`com.albrhi.carplay` stays named in `WITHHELD_PACKAGES`.
 
 > Albrhi is an **educational and corrective derivative** of
 > [SCInsta](https://github.com/SoCuul/SCInsta) by **SoCuul**, developed with AI assistance to
@@ -399,7 +400,7 @@ git submodule update --init --recursive
 ```
 
 The result lands in `tweaks/instagram/packages/`. Swap `instagram` for `youtube`, `twitter`,
-`tiktok`, `panel`, `nextup` or `carplay`, and `rootless` for `roothide`, `rootful` or `sideload`.
+`tiktok`, `panel` or `nextup`, and `rootless` for `roothide`, `rootful` or `sideload`.
 
 **To build what people actually install**, merge the five into the suite:
 
@@ -432,7 +433,7 @@ Adding a tweak means adding a directory under `tweaks/` — `tools/check.py` fin
 checks it without being told, `./build.sh <name> rootless` builds it, and `make-suite.sh`
 pulls it into `com.albrhi` automatically. Joining the suite is the default and costs
 nothing but a version bump in `suite/control`; staying out of it takes a `.no-suite` marker
-file, which only CarPlay has.
+file, which only NextUp has.
 
 ### 🧰 The tools
 
@@ -522,8 +523,7 @@ anything or losing its settings. Reopen the app for the change to take effect.
 - [x] **Albrhi for TikTok** — a download button in the feed, photo posts, confirmations, privacy
 - [x] Photo posts saved as photos, and one picture saved as a clip with the post's own sound
 - [x] **Albrhi NextUp** — a GPLv3 port of NextUp 3, configured from the panel, published on its own
-- [ ] **Albrhi CarPlay confirmed on a device** — the code is written and withheld until it is
-- [ ] iOS 18 support for CarPlay, which needs an on-disk re-signing daemon rather than a runtime hook
+- [ ] **Albrhi CarPlay, rebuilt from scratch in its own repository** — removed from this one
 - [ ] Tie a SponsorBlock marker to the video its bar belongs to — today one global serves every bar
 - [ ] Settings profiles — several configurations, switched per account
 - [ ] Crash protection that isolates and disables a faulting feature rather than the whole tweak

@@ -1,5 +1,17 @@
 # Albrhi Panel Changelog
 
+## v0.9.4
+
+**Albrhi CarPlay's page left with the tweak**, which was removed from this repository to be rebuilt
+in one of its own.
+
+**And a row whose page is not in this build is no longer drawn.** The panel finds these rows from
+filter plists on disk, and a filter outlives the package that installed it: anyone who installed
+CarPlay from one of its old releases still has `AlbrhiCP.plist` beside a dylib, while the page it
+names is gone. A `PSLinkCell` with a nil detail class is a row that answers a tap by doing nothing
+— a door drawn on a wall. Asking the runtime whether the class exists costs one lookup and is the
+only thing that knows.
+
 ## v0.9.3
 
 **A diagnostic-log switch for Albrhi NextUp**, under a new Advanced section, off by default. The

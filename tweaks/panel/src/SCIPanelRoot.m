@@ -12,7 +12,7 @@
 #import <objc/message.h>
 #import <objc/runtime.h>
 
-NSString *SCIVersionString = @"v0.9.3";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.9.4";  // AlbrhiPanel
 
 ///
 /// Albrhi's own control panel, in the iOS Settings app.
@@ -152,6 +152,16 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
 
         for (SCIPanelEntry *entry in features) {
             Class detailClass = NSClassFromString(entry.detailControllerClassName);
+
+            // **A row whose page is not in this build is not drawn.**
+            //
+            // The scan finds these rows from filter plists on disk, and a filter outlives the
+            // package that installed it: somebody who installed Albrhi CarPlay from one of its old
+            // releases still has `AlbrhiCP.plist` beside a dylib, while the page it names
+            // (`SCICPSettingsController`) left with the tweak. `PSLinkCell` with a nil detail class
+            // is a row that answers a tap by doing nothing at all -- a door drawn on a wall. Asking
+            // the runtime costs one lookup and is the only thing that knows.
+            if (!detailClass) continue;
             PSSpecifier *row = [PSSpecifier preferenceSpecifierNamed:entry.appName
                                                               target:self
                                                                  set:NULL

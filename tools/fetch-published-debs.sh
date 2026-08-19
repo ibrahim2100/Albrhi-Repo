@@ -69,23 +69,16 @@ OWNER_TWEAK="${5:-}"
 # gathered from its old releases and served forever, at the last version it shipped.
 # Silence removes nothing.
 #
-# CarPlay is here because its app bridging has never been confirmed working on a
-# device: 0.3.0 and 0.4.0 each looked finished and were not, and 0.4.1's fixes for what
-# a real iOS 16.1 report found missing are themselves unobserved. Serving it offers an
-# update to people whose only report is that it does not work.
+# **CarPlay was removed from this repository**, on the owner's decision to stop carrying it
+# here and rebuild it from scratch in a repository of its own. It never ran on a device: 0.3.0
+# and 0.4.0 each looked finished and were not, and 0.4.1's fixes for what a real iOS 16.1
+# report found missing were themselves never observed.
 #
-# Both halves have to be undone together to publish it again -- this entry and the
-# release half of .github/workflows/buildcarplay.yml, which says the same thing from
-# its side. Removing only this one serves an old release as though it were current.
-#
-# Matched exactly, against the archive's own Package field, and every flavour has to be
-# named: com.albrhi.carplay and com.albrhi.carplay.roothide are separate identities, and
-# listing only the first would withhold the rootless build while still serving roothide.
-# Two different reasons live in this one list, and confusing them would be a mistake a
-# year from now, so they are written out separately.
-#
-# **Withheld until confirmed on a device** -- CarPlay. Temporary, and undoing it is two
-# changes, not one: this entry and the release half of buildcarplay.yml. See that file.
+# Its entries stay in this list for the reason the paragraph above gives, and this is the
+# second time that reason has been paid for: five `carplay-v*` releases are still published,
+# and an index built from what is published would go on offering 0.4.1 forever -- from a tweak
+# whose source is no longer in the tree to fix. Deleting the directory removes nothing from the
+# source; these two lines do.
 #
 # **Withheld permanently** -- the individual social-app packages still bundled in the
 # suite. com.albrhi is the front door for these; it declares Conflicts and Replaces on
