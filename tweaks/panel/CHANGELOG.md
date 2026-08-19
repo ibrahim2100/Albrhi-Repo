@@ -1,5 +1,24 @@
 # Albrhi Panel Changelog
 
+## v0.9.7
+
+**A tweak whose settings page is missing is now shown and explained, not hidden.**
+
+0.9.4 skipped those rows outright, which was right for one of the two situations that produce them
+and badly wrong for the other:
+
+- The tweak is **gone** and its filter plist outlived the package — Albrhi CarPlay, removed from
+  this repository, whose `AlbrhiCP.plist` still sits beside a dylib for anyone who installed it. A
+  row there is a door drawn on a wall.
+- The tweak is **newer than the panel**. Albrhi Watch ships as its own package while its page lives
+  in this bundle, so installing the tweak before the suite update that carries the page is an
+  ordinary sequence — **and hiding the row then tells somebody who just installed a tweak that it
+  did not install.** Reported exactly that way, within an hour of the first release.
+
+The second is the one people meet, and silence is the worst available answer to it. The row is
+drawn, dimmed, and carries the reason: *installed, but its settings page is not — update Albrhi
+from Sileo*. That sentence is also true of the first case, and costs nothing there.
+
 ## v0.9.6
 
 **Albrhi Watch's page gains the update hold and the report.** The hold is a switch like the others;

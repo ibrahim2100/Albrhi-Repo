@@ -12,7 +12,7 @@
 #import <objc/message.h>
 #import <objc/runtime.h>
 
-NSString *SCIVersionString = @"v0.9.6";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.9.7";  // AlbrhiPanel
 
 ///
 /// Albrhi's own control panel, in the iOS Settings app.
@@ -153,15 +153,41 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
         for (SCIPanelEntry *entry in features) {
             Class detailClass = NSClassFromString(entry.detailControllerClassName);
 
-            // **A row whose page is not in this build is not drawn.**
             //
-            // The scan finds these rows from filter plists on disk, and a filter outlives the
-            // package that installed it: somebody who installed Albrhi CarPlay from one of its old
-            // releases still has `AlbrhiCP.plist` beside a dylib, while the page it names
-            // (`SCICPSettingsController`) left with the tweak. `PSLinkCell` with a nil detail class
-            // is a row that answers a tap by doing nothing at all -- a door drawn on a wall. Asking
-            // the runtime costs one lookup and is the only thing that knows.
-            if (!detailClass) continue;
+            // **A row whose page is missing is shown and explained, not hidden.**
+            //
+            // The first version of this skipped the row outright, and that was wrong in the more
+            // common direction. Two different situations produce a nil detail class:
+            //
+            //  - The tweak is *gone* and its filter plist outlived the package -- Albrhi CarPlay,
+            //    removed from this repository, whose `AlbrhiCP.plist` still sits beside a dylib on
+            //    anyone who installed it. A row here would be a door drawn on a wall.
+            //  - The tweak is *newer than the panel*. Albrhi Watch ships as its own package while
+            //    its page lives in this bundle, so installing the tweak before the suite update
+            //    that carries the page is an ordinary Tuesday -- and hiding the row then tells
+            //    somebody who just installed a tweak that it did not install.
+            //
+            // The second is the one people actually meet, and silence is the worst possible answer
+            // to it. So the row is drawn, dimmed, and says why -- which is also true of the first
+            // case and costs nothing there.
+            //
+            if (!detailClass) {
+                PSSpecifier *stale = [PSSpecifier preferenceSpecifierNamed:entry.appName
+                                                                    target:self
+                                                                       set:NULL
+                                                                       get:NULL
+                                                                    detail:Nil
+                                                                      cell:PSTitleValueCell
+                                                                      edit:Nil];
+                [stale setProperty:@NO forKey:@"enabled"];
+                [stale setProperty:SCILocalized(@"tweak_page_missing") forKey:@"sciSubtitle"];
+                [stale setProperty:@YES forKey:@"sciSubtitleIsWarning"];
+                [stale setProperty:[SCIPanelAppCell class] forKey:@"cellClass"];
+                [stale setProperty:SCIPanelBadgeForGroup(entry.bundleIdentifier)
+                            forKey:@"iconImage"];
+                [specifiers addObject:stale];
+                continue;
+            }
             PSSpecifier *row = [PSSpecifier preferenceSpecifierNamed:entry.appName
                                                               target:self
                                                                  set:NULL

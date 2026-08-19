@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.49.3
+
+**If a tweak is installed but Albrhi has not caught up with its settings page, the page's row now
+says so** instead of not appearing at all. Installing Albrhi Watch before this update made the
+tweak look as though it had not installed.
+
+Includes Panel 0.9.7.
+
 ## v1.49.2
 
 Albrhi Watch's settings page gains a switch that stops the Watch app looking for watchOS updates,
