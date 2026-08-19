@@ -9,6 +9,10 @@
 #import "../Localization/SCILocalize.h"
 #import "../Settings/SCIDiagnosticsViewController.h"
 #import <objc/runtime.h>
+// objc_msgSend is declared here, not in runtime.h -- the selectors probed in
+// +mediaDeclaresVideo: are confirmed in a class dump rather than declared in
+// InstagramHeaders.h, so they are sent rather than called.
+#import <objc/message.h>
 #import <Photos/Photos.h>
 
 @implementation SCIMediaDownloader
@@ -161,9 +165,15 @@
     IGVideo *video = nil;
     @try { video = [media valueForKey:@"video"]; } @catch (__unused id e) {}
 
+    // Sent through objc_msgSend like the other two, and for the same reason: these are
+    // selectors confirmed in a class dump, not methods InstagramHeaders.h declares, so
+    // a direct call has no visible interface to compile against. The cast must name the
+    // real return type -- a double comes back in a floating-point register, and reading
+    // it through an `id`-shaped signature would read the wrong register entirely.
     @try {
-        if ([video respondsToSelector:@selector(videoDuration)] &&
-            [video videoDuration] > 0.0) {
+        SEL duration = NSSelectorFromString(@"videoDuration");
+        if ([video respondsToSelector:duration] &&
+            ((double (*)(id, SEL))objc_msgSend)(video, duration) > 0.0) {
             return YES;
         }
     } @catch (__unused id e) {}
