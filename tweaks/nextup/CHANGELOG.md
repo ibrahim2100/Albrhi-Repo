@@ -1,5 +1,28 @@
 # Albrhi NextUp — what changed
 
+## v0.1.3
+
+**0.1.1 made the master switch opt-in and this republished it as on, which put the whole
+change back.**
+
+`NUPrefBool` trusts any bit the state word marks as known and only falls back to a caller's
+default when the word says nothing about that key — so a published bit outranks the default.
+`NUPrefsPublishState()` was still reading `Enabled` with upstream's fail-open `YES`, and
+SpringBoard re-seeds that word from its own `%ctor` on every respring. On a fresh install, with
+nothing ever written to the plist, that seed published master = 1 and every reader in every
+process read the master as on. `NUMasterEnabled()`'s `NO` was unreachable.
+
+The panel's own publisher was fixed for exactly this in Panel 0.9.1; the tweak's was not, so the
+two halves of one decision disagreed — and the one that runs at every respring won.
+
+**The rule under it:** a default written where state is *published* has to be the default the
+reader would have used. They differ only when nothing is stored, which is the only moment a
+default is consulted at all. The re-seed's own comment even names the failure it must not cause
+— "NUPrefBool would fall back to the fail-open default" — while supplying that default itself.
+
+Nothing else changed; every other key keeps upstream's `YES` deliberately, so one switch is
+still enough to get a working tweak.
+
 ## v0.1.2
 
 **The sandbox profile was never applied, and that alone is "it didn't work at all".**

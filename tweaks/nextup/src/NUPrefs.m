@@ -104,7 +104,19 @@ void NUPrefsPublishState(void) {
     // Build the word from the freshly-written plist (this is Settings' own process, so the
     // read is reliable), stamp it valid, publish, and signal.
     uint64_t mask = kNUStateValidBit;
-    if (NUReadCF(@"Enabled",           YES, /*fresh=*/YES)) mask |= kNUStateMaster;
+    // **`NO`, matching `NUMasterEnabled()` above — and publishing `YES` here defeated it
+    // entirely.** A published bit outranks the CFPreferences default: `NUPrefBool` trusts any
+    // bit the publisher stamped as known, and only falls back to the caller's default when the
+    // word says nothing about that key. So on a fresh install, with nothing ever written to the
+    // plist, SpringBoard's own `%ctor` re-seed published master = 1 and every reader in every
+    // process then read the master as on. The opt-in default two dozen lines above was
+    // unreachable, which is the whole of what 0.1.1 set out to change.
+    //
+    // The re-seed's own comment names the failure it must not cause -- "NUPrefBool would fall
+    // back to the fail-open default" -- while supplying that same fail-open default itself. Any
+    // default written here has to be the one the reader would have used, or the two disagree
+    // precisely when nothing is stored, which is the only moment a default matters at all.
+    if (NUReadCF(@"Enabled",           NO,  /*fresh=*/YES)) mask |= kNUStateMaster;
     if (NUReadCF(@"enabledMusic",      YES, YES))           mask |= kNUStateAppMusic;
     if (NUReadCF(@"enabledPodcasts",   YES, YES))           mask |= kNUStateAppPodcasts;
     if (NUReadCF(@"enabledYouTubeMusic", YES, YES))         mask |= kNUStateAppYouTubeMusic;
