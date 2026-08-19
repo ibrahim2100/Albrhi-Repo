@@ -106,12 +106,12 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.42.1",
+          "title": "v1.44.0",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **TikTok now welcomes you once, after installing.**",
+          "markdown": "• **Settings › Albrhi gained a page for Albrhi NextUp**",
           "useSpacing": true
         },
         {
@@ -120,12 +120,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.42.0",
+          "title": "v1.43.1",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **TikTok, confirmed on a device.**",
+          "markdown": "• **Saving a video from an Instagram repost now saves the video.**",
           "useSpacing": true
         },
         {
@@ -134,12 +134,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.41.2",
+          "title": "v1.43.0",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **TikTok: the quality attempt in 1.41.0 did not work, and this release says why rather than guessing again.**",
+          "markdown": "• **A repost no longer saves as a picture.**",
           "useSpacing": true
         },
         {
@@ -155,7 +155,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.43.1"
+          "text": "1.44.0"
         },
         {
           "class": "DepictionTableTextView",
