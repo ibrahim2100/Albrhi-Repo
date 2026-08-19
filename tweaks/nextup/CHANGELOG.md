@@ -1,5 +1,32 @@
 # Albrhi NextUp — what changed
 
+## v0.1.0 — packaging notes
+
+The port compiles: ten thousand lines built clean for arm64 and arm64e, linked, signed,
+packaged both flavours, and released. Getting there took four packaging failures, none
+of them in the ported code and every one of them now a `tools/check.py` rule or a
+documented rule in `CLAUDE.md`:
+
+- **`shared/tweak.mk` was appending JGProgressHUD, `SCIPanelGate.m` and
+  `SCISubstrateShim.m`** to a tweak that uses none of them, and compiling code written
+  for a 15.0 deployment target at this tweak's 14.2. This is the only tweak here that
+  does not include that file; the flags worth having are copied into its Makefile.
+- **An unclosed parenthesis in `control`** — opened on one line of the Description and
+  closed on the next. Theos reads that file line by line and refuses to package.
+  check.py rule 20.
+- **`layout/DEBIAN/postinst` was mode 644.** `chmod +x` is a no-op on Windows, so git
+  stored a script CI would not run. check.py rule 21 reads the mode from the git index
+  rather than the filesystem, for exactly that reason.
+- **`build.sh`'s roothide identity swap assumed `Conflicts` named nothing but the other
+  flavour.** NextUp also conflicts with `com.yves.nextup3`, and the second list entry
+  made an anchored pattern match zero times. It now swaps the identifier as a list
+  element; checked against all seven controls.
+
+The generator registry also needed a `nextup` entry — the workflow was passing the
+depiction *slug* where its *key* belongs. That step runs locally in seconds, and running
+it once before pushing would have caught it; this project's own rule about testing
+scripts before shipping them applies to more than shell one-liners.
+
 ## v0.1.0
 
 **A port of [NextUp 3](https://github.com/Yves000/NextUp3) 1.1.2 by Yves, under the GNU

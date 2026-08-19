@@ -1452,8 +1452,22 @@ it already made.
 **Keep the `albrhi-pages` concurrency group on every workflow that publishes anyway.** It is the
 one thing that stops two runs writing `gh-pages` at once, and the arrangement below — a shared
 gather, a stated-and-checked index, a run folding in its own build — exists because two
-publishers really did race. That is history rather than the current state, and every word of it
-becomes live again the moment a second publisher returns.
+publishers really did race. Albrhi NextUp made that current again rather than historical: there
+are two publishers today.
+
+**And a shared concurrency group cancels a *pending* run, which `cancel-in-progress: false`
+does not prevent.** That flag protects a run already executing; a run still queued behind it is
+simply dropped when a newer run joins the group, because GitHub keeps only the most recent
+pending member. So a commit touching a path both publishers watch — `tools/**` and `shared/**`
+are in both trigger lists — starts two runs, and whichever queues *second* cancels the first.
+It shows up as `cancelled`, not `failure`, with no error anywhere and no index update, which is
+the one outcome this whole section exists to prevent and the easiest to mistake for "it ran".
+
+The practical rule: **when only the second publisher's run matters, push a commit that touches
+only that tweak's own directory.** `tweaks/nextup/**` is excluded from `buildsuite.yml`'s
+trigger, so a change confined there starts exactly one run and nothing can cancel it. Editing a
+shared tool and expecting both publishers to complete in one push is the thing that does not
+work — do the shared edit, let the suite take it, then push the tweak-local change separately.
 
 ### Publishing Pages: what three releases established
 
