@@ -65,6 +65,9 @@ static void SCIBuildTables(void) {
         @"nextup_app_youtube": @"YouTube",
         @"nextup_app_youtube_music": @"YouTube Music",
         @"nextup_app_spotify": @"Spotify",
+        @"nextup_advanced_section": @"Advanced",
+        @"nextup_log": @"Diagnostic log",
+        @"nextup_log_footer": @"Off. Turn it on only while something is wrong: it writes what each process is doing — including the titles of what is playing — to /var/mobile/nu/. Reopen the app or respring for it to take effect, and turn it off again afterwards.",
         @"nextup_credit": @"Albrhi NextUp is a port of NextUp 3 by Yves (github.com/Yves000/NextUp3), used under the GNU GPL v3. The design and nearly all of the implementation are his work; this port replaced the settings pane and rebranded the package.",
 
         @"carplay_title": @"Albrhi CarPlay",
@@ -149,6 +152,9 @@ static void SCIBuildTables(void) {
         @"nextup_app_youtube": @"يوتيوب",
         @"nextup_app_youtube_music": @"يوتيوب ميوزك",
         @"nextup_app_spotify": @"سبوتيفاي",
+        @"nextup_advanced_section": @"متقدّم",
+        @"nextup_log": @"سجل التشخيص",
+        @"nextup_log_footer": @"مطفأ. شغّله فقط حين يوجد خلل: يكتب ما تفعله كل عملية — ومنه عناوين ما يُشغَّل — في /var/mobile/nu/. أعد فتح التطبيق أو أعد التشغيل ليأخذ مفعوله، ثم أطفئه بعدها.",
         @"nextup_credit": @"البرهي نكست أب نقلٌ لأداة NextUp 3 من Yves ‏(github.com/Yves000/NextUp3)، مستخدمة بموجب رخصة GNU GPL v3. التصميم وأغلب التنفيذ عمله هو؛ وهذا النقل استبدل صفحة الإعدادات وأعاد تسمية الحزمة.",
 
         @"carplay_title": @"البرهي كاربلي",

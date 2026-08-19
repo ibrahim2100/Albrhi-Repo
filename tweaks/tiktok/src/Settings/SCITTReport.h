@@ -28,4 +28,11 @@
 /// copied text and the screen it claims to mirror are built from two lists.
 + (NSString *)reportText;
 
+/// The same, plus the class dumps the ordinary report leaves out.
+///
+/// Two texts rather than one long one: an ordinary report is read by a person and should fit in a
+/// message, while a class's whole method list is only ever wanted when a class list is the actual
+/// question. Both walk the same list of rows, so neither can miss a row the other has.
++ (NSString *)fullReportText;
+
 @end

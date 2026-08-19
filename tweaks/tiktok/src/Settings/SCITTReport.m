@@ -27,6 +27,21 @@ static NSString *const kSCIRowTitle = @"title";
 static NSString *const kSCIRowValue = @"value";
 static NSString *const kSCIRowIcon = @"icon";
 static NSString *const kSCIRowColor = @"color";
+
+///
+/// A row whose value is a runtime dump rather than a finding.
+///
+/// **Three of these rows answered their question and then kept answering it.** The feed cell's
+/// accessor list is what proved that cell has no aweme accessor at all; `AWEVideoModel`'s is where
+/// `downloadNoWatermarkURL` was found. Both are settled, and both are still several thousand
+/// characters that every report has to carry — three reports in a row arrived as walls of text
+/// with the four lines that mattered buried inside them.
+///
+/// A diagnostic that is too heavy to read has stopped being a diagnostic. So a heavy row shows how
+/// much it holds and stays out of the ordinary report; **Copy everything** puts the whole thing on
+/// the pasteboard for the day a class list is the question again.
+///
+static NSString *const kSCIRowHeavy = @"heavy";
 static NSString *const kSCISectionTitle = @"section";
 static NSString *const kSCISectionRows = @"rows";
 
@@ -51,6 +66,12 @@ static NSDictionary *SCIRow(NSString *title, NSString *value, NSString *icon, UI
         kSCIRowIcon: icon ?: @"circle",
         kSCIRowColor: color ?: [UIColor systemGrayColor],
     };
+}
+
+static NSDictionary *SCIHeavyRow(NSString *title, NSString *value, NSString *icon, UIColor *color) {
+    NSMutableDictionary *row = [SCIRow(title, value, icon, color) mutableCopy];
+    row[kSCIRowHeavy] = @YES;
+    return row;
 }
 
 /// Read live, every time, so nothing on this screen can be a value from an earlier launch.
@@ -105,16 +126,16 @@ static NSDictionary *SCIRow(NSString *title, NSString *value, NSString *icon, UI
                 // "data" and nothing about a video -- which was itself the finding: this cell has
                 // no aweme accessor of its own. A filter built from the names I expected is the
                 // last thing that will show me the one I did not.
-                SCIRow(SCILocalized(@"status_cell_accessors"),
+                SCIHeavyRow(SCILocalized(@"status_cell_accessors"),
                        [SCITTMedia accessorsOnClassNamed:@"AWEFeedViewTemplateCell" matching:@[]],
                        @"rectangle.on.rectangle", [UIColor systemPurpleColor]),
-                SCIRow(SCILocalized(@"status_media_candidates"),
+                SCIHeavyRow(SCILocalized(@"status_media_candidates"),
                        [SCITTMedia candidateAccessorsOnAwemeModel],
                        @"magnifyingglass", [UIColor systemPurpleColor]),
                 // The video model's own accessors, asked of the device rather than guessed from a
                 // framework-wide selector dump -- which says a name exists and never says on what
                 // class. Three releases here went to exactly that gap.
-                SCIRow(SCILocalized(@"status_video_accessors"),
+                SCIHeavyRow(SCILocalized(@"status_video_accessors"),
                        [SCITTMedia accessorsOnClassNamed:@"AWEVideoModel"
                                                 matching:@[@"url", @"URL", @"addr", @"Addr",
                                                            @"bitrate", @"bitRate", @"uri", @"URI",
@@ -140,10 +161,33 @@ static NSDictionary *SCIRow(NSString *title, NSString *value, NSString *icon, UI
     [report appendFormat:@"app %@\n",
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"] ?: @"?"];
 
+    NSUInteger skipped = 0;
     for (NSDictionary *section in [self sections]) {
         [report appendFormat:@"\n== %@ ==\n", section[kSCISectionTitle]];
         for (NSDictionary *row in section[kSCISectionRows]) {
+            if ([row[kSCIRowHeavy] boolValue]) { skipped++; continue; }
             [report appendFormat:@"%@: %@\n", row[kSCIRowTitle], row[kSCIRowValue]];
+        }
+    }
+
+    // Named, not silently dropped: a report that quietly omits something is worse than a long
+    // one, because the next person reads its absence as "this build has nothing to say there".
+    if (skipped) {
+        [report appendFormat:@"\n(%lu class dump(s) left out — Copy everything includes them)\n",
+            (unsigned long)skipped];
+    }
+
+    return report;
+}
+
+/// Everything, class dumps included. What the second Copy button sends.
++ (NSString *)fullReportText {
+    NSMutableString *report = [NSMutableString stringWithString:[self reportText]];
+
+    for (NSDictionary *section in [self sections]) {
+        for (NSDictionary *row in section[kSCISectionRows]) {
+            if (![row[kSCIRowHeavy] boolValue]) continue;
+            [report appendFormat:@"\n== %@ ==\n%@\n", row[kSCIRowTitle], row[kSCIRowValue]];
         }
     }
 
@@ -154,11 +198,19 @@ static NSDictionary *SCIRow(NSString *title, NSString *value, NSString *icon, UI
     [super viewDidLoad];
 
     self.title = SCILocalized(@"report_title");
-    self.navigationItem.rightBarButtonItem =
+    // Two, because they answer two different requests: "send me the report" and "send me the
+    // class list too". One button doing both would put four thousand characters of method names
+    // into every ordinary report, which is what this release is undoing.
+    self.navigationItem.rightBarButtonItems = @[
         [[UIBarButtonItem alloc] initWithTitle:SCILocalized(@"copy_report")
+                                         style:UIBarButtonItemStyleDone
+                                        target:self
+                                        action:@selector(copyReport)],
+        [[UIBarButtonItem alloc] initWithTitle:SCILocalized(@"copy_report_all")
                                          style:UIBarButtonItemStylePlain
                                         target:self
-                                        action:@selector(copyReport)];
+                                        action:@selector(copyFullReport)],
+    ];
 
     // Every value here is a dynamically-built string -- a comma list of hooks, a whole gear
     // ladder, a class's method list -- so a fixed row height draws the wrapped lines on top of
@@ -190,8 +242,17 @@ static NSDictionary *SCIRow(NSString *title, NSString *value, NSString *icon, UI
     [self.refreshControl endRefreshing];
 }
 
+- (void)copyFullReport {
+    [UIPasteboard generalPasteboard].string = [SCITTReport fullReportText];
+    [self confirmCopied];
+}
+
 - (void)copyReport {
     [UIPasteboard generalPasteboard].string = [SCITTReport reportText];
+    [self confirmCopied];
+}
+
+- (void)confirmCopied {
 
     UIImpactFeedbackGenerator *haptic =
         [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
@@ -239,9 +300,20 @@ static NSDictionary *SCIRow(NSString *title, NSString *value, NSString *icon, UI
     if (indexPath.row >= (NSInteger)rows.count) return cell;
 
     NSDictionary *row = rows[(NSUInteger)indexPath.row];
+
+    // A heavy row is summarised on screen. Its value is a class's whole method list -- drawing it
+    // makes the screen unscrollable and tells nobody anything; the count is the part a person can
+    // act on, and Copy everything is where the list itself lives.
+    NSString *value = row[kSCIRowValue];
+    if ([row[kSCIRowHeavy] boolValue]) {
+        NSUInteger count = [[value componentsSeparatedByString:@", "] count];
+        value = [NSString stringWithFormat:SCILocalized(@"status_heavy_summary"),
+                 (unsigned long)count];
+    }
+
     cell.textLabel.text = row[kSCIRowTitle];
     cell.textLabel.font = [UIFont systemFontOfSize:16 weight:UIFontWeightSemibold];
-    cell.detailTextLabel.text = row[kSCIRowValue];
+    cell.detailTextLabel.text = value;
     cell.detailTextLabel.numberOfLines = 0;
     cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
     cell.imageView.image = SCITTBadgeImage(row[kSCIRowIcon], row[kSCIRowColor]);

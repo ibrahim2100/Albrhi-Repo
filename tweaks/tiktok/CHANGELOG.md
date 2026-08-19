@@ -1,5 +1,20 @@
 # Albrhi for TikTok — what changed
 
+## v0.17.2
+
+**The status report had become too heavy to read, which means it had stopped being a report.**
+Three device reports in a row arrived as walls of text: two rows dump a whole class's method list
+— several thousand characters each — and the four lines that mattered were buried inside them.
+
+Both had already answered their question and kept answering it. The feed cell's list is what
+proved that cell has no aweme accessor at all; `AWEVideoModel`'s is where `downloadNoWatermarkURL`
+was found. So they are marked heavy: the screen shows how many entries each holds, the ordinary
+**Copy** leaves them out and says how many it left out, and a second **Copy everything** sends the
+lot for the day a class list is the question again.
+
+Two texts, one list of rows — neither can miss a row the other has, which is the rule this screen
+was built on.
+
 ## v0.17.1
 
 **A first-run screen.** Everything this tweak adds is either invisible until you look for it — the

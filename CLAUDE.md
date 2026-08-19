@@ -1609,11 +1609,26 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.17.1** · NextUp **0.1.2** (a GPLv3 port; **published**, on request,
-rather than withheld — it compiles and packages, the settings page is confirmed working
-on a device, and the row itself is not yet: it injects into SpringBoard, so logging is
-compiled into the release while that is still true) · suite **1.45.0**.
+Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.3** · CarPlay **0.4.1**
+(withheld from the source) · TikTok **0.17.2** · NextUp **0.1.4** · suite **1.47.0**.
+
+**This line is read first in every session, so it being out of date costs more than it being
+absent.** It said Panel 0.9.1 and suite 1.45.0 while the source served 0.9.2 and 1.46.0, and
+called NextUp unproven after it had been confirmed on a device. Move it with the four version
+numbers, not after them.
+
+**NextUp is confirmed working on iOS 16.1** — the row draws and the queue is read, on Music,
+Podcasts, YouTube, YouTube Music and Spotify. The first "it didn't work" was a jailbreak with
+per-app tweak injection and the media apps not enabled in it: the display side was up and no
+provider answered, which the log named exactly (`kr=1102`, `BOOTSTRAP_UNKNOWN_SERVICE`, defined
+in `vendor/LightMessaging/bootstrap.h`). Worth keeping as the first question for any tweak that
+spans a system process and App Store apps.
+
+**Its log is compiled in and switched off** (0.1.4), rather than either always-on or compiled
+out: an always-on log writes the titles of what is playing into `/var/mobile/nu/` forever, from
+a package whose neighbour in this source exists to stop watching being reported at all — and
+compiling it out is what left the first install undiagnosable. `NULogEnabled()` reads a
+preference, off by default, in Settings › Albrhi › Albrhi NextUp › Advanced.
 
 ### TikTok, where it actually stands
 

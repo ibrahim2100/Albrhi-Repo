@@ -38,6 +38,8 @@ static void SCIBuildTables(void) {
         @"row_report": @"Status report",
         @"row_report_note": @"Every number behind every feature, and one tap to copy the lot.",
         @"report_title": @"Status report",
+        @"copy_report_all": @"Copy everything",
+        @"status_heavy_summary": @"%lu entries — sent with Copy everything",
         @"copy_report": @"Copy",
 
         @"section_overview": @"Overview",
@@ -158,6 +160,8 @@ static void SCIBuildTables(void) {
         @"row_report": @"تقرير الحالة",
         @"row_report_note": @"كل رقم خلف كل ميزة، ونسخها كلها بلمسة.",
         @"report_title": @"تقرير الحالة",
+        @"copy_report_all": @"نسخ الكل",
+        @"status_heavy_summary": @"%lu عنصراً — تُرسَل مع «نسخ الكل»",
         @"copy_report": @"نسخ",
 
         @"section_overview": @"نظرة عامة",

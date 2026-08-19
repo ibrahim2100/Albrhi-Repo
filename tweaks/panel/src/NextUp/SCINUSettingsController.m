@@ -119,8 +119,15 @@ static const size_t kSCINUToggleCount = sizeof(kSCINUToggles) / sizeof(kSCINUTog
 /// either default on its own.
 - (id)nuValueForSpecifier:(PSSpecifier *)specifier {
     NSString *key = [specifier propertyForKey:@"sciNUKey"];
-    BOOL optIn = [key isEqualToString:@"Enabled"];
-    return @([self sci_readBool:key fallback:!optIn]);
+
+    // **The default travels on the row, rather than being inferred from its key here.**
+    //
+    // It used to read `[key isEqualToString:@"Enabled"]`, which is a list of opt-in keys written
+    // as a comparison -- correct while there was exactly one, and quietly wrong the moment a
+    // second arrived: the diagnostic log would have defaulted *on*, which is the failure that
+    // switch exists to prevent. A row that states its own default cannot be added wrongly.
+    NSNumber *fallback = [specifier propertyForKey:@"sciNUDefault"];
+    return @([self sci_readBool:key fallback:fallback ? fallback.boolValue : YES]);
 }
 
 - (void)setNuValue:(NSNumber *)value specifier:(PSSpecifier *)specifier {
@@ -169,6 +176,16 @@ static const size_t kSCINUToggleCount = sizeof(kSCINUToggles) / sizeof(kSCINUTog
                          symbol:(NSString *)symbol
                           tint:(UIColor *)tint
                         support:(NSString *)support {
+    return [self nuSwitchTitled:title key:key symbol:symbol tint:tint support:support
+                     defaultsTo:![key isEqualToString:@"Enabled"]];
+}
+
+- (PSSpecifier *)nuSwitchTitled:(NSString *)title
+                            key:(NSString *)key
+                         symbol:(NSString *)symbol
+                          tint:(UIColor *)tint
+                        support:(NSString *)support
+                     defaultsTo:(BOOL)defaultsTo {
     PSSpecifier *row = [PSSpecifier preferenceSpecifierNamed:title
                                                        target:self
                                                           set:@selector(setNuValue:specifier:)
@@ -177,6 +194,7 @@ static const size_t kSCINUToggleCount = sizeof(kSCINUToggles) / sizeof(kSCINUTog
                                                          cell:PSSwitchCell
                                                          edit:Nil];
     [row setProperty:key forKey:@"sciNUKey"];
+    [row setProperty:@(defaultsTo) forKey:@"sciNUDefault"];
 
     // A mark per row, the same 29-point badge the root list gives this tweak.
     //
@@ -249,6 +267,15 @@ static const size_t kSCINUToggleCount = sizeof(kSCINUToggles) / sizeof(kSCINUTog
                                         symbol:@"waveform"
                                           tint:[UIColor systemGreenColor]
                                        support:SCILocalized(@"nextup_support_spotify")]];
+
+    [specifiers addObject:[self nuGroupTitled:SCILocalized(@"nextup_advanced_section")
+                                        footer:SCILocalized(@"nextup_log_footer")]];
+    [specifiers addObject:[self nuSwitchTitled:SCILocalized(@"nextup_log")
+                                           key:@"verboseLogging"
+                                        symbol:@"doc.text.magnifyingglass"
+                                          tint:[UIColor systemGrayColor]
+                                       support:nil
+                                    defaultsTo:NO]];
 
     [specifiers addObject:[self nuGroupTitled:nil footer:SCILocalized(@"nextup_credit")]];
 

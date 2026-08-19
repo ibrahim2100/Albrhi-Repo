@@ -1,5 +1,16 @@
 # Albrhi Panel Changelog
 
+## v0.9.3
+
+**A diagnostic-log switch for Albrhi NextUp**, under a new Advanced section, off by default. The
+tweak's own log stopped writing unless it is turned on (NextUp 0.1.4); this is where it is turned
+on, with the path and the "turn it off afterwards" written on the row.
+
+**And a row's default now travels on the row.** The page inferred it from the key —
+`[key isEqualToString:@"Enabled"]` — which is a list of opt-in keys written as a comparison:
+correct while there was one, and wrong the moment a second arrived. The log switch would have
+defaulted *on*, which is the exact failure that switch exists to prevent.
+
 ## v0.9.2
 
 **A section of its own for the tweaks that are not apps, each with a mark.**

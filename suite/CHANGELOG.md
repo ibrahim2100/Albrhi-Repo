@@ -1,5 +1,18 @@
 # Albrhi Changelog
 
+## v1.47.0
+
+**TikTok's status report is readable again.** Two rows that dump a whole class's method list are
+summarised on screen and left out of the ordinary Copy — a second **Copy everything** sends them
+when a class list is actually the question. Sending a report no longer means sending a wall of
+text.
+
+**Albrhi NextUp's diagnostic log is off by default**, with a switch for it in Settings › Albrhi ›
+Albrhi NextUp › Advanced. It used to write what every process was doing — including the titles of
+what is playing — to disk on every install.
+
+Includes TikTok 0.17.2 and Panel 0.9.3.
+
 ## v1.46.0
 
 **Settings › Albrhi is tidier.** The tweaks that run across several processes — Albrhi NextUp and
