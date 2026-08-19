@@ -1,5 +1,39 @@
 # Albrhi Panel Changelog
 
+## v0.9.2
+
+**A section of its own for the tweaks that are not apps, each with a mark.**
+
+The list mixed two kinds of row. An app row is a switch — "does Albrhi touch Instagram". A row for
+Albrhi NextUp or Albrhi CarPlay pushes to a page and is not about an app at all: those run across
+SpringBoard and five media apps, or SpringBoard and Camera. Sorted in among the apps they read as
+apps this project patches, which is the same misreading `SCIPanelGroupIdentifier` was added to fix
+one level down — it collapsed seven rows into one, and the one was still in the wrong list. They
+now sit under the apps, under their own heading, and the split is made from what each entry
+declares rather than from a list of names here, so the next tweak with a page lands correctly
+without this file being edited.
+
+**And those rows had no icon at all**, because the scan finds an app icon by bundle identifier and
+a group identifier names a tweak rather than an app. They are drawn here now — an SF Symbol on a
+coloured badge, keyed on the identifier the filter plist already declares rather than on the
+displayed name, which is translated and would lose its icon in Arabic.
+
+**The count above the list was wrong in both halves.** It read "N of M on" over a list of app
+switches while counting rows that are not app switches: NextUp keeps its state in its own
+preference domain and never touches the panel's key, so it counted as off forever *and* inflated
+the total it was measured against. It counts apps now, which is what it sits above.
+
+**Albrhi NextUp's page was rebuilt in this project's own identity.** A page reached from a list
+has to say what it is for: it opens with the accent disc and the mark the tweaks use in their own
+screens, the name, a line saying what the tweak does, and a pill stating whether it is doing
+anything — which nine switches cannot say at a glance. Every switch carries its own badge, so the
+row wanted is found before the reading starts. The pill is rebuilt when the master moves rather
+than only when the page is reopened; a header that kept saying "On" over a switch that had just
+been turned off is the screen-disagreeing-with-itself failure this page was fixed for once already.
+
+The apps carry a symbol for what they play rather than a brand glyph: an app's own icon is not
+this bundle's to draw, and an imitation that looks nearly right is worse than an honest symbol.
+
 ## v0.9.1
 
 **The NextUp page showed its master switch as on while the tweak read it as off.**

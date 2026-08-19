@@ -3,6 +3,7 @@
 #import <UIKit/UIKit.h>
 
 #import "SCIPanelScan.h"
+#import "SCIPanelBadge.h"
 #import "SCIPanelHeader.h"
 #import "SCIPanelAppCell.h"
 #import "SCIPanelDomain.h"
@@ -11,7 +12,7 @@
 #import <objc/message.h>
 #import <objc/runtime.h>
 
-NSString *SCIVersionString = @"v0.9.1";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.9.2";  // AlbrhiPanel
 
 ///
 /// Albrhi's own control panel, in the iOS Settings app.
@@ -47,8 +48,26 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
 /// Settings keeps a preference bundle loaded after its page is closed, so a cached list
 /// would still show a tweak that has since been uninstalled.
 - (NSArray *)specifiers {
-    NSArray<SCIPanelEntry *> *entries = [SCIPanelScan entries];
+    NSArray<SCIPanelEntry *> *scanned = [SCIPanelScan entries];
     NSMutableArray *specifiers = [NSMutableArray array];
+
+    // **Two kinds of row, and mixing them read as one kind badly.**
+    //
+    // An app row is a switch: "does Albrhi touch Instagram". A tweak row pushes to a page and
+    // is not about an app at all -- Albrhi NextUp runs across SpringBoard and five media apps,
+    // and Albrhi CarPlay across SpringBoard and Camera. Sorted in among the apps they read as
+    // apps this project patches, which is the same misreading `SCIPanelGroupIdentifier` was
+    // added to fix one level down: it collapsed seven rows into one, and the one was still
+    // sitting in the wrong list.
+    //
+    // Split by what the entry declares rather than by a name list here, so a tweak that adds a
+    // page tomorrow lands in the right section without this file being edited.
+    NSMutableArray<SCIPanelEntry *> *entries = [NSMutableArray array];
+    NSMutableArray<SCIPanelEntry *> *features = [NSMutableArray array];
+    for (SCIPanelEntry *entry in scanned) {
+        if (entry.detailControllerClassName.length) [features addObject:entry];
+        else [entries addObject:entry];
+    }
 
     PSSpecifier *group = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"section_apps")
                                                         target:self
@@ -72,37 +91,19 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
     }
 
     for (SCIPanelEntry *entry in entries) {
-        PSSpecifier *row;
+        PSSpecifier *row = [PSSpecifier preferenceSpecifierNamed:entry.appName
+                                                          target:self
+                                                             set:@selector(setOn:forSpecifier:)
+                                                             get:@selector(isOnForSpecifier:)
+                                                          detail:Nil
+                                                            cell:PSSwitchCell
+                                                            edit:Nil];
 
-        if (entry.detailControllerClassName.length) {
-            // A tweak that declared its own settings page (SCIPanelDetailController)
-            // gets a link row that pushes to it, not a switch on this list -- Albrhi
-            // CarPlay's master on/off lives inside that page instead, alongside the
-            // settings a single switch cell has no room for.
-            Class detailClass = NSClassFromString(entry.detailControllerClassName);
-            row = [PSSpecifier preferenceSpecifierNamed:entry.appName
-                                                 target:self
-                                                    set:NULL
-                                                    get:NULL
-                                                 detail:detailClass
-                                                   cell:PSLinkCell
-                                                   edit:Nil];
-        } else {
-            row = [PSSpecifier preferenceSpecifierNamed:entry.appName
-                                                 target:self
-                                                    set:@selector(setOn:forSpecifier:)
-                                                    get:@selector(isOnForSpecifier:)
-                                                 detail:Nil
-                                                   cell:PSSwitchCell
-                                                   edit:Nil];
-
-            // An app that is not on the phone gets a switch that cannot be moved.
-            // Offering a live switch for an app you do not have is offering a control
-            // over nothing. A row that pushes to its own page has nothing to dim --
-            // tapping it always works, whichever of its two processes is running.
-            if (!entry.appInstalled) {
-                [row setProperty:@NO forKey:@"enabled"];
-            }
+        // An app that is not on the phone gets a switch that cannot be moved.
+        // Offering a live switch for an app you do not have is offering a control
+        // over nothing.
+        if (!entry.appInstalled) {
+            [row setProperty:@NO forKey:@"enabled"];
         }
 
         [row setProperty:entry.bundleIdentifier forKey:@"sciBundleIdentifier"];
@@ -114,7 +115,7 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
         // chevron with a switch that controls nothing.
         BOOL warn = NO;
         NSString *subtitle = [self subtitleForEntry:entry warning:&warn];
-        if (subtitle.length && !entry.detailControllerClassName.length) {
+        if (subtitle.length) {
             [row setProperty:subtitle forKey:@"sciSubtitle"];
             [row setProperty:@(warn) forKey:@"sciSubtitleIsWarning"];
             // A Class, not its name.
@@ -134,6 +135,38 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
         if (entry.appIcon) [row setProperty:entry.appIcon forKey:@"iconImage"];
 
         [specifiers addObject:row];
+    }
+
+    // The tweaks that own a page, under the apps they run across.
+    if (features.count) {
+        PSSpecifier *featureGroup =
+            [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"section_tweaks")
+                                           target:self
+                                              set:NULL
+                                              get:NULL
+                                           detail:Nil
+                                             cell:PSGroupCell
+                                             edit:Nil];
+        [featureGroup setProperty:SCILocalized(@"tweaks_footer") forKey:@"footerText"];
+        [specifiers addObject:featureGroup];
+
+        for (SCIPanelEntry *entry in features) {
+            Class detailClass = NSClassFromString(entry.detailControllerClassName);
+            PSSpecifier *row = [PSSpecifier preferenceSpecifierNamed:entry.appName
+                                                              target:self
+                                                                 set:NULL
+                                                                 get:NULL
+                                                              detail:detailClass
+                                                                cell:PSLinkCell
+                                                                edit:Nil];
+            [row setProperty:entry.bundleIdentifier forKey:@"sciBundleIdentifier"];
+
+            // Its own mark, drawn here. These rows had no icon at all: the scan reads an app
+            // icon by bundle identifier, and a group identifier names a tweak rather than an
+            // app, so nothing was ever found for them.
+            [row setProperty:SCIPanelBadgeForGroup(entry.bundleIdentifier) forKey:@"iconImage"];
+            [specifiers addObject:row];
+        }
     }
 
     PSSpecifier *about = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"section_about")
@@ -449,17 +482,25 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
     // Counted here rather than cached, so the pill can never disagree with the switches
     // below it -- -viewWillAppear reloads the specifiers on every return to this page, and
     // a header holding its own tally would keep yesterday's answer.
-    NSArray<SCIPanelEntry *> *entries = [SCIPanelScan entries];
-    NSInteger on = 0;
-    for (SCIPanelEntry *entry in entries) {
+    // **Apps only, now that the tweaks with their own page sit in their own section.**
+    //
+    // The pill answers "how much of this is switched on", and it sat above a list of app
+    // switches while counting rows that are not app switches at all: Albrhi NextUp keeps its
+    // state in its own preference domain and never touches the panel's key, so it counted as
+    // off forever and the total it was measured against included it. A tally whose denominator
+    // holds rows the numerator cannot reach is wrong in both halves at once.
+    NSInteger on = 0, total = 0;
+    for (SCIPanelEntry *entry in [SCIPanelScan entries]) {
+        if (entry.detailControllerClassName.length) continue;
         if (!entry.appInstalled) continue;
+        total++;
         if ([[self isOnForSpecifierWithIdentifier:entry.bundleIdentifier] boolValue]) on++;
     }
 
     UIView *header = [SCIPanelHeader viewForWidth:width
                                           version:[self displayedVersion]
                                                on:on
-                                               of:(NSInteger)entries.count];
+                                               of:total];
     if (header) table.tableHeaderView = header;
 }
 

@@ -31,6 +31,22 @@ NS_ASSUME_NONNULL_BEGIN
                                 on:(NSInteger)on
                                 of:(NSInteger)total;
 
+/// The same header, for one tweak's own page.
+///
+/// **A page reached from a list needs to say what it is the page *for*.** The root header carries
+/// Albrhi's mark because the root is Albrhi; a tweak's page carried nothing but a title bar, so a
+/// page of nine switches opened looking like a fragment of Settings rather than part of this
+/// project. The mark is drawn from an SF Symbol on an accent disc -- the same pair the tweaks use
+/// in their own screens -- and the pill states the one thing the switches below cannot say at a
+/// glance: whether the tweak is doing anything at all.
++ (UIView *)pageHeaderForWidth:(CGFloat)width
+                        symbol:(NSString *)symbolName
+                          tint:(UIColor *)tint
+                         title:(NSString *)title
+                      subtitle:(NSString *)subtitle
+                         state:(NSString *)state
+                            on:(BOOL)on;
+
 @end
 
 NS_ASSUME_NONNULL_END

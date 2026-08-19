@@ -1,5 +1,18 @@
 # Albrhi Changelog
 
+## v1.46.0
+
+**Settings › Albrhi is tidier.** The tweaks that run across several processes — Albrhi NextUp and
+Albrhi CarPlay — now sit in their own section under the apps, each with its own icon, instead of
+being listed as though they were apps. The count at the top counts apps, which is what it sits
+above.
+
+**Albrhi NextUp's settings page was redesigned** in the same identity as the rest of Albrhi: a
+header with the mark, a line saying what it does, and a pill showing whether it is on — plus an
+icon on every switch.
+
+Includes Panel 0.9.2.
+
 ## v1.45.0
 
 **Albrhi NextUp's page no longer shows its main switch as on when it is off.** That tweak

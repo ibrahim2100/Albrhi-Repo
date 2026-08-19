@@ -2,6 +2,8 @@
 #import <Preferences/PSSpecifier.h>
 #import <notify.h>
 #import "../Localization/SCILocalize.h"
+#import "../SCIPanelBadge.h"
+#import "../SCIPanelHeader.h"
 
 ///
 /// Upstream's preference plumbing, used exactly as upstream's own pane used it.
@@ -124,6 +126,12 @@ static const size_t kSCINUToggleCount = sizeof(kSCINUToggles) / sizeof(kSCINUTog
     NSString *key = [specifier propertyForKey:@"sciNUKey"];
     if (!key.length) return;
     [self sci_writeBool:value.boolValue forKey:key];
+
+    // The switches are drawn by Preferences and the header by this file, so moving the master
+    // has to tell the header -- otherwise the pill keeps saying "on" while the switch under it
+    // is off, which is the screen-disagreeing-with-itself failure this page was already fixed
+    // for once. The rebuild is skipped internally unless the state actually changed.
+    if ([key isEqualToString:@"Enabled"]) [self viewDidLayoutSubviews];
 }
 
 - (PSSpecifier *)nuGroupTitled:(NSString *)title footer:(NSString *)footer {
@@ -138,7 +146,10 @@ static const size_t kSCINUToggleCount = sizeof(kSCINUToggles) / sizeof(kSCINUTog
     return group;
 }
 
-- (PSSpecifier *)nuSwitchTitled:(NSString *)title key:(NSString *)key {
+- (PSSpecifier *)nuSwitchTitled:(NSString *)title
+                            key:(NSString *)key
+                         symbol:(NSString *)symbol
+                          tint:(UIColor *)tint {
     PSSpecifier *row = [PSSpecifier preferenceSpecifierNamed:title
                                                        target:self
                                                           set:@selector(setNuValue:specifier:)
@@ -147,6 +158,15 @@ static const size_t kSCINUToggleCount = sizeof(kSCINUToggles) / sizeof(kSCINUTog
                                                          cell:PSSwitchCell
                                                          edit:Nil];
     [row setProperty:key forKey:@"sciNUKey"];
+
+    // A mark per row, the same 29-point badge the root list gives this tweak.
+    //
+    // Nine switches whose titles are three surfaces and five app names is a page read
+    // top to bottom every time; with a mark on each, the row wanted is found before the
+    // reading starts. The apps carry a symbol for what they play rather than a brand
+    // glyph -- an app's own icon is not this bundle's to draw, and a wrong-looking
+    // imitation is worse than an honest symbol.
+    if (symbol.length) [row setProperty:SCIPanelBadgeImage(symbol, tint) forKey:@"iconImage"];
     return row;
 }
 
@@ -156,29 +176,48 @@ static const size_t kSCINUToggleCount = sizeof(kSCINUToggles) / sizeof(kSCINUTog
     NSMutableArray *specifiers = [NSMutableArray array];
 
     [specifiers addObject:[self nuGroupTitled:nil footer:SCILocalized(@"nextup_master_footer")]];
-    [specifiers addObject:[self nuSwitchTitled:SCILocalized(@"nextup_master") key:@"Enabled"]];
+    [specifiers addObject:[self nuSwitchTitled:SCILocalized(@"nextup_master")
+                                           key:@"Enabled"
+                                        symbol:@"power"
+                                          tint:SCIPanelAccent()]];
 
     [specifiers addObject:[self nuGroupTitled:SCILocalized(@"nextup_where_section")
                                         footer:SCILocalized(@"nextup_where_footer")]];
     [specifiers addObject:[self nuSwitchTitled:SCILocalized(@"nextup_lock_screen")
-                                            key:@"showLockScreen"]];
+                                           key:@"showLockScreen"
+                                        symbol:@"lock.fill"
+                                          tint:[UIColor systemIndigoColor]]];
     [specifiers addObject:[self nuSwitchTitled:SCILocalized(@"nextup_dynamic_island")
-                                            key:@"showDynamicIsland"]];
+                                           key:@"showDynamicIsland"
+                                        symbol:@"iphone"
+                                          tint:[UIColor systemTealColor]]];
     [specifiers addObject:[self nuSwitchTitled:SCILocalized(@"nextup_control_center")
-                                            key:@"showControlCenter"]];
+                                           key:@"showControlCenter"
+                                        symbol:@"switch.2"
+                                          tint:[UIColor systemBlueColor]]];
 
     [specifiers addObject:[self nuGroupTitled:SCILocalized(@"nextup_apps_section")
                                         footer:SCILocalized(@"nextup_apps_footer")]];
     [specifiers addObject:[self nuSwitchTitled:SCILocalized(@"nextup_app_music")
-                                            key:@"enabledMusic"]];
+                                           key:@"enabledMusic"
+                                        symbol:@"music.note"
+                                          tint:[UIColor systemPinkColor]]];
     [specifiers addObject:[self nuSwitchTitled:SCILocalized(@"nextup_app_podcasts")
-                                            key:@"enabledPodcasts"]];
+                                           key:@"enabledPodcasts"
+                                        symbol:@"mic.fill"
+                                          tint:[UIColor systemPurpleColor]]];
     [specifiers addObject:[self nuSwitchTitled:SCILocalized(@"nextup_app_youtube")
-                                            key:@"enabledYouTube"]];
+                                           key:@"enabledYouTube"
+                                        symbol:@"play.rectangle.fill"
+                                          tint:[UIColor systemRedColor]]];
     [specifiers addObject:[self nuSwitchTitled:SCILocalized(@"nextup_app_youtube_music")
-                                            key:@"enabledYouTubeMusic"]];
+                                           key:@"enabledYouTubeMusic"
+                                        symbol:@"music.note.list"
+                                          tint:[UIColor systemRedColor]]];
     [specifiers addObject:[self nuSwitchTitled:SCILocalized(@"nextup_app_spotify")
-                                            key:@"enabledSpotify"]];
+                                           key:@"enabledSpotify"
+                                        symbol:@"waveform"
+                                          tint:[UIColor systemGreenColor]]];
 
     [specifiers addObject:[self nuGroupTitled:nil footer:SCILocalized(@"nextup_credit")]];
 
@@ -188,6 +227,39 @@ static const size_t kSCINUToggleCount = sizeof(kSCINUToggles) / sizeof(kSCINUTog
     // shipped once, on CarPlay's page.
     _specifiers = specifiers;
     return _specifiers;
+}
+
+// MARK: - The header
+
+/// Fitted here, not in -viewDidLoad, for the reason the root page documents: a table header has
+/// to be given a frame, and the width to fit it to is not final until the view has been laid out.
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+
+    UITableView *table = self.table;
+    CGFloat width = table.bounds.size.width;
+    if (width <= 0) return;
+
+    BOOL on = [self sci_readBool:@"Enabled" fallback:NO];
+
+    // Rebuilt when the width changes *or* the master does -- the pill is a live statement and a
+    // header cached on width alone would keep saying "on" after the switch under it was moved.
+    if (table.tableHeaderView
+        && ABS(table.tableHeaderView.frame.size.width - width) < 0.5
+        && table.tableHeaderView.tag == (on ? 1 : 2)) {
+        return;
+    }
+
+    UIView *header = [SCIPanelHeader pageHeaderForWidth:width
+                                                 symbol:@"music.note.list"
+                                                   tint:SCIPanelAccent()
+                                                  title:SCILocalized(@"nextup_title")
+                                               subtitle:SCILocalized(@"nextup_page_subtitle")
+                                                  state:SCILocalized(on ? @"nextup_state_on"
+                                                                        : @"nextup_state_off")
+                                                     on:on];
+    header.tag = on ? 1 : 2;
+    table.tableHeaderView = header;
 }
 
 @end
