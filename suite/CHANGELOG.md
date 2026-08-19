@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.45.0
+
+**Albrhi NextUp's page no longer shows its main switch as on when it is off.** That tweak
+now stays off until you turn it on — nothing it does happens until you ask — and this
+update makes the settings page agree with it.
+
+Includes Panel 0.9.1.
+
 ## v1.44.0
 
 **Settings › Albrhi gained a page for Albrhi NextUp**, a new tweak released on its own that

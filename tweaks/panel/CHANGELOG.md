@@ -1,5 +1,18 @@
 # Albrhi Panel Changelog
 
+## v0.9.1
+
+**The NextUp page showed its master switch as on while the tweak read it as off.**
+Albrhi NextUp 0.1.1 made that switch opt-in — this repository's own rule that absence
+reads as *off*, applied to a tweak that injects into SpringBoard and five media apps.
+The page still defaulted it to on, which is worse than either default on its own: a
+screen stating the opposite of what is happening.
+
+Both halves of the page now use the same split — the master reads and publishes NO when
+nothing is stored, every other switch keeps YES — because this page writes the live
+notify token as well as the stored value, and publishing a different default than the
+rows display would have put the two in disagreement before any value was ever saved.
+
 ## v0.9.0
 
 **A settings page for Albrhi NextUp**, reached from the single row `SCIPanelScan`

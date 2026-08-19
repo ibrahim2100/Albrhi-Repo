@@ -71,9 +71,12 @@ static const size_t kSCINUToggleCount = sizeof(kSCINUToggles) / sizeof(kSCINUTog
     uint64_t known = 0;
 
     for (size_t i = 0; i < kSCINUToggleCount; i++) {
-        // Every default is YES upstream: the tweak fails open, so a fresh install with no
-        // plist behaves as though everything is switched on.
-        if ([self sci_readBool:kSCINUToggles[i].key fallback:YES]) mask |= kSCINUToggles[i].bit;
+        // The same split the rows read with: the master is opt-in, everything else keeps
+        // upstream's fail-open YES. Publishing a different default than the rows display
+        // would put the token and the screen in disagreement the first time this runs,
+        // before any value has actually been stored.
+        BOOL optIn = [kSCINUToggles[i].key isEqualToString:@"Enabled"];
+        if ([self sci_readBool:kSCINUToggles[i].key fallback:!optIn]) mask |= kSCINUToggles[i].bit;
         known |= kSCINUToggles[i].bit;
     }
 
@@ -105,9 +108,16 @@ static const size_t kSCINUToggleCount = sizeof(kSCINUToggles) / sizeof(kSCINUTog
 /// The switch's own key travels on the specifier, so adding a row costs one entry here
 /// and nothing anywhere else — no second `if` ladder mapping a tag back to a key, which
 /// is where this project has put a switch on the wrong preference before.
+/// The master reads NO when nothing is stored; every other switch reads YES.
+///
+/// This has to agree exactly with `NUMasterEnabled()` in the tweak, which is opt-in for
+/// the reason written there. A page that showed the master as on while the tweak read it
+/// as off would be a screen stating the opposite of what is happening — worse than
+/// either default on its own.
 - (id)nuValueForSpecifier:(PSSpecifier *)specifier {
     NSString *key = [specifier propertyForKey:@"sciNUKey"];
-    return @([self sci_readBool:key fallback:YES]);
+    BOOL optIn = [key isEqualToString:@"Enabled"];
+    return @([self sci_readBool:key fallback:!optIn]);
 }
 
 - (void)setNuValue:(NSNumber *)value specifier:(PSSpecifier *)specifier {
