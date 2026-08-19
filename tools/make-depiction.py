@@ -135,6 +135,25 @@ YOUTUBE_FEATURES = [
      'it is readable even if nothing else worked.'),
 ]
 
+WATCH_FEATURES = [
+    ('Pair a newer watch',
+     'iOS refuses to pair with an Apple Watch whose watchOS is newer than it '
+     'expects. Albrhi Watch answers those compatibility questions the way a '
+     'supported pairing would, so setup completes.'),
+    ('Install companion apps',
+     'Apps that refuse to install onto a newer watchOS are answered as compatible, '
+     'so the Watch app can put them on the wrist.'),
+    ('Switched on deliberately',
+     'Off until you turn it on in Settings › Albrhi › Albrhi Watch, with three '
+     'separate switches so one answer can be turned off without removing the tweak, '
+     'and a restart button under them because the answers are installed while '
+     'SpringBoard starts.'),
+    ('It tells you what it did',
+     'Which classes were found on your build, how many times each answer was given, '
+     'and the watch version it read against your iPhone — because a pairing that '
+     'fails looks exactly like a tweak that never loaded.'),
+]
+
 NEXTUP_FEATURES = [
     ('What plays next, without opening the app',
      'A row under the now-playing controls showing the next track — its title, artist '
@@ -265,6 +284,34 @@ TWEAKS = {
                       'derived from iSponsorBlock by Galactic Dev, GPLv3. Not '
                       'affiliated with, endorsed by or sponsored by YouTube or '
                       'Google._',
+    },
+    'watch': {
+        'slug': 'albrhi-watch',                  # matches control's Depiction URLs
+        'title': 'Albrhi Watch',
+        'accent': '#FF375F',
+        'features': WATCH_FEATURES,
+        'tagline': '**Pair an Apple Watch running a watchOS your iPhone does not '
+                   'officially support** — setup completes, and companion apps '
+                   'install.\n\nIts own package: this has nothing to do with the '
+                   'social apps the combined Albrhi package patches.',
+        'html_tagline': '<strong>Pair an Apple Watch on a newer watchOS than your '
+                        'iPhone expects</strong>.',
+        'app': 'SpringBoard',
+        'tested': 'not yet validated on-device',
+        'tested_note': 'The pairing core is proven upstream; this packaging of it, '
+                       'with its switches and settings page, has not yet run on a '
+                       'phone. It injects into SpringBoard — have a way back in '
+                       'before the first install.',
+        'rows': [('Pairing core', 'watched by 34306 (github.com/34306/watched), MIT'),
+                 ('Answers', 'pairing compatibility, watch capabilities, companion '
+                             'app installation'),
+                 ('Settings', 'Settings › Albrhi › Albrhi Watch')],
+        'footer_html': 'GPLv3 · pairing core by 34306 under the MIT licence · not '
+                       'affiliated with Apple.',
+        'disclaimer': '_Free and open source. The pairing core is watched by 34306, '
+                      'used under the MIT licence, whose text ships with the '
+                      'package. Not affiliated with, endorsed by or sponsored by '
+                      'Apple._',
     },
     'nextup': {
         'slug': 'albrhi-nextup',                 # matches control's Depiction URLs

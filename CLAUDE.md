@@ -23,6 +23,7 @@ four standing on their own:
 | `tweaks/panel` | `com.albrhi.panel` | the Settings app — the per-app switches |
 | `suite/` | **`com.albrhi`** | the four social-app tweaks and the panel, in one package |
 | `tweaks/nextup` | `com.albrhi.nextup` | SpringBoard + 5 media apps — what plays next, **a GPLv3 port, released on its own** |
+| `tweaks/watch` | `com.albrhi.watch` | SpringBoard — Apple Watch pairing, **an MIT port, released on its own** |
 
 **Albrhi NextUp is a port, and that is the first thing to know about it.** It is
 [NextUp 3](https://github.com/Yves000/NextUp3) by Yves, carried over under the GNU GPL
@@ -1397,8 +1398,8 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.4** · TikTok **0.17.7** ·
-NextUp **0.1.5** · suite **1.49.0**. **CarPlay is gone** — removed from this repository, to be
+Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.5** · Watch **0.1.0** · TikTok **0.17.7** ·
+NextUp **0.1.5** · suite **1.49.1**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

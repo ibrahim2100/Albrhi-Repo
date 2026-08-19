@@ -37,6 +37,7 @@ on:
             - 'suite/**'
             - 'tweaks/**'
             - '!tweaks/nextup/**'
+            - '!tweaks/watch/**'
             - 'shared/**'
             - 'tools/**'
             - 'extra-debs/**'

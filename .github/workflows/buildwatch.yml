@@ -1,0 +1,392 @@
+name: Build Albrhi Watch
+
+#
+# Albrhi Watch publishes on its own -- its own package, its own releases, its own tag namespace
+# (watch-v*) -- and it is the second workflow that writes the shared APT index, so every word of
+# the two-publisher discipline in CLAUDE.md is live: the index is built from what is *published*
+# rather than from this run's own compile, the run folds its own build in by name, and it takes
+# the albrhi-pages concurrency group.
+#
+# **It injects into SpringBoard**, which is why it is not in the combined package and why
+# tweaks/watch carries a .no-suite marker. A wrong answer here is a pairing that fails; a wrong
+# *hook* here is the home screen. Have a way back in before installing any build.
+#
+# No sideload dylib step: that asset exists for injecting into one App Store app without a
+# jailbreak, and SpringBoard is not that.
+#
+
+on:
+    push:
+        branches:
+            - 'main'
+        paths:
+            - 'tweaks/watch/**'
+            - 'shared/**'
+            - 'tools/**'
+            - '.github/workflows/buildwatch.yml'
+    workflow_dispatch:
+        inputs:
+            force_rebuild:
+                description: 'Release even if this version was already released'
+                type: boolean
+                default: false
+
+env:
+    TWEAK_DIR: main/tweaks/watch
+    TWEAK_NAME: watch
+
+jobs:
+    build:
+        name: Build, release and publish
+        runs-on: macos-latest
+
+        # Shared with buildsuite.yml, and never cancelled: two runs must not rebuild and
+        # deploy gh-pages at once, and cancelling rather than queueing would drop an index
+        # update rather than merely delay it.
+        concurrency:
+            group: albrhi-pages
+            cancel-in-progress: false
+
+        permissions:
+            contents: write
+            pages: write
+
+        steps:
+            - name: Checkout Main
+              uses: actions/checkout@v4
+              with:
+                path: main
+                submodules: recursive
+
+            - name: Source checks
+              run: |
+                cd main
+                python3 tools/check.py
+
+            - name: Get version
+              run: |
+                WATCH_VERSION=$(awk -F': *' '/^Version:/ {print $2; exit}' "$TWEAK_DIR/control")
+
+                if [ -z "$WATCH_VERSION" ]; then
+                  echo "::error::Could not read Version from $TWEAK_DIR/control"
+                  exit 1
+                fi
+
+                echo "WATCH_VERSION=${WATCH_VERSION}" >> "$GITHUB_ENV"
+
+            - name: Point control at this repository
+              run: |
+                cd "$TWEAK_DIR"
+
+                OWNER="${{ github.repository_owner }}"
+                PROJECT="${{ github.event.repository.name }}"
+
+                sed -i.bak \
+                  -e "s|^Homepage: .*|Homepage: https://github.com/${OWNER}/${PROJECT}|" \
+                  -e "s|^Icon: .*|Icon: https://${OWNER}.github.io/${PROJECT}/CydiaIcon.png|" \
+                  -e "s|^Depiction: .*|Depiction: https://${OWNER}.github.io/${PROJECT}/depictions/albrhi-watch.html|" \
+                  -e "s|^SileoDepiction: .*|SileoDepiction: https://${OWNER}.github.io/${PROJECT}/depictions/albrhi-watch.json|" \
+                  control
+                rm -f control.bak
+
+                grep -E '^(Homepage|Icon|Depiction|SileoDepiction):' control
+
+            - name: Decide whether a release is needed
+              id: release_check
+              env:
+                GH_TOKEN: ${{ github.token }}
+              run: |
+                # Its own tag namespace, so this tweak's versions can never be confused
+                # with the suite's -- they share this repository's releases page.
+                TAG="watch-v${WATCH_VERSION}"
+                echo "TAG=${TAG}" >> "$GITHUB_ENV"
+
+                if [ "${{ github.event.inputs.force_rebuild }}" = "true" ]; then
+                  echo "Forced rebuild requested."
+                  echo "needed=true" >> "$GITHUB_OUTPUT"
+                elif gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+                  echo "::notice::${TAG} is already released - skipping the build."
+                  echo "::notice::Bump Version in $TWEAK_DIR/control to build again."
+                  echo "needed=false" >> "$GITHUB_OUTPUT"
+                else
+                  echo "${TAG} is new - building."
+                  echo "needed=true" >> "$GITHUB_OUTPUT"
+                fi
+
+            - name: Install dpkg
+              # Needed on every run, not only build runs: the index is assembled with
+              # dpkg-deb and dpkg-scanpackages even when the build is skipped.
+              run: brew install dpkg
+
+            - name: Install build dependencies
+              if: steps.release_check.outputs.needed == 'true'
+              run: brew install ldid make
+
+            - name: Set PATH environment variable
+              if: steps.release_check.outputs.needed == 'true'
+              run: echo "$(brew --prefix make)/libexec/gnubin" >> $GITHUB_PATH
+
+            - name: Setup Theos
+              if: steps.release_check.outputs.needed == 'true'
+              uses: actions/checkout@v4
+              with:
+                repository: theos/theos
+                ref: master
+                path: ${{ github.workspace }}/theos
+                submodules: recursive
+
+            - name: SDK Caching
+              if: steps.release_check.outputs.needed == 'true'
+              id: SDK
+              uses: actions/cache@v4
+              env:
+                cache-name: iPhoneOS16.2.sdk
+              with:
+                path: ${{ github.workspace }}/theos/sdks/
+                key: ${{ env.cache-name }}
+                restore-keys: ${{ env.cache-name }}
+
+            - name: Download iOS SDK
+              if: steps.release_check.outputs.needed == 'true' && steps.SDK.outputs.cache-hit != 'true'
+              run: |
+                git clone --quiet -n --depth=1 --filter=tree:0 https://github.com/xybp888/iOS-SDKs/
+                cd iOS-SDKs
+                git sparse-checkout set --no-cone iPhoneOS16.2.sdk
+                git checkout
+                mv *.sdk $THEOS/sdks
+              env:
+                THEOS: ${{ github.workspace }}/theos
+
+            - name: Build for rootless
+              if: steps.release_check.outputs.needed == 'true'
+              run: |
+                cd main
+                chmod +x build.sh
+                ./build.sh watch rootless
+                ls -la tweaks/watch/packages
+              env:
+                THEOS: ${{ github.workspace }}/theos
+
+            - name: Rename rootless deb
+              if: steps.release_check.outputs.needed == 'true'
+              run: |
+                cd "$TWEAK_DIR/packages"
+
+                BUILT_DEB=$(ls -t *.deb | head -n1)
+                if [ -z "$BUILT_DEB" ]; then
+                  echo "::error::No .deb produced by build.sh"
+                  exit 1
+                fi
+
+                mv "$BUILT_DEB" "com.albrhi.watch_${WATCH_VERSION}+rootless.deb"
+                ls -la
+
+            - name: Setup roothide Theos
+              if: steps.release_check.outputs.needed == 'true'
+              uses: actions/checkout@v4
+              with:
+                repository: roothide/theos
+                ref: master
+                path: ${{ github.workspace }}/theos-roothide
+                submodules: recursive
+
+            - name: Share the SDK with roothide Theos
+              if: steps.release_check.outputs.needed == 'true'
+              run: |
+                mkdir -p "${{ github.workspace }}/theos-roothide/sdks"
+                cp -R "${{ github.workspace }}/theos/sdks/." "${{ github.workspace }}/theos-roothide/sdks/"
+                ls "${{ github.workspace }}/theos-roothide/sdks"
+
+            - name: Build for roothide
+              if: steps.release_check.outputs.needed == 'true'
+              run: |
+                cd main
+                ./build.sh watch roothide
+                ls -la tweaks/watch/packages
+              env:
+                THEOS: ${{ github.workspace }}/theos-roothide
+
+            - name: Rename roothide deb
+              if: steps.release_check.outputs.needed == 'true'
+              run: |
+                cd "$TWEAK_DIR/packages"
+
+                # Matched on the roothide identity rather than on "whatever is newest":
+                # an exact name cannot pick up the rootless build by mistake.
+                BUILT_DEB=$(ls -t com.albrhi.watch.roothide_*.deb 2>/dev/null | head -n1)
+                if [ -z "$BUILT_DEB" ]; then
+                  echo "::error::No roothide .deb produced — the package identity swap may have failed"
+                  ls -la
+                  exit 1
+                fi
+
+                TARGET="com.albrhi.watch.roothide_${WATCH_VERSION}.deb"
+                if [ "$BUILT_DEB" != "$TARGET" ]; then
+                  mv "$BUILT_DEB" "$TARGET"
+                fi
+                ls -la
+
+            - name: Upload build artifacts
+              if: steps.release_check.outputs.needed == 'true'
+              uses: actions/upload-artifact@v4
+              with:
+                name: AlbrhiWatch-${{ env.WATCH_VERSION }}
+                path: |
+                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/com.albrhi.watch_${{ env.WATCH_VERSION }}+rootless.deb
+                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/com.albrhi.watch.roothide_${{ env.WATCH_VERSION }}.deb
+                if-no-files-found: error
+
+            - name: Extract changelog for this version
+              if: steps.release_check.outputs.needed == 'true'
+              run: |
+                cd main
+                python3 tools/release-notes.py tweaks/watch/CHANGELOG.md tweaks/watch/control > /tmp/notes.md
+                echo '--- release notes'
+                cat /tmp/notes.md
+
+            - name: Publish release
+              if: steps.release_check.outputs.needed == 'true'
+              uses: softprops/action-gh-release@v2
+              with:
+                name: Albrhi Watch ${{ env.WATCH_VERSION }}
+                tag_name: watch-v${{ env.WATCH_VERSION }}
+                body_path: /tmp/notes.md
+                files: |
+                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/com.albrhi.watch_${{ env.WATCH_VERSION }}+rootless.deb
+                  ${{ github.workspace }}/${{ env.TWEAK_DIR }}/packages/com.albrhi.watch.roothide_${{ env.WATCH_VERSION }}.deb
+                fail_on_unmatched_files: true
+
+            - name: Gather every published package
+              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/watch-v')
+              env:
+                GH_TOKEN: ${{ github.token }}
+              run: |
+                # Built from what is published, not from this run's compile -- the same
+                # reason buildsuite.yml does it this way: make-repo.sh wipes debs/ and
+                # rebuilds it, so an index built from one workflow's output alone would
+                # erase the other publisher's packages from the source.
+                chmod +x main/tools/fetch-published-debs.sh
+                ./main/tools/fetch-published-debs.sh published "${{ github.repository }}" 3 "$TWEAK_DIR/packages" watch
+
+            - name: Publish APT repo to GitHub Pages
+              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/watch-v')
+              env:
+                GH_TOKEN: ${{ github.token }}
+              run: |
+                set -x
+                REPO_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+                REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+
+                rm -rf pages
+                mkdir pages
+                cd pages
+                git init -q
+                git remote add origin "$REMOTE"
+
+                if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+                  echo "gh-pages exists — fetching it."
+                  git fetch -q --depth 1 origin gh-pages
+                  git checkout -q -b gh-pages FETCH_HEAD
+                else
+                  echo "gh-pages does not exist — starting a fresh branch."
+                  git checkout -q -b gh-pages
+                fi
+
+                cd ..
+
+                chmod +x main/tools/make-repo.sh
+                ./main/tools/make-repo.sh published pages "$REPO_URL"
+
+                cp main/tools/repo-index.html pages/index.html
+
+                mkdir -p pages/deb-edit
+                cp main/tools/deb-edit.html pages/deb-edit/index.html
+
+                mkdir -p pages/inject
+                cp main/tools/ipa-inject.html pages/inject/index.html
+
+                # Regenerated every run so the version and changelog shown always match
+                # what was actually built. From the tweak's own directory, because the
+                # generator reads CHANGELOG.md relative to its working directory.
+                PAGES_DIR="$(pwd)/pages"
+                # The last argument is make-depiction.py's own registry *key*, not the
+                # slug — the slug it writes (albrhi-watch, matching control's Depiction
+                # URLs) is looked up from that key inside the generator.
+                ( cd main/tweaks/watch && python3 ../../tools/make-depiction.py "$PAGES_DIR" "$WATCH_VERSION" "$REPO_URL" watch )
+
+                ls -la pages/depictions
+
+                python3 main/tools/make-logo.py pages/CydiaIcon.png 512
+
+                touch pages/.nojekyll
+
+                cd pages
+                git config user.name "github-actions[bot]"
+                git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                git add -A
+
+                if git diff --cached --quiet; then
+                  echo "Repo index unchanged — nothing to push."
+                  exit 0
+                fi
+
+                git commit -q -m "Repo: Albrhi Watch ${WATCH_VERSION}"
+                git push -q origin gh-pages
+
+                echo "Index committed to gh-pages; the deploy steps below publish it."
+
+            - name: Serve the source from the branch
+              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/watch-v')
+              env:
+                GH_TOKEN: ${{ github.token }}
+              # Same reasoning as buildsuite.yml's identical step: deploy-pages queued
+              # indefinitely on this repository and was removed for it. An APT source does
+              # not need it -- gh-pages is pushed above and already holds the finished
+              # index; this only makes the branch-serving arrangement explicit.
+              run: |
+                echo "Pointing Pages at the gh-pages branch"
+                gh api -X PUT "repos/${{ github.repository }}" --field has_pages=true --silent 2>/dev/null || true
+
+                if gh api -X PUT "repos/${{ github.repository }}/pages" --field 'build_type=legacy' --field 'source[branch]=gh-pages' --field 'source[path]=/' --silent 2>/dev/null; then
+                  echo "Pages now serves gh-pages"
+                else
+                  echo "::warning::could not set the Pages source; continuing"
+                fi
+
+                gh api -X POST "repos/${{ github.repository }}/pages/builds" --silent && echo "build requested" || echo "::warning::could not request a build; the push may still start one"
+
+            - name: Check the source actually serves this version
+              if: always() && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/watch-v'))
+              run: |
+                BASE="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/Packages"
+                echo "Asking $BASE for com.albrhi.watch ${WATCH_VERSION}"
+
+                for ATTEMPT in $(seq 1 6); do
+                  BODY=$(curl -fsSL "${BASE}?t=$(date +%s)-${ATTEMPT}" 2>/dev/null || true)
+
+                  if printf '%s' "$BODY" | grep -A5 '^Package: com.albrhi.watch$' | grep -q "^Version: ${WATCH_VERSION}$"; then
+                    echo "ok  the source is serving ${WATCH_VERSION}"
+                    exit 0
+                  fi
+
+                  SERVING=$(printf '%s' "$BODY" | grep -A5 '^Package: com.albrhi.watch$' | grep '^Version:' | sort -V | tail -n1)
+                  echo "attempt ${ATTEMPT}: ${SERVING:-nothing for com.albrhi.watch yet}"
+                  sleep 20
+                done
+
+                echo "Serving: ${SERVING:-nothing for com.albrhi.watch}"
+                echo ""
+
+                if [ -n "$SERVING" ]; then
+                  echo "::notice::the source is serving ${SERVING#Version: }; ${WATCH_VERSION} follows when Pages builds"
+                  exit 0
+                fi
+
+                echo "::error::the source is serving no com.albrhi.watch at all"
+                echo ""
+                echo "Check the one setting this side cannot read:"
+                echo ""
+                echo "  Settings -> Pages -> Build and deployment -> Source"
+                echo "      Deploy from a branch"
+                echo "      Branch: gh-pages    Folder: / (root)"
+                exit 1

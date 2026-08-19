@@ -1,5 +1,16 @@
 # Albrhi Panel Changelog
 
+## v0.9.5
+
+**Albrhi Watch's settings page**, reached from its own row under the Tweaks section: the master
+switch, the three answers it gives while pairing, and a restart button directly under them —
+because those answers are installed while SpringBoard starts, so a switch moved here does nothing
+until it restarts, and a page that hides that reports success while nothing has changed.
+
+Its switches are written to `com.albrhi.watch`, the domain the tweak itself reads, rather than to
+the panel's own. The panel's domain answers "may Albrhi act in this process at all"; a tweak's
+switches belong where that tweak looks.
+
 ## v0.9.4
 
 **Albrhi CarPlay's page left with the tweak**, which was removed from this repository to be rebuilt

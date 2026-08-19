@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.49.1
+
+**A page for Albrhi Watch** — a new standalone tweak that pairs an Apple Watch running a watchOS
+your iPhone does not officially support. The tweak is its own package; this release only adds its
+settings page to Settings › Albrhi, with the master switch, what it answers, and a restart button.
+
+Includes Panel 0.9.5.
+
 ## v1.49.0
 
 **Albrhi CarPlay has been removed from this project.** It put an ordinary app on the car display,

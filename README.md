@@ -4,7 +4,7 @@
 
 ### iOS tweaks, built in the open — bilingual, native, and written to be read
 
-**العربية · English** · a working APT source · six tweaks, five in one package
+**العربية · English** · a working APT source · seven tweaks, five in one package
 
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B-lightgrey.svg)]()
@@ -14,7 +14,8 @@
 [![YouTube](https://img.shields.io/badge/YouTube-1.20.0-red.svg)](tweaks/youtube/CHANGELOG.md)
 [![X](https://img.shields.io/badge/X-0.14.0-black.svg)](tweaks/twitter/CHANGELOG.md)
 [![TikTok](https://img.shields.io/badge/TikTok-0.17.1-ff0050.svg)](tweaks/tiktok/CHANGELOG.md)
-[![NextUp](https://img.shields.io/badge/NextUp-0.1.3-FF375F.svg)](tweaks/nextup/CHANGELOG.md)
+[![NextUp](https://img.shields.io/badge/NextUp-0.1.5-FF375F.svg)](tweaks/nextup/CHANGELOG.md)
+[![Watch](https://img.shields.io/badge/Watch-0.1.0-FF375F.svg)](tweaks/watch/CHANGELOG.md)
 [![Based on](https://img.shields.io/badge/based%20on-SCInsta-lightblue.svg)](https://github.com/SoCuul/SCInsta)
 
 <br/>
@@ -101,7 +102,7 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 
 ### What is in here
 
-**Six tweaks. Five ship inside `com.albrhi`; one stands on its own.**
+**Seven tweaks. Five ship inside `com.albrhi`; two stand on their own.**
 
 | Tweak | Patches | Version | What it does |
 |---|---|---|---|
@@ -110,7 +111,8 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 | **Albrhi for X** | X / Twitter | 0.14.0 | media downloads, and the feature switches X asks itself about |
 | **Albrhi for TikTok** | TikTok | 0.17.1 | a download button in the feed, photo posts, no ads, confirmations, privacy |
 | **Albrhi Panel** | Settings | 0.9.2 | the Albrhi page — one switch per patched app, and a page per tweak |
-| **Albrhi NextUp** | SpringBoard, Music, Podcasts, YouTube, YT Music, Spotify | 0.1.3 | what plays next, on the Lock Screen — **its own package** |
+| **Albrhi NextUp** | SpringBoard, Music, Podcasts, YouTube, YT Music, Spotify | 0.1.5 | what plays next, on the Lock Screen — **its own package** |
+| **Albrhi Watch** | SpringBoard | 0.1.0 | pair an Apple Watch on a newer watchOS than iOS expects — **its own package** |
 
 Each is a self-contained Theos project under `tweaks/`, with its own sources, package
 identity and version number, and **they never meet at runtime**: an injection filter binds
@@ -119,7 +121,7 @@ share is the build plumbing — the checks, the build script and the APT index.
 
 `com.albrhi` is the merge of the first five, built by `tools/make-suite.sh`, which picks up
 any `tweaks/*/control` automatically. A tweak leaves the merge only by carrying a
-`.no-suite` marker file in its directory — NextUp is the one that does.
+`.no-suite` marker file in its directory — NextUp and Watch are the two that do.
 
 **Albrhi for Locket was removed from this repository**, on the owner's instruction to isolate it
 completely: it left the suite first, then left the project. Its five `locket-v*` releases stay on
@@ -353,6 +355,38 @@ this one injects into SpringBoard and five media apps.
 
 ---
 
+## ⌚ Albrhi Watch
+
+### Pair a watch iOS does not expect
+iOS refuses to pair with an Apple Watch whose watchOS is newer than it expects, and refuses to
+install companion apps onto it. Albrhi Watch answers those compatibility questions the way a
+supported pairing would — the pairing gate, the watch's declared capabilities, and the companion
+app runtime check — so setup completes and apps install.
+
+### Three switches, and a restart button under them
+**Settings › Albrhi › Albrhi Watch.** The master is off until you turn it on: this answers the
+questions iOS asks before it agrees to pair, and that should never begin because a package landed.
+The three answers have their own switches, so a watch that pairs but misbehaves can have one of
+them turned off rather than the tweak removed.
+
+The answers are installed while SpringBoard starts, so the page carries the restart button that
+makes a change to the master switch real — a settings page that hides that reports success while
+nothing has happened.
+
+### It says what it did
+Which classes were present on your build, how many times each answer was given, and the watch
+version it read against your iPhone's. **A pairing that fails looks exactly like a tweak that never
+loaded**, and the pairing screen shows neither.
+
+> **The pairing core is not this project's work.** It is
+> [watched](https://github.com/34306/watched) by **34306**, used under the MIT licence — carried
+> over as code, which MIT permits, with its notice shipped inside the package as MIT requires.
+> Albrhi adds the switches, the settings page, the diagnostics and the bilingual interface.
+
+> **It injects into SpringBoard.** Have a way back in before installing any build.
+
+---
+
 ## 🧩 Compatibility
 
 | | |
@@ -363,6 +397,7 @@ this one injects into SpringBoard and five media apps.
 | **YouTube** | Tested on **21.30.5** |
 | **X / Twitter** | Tested on **12.15** |
 | **TikTok** | Tested on **46.4.0** |
+| **Watch** | iOS **15+**, any watchOS the pairing gate is asked about |
 | **NextUp** | iOS **14.2–26**, confirmed on **16.1** · Music, Podcasts, YouTube **21.32.4**, YT Music **9.28.4**, Spotify **9.1.62** |
 | **Jailbreaks** | Rootless (Dopamine, palera1n) · roothide · rootful (unc0ver, checkra1n) |
 | **Sideloading** | Supported via the bundled FLEXing sub-project |
@@ -400,7 +435,7 @@ git submodule update --init --recursive
 ```
 
 The result lands in `tweaks/instagram/packages/`. Swap `instagram` for `youtube`, `twitter`,
-`tiktok`, `panel` or `nextup`, and `rootless` for `roothide`, `rootful` or `sideload`.
+`tiktok`, `panel`, `nextup` or `watch`, and `rootless` for `roothide`, `rootful` or `sideload`.
 
 **To build what people actually install**, merge the five into the suite:
 
@@ -433,7 +468,7 @@ Adding a tweak means adding a directory under `tweaks/` — `tools/check.py` fin
 checks it without being told, `./build.sh <name> rootless` builds it, and `make-suite.sh`
 pulls it into `com.albrhi` automatically. Joining the suite is the default and costs
 nothing but a version bump in `suite/control`; staying out of it takes a `.no-suite` marker
-file, which only NextUp has.
+file, which NextUp and Watch have.
 
 ### 🧰 The tools
 

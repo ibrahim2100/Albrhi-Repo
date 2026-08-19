@@ -63,6 +63,9 @@ static inline UIImage *SCIPanelBadgeForGroup(NSString *groupIdentifier) {
     if ([groupIdentifier isEqualToString:@"com.albrhi.nextup"]) {
         return SCIPanelBadgeImage(@"music.note.list", SCIPanelAccent());
     }
+    if ([groupIdentifier isEqualToString:@"com.albrhi.watch"]) {
+        return SCIPanelBadgeImage(@"applewatch", SCIPanelAccent());
+    }
     // A tweak this build has never heard of still gets a mark rather than a gap.
     return SCIPanelBadgeImage(@"gearshape.fill", [UIColor systemGrayColor]);
 }
