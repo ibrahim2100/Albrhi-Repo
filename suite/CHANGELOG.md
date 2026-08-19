@@ -1,5 +1,15 @@
 # Albrhi Changelog
 
+## v1.48.3
+
+**TikTok now picks the largest readable version of a single saved picture** rather than the first
+one that works, by measuring the alternatives before downloading. Saving a whole album is unchanged
+— measuring every version of every picture would be hundreds of requests before anything is saved.
+
+The save report also names the pixel size of what it saved.
+
+Includes TikTok 0.17.6.
+
 ## v1.48.2
 
 **TikTok photo saving no longer falls through to the watermarked copy.** When a post's original

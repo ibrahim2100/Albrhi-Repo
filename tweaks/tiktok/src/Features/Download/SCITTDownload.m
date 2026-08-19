@@ -827,11 +827,44 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
             NSMutableSet<NSString *> *ways = [NSMutableSet set];
 
             for (NSArray<NSURL *> *group in groups) {
+                //
+                // **For one picture, the biggest readable variant; for a whole album, the first.**
+                //
+                // A device report saved cleanly at 1170×2080 and named `thumbnailPhotoURL` as the
+                // winner -- which is not the tiny preview the name suggests, but it is not proof
+                // that nothing larger was readable either: the walk takes the first variant that
+                // decodes, and "first" is a position in a list, not a size. The video path settled
+                // this argument long ago by measuring instead of ranking names, and the same answer
+                // applies here: one `HEAD` per link, largest first, then download.
+                //
+                // Only for a single picture. An album of twenty-one at ten links each would be two
+                // hundred round trips before the first byte of anything is saved, and the person
+                // who asked for "all of them" asked for all of them, not for the best possible
+                // version of all of them.
+                //
+                NSArray<NSURL *> *ordered = group;
+                if (groups.count == 1 && group.count > 1) {
+                    NSMutableArray<NSURL *> *sorted = [group mutableCopy];
+                    NSMutableDictionary<NSString *, NSNumber *> *sizes = [NSMutableDictionary dictionary];
+                    for (NSURL *candidate in group) {
+                        long long bytes = SCITTMeasure(candidate, NULL);
+                        if (bytes <= 0) bytes = SCITTMeasureByRange(candidate, NULL);
+                        // A link that will not answer keeps its place rather than sinking: refusing
+                        // to be measured is not evidence of being small, and this project has
+                        // already disabled a working feature by treating it as such.
+                        sizes[candidate.absoluteString] = @(bytes > 0 ? bytes : LLONG_MAX / 2);
+                    }
+                    [sorted sortUsingComparator:^NSComparisonResult(NSURL *a, NSURL *b) {
+                        return [sizes[b.absoluteString] compare:sizes[a.absoluteString]];
+                    }];
+                    ordered = sorted;
+                }
+
                 BOOL done = NO;
                 NSMutableArray<NSString *> *tried = [NSMutableArray array];
                 NSString *lastError = nil;
 
-                for (NSURL *url in group) {
+                for (NSURL *url in ordered) {
                     NSString *fetchNote = nil;
                     NSData *data = SCITTFetchPhoto(url, &fetchNote);
                     if (!data.length) {
@@ -859,10 +892,14 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
                         // watermarked copy too, which is how a device report of "it saves, but with
                         // a watermark" had nothing in the log to confirm it. The accessor's name is
                         // the only thing that knows.
+                        // The pixels, because that is the question a person actually has about a
+                        // saved picture, and a variant name only answers it indirectly.
                         NSString *origin = [SCITTMedia photoOriginFor:url];
+                        NSString *pixels = [NSString stringWithFormat:@"%.0f×%.0f",
+                            image.size.width * image.scale, image.size.height * image.scale];
                         [ways addObject:origin.length
-                            ? [NSString stringWithFormat:@"%@ · %@", origin, how ?: @"saved"]
-                            : (how ?: @"saved")];
+                            ? [NSString stringWithFormat:@"%@ %@ · %@", origin, pixels, how ?: @"saved"]
+                            : [NSString stringWithFormat:@"%@ · %@", pixels, how ?: @"saved"]];
                         done = YES;
                         break;
                     }

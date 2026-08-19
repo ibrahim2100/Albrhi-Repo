@@ -1,5 +1,28 @@
 # Albrhi for TikTok — what changed
 
+## v0.17.6
+
+**A clean save at full size — and a report that could not prove it was the biggest one.**
+
+The picture came back clean at 1170×2080, and the winning variant was named `thumbnailPhotoURL`.
+That name is misleading here (TikTok's photo-mode "thumbnail" is a screen-sized render, not a
+preview), but it is also not proof that nothing larger was readable: **the walk takes the first
+variant that decodes, and "first" is a position in a list, not a size.**
+
+The video side settled this same argument long ago by measuring rather than ranking names, and the
+answer is the same here. For a single picture, every variant is `HEAD`-ed, the list is sorted
+largest-first, and the download proceeds in that order. A link that refuses to be measured keeps
+its place rather than sinking — refusing to answer is not evidence of being small, and this project
+has already disabled a working feature by treating it as such.
+
+**Only for a single picture.** An album of twenty-one at ten links each would be two hundred round
+trips before the first byte is saved, and somebody who asked for all of them asked for all of them,
+not for the best possible version of all of them.
+
+**The save note now carries the pixels**, because that is the question a person actually has about
+a saved picture, and a variant's name only answers it sideways: `originPhotoURL 1170×2080 · as
+posted`.
+
 ## v0.17.5
 
 **It saved — with a watermark — and the order asked for exactly that.**
