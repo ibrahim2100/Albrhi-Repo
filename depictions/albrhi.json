@@ -106,6 +106,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v1.49.3",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **If a tweak is installed but Albrhi has not caught up with its settings page, the page's row now says so**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v1.49.2",
           "useBoldText": true
         },
@@ -131,20 +145,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v1.49.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **Albrhi CarPlay has been removed from this project.**",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -155,7 +155,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.49.2"
+          "text": "1.49.3"
         },
         {
           "class": "DepictionTableTextView",
