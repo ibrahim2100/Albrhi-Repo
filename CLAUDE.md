@@ -315,6 +315,20 @@ prefers a candidate that can resolve a video over the first one merely carrying 
 capability check gates a fallback, check that the fallback is not silently asserting an
 identity the check never established.
 
+**And a capability check must ask the same question the capability answers — a gate
+narrower than what it guards refuses work that would have succeeded.** Fixing the above
+made the repost report `video — declared but no rendition resolved` with `-needsFetch`
+answering **NO**, which ruled out the stub theory and exposed a second, older bug behind
+it: `hasPlayableVideo:` decided whether to take the video path by asking
+`getVideoUrl:` (`videoVersions`, `sortedVideoURLsBySize`, `allVideoURLs`), while
+`downloadVideo:` behind it asks `getBestVideoUrl:`, **which also parses the DASH
+manifest**. A video whose only rendition lives in that manifest was refused by a test the
+download itself would have passed — and this project had already written the DASH parser,
+correctly, for the quality ladder; it was simply never reached from the gate. Nothing was
+missing but the question. When a guard and the thing it guards resolve the same resource
+by different routes, the guard is wrong by construction, and it fails silently in the
+direction of doing less.
+
 **SABR cannot be turned off from inside the app. This was measured to the end — do not
 try again without new evidence.** Every format on YouTube 21.30.5 answers with an empty
 `?cpn=` URL, because the client asks a server-side controller for byte ranges instead of
@@ -1510,8 +1524,8 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.9** · YouTube **1.20.0** · X **0.14.0** · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.17.1** · suite **1.43.0**.
+Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
+source) · TikTok **0.17.1** · suite **1.43.1**.
 
 ### TikTok, where it actually stands
 

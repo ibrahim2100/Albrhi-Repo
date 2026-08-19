@@ -10,7 +10,7 @@
 #import "../Settings/SCIDiagnosticsViewController.h"
 #import <objc/runtime.h>
 // objc_msgSend is declared here, not in runtime.h -- the selectors probed in
-// +mediaDeclaresVideo: are confirmed in a class dump rather than declared in
+// +videoDeclarationSignalFor: are confirmed in a class dump rather than declared in
 // InstagramHeaders.h, so they are sent rather than called.
 #import <objc/message.h>
 #import <Photos/Photos.h>
@@ -138,43 +138,70 @@
     } @catch (__unused id e) {}
 
     // No rendition list, but another accessor may still resolve a URL.
-    return ([SCIUtils getVideoUrl:video] != nil);
+    if ([SCIUtils getVideoUrl:video] != nil) return YES;
+
+    //
+    // **The gate was narrower than the thing it gates, and that is its own bug.**
+    // This check ran `+getVideoUrl:` — `videoVersions`, `sortedVideoURLsBySize`,
+    // `allVideoURLs` — while the downloader it stands in front of runs
+    // `+getBestVideoUrl:`, which *also* parses the DASH manifest. So a video whose
+    // only rendition lives in that manifest was refused here by a test the actual
+    // download would have passed. `-dashManifestData` is declared on `IGVideo` in the
+    // tested build (and on `IGVideo` only, which is why nothing is asked of the media).
+    //
+    // A capability check must ask the same question the capability answers.
+    //
+    @try {
+        for (NSDictionary *rep in [SCIUtils dashRepresentationsForVideo:video media:nil]) {
+            if ([rep[@"type"] isEqualToString:@"video"] && [rep[@"url"] length]) return YES;
+        }
+    } @catch (__unused id e) {}
+
+    return NO;
 }
 
 ///
-/// Does this media *say* it is a video, whether or not one can be resolved yet?
+/// Does this media *say* it is a video, whether or not one can be resolved yet — and
+/// if so, which signal said so? Nil when none did.
+///
+/// **The distinction this exists for.** `+hasPlayableVideo:` answers "is there a
+/// rendition I can fetch right now", and a repost answers NO to that while still being
+/// a video. Reading that NO as "therefore a photo" is what saved a repost's cover image
+/// when a video was asked for, so the kind is asked here, separately.
 ///
 /// Read from the class dump of the tested build rather than guessed. Three independent
 /// signals, because no single one of them is safe alone:
 ///
 ///   -videoDuration on IGVideo   a photo post's hollow IGVideo has no duration, so a
 ///                               positive one is a video and needs no enum constant
+///   -dashManifestData           a manifest exists only for a video
 ///   -mediaTypeEnum on IGMedia   Instagram's own media_type; 2 is video in its API and
 ///                               has been for years, but it is a constant this project
-///                               did not measure, so it never decides alone
-///   -dashManifestData           a manifest exists only for a video
+///                               did not measure, so it is asked last
 ///
 /// Any one of the three is enough. They are OR-ed rather than AND-ed because the
 /// failure that matters is a video being missed, and a photo post satisfies none of
 /// them: its hollow IGVideo carries no duration, no manifest, and its media type is
 /// not the video one.
 ///
-+ (BOOL)mediaDeclaresVideo:(id)media {
-    if (!media) return NO;
+/// The *name* is returned rather than a flag because the three point at different
+/// causes, and one sentence covering all of them is a diagnostic that cannot say which.
++ (NSString *)videoDeclarationSignalFor:(id)media {
+    if (!media) return nil;
 
     IGVideo *video = nil;
     @try { video = [media valueForKey:@"video"]; } @catch (__unused id e) {}
 
-    // Sent through objc_msgSend like the other two, and for the same reason: these are
-    // selectors confirmed in a class dump, not methods InstagramHeaders.h declares, so
-    // a direct call has no visible interface to compile against. The cast must name the
-    // real return type -- a double comes back in a floating-point register, and reading
-    // it through an `id`-shaped signature would read the wrong register entirely.
+    // All three are sent through objc_msgSend rather than called: they are selectors
+    // confirmed in a class dump of the tested build, not methods InstagramHeaders.h
+    // declares, so a direct call has no visible interface to compile against. Each cast
+    // must name the real return type -- a double comes back in a floating-point
+    // register, and reading it through an `id`-shaped signature reads the wrong one.
     @try {
         SEL duration = NSSelectorFromString(@"videoDuration");
         if ([video respondsToSelector:duration] &&
             ((double (*)(id, SEL))objc_msgSend)(video, duration) > 0.0) {
-            return YES;
+            return @"duration";
         }
     } @catch (__unused id e) {}
 
@@ -182,20 +209,21 @@
         SEL manifest = NSSelectorFromString(@"dashManifestData");
         if ([video respondsToSelector:manifest] &&
             ((id (*)(id, SEL))objc_msgSend)(video, manifest) != nil) {
-            return YES;
+            return @"dash manifest";
         }
     } @catch (__unused id e) {}
 
     @try {
         SEL typeEnum = NSSelectorFromString(@"mediaTypeEnum");
-        if ([media respondsToSelector:typeEnum]) {
-            long long type = ((long long (*)(id, SEL))objc_msgSend)(media, typeEnum);
-            if (type == 2) return YES;
+        if ([media respondsToSelector:typeEnum] &&
+            ((long long (*)(id, SEL))objc_msgSend)(media, typeEnum) == 2) {
+            return @"mediaTypeEnum";
         }
     } @catch (__unused id e) {}
 
-    return NO;
+    return nil;
 }
+
 
 /// Whether this media is a stub Instagram has not fetched yet -- both accessors are
 /// declared on IGMedia in the tested build. Used only to word the failure, never to
@@ -280,11 +308,17 @@
     // asked separately now, and a declared video that will not resolve says so instead
     // of quietly handing back a different file than the one that was asked for.
     //
-    if ([self mediaDeclaresVideo:media]) {
+    NSString *signal = [self videoDeclarationSignalFor:media];
+    if (signal) {
+        // The signal is named, not just counted. "Declared but no rendition resolved"
+        // was one sentence covering three different causes -- a duration with no
+        // renditions, a manifest that would not parse, and a media type that says video
+        // while nothing else does are three different bugs, and the next report should
+        // not need a fourth round trip to say which.
         BOOL pending = [self mediaNeedsFetch:media];
-        [SCIDiagnostics recordDownloadKind:pending
-            ? @"video — not fetched yet, refused rather than saving the cover"
-            : @"video — declared but no rendition resolved"];
+        [SCIDiagnostics recordDownloadKind:[NSString stringWithFormat:@"video (%@) — %@",
+            signal, pending ? @"not fetched yet, refused rather than saving the cover"
+                            : @"no rendition resolved"]];
 
         [SCIUtils showErrorHUDWithDescription:SCILocalized(pending
             ? @"err_video_not_ready" : @"err_video_unresolved")];

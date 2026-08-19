@@ -4,6 +4,28 @@
 Other versions should work too — the tweak looks for what it needs while the app runs
 rather than expecting a particular version number.
 
+## v4.1.10
+
+4.1.9 stopped the repost saving its cover image and made it say what it was instead —
+`video — declared but no rendition resolved`, with `-needsFetch` answering **NO**. So it
+is not a stub waiting to be fetched: the media is complete, says it is a video, and has
+no rendition the download path could find. That pointed at something else entirely.
+
+**The gate was narrower than the thing it gates.** `+hasPlayableVideo:` decided whether
+to take the video path at all, and it asked `+getVideoUrl:` — `videoVersions`,
+`sortedVideoURLsBySize`, `allVideoURLs`. But the downloader standing behind it,
+`+downloadVideo:`, asks `+getBestVideoUrl:`, which *also parses the DASH manifest*. A
+video whose only rendition lives in that manifest was therefore refused by a test the
+actual download would have passed — the parser was already written, already correct, and
+simply never reached. `-dashManifestData` is declared on `IGVideo` in the tested build.
+The gate now asks the same question the capability answers.
+
+**And the diagnostic names which signal fired.** "Declared but no rendition resolved"
+was one sentence covering three different causes — a duration with no renditions, a
+manifest that would not parse, a media type that says video while nothing else does —
+and each needs a different fix. The line now reads `video (dash manifest) — …` and the
+three probes live in one implementation rather than two that can drift.
+
 ## v4.1.9
 
 **Saving a video from a repost saved its cover image instead.** Reported from a device,
