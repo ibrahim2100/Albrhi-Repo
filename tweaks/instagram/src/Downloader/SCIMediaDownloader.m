@@ -137,6 +137,72 @@
     return ([SCIUtils getVideoUrl:video] != nil);
 }
 
+///
+/// Does this media *say* it is a video, whether or not one can be resolved yet?
+///
+/// Read from the class dump of the tested build rather than guessed. Three independent
+/// signals, because no single one of them is safe alone:
+///
+///   -videoDuration on IGVideo   a photo post's hollow IGVideo has no duration, so a
+///                               positive one is a video and needs no enum constant
+///   -mediaTypeEnum on IGMedia   Instagram's own media_type; 2 is video in its API and
+///                               has been for years, but it is a constant this project
+///                               did not measure, so it never decides alone
+///   -dashManifestData           a manifest exists only for a video
+///
+/// Any one of the three is enough. They are OR-ed rather than AND-ed because the
+/// failure that matters is a video being missed, and a photo post satisfies none of
+/// them: its hollow IGVideo carries no duration, no manifest, and its media type is
+/// not the video one.
+///
++ (BOOL)mediaDeclaresVideo:(id)media {
+    if (!media) return NO;
+
+    IGVideo *video = nil;
+    @try { video = [media valueForKey:@"video"]; } @catch (__unused id e) {}
+
+    @try {
+        if ([video respondsToSelector:@selector(videoDuration)] &&
+            [video videoDuration] > 0.0) {
+            return YES;
+        }
+    } @catch (__unused id e) {}
+
+    @try {
+        SEL manifest = NSSelectorFromString(@"dashManifestData");
+        if ([video respondsToSelector:manifest] &&
+            ((id (*)(id, SEL))objc_msgSend)(video, manifest) != nil) {
+            return YES;
+        }
+    } @catch (__unused id e) {}
+
+    @try {
+        SEL typeEnum = NSSelectorFromString(@"mediaTypeEnum");
+        if ([media respondsToSelector:typeEnum]) {
+            long long type = ((long long (*)(id, SEL))objc_msgSend)(media, typeEnum);
+            if (type == 2) return YES;
+        }
+    } @catch (__unused id e) {}
+
+    return NO;
+}
+
+/// Whether this media is a stub Instagram has not fetched yet -- both accessors are
+/// declared on IGMedia in the tested build. Used only to word the failure, never to
+/// decide the kind: a photo post can be momentarily unfetched too.
++ (BOOL)mediaNeedsFetch:(id)media {
+    for (NSString *name in @[@"needsMediaFetch", @"needsFetch"]) {
+        @try {
+            SEL selector = NSSelectorFromString(name);
+            if ([media respondsToSelector:selector] &&
+                ((BOOL (*)(id, SEL))objc_msgSend)(media, selector)) {
+                return YES;
+            }
+        } @catch (__unused id e) {}
+    }
+    return NO;
+}
+
 + (void)downloadMedia:(id)media sourceLabel:(NSString *)sourceLabel anchor:(UIView *)anchor {
     if (!media) {
         [SCIUtils showErrorHUDWithDescription:SCILocalized(@"err_no_media")];
@@ -189,6 +255,29 @@
         }
 
         [self downloadVideo:video sourceLabel:sourceLabel anchor:anchor];
+        return;
+    }
+
+    //
+    // **A video that cannot be resolved yet is not a photo, and this is the bug that
+    // reached a device.** Saving a repost saved its cover image: the repost's IGMedia
+    // is a stub built from `IGRepostModel`'s `mediaId`, so `+hasPlayableVideo:`
+    // correctly answered NO while the cover photo resolved perfectly -- and the code
+    // below read that NO as "therefore a photo".
+    //
+    // `+hasPlayableVideo:` answers "can I play one *now*". It never meant "this is not
+    // a video", and only the photo branch's position made it mean that. The kind is
+    // asked separately now, and a declared video that will not resolve says so instead
+    // of quietly handing back a different file than the one that was asked for.
+    //
+    if ([self mediaDeclaresVideo:media]) {
+        BOOL pending = [self mediaNeedsFetch:media];
+        [SCIDiagnostics recordDownloadKind:pending
+            ? @"video — not fetched yet, refused rather than saving the cover"
+            : @"video — declared but no rendition resolved"];
+
+        [SCIUtils showErrorHUDWithDescription:SCILocalized(pending
+            ? @"err_video_not_ready" : @"err_video_unresolved")];
         return;
     }
 

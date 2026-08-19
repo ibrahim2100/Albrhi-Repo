@@ -298,6 +298,23 @@ implies.
 `IGVideo` for photo posts. Check that a thing can actually do its job, not that it
 is non-null — see `hasPlayableVideo:` in `SCIMediaDownloader.m`.
 
+**And "it cannot do its job" is not "it is the other kind" — the answer to a capability
+question must not be spent on an identity question.** `hasPlayableVideo:`, written for
+the rule above, is correct and stayed correct; what broke was reading its `NO` as
+"therefore a photo" because the photo branch simply came next. Saving a **repost** then
+saved its cover image: Instagram models one as `IGRepostModel`, which carries a
+`mediaId` string and *no media object*, so the `IGMedia` behind it is built with
+`-initWithPk:` and is a stub until fetched — `-needsFetch`, `-needsMediaFetch` and
+`-coverPhotoDidPartiallyLoad` are its own declared accessors, and the cover arrives
+before the renditions. A real video, no playable rendition yet, a perfectly resolvable
+cover photo, and one branch that could not tell "photo" from "video, not loaded". The
+kind is asked separately now (`mediaDeclaresVideo:` — duration, DASH manifest, or
+`mediaTypeEnum`, any one sufficient, a photo post satisfying none), and the media search
+prefers a candidate that can resolve a video over the first one merely carrying a photo.
+**Two questions that sound alike: "can I do this now" and "what is this".** Whenever a
+capability check gates a fallback, check that the fallback is not silently asserting an
+identity the check never established.
+
 **SABR cannot be turned off from inside the app. This was measured to the end — do not
 try again without new evidence.** Every format on YouTube 21.30.5 answers with an empty
 `?cpn=` URL, because the client asks a server-side controller for byte ranges instead of
@@ -1493,8 +1510,8 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.8** · YouTube **1.20.0** · X **0.14.0** · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
-source) · TikTok **0.17.0** · suite **1.42.0**.
+Instagram **4.1.9** · YouTube **1.20.0** · X **0.14.0** · Panel **0.8.1** · CarPlay **0.4.1** (withheld from the
+source) · TikTok **0.17.1** · suite **1.43.0**.
 
 ### TikTok, where it actually stands
 

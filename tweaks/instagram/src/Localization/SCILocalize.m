@@ -123,6 +123,8 @@ static NSDictionary *_arTable = nil;
         @"err_no_photo": @"Could not extract photo URL",
         @"err_no_video": @"Could not extract video URL",
         @"err_no_media": @"Could not find media to download",
+        @"err_video_not_ready": @"This video has not loaded yet. Play it, then try again.",
+        @"err_video_unresolved": @"This is a video, but no downloadable version was found",
 
         // Diagnostics
         @"diag_title": @"Diagnostics",
@@ -656,6 +658,8 @@ static NSDictionary *_arTable = nil;
         @"err_no_photo": @"تعذّر استخراج رابط الصورة",
         @"err_no_video": @"تعذّر استخراج رابط الفيديو",
         @"err_no_media": @"تعذّر العثور على الوسائط المطلوب تنزيلها",
+        @"err_video_not_ready": @"هذا الفيديو لم يُحمّل بعد. شغّله ثم أعد المحاولة.",
+        @"err_video_unresolved": @"هذا فيديو، لكن لم يُعثر على نسخة قابلة للتنزيل",
 
         // التشخيص
         @"diag_title": @"التشخيص",

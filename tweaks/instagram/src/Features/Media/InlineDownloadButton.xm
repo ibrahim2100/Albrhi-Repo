@@ -120,39 +120,76 @@ static id SCIMediaFromOwner(id owner) {
     return nil;
 }
 
-// Walks the delegate chain first, then the view hierarchy, looking for the media
-// backing this action row.
+///
+/// The first candidate is not always the right one, and a repost is where that showed.
+///
+/// Every owner in the chain below can hold *a* media, and `SCIHasMediaPayload` accepts
+/// any of them the moment a `photo` is non-nil — which a repost's unfetched stub always
+/// has, because Instagram loads the cover first (`-coverPhotoDidPartiallyLoad` is its
+/// own declared accessor). So the search stopped at the stub, its video had no
+/// renditions, and a video was saved as its cover image.
+///
+/// Taking the first match is still right for every ordinary post, so the walk is
+/// unchanged. What is added is a second pass: if the first match declares itself a
+/// video but cannot resolve one, keep looking, and prefer any later candidate that
+/// can. Only when nothing better turns up is the first match returned — so this can
+/// never do worse than before, it can only find something the old walk skipped past.
+///
+static void SCIConsiderMedia(id candidate, id *best, id *firstSeen) {
+    if (!candidate) return;
+    if (!*firstSeen) *firstSeen = candidate;
+    if (*best) return;
+
+    IGVideo *video = nil;
+    @try { video = [candidate valueForKey:@"video"]; } @catch (__unused id e) {}
+
+    if ([SCIMediaDownloader hasPlayableVideo:video]) *best = candidate;
+}
+
+/// Walks the delegate chain first, then the view hierarchy, looking for the media
+/// backing this action row.
 static id SCIMediaForButtonBar(UIView *bar) {
+    // The best candidate found so far (a resolvable video) and the first one found at
+    // all — which is exactly what this function used to return, and still does when
+    // nothing better exists.
+    id best = nil;
+    id firstSeen = nil;
+
     for (NSString *key in @[@"delegate", @"dataSource"]) {
         id owner = nil;
         @try { owner = [bar valueForKey:key]; } @catch (__unused id e) {}
 
-        id media = SCIMediaFromOwner(owner);
-        if (media) return media;
+        SCIConsiderMedia(SCIMediaFromOwner(owner), &best, &firstSeen);
+        if (best) return best;
 
         // Delegates commonly forward to another object holding the media.
         id nested = nil;
         @try { nested = [owner valueForKey:@"delegate"]; } @catch (__unused id e) {}
 
-        media = SCIMediaFromOwner(nested);
-        if (media) return media;
+        SCIConsiderMedia(SCIMediaFromOwner(nested), &best, &firstSeen);
+        if (best) return best;
     }
 
     // Then the enclosing cell, which is where the long-press path finds it.
     UIView *ancestor = bar.superview;
     while (ancestor) {
-        id media = SCIMediaFromOwner(ancestor);
-        if (media) return media;
+        SCIConsiderMedia(SCIMediaFromOwner(ancestor), &best, &firstSeen);
+        if (best) return best;
 
         // The cell's own view controller can hold it instead.
         id nextResponder = [ancestor nextResponder];
         if ([nextResponder isKindOfClass:[UIViewController class]]) {
-            media = SCIMediaFromOwner(nextResponder);
-            if (media) return media;
+            SCIConsiderMedia(SCIMediaFromOwner(nextResponder), &best, &firstSeen);
+            if (best) return best;
         }
 
         ancestor = ancestor.superview;
     }
+
+    // Nothing in the chain could resolve a video. The first match is what the old walk
+    // would have returned, and the downloader now refuses to call a declared video a
+    // photo, so this reports honestly instead of saving the wrong file.
+    if (firstSeen) return firstSeen;
 
     return nil;
 }

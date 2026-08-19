@@ -4,6 +4,36 @@
 Other versions should work too — the tweak looks for what it needs while the app runs
 rather than expecting a particular version number.
 
+## v4.1.9
+
+**Saving a video from a repost saved its cover image instead.** Reported from a device,
+and the cause is a distinction the download path never drew.
+
+Instagram models a repost as `IGRepostModel`, which carries a **`mediaId` string and no
+media object at all** — so the `IGMedia` behind it is built with `-initWithPk:` and is a
+stub until fetched. `-needsFetch`, `-needsMediaFetch` and `-coverPhotoDidPartiallyLoad`
+are all its own declared accessors on the tested build: the cover photo arrives first,
+the video renditions later. Read from a class dump of 410.1.0 rather than guessed.
+
+So `+hasPlayableVideo:` answered NO — **correctly**, there was no playable rendition at
+that moment — and the code below it read that NO as "therefore a photo", found the cover,
+and saved it. The function was right; its answer was being used for a question it never
+asked. "Can I play one right now" is not "is this a video".
+
+Two changes, and neither can make an ordinary post behave differently:
+
+**The kind is now asked separately.** `+mediaDeclaresVideo:` uses three independent
+signals — a positive `-videoDuration`, a non-nil `-dashManifestData`, or `-mediaTypeEnum`
+being Instagram's video constant — any one of which is enough, and a photo post satisfies
+none of them. A media that declares itself a video and cannot resolve one now says so
+instead of quietly handing back a different file than the one asked for.
+
+**And the button's media search prefers one that can actually resolve a video.** Every
+owner in the delegate and view chain can hold *a* media, and the old walk took the first
+whose `photo` was non-nil — which a repost's stub always satisfies. It now keeps walking
+when the first match is a declared video it cannot resolve, and returns the first match
+unchanged when nothing better exists. It can only find something the old walk skipped.
+
 ## v4.1.8
 
 **4.1.6 fixed a crash on Instagram 439 and may have quietly broken the follow badge on
