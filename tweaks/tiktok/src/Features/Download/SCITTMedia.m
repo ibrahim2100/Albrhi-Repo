@@ -149,8 +149,44 @@ static NSUInteger sciPhotoListCount = 0;
 static NSUInteger sciPhotoResolved = 0;
 static NSUInteger sciPhotoVariantCount = 0;
 
+/// Whether the app's own VVIC-replacement flag was there to ask. A build without it is a different
+/// finding from a build that has it and answers with the same links.
+static BOOL sciPhotoVVICAsked = NO;
+
 /// Where the live index came from, or why it did not.
 static NSString *sciPhotoIndexVia = nil;
+
+///
+/// The links this URL model gives when it is asked for something other than VVIC.
+///
+/// `needReplaceVVICFormat` is TikTok's own property, so this is the app's mechanism rather than a
+/// guess about one -- and it is read exactly the way every other private accessor here is: only if
+/// the object answers, with the setter's own encoding (`v20@0:8B16`) matched by the cast.
+///
+/// **The flag is restored before returning.** The model belongs to TikTok and drives what the app
+/// requests for its own display; a borrowed value that is never given back is a change to the app's
+/// behaviour that outlives the save it was borrowed for.
+static NSArray<NSURL *> *SCITTVVICReplacementURLs(id urlModel) {
+    SEL getter = NSSelectorFromString(@"needReplaceVVICFormat");
+    SEL setter = NSSelectorFromString(@"setNeedReplaceVVICFormat:");
+    if (![urlModel respondsToSelector:getter] || ![urlModel respondsToSelector:setter]) return @[];
+
+    BOOL original = ((BOOL (*)(id, SEL))objc_msgSend)(urlModel, getter);
+    ((void (*)(id, SEL, BOOL))objc_msgSend)(urlModel, setter, YES);
+
+    NSMutableArray<NSURL *> *out = [NSMutableArray array];
+    for (NSString *name in @[@"originURLList", @"URLList", @"urlList"]) {
+        SEL selector = NSSelectorFromString(name);
+        if (![urlModel respondsToSelector:selector]) continue;
+
+        NSURL *url = SCITTURLFromValue(((id (*)(id, SEL))objc_msgSend)(urlModel, selector));
+        if (url && SCITTURLLooksDownloadable(url) && ![out containsObject:url]) [out addObject:url];
+    }
+
+    ((void (*)(id, SEL, BOOL))objc_msgSend)(urlModel, setter, original);
+    sciPhotoVVICAsked = YES;
+    return out;
+}
 
 ///
 /// The same picture asked for in a format the phone can read, by rewriting the CDN's own template.
@@ -272,6 +308,23 @@ static NSArray<NSArray<NSURL *> *> *SCITTPhotoURLsFromModel(id model) {
                     [variants addObject:url];
                 }
                 break;
+            }
+
+            //
+            // **TikTok has its own answer to the unreadable format, and it is a property on this
+            // very object.** `AWEURLModel` declares `needReplaceVVICFormat` (`B16@0:8`, with
+            // `-setNeedReplaceVVICFormat:` as `v20@0:8B16`) -- the app's own flag for "hand me this
+            // picture in something other than VVIC". Whatever the guessed template rewrite below
+            // might achieve, this is the mechanism the app itself uses, which makes it the one to
+            // ask first.
+            //
+            // Set, read, **and put back**. This is TikTok's object, not ours: it decides its own
+            // requests from that flag, and leaving it flipped would change what the app fetches for
+            // its own display long after the save is over. Borrowing a value is fine; keeping it is
+            // not.
+            //
+            for (NSURL *replaced in SCITTVVICReplacementURLs(resolved)) {
+                if (![variants containsObject:replaced]) [variants addObject:replaced];
             }
         }
 
@@ -1101,7 +1154,8 @@ static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **ou
     SCITTMediaItem *item = sciRecent.firstObject;
 
     return [NSString stringWithFormat:
-        @"%@ → %@ ×%lu (%@) → %lu picture(s), up to %lu link(s) each; showing index %@ via %@",
+        @"%@ → %@ ×%lu (%@) → %lu picture(s), up to %lu link(s) each; showing index %@ via %@; "
+        @"VVIC replacement %@",
         sciPhotoHolder,
         sciPhotoListVia ?: @"no list accessor answered",
         (unsigned long)sciPhotoListCount,
@@ -1114,7 +1168,8 @@ static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **ou
         // resolver runs constantly, while the *item* keeps the index the tap actually used. The
         // saved picture was right; only the report was wrong, which is the more dangerous of the two.
         item.photoIndex == NSNotFound ? @"unknown" : @(item.photoIndex),
-        sciPhotoIndexVia ?: @"not asked"];
+        sciPhotoIndexVia ?: @"not asked",
+        sciPhotoVVICAsked ? @"asked" : @"absent"];
 }
 
 + (NSString *)gearLadder {

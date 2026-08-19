@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.48.1
+
+TikTok photo saving now asks the app for a readable format the way the app itself does, before
+falling back to anything this tweak guesses. Some photo posts are served in a format iOS cannot
+decode at all; TikTok carries its own switch for replacing it, and that switch is now used.
+
+Includes TikTok 0.17.4.
+
 ## v1.48.0
 
 **TikTok photo saving works again on posts whose pictures are served in a format iOS cannot read.**

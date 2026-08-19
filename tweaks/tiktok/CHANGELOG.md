@@ -1,5 +1,29 @@
 # Albrhi for TikTok — what changed
 
+## v0.17.4
+
+**TikTok has its own answer to the unreadable picture format, and it is a property on the very
+object this tweak already holds.**
+
+`AWEURLModel` declares `needReplaceVVICFormat` (`B16@0:8`) with `-setNeedReplaceVVICFormat:`
+(`v20@0:8B16`), and the app carries a whole machinery around it — `p_shouldReplaceVVICFormat:`,
+a `photomode_download_vvic_format_opt` setting, `public.vvic` and `video/vvic` types. Whatever a
+guessed URL template might achieve, **this is the mechanism the app itself uses**, which makes it
+the one to ask first. So each picture's URL model is asked with the flag set, and any links that
+come back differ from the ones it gave before are added as candidates ahead of the guessed rewrites.
+
+**The flag is put back before returning.** The model belongs to TikTok and drives what the app
+requests for its own display; a borrowed value that is never given back is a change to the app's
+behaviour outliving the save it was borrowed for.
+
+Found by reading the app rather than the network: `MusicallyCore` also ships `libttheif` with a
+`bytevc2_decoder`, which is how TikTok displays these stills at all — the decoder is inside the
+process this tweak is injected into. That is worth knowing before anyone proposes shipping a VVC
+decoder of our own: it would be several megabytes of C++ parsing network bytes inside TikTok, when
+the app already has one and its own way of avoiding the format entirely.
+
+The photo-chain row now says whether the replacement flag was there to ask.
+
 ## v0.17.3
 
 **Photo saving broke on a format iOS cannot read, and the new diagnostic named it in one report:**
