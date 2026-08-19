@@ -143,10 +143,10 @@ Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.tiktok, com.albrhi.tiktok.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.tiktok, com.albrhi.tiktok.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Filename: debs/com.albrhi_1.44.0_iphoneos-arm64.deb
-Size: 1158374
-MD5sum: b9a7d2e1b84b8702ba79a3606c863125
-SHA1: 92b6f03817e20d30630fe694f62cf0fd21499440
-SHA256: ded86c28952109b0895b56c35dec569fa06066f128b3bc1d1ce0204402727e88
+Size: 1158362
+MD5sum: 4c4670b1a7ab82f253a4c830a5f80b22
+SHA1: f10b21855d158714c63bf836c35c5ca799bc08ce
+SHA256: 5e81a35b047b575df0f318cfbaab21af0beaed73cbbac62fd930f3e21a4ed0ca
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube, X and TikTok, switched per app from Settings.
@@ -201,6 +201,110 @@ Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
 Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
 Name: Albrhi (rootless)
 Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
+
+Package: com.albrhi.nextup
+Version: 0.1.0
+Architecture: iphoneos-arm64
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 752
+Depends: mobilesubstrate, preferenceloader, com.opa334.libsandy
+Conflicts: com.albrhi.nextup.roothide, com.yves.nextup3
+Replaces: com.albrhi.nextup.roothide
+Filename: debs/com.albrhi.nextup_0.1.0_iphoneos-arm64.deb
+Size: 134092
+MD5sum: 79fcbdd7b6f6dc2c3cfa77d516a7f17b
+SHA1: 4085339a98b39925808b2e4fa27328472907b0ef
+SHA256: 424fd72cac7f130187152eee9a10d2e7089c2403b68392c33818d9c16a159dba
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: See and skip what plays next, from the Lock Screen.
+ .
+ ▍WHAT PLAYS NEXT, WITHOUT OPENING THE APP
+ A row under the now-playing controls showing the next track — its title, artist and
+ cover — on the Lock Screen, in Control Center and in the Dynamic Island. Tap the cover
+ to play it now, or skip it without ever opening the app.
+ .
+ ▍FIVE APPS
+ Apple Music, Apple Podcasts, YouTube, YouTube Music and Spotify. Each reads that app's
+ own playback queue, so the row shows what the app itself would play next — not a guess.
+ .
+ ▍SETTINGS IN ALBRHI
+ Settings › Albrhi › Albrhi NextUp: a master switch, one per surface — Lock Screen,
+ Dynamic Island, Control Center — and one per app. Changes apply immediately, without a
+ respring.
+ .
+ iOS 14.2 through 26. Every hook is chosen at runtime from the iOS version and the host
+ process, so one build serves all of them.
+ .
+ ▍CREDIT — THIS IS A PORT, NOT AN ORIGINAL
+ Albrhi NextUp is a port of NextUp 3 by Yves (github.com/Yves000/NextUp3), used and
+ redistributed under the GNU GPL v3 — the same licence this project ships under, which
+ is what makes carrying the code over lawful where an unlicensed tweak could only be
+ read for architecture. The original design, the private-API research and very nearly
+ all of the implementation are Yves's work. What this port changes: the Settings pane
+ was replaced by a page inside Albrhi Panel, and the package was rebranded. Nothing
+ about the feature itself is this project's invention.
+ .
+ Ported and maintained by Ibrahim Ismail AL-Rahn. Free and open source under the GNU
+ GPL v3; the full licence text ships with the source.
+Tag: role::enduser
+Author: Yves <github.com/Yves000> (original NextUp 3), ported by Ibrahim Ismail AL-Rahn
+Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-nextup.html
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi NextUp (rootless)
+Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-nextup.json
+
+Package: com.albrhi.nextup.roothide
+Version: 0.1.0
+Architecture: iphoneos-arm64e
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 752
+Depends: mobilesubstrate, preferenceloader, com.opa334.libsandy
+Conflicts: com.albrhi.nextup, com.yves.nextup3
+Replaces: com.albrhi.nextup
+Filename: debs/com.albrhi.nextup.roothide_0.1.0_iphoneos-arm64e.deb
+Size: 133886
+MD5sum: aa11c5efab39ebf84e35ddf140f4ab06
+SHA1: 69f5eb9cb5ad9386b2912c12d2a06170d5db9a97
+SHA256: e1365662163af637d5b72329c21d7ba88976f6cd1659099cadae454a27ceacba
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Description: See and skip what plays next, from the Lock Screen.
+ .
+ ▍WHAT PLAYS NEXT, WITHOUT OPENING THE APP
+ A row under the now-playing controls showing the next track — its title, artist and
+ cover — on the Lock Screen, in Control Center and in the Dynamic Island. Tap the cover
+ to play it now, or skip it without ever opening the app.
+ .
+ ▍FIVE APPS
+ Apple Music, Apple Podcasts, YouTube, YouTube Music and Spotify. Each reads that app's
+ own playback queue, so the row shows what the app itself would play next — not a guess.
+ .
+ ▍SETTINGS IN ALBRHI
+ Settings › Albrhi › Albrhi NextUp: a master switch, one per surface — Lock Screen,
+ Dynamic Island, Control Center — and one per app. Changes apply immediately, without a
+ respring.
+ .
+ iOS 14.2 through 26. Every hook is chosen at runtime from the iOS version and the host
+ process, so one build serves all of them.
+ .
+ ▍CREDIT — THIS IS A PORT, NOT AN ORIGINAL
+ Albrhi NextUp is a port of NextUp 3 by Yves (github.com/Yves000/NextUp3), used and
+ redistributed under the GNU GPL v3 — the same licence this project ships under, which
+ is what makes carrying the code over lawful where an unlicensed tweak could only be
+ read for architecture. The original design, the private-API research and very nearly
+ all of the implementation are Yves's work. What this port changes: the Settings pane
+ was replaced by a page inside Albrhi Panel, and the package was rebranded. Nothing
+ about the feature itself is this project's invention.
+ .
+ Ported and maintained by Ibrahim Ismail AL-Rahn. Free and open source under the GNU
+ GPL v3; the full licence text ships with the source.
+Tag: role::enduser
+Author: Yves <github.com/Yves000> (original NextUp 3), ported by Ibrahim Ismail AL-Rahn
+Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-nextup.html
+Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Name: Albrhi NextUp (roothide)
+Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-nextup.json
 
 Package: com.albrhi.roothide
 Version: 1.43.0
@@ -347,10 +451,10 @@ Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.tiktok, com.albrhi.tiktok.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.tiktok, com.albrhi.tiktok.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Filename: debs/com.albrhi.roothide_1.44.0_iphoneos-arm64e.deb
-Size: 1158086
-MD5sum: 1ca0d0895acb2ef59aa9351a09336e8e
-SHA1: 22e2762bbe650a32ffe73e532c30529efafaed3b
-SHA256: 054bb62ce8638e4bc53924794c417f9725803c1e8be5206c809e4568888eda6e
+Size: 1158082
+MD5sum: 6af2843381d8375379ff8c9ff087144f
+SHA1: cf4384c4a15b7696bcdb4e7f56f64d3ab873365f
+SHA256: 6f58ab84b3da2258a281646c522b73f35cb4df6747ba9f24850cd1c68dff0cd0
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube, X and TikTok, switched per app from Settings.
