@@ -92,6 +92,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.1.3",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **0.1.1 made the master switch opt-in and this republished it as on, which put the whole change back.**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.1.2",
           "useBoldText": true
         },
@@ -117,20 +131,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.1.0 — packaging notes",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **`shared/tweak.mk` was appending JGProgressHUD, `SCIPanelGate.m` and `SCISubstrateShim.m`**\n• **An unclosed parenthesis in `control`**\n• **`layout/DEBIAN/postinst` was mode 644.**\n• **`build.sh`'s roothide identity swap assumed `Conflicts` named nothing but the other flavour.**",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -141,7 +141,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.1.2"
+          "text": "0.1.3"
         },
         {
           "class": "DepictionTableTextView",
