@@ -77,11 +77,11 @@ NSString *SCITTDownloadReport(void) {
 /// The HUD for a photo-post save, held while the images go one at a time.
 
 + (void)askThenSavePhotos:(SCITTMediaItem *)item {
-    NSArray<NSURL *> *all = item.photoURLs;
+    NSArray<NSArray<NSURL *> *> *all = item.photoVariants;
     if (!all.count) return;
 
     NSUInteger index = (item.photoIndex < all.count) ? item.photoIndex : 0;
-    NSURL *current = all[index];
+    NSArray<NSURL *> *current = all[index];
 
     // **One picture is still a question now, and that is the change.** It used to save immediately
     // whenever the post had a single image, because the only question then was "this one or all of
@@ -132,7 +132,7 @@ NSString *SCITTDownloadReport(void) {
 ///
 /// **The offer is only made when there is actually a sound to offer.** A question whose answers all
 /// mean "save the picture" is not a question.
-+ (void)offerAudioForPicture:(NSURL *)picture item:(SCITTMediaItem *)item {
++ (void)offerAudioForPicture:(NSArray<NSURL *> *)picture item:(SCITTMediaItem *)item {
     if (!item.audioURL || !SCIPrefEnabled(SCIPrefPhotoAudio) || ![SCITTSheet canPresent]) {
         [self savePhotos:@[picture]];
         return;
@@ -499,6 +499,33 @@ static NSString *SCITTSniffImageKind(NSData *data) {
     return [NSString stringWithFormat:@"unknown (%02x %02x %02x %02x)", b[0], b[1], b[2], b[3]];
 }
 
+///
+/// The picture these bytes hold, or nil when nothing on this phone can read them.
+///
+/// **`UIImage` and `ImageIO` are two different answers and both are needed.** `UIImage` declines
+/// formats the system can otherwise decode, which is why the JPEG re-encode below was once
+/// unreachable in exactly the case it existed for; `ImageIO` reads everything the OS has a decoder
+/// for. When both refuse, the phone genuinely cannot read this variant -- a VVC still (`ftyp vvic`)
+/// is the case a device report actually produced -- and the caller's business is then the next
+/// link, not an error message.
+static UIImage *SCITTDecodePicture(NSData *data) {
+    if (!data.length) return nil;
+
+    UIImage *image = [UIImage imageWithData:data];
+    if (image) return image;
+
+    CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef)data, NULL);
+    if (!source) return nil;
+
+    CGImageRef decoded = CGImageSourceCreateImageAtIndex(source, 0, NULL);
+    if (decoded) {
+        image = [UIImage imageWithCGImage:decoded];
+        CGImageRelease(decoded);
+    }
+    CFRelease(source);
+    return image;
+}
+
 /// The file extension Photos needs to infer the type, or nil when the bytes are not a picture.
 static NSString *SCITTExtensionForImageKind(NSString *kind) {
     if ([kind isEqualToString:@"JPEG"]) return @"jpg";
@@ -691,7 +718,7 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
 /// made photo saving work at all. **The sound not arriving is not a failure of the clip**: the
 /// exporter lays down whatever audio it is given and writes the picture regardless, which is the
 /// same refusal-in-the-right-place rule that keeps the download button visible when a lookup fails.
-+ (void)saveClipFromPicture:(NSURL *)picture
++ (void)saveClipFromPicture:(NSArray<NSURL *> *)picture
                        item:(SCITTMediaItem *)item
                     seconds:(NSTimeInterval)seconds {
     [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelAddOnly
@@ -708,28 +735,28 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
         [SCITTToast showText:SCILocalized(@"audio_working") symbol:@"music.note" progress:-1];
 
         dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+            // The same walk the photo save does: a variant iOS cannot decode is the next link's
+            // turn, not the end of the attempt.
             NSString *note = nil;
-            NSData *stillData = SCITTFetchPhoto(picture, &note);
-            UIImage *still = stillData.length ? [UIImage imageWithData:stillData] : nil;
+            UIImage *still = nil;
+            NSMutableArray<NSString *> *tried = [NSMutableArray array];
 
-            if (!still && stillData.length) {
-                // The same ImageIO path the photo save needed: `UIImage` declines formats the
-                // system can otherwise decode, and this is exactly the case it declines.
-                CGImageSourceRef source =
-                    CGImageSourceCreateWithData((__bridge CFDataRef)stillData, NULL);
-                if (source) {
-                    CGImageRef decoded = CGImageSourceCreateImageAtIndex(source, 0, NULL);
-                    if (decoded) {
-                        still = [UIImage imageWithCGImage:decoded];
-                        CGImageRelease(decoded);
-                    }
-                    CFRelease(source);
+            for (NSURL *candidate in picture) {
+                NSData *stillData = SCITTFetchPhoto(candidate, &note);
+                if (!stillData.length) {
+                    [tried addObject:note ?: @"nothing arrived"];
+                    continue;
                 }
+
+                still = SCITTDecodePicture(stillData);
+                if (still) break;
+                [tried addObject:[NSString stringWithFormat:@"%@ (no decoder)",
+                    SCITTSniffImageKind(stillData)]];
             }
 
             if (!still) {
-                SCITTRecordDownload([NSString stringWithFormat:@"clip — picture unusable (%@)",
-                    note ?: @"no data"]);
+                SCITTRecordDownload([NSString stringWithFormat:@"clip — no readable picture (%@)",
+                    [tried componentsJoinedByString:@", "]]);
                 [self report:SCILocalized(@"save_failed") ok:NO];
                 return;
             }
@@ -767,7 +794,20 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
     }];
 }
 
-+ (void)savePhotos:(NSArray<NSURL *> *)urls {
+///
+/// **A picture is a list of links, and the save takes the first whose bytes actually read.**
+///
+/// It used to take one link per picture and hand whatever came back to Photos. A device report
+/// then showed `ISO media (vvic)` — a VVC still, a format iOS has no decoder for — so nothing on
+/// the phone could read it and Photos refused the file with `3302`. Nothing was wrong with the
+/// download or the name: that *variant* is unreadable here, and the model offers others.
+///
+/// So each candidate is fetched and read before it is offered to the library, and the first that
+/// decodes wins. A format that cannot be decoded is not a failure to report and stop on; it is a
+/// reason to try the next link, which is the difference between "TikTok served something odd" and
+/// "saving is broken".
+///
++ (void)savePhotos:(NSArray<NSArray<NSURL *> *> *)groups {
     [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelAddOnly
                                                handler:^(PHAuthorizationStatus status) {
         if (status != PHAuthorizationStatusAuthorized &&
@@ -786,36 +826,67 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
             NSString *firstError = nil;
             NSMutableSet<NSString *> *ways = [NSMutableSet set];
 
-            for (NSURL *url in urls) {
-                NSString *fetchNote = nil;
-                NSData *data = SCITTFetchPhoto(url, &fetchNote);
-                if (!data.length) {
-                    noData++;
-                    // The reason travels with the count. "never downloaded" on its own has been on
-                    // this screen for releases and never once said why.
-                    if (!firstError) firstError = fetchNote;
-                    continue;
+            for (NSArray<NSURL *> *group in groups) {
+                BOOL done = NO;
+                NSMutableArray<NSString *> *tried = [NSMutableArray array];
+                NSString *lastError = nil;
+
+                for (NSURL *url in group) {
+                    NSString *fetchNote = nil;
+                    NSData *data = SCITTFetchPhoto(url, &fetchNote);
+                    if (!data.length) {
+                        [tried addObject:[NSString stringWithFormat:@"%@ (%@)",
+                            url.lastPathComponent.pathExtension.length
+                                ? url.lastPathComponent.pathExtension : @"link",
+                            fetchNote ?: @"nothing arrived"]];
+                        lastError = fetchNote;
+                        continue;
+                    }
+
+                    // Read here, before Photos is asked: a format the phone has no decoder for is
+                    // the next link's turn, not an error to stop on.
+                    NSString *kind = SCITTSniffImageKind(data);
+                    UIImage *image = SCITTDecodePicture(data);
+                    if (!image) {
+                        [tried addObject:[NSString stringWithFormat:@"%@ (no decoder)", kind]];
+                        continue;
+                    }
+
+                    NSString *how = nil, *error = nil;
+                    if (SCITTSavePhotoData(data, image, url, &how, &error)) {
+                        saved++;
+                        if (how) [ways addObject:how];
+                        done = YES;
+                        break;
+                    }
+
+                    [tried addObject:[NSString stringWithFormat:@"%@ (%@)", kind,
+                        error ?: @"refused"]];
+                    lastError = error;
                 }
 
-                NSString *how = nil, *error = nil;
-                if (SCITTSavePhotoData(data, [UIImage imageWithData:data], url, &how, &error)) {
-                    saved++;
-                    if (how) [ways addObject:how];
-                } else {
-                    refused++;
-                    if (!firstError) firstError = error;
+                if (!done) {
+                    // Counted by what actually happened: nothing readable is a different problem
+                    // from nothing arriving, and both used to land in one number.
+                    if (lastError.length && !tried.count) noData++;
+                    else refused++;
+                    if (!firstError) {
+                        firstError = [NSString stringWithFormat:@"%lu link(s) tried: %@",
+                            (unsigned long)group.count,
+                            [tried componentsJoinedByString:@", "]];
+                    }
                 }
 
-                NSUInteger done = saved + noData + refused;
+                NSUInteger finished = saved + noData + refused;
                 [SCITTToast showText:SCILocalized(@"save_working")
                               symbol:@"photo"
-                            progress:(CGFloat)done / (CGFloat)urls.count];
+                            progress:(CGFloat)finished / (CGFloat)groups.count];
             }
 
             // Counted apart, because a download that never arrived and a library that refused
             // the file need different fixes and one number said only that nothing happened.
             NSMutableString *note = [NSMutableString stringWithFormat:@"photo post — saved %lu of %lu",
-                (unsigned long)saved, (unsigned long)urls.count];
+                (unsigned long)saved, (unsigned long)groups.count];
             if (ways.count) {
                 [note appendFormat:@" (%@)",
                     [[ways allObjects] componentsJoinedByString:@", "]];
@@ -828,11 +899,11 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
 
             NSUInteger finalSaved = saved;
             dispatch_async(dispatch_get_main_queue(), ^{
-                NSString *message = urls.count > 1
+                NSString *message = groups.count > 1
                     ? [NSString stringWithFormat:SCILocalized(@"photos_saved_count"),
-                       (unsigned long)finalSaved, (unsigned long)urls.count]
+                       (unsigned long)finalSaved, (unsigned long)groups.count]
                     : SCILocalized(finalSaved ? @"save_done" : @"save_failed");
-                [self report:message ok:(finalSaved == urls.count)];
+                [self report:message ok:(finalSaved == groups.count)];
             });
         });
     }];

@@ -6,6 +6,16 @@
 #import <objc/runtime.h>
 
 @implementation SCITTMediaItem
+
+/// The first link of each picture — what a caller wants when it only needs to count them or index
+/// into them. Derived, never stored, so it cannot disagree with the variants it comes from.
+- (NSArray<NSURL *> *)photoURLs {
+    NSMutableArray<NSURL *> *first = [NSMutableArray array];
+    for (NSArray<NSURL *> *group in self.photoVariants) {
+        if (group.firstObject) [first addObject:group.firstObject];
+    }
+    return first;
+}
 @end
 
 
@@ -48,7 +58,7 @@ static NSString *sciWinningChain = nil;
 static NSString *sciWinningURLShape = nil;
 
 static void SCITTAddResolvedList(NSArray<NSURL *> *urls);
-static void SCITTAddPhotoPost(NSArray<NSURL *> *photos, NSURL *audio);
+static void SCITTAddPhotoPost(NSArray<NSArray<NSURL *> *> *photos, NSURL *audio);
 
 static NSString *SCITTURLShape(NSURL *url) {
     if (!url) return @"nil";
@@ -137,11 +147,42 @@ static NSString *sciPhotoListVia = nil;
 static NSString *sciPhotoElement = nil;
 static NSUInteger sciPhotoListCount = 0;
 static NSUInteger sciPhotoResolved = 0;
+static NSUInteger sciPhotoVariantCount = 0;
 
 /// Where the live index came from, or why it did not.
 static NSString *sciPhotoIndexVia = nil;
 
-static NSArray<NSURL *> *SCITTPhotoURLsFromModel(id model) {
+///
+/// The same picture asked for in a format the phone can read, by rewriting the CDN's own template.
+///
+/// **A guess, appended last, and never trusted without decoding it.** TikTok served a picture as
+/// `..._photomode_vvic_vqe2_cae_v1~tplv-photomode-offline.image` — a VVC still, which iOS has no
+/// decoder for. Everything after `~` in a ByteDance image URL is a processing template the CDN
+/// applies on the way out, so asking the same object for a JPEG is a request the server may simply
+/// honour. It may equally ignore it and hand back the same bytes, which is why these sit *after*
+/// every link the model itself offered and are read like any other candidate: decoded before they
+/// are offered to Photos, and named in the report when they are what worked.
+///
+/// This is the same shape as the external-HD switch's own rule — a guess is allowed when the thing
+/// it produces is measured rather than assumed — and unlike that one it costs no privacy: it is the
+/// same host, the same object, one query string away.
+static NSArray<NSURL *> *SCITTRewrittenPictureURLs(NSURL *url) {
+    NSString *text = url.absoluteString;
+    NSRange marker = [text rangeOfString:@"~tplv-" options:NSBackwardsSearch];
+    if (marker.location == NSNotFound) return @[];
+
+    NSString *stem = [text substringToIndex:marker.location];
+    NSMutableArray<NSURL *> *out = [NSMutableArray array];
+
+    for (NSString *suffix in @[@"~tplv-photomode-image.jpeg", @"", @"~tplv-photomode-image.heic"]) {
+        NSURL *rewritten = [NSURL URLWithString:[stem stringByAppendingString:suffix]];
+        if (rewritten && ![rewritten isEqual:url]) [out addObject:rewritten];
+    }
+
+    return out;
+}
+
+static NSArray<NSArray<NSURL *> *> *SCITTPhotoURLsFromModel(id model) {
     if (!model) return nil;
 
     id holder = model;
@@ -187,10 +228,15 @@ static NSArray<NSURL *> *SCITTPhotoURLsFromModel(id model) {
     }
     if (!list.count) return nil;
 
-    NSMutableArray<NSURL *> *urls = [NSMutableArray array];
+    NSMutableArray<NSArray<NSURL *> *> *groups = [NSMutableArray array];
 
     for (id entry in list) {
-        id urlModel = entry;
+        // **Every accessor, not the first that answers.** The loop below used to stop at the first
+        // non-nil URL model and take one link from it; a device report then came back with a VVC
+        // still (`ISO media (vvic)`) that iOS cannot decode at all, and there was nothing behind it
+        // to try. `AWEPhotoAlbumPhoto` offers the same picture several ways, so all of them are
+        // collected in preference order and the saver takes the first whose bytes actually read.
+        NSMutableArray<NSURL *> *variants = [NSMutableArray array];
 
         // An `AWEImageModel` is not a URL model and answers none of the list accessors below.
         // It holds three of them -- one per appearance -- and the light one is the picture as
@@ -202,6 +248,10 @@ static NSArray<NSURL *> *SCITTPhotoURLsFromModel(id model) {
         // qualities; `originPhotoURL` is the one as posted, and the thumbnail is last because
         // saving a preview instead of a photo is the same class of mistake as saving SD.
         // `AWEImageModel` (from `-images`) instead names its by appearance.
+        // Preference order, and the order is the whole point: the picture as posted first, the
+        // watermarked copies next because a watermark is worse than nothing only if there is
+        // something, and the thumbnail last -- saving a preview instead of a photo is the same
+        // class of mistake as saving SD.
         for (NSString *inner in @[@"originPhotoURL", @"ownerWatermarkedPhotoURL",
                                   @"userWatermarkedPhotoURL", @"dynamicImageURL",
                                   @"lightURLModel", @"localURLModel", @"darkURLModel",
@@ -209,24 +259,35 @@ static NSArray<NSURL *> *SCITTPhotoURLsFromModel(id model) {
             SEL selector = NSSelectorFromString(inner);
             if (![entry respondsToSelector:selector]) continue;
             id resolved = ((id (*)(id, SEL))objc_msgSend)(entry, selector);
-            if (resolved) { urlModel = resolved; break; }
-        }
+            if (!resolved) continue;
 
-        // `URLList` with that casing is what AWEURLModel declares; the lowercase spelling is
-        // kept only because a different build might use it, and it costs one failed question.
-        for (NSString *name in @[@"originURLList", @"URLList", @"urlList"]) {
-            SEL selector = NSSelectorFromString(name);
-            if (![urlModel respondsToSelector:selector]) continue;
+            // `URLList` with that casing is what AWEURLModel declares; the lowercase spelling is
+            // kept only because a different build might use it, and it costs one failed question.
+            for (NSString *name in @[@"originURLList", @"URLList", @"urlList"]) {
+                SEL listSelector = NSSelectorFromString(name);
+                if (![resolved respondsToSelector:listSelector]) continue;
 
-            NSURL *url = SCITTURLFromValue(((id (*)(id, SEL))objc_msgSend)(urlModel, selector));
-            if (url && SCITTURLLooksDownloadable(url)) {
-                [urls addObject:url];
+                NSURL *url = SCITTURLFromValue(((id (*)(id, SEL))objc_msgSend)(resolved, listSelector));
+                if (url && SCITTURLLooksDownloadable(url) && ![variants containsObject:url]) {
+                    [variants addObject:url];
+                }
                 break;
             }
         }
+
+        // The rewrites go after everything the model offered, for every variant, so a post whose
+        // links are *all* in a format this phone cannot read still has somewhere to go.
+        for (NSURL *known in [variants copy]) {
+            for (NSURL *rewritten in SCITTRewrittenPictureURLs(known)) {
+                if (![variants containsObject:rewritten]) [variants addObject:rewritten];
+            }
+        }
+
+        if (variants.count) [groups addObject:variants];
     }
 
-    if (!urls.count) return nil;
+    if (!groups.count) return nil;
+    NSArray<NSURL *> *urls = [groups valueForKeyPath:@"@unionOfObjects.firstObject"];
 
     // **Committed only on success, and that is a correction to the first version of this
     // diagnostic.** These are written by every model the resolver walks, and virtually all of them
@@ -238,7 +299,15 @@ static NSArray<NSURL *> *SCITTPhotoURLsFromModel(id model) {
     sciPhotoListCount = list.count;
     sciPhotoElement = NSStringFromClass([list.firstObject class]);
     sciPhotoResolved = urls.count;
-    return urls;
+
+    // How many ways the shown picture is offered, which is the number that says whether a
+    // failed save had anywhere left to go.
+    sciPhotoVariantCount = 0;
+    for (NSArray<NSURL *> *group in groups) {
+        if (group.count > sciPhotoVariantCount) sciPhotoVariantCount = group.count;
+    }
+
+    return groups;
 }
 
 ///
@@ -775,11 +844,11 @@ static NSURL *SCITTAudioURLFromModel(id model) {
     return nil;
 }
 
-static void SCITTAddPhotoPost(NSArray<NSURL *> *photos, NSURL *audio) {
+static void SCITTAddPhotoPost(NSArray<NSArray<NSURL *> *> *photos, NSURL *audio) {
     if (!photos.count) return;
     if (!sciRecent) sciRecent = [NSMutableArray array];
 
-    NSURL *primary = photos.firstObject;
+    NSURL *primary = photos.firstObject.firstObject;
 
     for (SCITTMediaItem *existing in [sciRecent copy]) {
         if ([existing.url isEqual:primary]) [sciRecent removeObject:existing];
@@ -787,7 +856,7 @@ static void SCITTAddPhotoPost(NSArray<NSURL *> *photos, NSURL *audio) {
 
     SCITTMediaItem *item = [[SCITTMediaItem alloc] init];
     item.url = primary;
-    item.photoURLs = photos;
+    item.photoVariants = photos;
     item.photoIndex = (sciPhotoIndex < photos.count) ? sciPhotoIndex : NSNotFound;
     item.audioURL = audio;
     item.seen = [NSDate date];
@@ -1032,12 +1101,13 @@ static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **ou
     SCITTMediaItem *item = sciRecent.firstObject;
 
     return [NSString stringWithFormat:
-        @"%@ → %@ ×%lu (%@) → %lu link(s); showing index %@ via %@",
+        @"%@ → %@ ×%lu (%@) → %lu picture(s), up to %lu link(s) each; showing index %@ via %@",
         sciPhotoHolder,
         sciPhotoListVia ?: @"no list accessor answered",
         (unsigned long)sciPhotoListCount,
         sciPhotoElement ?: @"empty",
         (unsigned long)sciPhotoResolved,
+        (unsigned long)sciPhotoVariantCount,
         // **Read off the item, not off the static, and the last report is why.** That line said
         // `index unknown via activePhotoAlbumController.currentIndex (Q)` -- two halves of one
         // sentence disagreeing, because the static is reset at the top of every resolution and the
@@ -1072,7 +1142,7 @@ static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **ou
         // a video. The ordering is the whole fix: a post that has pictures is a photo post,
         // whatever else it also happens to carry.
         if (SCIPrefEnabled(SCIPrefPhotoDownload)) {
-            NSArray<NSURL *> *photos = SCITTPhotoURLsFromModel(model);
+            NSArray<NSArray<NSURL *> *> *photos = SCITTPhotoURLsFromModel(model);
             if (photos.count) {
                 SCITTAddPhotoPost(photos, SCITTAudioURLFromModel(model));
                 sciLastAttemptState = [NSString stringWithFormat:@"settled photo post — %lu picture(s)",
@@ -1115,7 +1185,7 @@ static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **ou
         // would all fail on it -- which is what "the button does nothing on photo posts"
         // would have looked like, indistinguishable from every other resolution failure.
         if (SCIPrefEnabled(SCIPrefPhotoDownload)) {
-            NSArray<NSURL *> *photos = SCITTPhotoURLsFromModel(model);
+            NSArray<NSArray<NSURL *> *> *photos = SCITTPhotoURLsFromModel(model);
             if (photos.count) {
                 SCITTAddPhotoPost(photos, SCITTAudioURLFromModel(model));
                 sciLastAttemptState = [NSString stringWithFormat:@"photo post — %lu picture(s)",

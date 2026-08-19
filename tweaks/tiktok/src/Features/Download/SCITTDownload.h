@@ -19,7 +19,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Saves every picture of a photo post. Called by +save: when the item carries pictures
 /// rather than a video; declared so check.py can see the implementation has a home.
-+ (void)savePhotos:(NSArray<NSURL *> *)urls;
+/// Saves one picture per group, taking the first link in each group whose bytes actually decode.
+///
+/// A group is the same picture offered several ways — TikTok served a VVC still on one report, a
+/// format iOS cannot read at all, and one link per picture left nothing to fall back to.
++ (void)savePhotos:(NSArray<NSArray<NSURL *> *> *)groups;
 
 /// What the candidate links measured, and which one was taken.
 ///

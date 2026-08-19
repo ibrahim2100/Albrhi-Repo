@@ -34,7 +34,20 @@ NS_ASSUME_NONNULL_BEGIN
 /// through, and saving it means saving all of them. Kept as its own array rather than
 /// squeezed into `candidates` -- those are *alternative* links to one thing, and treating a
 /// six-picture post as six fallbacks for one file would save the first and call it done.
-@property (nonatomic, copy) NSArray<NSURL *> *photoURLs;
+@property (nonatomic, readonly) NSArray<NSURL *> *photoURLs;
+
+/// Every link each picture is offered under, in preference order — one inner array per picture.
+///
+/// **One URL per picture was an assumption, and TikTok broke it in a way no fallback could see.**
+/// A device report came back with `ISO media (vvic)`: a VVC (H.266) still, which iOS has no decoder
+/// for at all, so nothing could read the bytes and Photos refused the file. The picture was fine —
+/// that *variant* of it was unreadable, and the model offers several. Keeping only the first meant
+/// the save had nothing to fall back to.
+///
+/// `photoURLs` is derived from this rather than stored beside it: two arrays that must agree are
+/// the shape this project has already been bitten by, when a link list and its origin labels drifted
+/// by one position and every label named the wrong accessor.
+@property (nonatomic, copy) NSArray<NSArray<NSURL *> *> *photoVariants;
 
 /// Which of `photoURLs` the album was showing when this was captured, or `NSNotFound`.
 ///

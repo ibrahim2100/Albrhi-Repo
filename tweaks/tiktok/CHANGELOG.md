@@ -1,5 +1,41 @@
 # Albrhi for TikTok — what changed
 
+## v0.17.3
+
+**Photo saving broke on a format iOS cannot read, and the new diagnostic named it in one report:**
+
+```
+ISO media (vvic), 35059 bytes,
+named …_photomode_vvic_vqe2_cae_v1~tplv-photomode-offline.image
+tried: as posted only — nothing could decode it
+```
+
+`vvic` is a **VVC (H.266) still**. The phone has no decoder for it, so `UIImage` and `ImageIO` both
+returned nothing and Photos refused the resource with `3302`. Nothing was wrong with the download,
+the file name or the library: **that variant of the picture is unreadable here** — and the model
+offers the same picture several other ways, which the resolver was throwing away.
+
+**It kept the first link that answered and stopped.** `AWEPhotoAlbumPhoto` carries the picture as
+posted, two watermarked copies, a dynamic one and a thumbnail; the loop took whichever answered
+first and moved to the next picture. So a post whose first variant is VVC had nothing behind it.
+
+Every variant is collected now, in preference order — as posted, then the watermarked copies, then
+the thumbnail last, because saving a preview instead of a photo is the same class of mistake as
+saving SD. The save fetches candidates in turn, **reads the bytes before offering them to Photos**,
+and takes the first that decodes. A format with no decoder is the next link's turn, not an error to
+stop on, and the report names every variant it tried and why each failed.
+
+**And a rewrite of the CDN's own template, appended last.** Everything after `~` in a ByteDance
+image URL is a processing template applied on the way out, so the same object can be asked for a
+JPEG. That is a guess — so it sits after every link the model itself offered, it is decoded like
+any other candidate before Photos sees it, and it costs nothing in privacy: same host, same object,
+one suffix away. If the server ignores it, the attempt is a wasted request and the report says so.
+
+The clip path (a picture plus the post's sound) walks the same list for the same reason.
+
+The photo-chain row now reports how many links each picture has, which is the number that says
+whether a failed save had anywhere left to go.
+
 ## v0.17.2
 
 **The status report had become too heavy to read, which means it had stopped being a report.**

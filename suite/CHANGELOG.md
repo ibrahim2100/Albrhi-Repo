@@ -1,5 +1,15 @@
 # Albrhi Changelog
 
+## v1.48.0
+
+**TikTok photo saving works again on posts whose pictures are served in a format iOS cannot read.**
+One report showed TikTok handing over a VVC still — a format the phone has no decoder for at all —
+where the tweak kept only that one link and had nothing to fall back to. It now collects every way
+the post offers each picture, reads the bytes before handing them to Photos, and saves the first
+one that actually decodes.
+
+Includes TikTok 0.17.3.
+
 ## v1.47.0
 
 **TikTok's status report is readable again.** Two rows that dump a whole class's method list are
