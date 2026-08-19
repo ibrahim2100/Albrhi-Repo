@@ -1,5 +1,40 @@
 # Albrhi Watch — what changed
 
+## v0.2.0
+
+**The Watch app, the update hold, and a probe that asks the device what its own classes look like.**
+
+Reading a commercial tweak's package answered one question with a negative worth having: **its
+update feature does not hook the phone's update screen at all** — it talks to the watch over IDS
+with protobufs. What *is* on the phone is `SUBManager`, from `SoftwareUpdateBridge`, and the Watch
+app's own `General.plist` names `COSSoftwareUpdateController` as its Software Update page. Those
+two facts are the entire basis for the hold; no logic was taken from anyone.
+
+**A hold, and it says so.** `-scanForUpdates` and `-checkForSoftwareUpdate:` are how the Watch app
+goes looking, and refusing them means it finds nothing to offer — which stops an update being
+presented or installed through the phone. It is **not a version filter**: refusing only watchOS 26
+needs the update descriptor's own API, which lives in the dyld shared cache that iOS 16 does not
+expose as a file. Off by default, because every other switch here answers a question iOS asks and
+this one refuses to ask it.
+
+**Nothing is installed unless the runtime agrees with what the hooks were compiled for.**
+`class_getInstanceMethod` returning non-NULL proves a selector exists and says nothing about its
+types, and a `%hook` with wrong argument types does not fail politely — arguments arrive in the
+wrong registers. This project crashed one app four times learning that, the worst of them a `^q`
+out-parameter declared as an `NSInteger`. So the real encoding is read with
+`method_getTypeEncoding` and compared against what the hook declares; a mismatch installs nothing
+and **reports both encodings**, which is exactly what the next release needs.
+
+**And a probe that hooks nothing.** Every class this tweak wants next — the update path, the sync
+subsystems — lives in the shared cache, which cannot be read as a file here. So they are asked at
+runtime, in the processes where they exist, and what they answer is written to a preference the
+settings page can read: present or absent, how many methods, and the verbatim type encoding of
+every selector a hook is being considered for. One copied report answers what extracting a
+three-gigabyte cache would have.
+
+The tweak now loads into `com.apple.Bridge` as well as SpringBoard, and each process installs only
+its own half: pairing is answered in SpringBoard, the update surface exists only in the Watch app.
+
 ## v0.1.0
 
 **A pairing tweak, from `watched` by 34306 under the MIT licence, with Albrhi's switches around it.**

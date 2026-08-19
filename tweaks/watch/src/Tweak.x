@@ -2,8 +2,10 @@
 #import "Prefs.h"
 #import "Localization/SCILocalize.h"
 #import "Pairing/SCIWPairing.h"
+#import "Update/SCIWUpdateGuard.h"
+#import "Update/SCIWUpdateProbe.h"
 
-NSString *SCIVersionString = @"v0.1.0";  // AlbrhiWatch
+NSString *SCIVersionString = @"v0.2.0";  // AlbrhiWatch
 
 ///
 /// Albrhi Watch — pairing an Apple Watch whose watchOS is newer than this iPhone expects.
@@ -23,15 +25,32 @@ NSString *SCIVersionString = @"v0.1.0";  // AlbrhiWatch
 ///
 %ctor {
     @autoreleasepool {
-        NSLog(@"[AlbrhiWatch] %@ loaded into %@", SCIVersionString,
-              [[NSBundle mainBundle] bundleIdentifier]);
+        NSString *process = [[NSBundle mainBundle] bundleIdentifier] ?: @"";
+        NSLog(@"[AlbrhiWatch] %@ loaded into %@", SCIVersionString, process);
 
-        // The panel's switch first, then this tweak's own master. Neither installs anything on
-        // its own: a group that is never %init-ed is a hook that was never placed, which is the
-        // only stop that cannot leave the pairing stack half-answered.
+        // The panel's switch first, then this tweak's master. Neither installs anything on its
+        // own: a group never %init-ed is a hook never placed, which is the only stop that cannot
+        // leave a pairing stack half-answered.
         if (!SCIPanelAllowsThisApp()) return;
         if (!SCIWReadPreference(SCIWPrefEnabled, NO)) return;
 
-        SCIWInstallPairing();
+        //
+        // **Two processes, two jobs, and neither runs the other's.**
+        //
+        // Pairing is answered inside SpringBoard: that is where NanoRegistry is asked, and where
+        // the preference writes belong. The update surface is inside the Watch app and nowhere
+        // else. Installing both everywhere would put hooks in a process that never calls them --
+        // harmless until the day one of those classes means something different there.
+        //
+        if ([process isEqualToString:@"com.apple.springboard"]) {
+            SCIWInstallPairing();
+        } else if ([process isEqualToString:@"com.apple.Bridge"]) {
+            SCIWInstallUpdateGuard();
+        }
+
+        // The probe runs in both, and hooks nothing. Its whole job is to report what the classes
+        // in *this* process really look like, so the next feature is written from a device's
+        // answer rather than from a name in a binary.
+        SCIWRunUpdateProbe();
     }
 }

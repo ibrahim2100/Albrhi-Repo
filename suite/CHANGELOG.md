@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.49.2
+
+Albrhi Watch's settings page gains a switch that stops the Watch app looking for watchOS updates,
+and a button that copies a diagnostic report from inside SpringBoard and the Watch app.
+
+Includes Panel 0.9.6.
+
 ## v1.49.1
 
 **A page for Albrhi Watch** — a new standalone tweak that pairs an Apple Watch running a watchOS

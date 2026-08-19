@@ -12,6 +12,13 @@
                  process runs as mobile, and the pairing core refuses to write from anything
                  that is not. -->
             <string>com.apple.springboard</string>
+
+            <!-- The Watch app. The update surface is here and nowhere else: `SUBManager` lives in
+                 SoftwareUpdateBridge, which this process links, and `COSSoftwareUpdateController`
+                 is what the app's own General.plist names as its Software Update page. Loading
+                 into it also lets the probe report what those classes really look like, which is
+                 the only way to read a class that lives in the shared cache. -->
+            <string>com.apple.Bridge</string>
         </array>
     </dict>
 

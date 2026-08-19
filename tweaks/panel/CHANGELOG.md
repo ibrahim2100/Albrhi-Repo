@@ -1,5 +1,13 @@
 # Albrhi Panel Changelog
 
+## v0.9.6
+
+**Albrhi Watch's page gains the update hold and the report.** The hold is a switch like the others;
+the report is a button that copies what the tweak found inside SpringBoard and the Watch app —
+which classes are present on this build and what their methods really look like. Those classes live
+in the shared cache, which iOS 16 does not expose as a file, so asking them at runtime and copying
+the answer out is the only way to read them.
+
 ## v0.9.5
 
 **Albrhi Watch's settings page**, reached from its own row under the Tweaks section: the master

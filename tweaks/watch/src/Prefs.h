@@ -41,6 +41,14 @@
 /// diagnosed by turning exactly one of these off.
 #define SCIWPrefCapabilities    CFSTR("watch_capabilities")
 
+/// Hold watchOS updates: the Watch app stops going looking for them.
+///
+/// **Off by default, and it is the one switch here that stops something the phone would otherwise
+/// do for you.** Everything else in this tweak *answers* a question iOS asks; this one refuses to
+/// ask it. Somebody who installs a pairing tweak has not asked for their watch to stop being
+/// offered updates, so it waits to be turned on.
+#define SCIWPrefHoldUpdates     CFSTR("watch_hold_updates")
+
 /// Companion app installation: `ACXRemoteApplication -isRuntimeCompatibleWithOSVersion:`.
 #define SCIWPrefApps            CFSTR("watch_apps")
 

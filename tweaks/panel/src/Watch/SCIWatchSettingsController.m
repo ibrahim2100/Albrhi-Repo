@@ -30,6 +30,9 @@ static const SCIWatchToggle kSCIWatchToggles[] = {
     { @"watch_pairing",      YES },
     { @"watch_capabilities", YES },
     { @"watch_apps",         YES },
+    // Off: every other switch here *answers* a question iOS asks, and this one refuses to ask it.
+    // Installing a pairing tweak is not a request to stop being offered watch updates.
+    { @"watch_hold_updates", NO  },
 };
 
 static const size_t kSCIWatchToggleCount = sizeof(kSCIWatchToggles) / sizeof(kSCIWatchToggles[0]);
@@ -130,6 +133,35 @@ static const size_t kSCIWatchToggleCount = sizeof(kSCIWatchToggles) / sizeof(kSC
                                            symbol:@"square.and.arrow.down.on.square"
                                              tint:[UIColor systemIndigoColor]]];
 
+    [specifiers addObject:[self watchGroupTitled:SCILocalized(@"watch_updates_section")
+                                          footer:SCILocalized(@"watch_updates_footer")]];
+    [specifiers addObject:[self watchSwitchTitled:SCILocalized(@"watch_hold_updates")
+                                              key:@"watch_hold_updates"
+                                           symbol:@"hand.raised.fill"
+                                             tint:[UIColor systemRedColor]]];
+
+    //
+    // **The probe's report, and a way to send it.**
+    //
+    // The classes this tweak wants next live in the shared cache, which iOS 16 does not expose as
+    // a file. So the tweak asks them at runtime inside the processes where they exist and writes
+    // what it found here. One copied report answers what extracting a three-gigabyte cache would.
+    //
+    [specifiers addObject:[self watchGroupTitled:SCILocalized(@"watch_report_section")
+                                          footer:SCILocalized(@"watch_report_footer")]];
+
+    PSSpecifier *report = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"watch_report_copy")
+                                                         target:self
+                                                            set:NULL
+                                                            get:NULL
+                                                         detail:Nil
+                                                           cell:PSButtonCell
+                                                           edit:Nil];
+    SCISetButtonAction(report, @selector(copyProbeReport));
+    [report setProperty:SCIPanelBadgeImage(@"doc.on.doc", [UIColor systemGrayColor])
+                 forKey:@"iconImage"];
+    [specifiers addObject:report];
+
     //
     // **The restart button, on this page rather than only on the panel's root.**
     //
@@ -161,6 +193,54 @@ static const size_t kSCIWatchToggleCount = sizeof(kSCIWatchToggles) / sizeof(kSC
     // opens to a black screen -- which this project shipped once already.
     _specifiers = specifiers;
     return _specifiers;
+}
+
+#pragma mark - The report
+
+/// What the tweak wrote from inside SpringBoard and the Watch app.
+///
+/// Read from the tweak's own domain rather than passed through some channel of its own: the probe
+/// runs in two processes that Settings cannot talk to, and a preference is the one place all three
+/// can meet. Empty means the probe has not run since the tweak was switched on — which is itself
+/// the answer, and the message says so rather than showing a blank sheet.
+- (NSString *)probeReport {
+    CFPreferencesAppSynchronize((__bridge CFStringRef)kSCIWatchDomain);
+    CFPropertyListRef value = CFPreferencesCopyAppValue(CFSTR("watch_probe_report"),
+                                                        (__bridge CFStringRef)kSCIWatchDomain);
+    if (!value) return nil;
+
+    NSString *text = (CFGetTypeID(value) == CFStringGetTypeID())
+        ? (__bridge_transfer NSString *)value : nil;
+    if (!text) CFRelease(value);
+    return text;
+}
+
+- (void)copyProbeReport {
+    NSString *report = [self probeReport];
+
+    if (!report.length) {
+        UIAlertController *note =
+            [UIAlertController alertControllerWithTitle:SCILocalized(@"watch_report_copy")
+                                                message:SCILocalized(@"watch_report_empty")
+                                         preferredStyle:UIAlertControllerStyleAlert];
+        [note addAction:[UIAlertAction actionWithTitle:SCILocalized(@"ok")
+                                                 style:UIAlertActionStyleDefault
+                                               handler:nil]];
+        [self presentViewController:note animated:YES completion:nil];
+        return;
+    }
+
+    [UIPasteboard generalPasteboard].string = report;
+
+    UIAlertController *done =
+        [UIAlertController alertControllerWithTitle:nil
+                                            message:SCILocalized(@"watch_report_copied")
+                                     preferredStyle:UIAlertControllerStyleAlert];
+    [self presentViewController:done animated:YES completion:nil];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.9 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [done dismissViewControllerAnimated:YES completion:nil];
+    });
 }
 
 #pragma mark - Restarting
