@@ -137,6 +137,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// doing the paging, at the moment the button is tapped rather than when the model was captured.
 + (void)refreshPhotoIndexFromController:(id)controller;
 
+/// Which accessor a picture link came from — "originPhotoURL", "template rewrite" and so on.
+///
+/// The saver reports the variant it actually used, so "it saved, but with a watermark" is a fact
+/// the report states rather than a thing anybody has to notice by looking at the picture.
++ (nullable NSString *)photoOriginFor:(NSURL *)url;
+
 + (NSString *)photoReport;
 
 /// The same resolution `captureModel:` runs, without touching the recent list --

@@ -855,7 +855,14 @@ static BOOL SCITTSavePhotoData(NSData *data, UIImage *image, NSURL *source,
                     NSString *how = nil, *error = nil;
                     if (SCITTSavePhotoData(data, image, url, &how, &error)) {
                         saved++;
-                        if (how) [ways addObject:how];
+                        // The *variant*, not just the method. "saved (as posted)" was true of a
+                        // watermarked copy too, which is how a device report of "it saves, but with
+                        // a watermark" had nothing in the log to confirm it. The accessor's name is
+                        // the only thing that knows.
+                        NSString *origin = [SCITTMedia photoOriginFor:url];
+                        [ways addObject:origin.length
+                            ? [NSString stringWithFormat:@"%@ · %@", origin, how ?: @"saved"]
+                            : (how ?: @"saved")];
                         done = YES;
                         break;
                     }

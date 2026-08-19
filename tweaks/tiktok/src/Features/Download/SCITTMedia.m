@@ -153,6 +153,23 @@ static NSUInteger sciPhotoVariantCount = 0;
 /// finding from a build that has it and answers with the same links.
 static BOOL sciPhotoVVICAsked = NO;
 
+/// Which accessor produced each link, one inner array per picture, built in the same pass as the
+/// links themselves.
+static NSMutableArray<NSArray<NSString *> *> *sciPhotoOrigins = nil;
+
+/// Link -> the accessor that produced it.
+///
+/// A dictionary rather than a second array walked alongside the first: this project has already
+/// shipped labels that named the *previous* link, because two lists were kept in step by hand and
+/// one of them was inserted into. A key cannot drift from its own value.
+static NSMutableDictionary<NSString *, NSString *> *sciPhotoOriginByURL = nil;
+
+static void SCITTRecordPhotoOrigin(NSURL *url, NSString *origin) {
+    if (!url.absoluteString.length || !origin.length) return;
+    if (!sciPhotoOriginByURL) sciPhotoOriginByURL = [NSMutableDictionary dictionary];
+    sciPhotoOriginByURL[url.absoluteString] = origin;
+}
+
 /// Where the live index came from, or why it did not.
 static NSString *sciPhotoIndexVia = nil;
 
@@ -265,6 +282,7 @@ static NSArray<NSArray<NSURL *> *> *SCITTPhotoURLsFromModel(id model) {
     if (!list.count) return nil;
 
     NSMutableArray<NSArray<NSURL *> *> *groups = [NSMutableArray array];
+    sciPhotoOrigins = [NSMutableArray array];
 
     for (id entry in list) {
         // **Every accessor, not the first that answers.** The loop below used to stop at the first
@@ -273,6 +291,7 @@ static NSArray<NSArray<NSURL *> *> *SCITTPhotoURLsFromModel(id model) {
         // to try. `AWEPhotoAlbumPhoto` offers the same picture several ways, so all of them are
         // collected in preference order and the saver takes the first whose bytes actually read.
         NSMutableArray<NSURL *> *variants = [NSMutableArray array];
+        NSMutableArray<NSString *> *origins = [NSMutableArray array];
 
         // An `AWEImageModel` is not a URL model and answers none of the list accessors below.
         // It holds three of them -- one per appearance -- and the light one is the picture as
@@ -284,28 +303,51 @@ static NSArray<NSArray<NSURL *> *> *SCITTPhotoURLsFromModel(id model) {
         // qualities; `originPhotoURL` is the one as posted, and the thumbnail is last because
         // saving a preview instead of a photo is the same class of mistake as saving SD.
         // `AWEImageModel` (from `-images`) instead names its by appearance.
-        // Preference order, and the order is the whole point: the picture as posted first, the
-        // watermarked copies next because a watermark is worse than nothing only if there is
-        // something, and the thumbnail last -- saving a preview instead of a photo is the same
-        // class of mistake as saving SD.
-        for (NSString *inner in @[@"originPhotoURL", @"ownerWatermarkedPhotoURL",
-                                  @"userWatermarkedPhotoURL", @"dynamicImageURL",
+        //
+        // **Every clean copy before any watermarked one, and that is a correction.**
+        //
+        // The list used to read origin, owner-watermarked, user-watermarked, dynamic, … because it
+        // was written when only the *first* entry was ever used: whatever came second was a
+        // fallback nobody reached. Now that the saver walks the whole list until something decodes,
+        // the order is the decision -- and a post whose original is an undecodable VVIC still fell
+        // straight through to the watermarked copy and saved that. Reported from a device as
+        // "it saves, but with a watermark", which is exactly what this order asked for.
+        //
+        // So the watermarked pair moved behind every clean variant, including the thumbnail. A
+        // thumbnail is small and this project's own rule says a preview is not a photo -- but a
+        // watermark cannot be undone, and the small clean copy is the one a person can still use.
+        // The saver names which variant won, so neither outcome is a silent surprise.
+        //
+        // `photoRankedURLModels` is an *array* of URL models rather than one -- TikTok's own ranked
+        // list of the ways this picture is available, read from the class's declared type
+        // (`@"NSArray"`) rather than assumed. It sits second because a ranking the app itself
+        // publishes is worth more than the order guessed here, and first place stays with the
+        // picture as posted.
+        for (NSString *inner in @[@"originPhotoURL", @"photoRankedURLModels", @"dynamicImageURL",
                                   @"lightURLModel", @"localURLModel", @"darkURLModel",
-                                  @"thumbnailPhotoURL", @"displayImage"]) {
+                                  @"displayImage", @"thumbnailPhotoURL",
+                                  @"ownerWatermarkedPhotoURL", @"userWatermarkedPhotoURL"]) {
             SEL selector = NSSelectorFromString(inner);
             if (![entry respondsToSelector:selector]) continue;
             id resolved = ((id (*)(id, SEL))objc_msgSend)(entry, selector);
             if (!resolved) continue;
 
+            // One accessor answers with a list; the rest answer with a single model. Both are
+            // walked the same way below rather than branching twice.
+            NSArray *models = [resolved isKindOfClass:[NSArray class]] ? resolved : @[resolved];
+            for (id model in models) {
+
             // `URLList` with that casing is what AWEURLModel declares; the lowercase spelling is
             // kept only because a different build might use it, and it costs one failed question.
             for (NSString *name in @[@"originURLList", @"URLList", @"urlList"]) {
                 SEL listSelector = NSSelectorFromString(name);
-                if (![resolved respondsToSelector:listSelector]) continue;
+                if (![model respondsToSelector:listSelector]) continue;
 
-                NSURL *url = SCITTURLFromValue(((id (*)(id, SEL))objc_msgSend)(resolved, listSelector));
+                NSURL *url = SCITTURLFromValue(((id (*)(id, SEL))objc_msgSend)(model, listSelector));
                 if (url && SCITTURLLooksDownloadable(url) && ![variants containsObject:url]) {
                     [variants addObject:url];
+                    [origins addObject:inner];
+                    SCITTRecordPhotoOrigin(url, inner);
                 }
                 break;
             }
@@ -323,24 +365,38 @@ static NSArray<NSArray<NSURL *> *> *SCITTPhotoURLsFromModel(id model) {
             // its own display long after the save is over. Borrowing a value is fine; keeping it is
             // not.
             //
-            for (NSURL *replaced in SCITTVVICReplacementURLs(resolved)) {
-                if (![variants containsObject:replaced]) [variants addObject:replaced];
+            for (NSURL *replaced in SCITTVVICReplacementURLs(model)) {
+                if (![variants containsObject:replaced]) {
+                    [variants addObject:replaced];
+                    NSString *label = [inner stringByAppendingString:@" (VVIC replaced)"];
+                    [origins addObject:label];
+                    SCITTRecordPhotoOrigin(replaced, label);
+                }
             }
+            }  // models
         }
 
         // The rewrites go after everything the model offered, for every variant, so a post whose
         // links are *all* in a format this phone cannot read still has somewhere to go.
         for (NSURL *known in [variants copy]) {
             for (NSURL *rewritten in SCITTRewrittenPictureURLs(known)) {
-                if (![variants containsObject:rewritten]) [variants addObject:rewritten];
+                if (![variants containsObject:rewritten]) {
+                    [variants addObject:rewritten];
+                    [origins addObject:@"template rewrite"];
+                    SCITTRecordPhotoOrigin(rewritten, @"template rewrite");
+                }
             }
         }
+
+        // Origins are recorded beside the links, in one pass, never matched up afterwards by
+        // value -- the parallel-array mistake this project has already made once, when every
+        // link label named the accessor of the link before it.
+        if (variants.count) [sciPhotoOrigins addObject:origins];
 
         if (variants.count) [groups addObject:variants];
     }
 
     if (!groups.count) return nil;
-    NSArray<NSURL *> *urls = [groups valueForKeyPath:@"@unionOfObjects.firstObject"];
 
     // **Committed only on success, and that is a correction to the first version of this
     // diagnostic.** These are written by every model the resolver walks, and virtually all of them
@@ -351,7 +407,10 @@ static NSArray<NSArray<NSURL *> *> *SCITTPhotoURLsFromModel(id model) {
     sciPhotoListVia = chainVia;
     sciPhotoListCount = list.count;
     sciPhotoElement = NSStringFromClass([list.firstObject class]);
-    sciPhotoResolved = urls.count;
+    // `groups.count`, read plainly. This was a KVC collection operator over an array of arrays
+    // and reported **zero pictures** on a post that had just saved one -- a diagnostic disagreeing
+    // with the thing it describes, which this file has now been bitten by three times.
+    sciPhotoResolved = groups.count;
 
     // How many ways the shown picture is offered, which is the number that says whether a
     // failed save had anywhere left to go.
@@ -1146,6 +1205,10 @@ static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **ou
     }
 
     sciPhotoIndexVia = @"nothing live answered";
+}
+
++ (NSString *)photoOriginFor:(NSURL *)url {
+    return url.absoluteString.length ? sciPhotoOriginByURL[url.absoluteString] : nil;
 }
 
 + (NSString *)photoReport {

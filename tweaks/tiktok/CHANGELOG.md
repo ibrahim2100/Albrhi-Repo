@@ -1,5 +1,36 @@
 # Albrhi for TikTok — what changed
 
+## v0.17.5
+
+**It saved — with a watermark — and the order asked for exactly that.**
+
+The variant list read origin, owner-watermarked, user-watermarked, dynamic, … which was written
+when only the *first* entry was ever used: whatever came second was a fallback nobody reached. Now
+that the saver walks the list until something decodes, **the order is the decision** — and a post
+whose original is an undecodable VVIC still fell straight through to the watermarked copy.
+
+Every clean variant now comes before either watermarked one, the thumbnail included. A thumbnail is
+small and this project's own rule says a preview is not a photo — but a watermark cannot be undone,
+and a small clean copy is the one a person can still use.
+
+**And a variant nobody was asking for.** `AWEPhotoAlbumPhoto` declares
+`photoRankedURLModels : NSArray` — TikTok's own ranked list of the ways the picture is available,
+read from the class's declared type rather than guessed. It is an array of URL models where every
+other accessor answers with one, so both are walked the same way, and it sits second: a ranking the
+app publishes is worth more than the order guessed here, while first place stays with the picture as
+posted.
+
+**The save now names the variant it used**, not just the method. "saved (as posted)" was equally
+true of the watermarked copy, which is why a report saying "it saves, but with a watermark" had
+nothing in it to confirm that. The accessor's name is the only thing that knows, and it travels in a
+dictionary keyed by the link rather than a second array walked alongside — the parallel-array
+mistake this project has already shipped once, when every label named the previous link's accessor.
+
+**And the picture count read zero on a post that had just saved one.** It came from a KVC collection
+operator over an array of arrays; it is `groups.count` now. Third time a diagnostic here has
+disagreed with the thing it describes, and the rule keeps being the same one: read the number off
+the object that holds it.
+
 ## v0.17.4
 
 **TikTok has its own answer to the unreadable picture format, and it is a property on the very

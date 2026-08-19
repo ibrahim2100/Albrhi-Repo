@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.48.2
+
+**TikTok photo saving no longer falls through to the watermarked copy.** When a post's original
+picture is in a format iOS cannot decode, the tweak now tries every clean variant — including
+TikTok's own ranked list of formats — before it will consider a watermarked one, and the report
+names which variant was actually saved.
+
+Includes TikTok 0.17.5.
+
 ## v1.48.1
 
 TikTok photo saving now asks the app for a readable format the way the app itself does, before
