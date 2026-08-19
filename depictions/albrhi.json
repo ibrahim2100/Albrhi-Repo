@@ -106,40 +106,40 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v1.49.2",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• Albrhi Watch's settings page gains a switch that stops the Watch app looking for watchOS updates, and a button that copies a diagnostic report from inside SpringBoard…",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "v1.49.1",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **A page for Albrhi Watch**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v1.49.0",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
           "markdown": "• **Albrhi CarPlay has been removed from this project.**",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v1.48.4",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **The watermark came back in 1.48.3 and is gone again.**",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v1.48.3",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **TikTok now picks the largest readable version of a single saved picture**",
           "useSpacing": true
         },
         {
@@ -155,7 +155,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.49.0"
+          "text": "1.49.2"
         },
         {
           "class": "DepictionTableTextView",
