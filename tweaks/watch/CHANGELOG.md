@@ -1,5 +1,30 @@
 # Albrhi Watch — what changed
 
+## v0.5.1
+
+**Confirmed on a device: the notice reaches the settled page and the install row now reads "Held by
+Albrhi Watch".** The watchOS hold is complete.
+
+**And the domain reader had a bug that threw away exactly the names most likely to be right.**
+`-pathExtension` on a bundle identifier is not an extension: `com.apple.carousel` answers
+`carousel`, `com.apple.sharing` answers `sharing`. A filter that skipped anything with a non-plist
+extension therefore skipped **every domain named like a bundle** — which is what an NPS domain looks
+like. The registry listing had them in plain sight and the report printed sixteen names with none of
+them in it. Only a literal `.plist` suffix is removed now. **A rule written against a shape of
+string, when the real rule is one exact suffix, is the same mistake as matching a localised button
+title.**
+
+**Every real name still answered zero, so the next thing measured is the accessor rather than the
+name.** `NPSDomainAccessor` offers `-initWithDomain:pairedDevice:` beside the plain
+`-initWithDomain:`, and an accessor built without a device may be reading the phone's own empty side
+of a domain whose contents belong to the watch. Both are built and both are reported, side by side,
+so the difference is visible rather than inferred — the first probe's uniform zeroes were unreadable
+precisely because there was nothing to compare them against.
+
+The active watch comes from `NRPairedDeviceRegistry`, whose class methods are not in
+`class_copyMethodList` — that lists instance methods — so `+sharedInstance`, `+defaultRegistry` and
+`+registry` are tried against the class object and the report says which answered.
+
 ## v0.5.0
 
 **The domain names are read off the device and asked about in the same pass.** The registry the

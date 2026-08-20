@@ -51,14 +51,26 @@ static NSArray<NSString *> *SCIWDiscoveredDomains(NSString *pairingID) {
                                       @"NanoPreferencesSync/Backup"],
                                   registry]) {
         for (NSString *entry in [fm contentsOfDirectoryAtPath:directory error:NULL]) {
-            NSString *name = [entry.pathExtension isEqualToString:@"plist"]
-                ? entry.stringByDeletingPathExtension : entry;
+            //
+            // **`-pathExtension` on a bundle identifier is not an extension, and this dropped the
+            // very names most likely to be right.**
+            //
+            // `com.apple.carousel` answers `carousel`, `com.apple.sharing` answers `sharing` — so
+            // a filter that skipped anything with a non-plist extension skipped every domain named
+            // like a bundle, which is what an NPS domain looks like. The registry listing had them
+            // in plain sight (`com.apple.carousel`, `com.apple.shortcuts`, `com.apple.sharing`)
+            // and the report showed sixteen names with none of them in it.
+            //
+            // Only a literal `.plist` suffix is removed now, and only the database's own three
+            // files are skipped by name. A rule written against a *shape* of string ("has an
+            // extension") when the real rule is about one exact suffix is the same mistake as
+            // matching a localised button title.
+            //
+            NSString *name = [entry hasSuffix:@".plist"]
+                ? [entry substringToIndex:entry.length - 6] : entry;
 
-            // The registry root also holds `NanoPreferencesSync` itself and a `.db`; neither is a
-            // domain, and asking about them would put two lines of noise at the top of the answer.
             if ([name isEqualToString:@"NanoPreferencesSync"]) continue;
-            if (entry.pathExtension.length && ![entry.pathExtension isEqualToString:@"plist"])
-                continue;
+            if ([name hasPrefix:@"database.db"]) continue;
 
             [names addObject:name];
         }
@@ -123,12 +135,74 @@ static NSString *SCIWAccessorLiveness(id accessor) {
     return notes.count ? [notes componentsJoinedByString:@", "] : @"answers nothing about itself";
 }
 
+///
+/// The active watch, for the accessor that takes one.
+///
+/// **Every real domain name still answered zero, which says the accessor and not the name.**
+/// `NPSDomainAccessor` offers `-initWithDomain:pairedDevice:` beside the plain `-initWithDomain:`,
+/// and an accessor built without a device may be reading the phone's own empty side of a domain
+/// whose contents belong to the watch. So both are built and both are reported, and whichever
+/// answers is the one the sync features will use.
+///
+/// The registry's class methods are not in `class_copyMethodList` -- that lists instance methods --
+/// so the three plausible accessors are tried by name against the class object itself, and the one
+/// that answers is named in the report rather than assumed.
+///
+static id SCIWActivePairedDevice(void) {
+    Class registry = NSClassFromString(@"NRPairedDeviceRegistry");
+    if (!registry) return nil;
+
+    for (NSString *name in @[@"sharedInstance", @"defaultRegistry", @"registry"]) {
+        SEL selector = NSSelectorFromString(name);
+        if (![registry respondsToSelector:selector]) continue;
+
+        id shared = ((id (*)(id, SEL))objc_msgSend)(registry, selector);
+        if (![shared respondsToSelector:@selector(getActivePairedDevice)]) continue;
+
+        return ((id (*)(id, SEL))objc_msgSend)(shared, @selector(getActivePairedDevice));
+    }
+    return nil;
+}
+
+static unsigned long long SCIWDomainSize(id accessor) {
+    return [accessor respondsToSelector:@selector(domainSize)]
+        ? ((unsigned long long (*)(id, SEL))objc_msgSend)(accessor, @selector(domainSize)) : 0;
+}
+
 static NSString *SCIWDescribeDomain(Class accessorClass, NSString *domain, BOOL withLiveness) {
     id accessor = [accessorClass alloc];
     if (![accessor respondsToSelector:@selector(initWithDomain:)]) return nil;
 
     accessor = ((id (*)(id, SEL, id))objc_msgSend)(accessor, @selector(initWithDomain:), domain);
     if (!accessor) return [NSString stringWithFormat:@"%@ — no accessor", domain];
+
+    // The same domain, opened against the watch itself. Reported beside the plain one so the
+    // difference is visible rather than inferred -- the whole reason the first probe's uniform
+    // zeroes were unreadable is that there was nothing to compare them against.
+    NSString *paired = @"";
+    id device = SCIWActivePairedDevice();
+    if (device) {
+        id withDevice = [accessorClass alloc];
+        if ([withDevice respondsToSelector:@selector(initWithDomain:pairedDevice:)]) {
+            withDevice = ((id (*)(id, SEL, id, id))objc_msgSend)(
+                withDevice, @selector(initWithDomain:pairedDevice:), domain, device);
+
+            unsigned long long size = SCIWDomainSize(withDevice);
+            id keys = [withDevice respondsToSelector:@selector(copyKeyList)]
+                ? ((id (*)(id, SEL))objc_msgSend)(withDevice, @selector(copyKeyList)) : nil;
+
+            paired = [NSString stringWithFormat:@" | with the paired device: %llu byte(s), %lu key(s)%@",
+                      size, (unsigned long)[keys count],
+                      [keys count] ? [@"\n    " stringByAppendingString:
+                          [[keys sortedArrayUsingSelector:@selector(compare:)]
+                              componentsJoinedByString:@"\n    "]] : @""];
+
+            if ([withDevice respondsToSelector:@selector(invalidate)])
+                ((void (*)(id, SEL))objc_msgSend)(withDevice, @selector(invalidate));
+        }
+    } else {
+        paired = @" | no active paired device from the registry";
+    }
 
     // Asked of the first domain only: it is a fact about the accessor, not about the domain, so
     // sixteen copies of it would be sixteen copies of one line.
@@ -145,15 +219,15 @@ static NSString *SCIWDescribeDomain(Class accessorClass, NSString *domain, BOOL 
     }
 
     if (![keys isKindOfClass:[NSArray class]] || ![keys count]) {
-        return [NSString stringWithFormat:@"%@ — %llu byte(s), no keys%@", domain, size,
+        return [NSString stringWithFormat:@"%@ — %llu byte(s), no keys%@%@", domain, size, paired,
                 liveness.length ? [@"\n    accessor: " stringByAppendingString:liveness] : @""];
     }
 
     // Sorted, because an unordered list read twice looks like two different lists.
     NSArray *sorted = [keys sortedArrayUsingSelector:@selector(compare:)];
-    return [NSString stringWithFormat:@"%@ — %llu byte(s), %lu key(s):\n    %@%@",
+    return [NSString stringWithFormat:@"%@ — %llu byte(s), %lu key(s):\n    %@%@%@",
             domain, size, (unsigned long)sorted.count,
-            [sorted componentsJoinedByString:@"\n    "],
+            [sorted componentsJoinedByString:@"\n    "], paired,
             liveness.length ? [@"\n    accessor: " stringByAppendingString:liveness] : @""];
 }
 

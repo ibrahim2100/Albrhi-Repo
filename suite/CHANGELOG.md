@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.53.1
+
+Albrhi Watch 0.5.1: the diagnostics no longer discard domain names that look like bundle
+identifiers, and each domain is read both with and without the paired watch so the two can be
+compared.
+
 ## v1.53.0
 
 Albrhi Watch 0.5.0: the diagnostics report reads the watch's real preference-domain names off the
