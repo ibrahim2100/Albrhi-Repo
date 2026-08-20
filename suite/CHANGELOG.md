@@ -1,5 +1,9 @@
 # Albrhi Changelog
 
+## v1.58.8
+
+Albrhi for TikTok 0.19.8: the publish date lines up with the download button and stays on screen.
+
 ## v1.58.7
 
 Albrhi for TikTok 0.19.7: the publish date breaks into two lines, the time and its joining word

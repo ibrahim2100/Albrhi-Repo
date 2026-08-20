@@ -1,5 +1,18 @@
 # Albrhi for TikTok — what changed
 
+## v0.19.8
+
+The date is centred on the download button and no longer runs off the right edge of the screen.
+
+**One clamp, in the one space where the screen exists.** The rail sits hard against the right edge
+and this label is wider than the button it centres on, so its right half wanted to be off the
+display. The earlier attempt clamped into the rail's own bounds -- about 44pt, which cannot contain
+a 150pt label at all -- and so pinned it to the rail's left edge on every device. A clamp into a
+box narrower than the thing being placed is not a safety net; it is a guarantee of the wrong
+position. The frame is converted into the window, pushed back by however much it overhangs, and
+converted home: centred wherever there is room, sliding only as far as it must, and left centred
+rather than clamped against a guess when there is no window to measure.
+
 ## v0.19.7
 
 The publish date was one long row; it is two now, the date above and the time below it with the

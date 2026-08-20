@@ -291,9 +291,37 @@ static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *it
     CGFloat width = MIN(MAX(ceil(fits.width) + 8, 60), 150);
     CGFloat height = MAX(ceil(fits.height) + 2, 16);
 
-    label.frame = CGRectMake(CGRectGetMidX(b) - width / 2,
-                             CGRectGetMinY(b) - height - 2,
-                             width, height);
+    CGRect frame = CGRectMake(CGRectGetMidX(b) - width / 2,
+                              CGRectGetMinY(b) - height - 2,
+                              width, height);
+
+    //
+    // **Centred on the button, and never past the edge of the screen -- which is one clamp, in the
+    // one space where the screen exists.**
+    //
+    // The rail lives hard against the right edge, and this label is wider than the button it is
+    // centred on, so its right half wants to be off the display. The previous attempt at this
+    // clamped into `host.bounds` -- a 44pt rail -- which cannot contain a 150pt label at all and
+    // therefore pinned it to the rail's left edge on every device. **A clamp into a box narrower
+    // than the thing being placed is not a safety net, it is a guarantee of the wrong position.**
+    //
+    // The window is the box that actually has the property being asked for. The frame is converted
+    // there, pushed back by however much it overhangs, and converted home -- so the label stays
+    // centred on the button wherever there is room and slides only as far as it must. With no
+    // window there is nothing to measure against, and it is left centred rather than clamped
+    // against a guess.
+    //
+    UIView *root = host.window;
+    if (root) {
+        CGRect inWindow = [host convertRect:frame toView:root];
+        CGFloat margin = 4;
+        CGFloat over = CGRectGetMaxX(inWindow) - (CGRectGetWidth(root.bounds) - margin);
+        if (over > 0) inWindow.origin.x -= over;
+        if (CGRectGetMinX(inWindow) < margin) inWindow.origin.x = margin;
+        frame = [host convertRect:inWindow fromView:root];
+    }
+
+    label.frame = frame;
 
     // The rail clips by default, which is how a correctly centred label still lost its digits.
     host.clipsToBounds = NO;
