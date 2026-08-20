@@ -1,5 +1,17 @@
 # Albrhi for TikTok — what changed
 
+## v0.19.7
+
+The publish date was one long row; it is two now, the date above and the time below it with the
+word that joins them.
+
+**That word is not "at" everywhere, and the label follows the phone's own locale on purpose.**
+Writing the break as a literal `at` would hard-code English into a line an Arabic device renders
+in Arabic. So the separator is measured rather than named: the combined string minus the date half
+and minus the time half is whatever this locale puts between them. A locale that does not
+decompose that way keeps the single combined line, which is what shipped before and is merely
+long -- never a wrong word.
+
 ## v0.19.6
 
 **The lean had a cause, and 0.19.5 had not found it.** `button.frame` is expressed in the

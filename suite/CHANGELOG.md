@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.58.7
+
+Albrhi for TikTok 0.19.7: the publish date breaks into two lines, the time and its joining word
+beneath the date, with that word read from the locale rather than written into the source.
+
 ## v1.58.6
 
 Albrhi for TikTok 0.19.6: the publish date is placed in the same coordinate space it is measured

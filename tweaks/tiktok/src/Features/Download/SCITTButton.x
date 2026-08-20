@@ -207,6 +207,8 @@ static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *it
     // One formatter, kept: building an NSDateFormatter is expensive and this runs on every cell
     // that scrolls past.
     static NSDateFormatter *formatter = nil;
+    static NSDateFormatter *dateOnly = nil;
+    static NSDateFormatter *timeOnly = nil;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         formatter = [[NSDateFormatter alloc] init];
@@ -215,9 +217,46 @@ static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *it
         // The phone's own locale, so an Arabic device reads an Arabic date without this file
         // deciding what a date looks like.
         formatter.locale = [NSLocale currentLocale];
+
+        // The same two halves on their own, which is how the join between them is found below.
+        dateOnly = [[NSDateFormatter alloc] init];
+        dateOnly.dateStyle = NSDateFormatterMediumStyle;
+        dateOnly.timeStyle = NSDateFormatterNoStyle;
+        dateOnly.locale = [NSLocale currentLocale];
+
+        timeOnly = [[NSDateFormatter alloc] init];
+        timeOnly.dateStyle = NSDateFormatterNoStyle;
+        timeOnly.timeStyle = NSDateFormatterShortStyle;
+        timeOnly.locale = [NSLocale currentLocale];
     });
 
-    label.text = [formatter stringFromDate:item.posted];
+    //
+    // **The break goes before the join word, and the join word is not "at".**
+    //
+    // One line is too long, and the two lines wanted are the date and then `at <time>` under it.
+    // Writing that as `date + "\n at " + time` would hard-code an English word into a label that
+    // deliberately follows the phone's own locale -- an Arabic device joins with a different word
+    // entirely, and some locales use no word at all.
+    //
+    // So the separator is *measured* rather than named: the combined string minus the date half
+    // and minus the time half is whatever this locale puts between them. Anything that does not
+    // decompose that way -- an unfamiliar locale, a time string that appears twice -- falls back
+    // to the combined string untouched, which is exactly what shipped before and merely long.
+    //
+    NSString *text = [formatter stringFromDate:item.posted];
+    NSString *head = [dateOnly stringFromDate:item.posted];
+    NSString *tail = [timeOnly stringFromDate:item.posted];
+    if (head.length && tail.length && [text hasPrefix:head]) {
+        NSRange timeRange = [text rangeOfString:tail options:NSBackwardsSearch];
+        if (timeRange.location != NSNotFound && timeRange.location >= head.length) {
+            NSString *join = [[text substringWithRange:NSMakeRange(head.length, timeRange.location - head.length)]
+                stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+            NSString *second = join.length ? [NSString stringWithFormat:@"%@ %@", join, tail] : tail;
+            text = [NSString stringWithFormat:@"%@\n%@", head, second];
+        }
+    }
+
+    label.text = text;
     label.hidden = NO;
     sciDatePlaced++;
     sciDateLast = label.text;
