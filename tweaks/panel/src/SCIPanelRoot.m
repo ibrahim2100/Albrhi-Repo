@@ -12,7 +12,7 @@
 #import <objc/message.h>
 #import <objc/runtime.h>
 
-NSString *SCIVersionString = @"v0.9.18";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.9.19";  // AlbrhiPanel
 
 ///
 /// Albrhi's own control panel, in the iOS Settings app.
@@ -65,7 +65,20 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
     NSMutableArray<SCIPanelEntry *> *entries = [NSMutableArray array];
     NSMutableArray<SCIPanelEntry *> *features = [NSMutableArray array];
     for (SCIPanelEntry *entry in scanned) {
-        if (entry.detailControllerClassName.length) [features addObject:entry];
+        //
+        // **A page is not what decides the section; being about one app is.**
+        //
+        // The Tweaks section exists for a tweak that runs *across* apps -- NextUp reads five media
+        // apps, Watch answers inside SpringBoard and the Watch app -- where an app row would have
+        // to pick one of them to be about. A tweak that patches exactly one app belongs with the
+        // apps it is listed beside, whether or not it also wants a page: Albrhi for Spotify is
+        // collapsed into a group only so it can carry two switches, and that is a fact about its
+        // settings, not about what it patches.
+        //
+        // The icon is what says which case this is, because the scan sets it only when the filter
+        // named one real installed app.
+        //
+        if (entry.detailControllerClassName.length && !entry.appIcon) [features addObject:entry];
         else [entries addObject:entry];
     }
 
@@ -91,6 +104,42 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
     }
 
     for (SCIPanelEntry *entry in entries) {
+        //
+        // **An app row that owns a page pushes to it instead of carrying a switch.**
+        //
+        // Giving it both would be two controls for one thing: the master switch already lives on
+        // the page, and a switch here would write `app_enabled_<bundleid>`, which a tweak gated on
+        // its own master never reads -- a switch that moves and changes nothing, which this project
+        // has shipped once and does not intend to again.
+        //
+        if (entry.detailControllerClassName.length) {
+            Class detailClass = NSClassFromString(entry.detailControllerClassName);
+
+            // Same reasoning as the Tweaks section below: a row whose page is missing is drawn,
+            // dimmed and explained. Installing a tweak before the panel update that carries its
+            // page is an ordinary Tuesday, and silence is the worst possible answer to it.
+            PSSpecifier *link = [PSSpecifier preferenceSpecifierNamed:entry.appName
+                                                               target:self
+                                                                  set:NULL
+                                                                  get:NULL
+                                                               detail:detailClass
+                                                                 cell:(detailClass ? PSLinkCell
+                                                                                   : PSTitleValueCell)
+                                                                 edit:Nil];
+            if (!detailClass) {
+                [link setProperty:@NO forKey:@"enabled"];
+                [link setProperty:SCILocalized(@"tweak_page_missing") forKey:@"sciSubtitle"];
+                [link setProperty:@YES forKey:@"sciSubtitleIsWarning"];
+                [link setProperty:[SCIPanelAppCell class] forKey:@"cellClass"];
+            }
+
+            [link setProperty:entry.bundleIdentifier forKey:@"sciBundleIdentifier"];
+            if (entry.appIcon) [link setProperty:entry.appIcon forKey:@"iconImage"];
+
+            [specifiers addObject:link];
+            continue;
+        }
+
         PSSpecifier *row = [PSSpecifier preferenceSpecifierNamed:entry.appName
                                                           target:self
                                                              set:@selector(setOn:forSpecifier:)

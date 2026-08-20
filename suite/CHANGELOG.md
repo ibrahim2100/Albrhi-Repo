@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.54.3
+
+Albrhi Panel 0.9.19: Albrhi for Spotify sits with the apps, under Spotify's own icon, and opens its
+page from there.
+
 ## v1.54.2
 
 Albrhi Panel 0.9.18: the Albrhi for Spotify row carries Spotify's own icon rather than a drawn

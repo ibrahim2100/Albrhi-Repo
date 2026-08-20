@@ -1,5 +1,19 @@
 # Albrhi Panel Changelog
 
+## v0.9.19
+
+**A page is not what decides the section; being about one app is.** The Tweaks section exists for a
+tweak that runs *across* apps — NextUp reads five media apps, Watch answers inside SpringBoard and
+the Watch app — where an app row would have to pick one of them to be about. A tweak that patches
+exactly one app belongs with the apps, whether or not it also wants a page: Albrhi for Spotify is
+collapsed into a group only so it can carry two switches, and that is a fact about its settings, not
+about what it patches.
+
+Such a row **pushes to its page instead of carrying a switch**. Giving it both would be two controls
+for one thing — the master already lives on the page, and a switch here would write
+`app_enabled_<bundleid>`, which a tweak gated on its own master never reads. A switch that moves and
+changes nothing is a failure this project has shipped once and does not intend to again.
+
 ## v0.9.18
 
 **A grouped row that names exactly one app now carries that app's own icon.** The drawn badge exists
