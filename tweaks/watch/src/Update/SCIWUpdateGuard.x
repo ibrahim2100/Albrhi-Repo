@@ -4,6 +4,7 @@
 #import "SCIWUpdateGuard.h"
 #import "../Prefs.h"
 #import "../Diagnostics/SCIWDiagnostics.h"
+#import "../Localization/SCILocalize.h"
 
 ///
 /// Holding a watchOS update back, inside the Watch app — written from a device's own method lists.
@@ -45,8 +46,19 @@
 @interface COSSoftwareUpdateController : NSObject
 @end
 
+/// Preferences' own row object. Declared rather than imported: this tweak does not link
+/// Preferences.framework, and the four selectors used here are the whole of what it needs.
+@interface PSSpecifier : NSObject
+- (id)propertyForKey:(NSString *)key;
+- (void)setProperty:(id)value forKey:(NSString *)key;
+- (NSString *)name;
+- (NSString *)identifier;
+@end
+
 static NSString *sciwGuardState = nil;
 static NSString *sciwUpdateShape = nil;
+static NSString *sciwPageShape = nil;
+static BOOL sciwPageStamped = NO;
 
 /// The encodings, every one read off the device by the probe beside this file.
 static NSString *const kSCIWScanResultEncoding = @"v40@0:8@16@24@32";  // -manager:scanRequestDidLocateUpdate:error:
@@ -91,6 +103,69 @@ static void SCIWDescribeUpdate(id update) {
     }
 
     sciwUpdateShape = shape;
+}
+
+///
+/// Says on the page itself that Albrhi is the reason it shows nothing.
+///
+/// **Withholding an update makes iOS tell its owner the watch is up to date, which is a sentence
+/// this tweak caused and iOS believes.** That is worse than the thing being hidden: a person
+/// reading "up to date with all the latest security enhancements" has been given a fact about
+/// their watch, not a consequence of their own setting. So the page says who withheld it.
+///
+/// **The footer is edited, not replaced from a rebuilt list.** `-reloadSpecifiers` asks the
+/// controller to build its rows again, which would discard this edit the moment it is made;
+/// `-reloadSpecifier:` redraws the one row from the object already in the list. Both are guarded,
+/// like every private selector here.
+///
+/// And the whole specifier list is recorded the first time, so a later release can name Apple's
+/// own footer precisely instead of taking the last one carrying text — which is a heuristic, and
+/// is described as one in the report rather than trusted quietly.
+///
+static void SCIWStampUpdatePage(id controller) {
+    if (sciwPageStamped || ![controller respondsToSelector:@selector(specifiers)]) return;
+
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        NSArray *specifiers = ((id (*)(id, SEL))objc_msgSend)(controller,
+                                                              @selector(specifiers));
+        if (![specifiers isKindOfClass:[NSArray class]] || !specifiers.count) return;
+
+        NSMutableArray<NSString *> *shape = [NSMutableArray array];
+        PSSpecifier *target = nil;
+
+        for (PSSpecifier *specifier in specifiers) {
+            if (![specifier respondsToSelector:@selector(propertyForKey:)]) continue;
+
+            id footer = [specifier propertyForKey:@"footerText"];
+            NSString *footerText = [footer isKindOfClass:[NSString class]] ? footer : nil;
+
+            [shape addObject:[NSString stringWithFormat:@"    %@ / %@%@",
+                [specifier respondsToSelector:@selector(name)] ? ([specifier name] ?: @"—") : @"?",
+                [specifier respondsToSelector:@selector(identifier)]
+                    ? ([specifier identifier] ?: @"—") : @"?",
+                footerText.length ? [@" — footer: " stringByAppendingString:footerText] : @""]];
+
+            // The last row carrying a footer: on this page that is the one under the version,
+            // which is the sentence a person actually reads.
+            if (footerText.length) target = specifier;
+        }
+
+        if (!sciwPageShape) sciwPageShape = [shape componentsJoinedByString:@"\n"];
+        if (!target) return;
+
+        NSString *existing = [target propertyForKey:@"footerText"];
+        [target setProperty:[NSString stringWithFormat:@"%@\n\n%@",
+                                SCILocalized(@"hold_notice"), existing]
+                     forKey:@"footerText"];
+
+        if ([controller respondsToSelector:@selector(reloadSpecifier:)]) {
+            ((void (*)(id, SEL, id))objc_msgSend)(controller, @selector(reloadSpecifier:), target);
+        }
+
+        sciwPageStamped = YES;
+        SCIWRecordAnswer(@"update page stamped");
+    });
 }
 
 /// Why a selector was skipped, in the words the next release gets written from.
@@ -145,6 +220,7 @@ static void SCIWPublishGuardState(void) {
     // filter that turns "hold everything" into "hold 26" is written from what this reports.
     SCIWDescribeUpdate(update);
     SCIWRecordAnswer(@"update withheld at the scan result");
+    SCIWStampUpdatePage(self);
 
     // The page's own "nothing found" state, reached the way the page reaches it: no update, no
     // error. Refusing the scan itself would leave it waiting for an answer that never came.
@@ -293,7 +369,11 @@ NSString *SCIWUpdateGuardReport(void) {
     NSString *state = sciwGuardState
         ?: @"not installed — either the master switch is off or the Watch app has not run this build";
 
-    return sciwUpdateShape.length
-        ? [NSString stringWithFormat:@"%@\nthe update it saw: %@", state, sciwUpdateShape]
-        : state;
+    NSMutableString *report = [NSMutableString stringWithString:state];
+    if (sciwUpdateShape.length)
+        [report appendFormat:@"\nthe update it saw: %@", sciwUpdateShape];
+    if (sciwPageShape.length)
+        [report appendFormat:@"\nthe update page's rows (the last one carrying a footer is the "
+                              @"one stamped):\n%@", sciwPageShape];
+    return report;
 }

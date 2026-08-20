@@ -1,5 +1,23 @@
 # Albrhi Watch — what changed
 
+## v0.3.0
+
+**The hold works, and it made iOS tell its owner something untrue.** "Your Apple Watch is up to
+date with all the latest bug fixes and security enhancements" is a sentence this tweak caused and
+iOS believes — a fact about the watch, where what happened is a consequence of a switch. That is
+worse than the update being hidden.
+
+So the Software Update page now says who withheld it, in both languages, above Apple's own text
+rather than instead of it. The footer is **edited in place and redrawn with `-reloadSpecifier:`**:
+`-reloadSpecifiers` would ask the controller to build its rows again and discard the edit in the
+same breath as making it.
+
+**Which footer is a heuristic, and the report says so.** It takes the last row carrying footer
+text, which on this page is the one under the version. The whole specifier list — every row's name,
+identifier and footer — is recorded the first time the page is stamped, so the next release can
+name Apple's own row precisely instead of inferring it. A heuristic described as one is a different
+thing from a heuristic trusted quietly.
+
 ## v0.2.9
 
 **Confirmed on a device: all five update hooks are installed**, and the switch was read from

@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.51.0
+
+Albrhi Watch 0.3.0: while updates are held, the watch's Software Update page says Albrhi is holding
+them instead of only saying the watch is up to date.
+
 ## v1.50.9
 
 Albrhi Watch 0.2.9: the diagnostics report carries NanoPreferencesSync's real method lists, which is
