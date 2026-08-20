@@ -42,9 +42,6 @@ enum AlbrhiPrefs {
     /// TikTok tweak's external download switch already follows.
     static let sponsorBlock = "spotify_sponsorblock"
 
-    /// Share links with Spotify's tracking parameters removed.
-    static let cleanLinks = "spotify_clean_links"
-
     /// Where the last answer came from, so the settings page can say it rather than imply it.
     private(set) static var source = "nothing has been read yet"
 

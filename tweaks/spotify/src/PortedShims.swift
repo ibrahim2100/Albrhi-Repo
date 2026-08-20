@@ -34,10 +34,9 @@ enum EeveeSpotify {
     static let version = SCIVersionString.replacingOccurrences(of: "v", with: "")
 }
 
-extension UserDefaults {
-    /// Share links without the tracking parameters Spotify appends. Read through Albrhi's own gate
-    /// rather than `standard`, which inside Spotify means Spotify's own preferences.
-    static var cleanShareLinks: Bool {
-        AlbrhiPrefs.on(AlbrhiPrefs.cleanLinks)
-    }
-}
+//
+// **Clean share links was removed in 0.2.1 and its switch with it.** Its three hooks were the only
+// ungrouped ones in the port -- Orion installs those at startup, before any gate is consulted -- so
+// they ran even with Albrhi's master switch off, and Spotify crashed. Kept out rather than kept
+// behind a switch that could not reach them.
+//

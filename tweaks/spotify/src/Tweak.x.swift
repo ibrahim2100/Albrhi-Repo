@@ -72,12 +72,5 @@ struct AlbrhiSpotify: Tweak {
             NSLog("[AlbrhiSpotify] SponsorBlock active")
         }
 
-        //
-        // Clean share links installs no group: its hooks are ungrouped, so Orion places them at
-        // startup and each one asks `UserDefaults.cleanShareLinks` before touching anything —
-        // which this port points at Albrhi's own switch. Upstream's design, kept.
-        //
-        NSLog("[AlbrhiSpotify] clean share links: %@",
-              AlbrhiPrefs.on(AlbrhiPrefs.cleanLinks) ? "on" : "off")
     }
 }

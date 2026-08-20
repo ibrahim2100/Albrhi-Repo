@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.55.1
+
+**1.55.0 crashed Spotify — install this one.** The clean-share-links hooks were the only ungrouped
+ones in Albrhi for Spotify, so they installed at startup regardless of the master switch. The
+feature is removed; the ad blocking, the Premium popups and SponsorBlock are unaffected and remain
+gated.
+
 ## v1.55.0
 
 **Albrhi for Spotify 0.2.0** — ads and Premium popups blocked, sponsored podcast segments skipped

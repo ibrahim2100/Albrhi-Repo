@@ -1,5 +1,23 @@
 # Albrhi for Spotify — what changed
 
+## v0.2.1
+
+**0.2.0 crashed Spotify. Clean share links is removed — install this one.**
+
+Its three hooks were **the only ungrouped ones in the port**: eleven of the fourteen hooks here name
+a group, and Orion activates an ungrouped hook at startup, before any gate is consulted. So those
+three installed themselves whatever Albrhi's master switch said, and a `ClassHook` on a class this
+build of Spotify does not have does not fail quietly.
+
+**A switch that cannot reach the thing it names is worse than no switch**, so the feature is out
+rather than pretending to be governed. Everything else was already grouped and stays: the ad
+blocking, the Premium popups, and SponsorBlock — all behind `%init`-shaped gates, all inert when the
+master is off.
+
+The general rule, and the reason this was found in one look rather than by bisecting: **count the
+hooks against the groups.** A file with hooks and no group is a file that runs regardless of what
+you decided.
+
 ## v0.2.0
 
 **SponsorBlock for podcasts, and clean share links** — carried over from EeveeSpotify under GPLv3

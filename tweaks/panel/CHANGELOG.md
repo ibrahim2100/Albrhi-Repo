@@ -1,5 +1,9 @@
 # Albrhi Panel Changelog
 
+## v0.9.21
+
+The clean-share-links switch is gone with the feature it named.
+
 ## v0.9.20
 
 The Spotify page gains podcast and sharing sections: skip sponsored segments, and clean share links.
