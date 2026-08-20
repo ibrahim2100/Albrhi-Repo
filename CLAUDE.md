@@ -21,6 +21,7 @@ four standing on their own:
 | `tweaks/twitter` | `com.albrhi.twitter` | X / Twitter, tested on **12.15** |
 | `tweaks/tiktok` | `com.albrhi.tiktok` | TikTok, tested on **46.4.0** |
 | `tweaks/spotify` | `com.albrhi.spotify` | Spotify — **Swift and Orion, the only one** |
+| `tweaks/ytmusic` | `com.albrhi.ytmusic` | YouTube Music — ads and background playback |
 | `tweaks/panel` | `com.albrhi.panel` | the Settings app — the per-app switches |
 | `suite/` | **`com.albrhi`** | the four social-app tweaks and the panel, in one package |
 | `tweaks/nextup` | `com.albrhi.nextup` | SpringBoard + 5 media apps — what plays next, **a GPLv3 port, released on its own** |
@@ -1400,8 +1401,8 @@ far less surface area than a real compressor for a few-kilobyte archive.
 ## Known state
 
 Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.21** · Watch **0.5.2** · TikTok **0.17.7** ·
-Spotify **0.2.3** ·
-NextUp **0.1.5** · suite **1.55.3**. **CarPlay is gone** — removed from this repository, to be
+Spotify **0.2.3** · YT Music **0.1.0** ·
+NextUp **0.1.5** · suite **1.56.0**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

@@ -4,17 +4,18 @@
 
 ### iOS tweaks, built in the open — bilingual, native, and written to be read
 
-**العربية · English** · a working APT source · eight tweaks, six in one package
+**العربية · English** · a working APT source · nine tweaks, seven in one package
 
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B-lightgrey.svg)]()
 [![Rootless](https://img.shields.io/badge/rootless-supported-success.svg)](#-compatibility)
-[![Albrhi](https://img.shields.io/badge/Albrhi-1.55.3-blueviolet.svg)](suite/CHANGELOG.md)
+[![Albrhi](https://img.shields.io/badge/Albrhi-1.56.0-blueviolet.svg)](suite/CHANGELOG.md)
 [![Instagram](https://img.shields.io/badge/Instagram-4.1.10-orange.svg)](tweaks/instagram/CHANGELOG.md)
 [![YouTube](https://img.shields.io/badge/YouTube-1.20.0-red.svg)](tweaks/youtube/CHANGELOG.md)
 [![X](https://img.shields.io/badge/X-0.14.0-black.svg)](tweaks/twitter/CHANGELOG.md)
 [![TikTok](https://img.shields.io/badge/TikTok-0.17.7-ff0050.svg)](tweaks/tiktok/CHANGELOG.md)
 [![Spotify](https://img.shields.io/badge/Spotify-0.2.3-1DB954.svg)](tweaks/spotify/CHANGELOG.md)
+[![YT Music](https://img.shields.io/badge/YT%20Music-0.1.0-FF0000.svg)](tweaks/ytmusic/CHANGELOG.md)
 [![NextUp](https://img.shields.io/badge/NextUp-0.1.5-FF375F.svg)](tweaks/nextup/CHANGELOG.md)
 [![Watch](https://img.shields.io/badge/Watch-0.5.2-FF375F.svg)](tweaks/watch/CHANGELOG.md)
 [![Based on](https://img.shields.io/badge/based%20on-SCInsta-lightblue.svg)](https://github.com/SoCuul/SCInsta)
@@ -103,7 +104,7 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 
 ### What is in here
 
-**Eight tweaks. Six ship inside `com.albrhi`; two stand on their own.**
+**Nine tweaks. Seven ship inside `com.albrhi`; two stand on their own.**
 
 | Tweak | Patches | Version | What it does |
 |---|---|---|---|
@@ -112,6 +113,7 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 | **Albrhi for X** | X / Twitter | 0.14.0 | media downloads, and the feature switches X asks itself about |
 | **Albrhi for TikTok** | TikTok | 0.17.7 | a download button in the feed, photo posts, no ads, confirmations, privacy |
 | **Albrhi for Spotify** | Spotify | 0.2.3 | no ads, no Premium popups, sponsored podcast segments skipped |
+| **Albrhi for YouTube Music** | YouTube Music | 0.1.0 | no ads, background playback without the upsell |
 | **Albrhi Panel** | Settings | 0.9.21 | the Albrhi page — one switch per patched app, and a page per tweak |
 | **Albrhi NextUp** | SpringBoard, Music, Podcasts, YouTube, YT Music, Spotify | 0.1.5 | what plays next, on the Lock Screen — **its own package** |
 | **Albrhi Watch** | SpringBoard, Watch app | 0.5.2 | pair an Apple Watch on a newer watchOS than iOS expects, and hold watchOS 26 back — **its own package** |
@@ -121,7 +123,7 @@ identity and version number, and **they never meet at runtime**: an injection fi
 each dylib to one bundle id, so the YouTube tweak is never loaded into Instagram. What they
 share is the build plumbing — the checks, the build script and the APT index.
 
-`com.albrhi` is the merge of the first six, built by `tools/make-suite.sh`, which picks up
+`com.albrhi` is the merge of the first seven, built by `tools/make-suite.sh`, which picks up
 any `tweaks/*/control` automatically. A tweak leaves the merge only by carrying a
 `.no-suite` marker file in its directory — NextUp and Watch are the two that do.
 
@@ -340,6 +342,25 @@ what is playing, and that is a cost paid only by somebody who chose it.
 > **SideloadLabs** team, under GPLv3 — the same licence Albrhi ships under, which is what makes
 > carrying them over lawful rather than merely possible. Every ported file is kept diffable against
 > upstream; Albrhi adds the gate, the settings page and the bilingual interface.
+
+---
+
+## 🎼 Albrhi for YouTube Music
+
+### No ads, and background playback left alone
+Advertising is refused where YouTube Music asks for it, and the monetisation flags its player
+response carries are answered as an unmonetised video would answer them. Background playback keeps
+going without the upsell notification that interrupts it.
+
+**This does not unlock Premium.** The tweak these hooks come from tells YouTube Music the account is
+a paying one; that is the single thing not carried over. The two files taken here never ask what the
+account is — `RemoveAds.x` does not contain the word.
+
+> **The hooks are not this project's work.** They are
+> [YTMusicUltimate](https://github.com/dayanch96/YTMusicUltimate) by **dayanch96**, under GPLv3 —
+> the same licence Albrhi ships under, which is what makes carrying them over lawful. Albrhi adds
+> the gate and the packaging; every ported file is kept diffable against upstream, with each edit
+> written where it is.
 
 ---
 
