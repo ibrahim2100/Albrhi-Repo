@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.54.4
+
+Albrhi for Spotify 0.1.2 — **1.54.3 and earlier blocked nothing.** The tweak loaded and installed no
+hooks at all, because Orion's runtime was never started. Install this one.
+
 ## v1.54.3
 
 Albrhi Panel 0.9.19: Albrhi for Spotify sits with the apps, under Spotify's own icon, and opens its

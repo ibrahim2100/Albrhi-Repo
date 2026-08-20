@@ -7,7 +7,7 @@
 
 #import "SCILocalize.h"
 
-NSString *SCIVersionString = @"v0.1.1";  // AlbrhiSpotify
+NSString *SCIVersionString = @"v0.1.2";  // AlbrhiSpotify
 
 ///
 /// Short, because almost everything a person reads about this tweak is drawn by Albrhi Panel and

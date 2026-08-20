@@ -1,5 +1,25 @@
 # Albrhi for Spotify — what changed
 
+## v0.1.2
+
+**Nothing was hooked. Orion never started, and the build gave no sign of it.**
+
+The package compiled, linked, installed and loaded; it logged its version and read its switches. It
+installed **zero hooks**, because Orion's runtime has to be started and nothing started it. Found by
+asking the built dylib instead of trusting the build — and proved by building it both ways:
+
+| | `__init_offsets` |
+|---|---|
+| without the constructor | **0** — no initialiser section at all |
+| with it | **1** |
+
+An empty initialiser section means no code ran at load. The reference tweak calls `orion_init()`
+from a constructor of its own, which is what prompted the check; **a build succeeding is not a hook
+being installed**, and this is the first tweak here where those two came apart.
+
+Worth keeping for the next Swift tweak: Logos writes its own `%ctor` and a Theos Swift/Orion tweak
+does not.
+
 ## v0.1.1
 
 Part of `com.albrhi` rather than a package of its own: it installs with the rest, the way Instagram

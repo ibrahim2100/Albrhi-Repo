@@ -984,7 +984,15 @@ for path in SRC:
                 continue
 
             # A declaration of the thing itself is not a call to something missing.
-            if re.match(r'^\s*(?:static\s+|inline\s+|extern\s+|void\s+|BOOL\s+|NSString)', line):
+            #
+            # **An attribute may sit in front of the storage class, and this missed that.**
+            # `__attribute__((constructor)) static void SCIFoo(void) {` is a definition that reads
+            # as a call to this pattern, because the line starts with the attribute rather than
+            # with `static`. It cost one finding on the first Swift/Orion tweak here, whose whole
+            # entry point is exactly that line. Narrowed rather than worked around: the code was
+            # right and the rule was reading the wrong column.
+            if re.match(r'^\s*(?:__attribute__\s*\(\(.*?\)\)\s*)?'
+                        r'(?:static\s+|inline\s+|extern\s+|void\s+|BOOL\s+|NSString)', line):
                 continue
 
             report('%s at %s:%d is called but defined nowhere this tweak can see '
