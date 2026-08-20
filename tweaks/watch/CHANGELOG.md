@@ -1,5 +1,30 @@
 # Albrhi Watch — what changed
 
+## v0.4.4
+
+**The stage counters answered it in one line**, which is the whole reason they were added:
+
+```
+stamp: 5 call(s) → 11 asked → 2 row(s), 4 with a footer → 1 stamped
+      — last stop: no row on this page carries footer text
+```
+
+The six-row page that offers the update carries footers. The **two-row page it settles into** —
+"your Apple Watch is up to date" — carries none. So the notice was being stamped onto rows that
+were about to be thrown away, and the page a person actually ends up looking at had nothing to
+stamp. Three passes did not help, because the problem was never timing.
+
+A group with no footer is not a page refusing one: `footerText` is a property, and setting it on a
+group that had none draws a footer under that group. So when nothing carries text, **the last group
+is given it** rather than the pass giving up. A group is recognised as a row with no title of its
+own, which is exactly how `TITLE_GROUP` and `INSTALL_BUTTON_GROUP` appear in the page's own dump —
+structure again, not words.
+
+**And the report records both shapes now**: the page as first seen, which is what named
+`INSTALL_BUTTON_GROUP` and made the install rows findable, and the page as it settled, which is
+what a person is looking at. Keeping only the first is how a settled page went four releases
+without ever being described.
+
 ## v0.4.3
 
 **"It shows, then a few seconds later the watch says it is up to date."** Both halves of this

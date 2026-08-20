@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.52.4
+
+Albrhi Watch 0.4.4: the "Albrhi is holding this update" notice reaches the up-to-date page, which
+carries no footer of its own and was therefore never stamped.
+
 ## v1.52.3
 
 Albrhi Watch 0.4.3: the "Albrhi is holding this update" notice survives the page settling into its

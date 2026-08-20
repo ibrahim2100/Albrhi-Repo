@@ -68,6 +68,7 @@ static __weak id sciwLastSeenUpdate = nil;
 static NSString *sciwHeldVersion = nil;
 static NSString *sciwPassedVersion = nil;
 static NSString *sciwPageShape = nil;
+static NSString *sciwPageShapeLast = nil;
 static NSUInteger sciwPageStamps = 0;
 static NSUInteger sciwDisabledRows = 0;
 
@@ -223,6 +224,7 @@ static void SCIWStampUpdatePage(id controller) {
 
         NSMutableArray<NSString *> *shape = [NSMutableArray array];
         PSSpecifier *target = nil;
+        PSSpecifier *lastGroup = nil;
 
         //
         // **The install rows are disabled, not removed — and they are found by structure, not by
@@ -262,6 +264,13 @@ static void SCIWStampUpdatePage(id controller) {
                 target = specifier;
             }
 
+            // A group is a row with no title of its own -- which is exactly how `TITLE_GROUP` and
+            // `INSTALL_BUTTON_GROUP` appear in the page's own dump. Kept because the settled page
+            // carries no footer anywhere, and a footer has to be given to something.
+            NSString *rowName = [specifier respondsToSelector:@selector(name)]
+                ? [specifier name] : nil;
+            if (!rowName.length) lastGroup = specifier;
+
             NSString *identifier = [specifier respondsToSelector:@selector(identifier)]
                 ? [specifier identifier] : nil;
 
@@ -286,11 +295,29 @@ static void SCIWStampUpdatePage(id controller) {
             }
         }
 
+        // Both shapes: the first, which named `INSTALL_BUTTON_GROUP` and made the install rows
+        // findable, and the most recent, which is the page a person is actually looking at.
         if (!sciwPageShape) sciwPageShape = [shape componentsJoinedByString:@"\n"];
+        sciwPageShapeLast = [shape componentsJoinedByString:@"\n"];
+
+        //
+        // **The settled page has no footer at all, and the stage counters are what revealed it.**
+        //
+        // `2 row(s), 4 with a footer → 1 stamped — last stop: no row on this page carries footer
+        // text`. The six-row page that offers the update has footers; the two-row page it settles
+        // into — "your Apple Watch is up to date" — has none. So the notice was being stamped onto
+        // rows that were about to be thrown away, and the page a person ends up looking at had
+        // nothing to stamp.
+        //
+        // A group with no footer is not a page refusing one: `footerText` is a property, and
+        // setting it on a group that had none draws a footer under that group. So when nothing
+        // carries text, the last group is given it rather than the pass giving up.
+        //
+        if (!target) target = lastGroup;
 
         if (!target) {
-            sciwStampStop = @"no row on this page carries footer text";
-        SCIWRefreshReport();
+            sciwStampStop = @"this page has neither a footer nor a group to give one to";
+            SCIWRefreshReport();
             return;
         }
 
@@ -707,7 +734,8 @@ NSString *SCIWUpdateGuardReport(void) {
      (unsigned long)sciwStampFooters, (unsigned long)sciwPageStamps,
      sciwStampStop.length ? [@" — last stop: " stringByAppendingString:sciwStampStop] : @""];
     if (sciwPageShape.length)
-        [report appendFormat:@"\nthe update page's rows (the last one carrying a footer is the "
-                              @"one stamped):\n%@", sciwPageShape];
+        [report appendFormat:@"\nthe update page's rows, first seen:\n%@", sciwPageShape];
+    if (sciwPageShapeLast.length && ![sciwPageShapeLast isEqualToString:sciwPageShape])
+        [report appendFormat:@"\nthe update page's rows, as it settled:\n%@", sciwPageShapeLast];
     return report;
 }
