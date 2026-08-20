@@ -1,5 +1,29 @@
 # Albrhi for TikTok — what changed
 
+## v0.19.3
+
+**`0 call(s)` was the diagnostic lying, not the code failing — and the fault is one this project has
+now met three times.** The guard sat above the counter:
+
+```objc
+if (!host || !button) return;   // returns silently
+sciDateCalls++;                 // never reached
+```
+
+So a function being called on every video reported never being called at all. **Before believing a
+zero, check that the counter sits on the path that executes** — the same family as the watermark
+counter on a setter this build never calls, and as the last-event snapshot that read as fresh proof
+three reports running. Counted first now, with a nil host counted as its own outcome instead of
+vanishing.
+
+**And the real cause underneath it: the label was placed while the button was still being built.**
+On the rail path the item is attached during construction — no superview, no frame — so the label
+was positioned from a rectangle that does not exist yet, which is exactly what a constraint built
+from `bounds` at construction time already cost this file once. It is placed where the button is
+actually in the hierarchy now, beside the counter that says it was placed.
+
+The base path had its host in scope all along and was being asked for `button.superview` instead.
+
 ## v0.19.2
 
 **`0 call(s)` was the truth, and it named the fault in one line.** The date label was hooked into

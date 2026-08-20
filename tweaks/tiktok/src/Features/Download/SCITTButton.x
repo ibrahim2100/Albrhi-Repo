@@ -108,6 +108,7 @@ static const NSInteger kSCIDateTag = 0x5344;
 /// deduped` in the quality picker.
 static NSUInteger sciDateCalls = 0;
 static NSUInteger sciDateOff = 0;
+static NSUInteger sciDateNoHost = 0;
 static NSUInteger sciDateNoDate = 0;
 static NSUInteger sciDatePlaced = 0;
 static NSString *sciDateLast = nil;
@@ -136,10 +137,23 @@ static NSString *sciDateLast = nil;
 /// several is attached on none of the others**, and this file has now paid for that twice.
 ///
 static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *item) {
-    if (!host) host = button.superview;
-    if (!host || !button) return;
-
+    //
+    // **Counted first, because a counter behind a guard counts successes and not calls.**
+    //
+    // A device answered `0 call(s)` while this function was being called on every video: the guard
+    // below returned before the counter, so a path that ran constantly reported never running. That
+    // is the third time this project has met the same family -- the watermark counter on the setter
+    // this build never calls, the last-event snapshot, and now this -- and the rule it keeps
+    // arriving at is one line: **before believing a zero, check that the counter sits on the path
+    // that executes.**
+    //
     sciDateCalls++;
+
+    if (!host) host = button.superview;
+    if (!host || !button) {
+        sciDateNoHost++;
+        return;
+    }
 
     UILabel *label = [host viewWithTag:kSCIDateTag];
 
@@ -206,8 +220,8 @@ static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *it
 /// this cost seconds rather than five minutes.
 NSString *SCITTDateReport(void) {
     return [NSString stringWithFormat:
-            @"%lu call(s) → %lu off → %lu without a date → %lu drawn%@",
-            (unsigned long)sciDateCalls, (unsigned long)sciDateOff,
+            @"%lu call(s) → %lu with no host yet → %lu off → %lu without a date → %lu drawn%@",
+            (unsigned long)sciDateCalls, (unsigned long)sciDateNoHost, (unsigned long)sciDateOff,
             (unsigned long)sciDateNoDate, (unsigned long)sciDatePlaced,
             sciDateLast.length ? [@" — last: " stringByAppendingString:sciDateLast] : @""];
 }
@@ -474,7 +488,6 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
      forControlEvents:UIControlEventTouchUpInside];
 
     objc_setAssociatedObject(button, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    SCITTPlaceDateLabel(button.superview, button, item);
 
     //
     // **Searching the siblings for "share" cannot work, and a device report is what
@@ -601,6 +614,13 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
     }
 
     sciRailButtonsPlaced++;
+
+    // **Here, not at the bind.** The date label was placed where the item is attached, which on
+    // this path is while the button is still being built -- no superview, no frame, and a label
+    // positioned from a rectangle that does not exist yet. This is the line where the button is
+    // actually in the hierarchy, which is the same distinction a constraint built from `bounds` at
+    // construction time already cost this file once.
+    SCITTPlaceDateLabel(button.superview, button, item);
 }
 
 
@@ -1167,7 +1187,7 @@ static void SCITTPlaceBaseButton(UIViewController *controller) {
     // Re-associated on every bind, because the controller is reused and the button is not:
     // a stale association is how the same clip saved three times while another was on screen.
     objc_setAssociatedObject(button, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    SCITTPlaceDateLabel(button.superview, button, item);
+    SCITTPlaceDateLabel(host, button, item);
 
     } @catch (NSException *exception) {
         SCILogV(@"base button: %@", exception.reason);

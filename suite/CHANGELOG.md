@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.58.3
+
+Albrhi for TikTok 0.19.3: the publish date is drawn once the button is really on screen, and its
+diagnostic counts calls rather than successes — it was reporting zero while running constantly.
+
 ## v1.58.2
 
 Albrhi for TikTok 0.19.2: the publish date follows the button wherever it is placed, and the
