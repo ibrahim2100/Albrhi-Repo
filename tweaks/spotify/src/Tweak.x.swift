@@ -43,8 +43,30 @@ struct AlbrhiSpotify: Tweak {
         // than checking a preference inside `%orig`.
         //
         if AlbrhiPrefs.on(AlbrhiPrefs.blockAds) {
+            // Guards itself: upstream's own function checks each class before hooking it, and
+            // logs the ones this build of Spotify does not have.
             activateEeveeAdBlockerExtended()
-            AdBlockerGroup().activate()
+
+            //
+            // **This one is guarded by its caller, and ours was not — which is the crash.**
+            //
+            // Upstream writes `if NSClassFromString("HUBViewModelBuilderImplementation") != nil`
+            // around this exact line. The port took the activation and left the condition behind,
+            // and activating an Orion group whose target class is absent does not fail politely.
+            // Found by reading the reference's own call site rather than by bisecting ours.
+            //
+            // The general rule, which this project already keeps for `%init`: **a hook is
+            // installed only after the thing it hooks is confirmed to be there.** Logos answers
+            // that by never attaching to an absent class; Orion does not, so the caller must.
+            //
+            if NSClassFromString("HUBViewModelBuilderImplementation") != nil {
+                AdBlockerGroup().activate()
+                NSLog("[AlbrhiSpotify] hub ad filtering active")
+            } else {
+                NSLog("[AlbrhiSpotify] HUBViewModelBuilderImplementation is not in this Spotify — "
+                      + "hub ad filtering skipped")
+            }
+
             NSLog("[AlbrhiSpotify] ad blocking active")
         }
 
@@ -68,8 +90,24 @@ struct AlbrhiSpotify: Tweak {
             options.enabled = true
             UserDefaults.sponsorBlockOptions = options
 
-            activateSponsorBlock()
-            NSLog("[AlbrhiSpotify] SponsorBlock active")
+            //
+            // Both of its targets, checked before activation for the reason above. Upstream
+            // activates this one unguarded and logs whether the player class was found -- which
+            // works on the Spotify versions it is maintained against and is a coin toss on any
+            // other. The progress-bar target is a Swift class, so its runtime name is mangled and
+            // a rename between Spotify releases is silent.
+            //
+            let targets = ["SPTPlayerServiceImplementation",
+                           "_TtCO17NowPlaying_ECMKit11ProgressBar6Slider"]
+            let missing = targets.filter { NSClassFromString($0) == nil }
+
+            if missing.isEmpty {
+                activateSponsorBlock()
+                NSLog("[AlbrhiSpotify] SponsorBlock active")
+            } else {
+                NSLog("[AlbrhiSpotify] SponsorBlock skipped — not in this Spotify: %@",
+                      missing.joined(separator: ", "))
+            }
         }
 
     }

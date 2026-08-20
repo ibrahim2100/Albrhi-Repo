@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.55.2
+
+Albrhi for Spotify 0.2.2: the Spotify crash is fixed. A hook group was being activated without
+first checking that the class it hooks exists in your version of the app.
+
 ## v1.55.1
 
 **1.55.0 crashed Spotify — install this one.** The clean-share-links hooks were the only ungrouped

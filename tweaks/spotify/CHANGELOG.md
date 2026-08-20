@@ -1,5 +1,33 @@
 # Albrhi for Spotify — what changed
 
+## v0.2.2
+
+**The crash was one missing line, found by reading the reference's own call site rather than by
+bisecting ours.** Upstream writes
+
+```swift
+if NSClassFromString("HUBViewModelBuilderImplementation") != nil {
+    AdBlockerGroup().activate()
+}
+```
+
+and this port took the activation while leaving the condition behind. **Activating an Orion group
+whose target class is absent does not fail politely** — and a class that exists in the Spotify
+version upstream is maintained against is a coin toss on any other.
+
+The rule this project already keeps for `%init`, now written for Orion too: **a hook is installed
+only after the thing it hooks is confirmed to be there.** Logos answers that by never attaching to
+an absent class; Orion does not, so the caller must.
+
+SponsorBlock is guarded the same way, on **both** of its targets — upstream activates it unguarded
+and merely logs whether the player class was found. One of the two is a Swift class, so its runtime
+name is mangled and a rename between Spotify releases is silent.
+
+**Two things ruled out by comparing against the upstream package the owner supplied**, rather than
+left as suspicions: our dylib links Orion exactly as theirs does, and neither carries the Swift
+back-deployment shims — so `-runtime-compatibility-version none`, added earlier to make the link
+succeed, is not a difference from a build that works.
+
 ## v0.2.1
 
 **0.2.0 crashed Spotify. Clean share links is removed — install this one.**
