@@ -1,5 +1,28 @@
 # Albrhi for Spotify — what changed
 
+## v0.2.3
+
+**The crash was a missing build flag, and it selected a different code path.**
+
+The ported ad blocker has two branches. Under `-D ROOTHIDE` it activates **one small hook group per
+target class**, each guarded by that class *and* the method it hooks being present. Without the
+define it takes the other branch: **one group covering all five hooks, activated as soon as any
+single target class is found** — so a Spotify missing two of the five is hooked for classes it does
+not have, and Orion does not fail politely.
+
+This port built for the roothide scheme and never defined the flag, so a roothide device silently
+took the branch written for everything else. Upstream's own makefile sets it, which is where it was
+finally read from — after the previous fix corrected a real fault in a different group and the crash
+survived it.
+
+Verified in the built dylib rather than assumed: the guarded per-class messages are in it and the
+all-at-once branch's are not.
+
+**A conditional compiled out is not a conditional you can see.** That is the second thing in this
+tweak that compiled, linked, installed and behaved as though a decision had been made somewhere
+else — the first was Orion never being started. Both were found by asking the artefact instead of
+trusting the build, and neither produced a single warning.
+
 ## v0.2.2
 
 **The crash was one missing line, found by reading the reference's own call site rather than by

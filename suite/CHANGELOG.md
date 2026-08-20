@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.55.3
+
+Albrhi for Spotify 0.2.3 — the crash on roothide is fixed. A build flag was missing, and it chose a
+code path that hooks classes without checking each one is there.
+
 ## v1.55.2
 
 Albrhi for Spotify 0.2.2: the Spotify crash is fixed. A hook group was being activated without

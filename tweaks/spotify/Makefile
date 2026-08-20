@@ -48,6 +48,33 @@ AlbrhiSpotify_SWIFTFLAGS = -Osize -import-objc-header src/Localization/SCILocali
 # `ld: symbol(s) not found`.
 #
 
+#
+# **`-D ROOTHIDE` is not a packaging detail — it selects a different code path, and its absence
+# crashed Spotify.**
+#
+# The ported ad blocker has two branches. Under `ROOTHIDE` it activates one small hook group per
+# target class, each guarded by that class *and* the method it hooks being present. Without the
+# define it takes the other branch: **one group covering all five hooks, activated when any single
+# target class is found** -- so a build of Spotify missing two of the five is hooked for classes it
+# does not have, and Orion does not fail politely.
+#
+# This port built for the roothide scheme and never defined the flag, so a roothide device silently
+# took the branch written for everything else. Upstream's own makefile sets it, which is where this
+# was finally read from after the crash survived a fix aimed at the wrong group.
+#
+# **A conditional compiled out is not a conditional you can see**, and this is the second thing in
+# this tweak that compiled, linked, installed and behaved as though a decision had been made
+# somewhere else. Worth checking for any ported file the moment a build flag appears in its
+# `#if`s -- there is no warning for taking the wrong one.
+#
+# NOTE: no tab in column one anywhere below. Make reads the first character before expanding
+# anything, and a tab there is an attempted recipe -- which cost this repository a build once.
+#
+ifeq ($(THEOS_PACKAGE_SCHEME),roothide)
+AlbrhiSpotify_SWIFTFLAGS += -D ROOTHIDE
+AlbrhiSpotify_LDFLAGS += -Xlinker -rpath -Xlinker @loader_path/.jbroot/Library/Frameworks
+endif
+
 AlbrhiSpotify_FRAMEWORKS = Foundation UIKit
 
 #
