@@ -106,40 +106,40 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v1.56.1",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• Albrhi for YouTube Music 0.1.1 — 1.56.0 never published: its rootless build failed on a `%orig` that the two Theos installs disagree about.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "v1.56.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **Albrhi for YouTube Music 0.1.0 joins the package**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v1.55.3",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
           "markdown": "• Albrhi for Spotify 0.2.3 — the crash on roothide is fixed.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v1.55.2",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• Albrhi for Spotify 0.2.2: the Spotify crash is fixed.",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v1.55.1",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **1.55.0 crashed Spotify — install this one.**",
           "useSpacing": true
         },
         {
@@ -155,7 +155,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.55.3"
+          "text": "1.56.1"
         },
         {
           "class": "DepictionTableTextView",
