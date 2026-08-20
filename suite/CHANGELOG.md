@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.50.9
+
+Albrhi Watch 0.2.9: the diagnostics report carries NanoPreferencesSync's real method lists, which is
+what the photo, music, apps and Maps features get written from.
+
 ## v1.50.8
 
 Albrhi Watch 0.2.8: the Watch app reads Albrhi's switches from the file when the preferences daemon

@@ -59,6 +59,14 @@ static NSArray<NSString *> *SCIWProbeFilterFor(NSString *className) {
     if ([className isEqualToString:@"SUBManager"]) return @[];              // all 33
     if ([className isEqualToString:@"COSSoftwareUpdateAutomaticUpdateContoller"]) return @[];  // 8
 
+    // NanoPreferencesSync, in full: 17 and 54 methods, and **this is the route the four sync
+    // features have to be written from**. It is the phone's own way of pushing a preference domain
+    // to the watch -- present in SpringBoard, where this tweak already runs and already works --
+    // and it needs no IDS, no injection into a system app, and nothing installed on the watch.
+    // Counts told us the classes are here; only the lists can say what to call.
+    if ([className isEqualToString:@"NPSManager"]) return @[];
+    if ([className isEqualToString:@"NPSDomainAccessor"]) return @[];
+
     if ([className isEqualToString:@"COSSoftwareUpdateController"]) {
         return @[@"update", @"scan", @"check", @"avail", @"download", @"install",
                  @"eligib", @"version", @"defer", @"enabl"];

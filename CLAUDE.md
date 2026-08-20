@@ -1398,7 +1398,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.11** · Watch **0.2.4** · TikTok **0.17.7** ·
+Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.13** · Watch **0.2.9** · TikTok **0.17.7** ·
 NextUp **0.1.5** · suite **1.49.1**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
@@ -1419,6 +1419,64 @@ out: an always-on log writes the titles of what is playing into `/var/mobile/nu/
 a package whose neighbour in this source exists to stop watching being reported at all — and
 compiling it out is what left the first install undiagnosable. `NULogEnabled()` reads a
 preference, off by default, in Settings › Albrhi › Albrhi NextUp › Advanced.
+
+### Apple Watch, where it actually stands
+
+**Confirmed on a device: pairing works, and the update hold is installed on all five of its
+selectors** — `-manager:scanRequestDidLocateUpdate:error:` on `COSSoftwareUpdateController`, plus
+`-startDownload:`, `-startDownload:passcode:`, `-installUpdate:` and `-installUpdate:passcode:` on
+`SUBManager`. Every encoding was read off the device before a hook was written against it.
+
+Getting there cost seven releases, and every one of them was a rule this file already contained,
+arriving in a place nobody had checked it against:
+
+**The panel gate refused forever, because the question had no answer.** `SCIPanelAllowsThisApp()`
+asks whether `app_enabled_<bundleid>` is set; the panel only ever draws that switch on an *app's*
+own row, and this tweak is deliberately collapsed into one grouped row. Nothing installed, the probe
+never ran, and the report was empty — indistinguishable from a broken tweak. A tweak's own master
+switch is the gate when its shape is not one-tweak-one-app.
+
+**A sandboxed process's preference write is redirected, not refused — and reading it back proves
+nothing.** The Watch app wrote its report into the shared domain, read it back, found it, and
+announced success while Settings saw nothing: cfprefsd had put it in that app's own container,
+where the read-back looked. **A self-verifying write verifies the wrong thing when the failure is
+redirection.** The report travels as a file now, in the one direction needing no permission either
+side lacks — the sandboxed app writes inside its own container, and SpringBoard, unsandboxed, reads
+it and copies it into the shared domain.
+
+**And the same redirection made the master switch read as off.** The report said `master OFF, hold
+updates ON`, which is *precisely* the two defaults — the signature of an empty domain, not of a
+switch. `SCIPanelGate.m`'s daemon-then-file lookup exists for exactly this and was left out of this
+tweak on a comment reasoning that SpringBoard is not sandboxed. True of SpringBoard; this tweak
+stopped being only SpringBoard three releases earlier. **A comment that was right when written is
+not a check that it is still right.** The file answered from
+`…/.jbroot-<random>/var/mobile/Library/Preferences/…`, so the `dladdr`-derived prefix was not
+belt-and-braces — the plain `/` candidate never answered at all.
+
+**Refusing an asynchronous call is not withholding its answer.** The first hold swallowed
+`-scanForUpdates`. The device's own method list said why that was wrong before it shipped: the page
+tracks its wait in `-isExpectingScanResult` and `-hasReceivedValidFirstScanResult`, so a swallowed
+scan is a spinner that never stops. The answer is replaced instead — `%orig` with a nil update,
+which is the path `-noUpdateFoundOrIsComplete` exists for.
+
+**A gate narrower than what it guards fails silently toward doing less.** The hold demanded
+`-scanForUpdates` *and* `-checkForSoftwareUpdate:` and installed neither; the second is not on
+`SUBManager` in this build at all. Each selector decides for itself now, in its own `%group` —
+which matters beyond tidiness, because **a `%hook` on a method a class does not declare does not
+politely do nothing: Logos adds it**, and the tweak would be inventing an API Apple never calls.
+
+**Two ambiguous diagnostics, both fixed by saying which.** `not reached` meant either "the app has
+not run this build" or "the tweak is switched off"; `OFF` meant either off or unreadable. The switch
+values and the source they were read from travel with the report now, and the settings page states
+its own gate above the switches rather than only inside a report somebody must think to copy.
+
+**What is not built, and what it is waiting on.** The hold is coarse: it withholds every update, and
+the switch was asked for as "stop watchOS 26". The update descriptor's class and accessors are in no
+header on this machine, so the first update the hook ever sees is **described into the report**
+behind `-respondsToSelector:`, reading only object-returning accessors — and the filter gets written
+from a name a device confirmed. The four sync features (photos, music, apps, maps) go through
+**NanoPreferencesSync**: `NPSManager` and `NPSDomainAccessor`, both confirmed in SpringBoard, whose
+method lists the probe now dumps in full for the same reason.
 
 ### Apple Watch, and what Legizmo settled
 

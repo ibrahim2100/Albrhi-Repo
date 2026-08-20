@@ -1,5 +1,18 @@
 # Albrhi Watch — what changed
 
+## v0.2.9
+
+**Confirmed on a device: all five update hooks are installed**, and the switch was read from
+`…/.jbroot-<random>/var/mobile/Library/Preferences/com.albrhi.watch.plist` — the preferences daemon
+answered the Watch app with nothing and the file answered, from the roothide path. The
+`dladdr`-derived prefix was not belt-and-braces: the plain `/` candidate never answered at all.
+
+The probe now dumps `NPSManager` and `NPSDomainAccessor` in full. Counts said the classes are here;
+only the method lists can say what to call, and **NanoPreferencesSync is the route the four sync
+features have to be written from** — it is the phone's own way of pushing a preference domain to
+the watch, present in SpringBoard where this tweak already works, needing no IDS, no injection into
+a system app, and nothing installed on the watch.
+
 ## v0.2.8
 
 **The master switch was never off. The Watch app could not read it.**
