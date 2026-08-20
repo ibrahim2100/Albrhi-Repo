@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.55.0
+
+**Albrhi for Spotify 0.2.0** — ads and Premium popups blocked, sponsored podcast segments skipped
+(off until you turn it on: it asks a third-party server what is playing), and share links stripped
+of their tracking parameters. Still no Premium unlock, and the page says so above its switches.
+
 ## v1.54.4
 
 Albrhi for Spotify 0.1.2 — **1.54.3 and earlier blocked nothing.** The tweak loaded and installed no

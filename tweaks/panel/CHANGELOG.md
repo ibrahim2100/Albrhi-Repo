@@ -1,5 +1,9 @@
 # Albrhi Panel Changelog
 
+## v0.9.20
+
+The Spotify page gains podcast and sharing sections: skip sponsored segments, and clean share links.
+
 ## v0.9.19
 
 **A page is not what decides the section; being about one app is.** The Tweaks section exists for a

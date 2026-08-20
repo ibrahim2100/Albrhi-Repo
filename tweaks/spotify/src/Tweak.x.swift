@@ -52,5 +52,32 @@ struct AlbrhiSpotify: Tweak {
             activateUpsellPopupBlocker()
             NSLog("[AlbrhiSpotify] upsell popups blocked")
         }
+
+        //
+        // **Two switches for one feature is one switch too many, so Albrhi's is the one that
+        // decides.**
+        //
+        // SponsorBlock keeps its own `enabled` flag inside its options, defaulting off, because
+        // upstream drives it from a settings screen of its own that this port does not carry.
+        // Left alone, the group would activate and skip nothing — a switch that moves and changes
+        // nothing, which is the failure this project keeps writing rules about. So the option is
+        // written from Albrhi's switch rather than read beside it.
+        //
+        if AlbrhiPrefs.on(AlbrhiPrefs.sponsorBlock) {
+            var options = UserDefaults.sponsorBlockOptions
+            options.enabled = true
+            UserDefaults.sponsorBlockOptions = options
+
+            activateSponsorBlock()
+            NSLog("[AlbrhiSpotify] SponsorBlock active")
+        }
+
+        //
+        // Clean share links installs no group: its hooks are ungrouped, so Orion places them at
+        // startup and each one asks `UserDefaults.cleanShareLinks` before touching anything —
+        // which this port points at Albrhi's own switch. Upstream's design, kept.
+        //
+        NSLog("[AlbrhiSpotify] clean share links: %@",
+              AlbrhiPrefs.on(AlbrhiPrefs.cleanLinks) ? "on" : "off")
     }
 }

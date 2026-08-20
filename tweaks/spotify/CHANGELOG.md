@@ -1,5 +1,31 @@
 # Albrhi for Spotify — what changed
 
+## v0.2.0
+
+**SponsorBlock for podcasts, and clean share links** — carried over from EeveeSpotify under GPLv3
+alongside the ad blocking.
+
+Sponsored, self-promotion and interruption segments are skipped from SponsorBlock's community
+database, with the toast that says one was skipped. **Off by default**: it asks a third-party server
+about what is playing, and this project does not pay a privacy cost on somebody's behalf — the same
+rule the TikTok tweak's external-download switch already follows, stated on its own row.
+
+**Two switches for one feature is one switch too many.** SponsorBlock keeps its own `enabled` flag,
+defaulting off, because upstream drives it from a settings screen this port does not carry. Left
+alone the group would activate and skip nothing — a switch that moves and changes nothing. Albrhi's
+switch writes that option rather than sitting beside it.
+
+**The submit-and-report screens are not here, and the reason is the SDK.** `iPhoneOS16.2.sdk`
+carries a SwiftUI interface built by Swift 5.7.1 and the toolchain here is 6.3.3, which refuses to
+rebuild the module from it. Those four files are the only SwiftUI in the port, and they are the part
+that *contributes* segments rather than the part that skips them. Their three entry points are kept
+as a shim so **every ported file stays byte-for-byte diffable against upstream** — one line in one
+file is the only edit made to any of them, and it says so where it is.
+
+Upstream's `writeDebugLog` wrote every message to a file, forever. It goes to `NSLog` here, for the
+reason Albrhi NextUp's log was switched off: a growing record of what somebody is listening to, from
+a tweak whose neighbours exist to stop watching being reported at all.
+
 ## v0.1.2
 
 **Nothing was hooked. Orion never started, and the build gave no sign of it.**

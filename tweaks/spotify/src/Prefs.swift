@@ -36,6 +36,15 @@ enum AlbrhiPrefs {
     /// person who wants one may not want the other.
     static let blockUpsell = "spotify_block_upsell"
 
+    /// Sponsored, self-promotion and interruption segments in podcasts, skipped by the community
+    /// database SponsorBlock maintains. Off by default: it asks a third-party server about what you
+    /// are listening to, and that is a cost paid only by somebody who chose it — the same rule the
+    /// TikTok tweak's external download switch already follows.
+    static let sponsorBlock = "spotify_sponsorblock"
+
+    /// Share links with Spotify's tracking parameters removed.
+    static let cleanLinks = "spotify_clean_links"
+
     /// Where the last answer came from, so the settings page can say it rather than imply it.
     private(set) static var source = "nothing has been read yet"
 

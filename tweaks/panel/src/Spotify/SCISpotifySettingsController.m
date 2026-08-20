@@ -23,6 +23,10 @@ static const SCISpotifyToggle kSCISpotifyToggles[] = {
     { @"spotify_enabled",      NO  },
     { @"spotify_block_ads",    YES },
     { @"spotify_block_upsell", YES },
+    // Off: it asks a third-party server about what is playing, and that cost is paid only by
+    // somebody who chose it -- the same rule the TikTok tweak's external download switch follows.
+    { @"spotify_sponsorblock",  NO  },
+    { @"spotify_clean_links",   YES },
 };
 
 static const size_t kSCISpotifyToggleCount =
@@ -130,6 +134,22 @@ static const size_t kSCISpotifyToggleCount =
                                                 key:@"spotify_block_upsell"
                                              symbol:@"rectangle.slash"
                                                tint:[UIColor systemTealColor]]];
+
+    [specifiers addObject:[self spotifyGroupTitled:SCILocalized(@"spotify_podcast_section")
+                                            footer:SCILocalized(@"spotify_sponsorblock_footer")]];
+
+    [specifiers addObject:[self spotifySwitchTitled:SCILocalized(@"spotify_sponsorblock")
+                                                key:@"spotify_sponsorblock"
+                                             symbol:@"forward.end"
+                                               tint:[UIColor systemOrangeColor]]];
+
+    [specifiers addObject:[self spotifyGroupTitled:SCILocalized(@"spotify_sharing_section")
+                                            footer:SCILocalized(@"spotify_clean_links_footer")]];
+
+    [specifiers addObject:[self spotifySwitchTitled:SCILocalized(@"spotify_clean_links")
+                                                key:@"spotify_clean_links"
+                                             symbol:@"link"
+                                               tint:[UIColor systemBlueColor]]];
 
     [specifiers addObject:[self spotifyGroupTitled:nil footer:SCILocalized(@"spotify_credit")]];
 
