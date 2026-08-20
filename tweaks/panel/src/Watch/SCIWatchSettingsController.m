@@ -76,7 +76,12 @@ static const size_t kSCIWatchToggleCount = sizeof(kSCIWatchToggles) / sizeof(kSC
     // be followed by.
     CFPreferencesAppSynchronize((__bridge CFStringRef)kSCIWatchDomain);
 
-    if ([key isEqualToString:@"watch_enabled"]) [self viewDidLayoutSubviews];
+    if ([key isEqualToString:@"watch_enabled"]) {
+        [self viewDidLayoutSubviews];
+        // The line above the switch states the master's own value, so it is stale the instant the
+        // switch moves. Rebuilt rather than left to whenever the page is next entered.
+        [self reloadSpecifiers];
+    }
 }
 
 #pragma mark - Rows
@@ -112,7 +117,21 @@ static const size_t kSCIWatchToggleCount = sizeof(kSCIWatchToggles) / sizeof(kSC
 - (NSArray *)specifiers {
     NSMutableArray *specifiers = [NSMutableArray array];
 
-    [specifiers addObject:[self watchGroupTitled:nil footer:SCILocalized(@"watch_master_footer")]];
+    //
+    // **The state, before the switches rather than only inside a report.**
+    //
+    // Every row below this one is inert while the master is off -- no hooks, no answers, no update
+    // hold -- and the only place that said so was a diagnostics line at the bottom of a report
+    // somebody had to think to copy. A page whose switches look live while nothing is installed is
+    // a page that costs a round trip to a device to explain.
+    //
+    NSString *state = [self sci_readBool:@"watch_enabled"]
+        ? SCILocalized(@"watch_gate_on")
+        : SCILocalized(@"watch_gate_off");
+
+    [specifiers addObject:[self watchGroupTitled:nil
+                                          footer:[NSString stringWithFormat:@"%@\n\n%@", state,
+                                                     SCILocalized(@"watch_master_footer")]]];
     [specifiers addObject:[self watchSwitchTitled:SCILocalized(@"watch_master")
                                               key:@"watch_enabled"
                                            symbol:@"power"

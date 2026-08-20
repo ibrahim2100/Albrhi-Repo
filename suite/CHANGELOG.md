@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.50.7
+
+Albrhi Panel 0.9.13: the Albrhi Watch page states whether the tweak is actually on, above its
+switches instead of only inside the diagnostics report.
+
 ## v1.50.6
 
 Albrhi Watch 0.2.7: the update hold replaces the scan's answer instead of refusing the scan, which

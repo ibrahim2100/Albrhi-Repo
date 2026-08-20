@@ -1,5 +1,15 @@
 # Albrhi Panel Changelog
 
+## v0.9.13
+
+**The Watch page says whether it is on, above the switches rather than only inside a report.**
+Every row below the master is inert while it is off — no pairing answers, no update hold — and the
+only place that said so was a diagnostics line at the bottom of a report somebody had to think to
+copy. A page whose switches look live while nothing is installed costs a round trip to a device to
+explain, and this one did.
+
+The line is rebuilt when the master moves, since it states the value that just changed.
+
 ## v0.9.12
 
 The Watch report no longer prints each process's header twice: the probe writes its own, and this
