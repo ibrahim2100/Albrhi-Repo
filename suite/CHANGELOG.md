@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.52.3
+
+Albrhi Watch 0.4.3: the "Albrhi is holding this update" notice survives the page settling into its
+up-to-date state instead of flashing and disappearing.
+
 ## v1.52.2
 
 Albrhi Watch 0.4.2: while watchOS 26 is held, the update page's install row is disabled and says so

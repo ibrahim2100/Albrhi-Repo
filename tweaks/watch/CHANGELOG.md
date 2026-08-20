@@ -1,5 +1,26 @@
 # Albrhi Watch — what changed
 
+## v0.4.3
+
+**"It shows, then a few seconds later the watch says it is up to date."** Both halves of this
+feature were working, and they were working against each other.
+
+The scan-result hook settles the page to *nothing found* — that is what stops the update — and
+settling **rebuilds the rows**, which throws away the notice just stamped onto the rows before it.
+So the page ended on Apple's own up-to-date screen with nothing to say who decided that, which is
+precisely the dishonesty this notice exists to remove.
+
+The stamp runs three times now, at 0.4, 1.5 and 3.0 seconds, rather than once. A single pass at a
+fixed delay is a guess about when the rebuilding stops, and this project has a rule about guessing
+at durations: every time a sleep was replaced by asking, the answer came back immediately and was
+right. There is nothing to ask here, so the next best thing is to stamp again after each state the
+page can settle into — and the stamp is idempotent by content, so a pass that finds its own work
+already done costs one string comparison.
+
+A pass that finds the notice already there no longer records itself as the "last stop" either: it
+is the steady state, and reporting it as the last thing that happened buries the one stop that
+would actually explain a failure.
+
 ## v0.4.2
 
 **Confirmed on a device: no crash, and `held: watchOS 26.6 (major 26)`.** The filter works and four

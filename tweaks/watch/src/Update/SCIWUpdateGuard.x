@@ -191,7 +191,22 @@ static void SCIWStampUpdatePage(id controller) {
         return;
     }
 
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)),
+    //
+    // **Three passes, because the page has two end states and the last one wins.**
+    //
+    // A device reported it exactly: the notice appears, and a few seconds later the page turns
+    // into "your Apple Watch is up to date" with nothing on it. Both halves of this feature were
+    // working, and they were working against each other -- the scan-result hook settles the page
+    // to "nothing found", which is what stops the update, and settling **rebuilds the rows**,
+    // which throws away the stamp just applied to the rows before it.
+    //
+    // A single pass at a fixed delay is a guess about when the rebuilding stops, and this project
+    // has a rule about guessing at durations. There is nothing here to ask, so the next best thing
+    // is to stamp again after each state the page can settle into. The stamp is idempotent by
+    // content, so a pass that finds its work already done costs one string comparison.
+    //
+    for (NSNumber *delay in @[@0.4, @1.5, @3.0])
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay.doubleValue * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
         NSArray *specifiers = ((id (*)(id, SEL))objc_msgSend)(controller,
                                                               @selector(specifiers));
@@ -286,8 +301,8 @@ static void SCIWStampUpdatePage(id controller) {
         // launch -- while that same one-shot would double the text on a row that was not rebuilt.
         // Asking whether the notice is already there answers both.
         if ([existing containsString:SCILocalized(@"hold_notice")]) {
-            sciwStampStop = @"already stamped";
-        SCIWRefreshReport();
+            // Not recorded as a stop: it is the steady state, and reporting it as the last thing
+            // that happened would bury the one stop that actually explains a failure.
             return;
         }
         [target setProperty:[NSString stringWithFormat:@"%@\n\n%@",
