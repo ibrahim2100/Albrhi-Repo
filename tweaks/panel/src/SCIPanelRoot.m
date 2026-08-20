@@ -12,7 +12,7 @@
 #import <objc/message.h>
 #import <objc/runtime.h>
 
-NSString *SCIVersionString = @"v0.9.17";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.9.18";  // AlbrhiPanel
 
 ///
 /// Albrhi's own control panel, in the iOS Settings app.
@@ -200,7 +200,11 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
             // Its own mark, drawn here. These rows had no icon at all: the scan reads an app
             // icon by bundle identifier, and a group identifier names a tweak rather than an
             // app, so nothing was ever found for them.
-            [row setProperty:SCIPanelBadgeForGroup(entry.bundleIdentifier) forKey:@"iconImage"];
+            // The app's own icon when the group named one app, the drawn badge otherwise. A
+            // grouped row is not automatically iconless -- it is iconless when there is no app to
+            // take an icon from, which is a different condition and now asked separately.
+            [row setProperty:(entry.appIcon ?: SCIPanelBadgeForGroup(entry.bundleIdentifier))
+                      forKey:@"iconImage"];
             [specifiers addObject:row];
         }
     }

@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.54.2
+
+Albrhi Panel 0.9.18: the Albrhi for Spotify row carries Spotify's own icon rather than a drawn
+music note.
+
 ## v1.54.1
 
 Albrhi for Spotify 0.1.1 — the version the merged package carries.

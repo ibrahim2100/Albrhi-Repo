@@ -1,5 +1,16 @@
 # Albrhi Panel Changelog
 
+## v0.9.18
+
+**A grouped row that names exactly one app now carries that app's own icon.** The drawn badge exists
+because a filter naming SpringBoard and Camera is one feature rather than two apps, and no icon can
+be resolved from a tweak's group identifier. A filter naming one real app is the opposite case:
+Albrhi for Spotify is collapsed only because it wants a page, and a music-note glyph where
+Spotify's own mark belongs makes it the odd row in a list that is read by eye rather than by name.
+
+Iconless and *no app to take an icon from* are two different conditions, and they are asked
+separately now.
+
 ## v0.9.17
 
 A page for Albrhi for Spotify: the master, the two ad switches, and — above them — what the tweak

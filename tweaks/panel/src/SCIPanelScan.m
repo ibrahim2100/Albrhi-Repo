@@ -296,6 +296,22 @@
                 entry.detailControllerClassName = detailController;
             }
 
+            //
+            // **A group that names exactly one app is still about that app, and should look it.**
+            //
+            // The grouped row exists because a filter naming SpringBoard and Camera is one feature
+            // rather than two apps -- so those rows get a drawn badge, since a group identifier
+            // names a tweak and no icon can be resolved from it. A filter naming one real app is
+            // the opposite case: Albrhi for Spotify is collapsed only because it wants a page, and
+            // a music-note glyph where Spotify's own mark belongs makes it the odd row in a list
+            // read by eye rather than by name.
+            //
+            NSArray *bundles = filter[@"Bundles"];
+            if ([bundles isKindOfClass:[NSArray class]] && bundles.count == 1
+                    && [bundles.firstObject isKindOfClass:[NSString class]]) {
+                entry.appIcon = [self iconFor:bundles.firstObject];
+            }
+
             [out addObject:entry];
             continue;
         }
