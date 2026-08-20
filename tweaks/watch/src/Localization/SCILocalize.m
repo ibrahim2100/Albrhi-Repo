@@ -20,6 +20,10 @@ static void SCIBuildTables(void) {
                         @"because Albrhi withheld it, not because none was published — older "
                         @"updates are still offered. Turn the hold off in Settings › Albrhi › "
                         @"Albrhi Watch to see it again.",
+
+        // The install row's own label once it has been disabled. Short: it replaces a button
+        // title, not a paragraph.
+        @"hold_button": @"Held by Albrhi Watch",
     };
 
     _arTable = @{
@@ -29,6 +33,8 @@ static void SCIBuildTables(void) {
         @"hold_notice": @"البرهي للساعة يمنع watchOS 26 وما بعده. هذه الصفحة لا تُظهر تحديثاً لأن "
                         @"البرهي حجبه، لا لأنه غير موجود — والتحديثات الأقدم ما تزال تُعرض. "
                         @"أطفئ المنع من الإعدادات › البرهي › البرهي للساعة لتراه.",
+
+        @"hold_button": @"محجوب — البرهي للساعة",
     };
 }
 

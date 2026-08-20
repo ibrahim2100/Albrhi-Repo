@@ -53,6 +53,7 @@
 - (id)propertyForKey:(NSString *)key;
 - (void)setProperty:(id)value forKey:(NSString *)key;
 - (NSString *)name;
+- (void)setName:(NSString *)name;
 - (NSString *)identifier;
 @end
 
@@ -68,6 +69,7 @@ static NSString *sciwHeldVersion = nil;
 static NSString *sciwPassedVersion = nil;
 static NSString *sciwPageShape = nil;
 static NSUInteger sciwPageStamps = 0;
+static NSUInteger sciwDisabledRows = 0;
 
 ///
 /// **One counter answered "no" for five different reasons, which is a count and not a diagnosis.**
@@ -140,6 +142,12 @@ static void SCIWDescribeUpdate(id update) {
         // fault this file's own header warns about, and a shape report is not worth a crash.
         Method method = class_getInstanceMethod([update class], selector);
         const char *types = method ? method_getTypeEncoding(method) : NULL;
+        if (types && types[0] == 'q') {
+            long long value = ((long long (*)(id, SEL))objc_msgSend)(update, selector);
+            [shape appendFormat:@"; -%@ = %lld", name, value];
+            continue;
+        }
+
         if (!types || types[0] != '@') {
             [shape appendFormat:@"; -%@ %s (not read)", name, types ?: "?"];
             continue;
@@ -201,6 +209,25 @@ static void SCIWStampUpdatePage(id controller) {
         NSMutableArray<NSString *> *shape = [NSMutableArray array];
         PSSpecifier *target = nil;
 
+        //
+        // **The install rows are disabled, not removed — and they are found by structure, not by
+        // their words.**
+        //
+        // The report's own dump named them: a group whose identifier is `INSTALL_BUTTON_GROUP`,
+        // and the rows that follow it. Matching on "Download and Install" would be matching on a
+        // localised string, which is right in English and wrong in every other language this page
+        // is drawn in.
+        //
+        // Removing them was considered and refused. `-removeSpecifier:` changes the list the
+        // controller is iterating and leaves it holding rows it may still call `-reloadSpecifier:`
+        // on -- and this tweak crashed the app one release ago by being clever about Apple's own
+        // bookkeeping. Renaming and disabling uses only what has already been proven on a device:
+        // `-setProperty:forKey:` and `-reloadSpecifier:`, which stamped the footer without
+        // incident.
+        //
+        BOOL afterInstallGroup = NO;
+        NSUInteger disabled = 0;
+
         for (PSSpecifier *specifier in specifiers) {
             if (![specifier respondsToSelector:@selector(propertyForKey:)]) continue;
 
@@ -218,6 +245,29 @@ static void SCIWStampUpdatePage(id controller) {
             if (footerText.length) {
                 sciwStampFooters++;
                 target = specifier;
+            }
+
+            NSString *identifier = [specifier respondsToSelector:@selector(identifier)]
+                ? [specifier identifier] : nil;
+
+            if ([identifier isEqualToString:@"INSTALL_BUTTON_GROUP"]) {
+                afterInstallGroup = YES;
+                continue;
+            }
+
+            if (!afterInstallGroup) continue;
+
+            // A row that starts an update, held. The action behind it is already refused four
+            // ways; this is so the page stops offering what it cannot do.
+            [specifier setProperty:@NO forKey:@"enabled"];
+            if (!disabled && [specifier respondsToSelector:@selector(setName:)]) {
+                [specifier setName:SCILocalized(@"hold_button")];
+            }
+            disabled++;
+
+            if ([controller respondsToSelector:@selector(reloadSpecifier:)]) {
+                ((void (*)(id, SEL, id))objc_msgSend)(controller, @selector(reloadSpecifier:),
+                                                      specifier);
             }
         }
 
@@ -249,6 +299,7 @@ static void SCIWStampUpdatePage(id controller) {
         }
 
         sciwPageStamps++;
+        sciwDisabledRows = disabled;
         SCIWRecordAnswer(@"update page stamped");
         SCIWRefreshReport();
     });
@@ -634,6 +685,7 @@ NSString *SCIWUpdateGuardReport(void) {
         [report appendFormat:@"\nheld: %@", sciwHeldVersion];
     if (sciwPassedVersion.length)
         [report appendFormat:@"\nlet through: %@", sciwPassedVersion];
+    [report appendFormat:@"\ninstall rows disabled: %lu", (unsigned long)sciwDisabledRows];
     [report appendFormat:@"\nstamp: %lu call(s) → %lu asked → %lu row(s), %lu with a footer → "
                           @"%lu stamped%@",
      (unsigned long)sciwStampCalls, (unsigned long)sciwStampAsked, (unsigned long)sciwStampRows,

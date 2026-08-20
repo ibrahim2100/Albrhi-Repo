@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.52.2
+
+Albrhi Watch 0.4.2: while watchOS 26 is held, the update page's install row is disabled and says so
+rather than offering an update nothing can start.
+
 ## v1.52.1
 
 Albrhi Watch 0.4.1: 1.52.0 could crash the Watch app on its update page. The two hooks responsible

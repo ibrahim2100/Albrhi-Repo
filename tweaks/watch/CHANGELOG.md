@@ -1,5 +1,24 @@
 # Albrhi Watch — what changed
 
+## v0.4.2
+
+**Confirmed on a device: no crash, and `held: watchOS 26.6 (major 26)`.** The filter works and four
+separate refusals sit behind it. What the page still did was **offer** the update — the report's own
+dump listed `INSTALL_BUTTON_GROUP` and a `Download and Install` row.
+
+Those rows are **disabled and renamed**, not removed. `-removeSpecifier:` changes the list the
+controller is iterating and leaves it holding rows it may still call `-reloadSpecifier:` on, and
+this tweak crashed the app one release ago by being clever about Apple's own bookkeeping. Renaming
+and disabling uses only what a device has already proven here: `-setProperty:forKey:` and
+`-reloadSpecifier:`, which stamped the footer without incident.
+
+**They are found by structure, not by their words.** The rows that follow the group whose identifier
+is `INSTALL_BUTTON_GROUP` — matching on "Download and Install" would be matching a localised string,
+right in English and wrong in every other language this page is drawn in.
+
+`-downloadSize` is read now as well: its encoding is `q`, and the shape report had been declining
+every scalar rather than risk a wrong cast.
+
 ## v0.4.1
 
 **0.4.0 crashed the Watch app when the update page was opened. Both hooks it added are gone.**
