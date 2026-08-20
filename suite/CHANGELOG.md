@@ -1,5 +1,22 @@
 # Albrhi Changelog
 
+## v1.54.1
+
+Albrhi for Spotify 0.1.1 — the version the merged package carries.
+
+## v1.54.0
+
+**Albrhi for Spotify is in the package now, not a second download.** Ads, sponsored rows and the
+Premium popups, alongside Instagram, YouTube, X and TikTok — one install, one update.
+
+**It brings a dependency with it, and that is the honest cost:** `com.albrhi` now requires
+`dev.theos.orion`, because this is the first Swift tweak here and Orion is its runtime. Package
+managers fetch it on their own; it is stated rather than left to be discovered.
+
+**It does not unlock Premium.** The ad blocking is carried over from EeveeSpotify under GPLv3 — the
+same licence Albrhi ships under — and its subscription unlock is deliberately not included. The
+settings page says so above its own switches.
+
 ## v1.53.3
 
 Albrhi Panel 0.9.17: a settings page for Albrhi for Spotify, which is published as its own package.

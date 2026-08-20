@@ -38,7 +38,6 @@ on:
             - 'tweaks/**'
             - '!tweaks/nextup/**'
             - '!tweaks/watch/**'
-            - '!tweaks/spotify/**'
             - 'shared/**'
             - 'tools/**'
             - 'extra-debs/**'
@@ -174,7 +173,9 @@ jobs:
                     DynamicLibraries/AlbrhiTW.dylib \
                     DynamicLibraries/AlbrhiTW.plist \
                     DynamicLibraries/AlbrhiTT.dylib \
+                    DynamicLibraries/AlbrhiSpotify.dylib \
                     DynamicLibraries/AlbrhiTT.plist \
+                    DynamicLibraries/AlbrhiSpotify.plist \
                     PreferenceBundles/AlbrhiPanel.bundle/AlbrhiPanel \
                     PreferenceLoader/Preferences/AlbrhiPanel.plist
                 do

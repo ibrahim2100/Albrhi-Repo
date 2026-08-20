@@ -1,5 +1,12 @@
 # Albrhi for Spotify — what changed
 
+## v0.1.1
+
+Part of `com.albrhi` rather than a package of its own: it installs with the rest, the way Instagram
+and TikTok do. Its own package identity stays reserved — `com.albrhi.spotify` — and the suite
+declares `Conflicts` and `Replaces` on it, plus removes it in `preinst`, because `dpkg -i` honours
+neither.
+
 ## v0.1.0
 
 **No ads in Spotify — and no Premium.** Three hooks, carried over from EeveeSpotify under GPLv3:
