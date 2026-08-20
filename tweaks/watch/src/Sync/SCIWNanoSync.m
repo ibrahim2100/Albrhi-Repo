@@ -21,19 +21,63 @@ static NSString *sciwNanoReport = nil;
 /// spellings of each are tried: the `Nano*` name the watch side tends to use, and the phone app's
 /// own bundle identifier, which is what `-synchronizeUserDefaultsDomain:` takes.
 ///
+///
+/// The domains this device actually has, read out of the paired watch's own registry.
+///
+/// **Sixteen guessed names all answered zero while the accessor reported itself bound with a real
+/// pairing ID**, which is a broken measurement rather than an empty world. The registry answered
+/// instead: `/var/mobile/Library/DeviceRegistry/<pairingID>/` lists `NanoPhotos`, `NanoMaps`,
+/// `NanoAppRegistry`, `NanoSystemSettings`, `com.apple.carousel` and a dozen more — **and not one
+/// of the guesses was among them in that form.**
+///
+/// Two directories are read: the registry root, whose entries are the subsystems, and
+/// `NanoPreferencesSync/NanoDomains`, which is where a synced *preference* domain would keep its
+/// file. A `.plist` suffix is stripped, because a domain is `com.apple.NanoMaps` and the file is
+/// `com.apple.NanoMaps.plist` — the name and its storage are not the same string, and this project
+/// has already spent a release on treating one as the other.
+///
+static NSArray<NSString *> *SCIWDiscoveredDomains(NSString *pairingID) {
+    if (!pairingID.length) return @[];
+
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *registry = [NSString stringWithFormat:
+        @"/var/mobile/Library/DeviceRegistry/%@", pairingID];
+
+    NSMutableOrderedSet<NSString *> *names = [NSMutableOrderedSet orderedSet];
+
+    for (NSString *directory in @[[registry stringByAppendingPathComponent:
+                                      @"NanoPreferencesSync/NanoDomains"],
+                                  [registry stringByAppendingPathComponent:
+                                      @"NanoPreferencesSync/Backup"],
+                                  registry]) {
+        for (NSString *entry in [fm contentsOfDirectoryAtPath:directory error:NULL]) {
+            NSString *name = [entry.pathExtension isEqualToString:@"plist"]
+                ? entry.stringByDeletingPathExtension : entry;
+
+            // The registry root also holds `NanoPreferencesSync` itself and a `.db`; neither is a
+            // domain, and asking about them would put two lines of noise at the top of the answer.
+            if ([name isEqualToString:@"NanoPreferencesSync"]) continue;
+            if (entry.pathExtension.length && ![entry.pathExtension isEqualToString:@"plist"])
+                continue;
+
+            [names addObject:name];
+        }
+    }
+
+    return names.array;
+}
+
+///
+/// The names that were *guessed*, kept only as the control group.
+///
+/// They all answer zero, and that is the point: a report that shows the guesses beside the read
+/// names is a report that shows why reading is not optional. Four are kept rather than sixteen —
+/// the finding is established, and sixteen lines of it is a report nobody finishes.
+///
 static NSArray<NSString *> *SCIWCandidateDomains(void) {
     return @[
-        // Photos
-        @"com.apple.NanoPhotos", @"com.apple.mobileslideshow", @"com.apple.nanophotos",
-        // Music
-        @"com.apple.NanoMusic", @"com.apple.Music", @"com.apple.nanomusic",
-        // Companion apps
-        @"com.apple.NanoAppRegistry", @"com.apple.nanoappregistry", @"com.apple.Carousel",
-        // Maps
-        @"com.apple.NanoMaps", @"com.apple.Maps", @"com.apple.nanomaps",
-        // The watch's own settings, where a good many of the above are actually recorded
-        @"com.apple.NanoSettings", @"com.apple.nanosettings",
-        @"com.apple.nanosystemsettings", @"com.apple.Bridge",
+        @"com.apple.NanoPhotos", @"com.apple.NanoMusic",
+        @"com.apple.NanoMaps", @"com.apple.Bridge",
     ];
 }
 
@@ -187,17 +231,31 @@ void SCIWRunNanoProbe(void) {
                    dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
         NSMutableArray<NSString *> *lines = [NSMutableArray array];
 
+        NSString *pairingID = SCIWActivePairingID(accessorClass);
+        NSArray<NSString *> *discovered = SCIWDiscoveredDomains(pairingID);
+
+        [lines addObject:[NSString stringWithFormat:
+            @"read from the registry — %lu name(s):", (unsigned long)discovered.count]];
+
         BOOL first = YES;
-        for (NSString *domain in SCIWCandidateDomains()) {
+        for (NSString *domain in discovered) {
             NSString *line = SCIWDescribeDomain(accessorClass, domain, first);
             if (line) [lines addObject:line];
             first = NO;
         }
 
+        // The control group. Kept short and kept last: it is the evidence that reading the names
+        // was not optional, not a list anybody needs to act on.
+        [lines addObject:@"\nguessed, for comparison:"];
+        for (NSString *domain in SCIWCandidateDomains()) {
+            NSString *line = SCIWDescribeDomain(accessorClass, domain, NO);
+            if (line) [lines addObject:line];
+        }
+
         // The names, read rather than proposed. Printed after the candidates so the two can be
         // compared in one glance: what was guessed, and what is actually there.
         [lines addObject:@"\nwhere the domains actually live:"];
-        [lines addObject:SCIWListRegistry(SCIWActivePairingID(accessorClass))];
+        [lines addObject:SCIWListRegistry(pairingID)];
 
         sciwNanoReport = [lines componentsJoinedByString:@"\n"];
 

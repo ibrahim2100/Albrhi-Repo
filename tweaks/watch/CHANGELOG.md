@@ -1,5 +1,24 @@
 # Albrhi Watch — what changed
 
+## v0.5.0
+
+**The domain names are read off the device and asked about in the same pass.** The registry the
+last release listed is now walked for names — `NanoPreferencesSync/NanoDomains`, its `Backup`, and
+the registry root — and every name found is opened read-only for its size and its key list. A
+`.plist` suffix is stripped, because a domain is `com.apple.NanoMaps` while its file is
+`com.apple.NanoMaps.plist`: **the name and its storage are not the same string**, and this project
+has already spent a release treating one as the other.
+
+Four of the sixteen guesses are kept, last, as the control group — the evidence that reading the
+names was not optional. The other twelve are gone, and so is `NRPairedDeviceRegistry`'s method dump:
+it was added for one question, *where does a paired device come from*, and it answered
+(`-getActivePairedDevice`, `-isPaired`, `-waitForActivePairedDevice`). Twenty-five lines repeated in
+every report afterwards is a report nobody finishes, which this project has already had to say once
+about the TikTok one.
+
+**Still nothing written.** A `-setObject:forKey:` on a domain that syncs to a watch is not a
+diagnostic, it is a change to a paired device.
+
 ## v0.4.4
 
 **The stage counters answered it in one line**, which is the whole reason they were added:

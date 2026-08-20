@@ -68,9 +68,10 @@ static NSArray<NSString *> *SCIWProbeFilterFor(NSString *className) {
     // pairedDevice:`, and an accessor built without one may be bound to nothing -- which is the
     // reading the first domain probe's uniform zeroes point at. This is where the device comes
     // from, and its 127 methods are worth exactly the ones that name a device.
-    if ([className isEqualToString:@"NRPairedDeviceRegistry"]) {
-        return @[@"active", @"paired", @"default", @"shared", @"current"];
-    }
+    // `NRPairedDeviceRegistry` was dumped for one question -- where a paired device comes from --
+    // and it answered: `-getActivePairedDevice`, `-isPaired`, `-waitForActivePairedDevice`. Twenty
+    // five lines repeated in every report afterwards is a report nobody finishes, which this
+    // project has already had to say about the TikTok one.
 
     if ([className isEqualToString:@"NPSManager"]) return @[];
     if ([className isEqualToString:@"NPSDomainAccessor"]) return @[];

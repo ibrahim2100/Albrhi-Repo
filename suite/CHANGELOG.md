@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.53.0
+
+Albrhi Watch 0.5.0: the diagnostics report reads the watch's real preference-domain names off the
+device and asks each one what it holds — the groundwork the photo, music, apps and Maps features get
+written from.
+
 ## v1.52.4
 
 Albrhi Watch 0.4.4: the "Albrhi is holding this update" notice reaches the up-to-date page, which
