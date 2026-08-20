@@ -9,13 +9,13 @@
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B-lightgrey.svg)]()
 [![Rootless](https://img.shields.io/badge/rootless-supported-success.svg)](#-compatibility)
-[![Albrhi](https://img.shields.io/badge/Albrhi-1.46.0-blueviolet.svg)](suite/CHANGELOG.md)
+[![Albrhi](https://img.shields.io/badge/Albrhi-1.53.2-blueviolet.svg)](suite/CHANGELOG.md)
 [![Instagram](https://img.shields.io/badge/Instagram-4.1.10-orange.svg)](tweaks/instagram/CHANGELOG.md)
 [![YouTube](https://img.shields.io/badge/YouTube-1.20.0-red.svg)](tweaks/youtube/CHANGELOG.md)
 [![X](https://img.shields.io/badge/X-0.14.0-black.svg)](tweaks/twitter/CHANGELOG.md)
-[![TikTok](https://img.shields.io/badge/TikTok-0.17.1-ff0050.svg)](tweaks/tiktok/CHANGELOG.md)
+[![TikTok](https://img.shields.io/badge/TikTok-0.17.7-ff0050.svg)](tweaks/tiktok/CHANGELOG.md)
 [![NextUp](https://img.shields.io/badge/NextUp-0.1.5-FF375F.svg)](tweaks/nextup/CHANGELOG.md)
-[![Watch](https://img.shields.io/badge/Watch-0.1.0-FF375F.svg)](tweaks/watch/CHANGELOG.md)
+[![Watch](https://img.shields.io/badge/Watch-0.5.2-FF375F.svg)](tweaks/watch/CHANGELOG.md)
 [![Based on](https://img.shields.io/badge/based%20on-SCInsta-lightblue.svg)](https://github.com/SoCuul/SCInsta)
 
 <br/>
@@ -109,10 +109,10 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 | **Albrhi for Instagram** | Instagram | 4.1.10 | downloads, a quieter feed, watching without a seen receipt |
 | **Albrhi for YouTube** | YouTube | 1.20.0 | downloads with their own player, no ads, SponsorBlock, background playback |
 | **Albrhi for X** | X / Twitter | 0.14.0 | media downloads, and the feature switches X asks itself about |
-| **Albrhi for TikTok** | TikTok | 0.17.1 | a download button in the feed, photo posts, no ads, confirmations, privacy |
-| **Albrhi Panel** | Settings | 0.9.2 | the Albrhi page — one switch per patched app, and a page per tweak |
+| **Albrhi for TikTok** | TikTok | 0.17.7 | a download button in the feed, photo posts, no ads, confirmations, privacy |
+| **Albrhi Panel** | Settings | 0.9.16 | the Albrhi page — one switch per patched app, and a page per tweak |
 | **Albrhi NextUp** | SpringBoard, Music, Podcasts, YouTube, YT Music, Spotify | 0.1.5 | what plays next, on the Lock Screen — **its own package** |
-| **Albrhi Watch** | SpringBoard | 0.1.0 | pair an Apple Watch on a newer watchOS than iOS expects — **its own package** |
+| **Albrhi Watch** | SpringBoard, Watch app | 0.5.2 | pair an Apple Watch on a newer watchOS than iOS expects, and hold watchOS 26 back — **its own package** |
 
 Each is a self-contained Theos project under `tweaks/`, with its own sources, package
 identity and version number, and **they never meet at runtime**: an injection filter binds
@@ -363,25 +363,44 @@ install companion apps onto it. Albrhi Watch answers those compatibility questio
 supported pairing would — the pairing gate, the watch's declared capabilities, and the companion
 app runtime check — so setup completes and apps install.
 
-### Three switches, and a restart button under them
+### Hold watchOS 26 back
+A watch that updates to a watchOS your iPhone cannot pair with is a watch you cannot set up again.
+So the update can be held — and it is a **filter, not a blanket refusal**: the version is read from
+the update itself, so watchOS 26 and newer is withheld while the security updates for the watchOS
+your watch is on are still offered. An update whose version cannot be read is let through, because
+a hold that fires when it cannot tell what it is holding is not a filter.
+
+Nothing can start a held update: the scan result, the install button's own two actions, the
+download and the installation are each refused separately.
+
+### And the page says who held it
+Withholding an update makes iOS tell you the watch is up to date — a sentence the tweak caused and
+iOS believes. So the watch's Software Update page carries a note naming Albrhi as the reason and
+the switch that undoes it, and the install row is disabled and says the same. **A tweak that makes
+the system state a fact about your device, without saying it did, is worse than the thing it hid.**
+
+### Switches, restarts and a report
 **Settings › Albrhi › Albrhi Watch.** The master is off until you turn it on: this answers the
 questions iOS asks before it agrees to pair, and that should never begin because a package landed.
-The three answers have their own switches, so a watch that pairs but misbehaves can have one of
-them turned off rather than the tweak removed.
+Each answer has its own switch, so a watch that pairs but misbehaves can have one of them turned
+off rather than the tweak removed. The page says whether it is on above its own switches, because
+every row below the master is inert while it is off.
 
-The answers are installed while SpringBoard starts, so the page carries the restart button that
-makes a change to the master switch real — a settings page that hides that reports success while
-nothing has happened.
+**A full userspace restart is what applies a pairing change** — measured on a device: the limits are
+written once by SpringBoard and every other process reads them when it next starts, so a respring
+leaves the Watch app and the daemons holding what they cached at boot. The page's own buttons
+(reload SpringBoard, reload the Watch app) are the lesser version and are named as such.
 
-### It says what it did
-Which classes were present on your build, how many times each answer was given, and the watch
-version it read against your iPhone's. **A pairing that fails looks exactly like a tweak that never
-loaded**, and the pairing screen shows neither.
+The report says which classes were present on your build, what the update hold installed and what
+it skipped, which watchOS version it held, and whether the tweak ran in the Watch app at all —
+**"a pairing that fails looks exactly like a tweak that never loaded"**, and the pairing screen
+shows neither.
 
 > **The pairing core is not this project's work.** It is
 > [watched](https://github.com/34306/watched) by **34306**, used under the MIT licence — carried
 > over as code, which MIT permits, with its notice shipped inside the package as MIT requires.
-> Albrhi adds the switches, the settings page, the diagnostics and the bilingual interface.
+> Albrhi adds the update hold, the switches, the settings page, the diagnostics and the bilingual
+> interface.
 
 > **It injects into SpringBoard.** Have a way back in before installing any build.
 

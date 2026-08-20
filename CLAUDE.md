@@ -1398,8 +1398,8 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.15** · Watch **0.4.4** · TikTok **0.17.7** ·
-NextUp **0.1.5** · suite **1.49.1**. **CarPlay is gone** — removed from this repository, to be
+Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.16** · Watch **0.5.2** · TikTok **0.17.7** ·
+NextUp **0.1.5** · suite **1.53.2**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being
@@ -1516,7 +1516,22 @@ and `SCIPanelGate.m`'s daemon-then-file lookup had been left out of this tweak o
 that SpringBoard is not sandboxed. True of SpringBoard; this tweak had stopped being only SpringBoard
 three releases earlier.
 
-**What is not built: the four sync features.** They go through **NanoPreferencesSync** —
+**The four sync features are not being built, and the reason is not a technical failure.** The
+owner's own device settled it: **photo sync and notifications already work automatically** on a
+watch this tweak has paired, so the feature had no user left. Recorded rather than deleted, because
+"we could not" and "there was nothing to fix" are different conclusions and only one of them is a
+reason to try again.
+
+**And the reading that led there cost a safe mode, which is the more important half.** The domain
+probe sends messages to private classes **inside SpringBoard**, and one branch trusted
+`-copyKeyList` to return an array on the strength of its name while the branch ten lines above it
+asked `isKindOfClass:` first. An unrecognised selector there is not a failed diagnostic, it is a
+phone that will not boot to a home screen. **A feature that fails takes its feature down; a
+diagnostic that fails in SpringBoard takes the device down** — so it is off unless somebody switches
+it on, and it does not switch itself back off, because a switch that resets itself is a switch that
+lies.
+
+**What was learned about NanoPreferencesSync, for whoever needs it later.** They go through **NanoPreferencesSync** —
 `NPSManager` offers `-synchronizeNanoDomain:keys:` and
 `-synchronizeUserDefaultsDomain:keys:container:appGroupContainer:cloudEnabled:`; `NPSDomainAccessor`
 offers typed getters and setters plus `-copyKeyList` and `-domainSize`; both are confirmed in
