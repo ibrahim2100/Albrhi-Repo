@@ -106,12 +106,12 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.57.0",
+          "title": "v1.58.4",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• Albrhi for TikTok 0.18.0: more logged-in accounts, messages the sender took back stay visible and are marked as taken back, and a record of profile visitors that a later…",
+          "markdown": "• Albrhi for TikTok 0.19.4: the publish date sits above the download button instead of below and to one side.",
           "useSpacing": true
         },
         {
@@ -120,12 +120,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.56.1",
+          "title": "v1.58.3",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• Albrhi for YouTube Music 0.1.1 — 1.56.0 never published: its rootless build failed on a `%orig` that the two Theos installs disagree about.",
+          "markdown": "• Albrhi for TikTok 0.19.3: the publish date is drawn once the button is really on screen, and its diagnostic counts calls rather than successes — it was reporting zero…",
           "useSpacing": true
         },
         {
@@ -134,12 +134,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.56.0",
+          "title": "v1.58.2",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **Albrhi for YouTube Music 0.1.0 joins the package**",
+          "markdown": "• Albrhi for TikTok 0.19.2: the publish date follows the button wherever it is placed, and the recalled-message marker uses the key a device confirmed.",
           "useSpacing": true
         },
         {
@@ -155,7 +155,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.57.0"
+          "text": "1.58.4"
         },
         {
           "class": "DepictionTableTextView",
