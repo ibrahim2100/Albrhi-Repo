@@ -9,13 +9,13 @@
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B-lightgrey.svg)]()
 [![Rootless](https://img.shields.io/badge/rootless-supported-success.svg)](#-compatibility)
-[![Albrhi](https://img.shields.io/badge/Albrhi-1.58.4-blueviolet.svg)](suite/CHANGELOG.md)
+[![Albrhi](https://img.shields.io/badge/Albrhi-1.58.9-blueviolet.svg)](suite/CHANGELOG.md)
 [![Instagram](https://img.shields.io/badge/Instagram-4.1.10-orange.svg)](tweaks/instagram/CHANGELOG.md)
 [![YouTube](https://img.shields.io/badge/YouTube-1.20.0-red.svg)](tweaks/youtube/CHANGELOG.md)
 [![X](https://img.shields.io/badge/X-0.14.0-black.svg)](tweaks/twitter/CHANGELOG.md)
 [![TikTok](https://img.shields.io/badge/TikTok-0.19.4-ff0050.svg)](tweaks/tiktok/CHANGELOG.md)
 [![Spotify](https://img.shields.io/badge/Spotify-0.2.3-1DB954.svg)](tweaks/spotify/CHANGELOG.md)
-[![YT Music](https://img.shields.io/badge/YT%20Music-0.1.0-FF0000.svg)](tweaks/ytmusic/CHANGELOG.md)
+[![YT Music](https://img.shields.io/badge/YT%20Music-0.1.1-FF0000.svg)](tweaks/ytmusic/CHANGELOG.md)
 [![NextUp](https://img.shields.io/badge/NextUp-0.1.5-FF375F.svg)](tweaks/nextup/CHANGELOG.md)
 [![Watch](https://img.shields.io/badge/Watch-0.5.2-FF375F.svg)](tweaks/watch/CHANGELOG.md)
 [![Based on](https://img.shields.io/badge/based%20on-SCInsta-lightblue.svg)](https://github.com/SoCuul/SCInsta)
@@ -113,7 +113,7 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 | **Albrhi for X** | X / Twitter | 0.14.0 | media downloads, and the feature switches X asks itself about |
 | **Albrhi for TikTok** | TikTok | 0.19.4 | a download button in the feed, photo posts, no ads, confirmations, privacy, extras |
 | **Albrhi for Spotify** | Spotify | 0.2.3 | no ads, no Premium popups, sponsored podcast segments skipped |
-| **Albrhi for YouTube Music** | YouTube Music | 0.1.0 | no ads, background playback without the upsell |
+| **Albrhi for YouTube Music** | YouTube Music | 0.1.1 | no ads, background playback without the upsell |
 | **Albrhi Panel** | Settings | 0.9.21 | the Albrhi page — one switch per patched app, and a page per tweak |
 | **Albrhi NextUp** | SpringBoard, Music, Podcasts, YouTube, YT Music, Spotify | 0.1.5 | what plays next, on the Lock Screen — **its own package** |
 | **Albrhi Watch** | SpringBoard, Watch app | 0.5.2 | pair an Apple Watch on a newer watchOS than iOS expects, and hold watchOS 26 back — **its own package** |
@@ -470,6 +470,43 @@ shows neither.
 > interface.
 
 > **It injects into SpringBoard.** Have a way back in before installing any build.
+
+---
+
+## ⚠️ Instagram and roothide Bootstrap
+
+**On [roothide Bootstrap](https://github.com/roothide/Bootstrap), Instagram 442 and newer crashes
+when you change your profile picture. It is not caused by Albrhi, and no version of Albrhi can fix
+it.**
+
+That reads like every tweak author blaming the loader, so here is how it was established rather
+than asserted. The fault was cut in half, then in half again:
+
+| what was tested | what happened |
+|---|---|
+| Albrhi's Instagram features removed from the build, one group at a time | crash |
+| **every** feature file removed | crash |
+| every hook installed, **every setting answering false** | crash |
+| every file containing a hook removed — **zero Logos symbols in the dylib** | crash |
+| a dylib of one file that logs a line: **no hooks, no classes, no load-time work** | **crash** |
+| the same tweak merged by hand into the app, with no jailbreak injecting it | **no crash** |
+
+An empty 128 KB library, hooking nothing and defining nothing, is enough to crash that screen. The
+last row is the other half of the proof: the identical code, injected differently, does not crash at
+all. What is left is the injection — Bootstrap's loader — and Albrhi is a bystander that happens to
+be the library present.
+
+**What you can do.** Turn Albrhi off for Instagram while changing a picture, or use a manually
+merged build. What will not help is a newer Albrhi, and four releases were spent proving that: each
+fixed something real on that screen — a KVC probe running on every menu with no switch gating it, a
+reference to one of Instagram's own objects held for the life of the process, an ivar read by name
+with no check that it exists, sixteen list hooks rebuilding an array they had filtered nothing out
+of — and the crash was indifferent to all four.
+
+Instagram is also the one tweak here still written the old way: hooks are installed whether or not
+the method exists on the class, where the newer tweaks read a method's real type encoding off the
+device first and stand down when it disagrees. That is worth changing on its own merits. It was not
+this.
 
 ---
 
