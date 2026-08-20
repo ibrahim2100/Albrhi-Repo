@@ -60,6 +60,21 @@ static NSString *sciwUpdateShape = nil;
 static NSString *sciwPageShape = nil;
 static NSUInteger sciwPageStamps = 0;
 
+///
+/// **One counter answered "no" for five different reasons, which is a count and not a diagnosis.**
+///
+/// `the page was stamped 0 time(s)` is true whether the hook never fired, the controller does not
+/// answer `-specifiers`, the list came back empty because the rows are not built yet, or the list
+/// was fine and no row carried a footer to stamp. This project already knows the shape of that
+/// mistake -- the quality picker was fixed three times against the wrong stage until it reported
+/// `raw -> parsed -> deduped` separately -- so each stage counts itself.
+///
+static NSUInteger sciwStampCalls = 0;      ///< the hook fired
+static NSUInteger sciwStampAsked = 0;      ///< the controller answered -specifiers
+static NSUInteger sciwStampRows = 0;       ///< rows in the last list seen
+static NSUInteger sciwStampFooters = 0;    ///< rows carrying footer text
+static NSString *sciwStampStop = nil;      ///< where the last attempt gave up
+
 /// The encodings, every one read off the device by the probe beside this file.
 static NSString *const kSCIWScanResultEncoding = @"v40@0:8@16@24@32";  // -manager:scanRequestDidLocateUpdate:error:
 static NSString *const kSCIWDownloadEncoding = @"v24@0:8@16";          // -startDownload:
@@ -123,14 +138,32 @@ static void SCIWDescribeUpdate(id update) {
 /// is described as one in the report rather than trusted quietly.
 ///
 static void SCIWStampUpdatePage(id controller) {
-    if (!SCIWPrefEnabledForKey(SCIWPrefHoldUpdates)) return;
-    if (![controller respondsToSelector:@selector(specifiers)]) return;
+    sciwStampCalls++;
+
+    if (!SCIWPrefEnabledForKey(SCIWPrefHoldUpdates)) {
+        sciwStampStop = @"the hold is switched off";
+        return;
+    }
+    if (![controller respondsToSelector:@selector(specifiers)]) {
+        sciwStampStop = [NSString stringWithFormat:@"%@ does not answer -specifiers",
+                         NSStringFromClass([controller class])];
+        return;
+    }
 
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
         NSArray *specifiers = ((id (*)(id, SEL))objc_msgSend)(controller,
                                                               @selector(specifiers));
-        if (![specifiers isKindOfClass:[NSArray class]] || !specifiers.count) return;
+        sciwStampAsked++;
+
+        if (![specifiers isKindOfClass:[NSArray class]] || !specifiers.count) {
+            // The rows are built when the page loads, not when the delegate answers -- so an
+            // empty list here is a timing answer, and it is worth saying which.
+            sciwStampStop = [NSString stringWithFormat:@"-specifiers gave %@",
+                             specifiers ? @"an empty list" : @"nothing"];
+            return;
+        }
+        sciwStampRows = specifiers.count;
 
         NSMutableArray<NSString *> *shape = [NSMutableArray array];
         PSSpecifier *target = nil;
@@ -149,11 +182,18 @@ static void SCIWStampUpdatePage(id controller) {
 
             // The last row carrying a footer: on this page that is the one under the version,
             // which is the sentence a person actually reads.
-            if (footerText.length) target = specifier;
+            if (footerText.length) {
+                sciwStampFooters++;
+                target = specifier;
+            }
         }
 
         if (!sciwPageShape) sciwPageShape = [shape componentsJoinedByString:@"\n"];
-        if (!target) return;
+
+        if (!target) {
+            sciwStampStop = @"no row on this page carries footer text";
+            return;
+        }
 
         NSString *existing = [target propertyForKey:@"footerText"] ?: @"";
 
@@ -161,7 +201,10 @@ static void SCIWStampUpdatePage(id controller) {
         // rows, so a one-shot stamp is applied once and then silently absent for the rest of the
         // launch -- while that same one-shot would double the text on a row that was not rebuilt.
         // Asking whether the notice is already there answers both.
-        if ([existing containsString:SCILocalized(@"hold_notice")]) return;
+        if ([existing containsString:SCILocalized(@"hold_notice")]) {
+            sciwStampStop = @"already stamped";
+            return;
+        }
         [target setProperty:[NSString stringWithFormat:@"%@\n\n%@",
                                 SCILocalized(@"hold_notice"), existing]
                      forKey:@"footerText"];
@@ -450,7 +493,11 @@ NSString *SCIWUpdateGuardReport(void) {
     NSMutableString *report = [NSMutableString stringWithString:state];
     if (sciwUpdateShape.length)
         [report appendFormat:@"\nthe update it saw: %@", sciwUpdateShape];
-    [report appendFormat:@"\nthe page was stamped %lu time(s)", (unsigned long)sciwPageStamps];
+    [report appendFormat:@"\nstamp: %lu call(s) → %lu asked → %lu row(s), %lu with a footer → "
+                          @"%lu stamped%@",
+     (unsigned long)sciwStampCalls, (unsigned long)sciwStampAsked, (unsigned long)sciwStampRows,
+     (unsigned long)sciwStampFooters, (unsigned long)sciwPageStamps,
+     sciwStampStop.length ? [@" — last stop: " stringByAppendingString:sciwStampStop] : @""];
     if (sciwPageShape.length)
         [report appendFormat:@"\nthe update page's rows (the last one carrying a footer is the "
                               @"one stamped):\n%@", sciwPageShape];

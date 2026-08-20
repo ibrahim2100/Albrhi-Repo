@@ -1,5 +1,27 @@
 # Albrhi Watch — what changed
 
+## v0.3.2
+
+**Two zeroes came back, and neither of them is a result.**
+
+`the page was stamped 0 time(s)` is true for five different reasons — the hook never fired, the
+controller does not answer `-specifiers`, the list was empty because the rows are not built yet,
+no row carries a footer, or it was already stamped — and one counter cannot say which. This is the
+quality picker's own lesson: it was fixed three times against the wrong stage until it reported
+`raw → parsed → deduped` separately. Each stage counts itself now, and the last stop is named.
+
+**Sixteen domains answering `0 byte(s), no keys` is one answer, not sixteen.** Every candidate came
+back empty — including `com.apple.Bridge`, which the Watch app plainly uses. A uniform zero across
+unrelated things is the signature of a broken measurement, and this project has met it before, when
+every bitrate entry scored zero because one selector name was wrong on all of them. The class says
+what to ask: it declares `-initializedWithActiveDevice`, `-shouldNotDoWork`, `-pairingID` and
+`-requiresDeviceUnlockedSinceBoot`, and it offers `-initWithDomain:pairedDevice:` beside the plain
+`-initWithDomain:` this probe used. So the accessor is asked whether it is bound to anything, and
+the size stops being read as a fact about the domain.
+
+`NRPairedDeviceRegistry`'s 127 methods are dumped filtered to the ones naming a device, because
+that is where a paired device would come from — measured before the next attempt, not guessed at.
+
 ## v0.3.1
 
 **"Checking for updates…" never stopped, and the fix is the lesson this project already paid for in

@@ -64,6 +64,14 @@ static NSArray<NSString *> *SCIWProbeFilterFor(NSString *className) {
     // to the watch -- present in SpringBoard, where this tweak already runs and already works --
     // and it needs no IDS, no injection into a system app, and nothing installed on the watch.
     // Counts told us the classes are here; only the lists can say what to call.
+    // The paired-device registry, filtered. `NPSDomainAccessor` also takes `-initWithDomain:
+    // pairedDevice:`, and an accessor built without one may be bound to nothing -- which is the
+    // reading the first domain probe's uniform zeroes point at. This is where the device comes
+    // from, and its 127 methods are worth exactly the ones that name a device.
+    if ([className isEqualToString:@"NRPairedDeviceRegistry"]) {
+        return @[@"active", @"paired", @"default", @"shared", @"current"];
+    }
+
     if ([className isEqualToString:@"NPSManager"]) return @[];
     if ([className isEqualToString:@"NPSDomainAccessor"]) return @[];
 

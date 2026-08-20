@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.51.2
+
+Albrhi Watch 0.3.2: two diagnostics that reported zero for several different reasons now say which,
+so the next round of watch work is written from an answer rather than an absence.
+
 ## v1.51.1
 
 Albrhi Watch 0.3.1: the watch's Software Update page no longer sits on "Checking for updates…" when
