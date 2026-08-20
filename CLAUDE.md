@@ -1398,7 +1398,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.5** · Watch **0.1.0** · TikTok **0.17.7** ·
+Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.11** · Watch **0.2.4** · TikTok **0.17.7** ·
 NextUp **0.1.5** · suite **1.49.1**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
@@ -1419,6 +1419,55 @@ out: an always-on log writes the titles of what is playing into `/var/mobile/nu/
 a package whose neighbour in this source exists to stop watching being reported at all — and
 compiling it out is what left the first install undiagnosable. `NULogEnabled()` reads a
 preference, off by default, in Settings › Albrhi › Albrhi NextUp › Advanced.
+
+### Apple Watch, and what Legizmo settled
+
+**Legizmo Moonstone 6.3 contains no dylib and no MobileSubstrate filter — it injects into
+nothing.** That one fact, read from the package in a minute, ended a plan that had already cost
+several releases. The tweak this project was writing hooks `SUBManager` inside the Watch app
+(`com.apple.Bridge`) to hold watchOS updates; the developer with a year of watchOS work behind him
+does not hook that class, or any class, in any process. `SUBManager`,
+`SoftwareUpdateBridge`, `COSSoftwareUpdate*`, `NPSManager`, `NPSDomainAccessor` and
+`NRPairingCompatibilityVersionInfo` appear **nowhere** in any of its binaries.
+
+What it is instead: a jailbreak **app** in `/Applications`, a `mobile` **LaunchDaemon**
+(`legizmoappd`, started by a `com.apple.nanoregistry.devicedidpair` launch event), and a set of
+`.lgzfix` plugin bundles loaded into its **own** app. The app links `NanoRegistry`,
+`PBBridgeSupport`, `ProtocolBuffer`, `VisualPairing`, `OnBoardingKit` — the pairing and setup
+stack. It does its work by *being a second thing that drives pairing*, not by patching the first.
+
+**`LGZHephaestusScopeIdentifier` is a label, not an injection target, and reading it as one is the
+exact mistake this file already records about selector dumps.** Each fix declares a scope —
+`com.apple.Bridge`, `com.apple.Music`, `com.apple.Maps`, `com.apple.mobileslideshow`,
+`com.apple.AppStore` — which reads like a filter list and is not: with no dylib in the package,
+nothing of Legizmo can run in those processes. It names the app the fix is *about*, for its own UI.
+
+**The update mechanism, from `BSUCommander.lgzsvc`:** it links `IDS.framework`, `IDSFoundation`,
+`ProtocolBuffer` and `NanoRegistry`, speaks a service named `BSU-IDS`, and carries
+`BSUChangeEnrolmentRequest`/`Response`, `BSUEnrolmentStatusResponse`, `assetAudience`,
+`assetBrain`, `assetUpdate`, `DeveloperSeed`/`CustomerSeed`/`PublicSeed`. So watchOS updates are
+controlled **on the watch**, by changing its asset-audience enrolment, over IDS. Not on the phone,
+not in the phone's UI, and not by refusing a method call. Its own strings say as much to the user:
+"Once configuration completes, check for updates in the Apple Watch app."
+
+**And the screen the owner saw is Legizmo's own.** "Its name appears and it says unsupported" is
+`BSU_CURRENT_SEED_CELL_UNSUPPORTED` on Legizmo's Beta Update Support page, whose footer reads that
+the watch "is not currently compatible with this method of beta updates." It is not injected UI in
+the Watch app, because there is no injection. A screenshot of a screen is not evidence of where
+that screen lives, and the package answers it where the screen cannot.
+
+Read for architecture only, on the owner's instruction: a paid commercial tweak, copied from in no
+part. `LegizmoThemis` and `LegizmoThanos` are its licence and DRM components and were deliberately
+not examined, the same line this project drew at `Check0verPlus`.
+
+**What it means for this tweak, stated plainly rather than optimistically.** Holding a watchOS
+update from inside `com.apple.Bridge` is not disproven — it is simply not what the reference does,
+and no device has yet confirmed `SUBManager` is even in that process, because the probe has never
+run there. The route with evidence behind it runs through **NanoPreferencesSync**, which is
+`NPSManager` (17 methods) and `NPSDomainAccessor` (54) — both confirmed present **in SpringBoard**,
+where this tweak already runs and already works. That is the phone's supported way of pushing a
+preference domain to the watch, and it needs no IDS, no injection into a system app, and no
+component on the watch.
 
 ### TikTok, where it actually stands
 
