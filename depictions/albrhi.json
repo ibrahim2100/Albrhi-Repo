@@ -106,12 +106,12 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.53.2",
+          "title": "v1.55.3",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **1.53.1 could put SpringBoard into safe mode — install this one.**",
+          "markdown": "• Albrhi for Spotify 0.2.3 — the crash on roothide is fixed.",
           "useSpacing": true
         },
         {
@@ -120,12 +120,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.53.1",
+          "title": "v1.55.2",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• Albrhi Watch 0.5.1: the diagnostics no longer discard domain names that look like bundle identifiers, and each domain is read both with and without the paired watch so…",
+          "markdown": "• Albrhi for Spotify 0.2.2: the Spotify crash is fixed.",
           "useSpacing": true
         },
         {
@@ -134,12 +134,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.53.0",
+          "title": "v1.55.1",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• Albrhi Watch 0.5.0: the diagnostics report reads the watch's real preference-domain names off the device and asks each one what it holds — the groundwork the photo…",
+          "markdown": "• **1.55.0 crashed Spotify — install this one.**",
           "useSpacing": true
         },
         {
@@ -155,7 +155,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.53.2"
+          "text": "1.55.3"
         },
         {
           "class": "DepictionTableTextView",
