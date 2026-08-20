@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.52.0
+
+Albrhi Watch 0.4.0 and Albrhi Panel 0.9.15: the watchOS hold is a version filter rather than a
+blanket refusal — it holds watchOS 26 and newer and leaves older updates offered.
+
 ## v1.51.3
 
 Albrhi Watch 0.3.3: the diagnostics report refreshes while the app is used instead of describing

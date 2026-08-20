@@ -1,5 +1,32 @@
 # Albrhi Watch — what changed
 
+## v0.4.0
+
+**"Stop watchOS 26" is what this now does, and it took the device naming the descriptor.**
+
+```
+the update it saw: SUBDescriptor; -humanReadableUpdateName = watchOS 26.6;
+                   -productVersion = 26.6; -productBuildVersion = 23U67
+```
+
+Until that came back the hold was necessarily coarse — it withheld everything, which is not what was
+asked for and was described in the last release as not being it. The comparison is on the **major**
+number alone: `26.6`, `26.0.1` and `26` all answer 26, and a string compare would put `26.6` before
+`9.5`. **An update whose version cannot be read is let through, not held** — a hold that fires when
+it cannot tell what it is holding is the coarse behaviour wearing a filter's name, and the
+irreversible direction here is the one that stops a security fix for the watchOS the watch is on.
+
+**Withholding the scan result was not enough, and the page's own dump said so.** Every hook
+installed, `watchOS 26.6` recorded as seen, and the report still listed `INSTALL_BUTTON_GROUP` and a
+`Download and Install` row. The descriptor reaches the page by more than one road: the controller
+**stores** it in `-setUpdate:` and is driven by `-handleManagerState:update:error:`. Both are hooked
+now, both encodings read off the device. This is the watermark fix's shape from the TikTok tweak — a
+value that is stored is true for every reader afterwards, while intercepting one delivery answers
+one caller.
+
+The report says which version was held and which was let through, because "it allowed one" and "it
+never saw one" are two different things and only one of them is a bug.
+
 ## v0.3.3
 
 **`stamp: 0 call(s)` was not the hooks failing — it was my own report describing a process that had

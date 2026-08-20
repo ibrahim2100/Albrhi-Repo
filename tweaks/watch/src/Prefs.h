@@ -48,6 +48,14 @@
 /// offered updates, so it waits to be turned on.
 #define SCIWPrefHoldUpdates     CFSTR("watch_hold_updates")
 
+/// The watchOS major version the hold starts at — 26 unless something writes otherwise.
+///
+/// A number rather than a switch because the request was never "stop updates", it was **stop 26**:
+/// a watch that stays pairable with this iPhone still wants its 11.x security fixes. The device
+/// named the accessor this reads (`SUBDescriptor -productVersion`), so the comparison is on a real
+/// value rather than on the update's title.
+#define SCIWPrefHoldFromMajor   CFSTR("watch_hold_from_major")
+
 /// Companion app installation: `ACXRemoteApplication -isRuntimeCompatibleWithOSVersion:`.
 #define SCIWPrefApps            CFSTR("watch_apps")
 
@@ -74,6 +82,9 @@ BOOL SCIWReadPreference(CFStringRef key, BOOL fallback);
 /// Where the last answer came from — the daemon, a path, or nowhere. Printed in the report,
 /// because "switched off" and "unreadable" are the two things this whole lookup exists to separate.
 NSString *SCIWPreferenceSource(void);
+
+/// The same lookup, for a number. Same two steps and the same reasons.
+NSInteger SCIWReadInteger(CFStringRef key, NSInteger fallback);
 
 ///
 /// This tweak's master, then the feature's own — and **not** Albrhi Panel's per-app switch.

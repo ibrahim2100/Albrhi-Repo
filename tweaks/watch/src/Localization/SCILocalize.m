@@ -16,18 +16,19 @@ static void SCIBuildTables(void) {
 
         // Shown on the watch's own Software Update page while the hold is on. iOS says the watch
         // is up to date, because that is what it was told; this says who told it.
-        @"hold_notice": @"Albrhi Watch is holding watchOS updates. This page shows no update "
-                        @"because Albrhi withheld it, not because none was published. Turn the "
-                        @"hold off in Settings › Albrhi › Albrhi Watch to see it again.",
+        @"hold_notice": @"Albrhi Watch is holding watchOS 26 and newer. This page shows no update "
+                        @"because Albrhi withheld it, not because none was published — older "
+                        @"updates are still offered. Turn the hold off in Settings › Albrhi › "
+                        @"Albrhi Watch to see it again.",
     };
 
     _arTable = @{
         @"title": @"البرهي للساعة",
         @"gate_off": @"مطفأة — شغّل البرهي للساعة من الإعدادات › البرهي",
 
-        @"hold_notice": @"البرهي للساعة يمنع تحديثات watchOS. هذه الصفحة لا تُظهر تحديثاً لأن "
-                        @"البرهي حجبه، لا لأنه غير موجود. أطفئ المنع من الإعدادات › البرهي › "
-                        @"البرهي للساعة لتراه.",
+        @"hold_notice": @"البرهي للساعة يمنع watchOS 26 وما بعده. هذه الصفحة لا تُظهر تحديثاً لأن "
+                        @"البرهي حجبه، لا لأنه غير موجود — والتحديثات الأقدم ما تزال تُعرض. "
+                        @"أطفئ المنع من الإعدادات › البرهي › البرهي للساعة لتراه.",
     };
 }
 

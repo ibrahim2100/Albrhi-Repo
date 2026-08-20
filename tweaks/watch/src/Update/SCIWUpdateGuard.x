@@ -58,6 +58,8 @@
 
 static NSString *sciwGuardState = nil;
 static NSString *sciwUpdateShape = nil;
+static NSString *sciwHeldVersion = nil;
+static NSString *sciwPassedVersion = nil;
 static NSString *sciwPageShape = nil;
 static NSUInteger sciwPageStamps = 0;
 
@@ -246,6 +248,55 @@ static void SCIWStampUpdatePage(id controller) {
     });
 }
 
+///
+/// **"Stop watchOS 26" is now a thing this code can actually say.**
+///
+/// The device named the descriptor and its accessors: `SUBDescriptor`, with
+/// `-humanReadableUpdateName = watchOS 26.6`, `-productVersion = 26.6` and
+/// `-productBuildVersion = 23U67`. Until that came back the hold was necessarily coarse -- it
+/// withheld every update, which is not what was asked for and was described as not being it.
+///
+/// The comparison is on the **major** number alone. `26.6`, `26.0.1` and `26` all answer 26, and a
+/// string compare would order `26.6` before `9.5`; this project has already paid for a comparison
+/// that ranked the wrong thing correctly.
+///
+/// An update whose version cannot be read is **let through**, not held. A hold that fires when it
+/// cannot tell what it is holding is the coarse behaviour again wearing a filter's name, and the
+/// irreversible direction here is the one that stops a security update.
+///
+static NSInteger SCIWMajorVersion(id update) {
+    if (![update respondsToSelector:@selector(productVersion)]) return 0;
+
+    id version = ((id (*)(id, SEL))objc_msgSend)(update, @selector(productVersion));
+    if (![version isKindOfClass:[NSString class]]) return 0;
+
+    NSString *major = [(NSString *)version componentsSeparatedByString:@"."].firstObject;
+    return major.length ? major.integerValue : 0;
+}
+
+static BOOL SCIWShouldHold(id update) {
+    if (!SCIWPrefEnabledForKey(SCIWPrefHoldUpdates)) return NO;
+    if (!update) return NO;
+
+    NSInteger major = SCIWMajorVersion(update);
+    NSInteger floor = SCIWReadInteger(SCIWPrefHoldFromMajor, 26);
+
+    id name = [update respondsToSelector:@selector(humanReadableUpdateName)]
+        ? ((id (*)(id, SEL))objc_msgSend)(update, @selector(humanReadableUpdateName)) : nil;
+    NSString *label = [NSString stringWithFormat:@"%@ (major %ld)", name ?: @"unnamed", (long)major];
+
+    if (major && major >= floor) {
+        sciwHeldVersion = label;
+        return YES;
+    }
+
+    // Said out loud rather than silently allowed: "it let one through" and "it never saw one" are
+    // the two things a report has to separate, and only one of them is a bug.
+    sciwPassedVersion = [NSString stringWithFormat:@"%@ — allowed, the hold starts at %ld",
+                         label, (long)floor];
+    return NO;
+}
+
 /// Why a selector was skipped, in the words the next release gets written from.
 static NSString *SCIWDescribeSelector(Class cls, NSString *selectorName, NSString *expected) {
     Method method = class_getInstanceMethod(cls, NSSelectorFromString(selectorName));
@@ -289,7 +340,7 @@ static void SCIWPublishGuardState(void) {
 %hook COSSoftwareUpdateController
 
 - (void)manager:(id)manager scanRequestDidLocateUpdate:(id)update error:(id)error {
-    if (!SCIWPrefEnabledForKey(SCIWPrefHoldUpdates) || !update) {
+    if (!SCIWShouldHold(update)) {
         %orig;
         return;
     }
@@ -341,6 +392,52 @@ static void SCIWPublishGuardState(void) {
 // `-updateTableViewWithTask:` is it redrawing. Both are declared on the class, both encodings read
 // off the device.
 //
+//
+// **Withholding the scan result was not enough, and the page said so itself.** With every hook
+// installed and `watchOS 26.6` recorded as seen, the report's own dump of the page still listed
+// `INSTALL_BUTTON_GROUP` and a `Download and Install` row. So the descriptor reaches the page by
+// more than one road: the controller keeps it in `-setUpdate:` and is driven by
+// `-handleManagerState:update:error:`, both declared here, both encodings read off the device.
+//
+// This is the shape of the watermark fix in the TikTok tweak: a value that is *stored* is true for
+// every reader afterwards, while intercepting one delivery only answers one caller.
+//
+%group SetUpdate
+
+%hook COSSoftwareUpdateController
+
+- (void)setUpdate:(id)update {
+    if (SCIWShouldHold(update)) {
+        SCIWDescribeUpdate(update);
+        SCIWRecordAnswer(@"held update refused at -setUpdate:");
+        %orig(nil);
+        SCIWRefreshReport();
+        return;
+    }
+    %orig;
+}
+
+%end
+%end
+
+%group ManagerState
+
+%hook COSSoftwareUpdateController
+
+- (void)handleManagerState:(long long)state update:(id)update error:(id)error {
+    if (SCIWShouldHold(update)) {
+        SCIWDescribeUpdate(update);
+        SCIWRecordAnswer(@"held update removed from the state handler");
+        %orig(state, nil, error);
+        SCIWRefreshReport();
+        return;
+    }
+    %orig;
+}
+
+%end
+%end
+
 %group PageAppears
 
 %hook COSSoftwareUpdateController
@@ -456,6 +553,22 @@ void SCIWInstallUpdateGuard(void) {
             : @"COSSoftwareUpdateController is not in this process"];
     }
 
+    if (controller && SCIWEncodingMatches(controller, @"setUpdate:", @"v24@0:8@16")) {
+        %init(SetUpdate);
+        [installed addObject:@"-setUpdate:"];
+    } else if (controller) {
+        [skipped addObject:SCIWDescribeSelector(controller, @"setUpdate:", @"v24@0:8@16")];
+    }
+
+    if (controller && SCIWEncodingMatches(controller, @"handleManagerState:update:error:",
+                                          @"v40@0:8q16@24@32")) {
+        %init(ManagerState);
+        [installed addObject:@"-handleManagerState:update:error:"];
+    } else if (controller) {
+        [skipped addObject:SCIWDescribeSelector(controller, @"handleManagerState:update:error:",
+                                                @"v40@0:8q16@24@32")];
+    }
+
     if (controller && SCIWEncodingMatches(controller, @"startSUBUpdates", @"v16@0:8")) {
         %init(PageAppears);
         [installed addObject:@"-startSUBUpdates"];
@@ -522,6 +635,10 @@ NSString *SCIWUpdateGuardReport(void) {
     NSMutableString *report = [NSMutableString stringWithString:state];
     if (sciwUpdateShape.length)
         [report appendFormat:@"\nthe update it saw: %@", sciwUpdateShape];
+    if (sciwHeldVersion.length)
+        [report appendFormat:@"\nheld: %@", sciwHeldVersion];
+    if (sciwPassedVersion.length)
+        [report appendFormat:@"\nlet through: %@", sciwPassedVersion];
     [report appendFormat:@"\nstamp: %lu call(s) → %lu asked → %lu row(s), %lu with a footer → "
                           @"%lu stamped%@",
      (unsigned long)sciwStampCalls, (unsigned long)sciwStampAsked, (unsigned long)sciwStampRows,

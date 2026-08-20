@@ -1,5 +1,10 @@
 # Albrhi Panel Changelog
 
+## v0.9.15
+
+The watchOS update row says what the hold actually does: watchOS 26 and newer, with the version read
+from the update itself, older updates still offered, and an unreadable version let through.
+
 ## v0.9.14
 
 The Watch report carries a nano-domains section: what NanoPreferencesSync actually holds on this

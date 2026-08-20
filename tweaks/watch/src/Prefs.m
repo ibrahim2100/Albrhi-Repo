@@ -72,6 +72,11 @@ BOOL SCIWReadPreference(CFStringRef key, BOOL fallback) {
     return [value respondsToSelector:@selector(boolValue)] ? [value boolValue] : fallback;
 }
 
+NSInteger SCIWReadInteger(CFStringRef key, NSInteger fallback) {
+    id value = SCIWCopyRawValue(key);
+    return [value respondsToSelector:@selector(integerValue)] ? [value integerValue] : fallback;
+}
+
 NSString *SCIWPreferenceSource(void) {
     return sciwPreferenceSource ?: @"nothing has been read yet";
 }
