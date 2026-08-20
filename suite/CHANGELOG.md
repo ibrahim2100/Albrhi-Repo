@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.50.6
+
+Albrhi Watch 0.2.7: the update hold replaces the scan's answer instead of refusing the scan, which
+would have left the Software Update page waiting forever; the download and the install are refused
+as well; and the report says whether the switches are on.
+
 ## v1.50.5
 
 Albrhi Watch 0.2.6: the update hold installs what this build of the Watch app actually has rather

@@ -47,8 +47,21 @@ void SCIWBridgeAnnounce(void) {
                          stringByAppendingPathComponent:kSCIWDropName];
 
     NSError *error = nil;
-    NSString *payload = [NSString stringWithFormat:@"%@%@%@",
-                         SCIWUpdateProbeReport(), kSCIWGuardMarker, SCIWUpdateGuardReport()];
+    //
+    // **The switches travel with the report, because "not reached" had two meanings.**
+    //
+    // A verdict of "the Watch app has not run this build" is also what a switched-off tweak
+    // produces, and a reader cannot tell those apart -- the same ambiguity the empty section had
+    // before the announcement existed. The gate says its own state here so the next report is read
+    // once rather than guessed at twice.
+    //
+    NSString *switches = [NSString stringWithFormat:@"master %@, hold updates %@",
+                          SCIWReadPreference(SCIWPrefEnabled, NO) ? @"ON" : @"OFF",
+                          SCIWReadPreference(SCIWPrefHoldUpdates, YES) ? @"ON" : @"OFF"];
+
+    NSString *payload = [NSString stringWithFormat:@"%@%@%@\n(%@)",
+                         SCIWUpdateProbeReport(), kSCIWGuardMarker, SCIWUpdateGuardReport(),
+                         switches];
 
     BOOL wrote = [payload writeToFile:drop
                        atomically:YES

@@ -1,6 +1,6 @@
 Package: com.albrhi.watch
 Name: Albrhi Watch (rootless)
-Version: 0.2.6
+Version: 0.2.7
 Architecture: iphoneos-arm64
 Description: Pair an Apple Watch running a watchOS your iPhone does not officially support.
  .

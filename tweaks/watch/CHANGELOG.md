@@ -1,5 +1,35 @@
 # Albrhi Watch — what changed
 
+## v0.2.7
+
+**Refusing `-scanForUpdates` was wrong, and the device's own method list is what showed it.** The
+scan is asynchronous: its answer arrives through the delegate, and the Software Update page tracks
+the wait in `-isExpectingScanResult` and `-hasReceivedValidFirstScanResult`. Swallow the call and no
+answer ever arrives — **a spinner that never stops, not a phone that is up to date.** A principle
+applied at the wrong point removes the working behaviour instead of the unwanted one, which is a
+mistake this project has shipped before in another shape.
+
+So the answer is replaced rather than the question refused — the same way the TikTok ad filter lets
+the app build its object and then declines it. `-manager:scanRequestDidLocateUpdate:error:` on
+`COSSoftwareUpdateController` (confirmed `v40@0:8@16@24@32`) is called with **no update and no
+error**, which is Apple's own "nothing found" path; the page has `-noUpdateFoundOrIsComplete` for
+exactly that state.
+
+**And the download and the install are refused too**, because one intercepted answer is a single
+point of failure for something irreversible: `-startDownload:`, `-startDownload:passcode:`,
+`-installUpdate:`, `-installUpdate:passcode:`, each in its own group, each installed only if its
+runtime encoding matches.
+
+**The version filter is not written yet, on purpose.** The switch was asked for as "stop watchOS
+26", and holding every update is not that — but the update descriptor's class and accessors are in
+no header on this machine, and guessing at them is the exact mistake the last four releases have
+been undoing. The first update this ever sees is **described into the report** instead, behind
+`-respondsToSelector:` at every step and reading only object-returning accessors, so the filter gets
+written against a name a device confirmed.
+
+**`not reached` had two meanings** — the Watch app has not run this build, and the tweak is switched
+off — so the switches now travel with the report and say which.
+
 ## v0.2.6
 
 **The channel works, and the first real answer from inside the Watch app corrects two things at

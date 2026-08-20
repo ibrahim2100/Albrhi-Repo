@@ -1,59 +1,99 @@
 #import <Foundation/Foundation.h>
 #import <objc/runtime.h>
+#import <objc/message.h>
 #import "SCIWUpdateGuard.h"
 #import "../Prefs.h"
 #import "../Diagnostics/SCIWDiagnostics.h"
 
 ///
-/// Holding watchOS updates back, inside the Watch app.
+/// Holding a watchOS update back, inside the Watch app — written from a device's own method lists.
 ///
-/// **Where this came from, and where it did not.** Reading a commercial tweak's package told us
-/// one thing worth knowing and it was a negative: its update feature does not hook the phone's
-/// update screen at all -- it speaks to the watch over IDS with protobufs. What *is* on the phone
-/// is `SUBManager`, from `SoftwareUpdateBridge`, and the Watch app names
-/// `COSSoftwareUpdateController` in its own `General.plist` as the Software Update page. Those two
-/// facts are the entire basis for this file; no logic was taken from anybody.
+/// **Where this came from, and where it did not.** Reading a commercial tweak's package told us one
+/// thing worth knowing and it was a negative: its update feature hooks nothing on the phone at all,
+/// it speaks to the watch over IDS. What *is* on the phone is `SUBManager` from
+/// `SoftwareUpdateBridge` and `COSSoftwareUpdateController`, which the Watch app's own
+/// `General.plist` names as its Software Update page. Those two facts are the entire basis here;
+/// no logic was taken from anybody.
 ///
-/// **The hold is coarse and says so.** `-scanForUpdates` and `-checkForSoftwareUpdate:` are how
-/// the Watch app goes looking; refusing them means it finds nothing to offer. That stops an update
-/// being presented and installed *through the phone*, which is how a watch update normally
-/// arrives. It is not a version filter -- filtering on "26 or newer" needs the update descriptor's
-/// own API, which is in the dyld shared cache and cannot be read on iOS 16 without extracting a
-/// cryptex. The probe beside this file is what will settle that, from the device, in one report.
+/// **Refusing `-scanForUpdates` was wrong, and the method list is what showed it.** The scan is
+/// asynchronous: its answer comes back through the delegate, and the page tracks the wait in
+/// `-isExpectingScanResult` / `-hasReceivedValidFirstScanResult`. Swallow the *call* and no answer
+/// ever arrives — the page waits forever, which is a spinner that never stops, not a phone that is
+/// up to date. This project has shipped that mistake in another shape already: a principle applied
+/// at the wrong point removes the working behaviour instead of the unwanted one.
 ///
-/// **Nothing is installed unless the runtime encoding matches what these hooks were compiled
-/// for.** `class_getInstanceMethod` returning non-NULL proves a selector exists and says nothing
-/// about its types, and a `%hook` whose argument types are wrong does not fail politely: arguments
-/// arrive in the wrong registers. This project crashed one app four times learning that. So the
-/// real encoding is read and compared, and a mismatch installs nothing and reports itself.
+/// **So the answer is replaced rather than the question refused**, which is also how the TikTok ad
+/// filter works: let the app do its work, then hand back the result it would get if there were
+/// nothing to find. `-manager:scanRequestDidLocateUpdate:error:` is the delegate callback that
+/// carries a located update, confirmed on-device as `v40@0:8@16@24@32`, and `%orig` with a nil
+/// update is exactly the shape of Apple's own "nothing found" path — the page has
+/// `-noUpdateFoundOrIsComplete` for precisely that state.
+///
+/// **And the download and the install are refused as well**, because one intercepted answer is a
+/// single point of failure for something irreversible. `-startDownload:` and `-installUpdate:` are
+/// where an update stops being a notice and starts being a change to the watch.
+///
+/// **Every hook is installed only if the runtime encoding matches what it was compiled against.**
+/// `class_getInstanceMethod` returning non-NULL proves a selector exists and says nothing about its
+/// types; a `%hook` with wrong argument types does not fail politely. This project crashed one app
+/// four times learning that.
 ///
 
 @interface SUBManager : NSObject
 @end
 
+@interface COSSoftwareUpdateController : NSObject
+@end
+
 static NSString *sciwGuardState = nil;
+static NSString *sciwUpdateShape = nil;
 
-/// What each hooked selector must encode as. Read from the device by the probe; anything else
-/// means Apple changed the method and this build must not touch it.
-static NSString *const kSCIWScanEncoding = @"v16@0:8";        // -scanForUpdates
-static NSString *const kSCIWCheckEncoding = @"v24@0:8@16";    // -checkForSoftwareUpdate:
+/// The encodings, every one read off the device by the probe beside this file.
+static NSString *const kSCIWScanResultEncoding = @"v40@0:8@16@24@32";  // -manager:scanRequestDidLocateUpdate:error:
+static NSString *const kSCIWDownloadEncoding = @"v24@0:8@16";          // -startDownload:
+static NSString *const kSCIWDownloadPasscodeEncoding = @"v32@0:8@16@24";
+static NSString *const kSCIWInstallEncoding = @"v24@0:8@16";           // -installUpdate:
+static NSString *const kSCIWInstallPasscodeEncoding = @"v32@0:8@16@24";
 
 ///
-/// The state, written where Settings can read it.
+/// What the located update actually is, recorded the one time it exists.
 ///
-/// It was computed inside the Watch app and shown nowhere -- the one line a fix gets written
-/// from, sitting in a process the person reading the report cannot see into.
+/// **The version filter cannot be written until this comes back.** The switch is asked for as "stop
+/// watchOS 26", and a hold that refuses every update is not that -- but the descriptor's class and
+/// accessors are not in any header this machine has, and guessing at them is the mistake this whole
+/// tweak has been correcting for four releases. So the first update this ever sees is described
+/// into the report, behind `-respondsToSelector:` at every step, and the next release filters on a
+/// name a device confirmed.
 ///
-static void SCIWPublishGuardState(void) {
-    if (!sciwGuardState.length) return;
-    CFPreferencesSetAppValue(CFSTR("watch_update_guard"),
-                             (__bridge CFPropertyListRef)sciwGuardState,
-                             CFSTR("com.albrhi.watch"));
-    CFPreferencesAppSynchronize(CFSTR("com.albrhi.watch"));
+static void SCIWDescribeUpdate(id update) {
+    if (!update || sciwUpdateShape.length) return;
+
+    NSMutableString *shape = [NSMutableString stringWithFormat:@"%@",
+                              NSStringFromClass([update class])];
+
+    for (NSString *name in @[@"humanReadableUpdateName", @"productVersion", @"osVersion",
+                             @"version", @"build", @"productBuildVersion", @"detailedDescription",
+                             @"downloadSize", @"isCritical", @"updateName"]) {
+        SEL selector = NSSelectorFromString(name);
+        if (![update respondsToSelector:selector]) continue;
+
+        // Only object-returning accessors are sent. A scalar read through the wrong cast is the
+        // fault this file's own header warns about, and a shape report is not worth a crash.
+        Method method = class_getInstanceMethod([update class], selector);
+        const char *types = method ? method_getTypeEncoding(method) : NULL;
+        if (!types || types[0] != '@') {
+            [shape appendFormat:@"; -%@ %s (not read)", name, types ?: "?"];
+            continue;
+        }
+
+        id value = ((id (*)(id, SEL))objc_msgSend)(update, selector);
+        [shape appendFormat:@"; -%@ = %@", name, value];
+    }
+
+    sciwUpdateShape = shape;
 }
 
-/// Why a selector was skipped, in the words the next release gets written from: absent, or present
-/// with an encoding that is not what these hooks were compiled against.
+/// Why a selector was skipped, in the words the next release gets written from.
 static NSString *SCIWDescribeSelector(Class cls, NSString *selectorName, NSString *expected) {
     Method method = class_getInstanceMethod(cls, NSSelectorFromString(selectorName));
     if (!method) return [NSString stringWithFormat:@"-%@ is not on this class", selectorName];
@@ -68,93 +108,179 @@ static BOOL SCIWEncodingMatches(Class cls, NSString *selectorName, NSString *exp
     if (!method) return NO;
 
     const char *types = method_getTypeEncoding(method);
-    if (!types) return NO;
+    return types && [expected isEqualToString:[NSString stringWithUTF8String:types]];
+}
 
-    return [expected isEqualToString:[NSString stringWithUTF8String:types]];
+///
+/// The state, carried out of this process by the file drop rather than by a preference.
+///
+/// A preference written here is redirected into this app's own container -- established on a
+/// device, not assumed -- so the verdict rides in the report instead. This write stays because it
+/// costs nothing and is correct wherever the sandbox permits it.
+///
+static void SCIWPublishGuardState(void) {
+    if (!sciwGuardState.length) return;
+    CFPreferencesSetAppValue(CFSTR("watch_update_guard"),
+                             (__bridge CFPropertyListRef)sciwGuardState, SCIWDomain);
+    CFPreferencesAppSynchronize(SCIWDomain);
 }
 
 //
-// **Two groups, because the device says this build has one of these methods and not the other.**
+// One group per selector. A `%hook` on a method a class does not declare does not politely do
+// nothing -- Logos adds it -- so a build missing one of these must skip it rather than invent it.
+// The device already proved that matters: `-checkForSoftwareUpdate:` is not on `SUBManager` here.
 //
-// `-scanForUpdates` is here, encoding `v16@0:8`, exactly what these hooks were compiled for.
-// `-checkForSoftwareUpdate:` is **not on SUBManager in this build at all** -- and a `%hook` on a
-// method a class does not declare does not politely do nothing: Logos *adds* it, so the tweak
-// would be installing a method Apple's own code never calls and this project would have invented
-// an API. One group per selector is what lets the present one install while the absent one is
-// skipped, which a single group could not express.
-//
-%group UpdateHoldScan
+
+%group ScanResult
+
+%hook COSSoftwareUpdateController
+
+- (void)manager:(id)manager scanRequestDidLocateUpdate:(id)update error:(id)error {
+    if (!SCIWPrefEnabledForKey(SCIWPrefHoldUpdates) || !update) {
+        %orig;
+        return;
+    }
+
+    // Described before it is dropped: this is the only moment the object exists, and the version
+    // filter that turns "hold everything" into "hold 26" is written from what this reports.
+    SCIWDescribeUpdate(update);
+    SCIWRecordAnswer(@"update withheld at the scan result");
+
+    // The page's own "nothing found" state, reached the way the page reaches it: no update, no
+    // error. Refusing the scan itself would leave it waiting for an answer that never came.
+    %orig(manager, nil, error);
+}
+
+%end
+%end
+
+%group DownloadStart
 
 %hook SUBManager
 
-- (void)scanForUpdates {
+- (void)startDownload:(id)update {
     if (!SCIWPrefEnabledForKey(SCIWPrefHoldUpdates)) {
         %orig;
         return;
     }
-    // Refused, not delayed: the Watch app asks again on its own schedule, and a hold that only
-    // postponed the first ask would look like it worked for an afternoon.
-    SCIWRecordAnswer(@"update scan held");
+    SCIWDescribeUpdate(update);
+    SCIWRecordAnswer(@"update download refused");
 }
 
 %end
 %end
 
-%group UpdateHoldCheck
+%group DownloadStartPasscode
 
 %hook SUBManager
 
-- (void)checkForSoftwareUpdate:(id)completion {
+- (void)startDownload:(id)update passcode:(id)passcode {
     if (!SCIWPrefEnabledForKey(SCIWPrefHoldUpdates)) {
         %orig;
         return;
     }
-    SCIWRecordAnswer(@"update check held");
+    SCIWRecordAnswer(@"update download refused (passcode)");
 }
 
 %end
-
 %end
 
+%group InstallUpdate
+
+%hook SUBManager
+
+- (void)installUpdate:(id)update {
+    if (!SCIWPrefEnabledForKey(SCIWPrefHoldUpdates)) {
+        %orig;
+        return;
+    }
+    SCIWDescribeUpdate(update);
+    SCIWRecordAnswer(@"update install refused");
+}
+
+%end
+%end
+
+%group InstallUpdatePasscode
+
+%hook SUBManager
+
+- (void)installUpdate:(id)update passcode:(id)passcode {
+    if (!SCIWPrefEnabledForKey(SCIWPrefHoldUpdates)) {
+        %orig;
+        return;
+    }
+    SCIWRecordAnswer(@"update install refused (passcode)");
+}
+
+%end
+%end
 
 void SCIWInstallUpdateGuard(void) {
     Class manager = NSClassFromString(@"SUBManager");
+    Class controller = NSClassFromString(@"COSSoftwareUpdateController");
+
     SCIWRecordClass(@"SUBManager", manager != nil);
+    SCIWRecordClass(@"COSSoftwareUpdateController", controller != nil);
 
-    if (!manager) {
-        sciwGuardState = @"SUBManager is not in this process — nothing installed";
-        SCIWPublishGuardState();
-        return;
-    }
-
-    //
-    // **Each selector decides for itself, and a missing one is not a failure of the other.**
-    //
-    // The first version demanded both and installed neither when one was absent -- so a device
-    // carrying a perfectly hookable `-scanForUpdates` got no hold at all, reported as "signatures
-    // do not match". That is the same shape as a capability check narrower than the capability it
-    // guards: it fails silently in the direction of doing less.
-    //
     NSMutableArray<NSString *> *installed = [NSMutableArray array];
     NSMutableArray<NSString *> *skipped = [NSMutableArray array];
 
-    if (SCIWEncodingMatches(manager, @"scanForUpdates", kSCIWScanEncoding)) {
-        %init(UpdateHoldScan);
-        [installed addObject:@"-scanForUpdates"];
+    //
+    // **Each selector decides for itself, and a missing one is not a failure of the others.**
+    //
+    // The first version demanded two selectors and installed neither when one was absent -- so a
+    // device carrying a perfectly hookable method got no hold at all and was told its signatures
+    // did not match. A gate narrower than what it guards fails silently in the direction of doing
+    // less, which is a rule this project already had and applied here backwards.
+    //
+    if (controller && SCIWEncodingMatches(controller, @"manager:scanRequestDidLocateUpdate:error:",
+                                          kSCIWScanResultEncoding)) {
+        %init(ScanResult);
+        [installed addObject:@"-manager:scanRequestDidLocateUpdate:error:"];
     } else {
-        [skipped addObject:SCIWDescribeSelector(manager, @"scanForUpdates", kSCIWScanEncoding)];
+        [skipped addObject:controller
+            ? SCIWDescribeSelector(controller, @"manager:scanRequestDidLocateUpdate:error:",
+                                   kSCIWScanResultEncoding)
+            : @"COSSoftwareUpdateController is not in this process"];
     }
 
-    if (SCIWEncodingMatches(manager, @"checkForSoftwareUpdate:", kSCIWCheckEncoding)) {
-        %init(UpdateHoldCheck);
-        [installed addObject:@"-checkForSoftwareUpdate:"];
-    } else {
-        [skipped addObject:SCIWDescribeSelector(manager, @"checkForSoftwareUpdate:",
-                                                kSCIWCheckEncoding)];
+    if (manager && SCIWEncodingMatches(manager, @"startDownload:", kSCIWDownloadEncoding)) {
+        %init(DownloadStart);
+        [installed addObject:@"-startDownload:"];
+    } else if (manager) {
+        [skipped addObject:SCIWDescribeSelector(manager, @"startDownload:", kSCIWDownloadEncoding)];
     }
+
+    if (manager && SCIWEncodingMatches(manager, @"startDownload:passcode:",
+                                       kSCIWDownloadPasscodeEncoding)) {
+        %init(DownloadStartPasscode);
+        [installed addObject:@"-startDownload:passcode:"];
+    } else if (manager) {
+        [skipped addObject:SCIWDescribeSelector(manager, @"startDownload:passcode:",
+                                                kSCIWDownloadPasscodeEncoding)];
+    }
+
+    if (manager && SCIWEncodingMatches(manager, @"installUpdate:", kSCIWInstallEncoding)) {
+        %init(InstallUpdate);
+        [installed addObject:@"-installUpdate:"];
+    } else if (manager) {
+        [skipped addObject:SCIWDescribeSelector(manager, @"installUpdate:", kSCIWInstallEncoding)];
+    }
+
+    if (manager && SCIWEncodingMatches(manager, @"installUpdate:passcode:",
+                                       kSCIWInstallPasscodeEncoding)) {
+        %init(InstallUpdatePasscode);
+        [installed addObject:@"-installUpdate:passcode:"];
+    } else if (manager) {
+        [skipped addObject:SCIWDescribeSelector(manager, @"installUpdate:passcode:",
+                                                kSCIWInstallPasscodeEncoding)];
+    }
+
+    if (!manager) [skipped addObject:@"SUBManager is not in this process"];
 
     sciwGuardState = [NSString stringWithFormat:@"%@%@",
-        installed.count ? [NSString stringWithFormat:@"installed on SUBManager: %@",
+        installed.count ? [NSString stringWithFormat:@"installed: %@",
                               [installed componentsJoinedByString:@", "]]
                         : @"nothing installed",
         skipped.count ? [NSString stringWithFormat:@" — skipped: %@",
@@ -164,5 +290,10 @@ void SCIWInstallUpdateGuard(void) {
 }
 
 NSString *SCIWUpdateGuardReport(void) {
-    return sciwGuardState ?: @"not reached — the Watch app has not been opened this launch";
+    NSString *state = sciwGuardState
+        ?: @"not installed — either the master switch is off or the Watch app has not run this build";
+
+    return sciwUpdateShape.length
+        ? [NSString stringWithFormat:@"%@\nthe update it saw: %@", state, sciwUpdateShape]
+        : state;
 }
