@@ -1398,7 +1398,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.13** · Watch **0.2.9** · TikTok **0.17.7** ·
+Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.15** · Watch **0.4.4** · TikTok **0.17.7** ·
 NextUp **0.1.5** · suite **1.49.1**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
@@ -1470,13 +1470,70 @@ not run this build" or "the tweak is switched off"; `OFF` meant either off or un
 values and the source they were read from travel with the report now, and the settings page states
 its own gate above the switches rather than only inside a report somebody must think to copy.
 
-**What is not built, and what it is waiting on.** The hold is coarse: it withholds every update, and
-the switch was asked for as "stop watchOS 26". The update descriptor's class and accessors are in no
-header on this machine, so the first update the hook ever sees is **described into the report**
-behind `-respondsToSelector:`, reading only object-returning accessors — and the filter gets written
-from a name a device confirmed. The four sync features (photos, music, apps, maps) go through
-**NanoPreferencesSync**: `NPSManager` and `NPSDomainAccessor`, both confirmed in SpringBoard, whose
-method lists the probe now dumps in full for the same reason.
+**The hold is finished and confirmed on a device: watchOS 26.6 is refused, 11.x would still be
+offered, and the page says Albrhi is the reason.** Five more releases, and the lessons are worth
+more than the feature:
+
+**A version filter needs a version, and the device is what named it.** `SUBDescriptor`,
+`-humanReadableUpdateName = watchOS 26.6`, `-productVersion = 26.6`, `-productBuildVersion = 23U67`,
+`-downloadSize = 1879048192` — read by describing the first descriptor the hook ever saw, behind
+`-respondsToSelector:`, taking object accessors and then the `q` scalar once its encoding was known.
+The comparison is on the **major** alone; a string compare would put `26.6` before `9.5`. **An
+update whose version cannot be read is let through**: a hold that fires when it cannot tell what it
+is holding is the coarse behaviour wearing a filter's name.
+
+**Feeding nil into a state machine crashed the app.** `-setUpdate:` and
+`-handleManagerState:update:error:` were hooked to pass nil while the state still said an update had
+been found. Nil-messaging is safe in Objective-C, **which is exactly what made it look safe** — what
+is not safe is the code after the message, told a descriptor exists and reading something out of it.
+**Refusing a delivery is not the same as never having had one.** Removed the same day, for the rule
+TikTok 0.12.1 already established: a crash is worse than the thing being prevented. What replaced
+them refuses `-downloadAndInstall:` and `-install:` — the irreversible action, never the machinery
+leading to it.
+
+**A specifier list is edited, never rebuilt or removed from.** `-reloadSpecifiers` asks the
+controller to build its rows again and discards the edit in the same breath as making it;
+`-removeSpecifier:` changes the list the controller is iterating. `-setProperty:forKey:` plus
+`-reloadSpecifier:` is what a device has proven here. Rows are found **by structure** — the ones
+after the group whose identifier is `INSTALL_BUTTON_GROUP` — because matching "Download and Install"
+is matching a localised string, right in English and wrong everywhere else.
+
+**And the page has two shapes, which four releases of diagnostics never said.** Six rows while it
+offers an update; **two rows, and no footer anywhere**, once it settles into "your Apple Watch is up
+to date". The notice was being stamped onto rows about to be thrown away. Three timed passes did not
+help, because the problem was never timing — `2 row(s), 4 with a footer → 1 stamped — last stop: no
+row on this page carries footer text` is what said so, and only because each stage counts itself.
+The fix is that `footerText` is a property: a group that had no footer draws one when given it. The
+report keeps **both** shapes now, since keeping only the first is how the settled page went four
+releases undescribed.
+
+**Two diagnostics lied by omission, and each cost a full round trip.** The report is written from
+`%ctor`, so every counter in it was a launch-time counter and nothing that happened while the app was
+*used* was ever in it — rewritten after anything worth reporting now, throttled to once every two
+seconds. And `master OFF, hold updates ON` was *precisely the two defaults*, the signature of an
+empty domain rather than of a switch: the Watch app is sandboxed, cfprefsd answered it with nothing,
+and `SCIPanelGate.m`'s daemon-then-file lookup had been left out of this tweak on a comment reasoning
+that SpringBoard is not sandboxed. True of SpringBoard; this tweak had stopped being only SpringBoard
+three releases earlier.
+
+**What is not built: the four sync features.** They go through **NanoPreferencesSync** —
+`NPSManager` offers `-synchronizeNanoDomain:keys:` and
+`-synchronizeUserDefaultsDomain:keys:container:appGroupContainer:cloudEnabled:`; `NPSDomainAccessor`
+offers typed getters and setters plus `-copyKeyList` and `-domainSize`; both are confirmed in
+SpringBoard, where this tweak already works. Nothing has been written yet, deliberately: a
+`-setObject:forKey:` on a domain that syncs to a watch is not a diagnostic, it is a change to a
+paired device.
+
+**Sixteen guessed domain names all answered `0 byte(s), no keys` while the accessor reported itself
+bound with a real pairing ID** — a uniform zero across unrelated things is a broken measurement, not
+an empty world, the same shape as every bitrate entry scoring zero for one wrong selector name. The
+real names came from listing the device's own registry:
+`/var/mobile/Library/DeviceRegistry/<pairingID>/` holds `NanoPhotos`, `NanoMaps`, `NanoAppRegistry`,
+`NanoSystemSettings`, `NanoMail`, `NanoPasses`, `com.apple.carousel`, `com.apple.shortcuts`,
+`AppConduit`, `CompanionSync`, `PairedSync` and more — **and none of the sixteen guesses was among
+them in that form.** Under it, `NanoPreferencesSync/` holds `NanoDomains` and a `database.db`, so a
+synced domain is a row in a database rather than a file named after itself. That is where the next
+round of reading starts.
 
 ### Apple Watch, and what Legizmo settled
 
