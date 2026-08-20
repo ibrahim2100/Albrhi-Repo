@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.58.4
+
+Albrhi for TikTok 0.19.4: the publish date sits above the download button instead of below and to
+one side.
+
 ## v1.58.3
 
 Albrhi for TikTok 0.19.3: the publish date is drawn once the button is really on screen, and its

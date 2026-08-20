@@ -1,5 +1,15 @@
 # Albrhi for TikTok — what changed
 
+## v0.19.4
+
+**Confirmed on a device: the date appears.** It sat below the button and read as offset to the
+right, which is what centring a fixed width on a button living at the right edge of the screen
+does — half the label wants to be off-screen, so what is visible looks pushed sideways.
+
+It is above the button now, centred on it, and clamped to the host's bounds so it can never hang
+off an edge. **Two lines, because the frame is one this code owns** — the whole reason the label was
+put on the same host as the button rather than handed to one of TikTok's rails.
+
 ## v0.19.3
 
 **`0 call(s)` was the diagnostic lying, not the code failing — and the fault is one this project has

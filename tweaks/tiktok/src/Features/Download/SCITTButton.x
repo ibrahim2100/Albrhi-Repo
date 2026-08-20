@@ -206,8 +206,25 @@ static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *it
     sciDatePlaced++;
     sciDateLast = label.text;
 
+    //
+    // **Above the button, centred on it, and kept inside the host.**
+    //
+    // It sat below and drifted right, which is what centring a fixed width on a button that lives
+    // at the right edge of the screen does: half the label wants to be off-screen, so what is
+    // visible reads as offset. The frame is clamped to the host's bounds now, so the label sits
+    // over the button rather than beside it -- and this is a frame this code owns, which is the
+    // whole reason a two-line change can move it at all.
+    //
     CGRect b = button.frame;
-    label.frame = CGRectMake(CGRectGetMidX(b) - 44, CGRectGetMaxY(b) + 2, 88, 26);
+    CGFloat width = 96;
+    CGFloat height = 26;
+    CGFloat x = CGRectGetMidX(b) - width / 2;
+
+    CGFloat limit = CGRectGetWidth(host.bounds) - width - 2;
+    if (limit > 0 && x > limit) x = limit;
+    if (x < 2) x = 2;
+
+    label.frame = CGRectMake(x, CGRectGetMinY(b) - height - 2, width, height);
 
     [host bringSubviewToFront:label];
 }
