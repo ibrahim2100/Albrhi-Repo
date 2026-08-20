@@ -28,6 +28,19 @@
 #define SCIPrefPrivacyMessages  @"privacy_messages"
 #define SCIPrefPrivacyProfile   @"privacy_profile"
 
+/// The logged-in account limit TikTok enforces in the client. Raised, not removed.
+#define SCIPrefUnlimitedAccounts @"unlimited_accounts"
+
+/// A direct message the sender took back. TikTok received it and then received an instruction to
+/// hide it; hiding is the client's own doing, and this refuses that instruction. Nothing is
+/// fetched back from a server.
+#define SCIPrefKeepRecalled     @"keep_recalled"
+
+/// A local record of who opened your profile, kept as they arrive — so somebody who blocks you
+/// afterwards does not erase what TikTok had already delivered. Albrhi keeps its own list and
+/// shows it on its own screen; TikTok's list is never modified.
+#define SCIPrefVisitorLog       @"visitor_log"
+
 #define SCIPrefVerboseLogging   @"verbose_logging"
 
 /// Albrhi Panel's per-app switch, asked first. Every feature here reads its setting

@@ -198,6 +198,38 @@ static const void *kSCIPrefKeyAssoc = &kSCIPrefKeyAssoc;
             ],
         },
         @{
+            // **Three features that share nothing but where they were found.** Each was confirmed
+            // against the real 46.4.0 binary before a hook was written, and each installs on its
+            // own -- a build missing one class must not cost the other two.
+            kSCISectionTitle: SCILocalized(@"section_extras"),
+            kSCISectionRows: @[
+                @{
+                    kSCIRowKind: kSCIKindSwitch,
+                    kSCIRowPref: SCIPrefUnlimitedAccounts,
+                    kSCIRowTitle: SCILocalized(@"row_accounts"),
+                    kSCIRowNote: SCILocalized(@"row_accounts_note"),
+                    kSCIRowIcon: @"person.2.fill",
+                    kSCIRowColor: [UIColor systemIndigoColor],
+                },
+                @{
+                    kSCIRowKind: kSCIKindSwitch,
+                    kSCIRowPref: SCIPrefKeepRecalled,
+                    kSCIRowTitle: SCILocalized(@"row_keep_recalled"),
+                    kSCIRowNote: SCILocalized(@"row_keep_recalled_note"),
+                    kSCIRowIcon: @"arrow.uturn.backward.circle.fill",
+                    kSCIRowColor: [UIColor systemIndigoColor],
+                },
+                @{
+                    kSCIRowKind: kSCIKindSwitch,
+                    kSCIRowPref: SCIPrefVisitorLog,
+                    kSCIRowTitle: SCILocalized(@"row_visitors"),
+                    kSCIRowNote: SCILocalized(@"row_visitors_note"),
+                    kSCIRowIcon: @"eye.fill",
+                    kSCIRowColor: [UIColor systemIndigoColor],
+                },
+            ],
+        },
+        @{
             // Its own section rather than a row under Watching: these two do not change what TikTok
             // shows, they change what a tap does -- the only feature here that stands between the
             // user and an action they are already making.

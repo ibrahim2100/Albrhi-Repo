@@ -1,5 +1,35 @@
 # Albrhi for TikTok — what changed
 
+## v0.18.0
+
+**Three features, and every class behind them confirmed against the real 46.4.0 binary before a
+hook was written.**
+
+- **More logged-in accounts.** `AWEUserService -maxLoginedAccounts` (`Q16@0:8`). Raised rather than
+  removed: the app asks how many are allowed and something downstream sizes a list from the answer.
+- **Messages the sender took back stay visible.** `TIMOMessage -recalled` (`B16@0:8`). TikTok had
+  already delivered the message and then received an instruction to hide it; hiding is the client's
+  own doing, and this refuses that instruction. Nothing is fetched back from a server.
+- **A record of profile visitors**, kept as TikTok delivers them, so a block afterwards does not
+  erase what already arrived. `TTKProfileViewsPresenter -model` (`@16@0:8`).
+
+**The reference was read for architecture and immediately corrected by the binary.** VibeTok — read
+for where to look, never for code, the line this project keeps for every unlicensed TikTok reference
+— hooks `-isRecalled` on `TIMOMessage`. **That selector does not exist in 46.4.0 at all**: the
+property is `recalled` and its getter is `-recalled`. A reference's selector is what worked for its
+author, which is the same lesson `downloadAddr` and `bestURLtoDownload` already cost this tweak
+twice. Every encoding here was also checked against 45.7.0, so these are stable across two builds
+rather than true of one.
+
+**TikTok's own visitor list is never modified, and that is a deliberate difference from the
+reference.** It merges its cache back into the array the app is about to render, which is what makes
+a blocked visitor appear in TikTok's own screen. Feeding objects the app did not create into a list
+it is about to draw is the shape of thing that crashed the Watch app. Albrhi keeps its own record,
+bounded at 200 entries, and shows it on its own screen — and the effect asked for survives, because
+a visitor seen once is remembered.
+
+Each of the three installs on its own: a build missing one class must not cost the other two.
+
 ## v0.17.7
 
 **Measuring alone brought the watermark back, and the rule against that is already written in this

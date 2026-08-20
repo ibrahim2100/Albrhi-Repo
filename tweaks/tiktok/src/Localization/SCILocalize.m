@@ -20,6 +20,13 @@ static void SCIBuildTables(void) {
 
         // The settings screen's own sections, named by what a person came here to change
         // rather than by which part of the code owns them.
+        @"section_extras": @"Extras",
+        @"row_accounts": @"More logged-in accounts",
+        @"row_accounts_note": @"TikTok caps how many accounts may be signed in at once, and the cap is enforced in the app. Raised, not removed.",
+        @"row_keep_recalled": @"Keep messages that were taken back",
+        @"row_keep_recalled_note": @"A direct message the sender recalled stays visible. TikTok had already delivered it and then received an instruction to hide it; hiding is the app's own doing, and this refuses that instruction. Nothing is fetched back from a server.",
+        @"row_visitors": @"Remember profile visitors",
+        @"row_visitors_note": @"Keeps its own record of who opened your profile as TikTok delivers them, so somebody who blocks you afterwards does not erase what already arrived. TikTok's own list is never modified — Albrhi shows its record here.",
         @"section_confirm": @"Confirmations",
         @"row_confirm_like": @"Ask before liking",
         @"row_confirm_like_note": @"Both the heart and the double tap on the video. It asks whichever way the like was about to happen.",
@@ -142,6 +149,13 @@ static void SCIBuildTables(void) {
 
         @"section_privacy": @"الخصوصية",
 
+        @"section_extras": @"إضافات",
+        @"row_accounts": @"حسابات أكثر",
+        @"row_accounts_note": @"يحدّ تيك توك عدد الحسابات المسجَّلة معاً، والحدّ يفرضه التطبيق نفسه. رُفع، ولم يُلغَ.",
+        @"row_keep_recalled": @"إبقاء الرسائل المسحوبة",
+        @"row_keep_recalled_note": @"الرسالة التي يسحبها مرسلها تبقى ظاهرة. فتيك توك سلّمها ثم وصلته تعليمات إخفائها، والإخفاء يفعله التطبيق — وهذا رفضٌ لتلك التعليمات. ولا يُجلَب شيء من أي خادم.",
+        @"row_visitors": @"تذكّر زوّار الملف",
+        @"row_visitors_note": @"يحتفظ بسجلّه الخاص لمن فتح ملفك، لحظة يسلّمهم تيك توك — فمن يحظرك بعدها لا يمحو ما وصل فعلاً. ولا تُعدَّل قائمة تيك توك نفسها؛ البرهي يعرض سجلّه هنا.",
         @"section_confirm": @"التأكيدات",
         @"row_confirm_like": @"اسألني قبل الإعجاب",
         @"row_confirm_like_note": @"القلب والنقر المزدوج على الفيديو معاً. يسأل بأيّ الطريقتين كان الإعجاب سيحدث.",

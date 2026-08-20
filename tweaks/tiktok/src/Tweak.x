@@ -10,9 +10,10 @@
 #import "Features/Download/SCITTWatermark.h"
 #import "Features/Confirm/SCITTConfirm.h"
 #import "Features/Download/SCITTPlaybackProbe.h"
+#import "Features/Extras/SCITTExtras.h"
 #import "Settings/SCITTGesture.h"
 
-NSString *SCIVersionString = @"v0.17.7";  // AlbrhiTT
+NSString *SCIVersionString = @"v0.18.0";  // AlbrhiTT
 
 ///
 /// TESTED ON TikTok 46.4.0. Every class here was confirmed present in that build's own
@@ -74,4 +75,5 @@ NSString *SCIVersionString = @"v0.17.7";  // AlbrhiTT
     SCITTInstallConfirm();
     SCITTInstallWatermarkHooks();
     SCITTInstallPlaybackProbe();
+    SCITTInstallExtras();
 }

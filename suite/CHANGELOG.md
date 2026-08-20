@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.57.0
+
+Albrhi for TikTok 0.18.0: more logged-in accounts, messages the sender took back stay visible, and a
+record of profile visitors that a later block cannot erase.
+
 ## v1.56.1
 
 Albrhi for YouTube Music 0.1.1 — 1.56.0 never published: its rootless build failed on a `%orig`
