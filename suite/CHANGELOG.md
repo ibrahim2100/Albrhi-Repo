@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.58.6
+
+Albrhi for TikTok 0.19.6: the publish date is placed in the same coordinate space it is measured
+in, which is what the lean actually was, and its original format is restored.
+
 ## v1.58.5
 
 Albrhi for TikTok 0.19.5: the publish date sits over the download button on every device. It was

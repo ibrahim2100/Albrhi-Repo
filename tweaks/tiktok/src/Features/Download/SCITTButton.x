@@ -149,6 +149,18 @@ static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *it
     //
     sciDateCalls++;
 
+    //
+    // **The label goes where the button lives, and nowhere else.**
+    //
+    // `button.frame` is expressed in the coordinates of the button's *own* superview. This function
+    // was handed a `host` that on two of its three call sites is a different view -- so the frame
+    // was read in one space and drawn in another, and the label leaned by exactly the offset
+    // between them. On one phone that offset is small; on another it puts the day outside the app.
+    //
+    // A rectangle only means something in the space it was measured in. The anchor is the button's
+    // superview here, whatever the caller passed.
+    //
+    if (button.superview) host = button.superview;
     if (!host) host = button.superview;
     if (!host || !button) {
         sciDateNoHost++;
@@ -175,11 +187,11 @@ static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *it
         label.textAlignment = NSTextAlignmentCenter;
         label.font = [UIFont systemFontOfSize:10 weight:UIFontWeightSemibold];
         label.textColor = [UIColor whiteColor];
-        // One line: the date is read at a glance beside a video, and a second line was only ever
-        // the long format wrapping.
-        label.numberOfLines = 1;
-        label.adjustsFontSizeToFitWidth = YES;
-        label.minimumScaleFactor = 0.8;
+        // **Two lines and the long form, as it was.** 0.19.5 shortened this while fixing a
+        // position, and nobody had asked for it -- the date read better with the month named and
+        // the time under it. Changing what was not reported is its own kind of regression, and the
+        // width it needs is the placement's problem to solve, not the format's.
+        label.numberOfLines = 2;
         label.userInteractionEnabled = NO;
 
         // The same shadow TikTok gives its own rail text, so a white label stays readable over a
@@ -198,10 +210,8 @@ static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *it
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         formatter = [[NSDateFormatter alloc] init];
-        // Short and dateless of the clock. The long form plus a time needed more width than the
-        // rail has, so what survived on a narrower phone was a fragment -- the month and the year.
-        formatter.dateStyle = NSDateFormatterShortStyle;
-        formatter.timeStyle = NSDateFormatterNoStyle;
+        formatter.dateStyle = NSDateFormatterMediumStyle;
+        formatter.timeStyle = NSDateFormatterShortStyle;
         // The phone's own locale, so an Arabic device reads an Arabic date without this file
         // deciding what a date looks like.
         formatter.locale = [NSLocale currentLocale];
@@ -237,9 +247,10 @@ static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *it
     //
     CGRect b = button.frame;
 
-    CGSize fits = [label sizeThatFits:CGSizeMake(160, 40)];
-    CGFloat width = MIN(MAX(ceil(fits.width) + 8, 44), 150);
-    CGFloat height = MAX(ceil(fits.height), 14);
+    // Measured against a width the two-line form can actually use, then given exactly that box.
+    CGSize fits = [label sizeThatFits:CGSizeMake(150, 60)];
+    CGFloat width = MIN(MAX(ceil(fits.width) + 8, 60), 150);
+    CGFloat height = MAX(ceil(fits.height) + 2, 16);
 
     label.frame = CGRectMake(CGRectGetMidX(b) - width / 2,
                              CGRectGetMinY(b) - height - 2,

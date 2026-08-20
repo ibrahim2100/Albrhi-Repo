@@ -1,5 +1,22 @@
 # Albrhi for TikTok — what changed
 
+## v0.19.6
+
+**The lean had a cause, and 0.19.5 had not found it.** `button.frame` is expressed in the
+coordinates of the button's *own* superview, and this function was handed a `host` that on two of
+its three call sites is a different view. So the rectangle was read in one space and drawn in
+another, and the label leaned by exactly the offset between them — small on one phone, enough to
+put the day outside the app on another.
+
+**A rectangle only means something in the space it was measured in.** The label is anchored to the
+button's superview now, whatever the caller passes.
+
+**And the format is back as it was: the day, the month named, the year, and the time beneath.**
+0.19.5 shortened it while fixing a position and nobody had asked for that. Changing what was not
+reported is its own kind of regression, and the width the long form needs is the placement's
+problem to solve rather than the format's — which it now does, by measuring the text and centring
+the result on the button.
+
 ## v0.19.5
 
 **Two phones showed the same build differently: centred on one, leaning so far left on the other
