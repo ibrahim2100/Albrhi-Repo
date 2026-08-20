@@ -274,6 +274,14 @@ static const size_t kSCIWatchToggleCount = sizeof(kSCIWatchToggles) / sizeof(kSC
                                           @"this process.", process]];
     }
 
+    // What NanoPreferencesSync actually holds, which is what the photo, music, apps and Maps
+    // features get written from. Its own section: it is read on a delay from a background queue,
+    // so it arrives after everything else and its absence means "not yet", not "nothing".
+    NSString *nano = [self stringForKey:@"watch_nano_report"];
+    [parts addObject:nano.length
+        ? [@"nano domains\n" stringByAppendingString:nano]
+        : @"nano domains: not read yet — SpringBoard asks a few seconds after it starts"];
+
     // The update hold's own verdict, which is the line a fix gets written from: either it
     // installed, or it names both encodings that disagreed.
     NSString *guard = [self stringForKey:@"watch_update_guard"];

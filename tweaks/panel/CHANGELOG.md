@@ -1,5 +1,11 @@
 # Albrhi Panel Changelog
 
+## v0.9.14
+
+The Watch report carries a nano-domains section: what NanoPreferencesSync actually holds on this
+device, which is what the photo, music, apps and Maps features get written from. It is read on a
+delay from a background queue, so its absence means "not yet" and the section says so.
+
 ## v0.9.13
 
 **The Watch page says whether it is on, above the switches rather than only inside a report.**

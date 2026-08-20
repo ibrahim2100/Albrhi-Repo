@@ -1,5 +1,30 @@
 # Albrhi Watch — what changed
 
+## v0.3.1
+
+**"Checking for updates…" never stopped, and the fix is the lesson this project already paid for in
+the YouTube tweak.** Handing the page a nil update is not the same as telling it nothing was found:
+the wait is not inferred from the argument, the page keeps it in **its own flags**. So
+`-setIsExpectingScanResult:`, `-setNoUpdateFoundOrIsComplete:` and
+`-setHasReceivedValidFirstScanResult:` are set explicitly — every one declared on the class as
+`v20@0:8B16`, checked against the runtime before being sent. Code that keeps its own copy is never
+reached by answering a getter, which is exactly why `-bypassOnesie` failed.
+
+**And the notice never appeared because it was waiting for the wrong moment.**
+`-manager:scanRequestDidLocateUpdate:error:` fires only when a scan finds something, and once the
+hold has answered the app may not ask again for the rest of a launch. The page's own signals are
+hooked now — `-startSUBUpdates` when it goes live and `-updateTableViewWithTask:` when it redraws —
+and the stamp is **idempotent by content rather than by a flag**: returning to the page rebuilds
+the rows, so a one-shot stamp would be applied once and silently absent afterwards, while the same
+flag would double the text on a row that was not rebuilt. The report counts the stamps.
+
+**NanoPreferencesSync is asked what it actually holds.** Sixteen candidate domains — the Nano
+spelling and the app's own bundle id for photos, music, companion apps and Maps — are opened
+read-only and asked for `-domainSize` and `-copyKeyList`. **Nothing is written**: a
+`-setObject:forKey:` on a domain that syncs to a watch is not a diagnostic, it is a change to a
+paired device. It runs on a background queue eight seconds after SpringBoard starts, because every
+one of those calls is XPC and a diagnostic that stalls the home screen is worse than none.
+
 ## v0.3.0
 
 **The hold works, and it made iOS tell its owner something untrue.** "Your Apple Watch is up to

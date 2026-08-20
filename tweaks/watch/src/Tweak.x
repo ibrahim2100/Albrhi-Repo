@@ -5,8 +5,9 @@
 #import "Update/SCIWUpdateGuard.h"
 #import "Update/SCIWUpdateProbe.h"
 #import "Bridge/SCIWBridgeSignal.h"
+#import "Sync/SCIWNanoSync.h"
 
-NSString *SCIVersionString = @"v0.3.0";  // AlbrhiWatch
+NSString *SCIVersionString = @"v0.3.1";  // AlbrhiWatch
 
 ///
 /// Albrhi Watch — pairing an Apple Watch whose watchOS is newer than this iPhone expects.
@@ -66,6 +67,11 @@ NSString *SCIVersionString = @"v0.3.0";  // AlbrhiWatch
         // preference writes plus every process restarting to read them.
         //
         SCIWInstallPairing();
+
+        // NanoPreferencesSync, read-only, from the process that can reach it. It writes nothing:
+        // the four sync features need key names, and a name that exists somewhere is not a name
+        // that answers here -- which is the gap this project keeps paying for.
+        if ([process isEqualToString:@"com.apple.springboard"]) SCIWRunNanoProbe();
 
         // The update surface exists only in the Watch app: SUBManager is not in SpringBoard at
         // all, which the probe confirmed rather than assumed.

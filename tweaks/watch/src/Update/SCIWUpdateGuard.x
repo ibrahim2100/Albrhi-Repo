@@ -58,7 +58,7 @@
 static NSString *sciwGuardState = nil;
 static NSString *sciwUpdateShape = nil;
 static NSString *sciwPageShape = nil;
-static BOOL sciwPageStamped = NO;
+static NSUInteger sciwPageStamps = 0;
 
 /// The encodings, every one read off the device by the probe beside this file.
 static NSString *const kSCIWScanResultEncoding = @"v40@0:8@16@24@32";  // -manager:scanRequestDidLocateUpdate:error:
@@ -123,7 +123,8 @@ static void SCIWDescribeUpdate(id update) {
 /// is described as one in the report rather than trusted quietly.
 ///
 static void SCIWStampUpdatePage(id controller) {
-    if (sciwPageStamped || ![controller respondsToSelector:@selector(specifiers)]) return;
+    if (!SCIWPrefEnabledForKey(SCIWPrefHoldUpdates)) return;
+    if (![controller respondsToSelector:@selector(specifiers)]) return;
 
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
@@ -154,7 +155,13 @@ static void SCIWStampUpdatePage(id controller) {
         if (!sciwPageShape) sciwPageShape = [shape componentsJoinedByString:@"\n"];
         if (!target) return;
 
-        NSString *existing = [target propertyForKey:@"footerText"];
+        NSString *existing = [target propertyForKey:@"footerText"] ?: @"";
+
+        // **Idempotent by content, not by a flag.** Leaving the page and returning rebuilds the
+        // rows, so a one-shot stamp is applied once and then silently absent for the rest of the
+        // launch -- while that same one-shot would double the text on a row that was not rebuilt.
+        // Asking whether the notice is already there answers both.
+        if ([existing containsString:SCILocalized(@"hold_notice")]) return;
         [target setProperty:[NSString stringWithFormat:@"%@\n\n%@",
                                 SCILocalized(@"hold_notice"), existing]
                      forKey:@"footerText"];
@@ -163,7 +170,7 @@ static void SCIWStampUpdatePage(id controller) {
             ((void (*)(id, SEL, id))objc_msgSend)(controller, @selector(reloadSpecifier:), target);
         }
 
-        sciwPageStamped = YES;
+        sciwPageStamps++;
         SCIWRecordAnswer(@"update page stamped");
     });
 }
@@ -220,11 +227,67 @@ static void SCIWPublishGuardState(void) {
     // filter that turns "hold everything" into "hold 26" is written from what this reports.
     SCIWDescribeUpdate(update);
     SCIWRecordAnswer(@"update withheld at the scan result");
-    SCIWStampUpdatePage(self);
 
     // The page's own "nothing found" state, reached the way the page reaches it: no update, no
     // error. Refusing the scan itself would leave it waiting for an answer that never came.
     %orig(manager, nil, error);
+
+    //
+    // **Handing the page a nil update is not the same as telling it nothing was found.**
+    //
+    // A device reported the result plainly: the page sat on "Checking for updates…" forever. The
+    // wait is not inferred from the argument -- the page keeps it in its own flags, and this class
+    // declares every one of them as a setter (`v20@0:8B16`, read off the device). So the state is
+    // settled explicitly rather than hoped for, which is the same lesson as `-bypassOnesie` in the
+    // YouTube tweak: code that keeps its own copy is never reached by answering a getter.
+    //
+    for (NSString *name in @[@"setIsExpectingScanResult:", @"setNoUpdateFoundOrIsComplete:",
+                             @"setHasReceivedValidFirstScanResult:"]) {
+        SEL selector = NSSelectorFromString(name);
+        Method method = class_getInstanceMethod([self class], selector);
+        if (!method || strcmp(method_getTypeEncoding(method), "v20@0:8B16") != 0) continue;
+
+        BOOL value = ![name isEqualToString:@"setIsExpectingScanResult:"];
+        ((void (*)(id, SEL, BOOL))objc_msgSend)(self, selector, value);
+    }
+
+    SCIWRecordAnswer(@"scan state settled to 'no update'");
+    SCIWStampUpdatePage(self);
+}
+
+%end
+%end
+
+//
+// **The stamp cannot wait for an update to be located.** `-manager:scanRequestDidLocateUpdate:`
+// fires only when a scan finds something, and once the hold has answered once the app may not ask
+// again for the rest of a launch -- so the page said the watch was up to date with nothing to say
+// who decided that. A device reported exactly that: every hook installed, and no page shape in the
+// report, because the callback had never run.
+//
+// These two are the page's own signals: `-startSUBUpdates` is it going live and
+// `-updateTableViewWithTask:` is it redrawing. Both are declared on the class, both encodings read
+// off the device.
+//
+%group PageAppears
+
+%hook COSSoftwareUpdateController
+
+- (void)startSUBUpdates {
+    %orig;
+    SCIWStampUpdatePage(self);
+}
+
+%end
+%end
+
+%group PageRedraws
+
+%hook COSSoftwareUpdateController
+
+- (void)updateTableViewWithTask:(id)task {
+    %orig;
+    SCIWStampUpdatePage(self);
 }
 
 %end
@@ -321,6 +384,21 @@ void SCIWInstallUpdateGuard(void) {
             : @"COSSoftwareUpdateController is not in this process"];
     }
 
+    if (controller && SCIWEncodingMatches(controller, @"startSUBUpdates", @"v16@0:8")) {
+        %init(PageAppears);
+        [installed addObject:@"-startSUBUpdates"];
+    } else if (controller) {
+        [skipped addObject:SCIWDescribeSelector(controller, @"startSUBUpdates", @"v16@0:8")];
+    }
+
+    if (controller && SCIWEncodingMatches(controller, @"updateTableViewWithTask:", @"v24@0:8@?16")) {
+        %init(PageRedraws);
+        [installed addObject:@"-updateTableViewWithTask:"];
+    } else if (controller) {
+        [skipped addObject:SCIWDescribeSelector(controller, @"updateTableViewWithTask:",
+                                                @"v24@0:8@?16")];
+    }
+
     if (manager && SCIWEncodingMatches(manager, @"startDownload:", kSCIWDownloadEncoding)) {
         %init(DownloadStart);
         [installed addObject:@"-startDownload:"];
@@ -372,6 +450,7 @@ NSString *SCIWUpdateGuardReport(void) {
     NSMutableString *report = [NSMutableString stringWithString:state];
     if (sciwUpdateShape.length)
         [report appendFormat:@"\nthe update it saw: %@", sciwUpdateShape];
+    [report appendFormat:@"\nthe page was stamped %lu time(s)", (unsigned long)sciwPageStamps];
     if (sciwPageShape.length)
         [report appendFormat:@"\nthe update page's rows (the last one carrying a footer is the "
                               @"one stamped):\n%@", sciwPageShape];

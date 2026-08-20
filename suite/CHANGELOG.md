@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.51.1
+
+Albrhi Watch 0.3.1: the watch's Software Update page no longer sits on "Checking for updates…" when
+the hold is on, it says Albrhi is holding them, and the diagnostics report lists what
+NanoPreferencesSync actually holds.
+
 ## v1.51.0
 
 Albrhi Watch 0.3.0: while updates are held, the watch's Software Update page says Albrhi is holding
