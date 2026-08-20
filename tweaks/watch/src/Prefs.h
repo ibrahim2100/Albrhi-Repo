@@ -52,24 +52,28 @@
 #define SCIWPrefApps            CFSTR("watch_apps")
 
 ///
-/// One switch, read fresh.
+/// One switch, read where it actually is.
 ///
-/// `fresh` matters in SpringBoard: cfprefsd caches another domain's values per process, and the
-/// switch that was just moved in Settings is precisely the one being asked about. The hooks read
-/// this on every call rather than at launch, so turning a feature off takes effect without a
-/// respring even though *installing* the hooks needed one.
+/// **CFPreferences alone does not work here, and a device proved it twice in one session.** The
+/// panel writes this domain from inside Settings; SpringBoard reads it unsandboxed and sees it,
+/// and **the Watch app is sandboxed and sees nothing at all** — a sandboxed process asking cfprefsd
+/// for another application's domain is answered with an absence, not an error. So the report came
+/// back reading `master OFF, hold updates ON` from inside the Watch app: exactly what an empty
+/// domain produces, since one default is NO and the other YES. The master was on the whole time.
 ///
-static inline BOOL SCIWReadPreference(CFStringRef key, BOOL fallback) {
-    CFPreferencesAppSynchronize(SCIWDomain);
+/// This is `shared/src/SCIPanelGate.m`'s own lesson arriving in a second tweak, and the fix is
+/// deliberately the same one rather than a new idea: try the daemon first — where it works it is
+/// cheaper and it sees a value written but not yet flushed — then read the plist directly. On a
+/// jailbroken device the sandbox permits the file even where the daemon redirects the domain.
+///
+/// The jailbreak prefix comes from `dladdr` on this code's own address, which is the only way to
+/// get it right on roothide, where it is a different random directory on every device.
+///
+BOOL SCIWReadPreference(CFStringRef key, BOOL fallback);
 
-    CFPropertyListRef value = CFPreferencesCopyAppValue(key, SCIWDomain);
-    if (!value) return fallback;
-
-    BOOL result = (CFGetTypeID(value) == CFBooleanGetTypeID())
-        ? CFBooleanGetValue((CFBooleanRef)value) : fallback;
-    CFRelease(value);
-    return result;
-}
+/// Where the last answer came from — the daemon, a path, or nowhere. Printed in the report,
+/// because "switched off" and "unreadable" are the two things this whole lookup exists to separate.
+NSString *SCIWPreferenceSource(void);
 
 ///
 /// This tweak's master, then the feature's own — and **not** Albrhi Panel's per-app switch.

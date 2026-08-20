@@ -1,5 +1,28 @@
 # Albrhi Watch — what changed
 
+## v0.2.8
+
+**The master switch was never off. The Watch app could not read it.**
+
+The report said `master OFF, hold updates ON` — and those are exactly the two defaults, NO and YES,
+which is what an **empty domain** produces. The line was written from inside the Watch app, which
+is sandboxed, and a sandboxed process asking cfprefsd for another application's domain is answered
+with an absence rather than an error. SpringBoard, unsandboxed, was reading the same switch
+correctly the whole time.
+
+This is `shared/src/SCIPanelGate.m`'s own lesson arriving in a second tweak, and the fix is
+deliberately the same one rather than a new idea: try the daemon first — where it works it is
+cheaper and it sees a value written but not yet flushed — then **read the plist directly**, which a
+jailbroken device permits even where the daemon redirects the domain. The jailbreak prefix comes
+from `dladdr` on this code's own address, the only way to get it right on roothide.
+
+`Prefs.h` had said in a comment that no libSandy was needed here "because SpringBoard is not
+sandboxed" — true of SpringBoard, and this tweak stopped being only SpringBoard three releases ago.
+**A comment that was right when written is not a check that it is still right.**
+
+**And the report prints where the answer came from**, beside the values: a switch read from nowhere
+and a switch genuinely off produce the same two words, and that ambiguity cost a full round trip.
+
 ## v0.2.7
 
 **Refusing `-scanForUpdates` was wrong, and the device's own method list is what showed it.** The

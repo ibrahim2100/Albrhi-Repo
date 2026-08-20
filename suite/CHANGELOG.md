@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.50.8
+
+Albrhi Watch 0.2.8: the Watch app reads Albrhi's switches from the file when the preferences daemon
+answers a sandboxed process with nothing — the reason its half of the tweak looked switched off
+while SpringBoard's half was working.
+
 ## v1.50.7
 
 Albrhi Panel 0.9.13: the Albrhi Watch page states whether the tweak is actually on, above its

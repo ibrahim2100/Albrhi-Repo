@@ -55,9 +55,15 @@ void SCIWBridgeAnnounce(void) {
     // before the announcement existed. The gate says its own state here so the next report is read
     // once rather than guessed at twice.
     //
-    NSString *switches = [NSString stringWithFormat:@"master %@, hold updates %@",
-                          SCIWReadPreference(SCIWPrefEnabled, NO) ? @"ON" : @"OFF",
-                          SCIWReadPreference(SCIWPrefHoldUpdates, YES) ? @"ON" : @"OFF"];
+    // The source is printed beside the values, because a switch read from nowhere and a switch
+    // genuinely off produce the same two words. That ambiguity is what sent a whole round trip
+    // chasing a master switch that had been on the entire time.
+    BOOL master = SCIWReadPreference(SCIWPrefEnabled, NO);
+    NSString *masterFrom = SCIWPreferenceSource();
+    BOOL hold = SCIWReadPreference(SCIWPrefHoldUpdates, YES);
+
+    NSString *switches = [NSString stringWithFormat:@"master %@, hold updates %@ — read via %@",
+                          master ? @"ON" : @"OFF", hold ? @"ON" : @"OFF", masterFrom];
 
     NSString *payload = [NSString stringWithFormat:@"%@%@%@\n(%@)",
                          SCIWUpdateProbeReport(), kSCIWGuardMarker, SCIWUpdateGuardReport(),
