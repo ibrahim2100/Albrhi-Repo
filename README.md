@@ -9,11 +9,11 @@
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B-lightgrey.svg)]()
 [![Rootless](https://img.shields.io/badge/rootless-supported-success.svg)](#-compatibility)
-[![Albrhi](https://img.shields.io/badge/Albrhi-1.57.0-blueviolet.svg)](suite/CHANGELOG.md)
+[![Albrhi](https://img.shields.io/badge/Albrhi-1.58.4-blueviolet.svg)](suite/CHANGELOG.md)
 [![Instagram](https://img.shields.io/badge/Instagram-4.1.10-orange.svg)](tweaks/instagram/CHANGELOG.md)
 [![YouTube](https://img.shields.io/badge/YouTube-1.20.0-red.svg)](tweaks/youtube/CHANGELOG.md)
 [![X](https://img.shields.io/badge/X-0.14.0-black.svg)](tweaks/twitter/CHANGELOG.md)
-[![TikTok](https://img.shields.io/badge/TikTok-0.18.0-ff0050.svg)](tweaks/tiktok/CHANGELOG.md)
+[![TikTok](https://img.shields.io/badge/TikTok-0.19.4-ff0050.svg)](tweaks/tiktok/CHANGELOG.md)
 [![Spotify](https://img.shields.io/badge/Spotify-0.2.3-1DB954.svg)](tweaks/spotify/CHANGELOG.md)
 [![YT Music](https://img.shields.io/badge/YT%20Music-0.1.0-FF0000.svg)](tweaks/ytmusic/CHANGELOG.md)
 [![NextUp](https://img.shields.io/badge/NextUp-0.1.5-FF375F.svg)](tweaks/nextup/CHANGELOG.md)
@@ -111,7 +111,7 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 | **Albrhi for Instagram** | Instagram | 4.1.10 | downloads, a quieter feed, watching without a seen receipt |
 | **Albrhi for YouTube** | YouTube | 1.20.0 | downloads with their own player, no ads, SponsorBlock, background playback |
 | **Albrhi for X** | X / Twitter | 0.14.0 | media downloads, and the feature switches X asks itself about |
-| **Albrhi for TikTok** | TikTok | 0.18.0 | a download button in the feed, photo posts, no ads, confirmations, privacy, extras |
+| **Albrhi for TikTok** | TikTok | 0.19.4 | a download button in the feed, photo posts, no ads, confirmations, privacy, extras |
 | **Albrhi for Spotify** | Spotify | 0.2.3 | no ads, no Premium popups, sponsored podcast segments skipped |
 | **Albrhi for YouTube Music** | YouTube Music | 0.1.0 | no ads, background playback without the upsell |
 | **Albrhi Panel** | Settings | 0.9.21 | the Albrhi page — one switch per patched app, and a page per tweak |
@@ -320,6 +320,9 @@ message and then received an instruction to hide it; hiding is the app's own doi
 refuses that instruction. Nothing is fetched back from a server — and the message is **marked as
 taken back** rather than restored as though nothing happened, because a tweak that leaves no trace
 of what it decided is deciding on your behalf without saying so.
+
+**The publish date**, above Albrhi's own button — read from the video's own `createTime` and drawn
+in a frame this tweak owns, never handed to one of TikTok's rails.
 
 **A record of profile visitors**, kept as TikTok delivers them, so somebody who blocks you
 afterwards does not erase what already arrived. TikTok's own list is never modified: Albrhi keeps
