@@ -4,8 +4,9 @@
 #import "Pairing/SCIWPairing.h"
 #import "Update/SCIWUpdateGuard.h"
 #import "Update/SCIWUpdateProbe.h"
+#import "Bridge/SCIWBridgeSignal.h"
 
-NSString *SCIVersionString = @"v0.2.0";  // AlbrhiWatch
+NSString *SCIVersionString = @"v0.2.4";  // AlbrhiWatch
 
 ///
 /// Albrhi Watch — pairing an Apple Watch whose watchOS is newer than this iPhone expects.
@@ -28,29 +29,48 @@ NSString *SCIVersionString = @"v0.2.0";  // AlbrhiWatch
         NSString *process = [[NSBundle mainBundle] bundleIdentifier] ?: @"";
         NSLog(@"[AlbrhiWatch] %@ loaded into %@", SCIVersionString, process);
 
-        // The panel's switch first, then this tweak's master. Neither installs anything on its
-        // own: a group never %init-ed is a hook never placed, which is the only stop that cannot
-        // leave a pairing stack half-answered.
-        if (!SCIPanelAllowsThisApp()) return;
+        //
+        // **The probe runs before the gate, and that is deliberate.**
+        //
+        // It hooks nothing and changes nothing -- it asks the runtime what its own classes look
+        // like. Running it only when the tweak is switched on made an empty report ambiguous
+        // between "the master is off", "the gate refused" and "the classes are missing", and the
+        // first device report was exactly that ambiguity: nothing worked and nothing said why.
+        //
+        SCIWRunUpdateProbe();
+
+        //
+        // **An empty section and a denied write look identical, and one bit separates them.**
+        //
+        // The Watch app is sandboxed; SpringBoard is not. So the Watch app announces whether its
+        // own report survived being written, and SpringBoard -- which can always write -- records
+        // the answer. Both sides sit above the gate for the same reason the probe does: a report
+        // that only exists when everything already works diagnoses nothing.
+        //
+        if ([process isEqualToString:@"com.apple.springboard"]) SCIWBridgeListen();
+        if ([process isEqualToString:@"com.apple.Bridge"])      SCIWBridgeAnnounce();
+
+        // The master switch, and nothing above it. Albrhi Panel's per-app switch is *not* asked:
+        // it reads app_enabled_<bundleid>, no switch anywhere sets that for SpringBoard or the
+        // Watch app, and asking it refused forever. See Prefs.h.
         if (!SCIWReadPreference(SCIWPrefEnabled, NO)) return;
 
         //
-        // **Two processes, two jobs, and neither runs the other's.**
+        // **The pairing answers go into every process that asks them.**
         //
-        // Pairing is answered inside SpringBoard: that is where NanoRegistry is asked, and where
-        // the preference writes belong. The update surface is inside the Watch app and nowhere
-        // else. Installing both everywhere would put hooks in a process that never calls them --
-        // harmless until the day one of those classes means something different there.
+        // The first build installed them in SpringBoard alone, on the reasoning that pairing is
+        // "SpringBoard's job". Answering wherever the question is asked costs nothing and cannot
+        // be wrong in one process while right in another. **It is not, however, what fixed the
+        // Watch app** -- see CHANGELOG.md 0.2.4: a device opened it on 0.2.1, with the hooks in
+        // SpringBoard alone, after a full userspace restart. What fixes it is the NanoRegistry
+        // preference writes plus every process restarting to read them.
         //
-        if ([process isEqualToString:@"com.apple.springboard"]) {
-            SCIWInstallPairing();
-        } else if ([process isEqualToString:@"com.apple.Bridge"]) {
+        SCIWInstallPairing();
+
+        // The update surface exists only in the Watch app: SUBManager is not in SpringBoard at
+        // all, which the probe confirmed rather than assumed.
+        if ([process isEqualToString:@"com.apple.Bridge"]) {
             SCIWInstallUpdateGuard();
         }
-
-        // The probe runs in both, and hooks nothing. Its whole job is to report what the classes
-        // in *this* process really look like, so the next feature is written from a device's
-        // answer rather than from a name in a binary.
-        SCIWRunUpdateProbe();
     }
 }

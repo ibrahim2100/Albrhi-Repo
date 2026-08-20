@@ -27,8 +27,7 @@ include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = AlbrhiWatch
 
-AlbrhiWatch_FILES = $(shell find src -type f \( -iname \*.x -o -iname \*.xm -o -iname \*.m \)) \
-	$(ROOT)/shared/src/SCIPanelGate.m
+AlbrhiWatch_FILES = $(shell find src -type f \( -iname \*.x -o -iname \*.xm -o -iname \*.m \))
 
 AlbrhiWatch_CFLAGS = -fobjc-arc -I$(ROOT) -Isrc \
 	-DDISABLE_ROOTLESS_COMPAT_WARNING \
@@ -42,9 +41,12 @@ AlbrhiWatch_FRAMEWORKS = Foundation UIKit
 # It appends the whole JGProgressHUD module to every tweak that includes it, and this one
 # draws nothing: it answers compatibility questions inside SpringBoard and shows its
 # interface in Settings. Twelve source files of a HUD library compiled into SpringBoard
-# because an include is the habit is exactly what that decision was about. What is worth
-# having -- SCIPanelGate, so one switch in the panel governs the whole tweak -- is named
-# above instead.
+# because an include is the habit is exactly what that decision was about.
+#
+# **SCIPanelGate is not compiled in either, and that is a fix rather than a saving.** It asks
+# whether `app_enabled_<bundleid>` is set, the panel only ever sets that from an app's own row,
+# and this tweak is collapsed into one grouped row -- so the answer was no, forever, and nothing
+# installed at all. The master switch on this tweak's own page is the gate now. See src/Prefs.h.
 #
 include $(THEOS_MAKE_PATH)/tweak.mk
 

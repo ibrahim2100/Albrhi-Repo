@@ -1,5 +1,38 @@
 # Albrhi Watch — what changed
 
+## v0.2.4
+
+**Nothing ran at all, and the gate was mine.** `SCIPanelAllowsThisApp()` asks whether
+`app_enabled_<bundleid>` is set; the panel only ever sets that from an *app's* own row, and this
+tweak is deliberately collapsed into one grouped row — so the answer was no, forever. No hooks, no
+probe, an empty report, and a device reporting that not one feature worked. The tweak's own master
+switch is the gate now, which is what Albrhi NextUp already does.
+
+**The pairing answers are installed in every process that asks them**, not in SpringBoard alone.
+The preference *writes* stay in SpringBoard: one correct writer for a global value.
+
+**The record corrected.** An earlier note credited those extra hooks with fixing the Watch app. The
+device says otherwise: it opened on 0.2.1, with the hooks in SpringBoard alone, after a full
+userspace restart. So the mechanism is the **NanoRegistry preference writes** — global values
+written once, read by every process at its *next* launch. A respring restarts SpringBoard and
+leaves the Watch app and the daemons holding what they cached at boot; a userspace restart brings
+them all up to read what was already written. Same build, two kinds of restart, two behaviours. The
+settings page says so, and its buttons are named as the lesser version rather than the equivalent.
+
+**One report key per process.** Both processes wrote the same key, so whichever launched last was
+the only one ever read — and the section that mattered was always the missing one.
+
+**The update hold's verdict is published.** It was computed inside the Watch app and shown nowhere:
+either it installed, or it names both encodings that disagreed, and the second is what the next
+release gets written from.
+
+**And an empty section stops meaning two things at once.** `NOT REACHED` cannot tell apart "never
+injected here" from "ran, and the sandbox refused the write". The Watch app now reads its own write
+back and announces the outcome over a Darwin notification — `notify_set_state` carries 64 bits
+beside the name, which is exactly the size of this question — and SpringBoard, which can always
+write, records the answer. The report prints that line first, because it decides how to read the
+emptiness underneath it.
+
 ## v0.2.0
 
 **The Watch app, the update hold, and a probe that asks the device what its own classes look like.**

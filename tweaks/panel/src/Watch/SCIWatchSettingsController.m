@@ -186,6 +186,23 @@ static const size_t kSCIWatchToggleCount = sizeof(kSCIWatchToggles) / sizeof(kSC
                    forKey:@"iconImage"];
     [specifiers addObject:respring];
 
+    //
+    // **A respring reloads SpringBoard and leaves the Watch app exactly as it was.** They are two
+    // processes and they load this tweak separately, so the half of it that lives in the Watch app
+    // needs its own button -- and the update hold lives entirely in that half.
+    //
+    PSSpecifier *restartApp = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"watch_restart_app")
+                                                             target:self
+                                                                set:NULL
+                                                                get:NULL
+                                                             detail:Nil
+                                                               cell:PSButtonCell
+                                                               edit:Nil];
+    SCISetButtonAction(restartApp, @selector(restartWatchApp));
+    [restartApp setProperty:SCIPanelBadgeImage(@"applewatch", SCIPanelAccent())
+                     forKey:@"iconImage"];
+    [specifiers addObject:restartApp];
+
     [specifiers addObject:[self watchGroupTitled:nil footer:SCILocalized(@"watch_credit")]];
 
     // Assigned to the ivar, not just returned: PSListController reads _specifiers directly in
@@ -203,16 +220,46 @@ static const size_t kSCIWatchToggleCount = sizeof(kSCIWatchToggles) / sizeof(kSC
 /// runs in two processes that Settings cannot talk to, and a preference is the one place all three
 /// can meet. Empty means the probe has not run since the tweak was switched on — which is itself
 /// the answer, and the message says so rather than showing a blank sheet.
-- (NSString *)probeReport {
-    CFPreferencesAppSynchronize((__bridge CFStringRef)kSCIWatchDomain);
-    CFPropertyListRef value = CFPreferencesCopyAppValue(CFSTR("watch_probe_report"),
+- (NSString *)stringForKey:(NSString *)key {
+    CFPropertyListRef value = CFPreferencesCopyAppValue((__bridge CFStringRef)key,
                                                         (__bridge CFStringRef)kSCIWatchDomain);
     if (!value) return nil;
 
-    NSString *text = (CFGetTypeID(value) == CFStringGetTypeID())
-        ? (__bridge_transfer NSString *)value : nil;
-    if (!text) CFRelease(value);
-    return text;
+    if (CFGetTypeID(value) != CFStringGetTypeID()) { CFRelease(value); return nil; }
+    return (__bridge_transfer NSString *)value;
+}
+
+- (NSString *)probeReport {
+    CFPreferencesAppSynchronize((__bridge CFStringRef)kSCIWatchDomain);
+
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+
+    // What the Watch app announced about itself, recorded by SpringBoard because the Watch app
+    // may not be able to write here at all. It goes first: it decides how the empty section
+    // below should be read, and a reader who meets the emptiness first has already guessed.
+    NSString *bridge = [self stringForKey:@"watch_bridge_state"];
+    if (bridge.length) [parts addObject:[@"watch app: " stringByAppendingString:bridge]];
+
+    // **One section per process.** Both wrote the same key once, so whichever launched last was
+    // the only one ever read -- and the section that mattered was always the missing one.
+    for (NSString *process in @[@"com.apple.springboard", @"com.apple.Bridge"]) {
+        NSString *report = [self stringForKey:
+            [@"watch_probe_report_" stringByAppendingString:process]];
+        [parts addObject:report.length
+            ? [NSString stringWithFormat:@"in %@\n%@", process, report]
+            : [NSString stringWithFormat:@"in %@\nNOT REACHED — the tweak never ran here. "
+                                          @"On a jailbreak with per-app injection, enable it for "
+                                          @"this process.", process]];
+    }
+
+    // The update hold's own verdict, which is the line a fix gets written from: either it
+    // installed, or it names both encodings that disagreed.
+    NSString *guard = [self stringForKey:@"watch_update_guard"];
+    [parts addObject:guard.length
+        ? [@"update hold: " stringByAppendingString:guard]
+        : @"update hold: no verdict — the Watch app has not run this build"];
+
+    return [parts componentsJoinedByString:@"\n\n"];
 }
 
 - (void)copyProbeReport {
@@ -298,6 +345,32 @@ static const size_t kSCIWatchToggleCount = sizeof(kSCIWatchToggles) / sizeof(kSC
     } @catch (__unused NSException *exception) {
         [self sayRestartFailed];
     }
+}
+
+///
+/// Ends the Watch app so its next launch carries this tweak.
+///
+/// `-terminateApplication:forReason:andReport:withDescription:` is FrontBoard's own way of ending
+/// an application, and it is what a restart of one app honestly is: iOS starts it again the next
+/// time it is opened. Guarded like everything private here, and it names the app rather than
+/// killing by pid -- a pid found by searching is a pid that can belong to something else by the
+/// time it is used.
+///
+- (void)restartWatchApp {
+    Class serviceClass = NSClassFromString(@"FBSSystemService");
+    SEL shared = NSSelectorFromString(@"sharedService");
+    SEL terminate = NSSelectorFromString(@"terminateApplication:forReason:andReport:withDescription:");
+
+    id service = (serviceClass && [serviceClass respondsToSelector:shared])
+        ? ((id (*)(id, SEL))objc_msgSend)(serviceClass, shared) : nil;
+
+    if (![service respondsToSelector:terminate]) {
+        [self sayRestartFailed];
+        return;
+    }
+
+    ((void (*)(id, SEL, id, NSInteger, BOOL, id))objc_msgSend)(
+        service, terminate, @"com.apple.Bridge", 1, NO, @"Albrhi Watch");
 }
 
 - (void)sayRestartFailed {

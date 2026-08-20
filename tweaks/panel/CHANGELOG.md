@@ -1,5 +1,16 @@
 # Albrhi Panel Changelog
 
+## v0.9.11
+
+A restart button for the Watch app beside the one for SpringBoard: they are two processes, they
+load Albrhi Watch separately, and the update hold lives entirely in the second — so a respring
+reloads half of it. The footer now says what a device proved: a full userspace restart is what
+applies a pairing change, and these buttons are the lesser version.
+
+The Watch report is merged from both processes rather than one shared key, carries the update
+hold's own verdict, and leads with what the Watch app announced about itself — whether it ran there
+at all, and whether its own report survived being written from inside a sandbox.
+
 ## v0.9.7
 
 **A tweak whose settings page is missing is now shown and explained, not hidden.**

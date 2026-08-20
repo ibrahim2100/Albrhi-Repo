@@ -1,5 +1,4 @@
 #import <Foundation/Foundation.h>
-#import "shared/src/SCIPanelGate.h"
 
 ///
 /// Every preference this tweak has, named once — and read from a domain both sides agree on.
@@ -72,13 +71,21 @@ static inline BOOL SCIWReadPreference(CFStringRef key, BOOL fallback) {
     return result;
 }
 
-/// Albrhi Panel's per-app switch, then this tweak's master, then the feature's own.
 ///
-/// Three gates that mean three things: "Albrhi may act in this process", "this tweak is on", and
-/// "this part of it is on". The features default *on* so the one master switch is enough to get a
-/// working tweak; the master defaults off.
+/// This tweak's master, then the feature's own — and **not** Albrhi Panel's per-app switch.
+///
+/// `SCIPanelAllowsThisApp()` asks whether `app_enabled_com.apple.springboard` is set, and **there
+/// is no switch anywhere that sets it**: the panel draws that switch on an app's own row, and this
+/// tweak is deliberately collapsed into one grouped row instead (`SCIPanelGroupIdentifier`), so its
+/// two processes never appear as apps at all. Asking a question nobody can answer means the gate
+/// refuses forever: nothing installs, the probe never runs, and the report stays empty — which is
+/// exactly how this shipped and exactly what the first device report said.
+///
+/// **The master switch on the tweak's own page is the gate**, which is also what Albrhi NextUp
+/// does for the same reason. The panel's per-app switch is for tweaks that patch one app and get
+/// one row; a tweak that spans SpringBoard and the Watch app is not that shape.
+///
 static inline BOOL SCIWPrefEnabledForKey(CFStringRef key) {
-    if (!SCIPanelAllowsThisApp()) return NO;
     if (!SCIWReadPreference(SCIWPrefEnabled, NO)) return NO;
     return SCIWReadPreference(key, YES);
 }

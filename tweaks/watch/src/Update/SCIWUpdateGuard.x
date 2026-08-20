@@ -38,6 +38,20 @@ static NSString *sciwGuardState = nil;
 static NSString *const kSCIWScanEncoding = @"v16@0:8";        // -scanForUpdates
 static NSString *const kSCIWCheckEncoding = @"v24@0:8@16";    // -checkForSoftwareUpdate:
 
+///
+/// The state, written where Settings can read it.
+///
+/// It was computed inside the Watch app and shown nowhere -- the one line a fix gets written
+/// from, sitting in a process the person reading the report cannot see into.
+///
+static void SCIWPublishGuardState(void) {
+    if (!sciwGuardState.length) return;
+    CFPreferencesSetAppValue(CFSTR("watch_update_guard"),
+                             (__bridge CFPropertyListRef)sciwGuardState,
+                             CFSTR("com.albrhi.watch"));
+    CFPreferencesAppSynchronize(CFSTR("com.albrhi.watch"));
+}
+
 static BOOL SCIWEncodingMatches(Class cls, NSString *selectorName, NSString *expected) {
     Method method = class_getInstanceMethod(cls, NSSelectorFromString(selectorName));
     if (!method) return NO;
@@ -81,6 +95,7 @@ void SCIWInstallUpdateGuard(void) {
 
     if (!manager) {
         sciwGuardState = @"SUBManager is not in this process — nothing installed";
+        SCIWPublishGuardState();
         return;
     }
 
@@ -100,11 +115,13 @@ void SCIWInstallUpdateGuard(void) {
             @"-checkForSoftwareUpdate: is %s (expected %@)",
             scanMethod ? method_getTypeEncoding(scanMethod) : "missing", kSCIWScanEncoding,
             checkMethod ? method_getTypeEncoding(checkMethod) : "missing", kSCIWCheckEncoding];
+        SCIWPublishGuardState();
         return;
     }
 
     %init(UpdateHold);
     sciwGuardState = @"installed on SUBManager (scan + check)";
+    SCIWPublishGuardState();
 }
 
 NSString *SCIWUpdateGuardReport(void) {

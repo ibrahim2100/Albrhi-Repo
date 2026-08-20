@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.50.3
+
+Albrhi Watch 0.2.4 and Albrhi Panel 0.9.11. The tweak was gated on Albrhi's per-app switch, which
+no switch anywhere sets for a tweak collapsed into one grouped row — so nothing installed at all.
+Its own master switch is the gate now. The diagnostics report is merged from both processes, the
+update hold's verdict travels with it, and the Watch app says whether it ran and whether it could
+write, so an empty section stops meaning two different things at once. A restart button per
+process, and an honest answer about what a full userspace restart needs.
+
 ## v1.49.3
 
 **If a tweak is installed but Albrhi has not caught up with its settings page, the page's row now

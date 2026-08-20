@@ -92,7 +92,12 @@ void SCIWRunUpdateProbe(void) {
     // Written where Settings can read it: the probe runs inside SpringBoard and the Watch app,
     // and the page that shows it runs inside Settings. A value that never leaves the process
     // that produced it is a diagnostic nobody can send.
-    CFPreferencesSetAppValue(CFSTR("watch_probe_report"),
+    // **One key per process.** Both processes ran this and both wrote the same key, so whichever
+    // launched last was the only one ever read -- two reports, one slot, and the section that
+    // mattered was always the missing one.
+    NSString *key = [@"watch_probe_report_" stringByAppendingString:
+                        [[NSBundle mainBundle] bundleIdentifier] ?: @"unknown"];
+    CFPreferencesSetAppValue((__bridge CFStringRef)key,
                              (__bridge CFPropertyListRef)sciwProbeReport,
                              CFSTR("com.albrhi.watch"));
     CFPreferencesAppSynchronize(CFSTR("com.albrhi.watch"));

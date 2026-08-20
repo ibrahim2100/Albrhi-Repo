@@ -300,5 +300,11 @@ void SCIWInstallPairing(void) {
 
     // The writes are behind the same switch as the gate they support, and they run after the
     // hooks so a launch with the master off leaves NanoRegistry exactly as iOS left it.
-    if (SCIWPrefEnabledForKey(SCIWPrefPairing)) SCIWApplyPairingPreferences();
+    // The hooks go into every process that asks the question; the *writes* stay in SpringBoard.
+    // They are global values with one correct writer, and geteuid() would refuse them anywhere
+    // else in any case -- but naming the process says why rather than relying on a uid check to
+    // mean something it does not say.
+    BOOL isSpringBoard = [[[NSBundle mainBundle] bundleIdentifier]
+                             isEqualToString:@"com.apple.springboard"];
+    if (isSpringBoard && SCIWPrefEnabledForKey(SCIWPrefPairing)) SCIWApplyPairingPreferences();
 }
