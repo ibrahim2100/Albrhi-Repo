@@ -46,8 +46,21 @@ static BOOL YTMU(NSString *key) {
 - (BOOL)isPlayableInBackground{
     return YTMU(@"YTMUltimateIsEnabled") && YTMU(@"backgroundPlayback") ? YES : %orig;
 }
+//
+// **A fourth edit, and it is the one this repository already had a rule for.** Upstream writes
+// this body as a ternary whose two branches are `%orig(YES)` and `%orig` -- two different
+// argument structures in one expression. The Logos in the roothide Theos accepts it; the Logos
+// in stock Theos answers `Invalid argument structure in %orig` and fails the build, which is
+// how CI found it after every local build had passed: **those builds were all roothide.**
+//
+// `%orig` must sit alone on its own line inside a full block. Written that way here.
+//
 - (void)setIsPlayableInBackground:(BOOL)backgroundable {
-    YTMU(@"YTMUltimateIsEnabled") && YTMU(@"backgroundPlayback") ? %orig(YES) : %orig;
+    if (YTMU(@"YTMUltimateIsEnabled") && YTMU(@"backgroundPlayback")) {
+        %orig(YES);
+        return;
+    }
+    %orig;
 }
 %end
 

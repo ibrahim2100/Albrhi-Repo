@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.56.1
+
+Albrhi for YouTube Music 0.1.1 — 1.56.0 never published: its rootless build failed on a `%orig`
+that the two Theos installs disagree about.
+
 ## v1.56.0
 
 **Albrhi for YouTube Music 0.1.0 joins the package** — seven tweaks in one install now. No ads, and

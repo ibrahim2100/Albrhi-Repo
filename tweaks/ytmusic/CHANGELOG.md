@@ -1,5 +1,19 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.1.1
+
+**The rootless build failed and every local build had passed, because every local build was
+roothide.** Upstream writes one method body as a ternary whose branches are `%orig(YES)` and
+`%orig` — two different argument structures in one expression. The Logos in the roothide Theos
+accepts it; the Logos in stock Theos answers `Invalid argument structure in %orig` and stops.
+
+`%orig` must sit alone on its own line inside a full block, which this repository already knew and
+had written down. What it did not have written down is the reason it went unnoticed: **the two
+Theos installs here carry different versions of Logos, so a local build proves one flavour and
+guesses at the other.** CI builds rootless first, which is why it was the one to say so.
+
+Fixed as a plain `if`/`return`, and both flavours now build locally before anything is pushed.
+
 ## v0.1.0
 
 **No ads, and background playback left alone — and no Premium.** Two files carried over from
