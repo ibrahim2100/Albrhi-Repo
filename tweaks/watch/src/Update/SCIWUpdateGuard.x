@@ -5,6 +5,7 @@
 #import "../Prefs.h"
 #import "../Diagnostics/SCIWDiagnostics.h"
 #import "../Localization/SCILocalize.h"
+#import "../Bridge/SCIWBridgeSignal.h"
 
 ///
 /// Holding a watchOS update back, inside the Watch app — written from a device's own method lists.
@@ -75,6 +76,29 @@ static NSUInteger sciwStampRows = 0;       ///< rows in the last list seen
 static NSUInteger sciwStampFooters = 0;    ///< rows carrying footer text
 static NSString *sciwStampStop = nil;      ///< where the last attempt gave up
 
+///
+/// **The report is written at launch, and everything interesting happens afterwards.**
+///
+/// `stamp: 0 call(s)` was read as "the hooks never fired" and it was not: the drop that carries
+/// the report is written from `%ctor`, before any page can have appeared, so the counters in it
+/// are always the counters of a process that has just started. A report with no timestamp and no
+/// refresh describes one instant and is read as describing the run — which is this project's own
+/// tally-versus-snapshot rule, arriving in the diagnostic rather than in the feature.
+///
+/// So the drop is rewritten after anything worth reporting. It is a few kilobytes to the app's own
+/// container, and SpringBoard picks it up on the notification that follows.
+///
+static void SCIWRefreshReport(void) {
+    static NSDate *last = nil;
+
+    // Throttled, because a redrawing table can call this several times a second and a diagnostic
+    // has no business being the most frequent writer in the process.
+    if (last && [[NSDate date] timeIntervalSinceDate:last] < 2.0) return;
+    last = [NSDate date];
+
+    SCIWBridgeAnnounce();
+}
+
 /// The encodings, every one read off the device by the probe beside this file.
 static NSString *const kSCIWScanResultEncoding = @"v40@0:8@16@24@32";  // -manager:scanRequestDidLocateUpdate:error:
 static NSString *const kSCIWDownloadEncoding = @"v24@0:8@16";          // -startDownload:
@@ -142,6 +166,7 @@ static void SCIWStampUpdatePage(id controller) {
 
     if (!SCIWPrefEnabledForKey(SCIWPrefHoldUpdates)) {
         sciwStampStop = @"the hold is switched off";
+        SCIWRefreshReport();
         return;
     }
     if (![controller respondsToSelector:@selector(specifiers)]) {
@@ -192,6 +217,7 @@ static void SCIWStampUpdatePage(id controller) {
 
         if (!target) {
             sciwStampStop = @"no row on this page carries footer text";
+        SCIWRefreshReport();
             return;
         }
 
@@ -203,6 +229,7 @@ static void SCIWStampUpdatePage(id controller) {
         // Asking whether the notice is already there answers both.
         if ([existing containsString:SCILocalized(@"hold_notice")]) {
             sciwStampStop = @"already stamped";
+        SCIWRefreshReport();
             return;
         }
         [target setProperty:[NSString stringWithFormat:@"%@\n\n%@",
@@ -215,6 +242,7 @@ static void SCIWStampUpdatePage(id controller) {
 
         sciwPageStamps++;
         SCIWRecordAnswer(@"update page stamped");
+        SCIWRefreshReport();
     });
 }
 
@@ -295,6 +323,7 @@ static void SCIWPublishGuardState(void) {
     }
 
     SCIWRecordAnswer(@"scan state settled to 'no update'");
+    SCIWRefreshReport();
     SCIWStampUpdatePage(self);
 }
 

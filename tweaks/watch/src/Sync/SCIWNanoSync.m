@@ -113,6 +113,62 @@ static NSString *SCIWDescribeDomain(Class accessorClass, NSString *domain, BOOL 
             liveness.length ? [@"\n    accessor: " stringByAppendingString:liveness] : @""];
 }
 
+///
+/// **The accessor is bound and every domain is empty, so the names are wrong — and names are the
+/// one thing a device can be asked for instead of guessed at.**
+///
+/// The probe answered `bound to the active device, pairingID = 53DE7DDA-…` and then reported
+/// nothing in all sixteen candidates. A live accessor over an empty domain means the domain does
+/// not exist under that name, and sixteen guesses are sixteen guesses however carefully chosen.
+///
+/// NanoPreferencesSync keeps a watch's synced domains **on disk**, under the paired device's own
+/// registry directory, one file per domain. SpringBoard is not sandboxed, so the directory can
+/// simply be listed — and the file names *are* the domain names. This is the same move as dumping
+/// a class's method list instead of trying selectors: stop proposing names, read them.
+///
+static NSString *SCIWListRegistry(NSString *pairingID) {
+    NSFileManager *fm = [NSFileManager defaultManager];
+
+    NSMutableArray<NSString *> *roots = [NSMutableArray arrayWithArray:@[
+        @"/var/mobile/Library/DeviceRegistry",
+        @"/var/mobile/Library/NanoPreferencesSync",
+    ]];
+
+    if (pairingID.length) {
+        [roots addObject:[NSString stringWithFormat:
+            @"/var/mobile/Library/DeviceRegistry/%@", pairingID]];
+        [roots addObject:[NSString stringWithFormat:
+            @"/var/mobile/Library/DeviceRegistry/%@/NanoPreferencesSync", pairingID]];
+    }
+
+    NSMutableArray<NSString *> *lines = [NSMutableArray array];
+
+    for (NSString *root in roots) {
+        NSArray<NSString *> *entries = [fm contentsOfDirectoryAtPath:root error:NULL];
+        if (!entries) {
+            [lines addObject:[NSString stringWithFormat:@"%@ — not readable or not there", root]];
+            continue;
+        }
+
+        NSArray *sorted = [entries sortedArrayUsingSelector:@selector(compare:)];
+        [lines addObject:[NSString stringWithFormat:@"%@ — %lu entr(ies):\n    %@", root,
+                          (unsigned long)sorted.count,
+                          [sorted componentsJoinedByString:@"\n    "]]];
+    }
+
+    return [lines componentsJoinedByString:@"\n"];
+}
+
+static NSString *SCIWActivePairingID(Class accessorClass) {
+    id accessor = ((id (*)(id, SEL, id))objc_msgSend)([accessorClass alloc],
+                      @selector(initWithDomain:), @"com.apple.Bridge");
+
+    if (![accessor respondsToSelector:@selector(pairingID)]) return nil;
+
+    id pairing = ((id (*)(id, SEL))objc_msgSend)(accessor, @selector(pairingID));
+    return [pairing isKindOfClass:[NSString class]] ? pairing : [pairing description];
+}
+
 void SCIWRunNanoProbe(void) {
     Class accessorClass = NSClassFromString(@"NPSDomainAccessor");
     if (!accessorClass) {
@@ -137,6 +193,11 @@ void SCIWRunNanoProbe(void) {
             if (line) [lines addObject:line];
             first = NO;
         }
+
+        // The names, read rather than proposed. Printed after the candidates so the two can be
+        // compared in one glance: what was guessed, and what is actually there.
+        [lines addObject:@"\nwhere the domains actually live:"];
+        [lines addObject:SCIWListRegistry(SCIWActivePairingID(accessorClass))];
 
         sciwNanoReport = [lines componentsJoinedByString:@"\n"];
 

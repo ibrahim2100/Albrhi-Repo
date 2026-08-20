@@ -1,5 +1,29 @@
 # Albrhi Watch — what changed
 
+## v0.3.3
+
+**`stamp: 0 call(s)` was not the hooks failing — it was my own report describing a process that had
+just started.** The drop carrying the report is written from `%ctor`, so every counter in it is a
+launch-time counter, and nothing that happens while the app is *used* was ever in it. A diagnostic
+with no refresh describes one instant and is read as describing the run: this project's own
+tally-versus-snapshot rule, arriving in the diagnostic instead of the feature.
+
+The drop is rewritten now after anything worth reporting — a stamp, a withheld update, or a stamp
+that gave up and named why — throttled to once every two seconds, because a redrawing table can
+call it several times a second and a diagnostic has no business being the busiest writer in the
+process.
+
+**And the domain probe answered the important half: the accessor is bound.** `bound to the active
+device, pairingID = 53DE7DDA-…`, and then nothing in all sixteen candidates. A live accessor over
+an empty domain means **the names are wrong**, and sixteen guesses are still guesses however
+carefully chosen.
+
+So the names are read instead of proposed. NanoPreferencesSync keeps a watch's synced domains on
+disk under the paired device's own registry directory, one file per domain, and SpringBoard is not
+sandboxed — so the directory is listed and **the file names are the domain names**. Same move as
+dumping a class's method list rather than trying selectors, which is what unblocked the update work
+two releases ago.
+
 ## v0.3.2
 
 **Two zeroes came back, and neither of them is a result.**

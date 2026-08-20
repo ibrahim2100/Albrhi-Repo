@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.51.3
+
+Albrhi Watch 0.3.3: the diagnostics report refreshes while the app is used instead of describing
+only the moment it launched, and the nano-domain names are read off the device rather than guessed.
+
 ## v1.51.2
 
 Albrhi Watch 0.3.2: two diagnostics that reported zero for several different reasons now say which,
