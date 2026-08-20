@@ -1,5 +1,26 @@
 # Albrhi Watch — what changed
 
+## v0.5.2
+
+**0.5.1 put SpringBoard into safe mode. Install this one.**
+
+The cause is one missing check, in code I wrote an hour after the code that has it. `-copyKeyList`
+was trusted to return an array and sent `-count` and `-sortedArrayUsingSelector:` on the strength of
+its name; the plain-accessor branch ten lines above asks `isKindOfClass:` first. **Two branches doing
+the same job, one of them guarded** — the same shape CLAUDE.md already records about a path
+derivation existing twice with only one copy correct. An unrecognised selector in SpringBoard is not
+a failed diagnostic, it is safe mode.
+
+**And the exposure is the real lesson, not the bug.** This probe sends messages to private classes
+inside the process that draws the home screen, to answer a question nobody has while they are simply
+using their phone. **A feature that fails takes its feature down; a diagnostic that fails here takes
+the device down.** So it is off unless somebody turns it on — a new switch, *Read the watch's
+domains*, under the report — and it does not turn itself back off, because a switch that resets
+itself is a switch that lies.
+
+Nothing else changed. The watchOS hold, the pairing answers and the report are exactly as they were
+in 0.5.1, which a device confirmed working before this.
+
 ## v0.5.1
 
 **Confirmed on a device: the notice reaches the settled page and the install row now reads "Held by

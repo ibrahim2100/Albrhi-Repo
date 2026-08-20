@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.53.2
+
+**1.53.1 could put SpringBoard into safe mode — install this one.** Albrhi Watch 0.5.2 fixes the
+missing type check that caused it, and the diagnostic responsible is now off unless it is switched
+on. Everything else is unchanged.
+
 ## v1.53.1
 
 Albrhi Watch 0.5.1: the diagnostics no longer discard domain names that look like bundle

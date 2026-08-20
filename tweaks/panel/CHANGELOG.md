@@ -1,5 +1,10 @@
 # Albrhi Panel Changelog
 
+## v0.9.16
+
+A switch for the watch's domain reading, off by default: it is a diagnostic that runs inside
+SpringBoard, and the release that added it put a phone into safe mode.
+
 ## v0.9.15
 
 The watchOS update row says what the hold actually does: watchOS 26 and newer, with the version read

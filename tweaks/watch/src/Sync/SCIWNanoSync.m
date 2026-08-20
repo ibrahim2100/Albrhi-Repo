@@ -191,10 +191,25 @@ static NSString *SCIWDescribeDomain(Class accessorClass, NSString *domain, BOOL 
             id keys = [withDevice respondsToSelector:@selector(copyKeyList)]
                 ? ((id (*)(id, SEL))objc_msgSend)(withDevice, @selector(copyKeyList)) : nil;
 
-            paired = [NSString stringWithFormat:@" | with the paired device: %llu byte(s), %lu key(s)%@",
-                      size, (unsigned long)[keys count],
-                      [keys count] ? [@"\n    " stringByAppendingString:
-                          [[keys sortedArrayUsingSelector:@selector(compare:)]
+            //
+            // **This is where SpringBoard died, and the check that was missing is one the branch
+            // ten lines above already had.**
+            //
+            // `-count` and `-sortedArrayUsingSelector:` were sent to whatever `-copyKeyList`
+            // returned, on the strength of its name. The plain-accessor branch asks
+            // `isKindOfClass:` first; this one, written an hour later, did not — and an
+            // unrecognised selector in SpringBoard is not a failed diagnostic, it is safe mode.
+            //
+            // Two branches doing the same job, one of them guarded: exactly the shape CLAUDE.md
+            // already records about a derivation existing twice with only one copy correct.
+            //
+            NSArray *keyList = [keys isKindOfClass:[NSArray class]] ? keys : nil;
+
+            paired = [NSString stringWithFormat:
+                          @" | with the paired device: %llu byte(s), %lu key(s)%@",
+                      size, (unsigned long)keyList.count,
+                      keyList.count ? [@"\n    " stringByAppendingString:
+                          [[keyList sortedArrayUsingSelector:@selector(compare:)]
                               componentsJoinedByString:@"\n    "]] : @""];
 
             if ([withDevice respondsToSelector:@selector(invalidate)])
@@ -288,6 +303,24 @@ static NSString *SCIWActivePairingID(Class accessorClass) {
 }
 
 void SCIWRunNanoProbe(void) {
+    //
+    // **Off unless it is asked for, and that is a rule this diagnostic earned the hard way.**
+    //
+    // 0.5.1 put SpringBoard into safe mode. The cause was one missing `isKindOfClass:` and it is
+    // fixed above -- but the shape of the risk is not: this probe sends messages to private
+    // classes, in the process that draws the home screen, to answer a question nobody has while
+    // they are simply using their phone. A feature that fails takes its feature down; a diagnostic
+    // that fails here takes the device down.
+    //
+    // So it runs only when somebody turns it on to take a reading, and turns itself off again
+    // afterwards is deliberately *not* done -- a switch that resets itself is a switch that lies.
+    //
+    if (!SCIWReadPreference(SCIWPrefNanoProbe, NO)) {
+        sciwNanoReport = @"off — turn on 'Read the watch's domains' in Settings › Albrhi › "
+                         @"Albrhi Watch to take a reading";
+        return;
+    }
+
     Class accessorClass = NSClassFromString(@"NPSDomainAccessor");
     if (!accessorClass) {
         sciwNanoReport = @"NPSDomainAccessor is not in this process";

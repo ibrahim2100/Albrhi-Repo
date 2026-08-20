@@ -176,6 +176,18 @@ static const size_t kSCIWatchToggleCount = sizeof(kSCIWatchToggles) / sizeof(kSC
                                                          detail:Nil
                                                            cell:PSButtonCell
                                                            edit:Nil];
+    //
+    // **The domain reading is a switch, not something that happens.**
+    //
+    // It sends messages to private classes inside SpringBoard, and the release that added it put a
+    // real phone into safe mode. Fixed -- and left off by default anyway, because a diagnostic that
+    // can take the home screen down should run when somebody wants a reading and not otherwise.
+    //
+    [specifiers addObject:[self watchSwitchTitled:SCILocalized(@"watch_nano_probe")
+                                              key:@"watch_nano_probe"
+                                           symbol:@"externaldrive.connected.to.line.below"
+                                             tint:[UIColor systemGrayColor]]];
+
     SCISetButtonAction(report, @selector(copyProbeReport));
     [report setProperty:SCIPanelBadgeImage(@"doc.on.doc", [UIColor systemGrayColor])
                  forKey:@"iconImage"];

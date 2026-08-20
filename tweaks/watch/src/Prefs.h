@@ -56,6 +56,14 @@
 /// value rather than on the update's title.
 #define SCIWPrefHoldFromMajor   CFSTR("watch_hold_from_major")
 
+/// The NanoPreferencesSync reading, off unless somebody asks for it.
+///
+/// **A diagnostic that can take the device down is not a diagnostic that runs by default.** This
+/// one sends messages to private classes inside SpringBoard, and 0.5.1 shipped it with one missing
+/// `isKindOfClass:` and put a real phone into safe mode. The bug is fixed; the exposure is the
+/// point -- a feature that fails takes its feature down, and this fails the home screen.
+#define SCIWPrefNanoProbe       CFSTR("watch_nano_probe")
+
 /// Companion app installation: `ACXRemoteApplication -isRuntimeCompatibleWithOSVersion:`.
 #define SCIWPrefApps            CFSTR("watch_apps")
 
