@@ -1,5 +1,25 @@
 # Albrhi for TikTok — what changed
 
+## v0.19.5
+
+**Two phones showed the same build differently: centred on one, leaning so far left on the other
+that the day was outside the app.** That is not a nudge to correct — it is a clamp that could only
+ever have been wrong.
+
+The label was forced to a fixed 96pt and then clamped into `host.bounds`, and the host is the
+interaction rail, which is about 44pt wide. So `hostWidth - 96 - 2` was **negative**, the right-hand
+clamp never ran, and the `x < 2` line shoved the label onto the rail's left edge on every pass. A
+rail a few points wider leans a few points less, which is exactly what one phone against another
+showed.
+
+**A clamp into a box narrower than the thing being placed is not a safety net; it is a guarantee of
+the wrong position.** The label is sized to its own text now and centred on the button — the one
+rectangle this code owns and the only one that means the same thing on every device — and the rail
+is told not to clip, so a label wider than it can overhang instead of losing its digits.
+
+The format is short and drops the time: the long form plus a clock needed more width than the rail
+has, which is why what survived on the narrower phone was the month and the year.
+
 ## v0.19.4
 
 **Confirmed on a device: the date appears.** It sat below the button and read as offset to the

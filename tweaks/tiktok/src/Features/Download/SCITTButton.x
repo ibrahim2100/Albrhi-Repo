@@ -175,7 +175,11 @@ static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *it
         label.textAlignment = NSTextAlignmentCenter;
         label.font = [UIFont systemFontOfSize:10 weight:UIFontWeightSemibold];
         label.textColor = [UIColor whiteColor];
-        label.numberOfLines = 2;
+        // One line: the date is read at a glance beside a video, and a second line was only ever
+        // the long format wrapping.
+        label.numberOfLines = 1;
+        label.adjustsFontSizeToFitWidth = YES;
+        label.minimumScaleFactor = 0.8;
         label.userInteractionEnabled = NO;
 
         // The same shadow TikTok gives its own rail text, so a white label stays readable over a
@@ -194,8 +198,10 @@ static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *it
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         formatter = [[NSDateFormatter alloc] init];
-        formatter.dateStyle = NSDateFormatterMediumStyle;
-        formatter.timeStyle = NSDateFormatterShortStyle;
+        // Short and dateless of the clock. The long form plus a time needed more width than the
+        // rail has, so what survived on a narrower phone was a fragment -- the month and the year.
+        formatter.dateStyle = NSDateFormatterShortStyle;
+        formatter.timeStyle = NSDateFormatterNoStyle;
         // The phone's own locale, so an Arabic device reads an Arabic date without this file
         // deciding what a date looks like.
         formatter.locale = [NSLocale currentLocale];
@@ -215,16 +221,32 @@ static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *it
     // over the button rather than beside it -- and this is a frame this code owns, which is the
     // whole reason a two-line change can move it at all.
     //
+    //
+    // **Sized to its own text and centred on the button, with nothing clamped to the host.**
+    //
+    // What was here forced a 96pt box and then clamped it into `host.bounds` -- and the host is the
+    // interaction rail, which is about 44pt wide. So `hostWidth - 96 - 2` was *negative*, the right
+    // clamp never ran, and `if (x < 2) x = 2` shoved the label onto the rail's left edge every
+    // time. A device with a slightly different rail width leans differently, which is exactly what
+    // two phones showed: centred on one, hard left and cut off on the other.
+    //
+    // **A clamp into a box narrower than the thing being placed is not a safety net; it is a
+    // guarantee of the wrong position.** The button's own frame is the only rectangle this code
+    // owns and the only one that means the same thing on every device, so the label is centred on
+    // that and allowed to overhang a narrow rail rather than be pushed out of it.
+    //
     CGRect b = button.frame;
-    CGFloat width = 96;
-    CGFloat height = 26;
-    CGFloat x = CGRectGetMidX(b) - width / 2;
 
-    CGFloat limit = CGRectGetWidth(host.bounds) - width - 2;
-    if (limit > 0 && x > limit) x = limit;
-    if (x < 2) x = 2;
+    CGSize fits = [label sizeThatFits:CGSizeMake(160, 40)];
+    CGFloat width = MIN(MAX(ceil(fits.width) + 8, 44), 150);
+    CGFloat height = MAX(ceil(fits.height), 14);
 
-    label.frame = CGRectMake(x, CGRectGetMinY(b) - height - 2, width, height);
+    label.frame = CGRectMake(CGRectGetMidX(b) - width / 2,
+                             CGRectGetMinY(b) - height - 2,
+                             width, height);
+
+    // The rail clips by default, which is how a correctly centred label still lost its digits.
+    host.clipsToBounds = NO;
 
     [host bringSubviewToFront:label];
 }
