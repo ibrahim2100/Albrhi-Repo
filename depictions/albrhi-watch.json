@@ -92,12 +92,12 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
-          "title": "v0.2.0",
+          "title": "v0.5.2",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **The Watch app, the update hold, and a probe that asks the device what its own classes look like.**",
+          "markdown": "• **0.5.1 put SpringBoard into safe mode. Install this one.**",
           "useSpacing": true
         },
         {
@@ -106,12 +106,26 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v0.1.0",
+          "title": "v0.5.1",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **A master switch, off until it is turned on.**\n• **Three switches rather than one**\n• **Every answer is counted.**",
+          "markdown": "• **Confirmed on a device: the notice reaches the settled page and the install row now reads \"Held by Albrhi Watch\".**",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
+          "title": "v0.5.0",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• **The domain names are read off the device and asked about in the same pass.**",
           "useSpacing": true
         },
         {
@@ -127,7 +141,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.2.0"
+          "text": "0.5.2"
         },
         {
           "class": "DepictionTableTextView",
