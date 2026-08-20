@@ -20,6 +20,7 @@ four standing on their own:
 | `tweaks/youtube` | `com.albrhi.youtube` | YouTube, tested on **21.30.5** |
 | `tweaks/twitter` | `com.albrhi.twitter` | X / Twitter, tested on **12.15** |
 | `tweaks/tiktok` | `com.albrhi.tiktok` | TikTok, tested on **46.4.0** |
+| `tweaks/spotify` | `com.albrhi.spotify` | Spotify — **Swift and Orion, the only one** |
 | `tweaks/panel` | `com.albrhi.panel` | the Settings app — the per-app switches |
 | `suite/` | **`com.albrhi`** | the four social-app tweaks and the panel, in one package |
 | `tweaks/nextup` | `com.albrhi.nextup` | SpringBoard + 5 media apps — what plays next, **a GPLv3 port, released on its own** |
@@ -1398,8 +1399,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.16** · Watch **0.5.2** · TikTok **0.17.7** ·
-NextUp **0.1.5** · suite **1.53.2**. **CarPlay is gone** — removed from this repository, to be
+Instagram **4.1.10** · YouTube **1.20.0** · X **0.14.0** · Panel **0.9.21** · Watch **0.5.2** · TikTok **0.17.7** ·
+Spotify **0.2.3** ·
+NextUp **0.1.5** · suite **1.55.3**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being
@@ -1419,6 +1421,61 @@ out: an always-on log writes the titles of what is playing into `/var/mobile/nu/
 a package whose neighbour in this source exists to stop watching being reported at all — and
 compiling it out is what left the first install undiagnosable. `NULogEnabled()` reads a
 preference, off by default, in Settings › Albrhi › Albrhi NextUp › Advanced.
+
+### Spotify, and what a Swift/Orion tweak costs
+
+**The ad blocking is carried over from EeveeSpotify under GPLv3** — the same licence this repository
+ships under, which is what made carrying code over lawful rather than merely possible, exactly as
+with Albrhi NextUp. **Its Premium unlock is deliberately not here**, which is the same line this
+project drew at Locket's `Check0verPlus`: a tweak that hands somebody a paid subscription is taking
+money from the app's developers, not modifying a device. The owner asked for it three times and the
+answer did not change; what did change is that the *reason* is now recorded next to the code.
+
+**Why those files could be taken and the rest could not is a fact, not a judgement.** The ad
+blockers never consult the subscription state — measured in the upstream sources before a line was
+copied. The files that mention Premium are the subscription path and the ad blockers are not among
+them. The same reading settled the audio-quality question for good: `high-bitrate`,
+`very-high-bitrate` and `audio-quality` are **account attributes** the server sends, rewritten only
+by the Premium spoof. There is no 320 kbps hidden on the device to unlock, which is why "block the
+ads" is possible and "raise the quality" is not.
+
+**Three things a Swift/Orion tweak needs that a Logos one does not**, each found by asking the built
+artefact rather than trusting the build, and none of which produced a warning:
+
+- **`orion_init()` is not called for you.** Logos writes its own `%ctor`; Theos's Orion generator
+  emits `@_cdecl("orion_init")` and nothing invokes it. The first build linked, installed, loaded,
+  logged its version, read its switches and installed **zero hooks**. Proved by building it both
+  ways: without a constructor the dylib has **no `__init_offsets` section at all**.
+- **`-runtime-compatibility-version none`, or it does not link.** Swift emits a force-load reference
+  to `swiftCompatibility56` that the pinned iPhoneOS 16.2 SDK does not carry. Ruled out as a crash
+  cause later by comparing against upstream's own package: neither build carries those shims.
+- **SwiftUI cannot be compiled against that SDK at all.** Its `.swiftinterface` was built by Swift
+  5.7.1 and the toolchain here is 6.3.3, which refuses to rebuild the module. Any ported file
+  importing SwiftUI is out — for SponsorBlock that is the submit-and-report screens, which
+  *contribute* segments rather than skip them.
+
+**Two crashes, and both were the same mistake in different clothes: a hook installed before its
+target was confirmed.**
+
+- `AdBlockerGroup().activate()` was copied without the `if NSClassFromString("HUB…") != nil` that
+  upstream wraps it in. **Activating an Orion group whose target class is absent does not fail
+  politely** — and Logos's own answer to this (a `%hook` on a missing class simply never attaches)
+  has no equivalent here, so the caller must check.
+- **A missing `-D ROOTHIDE` was choosing a different code path.** The ported ad blocker activates
+  one guarded group *per class* under that define, and one group covering all five otherwise. The
+  port built for roothide and never defined it, so a roothide device silently took the branch
+  written for everything else. **A conditional compiled out is not a conditional you can see**;
+  upstream's own makefile is where it was finally read from.
+
+**And the fastest diagnosis in this tweak's history was counting.** Clean share links crashed
+Spotify because its three hooks named no group — Orion activates ungrouped hooks at startup, before
+any gate is consulted, so they installed themselves whatever Albrhi's master switch said. Eleven of
+fourteen hooks named a group; the three that did not were the whole fault. **Count the hooks against
+the groups**: a file with hooks and no group runs regardless of what was decided.
+
+**Every ported file is kept diffable against upstream** — one line in one file is the only edit, and
+it says so where it is. Upstream's `writeDebugLog` wrote every message to a file forever; it goes to
+`NSLog` here for the reason NextUp's log was switched off.
 
 ### Apple Watch, where it actually stands
 

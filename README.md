@@ -4,16 +4,17 @@
 
 ### iOS tweaks, built in the open — bilingual, native, and written to be read
 
-**العربية · English** · a working APT source · seven tweaks, five in one package
+**العربية · English** · a working APT source · eight tweaks, six in one package
 
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B-lightgrey.svg)]()
 [![Rootless](https://img.shields.io/badge/rootless-supported-success.svg)](#-compatibility)
-[![Albrhi](https://img.shields.io/badge/Albrhi-1.53.2-blueviolet.svg)](suite/CHANGELOG.md)
+[![Albrhi](https://img.shields.io/badge/Albrhi-1.55.3-blueviolet.svg)](suite/CHANGELOG.md)
 [![Instagram](https://img.shields.io/badge/Instagram-4.1.10-orange.svg)](tweaks/instagram/CHANGELOG.md)
 [![YouTube](https://img.shields.io/badge/YouTube-1.20.0-red.svg)](tweaks/youtube/CHANGELOG.md)
 [![X](https://img.shields.io/badge/X-0.14.0-black.svg)](tweaks/twitter/CHANGELOG.md)
 [![TikTok](https://img.shields.io/badge/TikTok-0.17.7-ff0050.svg)](tweaks/tiktok/CHANGELOG.md)
+[![Spotify](https://img.shields.io/badge/Spotify-0.2.3-1DB954.svg)](tweaks/spotify/CHANGELOG.md)
 [![NextUp](https://img.shields.io/badge/NextUp-0.1.5-FF375F.svg)](tweaks/nextup/CHANGELOG.md)
 [![Watch](https://img.shields.io/badge/Watch-0.5.2-FF375F.svg)](tweaks/watch/CHANGELOG.md)
 [![Based on](https://img.shields.io/badge/based%20on-SCInsta-lightblue.svg)](https://github.com/SoCuul/SCInsta)
@@ -102,7 +103,7 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 
 ### What is in here
 
-**Seven tweaks. Five ship inside `com.albrhi`; two stand on their own.**
+**Eight tweaks. Six ship inside `com.albrhi`; two stand on their own.**
 
 | Tweak | Patches | Version | What it does |
 |---|---|---|---|
@@ -110,7 +111,8 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 | **Albrhi for YouTube** | YouTube | 1.20.0 | downloads with their own player, no ads, SponsorBlock, background playback |
 | **Albrhi for X** | X / Twitter | 0.14.0 | media downloads, and the feature switches X asks itself about |
 | **Albrhi for TikTok** | TikTok | 0.17.7 | a download button in the feed, photo posts, no ads, confirmations, privacy |
-| **Albrhi Panel** | Settings | 0.9.16 | the Albrhi page — one switch per patched app, and a page per tweak |
+| **Albrhi for Spotify** | Spotify | 0.2.3 | no ads, no Premium popups, sponsored podcast segments skipped |
+| **Albrhi Panel** | Settings | 0.9.21 | the Albrhi page — one switch per patched app, and a page per tweak |
 | **Albrhi NextUp** | SpringBoard, Music, Podcasts, YouTube, YT Music, Spotify | 0.1.5 | what plays next, on the Lock Screen — **its own package** |
 | **Albrhi Watch** | SpringBoard, Watch app | 0.5.2 | pair an Apple Watch on a newer watchOS than iOS expects, and hold watchOS 26 back — **its own package** |
 
@@ -119,7 +121,7 @@ identity and version number, and **they never meet at runtime**: an injection fi
 each dylib to one bundle id, so the YouTube tweak is never loaded into Instagram. What they
 share is the build plumbing — the checks, the build script and the APT index.
 
-`com.albrhi` is the merge of the first five, built by `tools/make-suite.sh`, which picks up
+`com.albrhi` is the merge of the first six, built by `tools/make-suite.sh`, which picks up
 any `tweaks/*/control` automatically. A tweak leaves the merge only by carrying a
 `.no-suite` marker file in its directory — NextUp and Watch are the two that do.
 
@@ -311,6 +313,33 @@ never touched — only what gets sent back.
 The seek bar under the video kept visible instead of fading a moment after playback starts · the
 jailbreak answered for as an unmodified phone would · a settings screen grouped by what you came
 to change, with the full diagnostic report one row away and copyable in a tap.
+
+---
+
+## 🎧 Albrhi for Spotify
+
+### No ads — and **no Premium**
+Audio and display advertising is refused where Spotify asks for it, the home feed's sponsored rows
+are filtered out of the JSON before the screen is built, and the "go Premium" popups are dropped as
+they are presented.
+
+**This does not unlock a paid subscription.** It does not touch your account, does not report you as
+a subscriber, and does not remove the skip limit or raise the audio quality — those are account
+attributes the server decides, not switches inside the app. The tweak the ad blocking comes from is
+known for exactly that, and it is the one thing deliberately not carried over. The settings page says
+so above its own switches rather than leaving it to be discovered.
+
+### Sponsored segments in podcasts
+Sponsored, self-promotion and interruption segments are skipped from SponsorBlock's community
+database, with a note saying which one was skipped — a segment skipped silently is indistinguishable
+from a track that jumped on its own. **Off until you turn it on:** it asks a third-party server about
+what is playing, and that is a cost paid only by somebody who chose it.
+
+> **The ad blocking and SponsorBlock are not this project's work.** They are
+> [EeveeSpotify](https://github.com/SideloadLabs/EeveeSpotifyReincarnated) by **Eevee** and the
+> **SideloadLabs** team, under GPLv3 — the same licence Albrhi ships under, which is what makes
+> carrying them over lawful rather than merely possible. Every ported file is kept diffable against
+> upstream; Albrhi adds the gate, the settings page and the bilingual interface.
 
 ---
 
