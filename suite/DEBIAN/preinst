@@ -18,6 +18,7 @@ OLD="com.albrhi.tweak com.albrhi.tweak.roothide \
      com.albrhi.twitter com.albrhi.twitter.roothide \
      com.albrhi.tiktok com.albrhi.tiktok.roothide \
      com.albrhi.spotify com.albrhi.spotify.roothide \
+     com.albrhi.ytmusic com.albrhi.ytmusic.roothide \
      com.albrhi.panel com.albrhi.panel.roothide"
 
 for PACKAGE in $OLD; do

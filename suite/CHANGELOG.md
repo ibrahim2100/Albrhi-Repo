@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.56.0
+
+**Albrhi for YouTube Music 0.1.0 joins the package** — seven tweaks in one install now. No ads, and
+background playback without the upsell notification that interrupts it.
+
+**It does not unlock Premium.** The tweak its hooks are carried from answers `-isPremiumSubscriber`
+with YES on six classes; that is the one thing not carried over, the same line drawn for Locket and
+Spotify. The two files taken never ask what the account is — measured before a line was copied.
+
 ## v1.55.3
 
 Albrhi for Spotify 0.2.3 — the crash on roothide is fixed. A build flag was missing, and it chose a
