@@ -245,8 +245,11 @@ static const size_t kSCIWatchToggleCount = sizeof(kSCIWatchToggles) / sizeof(kSC
     for (NSString *process in @[@"com.apple.springboard", @"com.apple.Bridge"]) {
         NSString *report = [self stringForKey:
             [@"watch_probe_report_" stringByAppendingString:process]];
+        // No header added here: the probe writes its own `in <process>` line, and adding a second
+        // printed it twice. Two lists describing one thing again — the same shape as the report
+        // that had rows the screen did not.
         [parts addObject:report.length
-            ? [NSString stringWithFormat:@"in %@\n%@", process, report]
+            ? report
             : [NSString stringWithFormat:@"in %@\nNOT REACHED — the tweak never ran here. "
                                           @"On a jailbreak with per-app injection, enable it for "
                                           @"this process.", process]];

@@ -1,5 +1,26 @@
 # Albrhi Watch — what changed
 
+## v0.2.5
+
+**The report said the Watch app wrote its own report, and the section under it said the Watch app
+was never reached. Both were true, and the contradiction is the finding.**
+
+0.2.4 wrote the report into the shared preference domain, read it back, and announced success.
+cfprefsd had not refused the write — it **redirected** it into the Watch app's own container, where
+the read-back found it exactly where it had been put. **A self-verifying write verifies the wrong
+thing when the failure is redirection rather than refusal**, which is a sharper edge of this
+project's own rule about a sandboxed process being answered with nothing rather than an error.
+
+So the report travels as a file, in the one direction that needs no permission either side lacks:
+the Watch app writes inside **its own container**, which a sandbox always allows, and SpringBoard —
+not sandboxed — finds it and copies it into the shared domain. The container is a UUID assigned at
+install time, so it is searched for by a file name no other package uses rather than computed. The
+Darwin notification now only says *when to look*, which is all it ever had to carry.
+
+**And the report printed `in com.apple.springboard` twice.** The probe writes its own header line
+and the panel added a second — one thing described by two lists again, the same shape as a row
+added to a screen and not to the text that claims to mirror it.
+
 ## v0.2.4
 
 **Nothing ran at all, and the gate was mine.** `SCIPanelAllowsThisApp()` asks whether

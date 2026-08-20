@@ -18,10 +18,15 @@
 /// being answered with nothing rather than an error applies to writing in exactly the same way,
 /// and the cost of confusing the two is a round trip to a device for each guess.
 ///
-/// So the Watch app writes, **reads its own write back**, and announces the outcome over a Darwin
-/// notification. A notification carries no payload, but `notify_set_state` carries a 64-bit value
-/// beside the name, and one small number is precisely the size of this question. SpringBoard is
-/// listening, runs unsandboxed, and writes the answer where Settings can see it.
+/// **And reading the write back does not answer it, which a device had to show.** cfprefsd did not
+/// refuse the Watch app's write — it *redirected* it into that app's own container, where the
+/// read-back found it exactly where it had been put and announced success while Settings still saw
+/// nothing. A self-verifying write verifies the wrong thing when the failure is redirection.
+///
+/// So the report travels as a **file**, in the one direction that needs no permission either side
+/// lacks: the Watch app writes inside its own container, which a sandbox always allows, and
+/// SpringBoard — not sandboxed — finds it and copies it into the shared domain. The Darwin
+/// notification says when to look, which is all it has to carry.
 ///
 /// Deliberately not libSandy. Granting the Watch app the shared preferences directory would also
 /// work, and `vendor/libSandy` is in this repository for the day the Photos/Music/Maps features

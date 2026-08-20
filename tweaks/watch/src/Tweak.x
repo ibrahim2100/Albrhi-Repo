@@ -6,7 +6,7 @@
 #import "Update/SCIWUpdateProbe.h"
 #import "Bridge/SCIWBridgeSignal.h"
 
-NSString *SCIVersionString = @"v0.2.4";  // AlbrhiWatch
+NSString *SCIVersionString = @"v0.2.5";  // AlbrhiWatch
 
 ///
 /// Albrhi Watch — pairing an Apple Watch whose watchOS is newer than this iPhone expects.

@@ -1,5 +1,10 @@
 # Albrhi Panel Changelog
 
+## v0.9.12
+
+The Watch report no longer prints each process's header twice: the probe writes its own, and this
+page was adding a second.
+
 ## v0.9.11
 
 A restart button for the Watch app beside the one for SpringBoard: they are two processes, they

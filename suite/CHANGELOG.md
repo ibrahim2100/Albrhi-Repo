@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.50.4
+
+Albrhi Watch 0.2.5 and Albrhi Panel 0.9.12. The Watch app's diagnostics report reaches Settings:
+its preference write was being redirected into the app's own container rather than refused, so a
+read-back confirmed a write that had gone nowhere useful. It travels as a file now, written where
+a sandbox always allows and read by SpringBoard, which is not sandboxed.
+
 ## v1.50.3
 
 Albrhi Watch 0.2.4 and Albrhi Panel 0.9.11. The tweak was gated on Albrhi's per-app switch, which
