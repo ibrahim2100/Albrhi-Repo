@@ -123,7 +123,22 @@ static NSString *sciDateLast = nil;
 /// It is refreshed rather than recreated: `-configWithModel:` fires on every reuse, and a label
 /// added each time is a pile of labels on one cell.
 ///
+///
+/// **Called from every place a button is bound to an item, not from one of them.**
+///
+/// The first version hooked this into the cell path alone, and a device answered
+/// `0 call(s)`: the button on that build is placed by the *rail* path, which binds its item
+/// somewhere else entirely. Three sites bind an item to a button, and the truthful signal is the
+/// binding itself -- so the label follows all three rather than whichever one was read first.
+///
+/// This is the same fault as the publish date being read on one of four routes that build an item,
+/// one release earlier and in the same feature. **A value or a view attached on one path out of
+/// several is attached on none of the others**, and this file has now paid for that twice.
+///
 static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *item) {
+    if (!host) host = button.superview;
+    if (!host || !button) return;
+
     sciDateCalls++;
 
     UILabel *label = [host viewWithTag:kSCIDateTag];
@@ -459,6 +474,7 @@ static void SCITTPlaceRailButton(UIStackView *stack) {
      forControlEvents:UIControlEventTouchUpInside];
 
     objc_setAssociatedObject(button, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    SCITTPlaceDateLabel(button.superview, button, item);
 
     //
     // **Searching the siblings for "share" cannot work, and a device report is what
@@ -1151,6 +1167,7 @@ static void SCITTPlaceBaseButton(UIViewController *controller) {
     // Re-associated on every bind, because the controller is reused and the button is not:
     // a stale association is how the same clip saved three times while another was on screen.
     objc_setAssociatedObject(button, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    SCITTPlaceDateLabel(button.superview, button, item);
 
     } @catch (NSException *exception) {
         SCILogV(@"base button: %@", exception.reason);

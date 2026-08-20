@@ -1,5 +1,23 @@
 # Albrhi for TikTok — what changed
 
+## v0.19.2
+
+**`0 call(s)` was the truth, and it named the fault in one line.** The date label was hooked into
+the *cell* placement path, and on a real device the button is placed by the **rail** path — which
+binds its item somewhere else entirely. Three sites bind an item to a button; the label followed one
+of them.
+
+It follows all three now, from the binding itself, which is the only truthful signal that a button
+belongs to a video. **This is the same fault as the previous release's**, one week apart and in the
+same feature: a value read on one of four routes, then a view attached on one of three. **Attached
+on one path out of several is attached on none of the others**, and this file has now paid for it
+twice.
+
+**And the marker's key is confirmed rather than matched by shape.** The report came back reading
+`marked: 1 via key text`, so `text` is tried first and the name-shape rule stays underneath as the
+fallback for a build that renames it. A measurement that arrives and is not used is a round trip
+spent for nothing.
+
 ## v0.19.1
 
 **The date did not appear, and the cause was a pending value written on one path and read on four.**

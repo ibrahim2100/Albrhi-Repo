@@ -167,6 +167,26 @@ static BOOL SCITTEncodingMatches(Class cls, NSString *selectorName, NSString *ex
     NSMutableDictionary *marked = [NSMutableDictionary dictionaryWithDictionary:content];
     NSString *chosen = nil;
 
+    //
+    // **`text` is the key, confirmed on a device rather than matched by shape.**
+    //
+    // The first version took the first key whose *name* contained "text", and said so on its own
+    // row so the next release could name it exactly. A report came back reading `marked: 1 via key
+    // text` -- so the exact key is tried first now, and the shape rule stays underneath it as the
+    // fallback for a build that renames it. A measurement that arrives and is not used is a round
+    // trip spent for nothing.
+    //
+    NSString *known = content[@"text"];
+    if ([known isKindOfClass:[NSString class]]) {
+        NSString *badge = SCILocalized(@"recalled_badge");
+        if ([known hasPrefix:badge]) return content;
+
+        marked[@"text"] = [badge stringByAppendingString:known];
+        sciMarkedKey = @"text";
+        sciMarkedCount++;
+        return marked;
+    }
+
     for (NSString *key in [(NSDictionary *)content allKeys]) {
         if (![key isKindOfClass:[NSString class]]) continue;
         if ([key rangeOfString:@"text" options:NSCaseInsensitiveSearch].location == NSNotFound)

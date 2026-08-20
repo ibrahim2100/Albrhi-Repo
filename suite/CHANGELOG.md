@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.58.2
+
+Albrhi for TikTok 0.19.2: the publish date follows the button wherever it is placed, and the
+recalled-message marker uses the key a device confirmed.
+
 ## v1.58.1
 
 Albrhi for TikTok 0.19.1: the publish date now actually appears — it was being read on one of the
