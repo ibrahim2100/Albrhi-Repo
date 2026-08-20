@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.52.1
+
+Albrhi Watch 0.4.1: 1.52.0 could crash the Watch app on its update page. The two hooks responsible
+are removed and the install actions are refused instead. Install this one.
+
 ## v1.52.0
 
 Albrhi Watch 0.4.0 and Albrhi Panel 0.9.15: the watchOS hold is a version filter rather than a

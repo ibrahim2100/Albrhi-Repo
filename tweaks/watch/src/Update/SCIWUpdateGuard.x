@@ -58,6 +58,12 @@
 
 static NSString *sciwGuardState = nil;
 static NSString *sciwUpdateShape = nil;
+
+/// The last descriptor a scan handed over, kept so the button's own actions can ask about it.
+///
+/// **Weak, deliberately.** A strong reference would keep a descriptor alive past the page that
+/// made it, and a tweak that changes an app's object lifetimes has stopped being an observer.
+static __weak id sciwLastSeenUpdate = nil;
 static NSString *sciwHeldVersion = nil;
 static NSString *sciwPassedVersion = nil;
 static NSString *sciwPageShape = nil;
@@ -340,6 +346,8 @@ static void SCIWPublishGuardState(void) {
 %hook COSSoftwareUpdateController
 
 - (void)manager:(id)manager scanRequestDidLocateUpdate:(id)update error:(id)error {
+    sciwLastSeenUpdate = update;
+
     if (!SCIWShouldHold(update)) {
         %orig;
         return;
@@ -393,42 +401,37 @@ static void SCIWPublishGuardState(void) {
 // off the device.
 //
 //
-// **Withholding the scan result was not enough, and the page said so itself.** With every hook
-// installed and `watchOS 26.6` recorded as seen, the report's own dump of the page still listed
-// `INSTALL_BUTTON_GROUP` and a `Download and Install` row. So the descriptor reaches the page by
-// more than one road: the controller keeps it in `-setUpdate:` and is driven by
-// `-handleManagerState:update:error:`, both declared here, both encodings read off the device.
+// **0.4.0 added `-setUpdate:` and `-handleManagerState:update:error:`, and opening the page
+// crashed the app. They are gone, and the reasoning is a rule this project already keeps: a crash
+// is worse than the thing being prevented.**
 //
-// This is the shape of the watermark fix in the TikTok tweak: a value that is *stored* is true for
-// every reader afterwards, while intercepting one delivery only answers one caller.
+// Both fed **nil** into Apple's own state machine while the state still said an update had been
+// found. Nil-messaging is safe in Objective-C, and that is exactly what made this look safe: what
+// is not safe is the code *after* the message, which has been told a descriptor exists and reads
+// something out of it. Refusing a delivery is not the same as never having had one, and a
+// controller's own flow is not ours to half-answer.
 //
-%group SetUpdate
+// What replaces them is smaller and cannot corrupt anything: the two actions the install button
+// invokes are refused. The update may still be listed; nothing can start it. Same placement rule
+// as the TikTok download button — **refuse at the irreversible action, never at the machinery
+// leading to it.**
+//
+%group InstallActions
 
 %hook COSSoftwareUpdateController
 
-- (void)setUpdate:(id)update {
-    if (SCIWShouldHold(update)) {
-        SCIWDescribeUpdate(update);
-        SCIWRecordAnswer(@"held update refused at -setUpdate:");
-        %orig(nil);
+- (void)downloadAndInstall:(id)sender {
+    if (SCIWShouldHold(sciwLastSeenUpdate)) {
+        SCIWRecordAnswer(@"download-and-install refused");
         SCIWRefreshReport();
         return;
     }
     %orig;
 }
 
-%end
-%end
-
-%group ManagerState
-
-%hook COSSoftwareUpdateController
-
-- (void)handleManagerState:(long long)state update:(id)update error:(id)error {
-    if (SCIWShouldHold(update)) {
-        SCIWDescribeUpdate(update);
-        SCIWRecordAnswer(@"held update removed from the state handler");
-        %orig(state, nil, error);
+- (void)install:(id)sender {
+    if (SCIWShouldHold(sciwLastSeenUpdate)) {
+        SCIWRecordAnswer(@"install refused");
         SCIWRefreshReport();
         return;
     }
@@ -553,20 +556,12 @@ void SCIWInstallUpdateGuard(void) {
             : @"COSSoftwareUpdateController is not in this process"];
     }
 
-    if (controller && SCIWEncodingMatches(controller, @"setUpdate:", @"v24@0:8@16")) {
-        %init(SetUpdate);
-        [installed addObject:@"-setUpdate:"];
+    if (controller && SCIWEncodingMatches(controller, @"downloadAndInstall:", @"v24@0:8@16")
+                   && SCIWEncodingMatches(controller, @"install:", @"v24@0:8@16")) {
+        %init(InstallActions);
+        [installed addObject:@"-downloadAndInstall: / -install:"];
     } else if (controller) {
-        [skipped addObject:SCIWDescribeSelector(controller, @"setUpdate:", @"v24@0:8@16")];
-    }
-
-    if (controller && SCIWEncodingMatches(controller, @"handleManagerState:update:error:",
-                                          @"v40@0:8q16@24@32")) {
-        %init(ManagerState);
-        [installed addObject:@"-handleManagerState:update:error:"];
-    } else if (controller) {
-        [skipped addObject:SCIWDescribeSelector(controller, @"handleManagerState:update:error:",
-                                                @"v40@0:8q16@24@32")];
+        [skipped addObject:SCIWDescribeSelector(controller, @"downloadAndInstall:", @"v24@0:8@16")];
     }
 
     if (controller && SCIWEncodingMatches(controller, @"startSUBUpdates", @"v16@0:8")) {

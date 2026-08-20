@@ -1,5 +1,28 @@
 # Albrhi Watch — what changed
 
+## v0.4.1
+
+**0.4.0 crashed the Watch app when the update page was opened. Both hooks it added are gone.**
+
+`-setUpdate:` and `-handleManagerState:update:error:` fed **nil** into Apple's own state machine
+while the state still said an update had been found. Nil-messaging is safe in Objective-C, and that
+is exactly what made this look safe — what is not safe is the code *after* the message, which has
+been told a descriptor exists and reads something out of it. **Refusing a delivery is not the same
+as never having had one**, and a controller's own flow is not ours to half-answer.
+
+The rule this project already keeps decided it: **a crash is worse than the thing being
+prevented** — the same reason TikTok 0.12.1 exists.
+
+What replaces them is smaller and cannot corrupt anything: **the two actions the install button
+invokes are refused**, `-downloadAndInstall:` and `-install:`, both `v24@0:8@16`. The update may
+still be listed; nothing can start it, and `-startDownload:` and `-installUpdate:` still sit behind
+that as they have since 0.2.7. Same placement rule as the TikTok download button — refuse at the
+irreversible action, never at the machinery leading to it.
+
+The descriptor the scan handed over is kept **weakly** so those actions can ask about it: a strong
+reference would keep it alive past the page that made it, and a tweak that changes an app's object
+lifetimes has stopped being an observer.
+
 ## v0.4.0
 
 **"Stop watchOS 26" is what this now does, and it took the device naming the descriptor.**
