@@ -100,6 +100,18 @@ static SCITTMediaItem *SCITTItemForRail(UIView *rail);
 /// a stack of views nobody owns.
 static const NSInteger kSCIDateTag = 0x5344;
 
+/// **Each stage counts itself, because "the date did not appear" was true four ways.**
+///
+/// The placer is not reached at all, the switch is off, the item carries no date, or it was drawn
+/// and something else is on top of it. One number cannot say which -- that is the lesson the stamp
+/// counters in Albrhi Watch cost, and this file already learned it once with `raw -> parsed ->
+/// deduped` in the quality picker.
+static NSUInteger sciDateCalls = 0;
+static NSUInteger sciDateOff = 0;
+static NSUInteger sciDateNoDate = 0;
+static NSUInteger sciDatePlaced = 0;
+static NSString *sciDateLast = nil;
+
 ///
 /// The publish date, drawn under Albrhi's own button.
 ///
@@ -112,9 +124,18 @@ static const NSInteger kSCIDateTag = 0x5344;
 /// added each time is a pile of labels on one cell.
 ///
 static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *item) {
+    sciDateCalls++;
+
     UILabel *label = [host viewWithTag:kSCIDateTag];
 
-    if (!SCIPrefEnabled(SCIPrefVideoDate) || !item.posted) {
+    if (!SCIPrefEnabled(SCIPrefVideoDate)) {
+        sciDateOff++;
+        label.hidden = YES;
+        return;
+    }
+
+    if (!item.posted) {
+        sciDateNoDate++;
         label.hidden = YES;
         return;
     }
@@ -153,11 +174,27 @@ static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *it
 
     label.text = [formatter stringFromDate:item.posted];
     label.hidden = NO;
+    sciDatePlaced++;
+    sciDateLast = label.text;
 
     CGRect b = button.frame;
     label.frame = CGRectMake(CGRectGetMidX(b) - 44, CGRectGetMaxY(b) + 2, 88, 26);
 
     [host bringSubviewToFront:label];
+}
+
+/// Defined below the counters it reads, not above them.
+///
+/// C reads a file top to bottom, and this went in beside a forward declaration where none of them
+/// existed yet -- the same ordering mistake the Watch tweak's own verdict publisher made, caught
+/// there by CI and here by the first local build. Both flavours are built before a push now, so
+/// this cost seconds rather than five minutes.
+NSString *SCITTDateReport(void) {
+    return [NSString stringWithFormat:
+            @"%lu call(s) → %lu off → %lu without a date → %lu drawn%@",
+            (unsigned long)sciDateCalls, (unsigned long)sciDateOff,
+            (unsigned long)sciDateNoDate, (unsigned long)sciDatePlaced,
+            sciDateLast.length ? [@" — last: " stringByAppendingString:sciDateLast] : @""];
 }
 
 @interface SCITTButtonTarget : NSObject

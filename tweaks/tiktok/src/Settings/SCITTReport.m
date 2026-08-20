@@ -4,6 +4,7 @@
 #import "../Prefs.h"
 #import "../Localization/SCILocalize.h"
 #import "../Diagnostics/SCITTDiagnostics.h"
+#import "../Features/Extras/SCITTExtras.h"
 #import "../Features/Download/SCITTMedia.h"
 #import "../Features/Download/SCITTWatermark.h"
 #import "../Features/Download/SCITTPlaybackProbe.h"
@@ -105,6 +106,10 @@ static NSDictionary *SCIHeavyRow(NSString *title, NSString *value, NSString *ico
                        @"square.stack.3d.up", [UIColor systemOrangeColor]),
                 SCIRow(SCILocalized(@"status_measured"), SCITTMeasuredReport(),
                        @"ruler", [UIColor systemGreenColor]),
+                SCIRow(SCILocalized(@"status_video_date"), SCITTDateReport(),
+                       @"calendar", [UIColor systemIndigoColor]),
+                SCIRow(SCILocalized(@"status_extras"), SCITTExtrasReport(),
+                       @"square.grid.2x2", [UIColor systemIndigoColor]),
                 SCIRow(SCILocalized(@"status_watermark"), SCITTWatermarkReport(),
                        @"drop.fill", [UIColor systemCyanColor]),
                 SCIRow(SCILocalized(@"status_playback"), SCITTPlaybackReport(),

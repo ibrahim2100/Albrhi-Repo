@@ -1,5 +1,26 @@
 # Albrhi for TikTok — what changed
 
+## v0.19.1
+
+**The date did not appear, and the cause was a pending value written on one path and read on four.**
+
+`SCITTAddResolvedList` builds the item, and **four routes call it** — the settled-model video path,
+the photo path, and two others. The publish date was set beside the item id inside one of them, so
+every item built by the other three carried no date at all, and nothing was drawn. Worse, nothing
+cleared it: a date read for one video could have arrived on an unrelated one.
+
+It is read once now, at the single entry that holds the model, and **cleared first** so it cannot
+leak. That is what this file already does correctly for the item id, and copying that shape rather
+than inventing a second one is the whole fix.
+
+**And "it did not appear" was true four ways**, which is why the report now counts each stage
+separately: the placer not reached, the switch off, the item carrying no date, or the label drawn.
+One number could not say which — the lesson the Watch tweak's stamp counters cost, and one this
+file had already learned once as `raw → parsed → deduped`.
+
+Two rows join the report: the publish date's stages, and the extras. A feature whose diagnostics are
+computed and shown nowhere is one this project has shipped before.
+
 ## v0.19.0
 
 **The publish date, under Albrhi's own button.** `AWEAwemeModel.createTime` is an `NSNumber` on

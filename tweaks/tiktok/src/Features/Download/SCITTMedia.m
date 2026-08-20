@@ -894,6 +894,12 @@ static NSString *sciPendingItemID = nil;
 /// value is what would have been worth avoiding.
 static NSDate *sciPendingPosted = nil;
 
+/// Counted separately, because "no date appeared" was true for four different reasons and one
+/// number could not say which. Same shape as the stamp counters in Albrhi Watch, which turned a
+/// silent zero into a sentence naming the stage that stopped.
+static NSUInteger sciDateReads = 0;
+static NSUInteger sciDateMisses = 0;
+
 /// Which accessor produced each of the links about to be recorded.
 static NSArray<NSString *> *sciPendingOrigins = nil;
 
@@ -1252,6 +1258,28 @@ static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **ou
 + (void)captureSettledModel:(AWEAwemeModel *)model {
     if (!model) return;
 
+    //
+    // **Set here, at the one entry that has the model, and cleared first so it cannot leak.**
+    //
+    // The first version set this beside the item id, inside one of the four routes that build an
+    // item -- so the three other routes produced an item with no date, and the date never appeared.
+    // A pending value written on one path and read on four is a value that is either missing or
+    // stale, and this file already had the pattern right for the id: set it where the model is,
+    // once, before anything below can take a branch.
+    //
+    sciPendingPosted = nil;
+
+    SEL createdSel = NSSelectorFromString(@"createTime");
+    id created = [model respondsToSelector:createdSel]
+        ? ((id (*)(id, SEL))objc_msgSend)(model, createdSel) : nil;
+
+    if ([created isKindOfClass:[NSNumber class]] && [created doubleValue] > 0) {
+        sciPendingPosted = [NSDate dateWithTimeIntervalSince1970:[created doubleValue]];
+        sciDateReads++;
+    } else {
+        sciDateMisses++;
+    }
+
     // The best gear, asked for only here.
     //
     // This entry point exists because the caller -- the feed cell's button, holding
@@ -1290,15 +1318,6 @@ static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **ou
                     ? ((id (*)(id, SEL))objc_msgSend)(model, idSel) : nil;
                 sciPendingItemID = [identifier isKindOfClass:[NSString class]] ? identifier : nil;
 
-                // The publish date. Guarded twice: the selector, then the type -- `createTime` is
-                // declared `NSNumber` on 46.4.0, confirmed against the binary, and seconds since
-                // 1970 is what a number there means.
-                SEL createdSel = NSSelectorFromString(@"createTime");
-                id created = [model respondsToSelector:createdSel]
-                    ? ((id (*)(id, SEL))objc_msgSend)(model, createdSel) : nil;
-                sciPendingPosted = ([created isKindOfClass:[NSNumber class]]
-                                        && [created doubleValue] > 0)
-                    ? [NSDate dateWithTimeIntervalSince1970:[created doubleValue]] : nil;
 
                 SCITTAddResolvedList(links);
                 sciWinningChain = via;

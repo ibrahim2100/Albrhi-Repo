@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.58.1
+
+Albrhi for TikTok 0.19.1: the publish date now actually appears — it was being read on one of the
+four paths that build an item — and the report says which stage stopped when it does not.
+
 ## v1.58.0
 
 Albrhi for TikTok 0.19.0: the video's publish date, shown under Albrhi's own button.

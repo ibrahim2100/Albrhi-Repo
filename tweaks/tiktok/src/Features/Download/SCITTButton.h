@@ -17,3 +17,7 @@ void SCITTInstallButton(void);
 /// Which rail actually attached, and how many buttons have been placed -- for the
 /// status screen's own report.
 NSString *SCITTButtonReport(void);
+
+/// Where the publish date stopped, stage by stage: reached, switched off, no date on the item, or
+/// drawn — and the last one drawn. "It did not appear" is four different faults and one sentence.
+NSString *SCITTDateReport(void);
