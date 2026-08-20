@@ -143,10 +143,10 @@ Depends: mobilesubstrate, preferenceloader, dev.theos.orion (>= 1.0.0)
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.tiktok, com.albrhi.tiktok.roothide, com.albrhi.spotify, com.albrhi.spotify.roothide, com.albrhi.ytmusic, com.albrhi.ytmusic.roothide, com.albrhi.panel, com.albrhi.panel.roothide, com.eevee.spotify, com.dvntm.ytmultimate
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.tiktok, com.albrhi.tiktok.roothide, com.albrhi.spotify, com.albrhi.spotify.roothide, com.albrhi.ytmusic, com.albrhi.ytmusic.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Filename: debs/com.albrhi_1.56.1_iphoneos-arm64.deb
-Size: 1453258
-MD5sum: 840cf9dd8836d4e4f419c14b6d853054
-SHA1: 03d5e8307113e93189ec01e61569eaa3d4464dbb
-SHA256: 7e06dc769b171e213ecca311c114a2f1db6b85c0ff86cec56e3a6ed5981fc713
+Size: 1453256
+MD5sum: 4fc99687549b2a27cf6ddce46071b4cf
+SHA1: cea590a26a93675635cb0af975321fcb97d5bfb7
+SHA256: 3e7fdf75a30a42bd7dcfa88834f49f08ae349a3883a78a7eae9f3429f9174a98
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube, X and TikTok, switched per app from Settings.
@@ -659,10 +659,10 @@ Depends: mobilesubstrate, preferenceloader, dev.theos.orion (>= 1.0.0)
 Conflicts: com.albrhi.roothide, com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.tiktok, com.albrhi.tiktok.roothide, com.albrhi.spotify, com.albrhi.spotify.roothide, com.albrhi.ytmusic, com.albrhi.ytmusic.roothide, com.albrhi.panel, com.albrhi.panel.roothide, com.eevee.spotify, com.dvntm.ytmultimate
 Replaces: com.albrhi.tweak, com.albrhi.tweak.roothide, com.albrhi.youtube, com.albrhi.youtube.roothide, com.albrhi.twitter, com.albrhi.twitter.roothide, com.albrhi.tiktok, com.albrhi.tiktok.roothide, com.albrhi.spotify, com.albrhi.spotify.roothide, com.albrhi.ytmusic, com.albrhi.ytmusic.roothide, com.albrhi.panel, com.albrhi.panel.roothide
 Filename: debs/com.albrhi.roothide_1.56.1_iphoneos-arm64e.deb
-Size: 1452840
-MD5sum: a05159616aeb370b66f2f8258144bfca
-SHA1: 008afca36fc5ccda3467638b138c64b971407f55
-SHA256: a37b6089d47d21f9f2504dd930839f40b16169d5734bcba57c2947eb9dd75f38
+Size: 1452844
+MD5sum: 39cb47d03f49b4295c75914f0e57c3ae
+SHA1: f7e559e6ee9884ea2268751bd7fee21971ae2d96
+SHA256: 081d86ac6e56bf1187d6fef5a91c2c3ae6a40313758d269edb42a4ab4c150227
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/Albrhi-Repo
 Description: One tweak for Instagram, YouTube, X and TikTok, switched per app from Settings.
