@@ -1,5 +1,9 @@
 # Albrhi Changelog
 
+## v1.53.3
+
+Albrhi Panel 0.9.17: a settings page for Albrhi for Spotify, which is published as its own package.
+
 ## v1.53.2
 
 **1.53.1 could put SpringBoard into safe mode — install this one.** Albrhi Watch 0.5.2 fixes the

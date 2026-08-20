@@ -12,7 +12,7 @@
 #import <objc/message.h>
 #import <objc/runtime.h>
 
-NSString *SCIVersionString = @"v0.9.16";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.9.17";  // AlbrhiPanel
 
 ///
 /// Albrhi's own control panel, in the iOS Settings app.

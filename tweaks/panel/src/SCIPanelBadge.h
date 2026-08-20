@@ -63,6 +63,9 @@ static inline UIImage *SCIPanelBadgeForGroup(NSString *groupIdentifier) {
     if ([groupIdentifier isEqualToString:@"com.albrhi.nextup"]) {
         return SCIPanelBadgeImage(@"music.note.list", SCIPanelAccent());
     }
+    if ([groupIdentifier isEqualToString:@"com.albrhi.spotify"]) {
+        return SCIPanelBadgeImage(@"music.note", [UIColor systemGreenColor]);
+    }
     if ([groupIdentifier isEqualToString:@"com.albrhi.watch"]) {
         return SCIPanelBadgeImage(@"applewatch", SCIPanelAccent());
     }

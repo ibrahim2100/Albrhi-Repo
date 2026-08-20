@@ -1,5 +1,12 @@
 # Albrhi Panel Changelog
 
+## v0.9.17
+
+A page for Albrhi for Spotify: the master, the two ad switches, and — above them — what the tweak
+does **not** do. The ad blocking is carried over from a tweak known for unlocking a paid
+subscription, and somebody who installs this expecting that should read it on the page rather than
+find out by trying to skip a track.
+
 ## v0.9.16
 
 A switch for the watch's domain reading, off by default: it is a diagnostic that runs inside
