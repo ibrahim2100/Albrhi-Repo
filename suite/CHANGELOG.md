@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.58.9
+
+Albrhi for TikTok 0.19.9: the publish date is measured when the layout is real, so it sits in the
+same place on every video rather than only on the ones already laid out when they were bound.
+
 ## v1.58.8
 
 Albrhi for TikTok 0.19.8: the publish date lines up with the download button and stays on screen.

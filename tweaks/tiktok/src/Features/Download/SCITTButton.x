@@ -136,6 +136,47 @@ static NSString *sciDateLast = nil;
 /// one release earlier and in the same feature. **A value or a view attached on one path out of
 /// several is attached on none of the others**, and this file has now paid for that twice.
 ///
+//
+// **A position computed once is a position computed too early, and that is what "some videos are
+// perfect and some are not" was.**
+//
+// The geometry below reads `button.frame` and `host.window`. Neither is settled when the model is
+// bound: on the rail path the button is an *arranged* subview, so its frame is `CGRectZero` until
+// the stack lays out, and a cell being configured on its way onto the screen may not be in a
+// window yet -- which skips the on-screen clamp entirely and leaves the label centred on a button
+// that is nowhere. Both produce exactly the reported split: right on the cells that had already
+// laid out when they were bound, and the old wrong position on the ones that had not.
+//
+// This project has written the same lesson down once before, about a constraint built from
+// `bounds` at construction time. **A frame is a measurement, and a measurement taken before the
+// thing exists is not a smaller error -- it is a different number entirely.** So the label carries
+// the button it belongs to and re-measures whenever it is laid out or enters a window, which is
+// precisely when those two values become true.
+//
+@interface SCITTDateLabel : UILabel
+@property (nonatomic, weak) UIView *sciButton;
+@end
+
+static void SCITTLayoutDateLabel(UILabel *label, UIView *button);
+
+@implementation SCITTDateLabel
+
+- (void)didMoveToWindow {
+    [super didMoveToWindow];
+    SCITTLayoutDateLabel(self, self.sciButton);
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    // Re-measuring here is safe because the geometry is a function of the button's frame alone:
+    // running it a second time on an unchanged button yields the same rectangle, and the guard in
+    // the layout function refuses to set a frame it already has. A layout pass that settles
+    // nothing therefore stops after one.
+    SCITTLayoutDateLabel(self, self.sciButton);
+}
+
+@end
+
 static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *item) {
     //
     // **Counted first, because a counter behind a guard counts successes and not calls.**
@@ -167,7 +208,7 @@ static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *it
         return;
     }
 
-    UILabel *label = [host viewWithTag:kSCIDateTag];
+    SCITTDateLabel *label = (SCITTDateLabel *)[host viewWithTag:kSCIDateTag];
 
     if (!SCIPrefEnabled(SCIPrefVideoDate)) {
         sciDateOff++;
@@ -181,8 +222,9 @@ static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *it
         return;
     }
 
-    if (![label isKindOfClass:[UILabel class]]) {
-        label = [[UILabel alloc] initWithFrame:CGRectZero];
+    if (![label isKindOfClass:[SCITTDateLabel class]]) {
+        [label removeFromSuperview];
+        label = [[SCITTDateLabel alloc] initWithFrame:CGRectZero];
         label.tag = kSCIDateTag;
         label.textAlignment = NSTextAlignmentCenter;
         label.font = [UIFont systemFontOfSize:10 weight:UIFontWeightSemibold];
@@ -284,7 +326,25 @@ static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *it
     // owns and the only one that means the same thing on every device, so the label is centred on
     // that and allowed to overhang a narrow rail rather than be pushed out of it.
     //
+    // The button it belongs to, re-read on every bind because a recycled cell hands this label a
+    // different button than the one it was created for.
+    label.sciButton = button;
+    SCITTLayoutDateLabel(label, button);
+}
+
+//
+// **The measurement itself, in one place, callable whenever the numbers become true.**
+//
+static void SCITTLayoutDateLabel(UILabel *label, UIView *button) {
+    UIView *host = label.superview;
+    if (!host || !button || button.superview != host) return;
+
     CGRect b = button.frame;
+
+    // **An unlaid-out button is not a position, and placing against it would be inventing one.**
+    // Nothing is moved until the stack has given the button a size; the layout pass that gives it
+    // one calls straight back here.
+    if (CGRectGetWidth(b) < 1 || CGRectGetHeight(b) < 1) return;
 
     // Measured against a width the two-line form can actually use, then given exactly that box.
     CGSize fits = [label sizeThatFits:CGSizeMake(150, 60)];
@@ -321,12 +381,16 @@ static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *it
         frame = [host convertRect:inWindow fromView:root];
     }
 
-    label.frame = frame;
+    // **A frame it already has is not set again.** This runs from `-layoutSubviews`, and assigning
+    // an equal-but-new rectangle there is how a layout pass talks itself into another one.
+    if (!CGRectEqualToRect(label.frame, frame)) label.frame = frame;
 
     // The rail clips by default, which is how a correctly centred label still lost its digits.
     host.clipsToBounds = NO;
 
-    [host bringSubviewToFront:label];
+    // Only when it is not already there: this runs from a layout pass, and reordering subviews is
+    // not free even when the order does not change.
+    if (host.subviews.lastObject != label) [host bringSubviewToFront:label];
 }
 
 /// Defined below the counters it reads, not above them.

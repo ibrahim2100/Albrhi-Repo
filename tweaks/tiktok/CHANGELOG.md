@@ -1,5 +1,23 @@
 # Albrhi for TikTok — what changed
 
+## v0.19.9
+
+The date is in the same place on every video now, not on the ones that happened to be ready.
+
+**A position computed once is a position computed too early**, and that is exactly what "some are
+perfect and some go back to the old spot" was. The geometry reads the download button's frame and
+the view's window, and neither is settled at the moment the model is bound: on the rail path the
+button is an *arranged* subview, so its frame is empty until the stack lays out, and a cell being
+configured on its way onto the screen is not always in a window yet -- which skips the on-screen
+clamp entirely. Cells that had already laid out when they were bound came out right; the rest kept
+the old wrong position.
+
+This project had written the same lesson down once already, about a constraint built from `bounds`
+at construction time. **A measurement taken before the thing exists is not a smaller error; it is a
+different number.** The label carries the button it belongs to and re-measures whenever it is laid
+out or enters a window -- precisely when those two values become true -- and refuses to place
+against a button that has no size yet rather than inventing one.
+
 ## v0.19.8
 
 The date is centred on the download button and no longer runs off the right edge of the screen.
