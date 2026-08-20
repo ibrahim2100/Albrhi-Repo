@@ -291,6 +291,20 @@ for path in LOGOS:
         if '{' in l or '}' in l or re.search(r'\b(if|else|for|while)\b[^;]*\)\s*$', before):
             report('fragile %%orig placement at %s:%d' % (path, n))
 
+        # **Two %orig in one expression, which the two Theos installs here disagree about.**
+        # `cond ? %orig(YES) : %orig;` compiles under the Logos in the roothide fork and fails
+        # under stock Theos with `Invalid argument structure in %orig` -- so a local roothide
+        # build proves nothing about the flavour CI builds first, which is exactly how this
+        # reached a runner.
+        #
+        # **Written first as "%orig in a ternary" and narrowed before it landed.** That fired on
+        # five lines of `return cond ? nil : %orig;` in a file that builds clean under both
+        # installs -- one %orig, one argument structure, nothing to disagree about. The oracle
+        # is the other tweaks: they compile today, so any finding in them is a false positive by
+        # definition, and a check that cries wolf gets ignored.
+        elif l.count('%orig') > 1:
+            report('two %%orig in one expression at %s:%d -- give each its own line' % (path, n))
+
 # 5. Unterminated string literals - Objective-C has no multi-line strings.
 #    Comments must be stripped with string-awareness, or the "//" in every https://
 #    URL truncates the line and every URL looks like an unterminated literal.
