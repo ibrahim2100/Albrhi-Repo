@@ -28,7 +28,21 @@ it is about to draw is the shape of thing that crashed the Watch app. Albrhi kee
 bounded at 200 entries, and shows it on its own screen — and the effect asked for survives, because
 a visitor seen once is remembered.
 
-Each of the three installs on its own: a build missing one class must not cost the other two.
+**And a message that was taken back says so, rather than quietly staying.** The hook that hides the
+recall is the only thing that knows one happened — `%orig` answers YES a moment before Albrhi
+answers NO — so the fact is kept instead of swallowed, and the message is *marked* rather than
+restored as though nothing occurred. A tweak that leaves no trace of what it decided is deciding on
+the reader's behalf without saying so, which is the same objection this project raised about a watch
+being told it was up to date.
+
+`TIMOMessage -content` is `@16@0:8` and its declared type is `NSDictionary`. **Which key inside it
+holds the visible text is documented nowhere this project can read**, and guessing at a name is what
+`downloadAddr` and `bestURLtoDownload` already cost this tweak — so the rule is narrow and visible:
+the first key whose own name contains "text", carrying a string. If nothing matches, **nothing is
+marked**, and the report carries every key there was, so the next release can name it exactly. A
+copy of the dictionary is returned; TikTok's own is never written through.
+
+Each of the four installs on its own: a build missing one class must not cost the others.
 
 ## v0.17.7
 

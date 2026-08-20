@@ -2,7 +2,7 @@
 
 ## v1.57.0
 
-Albrhi for TikTok 0.18.0: more logged-in accounts, messages the sender took back stay visible, and a
+Albrhi for TikTok 0.18.0: more logged-in accounts, messages the sender took back stay visible and are marked as taken back, and a
 record of profile visitors that a later block cannot erase.
 
 ## v1.56.1

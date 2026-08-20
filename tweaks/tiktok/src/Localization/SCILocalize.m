@@ -20,6 +20,7 @@ static void SCIBuildTables(void) {
 
         // The settings screen's own sections, named by what a person came here to change
         // rather than by which part of the code owns them.
+        @"recalled_badge": @"🗑 taken back · ",
         @"section_extras": @"Extras",
         @"row_accounts": @"More logged-in accounts",
         @"row_accounts_note": @"TikTok caps how many accounts may be signed in at once, and the cap is enforced in the app. Raised, not removed.",
@@ -149,6 +150,7 @@ static void SCIBuildTables(void) {
 
         @"section_privacy": @"الخصوصية",
 
+        @"recalled_badge": @"🗑 مسحوبة · ",
         @"section_extras": @"إضافات",
         @"row_accounts": @"حسابات أكثر",
         @"row_accounts_note": @"يحدّ تيك توك عدد الحسابات المسجَّلة معاً، والحدّ يفرضه التطبيق نفسه. رُفع، ولم يُلغَ.",

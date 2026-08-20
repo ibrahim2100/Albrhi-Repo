@@ -11,6 +11,7 @@
 #import "SCITTExtras.h"
 #import "../../Prefs.h"
 #import "../../SCILog.h"
+#import "../../Localization/SCILocalize.h"
 
 ///
 /// **Where these came from, and what was measured before any of it was written.**
@@ -45,6 +46,21 @@
 
 static NSString *sciExtrasState = nil;
 static NSUInteger sciVisitorsSeen = 0;
+
+/// The messages whose sender took them back, by `serverMessageID`.
+///
+/// **The hook that hides the recall is also the only thing that knows one happened.** `%orig`
+/// answers YES a moment before Albrhi answers NO, so the fact is there to be kept rather than
+/// swallowed -- and keeping it is what lets the message be *marked* instead of quietly restored.
+/// A message shown as though nothing happened is the tweak deciding something on the reader's
+/// behalf without saying so, which is the same objection this project raised about a watch being
+/// told it was up to date.
+static NSMutableSet *sciRecalledIDs = nil;
+
+/// What the content dictionary turned out to hold, recorded once, and which key was marked.
+static NSString *sciContentKeys = nil;
+static NSString *sciMarkedKey = nil;
+static NSUInteger sciMarkedCount = 0;
 
 /// Where the visitor log lives. TikTok's own defaults, because this runs inside TikTok and the log
 /// is only ever read there and by Albrhi's own screen inside the same process.
@@ -82,12 +98,99 @@ static BOOL SCITTEncodingMatches(Class cls, NSString *selectorName, NSString *ex
 %hook TIMOMessage
 
 - (BOOL)recalled {
-    if (!SCIPrefEnabled(SCIPrefKeepRecalled)) return %orig;
+    // Called once, on its own line, and the answer reused. `if (%orig)` shares its line with a
+    // brace, which this Logos version cannot expand -- check.py caught it here, in code written by
+    // the same hand that added the rule two days ago.
+    BOOL recalled = %orig;
+
+    if (!SCIPrefEnabled(SCIPrefKeepRecalled)) return recalled;
+
+    if (recalled) {
+        // Remembered before it is answered away. Ids only -- holding the message itself would keep
+        // it alive past the conversation that made it.
+        id identifier = [self respondsToSelector:@selector(serverMessageID)]
+            ? ((id (*)(id, SEL))objc_msgSend)(self, @selector(serverMessageID)) : nil;
+
+        if (identifier) {
+            static dispatch_once_t once;
+            dispatch_once(&once, ^{ sciRecalledIDs = [NSMutableSet set]; });
+            @synchronized (sciRecalledIDs) { [sciRecalledIDs addObject:identifier]; }
+        }
+    }
 
     // The message is still here: TikTok received it, then received an instruction to hide it, and
     // hiding is done by the client. Nothing is fetched back from a server -- what is refused is the
     // instruction to stop showing what already arrived.
     return NO;
+}
+
+%end
+%end
+
+#pragma mark - Saying which ones were taken back
+
+%group SCITTMarkRecalled
+
+%hook TIMOMessage
+
+- (id)content {
+    id content = %orig;
+
+    if (!SCIPrefEnabled(SCIPrefKeepRecalled)) return content;
+    if (![content isKindOfClass:[NSDictionary class]]) return content;
+
+    id identifier = [self respondsToSelector:@selector(serverMessageID)]
+        ? ((id (*)(id, SEL))objc_msgSend)(self, @selector(serverMessageID)) : nil;
+    if (!identifier) return content;
+
+    BOOL recalled = NO;
+    @synchronized (sciRecalledIDs ?: [NSMutableSet set]) {
+        recalled = [sciRecalledIDs containsObject:identifier];
+    }
+    if (!recalled) return content;
+
+    // Recorded once, so the next release can name the key instead of matching a shape.
+    if (!sciContentKeys) {
+        sciContentKeys = [[(NSDictionary *)content allKeys] componentsJoinedByString:@", "];
+    }
+
+    //
+    // **The key is matched on its name, and the report says which one was taken.**
+    //
+    // The content dictionary's text key is not documented anywhere this project can read, and
+    // guessing at a name is what `downloadAddr` and `bestURLtoDownload` already cost this tweak.
+    // So the rule is narrow and visible: the first key whose own name contains "text", carrying a
+    // string. If nothing matches, **nothing is marked** and the report carries every key there was
+    // -- an honest miss that names the fix, rather than a mark placed on whatever happened to be a
+    // string.
+    //
+    NSMutableDictionary *marked = [NSMutableDictionary dictionaryWithDictionary:content];
+    NSString *chosen = nil;
+
+    for (NSString *key in [(NSDictionary *)content allKeys]) {
+        if (![key isKindOfClass:[NSString class]]) continue;
+        if ([key rangeOfString:@"text" options:NSCaseInsensitiveSearch].location == NSNotFound)
+            continue;
+
+        NSString *value = content[key];
+        if (![value isKindOfClass:[NSString class]]) continue;
+
+        NSString *badge = SCILocalized(@"recalled_badge");
+        if ([value hasPrefix:badge]) return content;   // already marked: idempotent by content
+
+        marked[key] = [badge stringByAppendingString:value];
+        chosen = key;
+        break;
+    }
+
+    if (!chosen) return content;
+
+    sciMarkedKey = chosen;
+    sciMarkedCount++;
+
+    // A copy is returned; TikTok's own dictionary is never written through. Same reason the
+    // visitor list is not merged back into the array the app is about to draw.
+    return marked;
 }
 
 %end
@@ -152,9 +255,13 @@ NSArray<NSString *> *SCITTVisitorLog(void) {
 }
 
 NSString *SCITTExtrasReport(void) {
-    return [NSString stringWithFormat:@"%@; visitors remembered: %lu (%lu seen this launch)",
+    return [NSString stringWithFormat:
+            @"%@; visitors remembered: %lu (%lu seen this launch); recalled seen: %lu, marked: %lu%@%@",
             sciExtrasState ?: @"not installed",
-            (unsigned long)SCITTVisitorLog().count, (unsigned long)sciVisitorsSeen];
+            (unsigned long)SCITTVisitorLog().count, (unsigned long)sciVisitorsSeen,
+            (unsigned long)(sciRecalledIDs.count), (unsigned long)sciMarkedCount,
+            sciMarkedKey ? [@" via key " stringByAppendingString:sciMarkedKey] : @"",
+            sciContentKeys ? [@"; content keys: " stringByAppendingString:sciContentKeys] : @""];
 }
 
 void SCITTInstallExtras(void) {
@@ -180,6 +287,13 @@ void SCITTInstallExtras(void) {
         [installed addObject:@"-recalled"];
     } else {
         [skipped addObject:@"TIMOMessage -recalled"];
+    }
+
+    if (message && SCITTEncodingMatches(message, @"content", @"@16@0:8")) {
+        %init(SCITTMarkRecalled);
+        [installed addObject:@"-content (recalled mark)"];
+    } else {
+        [skipped addObject:@"TIMOMessage -content"];
     }
 
     Class presenter = NSClassFromString(@"TTKProfileViewsPresenter");
