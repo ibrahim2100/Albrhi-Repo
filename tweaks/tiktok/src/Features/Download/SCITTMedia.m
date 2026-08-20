@@ -886,6 +886,14 @@ static BOOL SCITTURLLooksDownloadable(NSURL *url) {
 /// The post id belonging to the links about to be recorded.
 static NSString *sciPendingItemID = nil;
 
+/// The publish date, handed over the same way the id and the origins are.
+///
+/// **Set where the model is in scope, read where the item is built** -- this file already works
+/// that way, and the first attempt at this feature put the read in the builder instead, where
+/// `model` does not exist. The compiler said so immediately; inventing a second route for one
+/// value is what would have been worth avoiding.
+static NSDate *sciPendingPosted = nil;
+
 /// Which accessor produced each of the links about to be recorded.
 static NSArray<NSString *> *sciPendingOrigins = nil;
 
@@ -905,6 +913,8 @@ static void SCITTAddResolvedList(NSArray<NSURL *> *urls) {
     item.url = primary;
     item.candidates = urls;
     item.itemID = sciPendingItemID;
+
+    item.posted = sciPendingPosted;
     item.candidateOrigins = sciPendingOrigins;
     item.seen = [NSDate date];
     [sciRecent insertObject:item atIndex:0];
@@ -1279,6 +1289,16 @@ static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **ou
                 id identifier = [model respondsToSelector:idSel]
                     ? ((id (*)(id, SEL))objc_msgSend)(model, idSel) : nil;
                 sciPendingItemID = [identifier isKindOfClass:[NSString class]] ? identifier : nil;
+
+                // The publish date. Guarded twice: the selector, then the type -- `createTime` is
+                // declared `NSNumber` on 46.4.0, confirmed against the binary, and seconds since
+                // 1970 is what a number there means.
+                SEL createdSel = NSSelectorFromString(@"createTime");
+                id created = [model respondsToSelector:createdSel]
+                    ? ((id (*)(id, SEL))objc_msgSend)(model, createdSel) : nil;
+                sciPendingPosted = ([created isKindOfClass:[NSNumber class]]
+                                        && [created doubleValue] > 0)
+                    ? [NSDate dateWithTimeIntervalSince1970:[created doubleValue]] : nil;
 
                 SCITTAddResolvedList(links);
                 sciWinningChain = via;

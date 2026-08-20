@@ -95,6 +95,71 @@ static inline CGAffineTransform SCITTRailRest(void) {
 /// it needs the same answer.
 static SCITTMediaItem *SCITTItemForRail(UIView *rail);
 
+/// The tag the publish-date label carries, so a recycled cell finds its own rather than adding a
+/// second one. Same reason the button has one: a cell is reused, and a view added on every pass is
+/// a stack of views nobody owns.
+static const NSInteger kSCIDateTag = 0x5344;
+
+///
+/// The publish date, drawn under Albrhi's own button.
+///
+/// **In a frame this code owns, which is the whole reason it can be drawn at all.** TikTok's rails
+/// rebuild their arranged subviews and sweep guests out -- that is written down in CLAUDE.md at the
+/// cost of a release -- so the label is placed on the same host as the button, at a frame computed
+/// from the button's, and never handed to a stack.
+///
+/// It is refreshed rather than recreated: `-configWithModel:` fires on every reuse, and a label
+/// added each time is a pile of labels on one cell.
+///
+static void SCITTPlaceDateLabel(UIView *host, UIView *button, SCITTMediaItem *item) {
+    UILabel *label = [host viewWithTag:kSCIDateTag];
+
+    if (!SCIPrefEnabled(SCIPrefVideoDate) || !item.posted) {
+        label.hidden = YES;
+        return;
+    }
+
+    if (![label isKindOfClass:[UILabel class]]) {
+        label = [[UILabel alloc] initWithFrame:CGRectZero];
+        label.tag = kSCIDateTag;
+        label.textAlignment = NSTextAlignmentCenter;
+        label.font = [UIFont systemFontOfSize:10 weight:UIFontWeightSemibold];
+        label.textColor = [UIColor whiteColor];
+        label.numberOfLines = 2;
+        label.userInteractionEnabled = NO;
+
+        // The same shadow TikTok gives its own rail text, so a white label stays readable over a
+        // bright frame of video.
+        label.layer.shadowColor = [UIColor blackColor].CGColor;
+        label.layer.shadowOffset = CGSizeMake(0, 1);
+        label.layer.shadowOpacity = 0.6;
+        label.layer.shadowRadius = 2;
+
+        [host addSubview:label];
+    }
+
+    // One formatter, kept: building an NSDateFormatter is expensive and this runs on every cell
+    // that scrolls past.
+    static NSDateFormatter *formatter = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        formatter = [[NSDateFormatter alloc] init];
+        formatter.dateStyle = NSDateFormatterMediumStyle;
+        formatter.timeStyle = NSDateFormatterShortStyle;
+        // The phone's own locale, so an Arabic device reads an Arabic date without this file
+        // deciding what a date looks like.
+        formatter.locale = [NSLocale currentLocale];
+    });
+
+    label.text = [formatter stringFromDate:item.posted];
+    label.hidden = NO;
+
+    CGRect b = button.frame;
+    label.frame = CGRectMake(CGRectGetMidX(b) - 44, CGRectGetMaxY(b) + 2, 88, 26);
+
+    [host bringSubviewToFront:label];
+}
+
 @interface SCITTButtonTarget : NSObject
 + (instancetype)shared;
 - (void)tapped:(UIButton *)button;
@@ -798,6 +863,8 @@ static BOOL sciCellItemFromCell = NO;
             objc_setAssociatedObject(button, kSCIItemKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
         button.hidden = NO;
+
+        SCITTPlaceDateLabel(host, button, item);
     } @catch (NSException *exception) {
         // A button is a convenience; the feed is not. Anything thrown here costs the button.
         SCILogV(@"cell button: %@", exception.reason);

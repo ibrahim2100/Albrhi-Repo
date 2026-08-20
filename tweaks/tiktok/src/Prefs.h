@@ -41,6 +41,9 @@
 /// shows it on its own screen; TikTok's list is never modified.
 #define SCIPrefVisitorLog       @"visitor_log"
 
+/// The publish date, drawn under Albrhi's own button.
+#define SCIPrefVideoDate        @"video_date"
+
 #define SCIPrefVerboseLogging   @"verbose_logging"
 
 /// Albrhi Panel's per-app switch, asked first. Every feature here reads its setting

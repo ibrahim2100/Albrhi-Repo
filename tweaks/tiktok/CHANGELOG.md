@@ -1,5 +1,27 @@
 # Albrhi for TikTok — what changed
 
+## v0.19.0
+
+**The publish date, under Albrhi's own button.** `AWEAwemeModel.createTime` is an `NSNumber` on
+46.4.0 — confirmed against the real binary, not assumed — and the model is already in this tweak's
+hands once per video, so the date is read there and carried on the item rather than fetched again
+when a label is drawn.
+
+**It is placed in a frame this code owns, which is the only reason it can be drawn at all.**
+TikTok's rails rebuild their arranged subviews and sweep guests out; that is written down here at
+the cost of a release. The label sits on the same host as the button, at a frame computed from the
+button's, and is never handed to a stack. It is refreshed rather than recreated, because
+`-configWithModel:` fires on every reuse and a label added each time is a pile of labels on one
+cell — the recycled-cell lesson, applied before it could cost anything.
+
+The date is formatted in the phone's own locale, so an Arabic device reads an Arabic date without
+this file deciding what a date looks like.
+
+**And the first attempt put the read in the wrong function.** `SCITTAddResolvedList` builds the item
+and has no model in scope; this file already hands such values over as pending statics, the way the
+item id and the origins are. The compiler said so immediately — what would have been worth avoiding
+is inventing a second route for one value.
+
 ## v0.18.0
 
 **Three features, and every class behind them confirmed against the real 46.4.0 binary before a

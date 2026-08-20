@@ -221,6 +221,14 @@ static const void *kSCIPrefKeyAssoc = &kSCIPrefKeyAssoc;
                 },
                 @{
                     kSCIRowKind: kSCIKindSwitch,
+                    kSCIRowPref: SCIPrefVideoDate,
+                    kSCIRowTitle: SCILocalized(@"row_video_date"),
+                    kSCIRowNote: SCILocalized(@"row_video_date_note"),
+                    kSCIRowIcon: @"calendar",
+                    kSCIRowColor: [UIColor systemIndigoColor],
+                },
+                @{
+                    kSCIRowKind: kSCIKindSwitch,
                     kSCIRowPref: SCIPrefVisitorLog,
                     kSCIRowTitle: SCILocalized(@"row_visitors"),
                     kSCIRowNote: SCILocalized(@"row_visitors_note"),

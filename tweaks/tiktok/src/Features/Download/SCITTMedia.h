@@ -79,6 +79,14 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, nullable) NSURL *audioURL;
 
 @property (nonatomic, copy) NSDate *seen;
+
+/// When the video was published, read from `AWEAwemeModel.createTime` — an `NSNumber` on 46.4.0,
+/// confirmed against the real binary rather than assumed, and nil when the model does not carry it.
+///
+/// **Kept on the item rather than read at draw time.** The model is walked once per video, in the
+/// one place that already holds it; a label that reached back for the model on every layout pass
+/// is the shape of thing that crashed this app once.
+@property (nonatomic, copy, nullable) NSDate *posted;
 @end
 
 

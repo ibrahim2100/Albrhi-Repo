@@ -1,5 +1,9 @@
 # Albrhi Changelog
 
+## v1.58.0
+
+Albrhi for TikTok 0.19.0: the video's publish date, shown under Albrhi's own button.
+
 ## v1.57.0
 
 Albrhi for TikTok 0.18.0: more logged-in accounts, messages the sender took back stay visible and are marked as taken back, and a
