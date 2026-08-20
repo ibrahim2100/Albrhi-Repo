@@ -1,5 +1,23 @@
 # Albrhi for TikTok — what changed
 
+## v0.19.10
+
+The publish date appears on photo posts.
+
+**The same fault as 0.19.1, arriving through the second door.** That release fixed a pending date
+written on one path and read on four, and the fix was applied to the function that records a
+video -- while a photo post deliberately does *not* go through it, because a list of pictures and
+a list of alternative links to one file mean different things. Different meaning, different door,
+and the date was left at the first one: every photo post built an item with no date at all.
+
+**And reading it exposed a worse one behind it.** `+captureModel:` -- the model's own `-init`
+path -- builds photo posts too and never set the pending date, so a photo post arriving that way
+would have taken whatever date the last settled *video* left behind. Not a missing date, a
+confidently wrong one. Both entry points now call one reader that clears the value before asking,
+so a model that cannot answer leaves nothing rather than the previous answer.
+
+**A value set in one place and consumed in two is only fixed when both consumers are found.**
+
 ## v0.19.9
 
 The date is in the same place on every video now, not on the ones that happened to be ready.

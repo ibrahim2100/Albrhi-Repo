@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.58.10
+
+Albrhi for TikTok 0.19.10: the publish date appears on photo posts, and the date read for one is
+that post's own rather than the last video's.
+
 ## v1.58.9
 
 Albrhi for TikTok 0.19.9: the publish date is measured when the layout is real, so it sits in the

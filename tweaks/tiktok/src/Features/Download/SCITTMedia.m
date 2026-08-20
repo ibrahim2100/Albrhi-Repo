@@ -972,6 +972,33 @@ static NSURL *SCITTAudioURLFromModel(id model) {
     return nil;
 }
 
+//
+// **One reader, called from every entry that builds an item -- which is two, and only one of them
+// had it.**
+//
+// `+captureModel:` builds photo posts too, from the model's own `-init`, and it never set this at
+// all: a photo post arriving through that door would have taken whatever date the last *settled*
+// video left behind. Not a missing date -- a confidently wrong one, which is worse and is exactly
+// the failure mode a pending global has every time it is set in fewer places than it is read.
+//
+// Cleared first, so a model that cannot answer leaves nothing rather than the previous answer.
+//
+static void SCITTCapturePostedDate(id model) {
+    sciPendingPosted = nil;
+    if (!model) return;
+
+    SEL createdSel = NSSelectorFromString(@"createTime");
+    id created = [model respondsToSelector:createdSel]
+        ? ((id (*)(id, SEL))objc_msgSend)(model, createdSel) : nil;
+
+    if ([created isKindOfClass:[NSNumber class]] && [created doubleValue] > 0) {
+        sciPendingPosted = [NSDate dateWithTimeIntervalSince1970:[created doubleValue]];
+        sciDateReads++;
+    } else {
+        sciDateMisses++;
+    }
+}
+
 static void SCITTAddPhotoPost(NSArray<NSArray<NSURL *> *> *photos, NSURL *audio) {
     if (!photos.count) return;
     if (!sciRecent) sciRecent = [NSMutableArray array];
@@ -987,6 +1014,19 @@ static void SCITTAddPhotoPost(NSArray<NSArray<NSURL *> *> *photos, NSURL *audio)
     item.photoVariants = photos;
     item.photoIndex = (sciPhotoIndex < photos.count) ? sciPhotoIndex : NSNotFound;
     item.audioURL = audio;
+
+    //
+    // **The same pending value, and this is the second door it had to be carried through.**
+    //
+    // 0.19.1 fixed a date written on one path and read on four. The fix was right and it was
+    // applied to `SCITTAddResolvedList` alone -- while a photo post deliberately does *not* go
+    // through that function, because a list of pictures and a list of alternative links to one
+    // file mean different things. Different meaning, different door, and the date was left at the
+    // first one: every photo post got an item with no date, and the label had nothing to show.
+    //
+    // A value set in one place and consumed in two is only fixed when both consumers are found.
+    //
+    item.posted = sciPendingPosted;
     item.seen = [NSDate date];
     [sciRecent insertObject:item atIndex:0];
 
@@ -1267,18 +1307,7 @@ static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **ou
     // stale, and this file already had the pattern right for the id: set it where the model is,
     // once, before anything below can take a branch.
     //
-    sciPendingPosted = nil;
-
-    SEL createdSel = NSSelectorFromString(@"createTime");
-    id created = [model respondsToSelector:createdSel]
-        ? ((id (*)(id, SEL))objc_msgSend)(model, createdSel) : nil;
-
-    if ([created isKindOfClass:[NSNumber class]] && [created doubleValue] > 0) {
-        sciPendingPosted = [NSDate dateWithTimeIntervalSince1970:[created doubleValue]];
-        sciDateReads++;
-    } else {
-        sciDateMisses++;
-    }
+    SCITTCapturePostedDate(model);
 
     // The best gear, asked for only here.
     //
@@ -1336,6 +1365,8 @@ static NSArray<NSURL *> *SCITTAllLinksForVideoModel(id videoModel, NSString **ou
 
 + (void)captureModel:(AWEAwemeModel *)model {
     if (!model) return;
+
+    SCITTCapturePostedDate(model);
 
     @try {
         // Pictures first, because a photo post has no video to resolve and the chains below
