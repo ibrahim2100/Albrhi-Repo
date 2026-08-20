@@ -5,6 +5,10 @@
 Albrhi for Spotify 0.2.3 — the crash on roothide is fixed. A build flag was missing, and it chose a
 code path that hooks classes without checking each one is there.
 
+**This is the release that carries Albrhi for Spotify** — six tweaks in one package now, and the
+first one written in Swift. Spotify's ads and Premium popups are blocked, and sponsored podcast
+segments can be skipped; **it does not unlock Premium**, and its page says so above its switches.
+
 ## v1.55.2
 
 Albrhi for Spotify 0.2.2: the Spotify crash is fixed. A hook group was being activated without
