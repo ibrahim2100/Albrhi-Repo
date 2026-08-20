@@ -41,6 +41,72 @@ static NSArray<NSString *> *SCIWProbeSelectorsFor(NSString *className) {
     return @[];
 }
 
+///
+/// Classes whose **whole** method list is worth printing, and how to keep it readable.
+///
+/// A name and a count answer "is it here"; they cannot answer "what do I hook". `SUBManager` came
+/// back with 33 methods and the one selector this tweak had guessed at was not among them --
+/// which is this project's oldest lesson (a selector dump names what exists, class metadata names
+/// who answers it) arriving from the one direction it had not yet: the class was right, the
+/// method list was never asked for.
+///
+/// A filter comes with it because `COSSoftwareUpdateController` has 161 methods and a report
+/// nobody can read is not a report. An empty filter means everything -- written deliberately,
+/// because a filter loop that only adds from inside itself returns nothing when asked for
+/// "everything", which this project has already shipped once.
+///
+static NSArray<NSString *> *SCIWProbeFilterFor(NSString *className) {
+    if ([className isEqualToString:@"SUBManager"]) return @[];              // all 33
+    if ([className isEqualToString:@"COSSoftwareUpdateAutomaticUpdateContoller"]) return @[];  // 8
+
+    if ([className isEqualToString:@"COSSoftwareUpdateController"]) {
+        return @[@"update", @"scan", @"check", @"avail", @"download", @"install",
+                 @"eligib", @"version", @"defer", @"enabl"];
+    }
+    return nil;   // nil means: do not dump this class at all
+}
+
+static NSString *SCIWDumpMethods(NSString *name) {
+    NSArray<NSString *> *filter = SCIWProbeFilterFor(name);
+    if (!filter) return nil;
+
+    Class cls = NSClassFromString(name);
+    if (!cls) return nil;
+
+    unsigned int count = 0;
+    Method *methods = class_copyMethodList(cls, &count);
+    if (!methods) return nil;
+
+    NSMutableArray<NSString *> *lines = [NSMutableArray array];
+    for (unsigned int i = 0; i < count; i++) {
+        NSString *selector = NSStringFromSelector(method_getName(methods[i]));
+
+        if (filter.count) {
+            BOOL wanted = NO;
+            for (NSString *needle in filter) {
+                if ([selector rangeOfString:needle
+                                    options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                    wanted = YES;
+                    break;
+                }
+            }
+            if (!wanted) continue;
+        }
+
+        const char *types = method_getTypeEncoding(methods[i]);
+        [lines addObject:[NSString stringWithFormat:@"    -%@ %s", selector,
+                          types ?: "no encoding"]];
+    }
+    free(methods);
+
+    if (!lines.count) return nil;
+
+    [lines sortUsingSelector:@selector(compare:)];
+    return [NSString stringWithFormat:@"%@ — %@ of %u method(s):\n%@",
+            name, filter.count ? @"matching" : @"all", count,
+            [lines componentsJoinedByString:@"\n"]];
+}
+
 static NSString *sciwProbeReport = nil;
 
 ///
@@ -85,6 +151,13 @@ void SCIWRunUpdateProbe(void) {
 
     for (NSString *name in SCIWProbeSubjects()) {
         [lines addObject:SCIWDescribeClass(name)];
+    }
+
+    // The full lists, after the summary rather than inside it: the summary is what a person reads
+    // and these are what the next hook is written from.
+    for (NSString *name in SCIWProbeSubjects()) {
+        NSString *dump = SCIWDumpMethods(name);
+        if (dump) [lines addObject:[@"\n" stringByAppendingString:dump]];
     }
 
     sciwProbeReport = [lines componentsJoinedByString:@"\n"];

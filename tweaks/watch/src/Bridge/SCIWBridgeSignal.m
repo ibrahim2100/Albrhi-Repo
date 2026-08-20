@@ -8,6 +8,7 @@
 #import "SCIWBridgeSignal.h"
 #import "../Prefs.h"
 #import "../Update/SCIWUpdateProbe.h"
+#import "../Update/SCIWUpdateGuard.h"
 #import <notify.h>
 
 static const char *const kSCIWBridgeNotification = "com.albrhi.watch.bridge";
@@ -20,6 +21,12 @@ static NSString *const kSCIWDropName = @"AlbrhiWatch-report.txt";
 /// Where iOS keeps application containers. Enumerated rather than derived: the directory under it
 /// is a UUID assigned at install time, and nothing this code could compute would name it.
 static NSString *const kSCIWContainers = @"/var/mobile/Containers/Data/Application";
+
+/// Separates the two things the drop carries. **The update hold's verdict cannot travel by
+/// preference either** -- it is written by the same sandboxed process whose write is redirected,
+/// which is why "no verdict" was reported by a build that had computed one. One file, one marker,
+/// and SpringBoard splits it.
+static NSString *const kSCIWGuardMarker = @"\n##GUARD##\n";
 
 void SCIWBridgeAnnounce(void) {
     //
@@ -40,10 +47,13 @@ void SCIWBridgeAnnounce(void) {
                          stringByAppendingPathComponent:kSCIWDropName];
 
     NSError *error = nil;
-    BOOL wrote = [SCIWUpdateProbeReport() writeToFile:drop
-                                           atomically:YES
-                                             encoding:NSUTF8StringEncoding
-                                                error:&error];
+    NSString *payload = [NSString stringWithFormat:@"%@%@%@",
+                         SCIWUpdateProbeReport(), kSCIWGuardMarker, SCIWUpdateGuardReport()];
+
+    BOOL wrote = [payload writeToFile:drop
+                       atomically:YES
+                         encoding:NSUTF8StringEncoding
+                            error:&error];
 
     int token = 0;
     if (notify_register_check(kSCIWBridgeNotification, &token) != NOTIFY_STATUS_OK) return;
@@ -100,9 +110,14 @@ void SCIWBridgeListen(void) {
         NSString *text;
 
         if (report.length) {
-            // The whole point: this write is SpringBoard's, and SpringBoard is not sandboxed.
+            NSArray<NSString *> *halves = [report componentsSeparatedByString:kSCIWGuardMarker];
+
+            // The whole point: these writes are SpringBoard's, and SpringBoard is not sandboxed.
             CFPreferencesSetAppValue(CFSTR("watch_probe_report_com.apple.Bridge"),
-                                     (__bridge CFPropertyListRef)report, SCIWDomain);
+                                     (__bridge CFPropertyListRef)halves.firstObject, SCIWDomain);
+            if (halves.count > 1)
+                CFPreferencesSetAppValue(CFSTR("watch_update_guard"),
+                                         (__bridge CFPropertyListRef)halves.lastObject, SCIWDomain);
             text = @"the tweak ran in the Watch app, and its report was carried over";
         } else if ((SCIWBridgeState)state == SCIWBridgeStateWriteDenied) {
             text = @"the tweak ran in the Watch app but could not write its report at all — "

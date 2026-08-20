@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.50.5
+
+Albrhi Watch 0.2.6: the update hold installs what this build of the Watch app actually has rather
+than refusing unless it has everything, its verdict reaches Settings, and the diagnostics print
+whole method lists instead of counts.
+
 ## v1.50.4
 
 Albrhi Watch 0.2.5 and Albrhi Panel 0.9.12. The Watch app's diagnostics report reaches Settings:

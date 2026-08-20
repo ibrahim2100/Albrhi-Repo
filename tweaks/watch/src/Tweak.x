@@ -6,7 +6,7 @@
 #import "Update/SCIWUpdateProbe.h"
 #import "Bridge/SCIWBridgeSignal.h"
 
-NSString *SCIVersionString = @"v0.2.5";  // AlbrhiWatch
+NSString *SCIVersionString = @"v0.2.6";  // AlbrhiWatch
 
 ///
 /// Albrhi Watch — pairing an Apple Watch whose watchOS is newer than this iPhone expects.
@@ -71,6 +71,12 @@ NSString *SCIVersionString = @"v0.2.5";  // AlbrhiWatch
         // all, which the probe confirmed rather than assumed.
         if ([process isEqualToString:@"com.apple.Bridge"]) {
             SCIWInstallUpdateGuard();
+
+            // **Announced twice on purpose.** The first drop happens above the gate, so a report
+            // exists even when the tweak is switched off; this one replaces it once the update
+            // hold has decided, because its verdict is written by this same sandboxed process and
+            // cannot reach Settings by preference any more than the report could.
+            SCIWBridgeAnnounce();
         }
     }
 }

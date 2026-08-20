@@ -52,6 +52,17 @@ static void SCIWPublishGuardState(void) {
     CFPreferencesAppSynchronize(CFSTR("com.albrhi.watch"));
 }
 
+/// Why a selector was skipped, in the words the next release gets written from: absent, or present
+/// with an encoding that is not what these hooks were compiled against.
+static NSString *SCIWDescribeSelector(Class cls, NSString *selectorName, NSString *expected) {
+    Method method = class_getInstanceMethod(cls, NSSelectorFromString(selectorName));
+    if (!method) return [NSString stringWithFormat:@"-%@ is not on this class", selectorName];
+
+    const char *types = method_getTypeEncoding(method);
+    return [NSString stringWithFormat:@"-%@ is %s (expected %@)",
+            selectorName, types ?: "no encoding", expected];
+}
+
 static BOOL SCIWEncodingMatches(Class cls, NSString *selectorName, NSString *expected) {
     Method method = class_getInstanceMethod(cls, NSSelectorFromString(selectorName));
     if (!method) return NO;
@@ -62,7 +73,17 @@ static BOOL SCIWEncodingMatches(Class cls, NSString *selectorName, NSString *exp
     return [expected isEqualToString:[NSString stringWithUTF8String:types]];
 }
 
-%group UpdateHold
+//
+// **Two groups, because the device says this build has one of these methods and not the other.**
+//
+// `-scanForUpdates` is here, encoding `v16@0:8`, exactly what these hooks were compiled for.
+// `-checkForSoftwareUpdate:` is **not on SUBManager in this build at all** -- and a `%hook` on a
+// method a class does not declare does not politely do nothing: Logos *adds* it, so the tweak
+// would be installing a method Apple's own code never calls and this project would have invented
+// an API. One group per selector is what lets the present one install while the absent one is
+// skipped, which a single group could not express.
+//
+%group UpdateHoldScan
 
 %hook SUBManager
 
@@ -75,6 +96,13 @@ static BOOL SCIWEncodingMatches(Class cls, NSString *selectorName, NSString *exp
     // postponed the first ask would look like it worked for an afternoon.
     SCIWRecordAnswer(@"update scan held");
 }
+
+%end
+%end
+
+%group UpdateHoldCheck
+
+%hook SUBManager
 
 - (void)checkForSoftwareUpdate:(id)completion {
     if (!SCIWPrefEnabledForKey(SCIWPrefHoldUpdates)) {
@@ -99,28 +127,39 @@ void SCIWInstallUpdateGuard(void) {
         return;
     }
 
-    BOOL scan = SCIWEncodingMatches(manager, @"scanForUpdates", kSCIWScanEncoding);
-    BOOL check = SCIWEncodingMatches(manager, @"checkForSoftwareUpdate:", kSCIWCheckEncoding);
+    //
+    // **Each selector decides for itself, and a missing one is not a failure of the other.**
+    //
+    // The first version demanded both and installed neither when one was absent -- so a device
+    // carrying a perfectly hookable `-scanForUpdates` got no hold at all, reported as "signatures
+    // do not match". That is the same shape as a capability check narrower than the capability it
+    // guards: it fails silently in the direction of doing less.
+    //
+    NSMutableArray<NSString *> *installed = [NSMutableArray array];
+    NSMutableArray<NSString *> *skipped = [NSMutableArray array];
 
-    if (!scan || !check) {
-        // Named precisely, because this is the report that turns into the next release: the
-        // encoding is what a hook has to be rewritten against, and "it did not work" would not
-        // carry it.
-        Method scanMethod = class_getInstanceMethod(manager, NSSelectorFromString(@"scanForUpdates"));
-        Method checkMethod = class_getInstanceMethod(manager,
-            NSSelectorFromString(@"checkForSoftwareUpdate:"));
-
-        sciwGuardState = [NSString stringWithFormat:
-            @"signatures do not match — nothing installed. -scanForUpdates is %s (expected %@), "
-            @"-checkForSoftwareUpdate: is %s (expected %@)",
-            scanMethod ? method_getTypeEncoding(scanMethod) : "missing", kSCIWScanEncoding,
-            checkMethod ? method_getTypeEncoding(checkMethod) : "missing", kSCIWCheckEncoding];
-        SCIWPublishGuardState();
-        return;
+    if (SCIWEncodingMatches(manager, @"scanForUpdates", kSCIWScanEncoding)) {
+        %init(UpdateHoldScan);
+        [installed addObject:@"-scanForUpdates"];
+    } else {
+        [skipped addObject:SCIWDescribeSelector(manager, @"scanForUpdates", kSCIWScanEncoding)];
     }
 
-    %init(UpdateHold);
-    sciwGuardState = @"installed on SUBManager (scan + check)";
+    if (SCIWEncodingMatches(manager, @"checkForSoftwareUpdate:", kSCIWCheckEncoding)) {
+        %init(UpdateHoldCheck);
+        [installed addObject:@"-checkForSoftwareUpdate:"];
+    } else {
+        [skipped addObject:SCIWDescribeSelector(manager, @"checkForSoftwareUpdate:",
+                                                kSCIWCheckEncoding)];
+    }
+
+    sciwGuardState = [NSString stringWithFormat:@"%@%@",
+        installed.count ? [NSString stringWithFormat:@"installed on SUBManager: %@",
+                              [installed componentsJoinedByString:@", "]]
+                        : @"nothing installed",
+        skipped.count ? [NSString stringWithFormat:@" — skipped: %@",
+                            [skipped componentsJoinedByString:@"; "]]
+                      : @""];
     SCIWPublishGuardState();
 }
 

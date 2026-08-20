@@ -1,5 +1,29 @@
 # Albrhi Watch — what changed
 
+## v0.2.6
+
+**The channel works, and the first real answer from inside the Watch app corrects two things at
+once.** `SUBManager` is there — 33 methods — and `-scanForUpdates` encodes exactly `v16@0:8`, what
+these hooks were compiled for. **`-checkForSoftwareUpdate:` is not on the class at all.**
+
+So the guard demanded both and installed neither. A device carrying a perfectly hookable
+`-scanForUpdates` got no hold, reported as a signature mismatch — the same shape as a capability
+check narrower than the capability it guards, failing silently in the direction of doing less.
+Each selector decides for itself now, in its own `%group`, because **a `%hook` on a method a class
+does not declare does not politely do nothing — Logos adds it**, and the tweak would be installing
+an API Apple never calls.
+
+**The verdict could not travel either, for the reason 0.2.5 had just found.** It is written by the
+same sandboxed process whose preference write is redirected, which is why a build that had computed
+a verdict reported "no verdict". It rides in the dropped file now, behind a marker SpringBoard
+splits on, and the Watch app announces a second time once the hold has decided.
+
+**And the probe prints whole method lists.** A name and a count answer "is it here" and cannot
+answer "what do I hook" — `SUBManager` came back with 33 methods and the one selector this tweak
+had guessed at was not among them. `SUBManager` and the automatic-update controller are printed in
+full; `COSSoftwareUpdateController` has 161 methods, so it is filtered, with the empty filter
+written deliberately to mean *everything*.
+
 ## v0.2.5
 
 **The report said the Watch app wrote its own report, and the section under it said the Watch app
