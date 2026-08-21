@@ -106,12 +106,12 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.58.4",
+          "title": "v1.58.10",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• Albrhi for TikTok 0.19.4: the publish date sits above the download button instead of below and to one side.",
+          "markdown": "• Albrhi for TikTok 0.19.10: the publish date appears on photo posts, and the date read for one is that post's own rather than the last video's.",
           "useSpacing": true
         },
         {
@@ -120,12 +120,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.58.3",
+          "title": "v1.58.9",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• Albrhi for TikTok 0.19.3: the publish date is drawn once the button is really on screen, and its diagnostic counts calls rather than successes — it was reporting zero…",
+          "markdown": "• Albrhi for TikTok 0.19.9: the publish date is measured when the layout is real, so it sits in the same place on every video rather than only on the ones already laid out…",
           "useSpacing": true
         },
         {
@@ -134,12 +134,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.58.2",
+          "title": "v1.58.8",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• Albrhi for TikTok 0.19.2: the publish date follows the button wherever it is placed, and the recalled-message marker uses the key a device confirmed.",
+          "markdown": "• Albrhi for TikTok 0.19.8: the publish date lines up with the download button and stays on screen.",
           "useSpacing": true
         },
         {
@@ -155,7 +155,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.58.4"
+          "text": "1.58.10"
         },
         {
           "class": "DepictionTableTextView",
