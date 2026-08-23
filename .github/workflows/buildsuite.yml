@@ -23,17 +23,18 @@ on:
         branches:
             - 'main'
         paths:
-            # Anything that changes what ends up in the package, which is now every
-            # tweak this workflow actually bundles -- Instagram, YouTube, X and the
-            # panel. CarPlay and NextUp are excluded on purpose: neither is in the
-            # package (.no-suite marks both), so a commit that only touches one has
-            # nothing for
-            # this workflow to do, and running it anyway is exactly the confusion a
-            # report named directly -- a standalone tweak's push rebuilding Instagram,
-            # YouTube, X, TikTok and the panel for no reason, on every single commit.
+            # Anything that changes what ends up in the package, which is every tweak
+            # this workflow actually bundles -- Instagram, YouTube, X, TikTok, Spotify,
+            # YouTube Music and the panel. NextUp and Watch are excluded on purpose:
+            # neither is in the package (.no-suite marks both), so a commit that only
+            # touches one has nothing for this workflow to do, and running it anyway is
+            # exactly the confusion a report named directly -- a standalone tweak's push
+            # rebuilding every bundled tweak for no reason, on every single commit.
+            #
             # Keep this list in step with tools/make-suite.sh's own skip list; another
-            # standalone tweak needs its own '!' line here too. Locket's line was
-            # removed with the tweak itself.
+            # standalone tweak needs its own '!' line here too. Locket's line went with
+            # the tweak, and CarPlay's with its removal from this repository -- which is
+            # why this comment named a tweak that no longer exists until it was reread.
             - 'suite/**'
             - 'tweaks/**'
             - '!tweaks/nextup/**'
