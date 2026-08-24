@@ -129,7 +129,27 @@ BOOL SCIPanelAllowsApp(NSString *identifier) {
     // Persistence needs no code. The value lives in the panel's own plist, which dpkg does
     // not touch on upgrade and suite/DEBIAN/preinst does not remove -- so once switched on
     // it stays on across every update, and a deliberate off stays off just as firmly.
+    // The master switch is asked first, so one handle really does stop everything rather than
+    // stopping the tweaks that happen to route through the other entry point.
+    if (!SCIPanelMasterEnabled()) return NO;
+
     return SCIPanelReadBool([@"app_enabled_" stringByAppendingString:identifier], NO);
+}
+
+//
+// **One switch above all the others, and it is read where every tweak already asks.**
+//
+// When an app update breaks something, the answer today is eight switches or removing the
+// package -- and that is the worst moment to be hunting for either. This is one value, read in
+// the same call every tweak already makes, so nothing per-tweak had to change to honour it.
+//
+// **It defaults to on, and that is not the opt-in reading being reversed.** The per-app switch
+// answers "did anyone ask for this app to be patched", where silence must not mean yes. This
+// answers "has the user pulled the handle", and silence there means they have not -- an absent
+// value that read as off would switch off every working install on the day it shipped.
+//
+BOOL SCIPanelMasterEnabled(void) {
+    return SCIPanelReadBool(@"albrhi_master_enabled", YES);
 }
 
 BOOL SCIPanelAllowsThisApp(void) {
@@ -153,6 +173,11 @@ BOOL SCIPanelAllowsThisApp(void) {
     static dispatch_once_t once;
 
     dispatch_once(&once, ^{
+        if (!SCIPanelMasterEnabled()) {
+            sciGateSource = @"master switch is off";
+            return;
+        }
+
         NSString *key = SCIPanelKeyForThisApp();
         if (!key) return;   // no bundle id to ask about; stays off, as above
 

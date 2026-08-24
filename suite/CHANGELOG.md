@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.58.12
+
+Albrhi Panel 0.9.22: a master switch above every tweak, a guide page with each tweak's verified
+app version, settings backup and restore through the share sheet, and an update check that runs
+only when asked.
+
 ## v1.58.11
 
 Albrhi for Instagram 4.1.11: AV1 reels transcode again -- their ladder is 10-bit, and every frame

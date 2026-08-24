@@ -47,6 +47,13 @@ extern "C" {
 /// and a cross-process preference lookup on each of those would show. Changing the switch
 /// therefore takes effect when the app is next launched, which the panel says plainly rather
 /// than leaving anyone to wonder.
+/// Albrhi's single master switch, written by the panel and read by every tweak.
+///
+/// Defaults to YES: an absent value means nobody has pulled the handle, not that everything
+/// should stand down. The per-app switch, which defaults to NO, answers a different question --
+/// see SCIPanelAllowsApp.
+BOOL SCIPanelMasterEnabled(void);
+
 BOOL SCIPanelAllowsThisApp(void);
 
 /// How that answer was arrived at, for a diagnostics page.

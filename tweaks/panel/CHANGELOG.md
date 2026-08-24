@@ -1,5 +1,37 @@
 # Albrhi Panel Changelog
 
+## v0.9.22
+
+Four things the panel could not do before.
+
+**A master switch, above everything it governs.** When an app update breaks something, the answer
+until now was eight switches or removing the package -- and that is the worst possible moment to
+be hunting through rows. It is one value, read inside the call every tweak already makes, so no
+tweak needed changing to obey it. **It defaults to on, and that is not the opt-in reading being
+reversed**: the per-app switch answers "did anyone ask for this app to be patched", where silence
+must not mean yes; this answers "has the user pulled the handle", where an absent value that read
+as off would have switched off every working install on the day it shipped. With it off, the apps
+footer says so -- a row that cannot act must not look as though it does.
+
+**A guide page**, built from the device rather than from a list written into it: every tweak on
+this phone, one line on what it does, the app version it was verified against, and the version
+actually installed. A hand-maintained list of eight tweaks goes stale the first time one is added
+or renamed, which this project has already paid for twice.
+
+**A copy of your settings, out of the phone and back.** It goes out through the share sheet on
+purpose -- a rootless or roothide prefix is removed with the bootstrap, so a backup written beside
+the preferences it copies would be destroyed by exactly the event it exists for. **What it holds
+is stated rather than implied**: the panel's own domain, which is the master switch and the
+per-app switches. Each tweak's sub-options live inside that app's container where the Settings app
+may not read, and a backup claiming "all your settings" would be quietly wrong about most of them.
+A file that is not one of ours is refused whole rather than half-applied.
+
+**And an update check, on a tap and never on its own.** A page that phones home when it opens is a
+page that decided for its user. It asks Albrhi's own source and nothing else, takes the highest
+published version rather than the first listed (the index carries several on purpose), and treats
+"the source could not be reached" as a different answer from "you are up to date". A device with no
+package manager to compare against is told the published version rather than a guess.
+
 ## v0.9.21
 
 The clean-share-links switch is gone with the feature it named.

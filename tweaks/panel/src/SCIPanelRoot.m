@@ -8,11 +8,15 @@
 #import "SCIPanelAppCell.h"
 #import "SCIPanelDomain.h"
 #import "SCIPanelButtonAction.h"
+#import "SCIPanelBackup.h"
+#import "SCIPanelUpdate.h"
+#import "SCIPanelGuideController.h"
 #import "Localization/SCILocalize.h"
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <objc/message.h>
 #import <objc/runtime.h>
 
-NSString *SCIVersionString = @"v0.9.21";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.9.22";  // AlbrhiPanel
 
 ///
 /// Albrhi's own control panel, in the iOS Settings app.
@@ -34,7 +38,7 @@ NSString *SCIVersionString = @"v0.9.21";  // AlbrhiPanel
 ///
 /// Copyright (C) Ibrahim Ismail AL-Rahn. GPLv3.
 ///
-@interface SCIPanelRootController : PSListController
+@interface SCIPanelRootController : PSListController <UIDocumentPickerDelegate>
 @end
 
 @implementation SCIPanelRootController
@@ -82,6 +86,32 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
         else [entries addObject:entry];
     }
 
+    //
+    // **The master switch, above everything it governs.**
+    //
+    // Its own group, because it is not one of the apps: it decides whether any of them are asked
+    // about at all. When an app update breaks something, this is one handle instead of eight --
+    // and the moment it is needed is the worst moment to be hunting through rows.
+    //
+    PSSpecifier *masterGroup = [PSSpecifier preferenceSpecifierNamed:@""
+                                                             target:self
+                                                                set:NULL
+                                                                get:NULL
+                                                             detail:Nil
+                                                               cell:PSGroupCell
+                                                               edit:Nil];
+    [masterGroup setProperty:SCILocalized(@"master_footer") forKey:@"footerText"];
+    [specifiers addObject:masterGroup];
+
+    PSSpecifier *master = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"master_title")
+                                                         target:self
+                                                            set:@selector(setMaster:forSpecifier:)
+                                                            get:@selector(isMasterOn:)
+                                                         detail:Nil
+                                                           cell:PSSwitchCell
+                                                           edit:Nil];
+    [specifiers addObject:master];
+
     PSSpecifier *group = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"section_apps")
                                                         target:self
                                                            set:NULL
@@ -89,7 +119,12 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
                                                         detail:Nil
                                                           cell:PSGroupCell
                                                           edit:Nil];
-    [group setProperty:SCILocalized(@"apps_footer") forKey:@"footerText"];
+    // **A row that cannot act must not look as though it does.** With the master off, every
+    // switch below is still drawn at whatever it was set to, and every one of them is being
+    // ignored -- so the footer says so rather than leaving the page to imply otherwise.
+    [group setProperty:([[self isMasterOn:nil] boolValue] ? SCILocalized(@"apps_footer")
+                                                          : SCILocalized(@"apps_footer_master_off"))
+                forKey:@"footerText"];
     [specifiers addObject:group];
 
     if (!entries.count) {
@@ -257,6 +292,59 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
             [specifiers addObject:row];
         }
     }
+
+    //
+    // Guide, update, backup: three things that are about Albrhi itself rather than about any one
+    // app, kept together above "About" for that reason.
+    //
+    PSSpecifier *toolsGroup = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"section_tools")
+                                                             target:self
+                                                                set:NULL
+                                                                get:NULL
+                                                             detail:Nil
+                                                               cell:PSGroupCell
+                                                               edit:Nil];
+    [toolsGroup setProperty:SCILocalized(@"tools_footer") forKey:@"footerText"];
+    [specifiers addObject:toolsGroup];
+
+    PSSpecifier *guide = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"guide_title")
+                                                        target:self
+                                                           set:NULL
+                                                           get:NULL
+                                                        detail:[SCIPanelGuideController class]
+                                                          cell:PSLinkCell
+                                                          edit:Nil];
+    [specifiers addObject:guide];
+
+    PSSpecifier *update = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"update_check")
+                                                         target:self
+                                                            set:NULL
+                                                            get:NULL
+                                                         detail:Nil
+                                                           cell:PSButtonCell
+                                                           edit:Nil];
+    SCISetButtonAction(update, @selector(checkForUpdate));
+    [specifiers addObject:update];
+
+    PSSpecifier *backup = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"backup_export")
+                                                         target:self
+                                                            set:NULL
+                                                            get:NULL
+                                                         detail:Nil
+                                                           cell:PSButtonCell
+                                                           edit:Nil];
+    SCISetButtonAction(backup, @selector(exportSettings));
+    [specifiers addObject:backup];
+
+    PSSpecifier *restore = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"backup_import")
+                                                          target:self
+                                                             set:NULL
+                                                             get:NULL
+                                                          detail:Nil
+                                                            cell:PSButtonCell
+                                                            edit:Nil];
+    SCISetButtonAction(restore, @selector(importSettings));
+    [specifiers addObject:restore];
 
     PSSpecifier *about = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"section_about")
                                                         target:self
@@ -539,6 +627,123 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
         [UIAlertController alertControllerWithTitle:specifier.name
                                             message:SCILocalized(@"switch_restart")
                                      preferredStyle:UIAlertControllerStyleAlert];
+    [note addAction:[UIAlertAction actionWithTitle:SCILocalized(@"ok")
+                                             style:UIAlertActionStyleDefault
+                                           handler:nil]];
+    [self presentViewController:note animated:YES completion:nil];
+}
+
+// MARK: - The master switch
+
+//
+// Read and written here, and read by every tweak through SCIPanelMasterEnabled(). Two answers
+// to one question in two processes -- exactly the shape that made a per-app switch draw itself
+// on while the gate held it off -- so the default below and the gate's default are the same
+// value for the same stated reason: absent means nobody has pulled the handle.
+//
+- (id)isMasterOn:(PSSpecifier *)specifier {
+    CFPropertyListRef value = CFPreferencesCopyAppValue(CFSTR("albrhi_master_enabled"),
+                                                        (__bridge CFStringRef)kSCIPanelPreferenceDomain);
+    if (!value) return @YES;
+
+    BOOL on = (CFGetTypeID(value) == CFBooleanGetTypeID())
+        ? CFBooleanGetValue((CFBooleanRef)value) : YES;
+    CFRelease(value);
+    return @(on);
+}
+
+- (void)setMaster:(NSNumber *)value forSpecifier:(PSSpecifier *)specifier {
+    CFPreferencesSetAppValue(CFSTR("albrhi_master_enabled"),
+                             (__bridge CFPropertyListRef)@(value.boolValue),
+                             (__bridge CFStringRef)kSCIPanelPreferenceDomain);
+    CFPreferencesAppSynchronize((__bridge CFStringRef)kSCIPanelPreferenceDomain);
+
+    // The apps footer states whether the switches below it are being obeyed, so it is stale the
+    // instant this changes. Rebuilt rather than edited: this page is built in one pass and a
+    // second, partial update of it is how two descriptions of one state start to disagree.
+    [self reloadSpecifiers];
+
+    [self say:specifier.name message:SCILocalized(@"switch_restart")];
+}
+
+// MARK: - Backup
+
+- (void)exportSettings {
+    NSURL *file = SCIPanelBackupWrite();
+    if (!file) {
+        [self say:SCILocalized(@"backup_export") message:SCILocalized(@"backup_failed")];
+        return;
+    }
+
+    UIActivityViewController *share =
+        [[UIActivityViewController alloc] initWithActivityItems:@[file] applicationActivities:nil];
+
+    // An iPad presents this from a popover and refuses without an anchor. Settings is a split
+    // view there, so the row that was tapped is not reachable from here -- the view itself is.
+    share.popoverPresentationController.sourceView = self.view;
+    share.popoverPresentationController.sourceRect =
+        CGRectMake(CGRectGetMidX(self.view.bounds), CGRectGetMidY(self.view.bounds), 1, 1);
+
+    [self presentViewController:share animated:YES completion:nil];
+}
+
+- (void)importSettings {
+    UIDocumentPickerViewController *picker =
+        [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[UTTypePropertyList, UTTypeData]];
+    picker.delegate = self;
+    picker.allowsMultipleSelection = NO;
+    [self presentViewController:picker animated:YES completion:nil];
+}
+
+- (void)documentPicker:(UIDocumentPickerViewController *)controller
+didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
+    NSInteger restored = SCIPanelBackupRestore(urls.firstObject);
+
+    if (restored < 0) {
+        [self say:SCILocalized(@"backup_import") message:SCILocalized(@"backup_not_ours")];
+        return;
+    }
+
+    [self reloadSpecifiers];
+    [self say:SCILocalized(@"backup_import")
+      message:[NSString stringWithFormat:SCILocalized(@"backup_restored"), (long)restored]];
+}
+
+// MARK: - Updates
+
+- (void)checkForUpdate {
+    [self say:SCILocalized(@"update_check") message:SCILocalized(@"update_asking")];
+
+    SCIPanelCheckForUpdate(^(NSString *latest, NSString *installed, BOOL newer) {
+        // The alert already on screen is this page's own; dismissing it first means the answer
+        // never arrives behind something the user has to clear before reading it.
+        [self dismissViewControllerAnimated:YES completion:^{
+            NSString *message;
+
+            if (!latest.length) {
+                message = SCILocalized(@"update_unreachable");
+            } else if (newer) {
+                message = [NSString stringWithFormat:SCILocalized(@"update_available"), latest, installed];
+            } else if (!installed.length) {
+                // No dpkg to ask is not "up to date" -- it is a sideloaded device, where the
+                // published version is still the answer to what was asked.
+                message = [NSString stringWithFormat:SCILocalized(@"update_latest_only"), latest];
+            } else {
+                message = [NSString stringWithFormat:SCILocalized(@"update_current"), installed];
+            }
+
+            [self say:SCILocalized(@"update_check") message:message];
+        }];
+    });
+}
+
+// MARK: -
+
+/// One alert, one place. Four callers building their own is four chances to forget the button.
+- (void)say:(NSString *)title message:(NSString *)message {
+    UIAlertController *note = [UIAlertController alertControllerWithTitle:title
+                                                                 message:message
+                                                          preferredStyle:UIAlertControllerStyleAlert];
     [note addAction:[UIAlertAction actionWithTitle:SCILocalized(@"ok")
                                              style:UIAlertActionStyleDefault
                                            handler:nil]];
