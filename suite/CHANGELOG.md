@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.58.11
+
+Albrhi for Instagram 4.1.11: AV1 reels transcode again -- their ladder is 10-bit, and every frame
+was being refused on the way to the encoder.
+
 ## v1.58.10
 
 Albrhi for TikTok 0.19.10: the publish date appears on photo posts, and the date read for one is

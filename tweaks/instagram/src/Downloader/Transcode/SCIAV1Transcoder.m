@@ -74,9 +74,45 @@ static void sciNoFreeCallback(const uint8_t *buf, void *cookie) {}
 // A dav1d I420 8-bit picture as an NV12 pixel buffer VideoToolbox can encode.
 // Strides differ between dav1d's planes and the pixel buffer's rows, so every
 // plane is copied line by line rather than in one block.
-+ (CVPixelBufferRef)pixelBufferFromPicture:(Dav1dPicture *)pic CF_RETURNS_RETAINED {
-    if (pic->p.layout != DAV1D_PIXEL_LAYOUT_I420 || pic->p.bpc != 8) return NULL;
+//
+// **What the picture actually was, kept for the one report that has to explain a refusal.**
+//
+// `frames=0 samples=0` named the stage and nothing else, and the stage was not where the fault
+// was: dav1d decoded perfectly and every frame was then refused here. A count of zero is the one
+// number that cannot say why it is zero.
+//
+static NSString *sciLastPictureFormat = nil;
 
++ (CVPixelBufferRef)pixelBufferFromPicture:(Dav1dPicture *)pic CF_RETURNS_RETAINED {
+    int bpc = pic->p.bpc;
+
+    // The transfer characteristic settles "is this really HDR": 16 is PQ and 18 is HLG, and
+    // anything else at 10 bits is ordinary SDR that loses nothing worth seeing in the shift below.
+    int trc = pic->seq_hdr ? (int)pic->seq_hdr->trc : -1;
+    sciLastPictureFormat = [NSString stringWithFormat:@"%d-bit, layout %d, transfer %d%@",
+        bpc, (int)pic->p.layout, trc,
+        (trc == 16 || trc == 18) ? @" (HDR)" : @""];
+
+    if (pic->p.layout != DAV1D_PIXEL_LAYOUT_I420) return NULL;
+
+    //
+    // **Instagram's AV1 ladder is 10-bit, and this line refused every frame of it.**
+    //
+    // `bpc != 8` was written when the only thing tested was an 8-bit clip, and it is the whole
+    // reason the transcoder reported `frames=0` on a reel whose eight AV1 renditions decoded
+    // without a single error. The decoder was never the problem; the frame it handed back was
+    // simply not the shape this function had been taught.
+    //
+    // The extra bits are dropped rather than carried: an 8-bit H.264 file is what iOS plays and
+    // what Photos keeps, and this is the same shift every 8-bit player performs on the same
+    // stream. **Worth being plain about the cost** -- if the source is genuinely HDR (PQ or HLG
+    // transfer) a straight shift is not a tone map and the picture will read flat. The transfer
+    // characteristic is recorded below so the next report says which kind of 10-bit this was,
+    // rather than leaving it to be argued about.
+    //
+    if (bpc != 8 && bpc != 10 && bpc != 12) return NULL;
+
+    int shift = bpc - 8;
     int w = pic->p.w, h = pic->p.h;
 
     NSDictionary *attrs = @{
@@ -99,7 +135,14 @@ static void sciNoFreeCallback(const uint8_t *buf, void *cookie) {}
     const uint8_t *srcY = pic->data[0];
     ptrdiff_t srcYStride = pic->stride[0];
     for (int y = 0; y < h; y++) {
-        memcpy(dstY + y * dstYStride, srcY + y * srcYStride, w);
+        if (shift == 0) {
+            memcpy(dstY + y * dstYStride, srcY + y * srcYStride, w);
+        } else {
+            // dav1d holds a high-depth sample in a 16-bit container; the stride is in bytes.
+            const uint16_t *row = (const uint16_t *)(srcY + y * srcYStride);
+            uint8_t *out = dstY + y * dstYStride;
+            for (int x = 0; x < w; x++) out[x] = (uint8_t)(row[x] >> shift);
+        }
     }
 
     // Chroma: dav1d keeps U and V in separate planes; NV12 interleaves them.
@@ -113,9 +156,18 @@ static void sciNoFreeCallback(const uint8_t *buf, void *cookie) {}
         uint8_t *row = dstUV + y * dstUVStride;
         const uint8_t *ru = srcU + y * srcCStride;
         const uint8_t *rv = srcV + y * srcCStride;
-        for (int x = 0; x < cw; x++) {
-            row[2 * x]     = ru[x];
-            row[2 * x + 1] = rv[x];
+        if (shift == 0) {
+            for (int x = 0; x < cw; x++) {
+                row[2 * x]     = ru[x];
+                row[2 * x + 1] = rv[x];
+            }
+        } else {
+            const uint16_t *u16 = (const uint16_t *)ru;
+            const uint16_t *v16 = (const uint16_t *)rv;
+            for (int x = 0; x < cw; x++) {
+                row[2 * x]     = (uint8_t)(u16[x] >> shift);
+                row[2 * x + 1] = (uint8_t)(v16[x] >> shift);
+            }
         }
     }
 
@@ -265,7 +317,9 @@ static void encodeOutput(void *outputCallbackRefCon,
 
     if (failed || samples.count == 0) {
         stage(@"decode+encode", NO,
-              [NSString stringWithFormat:@"frames=%d samples=%lu", frameIndex, (unsigned long)samples.count]);
+              [NSString stringWithFormat:@"frames=%d samples=%lu — picture: %@", frameIndex,
+                  (unsigned long)samples.count,
+                  sciLastPictureFormat ?: @"none decoded, so the fault is before this point"]);
         return nil;
     }
 

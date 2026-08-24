@@ -4,6 +4,27 @@
 Other versions should work too — the tweak looks for what it needs while the app runs
 rather than expecting a particular version number.
 
+## v4.1.11
+
+AV1 reels transcode again. **Instagram's AV1 ladder is 10-bit, and one line refused every frame of
+it.**
+
+A device report showed the whole picture at once: twelve DASH representations, eight of them video,
+every one AV1, `saveable 0` -- so nothing on that reel could be saved without the transcoder. The
+transcoder then downloaded, demuxed 2.8 MB cleanly, and reported `frames=0 samples=0`. The decoder
+was never the problem. `pixelBufferFromPicture:` began `bpc != 8 → return NULL`, written when the
+only clip tested was 8-bit, so dav1d decoded perfectly and every frame was refused on the way to
+the encoder.
+
+High-depth pictures are converted rather than refused: dav1d holds the sample in a 16-bit
+container, and the extra bits are shifted off to make the 8-bit NV12 the H.264 encoder takes.
+**Plainly, that is not a tone map** -- a genuinely HDR source (PQ or HLG transfer) will read flat.
+Which kind of 10-bit this was is now recorded rather than argued about.
+
+**And a count of zero is the one number that cannot say why it is zero.** The failure line named
+the stage and nothing else, while the fault was a stage later than the one it accused. It now
+carries the picture's depth, layout and transfer characteristic.
+
 ## v4.1.10
 
 4.1.9 stopped the repost saving its cover image and made it say what it was instead —
