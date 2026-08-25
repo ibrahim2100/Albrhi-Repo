@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.58.21
+
+Albrhi for TikTok 0.19.12: videos really do not repeat now — the first attempt hooked the
+announcement instead of the decision — and the settings screen is seven self-registering files
+rather than one long array.
+
 ## v1.58.20
 
 Albrhi for TikTok 0.19.11: never appear online, and videos that do not repeat.

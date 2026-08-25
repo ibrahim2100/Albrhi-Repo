@@ -333,26 +333,96 @@ NSString *SCITTExtrasReport(void) {
 %end
 
 //
-// **A video that has finished does not start again.**
+// **A video that has finished does not start again — and the first attempt hooked the wrong thing.**
 //
-// `-playerWillLoopPlaying:` is the app announcing that it is about to restart the clip, on the
-// same `AWEFeedCellViewController` this tweak already holds for the model behind the download
-// button -- so the class is confirmed twice over and the encoding was read before hooking.
+// 0.19.11 hooked `AWEFeedCellViewController -playerWillLoopPlaying:` and the video kept repeating,
+// reported immediately. Reading the binary properly showed why: **that selector is an announcement,
+// not a decision.** Around twenty classes implement it -- caption managers, view-count managers,
+// danmaku, preload, clear-mode records -- because it is how the player tells everyone it is about
+// to loop. Refusing one listener's copy of the news changes nothing about the news.
 //
-// **Not calling through is the whole feature, and it is deliberately not "advance to the next
-// video".** Those are different requests, and this project has already recorded what happens when
-// a correct principle is applied one step further than it was asked for.
+// The decision lives on TikTok's playback engine: `TTVideoEnginePlayer`, `TTVideoEngineOwnPlayer`
+// and `TTVideoEngineSYSAVPlayer` each own `looping` (`B16@0:8`) with `-setLooping:` (`v20@0:8B16`),
+// and `TTVideoEngineAdapter` carries the setter too.
+//
+// **Both ends are answered, for the reason this project already wrote down twice** -- once for
+// `-bypassOnesie` in the YouTube tweak and once for TikTok's own watermark: code that reads an
+// ivar directly never passes through a getter hook, while a stored value is true for every reader.
+// So the setter refuses to store YES, and the getter refuses to report it.
 //
 %group SCITTNoLoop
 
-%hook AWEFeedCellViewController
+%hook TTVideoEnginePlayer
 
-- (void)playerWillLoopPlaying:(id)player {
-    if (!SCIPrefEnabled(SCIPrefNoLoop)) {
-        %orig;
+- (void)setLooping:(BOOL)looping {
+    if (SCIPrefEnabled(SCIPrefNoLoop)) {
+        %orig(NO);
         return;
     }
-    [SCITTDiagnostics recordPrivacyAnswer:@"video loop refused"];
+    %orig;
+}
+
+- (BOOL)looping {
+    if (!SCIPrefEnabled(SCIPrefNoLoop)) return %orig;
+    return NO;
+}
+
+%end
+
+%end
+
+%group SCITTNoLoopOwn
+
+%hook TTVideoEngineOwnPlayer
+
+- (void)setLooping:(BOOL)looping {
+    if (SCIPrefEnabled(SCIPrefNoLoop)) {
+        %orig(NO);
+        return;
+    }
+    %orig;
+}
+
+- (BOOL)looping {
+    if (!SCIPrefEnabled(SCIPrefNoLoop)) return %orig;
+    return NO;
+}
+
+%end
+
+%end
+
+%group SCITTNoLoopSystem
+
+%hook TTVideoEngineSYSAVPlayer
+
+- (void)setLooping:(BOOL)looping {
+    if (SCIPrefEnabled(SCIPrefNoLoop)) {
+        %orig(NO);
+        return;
+    }
+    %orig;
+}
+
+- (BOOL)looping {
+    if (!SCIPrefEnabled(SCIPrefNoLoop)) return %orig;
+    return NO;
+}
+
+%end
+
+%end
+
+%group SCITTNoLoopAdapter
+
+%hook TTVideoEngineAdapter
+
+- (void)setLooping:(BOOL)looping {
+    if (SCIPrefEnabled(SCIPrefNoLoop)) {
+        %orig(NO);
+        return;
+    }
+    %orig;
 }
 
 %end
@@ -400,12 +470,32 @@ void SCITTInstallExtras(void) {
         [skipped addObject:@"AWEIMActivityStatusReportManager -p_report…"];
     }
 
-    Class feedCell = NSClassFromString(@"AWEFeedCellViewController");
-    if (feedCell && SCITTEncodingMatches(feedCell, @"playerWillLoopPlaying:", @"v24@0:8@16")) {
-        %init(SCITTNoLoop);
-        [installed addObject:@"-playerWillLoopPlaying: (no loop)"];
-    } else {
-        [skipped addObject:@"AWEFeedCellViewController -playerWillLoopPlaying:"];
+    //
+    // Four engine classes, each asked for itself: a build may carry any subset, and a %hook on a
+    // class that is not there never attaches while a %hook on a method a class does not declare
+    // *adds* one -- which would be inventing an API nobody calls.
+    //
+    struct { const char *name; const char *selector; const char *encoding; int group; } loops[] = {
+        { "TTVideoEnginePlayer",      "setLooping:", "v20@0:8B16", 0 },
+        { "TTVideoEngineOwnPlayer",   "setLooping:", "v20@0:8B16", 1 },
+        { "TTVideoEngineSYSAVPlayer", "setLooping:", "v20@0:8B16", 2 },
+        { "TTVideoEngineAdapter",     "setLooping:", "v20@0:8B16", 3 },
+    };
+
+    for (size_t i = 0; i < sizeof(loops) / sizeof(loops[0]); i++) {
+        Class engine = NSClassFromString(@(loops[i].name));
+        if (!engine || !SCITTEncodingMatches(engine, @(loops[i].selector), @(loops[i].encoding))) {
+            [skipped addObject:[NSString stringWithFormat:@"%s -setLooping:", loops[i].name]];
+            continue;
+        }
+
+        switch (loops[i].group) {
+            case 0: %init(SCITTNoLoop); break;
+            case 1: %init(SCITTNoLoopOwn); break;
+            case 2: %init(SCITTNoLoopSystem); break;
+            case 3: %init(SCITTNoLoopAdapter); break;
+        }
+        [installed addObject:[NSString stringWithFormat:@"%s -setLooping: (no loop)", loops[i].name]];
     }
 
     Class presenter = NSClassFromString(@"TTKProfileViewsPresenter");

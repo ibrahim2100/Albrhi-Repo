@@ -1,4 +1,5 @@
 #import "SCITTStatus.h"
+#import "SCITTSectionRegistry.h"
 #import "SCITTReport.h"
 #import "SCITTBadge.h"
 #import "../UI/SCITTWelcome.h"
@@ -33,25 +34,11 @@
 ///    switch is one entry, not an entry plus a row count plus a branch in two methods.
 ///
 
-static NSString *const kSCIKindSwitch = @"switch";
-static NSString *const kSCIKindLink = @"link";
 
-static NSString *const kSCIRowKind = @"kind";
-static NSString *const kSCIRowTitle = @"title";
-static NSString *const kSCIRowNote = @"note";
-static NSString *const kSCIRowIcon = @"icon";
-static NSString *const kSCIRowColor = @"color";
-static NSString *const kSCIRowPref = @"pref";
-static NSString *const kSCIRowWarns = @"warns";
 
 /// Which screen a link row leads to. Named rather than inferred from the row's title, because a
 /// title is a translated string and comparing against one is a bug waiting for the other language.
-static NSString *const kSCIRowDestination = @"destination";
-static NSString *const kSCIDestinationReport = @"report";
-static NSString *const kSCIDestinationWelcome = @"welcome";
 
-static NSString *const kSCISectionTitle = @"section";
-static NSString *const kSCISectionRows = @"rows";
 
 /// The preference key a switch changes, carried by the switch.
 static const void *kSCIPrefKeyAssoc = &kSCIPrefKeyAssoc;
@@ -96,225 +83,13 @@ static const void *kSCIPrefKeyAssoc = &kSCIPrefKeyAssoc;
 
 #pragma mark - The rows
 
-/// Every row on this screen, named once.
+/// Every row on this screen, gathered from the files that own them.
+///
+/// **This was a 220-line array literal in the middle of this file.** It is seven files under
+/// `Sections/` now, each registering itself -- see SCITTSectionRegistry.h. Nothing here knows what
+/// sections exist, which is what makes adding or removing one a single-file change.
 - (NSArray<NSDictionary *> *)buildSections {
-    return @[
-        @{
-            kSCISectionTitle: SCILocalized(@"section_download"),
-            kSCISectionRows: @[
-                @{
-                    kSCIRowKind: kSCIKindSwitch,
-                    kSCIRowPref: SCIPrefDownloadButton,
-                    kSCIRowTitle: SCILocalized(@"row_download_button"),
-                    kSCIRowNote: SCILocalized(@"row_download_button_note"),
-                    kSCIRowIcon: @"arrow.down",
-                    kSCIRowColor: SCIAccent(),
-                },
-                @{
-                    kSCIRowKind: kSCIKindSwitch,
-                    kSCIRowPref: SCIPrefPhotoDownload,
-                    kSCIRowTitle: SCILocalized(@"row_photo_download"),
-                    kSCIRowNote: SCILocalized(@"row_photo_download_note"),
-                    kSCIRowIcon: @"photo.on.rectangle.angled",
-                    kSCIRowColor: [UIColor systemPinkColor],
-                },
-                @{
-                    kSCIRowKind: kSCIKindSwitch,
-                    kSCIRowPref: SCIPrefPhotoAudio,
-                    kSCIRowTitle: SCILocalized(@"row_photo_audio"),
-                    kSCIRowNote: SCILocalized(@"row_photo_audio_note"),
-                    kSCIRowIcon: @"music.note",
-                    kSCIRowColor: [UIColor systemPurpleColor],
-                },
-                @{
-                    kSCIRowKind: kSCIKindSwitch,
-                    kSCIRowPref: SCIPrefExternalHD,
-                    kSCIRowTitle: SCILocalized(@"row_external_hd"),
-                    kSCIRowNote: SCILocalized(@"row_external_hd_note"),
-                    kSCIRowIcon: @"antenna.radiowaves.left.and.right",
-                    kSCIRowColor: [UIColor systemOrangeColor],
-                    // **The one row on this screen whose note is drawn in a warning colour, and it
-                    // is not decoration.** Turning it on tells a service outside TikTok which video
-                    // is being watched -- the exact thing the three privacy switches below exist to
-                    // stop. A cost paid by the person using this is a cost they have to be able to
-                    // see before they pay it, and a grey note under a switch does not read as a
-                    // cost. Nothing else here earns this treatment; if a second row ever does, that
-                    // is a reason to re-read what it does, not to reuse the styling.
-                    kSCIRowWarns: @YES,
-                },
-            ],
-        },
-        @{
-            kSCISectionTitle: SCILocalized(@"section_watching"),
-            kSCISectionRows: @[
-                @{
-                    kSCIRowKind: kSCIKindSwitch,
-                    kSCIRowPref: SCIPrefHideAds,
-                    kSCIRowTitle: SCILocalized(@"row_ads"),
-                    kSCIRowNote: SCILocalized(@"row_ads_note"),
-                    kSCIRowIcon: @"nosign",
-                    kSCIRowColor: [UIColor systemRedColor],
-                },
-                @{
-                    kSCIRowKind: kSCIKindSwitch,
-                    kSCIRowPref: SCIPrefProgressBar,
-                    kSCIRowTitle: SCILocalized(@"row_progress_bar"),
-                    kSCIRowNote: SCILocalized(@"row_progress_bar_note"),
-                    kSCIRowIcon: @"slider.horizontal.below.rectangle",
-                    kSCIRowColor: [UIColor systemBlueColor],
-                },
-            ],
-        },
-        @{
-            // Three switches, not one. A story's seen mark, a message's read receipt and a profile
-            // view are three reports to three different places, and one switch bundling them could
-            // never be turned off for just one.
-            kSCISectionTitle: SCILocalized(@"section_privacy"),
-            kSCISectionRows: @[
-                @{
-                    kSCIRowKind: kSCIKindSwitch,
-                    kSCIRowPref: SCIPrefPrivacyStory,
-                    kSCIRowTitle: SCILocalized(@"row_privacy_story"),
-                    kSCIRowNote: SCILocalized(@"row_privacy_story_note"),
-                    kSCIRowIcon: @"eye.slash.fill",
-                    kSCIRowColor: [UIColor systemTealColor],
-                },
-                @{
-                    kSCIRowKind: kSCIKindSwitch,
-                    kSCIRowPref: SCIPrefPrivacyMessages,
-                    kSCIRowTitle: SCILocalized(@"row_privacy_messages"),
-                    kSCIRowNote: SCILocalized(@"row_privacy_messages_note"),
-                    kSCIRowIcon: @"message.fill",
-                    kSCIRowColor: [UIColor systemTealColor],
-                },
-                @{
-                    kSCIRowKind: kSCIKindSwitch,
-                    kSCIRowPref: SCIPrefPrivacyProfile,
-                    kSCIRowTitle: SCILocalized(@"row_privacy_profile"),
-                    kSCIRowNote: SCILocalized(@"row_privacy_profile_note"),
-                    kSCIRowIcon: @"person.fill.questionmark",
-                    kSCIRowColor: [UIColor systemTealColor],
-                },
-                @{
-                    kSCIRowKind: kSCIKindSwitch,
-                    kSCIRowPref: SCIPrefHideOnline,
-                    kSCIRowTitle: SCILocalized(@"row_hide_online"),
-                    kSCIRowNote: SCILocalized(@"row_hide_online_note"),
-                    kSCIRowIcon: @"circle.slash",
-                    kSCIRowColor: [UIColor systemTealColor],
-                },
-            ],
-        },
-        @{
-            // **Three features that share nothing but where they were found.** Each was confirmed
-            // against the real 46.4.0 binary before a hook was written, and each installs on its
-            // own -- a build missing one class must not cost the other two.
-            kSCISectionTitle: SCILocalized(@"section_extras"),
-            kSCISectionRows: @[
-                @{
-                    kSCIRowKind: kSCIKindSwitch,
-                    kSCIRowPref: SCIPrefUnlimitedAccounts,
-                    kSCIRowTitle: SCILocalized(@"row_accounts"),
-                    kSCIRowNote: SCILocalized(@"row_accounts_note"),
-                    kSCIRowIcon: @"person.2.fill",
-                    kSCIRowColor: [UIColor systemIndigoColor],
-                },
-                @{
-                    kSCIRowKind: kSCIKindSwitch,
-                    kSCIRowPref: SCIPrefNoLoop,
-                    kSCIRowTitle: SCILocalized(@"row_no_loop"),
-                    kSCIRowNote: SCILocalized(@"row_no_loop_note"),
-                    kSCIRowIcon: @"repeat.circle.fill",
-                    kSCIRowColor: [UIColor systemIndigoColor],
-                },
-                @{
-                    kSCIRowKind: kSCIKindSwitch,
-                    kSCIRowPref: SCIPrefKeepRecalled,
-                    kSCIRowTitle: SCILocalized(@"row_keep_recalled"),
-                    kSCIRowNote: SCILocalized(@"row_keep_recalled_note"),
-                    kSCIRowIcon: @"arrow.uturn.backward.circle.fill",
-                    kSCIRowColor: [UIColor systemIndigoColor],
-                },
-                @{
-                    kSCIRowKind: kSCIKindSwitch,
-                    kSCIRowPref: SCIPrefVideoDate,
-                    kSCIRowTitle: SCILocalized(@"row_video_date"),
-                    kSCIRowNote: SCILocalized(@"row_video_date_note"),
-                    kSCIRowIcon: @"calendar",
-                    kSCIRowColor: [UIColor systemIndigoColor],
-                },
-                @{
-                    kSCIRowKind: kSCIKindSwitch,
-                    kSCIRowPref: SCIPrefVisitorLog,
-                    kSCIRowTitle: SCILocalized(@"row_visitors"),
-                    kSCIRowNote: SCILocalized(@"row_visitors_note"),
-                    kSCIRowIcon: @"eye.fill",
-                    kSCIRowColor: [UIColor systemIndigoColor],
-                },
-            ],
-        },
-        @{
-            // Its own section rather than a row under Watching: these two do not change what TikTok
-            // shows, they change what a tap does -- the only feature here that stands between the
-            // user and an action they are already making.
-            kSCISectionTitle: SCILocalized(@"section_confirm"),
-            kSCISectionRows: @[
-                @{
-                    kSCIRowKind: kSCIKindSwitch,
-                    kSCIRowPref: SCIPrefConfirmLike,
-                    kSCIRowTitle: SCILocalized(@"row_confirm_like"),
-                    kSCIRowNote: SCILocalized(@"row_confirm_like_note"),
-                    kSCIRowIcon: @"heart.fill",
-                    kSCIRowColor: [UIColor systemRedColor],
-                },
-                @{
-                    kSCIRowKind: kSCIKindSwitch,
-                    kSCIRowPref: SCIPrefConfirmFollow,
-                    kSCIRowTitle: SCILocalized(@"row_confirm_follow"),
-                    kSCIRowNote: SCILocalized(@"row_confirm_follow_note"),
-                    kSCIRowIcon: @"person.badge.plus",
-                    kSCIRowColor: [UIColor systemPinkColor],
-                },
-            ],
-        },
-        @{
-            kSCISectionTitle: SCILocalized(@"section_protection"),
-            kSCISectionRows: @[
-                @{
-                    kSCIRowKind: kSCIKindSwitch,
-                    kSCIRowPref: SCIPrefBypass,
-                    kSCIRowTitle: SCILocalized(@"row_bypass"),
-                    kSCIRowNote: SCILocalized(@"row_bypass_note"),
-                    kSCIRowIcon: @"shield.lefthalf.filled",
-                    kSCIRowColor: [UIColor systemIndigoColor],
-                },
-            ],
-        },
-        @{
-            kSCISectionTitle: SCILocalized(@"section_advanced"),
-            kSCISectionRows: @[
-                @{
-                    // The welcome screen is shown once ever, which makes it easy to lose. This is
-                    // the way back to it -- and the only reason it is under Advanced rather than at
-                    // the top is that somebody who wants it has already seen it once.
-                    kSCIRowKind: kSCIKindLink,
-                    kSCIRowDestination: kSCIDestinationWelcome,
-                    kSCIRowTitle: SCILocalized(@"row_welcome"),
-                    kSCIRowNote: SCILocalized(@"row_welcome_note"),
-                    kSCIRowIcon: @"sparkles",
-                    kSCIRowColor: SCIAccent(),
-                },
-                @{
-                    kSCIRowKind: kSCIKindLink,
-                    kSCIRowDestination: kSCIDestinationReport,
-                    kSCIRowTitle: SCILocalized(@"row_report"),
-                    kSCIRowNote: SCILocalized(@"row_report_note"),
-                    kSCIRowIcon: @"stethoscope",
-                    kSCIRowColor: [UIColor systemGrayColor],
-                },
-            ],
-        },
-    ];
+    return SCITTSections();
 }
 
 #pragma mark - Screen

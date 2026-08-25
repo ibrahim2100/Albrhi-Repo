@@ -1,5 +1,33 @@
 # Albrhi for TikTok — what changed
 
+## v0.19.12
+
+**The video still repeated, and 0.19.11 had hooked an announcement rather than a decision.**
+
+`-playerWillLoopPlaying:` is how the player *tells* the app it is about to loop, and roughly twenty
+classes implement it — caption managers, view-count managers, danmaku, preload, clear-mode records.
+Refusing one listener's copy of the news changes nothing about the news, which is precisely what a
+device showed within minutes.
+
+The decision is on TikTok's playback engine. `TTVideoEnginePlayer`, `TTVideoEngineOwnPlayer` and
+`TTVideoEngineSYSAVPlayer` each own `looping` (`B16@0:8`) with `-setLooping:` (`v20@0:8B16`), and
+`TTVideoEngineAdapter` carries the setter too. **Both ends are answered**, for a reason written down
+twice in this project already — once for `-bypassOnesie` in the YouTube tweak, once for TikTok's own
+watermark: code that reads an ivar directly never passes through a getter hook, while a stored value
+is true for every reader. Each class is asked for its own encoding and installed separately, because
+a build may carry any subset.
+
+**And the settings screen is seven files instead of one array.** Every row of every section lived in
+a 220-line literal inside one method: adding a feature meant editing the middle of a list, removing
+one meant counting braces, and reading the seventh section meant scrolling past six. Each section
+now registers itself from its own file under `Settings/Sections/` — the same idea the Instagram
+tweak has used since it had three pages. Delete a file and its section is gone with nothing else to
+change. **No parallel list decides what exists**, which is the fault this project met three times in
+one week.
+
+The keys a section is written in moved out of `SCITTStatus.m` with them: they were file-local
+`static`s, which is exactly why a section could not live anywhere else.
+
 ## v0.19.11
 
 Two features, both confirmed against **this project's own 46.4.0 binary** before a hook was written
