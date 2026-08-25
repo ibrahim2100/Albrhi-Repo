@@ -1,5 +1,26 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.4.1
+
+**The settings screen crashed the moment it opened, and the cause is one this project had already
+written down — twice, in this very file.**
+
+The pages it offers were three parallel things: a title array, a destination array, and a row
+*count*. Removing the Premium and scrobbling rows meant editing all three. Two were edited. The
+count still said seven for five entries, so the table asked for row 5 of a five-item array and threw
+before anything was drawn.
+
+**A rule written beside two of three copies is not a check.** The comment restating "a parallel
+array must be walked in lockstep" was added to this file in the same commit, ten lines above the
+number that was wrong. There is one array now — `+settingsPages` — and the count, the cell and the
+destination all read it, so a row cannot exist without somewhere to go.
+
+**Two links repointed while fixing it, and the first is close to a licence matter.** *Source code*
+pointed at upstream's repository; this binary is a modified GPLv3 work, so that has to mean *this*
+source — sending someone to upstream hands them code that is not what they are running. The Telegram
+row was upstream's support channel, where a person with a problem in Albrhi's build would have been
+sent to a project that never shipped it; it is now a credit row naming YTMEnhanced and its licence.
+
 ## v0.4.0
 
 **The settings screen, which ten features were shipped without.**

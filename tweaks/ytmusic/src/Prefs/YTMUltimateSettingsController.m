@@ -3,6 +3,35 @@
 
 @implementation YTMUltimateSettingsController
 
+//
+// **One list, because three drifted.**
+//
+// The pages this screen offers were written as a title array, a destination array, and a row
+// *count* — and removing two of them meant editing all three. Two were edited. The count still
+// said seven for five entries, so the table asked for row 5 of a five-item array and the screen
+// crashed the moment it was opened, reported exactly that way.
+//
+// This project already had the rule ("a parallel array must be walked in lockstep, never re-found
+// by value") and a comment restating it was written into this very file, ten lines above the
+// number that was wrong. **A rule written next to two of three copies is not a check.** So there
+// is one array now: the count comes from it, the cell comes from it, and the destination comes
+// from it, and a row cannot exist without somewhere to go.
+//
++ (NSArray<NSDictionary *> *)settingsPages {
+    static NSArray *pages = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        pages = @[
+            @{@"title": LOC(@"PLAYER_SETTINGS"),      @"image": @"play.rectangle",    @"class": [PlayerSettingsController class]},
+            @{@"title": LOC(@"THEME_SETTINGS"),       @"image": @"paintbrush",        @"class": [ThemeSettingsController class]},
+            @{@"title": LOC(@"NAVBAR_SETTINGS"),      @"image": @"sidebar.trailing",  @"class": [NavBarSettingsController class]},
+            @{@"title": LOC(@"TABBAR_SETTINGS"),      @"image": @"dock.rectangle",    @"class": [OtherSettingsController class]},
+            @{@"title": LOC(@"TRANSLATION_SETTINGS"), @"image": @"character.bubble",  @"class": [TranslationSettingsController class]},
+        ];
+    });
+    return pages;
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
 
@@ -85,7 +114,7 @@
         case 0:
             return 1;
         case 1:
-            return 7;
+            return (NSInteger)[[self class] settingsPages].count;
         case 2:
             return 1;
         case 3:
@@ -130,20 +159,7 @@
     if (indexPath.section == 1) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"settingsSection"];
 
-        NSArray *settingsData = @[
-            // **Two rows are gone, and each for its own stated reason.**
-            //
-            // PREMIUM_SETTINGS drives -isPremiumSubscriber, which tells YouTube Music the account
-            // pays. This project refused the same shape by name for Locket and again for Spotify,
-            // and refusing the hooks while keeping the row that switches them would be a screen
-            // that lies. SCROBBLING_SETTINGS configures a feature that was not carried over at
-            // all, and a settings row for absent code is the same lie pointing the other way.
-            @{@"title": LOC(@"PLAYER_SETTINGS"), @"image": @"play.rectangle"},
-            @{@"title": LOC(@"THEME_SETTINGS"), @"image": @"paintbrush"},
-            @{@"title": LOC(@"NAVBAR_SETTINGS"), @"image": @"sidebar.trailing"},
-            @{@"title": LOC(@"TABBAR_SETTINGS"), @"image": @"dock.rectangle"},
-            @{@"title": LOC(@"TRANSLATION_SETTINGS"), @"image": @"character.bubble"}
-        ];
+        NSArray *settingsData = [[self class] settingsPages];
 
         NSDictionary *settingData = settingsData[indexPath.row];
 
@@ -178,8 +194,19 @@
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"linkSection"];
 
         NSArray *settingsData = @[
+            //
+            // **Both rows repointed, and the first one is close to a licence matter.**
+            //
+            // This binary is a modified GPLv3 work, so "source code" has to mean *this* source --
+            // sending someone to upstream's repository hands them code that is not what they are
+            // running. Upstream is credited in the row beneath, in `control`, in the changelog and
+            // in every ported file's header, which is where attribution belongs.
+            //
+            // And the Telegram row was upstream's support channel: a person with a problem in
+            // Albrhi's build would have been sent to a project that never shipped it.
+            //
             @{@"text": LOC(@"SOURCE_CODE"), @"detail": LOC(@"SOURCE_CODE_DESC"), @"image": @"github-24@2x"},
-            @{@"text": @"Telegram", @"detail": @"@YTMEnhanced", @"systemImage": @"paperplane.circle.fill"}
+            @{@"text": @"YTMEnhanced · py233", @"detail": @"GPLv3", @"systemImage": @"heart.circle.fill"}
         ];
 
         NSDictionary *settingData = settingsData[indexPath.row];
@@ -230,18 +257,12 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section == 1) {
-        // In step with the titles above -- a list of rows and a list of destinations are two
-        // parallel arrays, and this project has already recorded what happens when one is edited
-        // and the other is not: every label naming the previous entry's target, plausibly wrong
-        // throughout.
-        NSArray *controllers = @[[PlayerSettingsController class],
-                                 [ThemeSettingsController class],
-                                 [NavBarSettingsController class],
-                                 [OtherSettingsController class],
-                                 [TranslationSettingsController class]];
+        // The destination comes from the same list the row and the count come from -- see
+        // +settingsPages. The dead second lookup that stood here is gone with the array it read.
+        NSArray<NSDictionary *> *pages = [[self class] settingsPages];
 
-        if (indexPath.row >= 0 && indexPath.row < controllers.count) {
-            UIViewController *controller = [[controllers[indexPath.row] alloc] init];
+        if (indexPath.row >= 0 && indexPath.row < (NSInteger)pages.count) {
+            UIViewController *controller = [[pages[indexPath.row][@"class"] alloc] init];
             [self.navigationController pushViewController:controller animated:YES];
         }
     }
@@ -264,7 +285,9 @@
     }
 
     if (indexPath.section == 3) {
-        NSArray *urls = @[@"https://github.com/py233/YTMEnhanced", @"https://t.me/YTMEnhanced"];
+        // In step with the rows above, which is the same lockstep this file's own crash was about.
+        NSArray *urls = @[@"https://github.com/ibrahim2100/Albrhi-Repo",
+                          @"https://github.com/py233/YTMEnhanced"];
 
         if (indexPath.row >= 0 && indexPath.row < urls.count) {
             NSURL *url = [NSURL URLWithString:urls[indexPath.row]];

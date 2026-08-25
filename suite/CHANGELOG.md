@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.58.19
+
+Albrhi for YouTube Music 0.4.1: the settings screen no longer crashes on open — a row count that
+was not edited with the two arrays beside it — and its links point at this project's source rather
+than upstream's.
+
 ## v1.58.18
 
 Albrhi for Instagram 4.1.14: two diagnostics corrected — one could not recognise the tweak's own
