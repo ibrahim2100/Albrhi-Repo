@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.59.0
+
+Albrhi for TikTok 0.20.0: the settings screen rebuilt from nothing — an identity card, a grid of
+categories, and option cards — and the two comment features removed on request.
+
 ## v1.58.23
 
 Albrhi for TikTok 0.19.14: save a comment's picture from TikTok's own long-press menu, and copy a

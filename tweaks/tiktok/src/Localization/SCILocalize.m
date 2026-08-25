@@ -151,12 +151,7 @@ static void SCIBuildTables(void) {
         @"row_no_loop": @"Do not repeat a video",
         @"row_no_loop_note": @"A clip that reaches its end stays there instead of starting again. It does not move to the next video.",
         @"section_count": @"%lu options",
-        @"row_comment_save": @"Save media from a comment",
-        @"row_comment_save_note": @"A Save row appears in a comment's own long-press menu when it carries a picture, a sticker or an animated one.",
-        @"row_clean_copy": @"Copy a comment without the name",
-        @"row_clean_copy_note": @"Copying a comment puts the words on the clipboard, without the commenter's name in front of them.",
-        @"comment_save_one": @"Save the picture",
-        @"comment_save_many": @"Save %lu pictures",
+        @"hero_tally": @"%ld of %ld on",
     };
 
     _arTable = @{
@@ -296,12 +291,7 @@ static void SCIBuildTables(void) {
         @"row_no_loop": @"عدم تكرار الفيديو",
         @"row_no_loop_note": @"المقطع الذي ينتهي يبقى عند نهايته بدل أن يبدأ من جديد. ولا ينتقل إلى الفيديو التالي.",
         @"section_count": @"%lu خيارات",
-        @"row_comment_save": @"حفظ وسائط التعليق",
-        @"row_comment_save_note": @"يظهر صفّ حفظ في قائمة الضغط المطوّل على التعليق حين يحمل صورة أو ملصقاً أو متحرّكاً.",
-        @"row_clean_copy": @"نسخ التعليق بلا الاسم",
-        @"row_clean_copy_note": @"نسخ التعليق يضع الكلام في الحافظة، بلا اسم صاحبه أمامه.",
-        @"comment_save_one": @"حفظ الصورة",
-        @"comment_save_many": @"حفظ %lu صور",
+        @"hero_tally": @"%ld من %ld مُفعَّل",
     };
 }
 

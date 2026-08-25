@@ -37,22 +37,6 @@
             kSCISectionColor: [UIColor systemPurpleColor],
             kSCISectionTitle: SCILocalized(@"section_extras"),
             kSCISectionRows: @[
-            @{
-                kSCIRowKind: kSCIKindSwitch,
-                kSCIRowPref: SCIPrefSaveCommentMedia,
-                kSCIRowTitle: SCILocalized(@"row_comment_save"),
-                kSCIRowNote: SCILocalized(@"row_comment_save_note"),
-                kSCIRowIcon: @"photo.badge.arrow.down.fill",
-                kSCIRowColor: [UIColor systemPurpleColor],
-            },
-            @{
-                kSCIRowKind: kSCIKindSwitch,
-                kSCIRowPref: SCIPrefCleanCopy,
-                kSCIRowTitle: SCILocalized(@"row_clean_copy"),
-                kSCIRowNote: SCILocalized(@"row_clean_copy_note"),
-                kSCIRowIcon: @"doc.on.clipboard.fill",
-                kSCIRowColor: [UIColor systemPurpleColor],
-            },
                 @{
                     kSCIRowKind: kSCIKindSwitch,
                     kSCIRowPref: SCIPrefUnlimitedAccounts,

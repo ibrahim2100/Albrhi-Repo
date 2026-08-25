@@ -133,14 +133,3 @@ static inline BOOL SCIPrefEnabled(NSString *key) {
 /// on the class this tweak already holds for the model behind the download button.
 #define SCIPrefNoLoop           @"no_video_loop"
 
-/// Copy a comment without its author's name in front of the words.
-///
-/// `TTKCommentAppReviewsLongPressHelper -copyCommentContent:` (`v24@0:8@16`).
-#define SCIPrefCleanCopy        @"clean_comment_copy"
-
-/// A *Save media* row in a comment's own long-press sheet, when the comment carries a picture,
-/// a sticker or an animated one.
-///
-/// `-buildActionSheetForModel:index:` (`@32@0:8@16@24`) on the same class, with the row built as
-/// an `AWEUserSheetAction` and handed to the sheet's own `-addAction:`.
-#define SCIPrefSaveCommentMedia @"save_comment_media"

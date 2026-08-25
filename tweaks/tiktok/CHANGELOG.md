@@ -1,5 +1,35 @@
 # Albrhi for TikTok — what changed
 
+## v0.20.0
+
+**The settings screen, rebuilt from nothing.**
+
+What was there was a grouped table: a header view, a footer view, and forty rows drawn with
+`UITableViewCellStyleSubtitle` under seven titles. It was correct and it was shaped like a form
+from 2013 — and because every row used the same cell style, a switch, a link and a heading all
+looked like the same thing.
+
+It is a collection view now with **a layout per section**, which is the part a table cannot
+express: the identity card is full width and sized to its own contents, the categories are a
+two-column grid, and an option is a full-width card that grows with its note.
+
+Three cell shapes, because there are three kinds of thing on this screen:
+
+- **The identity card** — the mark, the name, the version, how many switches are on out of how
+  many, and a red banner when Albrhi is switched off for TikTok in the panel, because the gate has
+  the last word over every switch above it.
+- **A category card** — its icon in a tinted well of its own colour, its name, and how many of its
+  options are on. It presses in when touched, so a card that opens a page says so.
+- **An option card** — icon, name, what it does, and the switch that does it, with a chevron
+  instead of a switch when the row opens something.
+
+**The identity is kept and nothing borrowed.** The mark is still the download arrow on an accent
+disc — the same arrow as the button in the feed and the icon on the saving banner: three places,
+one identity, and deliberately not TikTok's own music note.
+
+**Removed on request:** saving a comment's media, and copying a comment without its author's name.
+Both shipped in 0.19.14 and both are gone — the preferences, the rows, the strings and the hooks.
+
 ## v0.19.14
 
 **Two things a long press on a comment can do now, and both live on one class the binary named.**
