@@ -43,6 +43,27 @@ on:
             - 'tools/**'
             - 'extra-debs/**'
             - '.github/workflows/buildsuite.yml'
+
+    # **A daily catch-up, because a cancelled run leaves no trace and publishes nothing.**
+    #
+    # Three workflows publish from this repository and all three take the `albrhi-pages`
+    # concurrency group, which is the one thing stopping two runs writing gh-pages at once.
+    # `cancel-in-progress: false` protects a run that is already executing; it does not protect
+    # one still *queued*, and GitHub keeps only the most recent pending member of a group. So a
+    # commit touching `tools/**` or `shared/**` -- both of which all three watch, and both of
+    # which are edited constantly -- starts three runs and silently drops whichever queued last.
+    #
+    # That is exactly what happened to suite 1.58.15: `cancelled`, not `failure`, no error
+    # anywhere, no release, and a source three versions behind while every build looked fine.
+    # CLAUDE.md already described this trap; what it had no answer for was recovery without a
+    # human noticing.
+    #
+    # This is that answer. The version gate below already refuses to release a version that is
+    # already tagged, so on an ordinary day this costs one short run that decides there is
+    # nothing to do -- and on the day a run was dropped, it publishes what was lost.
+    schedule:
+        - cron: '17 5 * * *'
+
     workflow_dispatch:
         inputs:
             force_rebuild:
