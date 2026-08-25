@@ -23,7 +23,7 @@ static void sciNoFreeCallback(const uint8_t *buf, void *cookie) {}
 // the pixel buffer's CF ownership explicitly (its name is not in the create/copy
 // family the compiler would otherwise infer a +1 return from).
 + (NSString *)downloadToTempFile:(NSURL *)url extension:(NSString *)ext;
-+ (CVPixelBufferRef)pixelBufferFromPicture:(Dav1dPicture *)pic pool:(CVPixelBufferPoolRef)pool CF_RETURNS_RETAINED;
++ (CVPixelBufferRef)pixelBufferFromPicture:(Dav1dPicture *)pic pool:(CVPixelBufferPoolRef)pool deep:(BOOL)deep CF_RETURNS_RETAINED;
 + (NSArray *)encodeH264FromBitstream:(NSData *)bitstream fps:(double)fps
                             outWidth:(int *)outW outHeight:(int *)outH
                             progress:(void (^)(NSString *))progress;
@@ -83,7 +83,54 @@ static void sciNoFreeCallback(const uint8_t *buf, void *cookie) {}
 //
 static NSString *sciLastPictureFormat = nil;
 
-+ (CVPixelBufferRef)pixelBufferFromPicture:(Dav1dPicture *)pic pool:(CVPixelBufferPoolRef)pool CF_RETURNS_RETAINED {
+//
+// **The colour description, taken from the bitstream rather than assumed.**
+//
+// A device report settled what this is for: Instagram's reels ladder is
+// `av01.0.12M.10.0.111.09.18.09.0` with `TransferCharacteristics=18`, `ColourPrimaries=9`,
+// `MatrixCoefficients=9` -- ten-bit HLG in BT.2020, carrying Dolby Vision profile 10 beside it.
+//
+// **A file that holds those samples and does not say so is a file that plays wrong.** The player
+// has no way to know, so it assumes BT.709 SDR and shows HDR data as if it were ordinary -- which
+// is exactly the "saved video looks washed out next to the app" report, and it happens whether the
+// samples are ten bits or eight.
+//
+// The numbers are AV1's own (ISO/IEC 23091-2), read from the sequence header dav1d hands back, so
+// a clip that is not HDR is described as what it actually is rather than force-tagged.
+//
+static void SCIColourDescription(Dav1dPicture *pic,
+                                 CFStringRef *primaries,
+                                 CFStringRef *transfer,
+                                 CFStringRef *matrix) {
+    *primaries = NULL; *transfer = NULL; *matrix = NULL;
+    if (!pic || !pic->seq_hdr) return;
+
+    switch ((int)pic->seq_hdr->pri) {
+        case 1:  *primaries = kCVImageBufferColorPrimaries_ITU_R_709_2; break;
+        case 9:  *primaries = kCVImageBufferColorPrimaries_ITU_R_2020;  break;
+        case 5:  *primaries = kCVImageBufferColorPrimaries_EBU_3213;    break;
+        case 6:  *primaries = kCVImageBufferColorPrimaries_SMPTE_C;     break;
+        default: break;
+    }
+
+    switch ((int)pic->seq_hdr->trc) {
+        case 1:  *transfer = kCVImageBufferTransferFunction_ITU_R_709_2;      break;
+        case 16: *transfer = kCVImageBufferTransferFunction_SMPTE_ST_2084_PQ; break;
+        case 18: *transfer = kCVImageBufferTransferFunction_ITU_R_2100_HLG;   break;
+        case 8:  *transfer = kCVImageBufferTransferFunction_Linear;           break;
+        default: break;
+    }
+
+    switch ((int)pic->seq_hdr->mtrx) {
+        case 1:  *matrix = kCVImageBufferYCbCrMatrix_ITU_R_709_2;  break;
+        case 9:  *matrix = kCVImageBufferYCbCrMatrix_ITU_R_2020;   break;
+        case 6:  *matrix = kCVImageBufferYCbCrMatrix_ITU_R_601_4;  break;
+        default: break;
+    }
+}
+
+
++ (CVPixelBufferRef)pixelBufferFromPicture:(Dav1dPicture *)pic pool:(CVPixelBufferPoolRef)pool deep:(BOOL)deep CF_RETURNS_RETAINED {
     int bpc = pic->p.bpc;
 
     // The transfer characteristic settles "is this really HDR": 16 is PQ and 18 is HLG, and
@@ -112,12 +159,28 @@ static NSString *sciLastPictureFormat = nil;
     //
     if (bpc != 8 && bpc != 10 && bpc != 12) return NULL;
 
-    int shift = bpc - 8;
+    //
+    // **Ten bits kept when the encoder can take them, dropped only when it cannot.**
+    //
+    // 4.1.11 shifted every high-depth sample down to eight so the H.264 encoder would accept it,
+    // which is what made AV1 reels saveable at all -- and it is also half of why they looked flat.
+    // `x420` holds ten bits in the *most significant* bits of a sixteen-bit container, which the
+    // SDK header states outright, so the conversion is a shift the other way: `16 - bpc`.
+    //
+    // The caller decides which of the two this is, because only the caller knows whether the
+    // session it created is HEVC Main10 or H.264 -- and a buffer that disagrees with its encoder
+    // is worse than a shallower one.
+    //
+    BOOL wide = (deep && bpc > 8);
+    OSType format = wide ? kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange
+                         : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
+
+    int shift = wide ? (16 - bpc) : (bpc - 8);
     int w = pic->p.w, h = pic->p.h;
 
     NSDictionary *attrs = @{
         (id)kCVPixelBufferIOSurfacePropertiesKey: @{},
-        (id)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange)
+        (id)kCVPixelBufferPixelFormatTypeKey: @(format)
     };
 
     //
@@ -128,8 +191,7 @@ static NSString *sciLastPictureFormat = nil;
     CVPixelBufferRef pb = NULL;
     if (pool == NULL ||
         CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &pb) != kCVReturnSuccess) {
-        if (CVPixelBufferCreate(kCFAllocatorDefault, w, h,
-                                kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange,
+        if (CVPixelBufferCreate(kCFAllocatorDefault, w, h, format,
                                 (__bridge CFDictionaryRef)attrs, &pb) != kCVReturnSuccess) {
             return NULL;
         }
@@ -143,7 +205,12 @@ static NSString *sciLastPictureFormat = nil;
     const uint8_t *srcY = pic->data[0];
     ptrdiff_t srcYStride = pic->stride[0];
     for (int y = 0; y < h; y++) {
-        if (shift == 0) {
+        if (wide) {
+            // Sixteen bits out as well as in, the samples moved up rather than thrown away.
+            const uint16_t *row = (const uint16_t *)(srcY + y * srcYStride);
+            uint16_t *out = (uint16_t *)(dstY + y * dstYStride);
+            for (int x = 0; x < w; x++) out[x] = (uint16_t)(row[x] << shift);
+        } else if (shift == 0) {
             memcpy(dstY + y * dstYStride, srcY + y * srcYStride, w);
         } else {
             // dav1d holds a high-depth sample in a 16-bit container; the stride is in bytes.
@@ -164,7 +231,15 @@ static NSString *sciLastPictureFormat = nil;
         uint8_t *row = dstUV + y * dstUVStride;
         const uint8_t *ru = srcU + y * srcCStride;
         const uint8_t *rv = srcV + y * srcCStride;
-        if (shift == 0) {
+        if (wide) {
+            const uint16_t *u16 = (const uint16_t *)ru;
+            const uint16_t *v16 = (const uint16_t *)rv;
+            uint16_t *out = (uint16_t *)row;
+            for (int x = 0; x < cw; x++) {
+                out[2 * x]     = (uint16_t)(u16[x] << shift);
+                out[2 * x + 1] = (uint16_t)(v16[x] << shift);
+            }
+        } else if (shift == 0) {
             for (int x = 0; x < cw; x++) {
                 row[2 * x]     = ru[x];
                 row[2 * x + 1] = rv[x];
@@ -180,6 +255,18 @@ static NSString *sciLastPictureFormat = nil;
     }
 
     CVPixelBufferUnlockBaseAddress(pb, 0);
+
+    //
+    // **Attached to the buffer, so the encoder writes it into the file's own format description.**
+    // Without this the samples are right and the file still plays wrong, which is the half of the
+    // wash-out that has nothing to do with bit depth.
+    //
+    CFStringRef primaries = NULL, transfer = NULL, matrix = NULL;
+    SCIColourDescription(pic, &primaries, &transfer, &matrix);
+    if (primaries) CVBufferSetAttachment(pb, kCVImageBufferColorPrimariesKey, primaries, kCVAttachmentMode_ShouldPropagate);
+    if (transfer)  CVBufferSetAttachment(pb, kCVImageBufferTransferFunctionKey, transfer, kCVAttachmentMode_ShouldPropagate);
+    if (matrix)    CVBufferSetAttachment(pb, kCVImageBufferYCbCrMatrixKey, matrix, kCVAttachmentMode_ShouldPropagate);
+
     return pb;
 }
 
@@ -241,6 +328,10 @@ static void encodeOutput(void *outputCallbackRefCon,
     __block int width = 0, height = 0;
     __block BOOL failed = NO;
 
+    /// Whether the session that was actually created takes ten-bit buffers. Decided once, at the
+    /// first picture, by trying rather than by assuming what this hardware can do.
+    __block BOOL deep = NO;
+
     // Wrapped, not copied: the NSData outlives the loop, so a no-op free callback
     // is correct and avoids duplicating a multi-megabyte buffer.
     Dav1dData data;
@@ -261,22 +352,80 @@ static void encodeOutput(void *outputCallbackRefCon,
             // makes `VTCompressionSessionGetPixelBufferPool` return a real pool, and a pooled
             // buffer is a recycled one.
             //
-            NSDictionary *sourceAttributes = @{
-                (id)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange),
-                (id)kCVPixelBufferWidthKey: @(width),
-                (id)kCVPixelBufferHeightKey: @(height),
-                (id)kCVPixelBufferIOSurfacePropertiesKey: @{}
+            //
+            // **Ten-bit source gets a ten-bit encoder, and HEVC is the only one iOS offers.**
+            //
+            // A device report settled that this is not hypothetical: Instagram's reels ladder is
+            // ten-bit HLG in BT.2020, `TransferCharacteristics=18`, with Dolby Vision beside it.
+            // H.264 has no ten-bit profile here, so an eight-bit encoder cannot be handed that
+            // picture without throwing two of its bits away -- which is what 4.1.11 did, and half
+            // of why a saved reel read flat next to the app.
+            //
+            // **The fallback is tried, not assumed.** Main10 encoding needs hardware this build
+            // cannot ask about, so the session is *created* and only one that actually came back
+            // is used. A device that cannot do it takes the eight-bit path, which is what shipped
+            // before and works.
+            //
+            BOOL deepSource = (pic->p.bpc > 8);
+
+            NSDictionary *(^attributesFor)(OSType) = ^(OSType fmt) {
+                return @{
+                    (id)kCVPixelBufferPixelFormatTypeKey: @(fmt),
+                    (id)kCVPixelBufferWidthKey: @(width),
+                    (id)kCVPixelBufferHeightKey: @(height),
+                    (id)kCVPixelBufferIOSurfacePropertiesKey: @{}
+                };
             };
 
-            OSStatus s = VTCompressionSessionCreate(kCFAllocatorDefault, width, height,
-                                                    kCMVideoCodecType_H264, NULL,
-                                                    (__bridge CFDictionaryRef)sourceAttributes, NULL,
-                                                    encodeOutput, (__bridge void *)samples, &session);
-            if (s != noErr) { failed = YES; return; }
+            OSStatus s = kVTParameterErr;
+
+            if (deepSource) {
+                s = VTCompressionSessionCreate(kCFAllocatorDefault, width, height,
+                                               kCMVideoCodecType_HEVC, NULL,
+                                               (__bridge CFDictionaryRef)attributesFor(kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange), NULL,
+                                               encodeOutput, (__bridge void *)samples, &session);
+
+                if (s == noErr) {
+                    OSStatus profile = VTSessionSetProperty(session, kVTCompressionPropertyKey_ProfileLevel,
+                                                            kVTProfileLevel_HEVC_Main10_AutoLevel);
+                    if (profile != noErr) {
+                        // A session that refuses Main10 would encode ten-bit buffers as eight
+                        // anyway, silently. Fail here and take the honest path instead.
+                        VTCompressionSessionInvalidate(session);
+                        CFRelease(session);
+                        session = NULL;
+                        s = profile;
+                    } else {
+                        deep = YES;
+                    }
+                }
+            }
+
+            if (session == NULL) {
+                s = VTCompressionSessionCreate(kCFAllocatorDefault, width, height,
+                                               kCMVideoCodecType_H264, NULL,
+                                               (__bridge CFDictionaryRef)attributesFor(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange), NULL,
+                                               encodeOutput, (__bridge void *)samples, &session);
+                if (s == noErr) {
+                    VTSessionSetProperty(session, kVTCompressionPropertyKey_ProfileLevel,
+                                         kVTProfileLevel_H264_High_AutoLevel);
+                }
+            }
+
+            if (s != noErr || session == NULL) { failed = YES; return; }
 
             VTSessionSetProperty(session, kVTCompressionPropertyKey_RealTime, kCFBooleanFalse);
-            VTSessionSetProperty(session, kVTCompressionPropertyKey_ProfileLevel,
-                                 kVTProfileLevel_H264_High_AutoLevel);
+
+            //
+            // The same description the buffers carry, told to the session as well: the attachment
+            // governs the frame, this governs the track's format description, and a file where
+            // those two disagree is a file two players will disagree about.
+            //
+            CFStringRef pri = NULL, trc = NULL, mtx = NULL;
+            SCIColourDescription(pic, &pri, &trc, &mtx);
+            if (pri) VTSessionSetProperty(session, kVTCompressionPropertyKey_ColorPrimaries, pri);
+            if (trc) VTSessionSetProperty(session, kVTCompressionPropertyKey_TransferFunction, trc);
+            if (mtx) VTSessionSetProperty(session, kVTCompressionPropertyKey_YCbCrMatrix, mtx);
             VTSessionSetProperty(session, kVTCompressionPropertyKey_AllowFrameReordering, kCFBooleanTrue);
 
             int32_t keyInterval = (int32_t)MAX(1.0, fps * 2.0);
@@ -292,7 +441,7 @@ static void encodeOutput(void *outputCallbackRefCon,
             CFRelease(brRef);
         }
 
-        CVPixelBufferRef pb = [self pixelBufferFromPicture:pic pool:VTCompressionSessionGetPixelBufferPool(session)];
+        CVPixelBufferRef pb = [self pixelBufferFromPicture:pic pool:VTCompressionSessionGetPixelBufferPool(session) deep:deep];
         if (!pb) { failed = YES; return; }
 
         CMTime pts = CMTimeMakeWithSeconds(frameIndex / fps, 600);
@@ -368,7 +517,9 @@ static void encodeOutput(void *outputCallbackRefCon,
     *outW = width;
     *outH = height;
     stage(@"decode+encode", YES,
-          [NSString stringWithFormat:@"%dx%d, %d frames", width, height, frameIndex]);
+          [NSString stringWithFormat:@"%dx%d, %d frames, %@ — %@", width, height, frameIndex,
+              deep ? @"HEVC Main10, 10-bit kept" : @"H.264, 8-bit",
+              sciLastPictureFormat ?: @"picture not described"]);
     return samples;
 }
 

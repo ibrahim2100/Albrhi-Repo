@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.58.16
+
+Albrhi for Instagram 4.1.13: a saved AV1 reel keeps its ten bits and its HLG/BT.2020 description,
+so it no longer plays flat next to the app.
+
 ## v1.58.15
 
 Albrhi for Instagram 4.1.12: the AV1 transcode stops synthesising film grain it is about to

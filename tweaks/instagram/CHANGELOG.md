@@ -4,6 +4,34 @@
 Other versions should work too — the tweak looks for what it needs while the app runs
 rather than expecting a particular version number.
 
+## v4.1.13
+
+**A saved AV1 reel keeps its HDR.** The device report that confirmed 4.1.11's fix also answered the
+question behind it, from the manifest rather than by inference: Instagram's reels ladder is
+`av01.0.12M.10.0.111.09.18.09.0` — ten-bit, `ColourPrimaries=9` (BT.2020),
+`TransferCharacteristics=18` (**HLG**), with `dav1.10.07` beside it, which is Dolby Vision profile
+10. That is genuine HDR, not a ten-bit SDR clip.
+
+**The wash-out had two independent causes, and one fix would have left the other.**
+
+*The depth.* 4.1.11 shifted every ten-bit sample down to eight so the H.264 encoder would take it —
+which is what made these reels saveable at all, and threw away two bits doing it. A ten-bit source
+now gets an **HEVC Main10** session and `x420` buffers, whose ten bits sit in the *most significant*
+bits of a sixteen-bit container, as the SDK header states outright. **The fallback is tried rather
+than assumed**: the session is created, the profile is set, and only a session that came back is
+used — a device without Main10 encoding takes the eight-bit path, which is what shipped before and
+works. A session that accepts creation but refuses Main10 is torn down rather than left to encode
+ten-bit buffers as eight in silence.
+
+*The description.* Even with every bit kept, a file that does not **say** it is HLG in BT.2020 is
+played as BT.709 SDR, because a player has no other way to know. The colour description is now read
+from dav1d's own sequence header — never assumed — and attached twice: to each pixel buffer, which
+governs the frame, and to the compression session, which governs the track's format description. A
+file where those two disagree is a file two players will disagree about.
+
+The status line names which encoder actually ran, so the next report says `HEVC Main10, 10-bit kept`
+or `H.264, 8-bit` rather than leaving it to be guessed at.
+
 ## v4.1.12
 
 Two changes to the AV1 transcode, both measured out of the code rather than guessed at.
