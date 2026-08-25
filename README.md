@@ -9,13 +9,13 @@
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B-lightgrey.svg)]()
 [![Rootless](https://img.shields.io/badge/rootless-supported-success.svg)](#-compatibility)
-[![Albrhi](https://img.shields.io/badge/Albrhi-1.58.9-blueviolet.svg)](suite/CHANGELOG.md)
-[![Instagram](https://img.shields.io/badge/Instagram-4.1.10-orange.svg)](tweaks/instagram/CHANGELOG.md)
+[![Albrhi](https://img.shields.io/badge/Albrhi-1.58.15-blueviolet.svg)](suite/CHANGELOG.md)
+[![Instagram](https://img.shields.io/badge/Instagram-4.1.12-orange.svg)](tweaks/instagram/CHANGELOG.md)
 [![YouTube](https://img.shields.io/badge/YouTube-1.20.0-red.svg)](tweaks/youtube/CHANGELOG.md)
 [![X](https://img.shields.io/badge/X-0.14.0-black.svg)](tweaks/twitter/CHANGELOG.md)
-[![TikTok](https://img.shields.io/badge/TikTok-0.19.4-ff0050.svg)](tweaks/tiktok/CHANGELOG.md)
+[![TikTok](https://img.shields.io/badge/TikTok-0.19.10-ff0050.svg)](tweaks/tiktok/CHANGELOG.md)
 [![Spotify](https://img.shields.io/badge/Spotify-0.2.3-1DB954.svg)](tweaks/spotify/CHANGELOG.md)
-[![YT Music](https://img.shields.io/badge/YT%20Music-0.1.1-FF0000.svg)](tweaks/ytmusic/CHANGELOG.md)
+[![YT Music](https://img.shields.io/badge/YT%20Music-0.3.0-FF0000.svg)](tweaks/ytmusic/CHANGELOG.md)
 [![NextUp](https://img.shields.io/badge/NextUp-0.1.5-FF375F.svg)](tweaks/nextup/CHANGELOG.md)
 [![Watch](https://img.shields.io/badge/Watch-0.5.2-FF375F.svg)](tweaks/watch/CHANGELOG.md)
 [![Based on](https://img.shields.io/badge/based%20on-SCInsta-lightblue.svg)](https://github.com/SoCuul/SCInsta)
@@ -108,13 +108,13 @@ Developed by **Ibrahim Ismail AL-Rahn** ([@ibrahim2100](https://github.com/ibrah
 
 | Tweak | Patches | Version | What it does |
 |---|---|---|---|
-| **Albrhi for Instagram** | Instagram | 4.1.10 | downloads, a quieter feed, watching without a seen receipt |
+| **Albrhi for Instagram** | Instagram | 4.1.12 | downloads, AV1 reels transcoded on the device, a quieter feed, watching without a seen receipt |
 | **Albrhi for YouTube** | YouTube | 1.20.0 | downloads with their own player, no ads, SponsorBlock, background playback |
 | **Albrhi for X** | X / Twitter | 0.14.0 | media downloads, and the feature switches X asks itself about |
-| **Albrhi for TikTok** | TikTok | 0.19.4 | a download button in the feed, photo posts, no ads, confirmations, privacy, extras |
+| **Albrhi for TikTok** | TikTok | 0.19.10 | a download button in the feed, the publish date on every clip, photo posts, no ads, confirmations, privacy, extras |
 | **Albrhi for Spotify** | Spotify | 0.2.3 | no ads, no Premium popups, sponsored podcast segments skipped |
-| **Albrhi for YouTube Music** | YouTube Music | 0.1.1 | no ads, background playback without the upsell |
-| **Albrhi Panel** | Settings | 0.9.21 | the Albrhi page — one switch per patched app, and a page per tweak |
+| **Albrhi for YouTube Music** | YouTube Music | 0.3.0 | synced lyrics, no ads, background playback, speed control, seek buttons, SponsorBlock |
+| **Albrhi Panel** | Settings | 0.9.22 | the Albrhi page — one switch per patched app, and a page per tweak |
 | **Albrhi NextUp** | SpringBoard, Music, Podcasts, YouTube, YT Music, Spotify | 0.1.5 | what plays next, on the Lock Screen — **its own package** |
 | **Albrhi Watch** | SpringBoard, Watch app | 0.5.2 | pair an Apple Watch on a newer watchOS than iOS expects, and hold watchOS 26 back — **its own package** |
 
@@ -289,6 +289,13 @@ outside TikTok which video you are watching, which is the exact thing the privac
 beside it exist to prevent. On some videos it returns the original upload — 60fps where TikTok's
 own stream is 30 — and on others it is byte for byte the file the tweak already had.
 
+### 📅 The publish date, on the clip itself
+When the video was posted, above the download button: the day, the month by name, the year, and
+the time on the line beneath. It is placed in the same coordinate space it is measured in and
+re-measured whenever the layout settles, so it sits in one place on every video and on every
+phone — which took four releases to be true, and the reasons are written in the changelog because
+they are the kind that come back.
+
 ### 🖼️ Photo posts
 A photo post saves as photos. **It asks first**: the picture you are on, or all of them —
 and the picture you are on is the one the paging controller says is on screen, read at the tap.
@@ -364,20 +371,86 @@ what is playing, and that is a cost paid only by somebody who chose it.
 
 ## 🎼 Albrhi for YouTube Music
 
-### No ads, and background playback left alone
+### 🎤 Synced lyrics
+Lyrics that follow the track, on the now-playing screen, with the line you are on lifted out of the
+rest. Six sources are asked and the best answer wins — LRCLib, Genius, MusixMatch, NetEase, the
+video description, and YouTube Music's own lyrics where it has them — and a wrong match is
+discarded rather than shown. Japanese, Korean and Chinese can be romanised as they play, the text
+can be selected and copied, the source can be pinned, and the timing nudged when a track is offset.
+
+> **A lyrics feature asks outside services what is playing. There is no version of it that does
+> not.** It is on because it was asked for by name; upstream ships it off. Translating those lyrics
+> is a separate switch, off by default, and does nothing at all without a key you supply yourself.
+
+### 🚫 No ads, and background playback left alone
 Advertising is refused where YouTube Music asks for it, and the monetisation flags its player
 response carries are answered as an unmonetised video would answer them. Background playback keeps
 going without the upsell notification that interrupts it.
 
-**This does not unlock Premium.** The tweak these hooks come from tells YouTube Music the account is
-a paying one; that is the single thing not carried over. The two files taken here never ask what the
-account is — `RemoveAds.x` does not contain the word.
+### 🎛️ And seven more
+- **The speed control the app already has and hides**, on the player.
+- **Seek buttons** — previous and next become back and forward, with the original behaviour still
+  there on a long press.
+- **No autoplay radio** when the queue ends, refused on every class that decides it.
+- **Casting**, enabled where the app gates it.
+- **The history, cast and filter buttons** in the navigation bar, hidden on request.
+- **A true-black theme**, keyboard included.
+- **SponsorBlock**, for the one category a music app has — `music_offtopic`. Off until you switch
+  it on: it asks sponsor.ajay.app about the track, which is the same cost the TikTok tweak states
+  on its own HD row.
+
+### 🧪 Verified, not only compiled
+`tweaks/ytmusic/tests/host/run.sh` builds the parts that are pure logic — the LRC parser, the
+matching pipeline, the caches, the romaniser, the description extractor — against the macOS SDK
+and **runs them on the build machine: 29 tests, in about a second**. A hook still needs a device;
+a parser does not, and three of this project's most expensive bugs lived in exactly that layer.
+
+**This does not unlock Premium.** The tweaks these hooks come from answer `-isPremiumSubscriber`
+with YES on six classes, telling YouTube Music the account is a paying one. That is the single
+thing not carried over — the same line drawn for Locket's `Check0verPlus` and for Spotify.
 
 > **The hooks are not this project's work.** They are
-> [YTMusicUltimate](https://github.com/dayanch96/YTMusicUltimate) by **dayanch96**, under GPLv3 —
-> the same licence Albrhi ships under, which is what makes carrying them over lawful. Albrhi adds
-> the gate and the packaging; every ported file is kept diffable against upstream, with each edit
-> written where it is.
+> [YTMusicUltimate](https://github.com/dayanch96/YTMusicUltimate) by **dayanch96** and
+> [YTMEnhanced](https://github.com/py233/YTMEnhanced) by **py233**, both under GPLv3 — the same
+> licence Albrhi ships under, which is what makes carrying them over lawful rather than merely
+> possible. Albrhi adds the gate, the packaging and the switch defaults; every ported file is kept
+> diffable against upstream, with each edit written where it is.
+
+---
+
+## 🎛️ Albrhi Panel
+
+**Settings › Albrhi.** The front door: one switch per patched app, and a page for each tweak that
+has more to say than a switch.
+
+### 🔌 One switch above all of them
+When an app update breaks something, the answer used to be eight switches or removing the package —
+and that is the worst possible moment to be hunting through rows. The master switch stands every
+Albrhi tweak down on the next app launch **without changing a single setting below it**, and the
+apps section says so rather than leaving switches that look as though they still apply.
+
+It defaults to **on**, and that is not the opt-in rule being reversed: the per-app switch answers
+*did anyone ask for this app to be patched*, where silence must not mean yes. This one answers
+*has the user pulled the handle*, where an absent value reading as off would switch off every
+working install on the day it shipped.
+
+### 📖 A guide, built from the device
+Every tweak on **this** phone, one line on what it does, the app version it was verified against,
+and the version actually installed. Built from the same scan the main page uses, so it cannot
+describe a tweak that is not there — a hand-maintained list of nine goes stale the first time one
+is added or renamed.
+
+### 💾 Your settings, out of the phone and back
+A copy goes out through the share sheet on purpose: a rootless or roothide prefix is removed with
+the bootstrap, so a backup written beside the preferences it copies would be destroyed by exactly
+the event it exists for. **What it holds is stated rather than implied** — the panel's own domain,
+which is the master switch and the per-app switches. A file that is not one of ours is refused
+whole rather than half-applied.
+
+### 🔄 An update check, on a tap
+Never on page load: a page that phones home when it opens is a page that decided for its user. It
+asks Albrhi's own source and nothing else, takes the highest published version rather than the
+first listed, and keeps *the source could not be reached* distinct from *you are up to date*.
 
 ---
 
@@ -573,6 +646,20 @@ genuinely broken this build before — a five-minute Theos compile is a slow way
 python3 tools/check.py
 ```
 
+**And the parts that are pure logic are run, not only compiled.** The YouTube Music lyrics module —
+the LRC parser, the matching pipeline, the caches, the romaniser — builds against the macOS SDK and
+executes on the build machine in about a second:
+
+```bash
+bash tweaks/ytmusic/tests/host/run.sh
+```
+
+A hook needs a device and there is no way around that. A parser does not, and three of the most
+expensive bugs in this project's history lived in exactly that layer: a quality ladder that needed
+its stages counted separately, a parallel array walked by value instead of in lockstep, and a label
+measured in one coordinate space and drawn in another. Every one of them would have failed here, in
+a second, on this Mac.
+
 GitHub Actions builds are also configured — see [BUILD.md](BUILD.md) and
 [GITHUB_BUILD.md](GITHUB_BUILD.md).
 
@@ -681,6 +768,11 @@ anything or losing its settings. Reopen the app for the change to take effect.
 - [x] **Albrhi for TikTok** — a download button in the feed, photo posts, confirmations, privacy
 - [x] Photo posts saved as photos, and one picture saved as a clip with the post's own sound
 - [x] **Albrhi NextUp** — a GPLv3 port of NextUp 3, configured from the panel, published on its own
+- [x] **Albrhi for YouTube Music** — synced lyrics, and seven more features carried over under GPLv3
+- [x] **A master switch, a guide, settings backup and an update check** in the panel
+- [x] **Tests that run on the build machine** — the pure-logic modules, proved without a device
+- [ ] Take that test arrangement to the other tweaks — the DASH ladder, the quality ranking and the
+      version comparison are all pure functions of their input
 - [ ] **Albrhi CarPlay, rebuilt from scratch in its own repository** — removed from this one
 - [ ] Tie a SponsorBlock marker to the video its bar belongs to — today one global serves every bar
 - [ ] Settings profiles — several configurations, switched per account
@@ -710,6 +802,12 @@ Issues and pull requests are welcome.
 - **[dav1d](https://code.videolan.org/videolan/dav1d)** by VideoLAN — the AV1 decoder behind on-device transcoding.
 - **[SponsorBlock](https://sponsor.ajay.app)** by Ajay Ramachandran — the segment database the YouTube tweak skips by, CC BY-NC-SA 4.0.
 - **[iSponsorBlock](https://github.com/Galactic-Dev/iSponsorBlock)** by Galactic Dev (GPLv3) — the YouTube tweak's coloured progress-bar markers are derived from it.
+- **[YTMusicUltimate](https://github.com/dayanch96/YTMusicUltimate)** by **dayanch96** and
+  **[YTMEnhanced](https://github.com/py233/YTMEnhanced)** by **py233** (both GPLv3) — the YouTube
+  Music hooks, including the synced-lyrics module, are carried over from them. Their Premium claim
+  deliberately is not.
+- **[EeveeSpotify](https://github.com/whoeevee/EeveeSpotify)** (GPLv3) — the Spotify ad blocking is
+  carried over from it, without its Premium unlock.
 - **[NextUp 3](https://github.com/Yves000/NextUp3)** by **Yves** (GPLv3) — Albrhi NextUp is a port of it; the design and nearly all of the implementation are his.
 - **[LightMessaging](https://github.com/rpetrich/libhooker)** by Ryan Petrich and **[libSandy](https://github.com/opa334/libSandy)** by opa334 — the cross-process messaging and sandbox profile NextUp needs.
 - **[FLEXing](https://github.com/SoCuul/FLEXing)** — runtime debugging support.
