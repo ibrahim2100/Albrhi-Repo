@@ -1,5 +1,26 @@
 # Albrhi for TikTok — what changed
 
+## v0.19.11
+
+Two features, both confirmed against **this project's own 46.4.0 binary** before a hook was written
+— not against the reference tweak they were found in.
+
+**Never appear online.** Four chokepoints on `AWEIMActivityStatusReportManager`, each with its type
+encoding read first: `-p_enableReportOnlineStatus` and `-canFetchAsReportCurrentUserActivityStatus`
+(`B16@0:8`) decide whether a report is worth sending, and `-p_reportActivityStatusWithParams:` and
+its if-needed sibling (`v24@0:8@16`) are where one actually leaves the phone. Refusing all four is
+the difference between *a report was suppressed once* and *there is nothing left to suppress*. Same
+shape as the three privacy switches beside it: **a report is withheld from leaving, and the server
+is never told anything untrue** — nothing here claims to be offline, it stops announcing.
+
+**Do not repeat a video.** `AWEFeedCellViewController -playerWillLoopPlaying:` (`v24@0:8@16`), on
+the class this tweak already holds for the model behind the download button — confirmed twice over.
+**Not calling through is the whole feature, and it deliberately does not advance to the next clip**:
+those are different requests, and this project has recorded what happens when a correct principle is
+applied one step further than it was asked for.
+
+Both rows are in the settings screen under Privacy and Extras, reached the same way as before.
+
 ## v0.19.10
 
 The publish date appears on photo posts.

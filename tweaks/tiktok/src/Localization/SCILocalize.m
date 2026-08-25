@@ -146,6 +146,10 @@ static void SCIBuildTables(void) {
 
         @"credit": @"Architecture read from BandarHL's and al3raQe's BHTikTok, NA9 For TikTok and VibeTok — none copied from.",
         @"report_copied": @"Report copied",
+        @"row_hide_online": @"Never appear online",
+        @"row_hide_online_note": @"TikTok stops being told you are active. Four separate reports are refused, and nothing false is sent in their place.",
+        @"row_no_loop": @"Do not repeat a video",
+        @"row_no_loop_note": @"A clip that reaches its end stays there instead of starting again. It does not move to the next video.",
     };
 
     _arTable = @{
@@ -280,6 +284,10 @@ static void SCIBuildTables(void) {
 
         @"credit": @"البنية مقروءة من BHTikTok لـ BandarHL وal3raQe، وNA9 For TikTok وVibeTok — لا شيء منسوخ منها.",
         @"report_copied": @"تم نسخ التقرير",
+        @"row_hide_online": @"لا تظهر متصلاً",
+        @"row_hide_online_note": @"يتوقّف إبلاغ تيك توك بأنك نشط. تُرفض أربعة بلاغات منفصلة، ولا يُرسل مكانها شيء غير صحيح.",
+        @"row_no_loop": @"عدم تكرار الفيديو",
+        @"row_no_loop_note": @"المقطع الذي ينتهي يبقى عند نهايته بدل أن يبدأ من جديد. ولا ينتقل إلى الفيديو التالي.",
     };
 }
 

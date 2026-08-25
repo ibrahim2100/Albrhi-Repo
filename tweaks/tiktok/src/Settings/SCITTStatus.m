@@ -195,6 +195,14 @@ static const void *kSCIPrefKeyAssoc = &kSCIPrefKeyAssoc;
                     kSCIRowIcon: @"person.fill.questionmark",
                     kSCIRowColor: [UIColor systemTealColor],
                 },
+                @{
+                    kSCIRowKind: kSCIKindSwitch,
+                    kSCIRowPref: SCIPrefHideOnline,
+                    kSCIRowTitle: SCILocalized(@"row_hide_online"),
+                    kSCIRowNote: SCILocalized(@"row_hide_online_note"),
+                    kSCIRowIcon: @"circle.slash",
+                    kSCIRowColor: [UIColor systemTealColor],
+                },
             ],
         },
         @{
@@ -209,6 +217,14 @@ static const void *kSCIPrefKeyAssoc = &kSCIPrefKeyAssoc;
                     kSCIRowTitle: SCILocalized(@"row_accounts"),
                     kSCIRowNote: SCILocalized(@"row_accounts_note"),
                     kSCIRowIcon: @"person.2.fill",
+                    kSCIRowColor: [UIColor systemIndigoColor],
+                },
+                @{
+                    kSCIRowKind: kSCIKindSwitch,
+                    kSCIRowPref: SCIPrefNoLoop,
+                    kSCIRowTitle: SCILocalized(@"row_no_loop"),
+                    kSCIRowNote: SCILocalized(@"row_no_loop_note"),
+                    kSCIRowIcon: @"repeat.circle.fill",
                     kSCIRowColor: [UIColor systemIndigoColor],
                 },
                 @{

@@ -118,3 +118,17 @@ static inline BOOL SCIPrefEnabled(NSString *key) {
 /// installation reads this key — which also means the compiler cannot fold the branch away and
 /// call it unreachable.
 #define SCIPrefBaseSurface      @"base_button_surface"
+
+/// Never tell TikTok's servers you are online.
+///
+/// Confirmed on 46.4.0 against `AWEIMActivityStatusReportManager`: `-p_enableReportOnlineStatus`
+/// (`B16@0:8`), `-canFetchAsReportCurrentUserActivityStatus` (`B16@0:8`) and the two report calls
+/// `-p_reportActivityStatusIfNeededWithParams:` / `-p_reportActivityStatusWithParams:`
+/// (`v24@0:8@16`). Four chokepoints on one class, which is what the report layer actually is.
+#define SCIPrefHideOnline       @"hide_online"
+
+/// Stop a video restarting when it reaches the end.
+///
+/// `AWEFeedCellViewController -playerWillLoopPlaying:` (`v24@0:8@16`) beside `loopTimes` (`q`),
+/// on the class this tweak already holds for the model behind the download button.
+#define SCIPrefNoLoop           @"no_video_loop"

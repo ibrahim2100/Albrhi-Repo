@@ -10,6 +10,7 @@
 #import <objc/message.h>
 #import "SCITTExtras.h"
 #import "../../Prefs.h"
+#import "../../Diagnostics/SCITTDiagnostics.h"
 #import "../../SCILog.h"
 #import "../../Localization/SCILocalize.h"
 
@@ -284,6 +285,80 @@ NSString *SCITTExtrasReport(void) {
             sciContentKeys ? [@"; content keys: " stringByAppendingString:sciContentKeys] : @""];
 }
 
+//
+// **Never reported as online.**
+//
+// Confirmed against this device's own 46.4.0 binary rather than against a reference tweak's list:
+// four chokepoints on `AWEIMActivityStatusReportManager`, each with its encoding read before a hook
+// was written. The two `-p_report…` calls are where a status actually leaves the phone; the two
+// booleans above them are what decides whether it is worth sending. Refusing all four is the
+// difference between "the report was suppressed once" and "there is nothing to suppress".
+//
+// This is the same shape as the three privacy switches already here: **a report is withheld from
+// leaving the device, and the server is never told anything untrue.** Nothing here claims to be
+// offline; it simply stops announcing.
+//
+%group SCITTHideOnline
+
+%hook AWEIMActivityStatusReportManager
+
+- (BOOL)p_enableReportOnlineStatus {
+    if (!SCIPrefEnabled(SCIPrefHideOnline)) return %orig;
+    return NO;
+}
+
+- (BOOL)canFetchAsReportCurrentUserActivityStatus {
+    if (!SCIPrefEnabled(SCIPrefHideOnline)) return %orig;
+    return NO;
+}
+
+- (void)p_reportActivityStatusIfNeededWithParams:(id)params {
+    if (!SCIPrefEnabled(SCIPrefHideOnline)) {
+        %orig;
+        return;
+    }
+    [SCITTDiagnostics recordPrivacyAnswer:@"online status withheld (if-needed)"];
+}
+
+- (void)p_reportActivityStatusWithParams:(id)params {
+    if (!SCIPrefEnabled(SCIPrefHideOnline)) {
+        %orig;
+        return;
+    }
+    [SCITTDiagnostics recordPrivacyAnswer:@"online status withheld"];
+}
+
+%end
+
+%end
+
+//
+// **A video that has finished does not start again.**
+//
+// `-playerWillLoopPlaying:` is the app announcing that it is about to restart the clip, on the
+// same `AWEFeedCellViewController` this tweak already holds for the model behind the download
+// button -- so the class is confirmed twice over and the encoding was read before hooking.
+//
+// **Not calling through is the whole feature, and it is deliberately not "advance to the next
+// video".** Those are different requests, and this project has already recorded what happens when
+// a correct principle is applied one step further than it was asked for.
+//
+%group SCITTNoLoop
+
+%hook AWEFeedCellViewController
+
+- (void)playerWillLoopPlaying:(id)player {
+    if (!SCIPrefEnabled(SCIPrefNoLoop)) {
+        %orig;
+        return;
+    }
+    [SCITTDiagnostics recordPrivacyAnswer:@"video loop refused"];
+}
+
+%end
+
+%end
+
 void SCITTInstallExtras(void) {
     NSMutableArray<NSString *> *installed = [NSMutableArray array];
     NSMutableArray<NSString *> *skipped = [NSMutableArray array];
@@ -314,6 +389,23 @@ void SCITTInstallExtras(void) {
         [installed addObject:@"-content (recalled mark)"];
     } else {
         [skipped addObject:@"TIMOMessage -content"];
+    }
+
+    Class online = NSClassFromString(@"AWEIMActivityStatusReportManager");
+    if (online && SCITTEncodingMatches(online, @"p_enableReportOnlineStatus", @"B16@0:8")
+               && SCITTEncodingMatches(online, @"p_reportActivityStatusWithParams:", @"v24@0:8@16")) {
+        %init(SCITTHideOnline);
+        [installed addObject:@"-p_report… (hide online)"];
+    } else {
+        [skipped addObject:@"AWEIMActivityStatusReportManager -p_report…"];
+    }
+
+    Class feedCell = NSClassFromString(@"AWEFeedCellViewController");
+    if (feedCell && SCITTEncodingMatches(feedCell, @"playerWillLoopPlaying:", @"v24@0:8@16")) {
+        %init(SCITTNoLoop);
+        [installed addObject:@"-playerWillLoopPlaying: (no loop)"];
+    } else {
+        [skipped addObject:@"AWEFeedCellViewController -playerWillLoopPlaying:"];
     }
 
     Class presenter = NSClassFromString(@"TTKProfileViewsPresenter");

@@ -1,5 +1,9 @@
 # Albrhi Changelog
 
+## v1.58.20
+
+Albrhi for TikTok 0.19.11: never appear online, and videos that do not repeat.
+
 ## v1.58.19
 
 Albrhi for YouTube Music 0.4.1: the settings screen no longer crashes on open — a row count that
