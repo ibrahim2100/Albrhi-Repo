@@ -4,6 +4,27 @@
 Other versions should work too — the tweak looks for what it needs while the app runs
 rather than expecting a particular version number.
 
+## v4.1.12
+
+Two changes to the AV1 transcode, both measured out of the code rather than guessed at.
+
+**Film grain synthesis is off, which saves twice.** AV1 does not store grain, it stores a recipe for
+it, and dav1d re-synthesises it onto every frame -- `apply_grain` defaults to on. That is decode
+time on every frame, and then it is paid for again at the other end: synthetic noise is the most
+expensive thing an H.264 encoder can be asked to carry, being high-entropy by construction, so the
+bits preserving it are bits not spent on the picture. Right for a player, wrong for a transcoder
+whose output is a fixed-bitrate file.
+
+**The encoder now hands back its own pixel buffers.** The session was created with no source
+attributes, so it had no pool to offer and the loop allocated a fresh CVPixelBuffer -- an allocation
+and an IOSurface mapping -- for every frame of the clip. Declaring the format makes
+`VTCompressionSessionGetPixelBufferPool` return a real pool, and a pooled buffer is a recycled one.
+The plain allocation stays as the path for the first frame, before the session exists, which is the
+one time it is reachable.
+
+**Not changed, deliberately:** dav1d's thread count. `0` already means one thread per logical core,
+which is what this wants; it is written down here so it is not "fixed" into a constant later.
+
 ## v4.1.11
 
 AV1 reels transcode again. **Instagram's AV1 ladder is 10-bit, and one line refused every frame of

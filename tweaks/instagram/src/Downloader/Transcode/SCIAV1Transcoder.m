@@ -23,7 +23,7 @@ static void sciNoFreeCallback(const uint8_t *buf, void *cookie) {}
 // the pixel buffer's CF ownership explicitly (its name is not in the create/copy
 // family the compiler would otherwise infer a +1 return from).
 + (NSString *)downloadToTempFile:(NSURL *)url extension:(NSString *)ext;
-+ (CVPixelBufferRef)pixelBufferFromPicture:(Dav1dPicture *)pic CF_RETURNS_RETAINED;
++ (CVPixelBufferRef)pixelBufferFromPicture:(Dav1dPicture *)pic pool:(CVPixelBufferPoolRef)pool CF_RETURNS_RETAINED;
 + (NSArray *)encodeH264FromBitstream:(NSData *)bitstream fps:(double)fps
                             outWidth:(int *)outW outHeight:(int *)outH
                             progress:(void (^)(NSString *))progress;
@@ -83,7 +83,7 @@ static void sciNoFreeCallback(const uint8_t *buf, void *cookie) {}
 //
 static NSString *sciLastPictureFormat = nil;
 
-+ (CVPixelBufferRef)pixelBufferFromPicture:(Dav1dPicture *)pic CF_RETURNS_RETAINED {
++ (CVPixelBufferRef)pixelBufferFromPicture:(Dav1dPicture *)pic pool:(CVPixelBufferPoolRef)pool CF_RETURNS_RETAINED {
     int bpc = pic->p.bpc;
 
     // The transfer characteristic settles "is this really HDR": 16 is PQ and 18 is HLG, and
@@ -120,11 +120,19 @@ static NSString *sciLastPictureFormat = nil;
         (id)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange)
     };
 
+    //
+    // The encoder's own pool first, and a plain allocation only when there is not one -- which is
+    // the first frame, before the session exists. **A fallback that is never reachable is not a
+    // fallback**, and this one is reached exactly once per clip.
+    //
     CVPixelBufferRef pb = NULL;
-    if (CVPixelBufferCreate(kCFAllocatorDefault, w, h,
-                            kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange,
-                            (__bridge CFDictionaryRef)attrs, &pb) != kCVReturnSuccess) {
-        return NULL;
+    if (pool == NULL ||
+        CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &pb) != kCVReturnSuccess) {
+        if (CVPixelBufferCreate(kCFAllocatorDefault, w, h,
+                                kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange,
+                                (__bridge CFDictionaryRef)attrs, &pb) != kCVReturnSuccess) {
+            return NULL;
+        }
     }
 
     CVPixelBufferLockBaseAddress(pb, 0);
@@ -204,6 +212,23 @@ static void encodeOutput(void *outputCallbackRefCon,
     Dav1dSettings settings;
     dav1d_default_settings(&settings);
 
+    //
+    // **Film grain synthesis off, which is two savings and not one.**
+    //
+    // AV1 does not store grain; it stores a *recipe* for it, and dav1d re-synthesises it onto every
+    // frame -- `apply_grain` defaults to 1. That costs decode time on every frame of the clip, and
+    // then costs again at the other end, because synthetic noise is the most expensive thing an
+    // H.264 encoder can be asked to carry: it is high-entropy by construction, so the bits that
+    // preserve it are bits not spent on the picture.
+    //
+    // Reinstating it would be right for a player. This is a transcoder whose output is a fixed
+    // bitrate H.264 file, so the grain would be paid for twice and look worse than not having it.
+    //
+    settings.apply_grain = 0;
+
+    // Threading is already right and is left alone: 0 means one thread per logical core, which is
+    // what this wants. Worth writing down so the next reader does not "fix" it to a constant.
+
     Dav1dContext *ctx = NULL;
     if (dav1d_open(&ctx, &settings) != 0) {
         stage(@"decode", NO, @"dav1d_open failed");
@@ -227,8 +252,25 @@ static void encodeOutput(void *outputCallbackRefCon,
             width = pic->p.w;
             height = pic->p.h;
 
+            //
+            // **The encoder is told what it will be fed, so it can hand back its own buffers.**
+            //
+            // With no source attributes the session has no pixel buffer pool to offer, and the
+            // loop below allocated a fresh CVPixelBuffer for every single frame -- an allocation
+            // and an IOSurface mapping per frame, for the whole clip. Declaring the format here
+            // makes `VTCompressionSessionGetPixelBufferPool` return a real pool, and a pooled
+            // buffer is a recycled one.
+            //
+            NSDictionary *sourceAttributes = @{
+                (id)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange),
+                (id)kCVPixelBufferWidthKey: @(width),
+                (id)kCVPixelBufferHeightKey: @(height),
+                (id)kCVPixelBufferIOSurfacePropertiesKey: @{}
+            };
+
             OSStatus s = VTCompressionSessionCreate(kCFAllocatorDefault, width, height,
-                                                    kCMVideoCodecType_H264, NULL, NULL, NULL,
+                                                    kCMVideoCodecType_H264, NULL,
+                                                    (__bridge CFDictionaryRef)sourceAttributes, NULL,
                                                     encodeOutput, (__bridge void *)samples, &session);
             if (s != noErr) { failed = YES; return; }
 
@@ -250,7 +292,7 @@ static void encodeOutput(void *outputCallbackRefCon,
             CFRelease(brRef);
         }
 
-        CVPixelBufferRef pb = [self pixelBufferFromPicture:pic];
+        CVPixelBufferRef pb = [self pixelBufferFromPicture:pic pool:VTCompressionSessionGetPixelBufferPool(session)];
         if (!pb) { failed = YES; return; }
 
         CMTime pts = CMTimeMakeWithSeconds(frameIndex / fps, 600);

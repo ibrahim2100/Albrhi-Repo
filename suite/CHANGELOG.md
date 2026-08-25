@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.58.15
+
+Albrhi for Instagram 4.1.12: the AV1 transcode stops synthesising film grain it is about to
+re-encode, and reuses the encoder's own pixel buffers instead of allocating one per frame.
+
 ## v1.58.14
 
 Albrhi for YouTube Music 0.3.0: synced lyrics with romanisation and a source picker, carried over
