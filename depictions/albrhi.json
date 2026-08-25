@@ -106,12 +106,12 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.58.12",
+          "title": "v1.58.15",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• Albrhi Panel 0.9.22: a master switch above every tweak, a guide page with each tweak's verified app version, settings backup and restore through the share sheet, and an…",
+          "markdown": "• Albrhi for Instagram 4.1.12: the AV1 transcode stops synthesising film grain it is about to re-encode, and reuses the encoder's own pixel buffers instead of allocating…",
           "useSpacing": true
         },
         {
@@ -120,12 +120,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.58.11",
+          "title": "v1.58.14",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• Albrhi for Instagram 4.1.11: AV1 reels transcode again -- their ladder is 10-bit, and every frame was being refused on the way to the encoder.",
+          "markdown": "• Albrhi for YouTube Music 0.3.0: synced lyrics with romanisation and a source picker, carried over from YTMEnhanced under GPLv3 and verified by a 29-test suite that runs…",
           "useSpacing": true
         },
         {
@@ -134,12 +134,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.58.10",
+          "title": "v1.58.13",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• Albrhi for TikTok 0.19.10: the publish date appears on photo posts, and the date read for one is that post's own rather than the last video's.",
+          "markdown": "• Albrhi for YouTube Music 0.2.0: the speed control, seek buttons, no autoplay radio, casting, hidden navigation buttons, an OLED theme and SponsorBlock -- carried over…",
           "useSpacing": true
         },
         {
@@ -155,7 +155,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.58.12"
+          "text": "1.58.15"
         },
         {
           "class": "DepictionTableTextView",
