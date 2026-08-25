@@ -346,6 +346,9 @@ static void SCIBuildTables(void) {
         @"diag_streams": @"Streams offered",
         @"diag_response": @"Full player response",
         @"diag_response_note": @"Everything YouTube told the app about that video. This is the part worth copying — it decides how downloading can work at all.",
+        @"set_parallel": @"Simultaneous downloads",
+        @"set_parallel_note": @"How many pieces of a video are fetched at once. More is faster; too many and the server may slow you down.",
+        @"set_parallel_tested": @" (tested)",
     };
 
     _arTable = @{
@@ -682,6 +685,9 @@ static void SCIBuildTables(void) {
         @"diag_streams": @"الصيغ المعروضة",
         @"diag_response": @"استجابة المشغّل كاملة",
         @"diag_response_note": @"كل ما قاله يوتيوب للتطبيق عن ذلك الفيديو. هذا هو الجزء الذي يستحق النسخ — فهو يحدّد كيف يمكن للتحميل أن يعمل أصلًا.",
+        @"set_parallel": @"التنزيلات المتزامنة",
+        @"set_parallel_note": @"كم قطعة من الفيديو تُجلب في وقتٍ واحد. الأكثر أسرع، والزائد قد يجعل الخادم يبطّئك.",
+        @"set_parallel_tested": @" (المُجرَّب)",
     };
 }
 

@@ -3,6 +3,27 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.21.0
+
+**Simultaneous downloads are a setting**, under Downloads: four, six or eight pieces at once, with
+four marked as the tested value.
+
+An HLS playlist is a few hundred segments, so this is the largest single lever on how long a
+download takes — and the right number is a fact about somebody's network, not about this source.
+More connections finish sooner; Google may throttle a client that opens too many, which cannot be
+measured from a build machine. **So it is asked rather than decided**, and an untouched preference
+behaves exactly as every previous release did.
+
+**And this tweak now has tests that run on the build machine**, in `tests/host/run.sh`: the
+MPEG-TS demuxer — 759 lines written here rather than vendored from ffmpeg — proved against
+synthetic packets, an `ftyp` box it must not claim, an empty file, a missing file, and a truncated
+stream it has to refuse rather than read past.
+
+**Nothing in the shipping code changed to make that possible**, which was the constraint: a test
+that needs a refactor is a test that can break the thing it was written to protect. The one
+concession is a stub for the diagnostics recorder, so byte parsing can be tested without compiling
+the settings UI behind it.
+
 ## v1.20.0
 
 **The scattered ad on Home, found and named.** The second device report from the widened

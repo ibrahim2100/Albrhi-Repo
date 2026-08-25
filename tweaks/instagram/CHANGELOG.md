@@ -4,6 +4,34 @@
 Other versions should work too — the tweak looks for what it needs while the app runs
 rather than expecting a particular version number.
 
+## v4.1.14
+
+**Two diagnostics that were saying untrue things, and the AV1 transcode switched on.**
+
+*The timestamp scanner did not recognise this tweak's own output.* A report listed
+`1mo – 01:04:39 AM` and `6d – 06:16:07 PM` among the labels it had found, with 330 exact date swaps
+counted above them, and still concluded **no match**. The pattern was anchored after the unit —
+written for Instagram's bare `1mo`, never revisited when the custom-format feature began appending
+a time. The one screen meant to prove that feature works was the one screen that could not see it
+working. It still refuses `12.2K`, `185` and `5/6`, because none is a number followed by a time unit.
+
+*The story line named the chokepoint that is missing and not the one doing the work.* The receipt is
+withheld at `IGStorySeenStateUploader -networker`, which both tested builds have, and at
+`IGStoryPendingSeenStateStore -_uploadSeenState:`, which only the newer Swift build has — so a
+healthy 410 reported an absence and read as a fault. Both are named now, and the row is green when
+either is installed.
+
+*And `distinct` counted one ladder while the screen implied two.* It is filled below the saveable
+test, so an AV1-only ladder scores zero **by construction** — read beside nine AV1 rungs up to 1440p
+as "nothing to choose between", when it meant "nothing without transcoding". The funnel carries a
+`transcodable` count now.
+
+**The AV1 transcode is on by default.** It shipped off because it is heavy, which was right while
+most reels arrived in a codec iOS could save. `saveable 0` ended that: the download button was
+failing silently on most of the feed, with nothing on screen saying why. A costly feature that works
+beats a free one that does nothing, and it announces itself with a progress banner while it runs.
+**Anyone who turned it off keeps it off** — `registerDefaults` never overwrites a value somebody set.
+
 ## v4.1.13
 
 **A saved AV1 reel keeps its HDR.** The device report that confirmed 4.1.11's fix also answered the

@@ -14,6 +14,54 @@
 
 @implementation SCIYTDownloadsPage
 
+/// Four, six or eight simultaneous segment downloads.
+///
+/// **The right value is a fact about somebody's network, not about this source.** More connections
+/// finish a few-hundred-segment playlist sooner, and Google may throttle a client that opens too
+/// many -- which cannot be measured from a build machine. So the question is asked, the tested
+/// value is marked, and an untouched preference behaves exactly as every previous release did.
++ (void)askForParallel {
+    UIAlertController *sheet =
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"set_parallel")
+                                            message:SCILocalized(@"set_parallel_note")
+                                     preferredStyle:UIAlertControllerStyleActionSheet];
+
+    NSInteger current = SCIPrefNumber(SCIPrefParallel);
+    if (current < 1) current = 4;
+
+    for (NSNumber *value in @[@4, @6, @8]) {
+        NSString *title = [NSString stringWithFormat:@"%@%@%@",
+                           value,
+                           value.integerValue == 4 ? SCILocalized(@"set_parallel_tested") : @"",
+                           value.integerValue == current ? @" ✓" : @""];
+
+        [sheet addAction:[UIAlertAction actionWithTitle:title
+                                                  style:UIAlertActionStyleDefault
+                                                handler:^(__unused UIAlertAction *action) {
+            [[NSUserDefaults standardUserDefaults] setInteger:value.integerValue forKey:SCIPrefParallel];
+        }]];
+    }
+
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
+                                              style:UIAlertActionStyleCancel
+                                            handler:nil]];
+
+    UIWindow *key = nil;
+    for (UIWindow *window in [UIApplication sharedApplication].windows) {
+        if (window.isKeyWindow) { key = window; break; }
+    }
+
+    UIViewController *top = key.rootViewController;
+    while (top.presentedViewController) top = top.presentedViewController;
+
+    // An iPad refuses an action sheet with no anchor, and this screen is reachable there.
+    sheet.popoverPresentationController.sourceView = top.view;
+    sheet.popoverPresentationController.sourceRect =
+        CGRectMake(CGRectGetMidX(top.view.bounds), CGRectGetMidY(top.view.bounds), 1, 1);
+
+    [top presentViewController:sheet animated:YES completion:nil];
+}
+
 + (void)load {
     [SCIYTSettingsRegistry registerPageWithOrder:10
                                         title:SCILocalized(@"page_downloads")
@@ -27,6 +75,15 @@
                            detail:nil
                            symbol:@"arrow.down.circle.fill"
                            action:^{ [SCIYTDownloadCenter present]; }],
+            //
+            // A disclosure that asks rather than a new cell type. This screen has switches and
+            // disclosures; inventing a segmented row for three values would be more surface than
+            // the question deserves, and the sheet can say what the trade is in a sentence.
+            //
+            [SCIRow disclosureRow:SCILocalized(@"set_parallel")
+                           detail:SCILocalized(@"set_parallel_note")
+                           symbol:@"arrow.down.to.line"
+                           action:^{ [SCIYTDownloadsPage askForParallel]; }],
             [SCIRow switchRow:SCILocalized(@"set_tab_button")
                        detail:nil
                        symbol:@"square.grid.2x2"

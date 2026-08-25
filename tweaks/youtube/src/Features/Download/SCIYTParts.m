@@ -1,4 +1,5 @@
 #import "SCIYTParts.h"
+#import "../../Prefs.h"
 #import "../../SCILog.h"
 #import "../../Localization/SCILocalize.h"
 #import "../../Diagnostics/SCIYTDiagnostics.h"
@@ -9,7 +10,22 @@
 /// enough in parallel, but a phone on a weak connection sharing its bandwidth four ways makes
 /// each individual part slower and likelier to time out -- and a timeout costs a retry, which
 /// costs more than the parallelism saved.
-static const NSUInteger kSCIParallel = 4;
+//
+// **Four was a tested constant, and it is now a floor rather than the answer.**
+//
+// An HLS playlist is a few hundred segments, so this number is the largest single lever on how
+// long a download takes -- and the right value is a property of somebody's network, not of this
+// source. Google's servers may throttle a client that opens too many connections, which is not
+// measurable from a build machine, so it is asked rather than decided: the settings row offers
+// 4, 6 and 8, and an unset preference keeps exactly the behaviour that has been shipping.
+//
+static const NSUInteger kSCIParallelDefault = 4;
+
+static NSUInteger SCIParallel(void) {
+    NSInteger chosen = SCIPrefNumber(SCIPrefParallel);
+    if (chosen < 1 || chosen > 8) return kSCIParallelDefault;
+    return (NSUInteger)chosen;
+}
 
 /// How many times one part is asked for before the run gives up.
 static const NSUInteger kSCIAttempts = 3;
@@ -96,7 +112,7 @@ static dispatch_queue_t sciLock = nil;
                 @"com.albrhi.youtube.downloads"];
 
         // Enough for the parts in flight and no more.
-        configuration.HTTPMaximumConnectionsPerHost = kSCIParallel;
+        configuration.HTTPMaximumConnectionsPerHost = SCIParallel();
         configuration.timeoutIntervalForRequest = 60;
 
         // Not discretionary: this was asked for by a person who is watching a progress bar,

@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.58.18
+
+Albrhi for Instagram 4.1.14: two diagnostics corrected — one could not recognise the tweak's own
+date format, the other named a missing hook and not the working one — and the AV1 transcode is on by
+default, because without it the download button fails silently on most of the feed.
+
+Albrhi for YouTube 1.21.0: simultaneous downloads are a setting, and the MPEG-TS demuxer has tests
+that run on the build machine.
+
 ## v1.58.17
 
 Albrhi for YouTube Music 0.4.0: the settings screen — reached from the account menu — which the last

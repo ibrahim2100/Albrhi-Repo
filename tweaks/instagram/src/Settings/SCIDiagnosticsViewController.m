@@ -1,4 +1,5 @@
 #import "SCIDiagnosticsViewController.h"
+#import <objc/runtime.h>
 #import "shared/src/SCIPanelGate.h"
 #import "SCIFeatureAudit.h"
 #import "../Utils.h"
@@ -12,6 +13,8 @@ static NSInteger _lastQualityCount = -1;
 static NSString *_lastVideoClass = nil;
 static NSInteger _storySeenIntercepts = 0;
 static NSString *_storySeenHook = nil;
+/// Whether *either* chokepoint is installed -- which is what "is this feature working" means.
+static BOOL _storySeenAnyHook = NO;
 static NSString *_seenReplay = nil;
 static NSArray<NSString *> *_scanResults = nil;
 static NSArray<NSString *> *_timestampResults = nil;
@@ -210,10 +213,13 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
                               videoReps:(NSInteger)videoReps
                                saveable:(NSInteger)saveable
                                distinct:(NSInteger)distinct
+                           transcodable:(NSInteger)transcodable
                                  chosen:(NSString *)chosen {
     @synchronized (self) {
-        _qualityFunnel = [NSString stringWithFormat:@"versions %ld · reps %ld · video %ld · saveable %ld · distinct %ld",
-                          (long)versions, (long)representations, (long)videoReps, (long)saveable, (long)distinct];
+        _qualityFunnel = [NSString stringWithFormat:
+                          @"versions %ld · reps %ld · video %ld · saveable %ld · distinct %ld · transcodable %ld",
+                          (long)versions, (long)representations, (long)videoReps,
+                          (long)saveable, (long)distinct, (long)transcodable];
         _qualityChosen = [chosen copy];
     }
 }
@@ -246,15 +252,35 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
 }
 
 + (void)recordStorySeenHookAttached:(BOOL)attached resolvedTo:(NSString *)runtimeName {
+    //
+    // **This line named the chokepoint that is missing and said nothing about the one doing the
+    // work, so a healthy 410 read as a broken feature.**
+    //
+    // The receipt is withheld at two places: `IGStorySeenStateUploader -networker`, which both
+    // tested builds have, and `IGStoryPendingSeenStateStore -_uploadSeenState:`, which only the
+    // newer Swift build has. A device on 410 therefore reports the second as absent -- correctly,
+    // and with no consequence, because the first is installed and is what stops the upload there.
+    //
+    // A report that names an absence without naming the presence beside it is a report that
+    // invites a fix for something that is not broken. Both are stated now.
+    //
+    BOOL uploaderHere = (objc_getClass("IGStorySeenStateUploader") != Nil);
+    NSString *uploader = uploaderHere ? @"IGStorySeenStateUploader -networker: installed"
+                                      : @"IGStorySeenStateUploader: not in this build";
+
+    NSString *store;
     if (attached && runtimeName.length) {
-        _storySeenHook = [runtimeName copy];
+        store = [NSString stringWithFormat:@"%@ -_uploadSeenState:: installed", runtimeName];
     } else if (runtimeName.length) {
         // The class is here and the method is not. A different failure from the class being
         // absent, needing a different fix, so it is said differently.
-        _storySeenHook = [NSString stringWithFormat:@"%@ — no -_uploadSeenState:", runtimeName];
+        store = [NSString stringWithFormat:@"%@: no -_uploadSeenState: on this build", runtimeName];
     } else {
-        _storySeenHook = SCILocalized(@"diag_story_hook_missing");
+        store = SCILocalized(@"diag_story_hook_missing");
     }
+
+    _storySeenHook = [NSString stringWithFormat:@"%@ · %@", uploader, store];
+    _storySeenAnyHook = uploaderHere || attached;
 }
 
 // MARK: - Live hierarchy scan
@@ -316,8 +342,22 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
     static NSRegularExpression *pattern = nil;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
+        //
+        // **The scanner did not recognise this tweak's own output, and said "no match" while
+        // printing it.**
+        //
+        // A device report listed `1mo – 01:04:39 AM` and `6d – 06:16:07 PM` among the labels it
+        // had found, with 330 exact date swaps recorded above them, and still concluded that
+        // nothing matched. The pattern was anchored with `$` after the unit -- written for
+        // Instagram's own bare `1mo`, and never revisited when the custom-format feature began
+        // appending a time to it. So the one screen meant to prove the feature works was the one
+        // screen that could not see it working.
+        //
+        // The anchor now allows a separator and whatever follows, which still refuses `12.2K`,
+        // `185` and `5/6` because none of them is a number followed by a time unit.
+        //
         pattern = [NSRegularExpression regularExpressionWithPattern:
-                   @"^\\s*\\d+\\s*(s|m|h|d|w|y|mo)\\s*$"
+                   @"^\\s*\\d+\\s*(s|m|h|d|w|y|mo)\\b\\s*([–—\\-·•|,]\\s*.*)?$"
                    @"|ago|منذ|قبل"
                    @"|^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)"
                                                             options:NSRegularExpressionCaseInsensitive
@@ -567,8 +607,9 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
               @"ok": @(_storySeenIntercepts > 0)},
             @{@"title": SCILocalized(@"diag_story_hook"),
               @"detail": _storySeenHook ?: @"—",
-              @"ok": @(_storySeenHook.length > 0 &&
-                       ![_storySeenHook isEqualToString:SCILocalized(@"diag_story_hook_missing")])}
+              // Green when *either* chokepoint is installed. Judging this by the newer build's
+              // store alone marked a perfectly working 410 as a fault.
+              @"ok": @(_storySeenAnyHook)}
         ]},
         @{@"header": SCILocalized(@"diag_section_env"), @"rows": @[
             // What the panel's switch is doing in this app, and how that was decided.

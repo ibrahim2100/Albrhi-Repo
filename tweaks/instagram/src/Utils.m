@@ -683,6 +683,19 @@ static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
         NSInteger videoReps = 0;
         NSInteger saveable = 0;
         NSMutableSet<NSString *> *distinct = [NSMutableSet set];
+
+        //
+        // **Counted separately, because a picker has two ladders to offer from and this line
+        // described one of them.**
+        //
+        // `distinct` is filled below the saveable test, so an AV1-only ladder scores zero -- by
+        // construction, not by observation. A device report read `saveable 0 · distinct 0` beside
+        // nine AV1 rungs up to 1440p and was taken to mean there was nothing to choose between,
+        // when what it meant was that nothing could be chosen *without transcoding*. Same family
+        // as the quality picker's own `raw → parsed → deduped`: name the stages, or one number
+        // answers for two.
+        //
+        NSMutableSet<NSString *> *transcodable = [NSMutableSet set];
         NSString *chosen = nil;
 
         for (NSDictionary *rep in reps) {
@@ -690,6 +703,9 @@ static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
             videoReps++;
 
             NSString *family = rep[@"family"];
+            if ([family isEqualToString:@"av1"] || [family isEqualToString:@"vp9"]) {
+                [transcodable addObject:[NSString stringWithFormat:@"%@x%@", rep[@"width"], rep[@"height"]]];
+            }
             if (![family isEqualToString:@"h264"] && ![family isEqualToString:@"hevc"]) continue;
             saveable++;
 
@@ -718,6 +734,7 @@ static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
                                              videoReps:videoReps
                                               saveable:saveable
                                               distinct:(NSInteger)distinct.count
+                                           transcodable:(NSInteger)transcodable.count
                                                 chosen:chosen];
 
         return best;

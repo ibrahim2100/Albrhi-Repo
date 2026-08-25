@@ -19,7 +19,7 @@
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v4.1.13";  // Albrhi
+NSString *SCIVersionString = @"v4.1.14";  // Albrhi
 
 // Variables that work across features
 
@@ -61,7 +61,20 @@ NSString *SCIVersionString = @"v4.1.13";  // Albrhi
         // Off by default: on-device AV1→H.264 transcoding is heavy (battery, heat,
         // time) and experimental. When off, videos download at their best saveable
         // progressive quality exactly as before.
-        @"dw_transcode_av1": @(NO),
+        //
+        // **On, and this is a reversal with a reason.**
+        //
+        // It shipped off because on-device AV1 transcoding is heavy -- battery and heat -- and
+        // that was the right default while most reels arrived in a codec iOS could already save.
+        // A device report ended that: the ladder now reads `saveable 0`, every rung AV1, so the
+        // download button fails **silently on most of the feed** unless this is switched on, and
+        // nothing on screen says why. A costly feature that works beats a free one that does
+        // nothing, and the cost is visible while it runs -- there is a progress banner for it.
+        //
+        // `registerDefaults` is what makes this safe to change: a value somebody set by hand is
+        // untouched, so anyone who turned it off keeps it off.
+        //
+        @"dw_transcode_av1": @(YES),
         // Off: taking the best quality automatically is the point of the tweak. This
         // only exists for when the top rung costs more time and space than wanted.
         @"dw_quality_picker": @(NO),

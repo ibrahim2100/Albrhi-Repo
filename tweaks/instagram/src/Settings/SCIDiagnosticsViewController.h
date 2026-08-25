@@ -151,6 +151,7 @@ NS_ASSUME_NONNULL_BEGIN
                               videoReps:(NSInteger)videoReps
                                saveable:(NSInteger)saveable
                                distinct:(NSInteger)distinct
+                           transcodable:(NSInteger)transcodable
                                  chosen:(nullable NSString *)chosen;
 
 @end

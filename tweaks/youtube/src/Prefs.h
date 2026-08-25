@@ -31,6 +31,9 @@
 /// swipe, or this switch for anyone who wants the old ending back.
 #define SCIPrefAutoPhotos       @"auto_save_photos"
 #define SCIPrefTabButton        @"tab_download_button"
+/// How many segment downloads run at once, per host. Zero means "not set", which reads as the
+/// tested default rather than as none -- see SCIYTParts.
+#define SCIPrefParallel         @"download_parallel"
 
 /// A save button in the Shorts action bar, beside like and share.
 ///
