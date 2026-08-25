@@ -150,6 +150,7 @@ static void SCIBuildTables(void) {
         @"row_hide_online_note": @"TikTok stops being told you are active. Four separate reports are refused, and nothing false is sent in their place.",
         @"row_no_loop": @"Do not repeat a video",
         @"row_no_loop_note": @"A clip that reaches its end stays there instead of starting again. It does not move to the next video.",
+        @"section_count": @"%lu options",
     };
 
     _arTable = @{
@@ -288,6 +289,7 @@ static void SCIBuildTables(void) {
         @"row_hide_online_note": @"يتوقّف إبلاغ تيك توك بأنك نشط. تُرفض أربعة بلاغات منفصلة، ولا يُرسل مكانها شيء غير صحيح.",
         @"row_no_loop": @"عدم تكرار الفيديو",
         @"row_no_loop_note": @"المقطع الذي ينتهي يبقى عند نهايته بدل أن يبدأ من جديد. ولا ينتقل إلى الفيديو التالي.",
+        @"section_count": @"%lu خيارات",
     };
 }
 

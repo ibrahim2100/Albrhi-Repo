@@ -1,5 +1,22 @@
 # Albrhi for TikTok — what changed
 
+## v0.19.13
+
+**The settings screen is a list of sections you open, not one long scroll.**
+
+0.19.12 reorganised the *source* into seven files and left the screen exactly as it was — which is
+what a report of "the settings didn't become options?" was about, and it was right: the plumbing
+changed and nothing visible did. This is the visible half.
+
+The root now shows one row per section — icon, name, and how many options are inside it, so the
+list says what it is offering before it is opened — and a tap pushes that section onto its own
+page. Forty switches under seven headings in one scroll became seven rows.
+
+**One controller does both jobs.** A second class would have been a second copy of the row drawing,
+the switch handling and the tint, all of which are already here and correct — and this project has
+spent enough of this week on things that existed twice. The status pills and the footer stay at the
+root, because they answer *is this working* on arrival rather than above every section.
+
 ## v0.19.12
 
 **The video still repeated, and 0.19.11 had hooked an announcement rather than a decision.**

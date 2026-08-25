@@ -43,6 +43,10 @@ extern NSString *const kSCIRowDestination;
 extern NSString *const kSCIDestinationReport;
 extern NSString *const kSCIDestinationWelcome;
 extern NSString *const kSCISectionTitle;
+/// Optional. What the section's own row looks like on the root screen -- an SF Symbol name and a
+/// tint. A section without them still gets a row; it borrows the icon of its first switch.
+extern NSString *const kSCISectionIcon;
+extern NSString *const kSCISectionColor;
 extern NSString *const kSCISectionRows;
 
 /// Registers one section. Called from a `+load` in the section's own file, so registration happens

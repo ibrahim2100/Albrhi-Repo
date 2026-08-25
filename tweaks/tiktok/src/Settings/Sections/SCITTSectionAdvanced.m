@@ -30,6 +30,8 @@
 + (void)load {
     SCITTRegisterSection(70, ^NSDictionary *{
         return @{
+            kSCISectionIcon: @"wrench.and.screwdriver.fill",
+            kSCISectionColor: [UIColor systemGrayColor],
             kSCISectionTitle: SCILocalized(@"section_advanced"),
             kSCISectionRows: @[
                 @{

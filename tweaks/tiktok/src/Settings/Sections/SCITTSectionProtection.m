@@ -30,6 +30,8 @@
 + (void)load {
     SCITTRegisterSection(60, ^NSDictionary *{
         return @{
+            kSCISectionIcon: @"lock.shield.fill",
+            kSCISectionColor: [UIColor systemOrangeColor],
             kSCISectionTitle: SCILocalized(@"section_protection"),
             kSCISectionRows: @[
                 @{

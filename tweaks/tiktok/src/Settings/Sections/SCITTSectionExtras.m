@@ -33,6 +33,8 @@
             // **Three features that share nothing but where they were found.** Each was confirmed
             // against the real 46.4.0 binary before a hook was written, and each installs on its
             // own -- a build missing one class must not cost the other two.
+            kSCISectionIcon: @"sparkles",
+            kSCISectionColor: [UIColor systemPurpleColor],
             kSCISectionTitle: SCILocalized(@"section_extras"),
             kSCISectionRows: @[
                 @{

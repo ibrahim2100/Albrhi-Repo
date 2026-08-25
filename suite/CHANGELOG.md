@@ -1,5 +1,9 @@
 # Albrhi Changelog
 
+## v1.58.22
+
+Albrhi for TikTok 0.19.13: the settings screen is a list of sections you open, each on its own page.
+
 ## v1.58.21
 
 Albrhi for TikTok 0.19.12: videos really do not repeat now — the first attempt hooked the

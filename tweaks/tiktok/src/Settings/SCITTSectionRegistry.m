@@ -13,6 +13,8 @@ NSString *const kSCIRowDestination = @"destination";
 NSString *const kSCIDestinationReport = @"report";
 NSString *const kSCIDestinationWelcome = @"welcome";
 NSString *const kSCISectionTitle = @"section";
+NSString *const kSCISectionIcon = @"sectionIcon";
+NSString *const kSCISectionColor = @"sectionColor";
 NSString *const kSCISectionRows = @"rows";
 
 /// Order and builder, kept together so they cannot be sorted apart.

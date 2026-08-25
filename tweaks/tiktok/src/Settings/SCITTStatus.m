@@ -45,6 +45,19 @@ static const void *kSCIPrefKeyAssoc = &kSCIPrefKeyAssoc;
 
 @interface SCITTStatus ()
 @property (nonatomic, strong) NSArray<NSDictionary *> *sections;
+
+///
+/// **The one section this screen is showing, or nil for the list of them.**
+///
+/// The whole screen used to be a single scroll of seven sections and forty rows, which is a lot to
+/// read past to reach the last switch. The same controller now does both jobs: with nothing focused
+/// it draws a row per section, and tapping one pushes another copy of itself with that section set.
+///
+/// One class rather than two because the row drawing, the switch handling and the tint are already
+/// here and correct -- a second controller would be a second copy of all of it, and this project
+/// has spent enough of this week on things that existed twice.
+///
+@property (nonatomic, strong, nullable) NSDictionary *focus;
 @end
 
 @implementation SCITTStatus
@@ -97,8 +110,10 @@ static const void *kSCIPrefKeyAssoc = &kSCIPrefKeyAssoc;
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    self.title = SCILocalized(@"title");
     self.sections = [self buildSections];
+
+    // A focused page is titled by its own section; the root keeps the tweak's name.
+    self.title = self.focus ? self.focus[kSCISectionTitle] : SCILocalized(@"title");
 
     self.navigationItem.rightBarButtonItem =
         [[UIBarButtonItem alloc] initWithTitle:SCILocalized(@"done")
@@ -119,8 +134,20 @@ static const void *kSCIPrefKeyAssoc = &kSCIPrefKeyAssoc;
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedRowHeight = 72;
 
-    [self buildHeader];
-    [self buildFooter];
+    //
+    // **The status pills and the footer belong to the root, not to every page.**
+    //
+    // They describe the tweak as a whole -- what is on, whether the panel gate allows this app --
+    // which is an answer to "is this working", asked on arrival. Repeating them above every
+    // section would be the same header four taps deep, pushing the switches down each time.
+    //
+    if (!self.focus) {
+        [self buildHeader];
+        [self buildFooter];
+    }
+
+    // A pushed page has a back chevron; only the root needs a way out of the sheet.
+    if (self.focus) self.navigationItem.rightBarButtonItem = nil;
 }
 
 /// The card at the top: what this is, which TikTok it is running in, and whether the three moving
@@ -336,30 +363,59 @@ static const void *kSCIPrefKeyAssoc = &kSCIPrefKeyAssoc;
 #pragma mark - Table
 
 - (NSDictionary *)rowAt:(NSIndexPath *)indexPath {
-    if (indexPath.section < 0 || indexPath.section >= (NSInteger)self.sections.count) return nil;
-    NSArray *rows = self.sections[(NSUInteger)indexPath.section][kSCISectionRows];
+    if (!self.focus) return nil;   // the root list draws its own rows, not these
+    NSArray *rows = self.focus[kSCISectionRows];
     if (indexPath.row < 0 || indexPath.row >= (NSInteger)rows.count) return nil;
     return rows[(NSUInteger)indexPath.row];
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return (NSInteger)self.sections.count;
+    if (!self.focus) return 1;   // the list of sections
+    return 1;                    // the focused section, on its own
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (section < 0 || section >= (NSInteger)self.sections.count) return 0;
-    return (NSInteger)[self.sections[(NSUInteger)section][kSCISectionRows] count];
+    if (!self.focus) return (NSInteger)self.sections.count;
+    return (NSInteger)[self.focus[kSCISectionRows] count];
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    if (section < 0 || section >= (NSInteger)self.sections.count) return nil;
-    return self.sections[(NSUInteger)section][kSCISectionTitle];
+    // The root list needs no header -- its rows *are* the headers.
+    return self.focus ? self.focus[kSCISectionTitle] : nil;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView
          cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell =
         [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:nil];
+
+    //
+    // **The root screen's own row: a section, not a setting.**
+    //
+    // Icon, name, and how many switches are inside it -- so the list says what it is offering
+    // before it is opened, which is the whole reason for splitting the screen up.
+    //
+    if (!self.focus) {
+        if (indexPath.row < 0 || indexPath.row >= (NSInteger)self.sections.count) return cell;
+
+        NSDictionary *section = self.sections[(NSUInteger)indexPath.row];
+        NSArray *rows = section[kSCISectionRows];
+
+        cell.textLabel.text = section[kSCISectionTitle];
+        cell.textLabel.font = [UIFont systemFontOfSize:17 weight:UIFontWeightSemibold];
+        cell.detailTextLabel.text =
+            [NSString stringWithFormat:SCILocalized(@"section_count"), (unsigned long)rows.count];
+        cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
+
+        // A section with no icon of its own borrows its first row's, which is always something
+        // that describes it -- rather than drawing a blank where every other row has a badge.
+        NSString *icon = section[kSCISectionIcon] ?: [rows.firstObject objectForKey:kSCIRowIcon];
+        UIColor *tint = section[kSCISectionColor] ?: [rows.firstObject objectForKey:kSCIRowColor];
+        cell.imageView.image = SCITTBadgeImage(icon, tint);
+
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        return cell;
+    }
 
     NSDictionary *row = [self rowAt:indexPath];
     if (!row) return cell;
@@ -406,6 +462,17 @@ static const void *kSCIPrefKeyAssoc = &kSCIPrefKeyAssoc;
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
+
+    // At the root, a tap opens a section: the same controller with that section focused, pushed
+    // onto the navigation stack this screen is already presented inside.
+    if (!self.focus) {
+        if (indexPath.row < 0 || indexPath.row >= (NSInteger)self.sections.count) return;
+
+        SCITTStatus *page = [[SCITTStatus alloc] initWithStyle:UITableViewStyleInsetGrouped];
+        page.focus = self.sections[(NSUInteger)indexPath.row];
+        [self.navigationController pushViewController:page animated:YES];
+        return;
+    }
 
     NSDictionary *row = [self rowAt:indexPath];
     if (![row[kSCIRowKind] isEqualToString:kSCIKindLink]) return;

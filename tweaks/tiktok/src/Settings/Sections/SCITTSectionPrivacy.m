@@ -33,6 +33,8 @@
             // Three switches, not one. A story's seen mark, a message's read receipt and a profile
             // view are three reports to three different places, and one switch bundling them could
             // never be turned off for just one.
+            kSCISectionIcon: @"hand.raised.fill",
+            kSCISectionColor: [UIColor systemTealColor],
             kSCISectionTitle: SCILocalized(@"section_privacy"),
             kSCISectionRows: @[
                 @{

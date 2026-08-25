@@ -30,6 +30,8 @@
 + (void)load {
     SCITTRegisterSection(20, ^NSDictionary *{
         return @{
+            kSCISectionIcon: @"play.rectangle.fill",
+            kSCISectionColor: [UIColor systemIndigoColor],
             kSCISectionTitle: SCILocalized(@"section_watching"),
             kSCISectionRows: @[
                 @{

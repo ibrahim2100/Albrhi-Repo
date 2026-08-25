@@ -30,6 +30,8 @@
 + (void)load {
     SCITTRegisterSection(10, ^NSDictionary *{
         return @{
+            kSCISectionIcon: @"arrow.down.circle.fill",
+            kSCISectionColor: [UIColor systemBlueColor],
             kSCISectionTitle: SCILocalized(@"section_download"),
             kSCISectionRows: @[
                 @{

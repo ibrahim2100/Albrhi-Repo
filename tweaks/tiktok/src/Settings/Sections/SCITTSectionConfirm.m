@@ -33,6 +33,8 @@
             // Its own section rather than a row under Watching: these two do not change what TikTok
             // shows, they change what a tap does -- the only feature here that stands between the
             // user and an action they are already making.
+            kSCISectionIcon: @"checkmark.shield.fill",
+            kSCISectionColor: [UIColor systemGreenColor],
             kSCISectionTitle: SCILocalized(@"section_confirm"),
             kSCISectionRows: @[
                 @{
