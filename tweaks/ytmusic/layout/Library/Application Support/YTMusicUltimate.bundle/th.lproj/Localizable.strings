@@ -1,0 +1,214 @@
+"ENABLED" = "เปิดใช้งาน YTMEnhanced";
+"RESTART_FOOTER" = "ต้องรีสตาร์ทแอปเพื่อปรับใช้งาน";
+
+"PREMIUM_SETTINGS" = "พรีเมียม";
+"NO_ADS" = "ไม่มีโฆษณา";
+"NO_ADS_DESC" = "ลบโฆษณาภายในแอป";
+"BACKGROUND_PLAYBACK" = "เล่นเบื้องหลัง";
+"BACKGROUND_PLAYBACK_DESC" = "เปิดใช้งานการเล่นเบื้องหลัง";
+
+"PLAYER_SETTINGS" = "เครื่องเล่น";
+"DOWNLOAD_AUDIO" = "ดาวน์โหลดเสียง";
+"DOWNLOAD_AUDIO_DESC" = "เพิ่มตัวเลือกดาวน์โหลดเสียงโดยกดปุ่ม YTMEnhanced ในเครื่องเล่น";
+"DOWNLOAD_COVER" = "ดาวน์โหลดภาพปก";
+"DOWNLOAD_COVER_DESC" = "เพิ่มตัวเลือกดาวน์โหลดภาพปกโดยกดปุ่ม YTMEnhanced ในเครื่องเล่น";
+"PLAYBACK_RATE_BUTTON" = "แสดงปุ่มปรับความเร็ว";
+"PLAYBACK_RATE_BUTTON_DESC" = "ใช้ในการปรับความเร็วการเล่น";
+"VOLBAR" = "แถบปรับระดับเสียง";
+"VOLBAR_DESC" = "เพิ่มแถบปรับระดับเสียงในเครื่องเล่น";
+"NO_AUTORADIO" = "ปิดวิทยุอัตโนมัติ";
+"NO_AUTORADIO_DESC" = "ปิดฟีเจอร์เล่นเพลงต่อเนื่อง";
+"SKIP_CONTENT_WARNING" = "ข้ามคำเตือนเนื้อหา";
+"SKIP_CONTENT_WARNING_DESC" = "ข้ามคำเตือนเกี่ยวกับเนื้อหาที่อาจไม่เหมาะสม";
+"AV_DEFAULT_MODE" = "โหมดการเล่นเริ่มต้น";
+
+"SKIP_NONMUSIC_PARTS" = "SponsorBlock";
+"SKIP_NONMUSIC_PARTS_DESC" = "ข้ามช่วงที่ไม่ใช่ดนตรีในมิวสิกวิดีโอ";
+"SB_BEHAVIOR" = "การกระทำ";
+"SB_SKIP" = "ข้าม";
+"SB_ASK" = "ถามก่อน";
+"SB_NOTIF_DURATION" = "ระยะเวลาแจ้งเตือน (วินาที)";
+
+"SEEK_BUTTONS" = "แทนที่ปุ่มถัดไป/ก่อนหน้า ด้วยปุ่มกรอไปข้างหน้าและย้อนกลับ";
+"SEEK_TIME_FOOTER" = "เลือกเวลาการกรอเป็นวินาที\n\nค่าเริ่มต้น:\nย้อนกลับ = 10 วินาที\nกรอไปข้างหน้า = 30 วินาที\n\nสามารถข้ามไปเพลงถัดไปหรือก่อนหน้าได้โดยกดค้างที่ปุ่ม";
+"DEFAULT" = "ค่าเริ่มต้น";
+
+"THEME_SETTINGS" = "ธีม";
+"OLED_DARK_THEME" = "ธีมมืด OLED";
+"OLED_DARK_THEME_DESC" = "เปิดใช้งานธีมมืด OLED";
+"OLED_DARK_KEYBOARD" = "คีย์บอร์ดมืด OLED";
+"OLED_DARK_KEYBOARD_DESC" = "เปิดใช้งานคีย์บอร์ดมืด OLED";
+"LOW_CONTRAST" = "คอนทราสต์ต่ำ";
+"LOW_CONTRAST_DESC" = "ลดความคอนทราสต์ของข้อความและปุ่ม";
+
+"NAVBAR_SETTINGS" = "แถบนำทาง";
+"DONT_STICK_HEADERS" = "ไม่ยึดแถบ";
+"DONT_STICK_HEADERS_DESC" = "ปิดการยึดแถบนำทางด้านบนของหน้าจอ";
+"HIDE_HISTORY_BUTTON" = "ซ่อนปุ่มประวัติ";
+"HIDE_HISTORY_BUTTON_DESC" = "ซ่อนปุ่มประวัติในแถบนำทาง";
+"HIDE_CAST_BUTTON" = "ซ่อนปุ่มแคสต์";
+"HIDE_CAST_BUTTON_DESC" = "ซ่อนปุ่มแคสต์ในแถบนำทาง";
+"HIDE_FILTER_BUTTON" = "ลบปุ่มตัวกรองการจัดเรียง";
+"HIDE_FILTER_BUTTON_DESC" = "ลบปุ่มกรองจากคลังเพลงและดาวน์โหลดออกจากแถบนำทาง";
+
+"TABBAR_SETTINGS" = "แท็บนำทาง";
+"STARTUP_TAB" = "แท็บเริ่มต้น";
+"DOWNLOADS" = "ดาวน์โหลด";
+
+"TAB_SETTINGS" = "การตั้งค่าแท็บ";
+"REMOVE_TABBAR_LABELS" = "ซ่อนชื่อแท็บ";
+"HIDE_HOME" = "ซ่อนแท็บหน้าแรก";
+"HIDE_SAMPLES" = "ซ่อนแท็บลองฟัง";
+"HIDE_EXPLORE" = "ซ่อนแท็บสำรวจ";
+"HIDE_LIBRARY" = "ซ่อนแท็บคลังเพลง";
+"HIDE_DOWNLOADS" = "ซ่อนแท็บดาวน์โหลด";
+
+"CLEAR_CACHE" = "ล้างแคช";
+
+"LINKS" = "ลิงก์";
+"TWITTER" = "ติดตาม %@ บน Twitter";
+"TWITTER_DESC" = "ติดตามฉันเพื่อรับอัปเดต";
+"DISCORD" = "เข้าร่วม Discord";
+"DISCORD_DESC" = "รายงานบั๊กและขอฟีเจอร์";
+"SOURCE_CODE" = "ซอร์สโค้ด";
+"SOURCE_CODE_DESC" = "ดูโค้ดของโปรเจกต์";
+
+"CLOSE" = "ปิด";
+"WARNING" = "คำเตือน";
+"LOGIN_INFO" = "จำเป็นต้องรีสตาร์ทแอปหลังจากลงชื่อเข้าใช้บัญชี Google สำเร็จ";
+"RETRY_LOGIN" = "เปิดใช้งานการแก้ไขแล้ว\n\nกรุณาลงชื่อเข้าใช้ใหม่อีกครั้ง";
+"APPLY_MESSAGE" = "การกระทำนี้จะปิด YouTube Music เพื่อปรับใช้การเปลี่ยนแปลง คุณแน่ใจหรือไม่?";
+"CANCEL" = "ยกเลิก";
+"YES" = "ใช่";
+"REGIONAL_RESTRICTION" = "ดูเหมือนว่า YouTube Music จะถูกจำกัดในประเทศของคุณ\n\nกรุณาใช้ VPN เพื่อเข้าถึง YouTube Music";
+
+"DONT_RUSH" = "อย่ารีบกับสิ่งที่ดี";
+"DONT_RUSH_DESC" = "ต้องเล่นเพลงก่อนเพื่อดึงลิงก์ออกมา";
+"SELECT_ACTION" = "เลือกการทำงาน";
+"DOWNLOAD_PREMIUM" = "ดาวน์โหลด (ต้องใช้พรีเมียม)";
+"DOWNLOADING" = "กำลังดาวน์โหลด";
+"OOPS" = "ไม่สามารถดาวน์โหลดได้\nมีบางอย่างผิดพลาด";
+"LINK_NOT_FOUND" = "ไม่พบลิงก์";
+"SAVED_TO_PHOTOS" = "บันทึกลงในรูปภาพแล้ว";
+"DONE" = "เสร็จสิ้น";
+"FOUND_SEGMENT" = "พบช่วงที่ไม่เกี่ยวข้อง";
+"SEGMENT_SKIPPED" = "ข้ามช่วงที่ไม่เกี่ยวข้องแล้ว";
+"SKIP" = "ข้าม";
+"UNSKIP" = "ยกเลิกการข้าม";
+
+"EMPTY" = "เนื้อหาที่คุณดาวน์โหลดจะแสดงที่นี่";
+"REMOVE_ALL" = "ลบไฟล์เสียงทั้งหมด";
+"SHARE_ALL" = "แชร์ไฟล์เสียงทั้งหมด";
+"DELETE_MESSAGE" = "คุณแน่ใจว่าต้องการลบ %@ หรือไม่?";
+"ALL_DOWNLOADS" = "ไฟล์เสียงที่ดาวน์โหลดทั้งหมด";
+"DELETE" = "ลบ";
+"RENAME" = "เปลี่ยนชื่อ";
+
+"TRANSLATION_SETTINGS" = "เนื้อเพลงซิงค์";
+"BILINGUAL_LYRICS" = "เนื้อเพลงสองภาษา";
+"BILINGUAL_LYRICS_DESC" = "แสดงบรรทัดคำแปลใต้เนื้อเพลงต้นฉบับ";
+"TRANSLATION_PROVIDER" = "ผู้ให้บริการ";
+"TRANSLATION_FOLLOW_APP_LANG" = "ตามภาษาแอป";
+"TRANSLATION_TARGET_LANG" = "ภาษาปลายทาง";
+"TRANSLATION_API_KEY" = "คีย์ API";
+"TRANSLATION_MODEL" = "โมเดล";
+"TRANSLATION_BASE_URL" = "Base URL";
+"TRANSLATION_CLEAR_CACHE" = "ล้างแคชเนื้อเพลงและคำแปล";
+"PROVIDER_GOOGLE" = "Google Translate";
+"PROVIDER_ANTHROPIC" = "Anthropic";
+"PROVIDER_GEMINI" = "Gemini";
+"PROVIDER_OPENAI" = "เข้ากันได้กับ OpenAI";
+"SYNCED_LYRICS" = "เลเยอร์เนื้อเพลงซิงค์";
+"LYRICS_SOURCE" = "แหล่งเนื้อเพลง";
+"LYRICS_SOURCE_AUTO" = "อัตโนมัติ";
+"LYRICS_EFFECT_FANCY" = "เต็มรูปแบบ";
+"LYRICS_EFFECT_SCALE" = "ขยายขนาด";
+"LYRICS_EFFECT_OFFSET" = "เลื่อน";
+"LYRICS_EFFECT_FOCUS" = "โฟกัส";
+"LYRICS_DEFAULT_TEXT" = "ข้อความบรรทัดว่าง";
+"LYRICS_CHINESE_CONVERSION" = "การแปลงอักษรจีน";
+"LYRICS_CHINESE_DISABLED" = "ปิด";
+"LYRICS_CHINESE_S2T" = "จีนตัวย่อเป็นตัวเต็ม";
+"LYRICS_CHINESE_T2S" = "จีนตัวเต็มเป็นตัวย่อ";
+"LYRICS_ROMANIZATION" = "อักษรโรมัน";
+"LYRICS_SHOW_INEXACT" = "แสดงผลลัพธ์ที่ตรงไม่ตรงเป๊ะ";
+"TRANSLATION_DEBUG_LOGS" = "บันทึกการดีบัก";
+"TRANSLATION_DEBUG_LOGS_DESC" = "บันทึกข้อมูลการวินิจฉัย YTMULyrics และ YTMUTranslation ลงในบันทึกของอุปกรณ์";
+"LYRICS_PANEL_TITLE" = "เนื้อเพลง";
+"LYRICS_TEXT_SIZE" = "ขนาดข้อความ";
+"LYRICS_TIMING_OFFSET" = "ปรับเวลา";
+"LYRICS_FOCUS_BLUR" = "เบลอโฟกัส";
+"LYRICS_TIMECODES" = "รหัสเวลา";
+"LYRICS_SELECTED" = "เลือกแล้ว";
+"LYRICS_MATCHED" = "ตรงกัน";
+"LYRICS_CHECKING" = "กำลังตรวจสอบ";
+"LYRICS_NO_MATCH" = "ไม่ตรงกัน";
+"LYRICS_RESET" = "รีเซ็ต";
+"LYRICS_STATE_SEARCHING" = "กำลังค้นหาเนื้อเพลง...";
+"LYRICS_STATE_NO_LYRICS" = "ไม่พบเนื้อเพลง";
+"LYRICS_STATE_OPEN_SONG" = "เปิดเพลงเพื่อโหลดเนื้อเพลง";
+"LYRICS_ATTRIBUTION_BOTH_FORMAT" = "เนื้อเพลงและคำแปลจาก %@";
+"LYRICS_ATTRIBUTION_LYRICS_FORMAT" = "เนื้อเพลงจาก %@";
+"LYRICS_ATTRIBUTION_TRANSLATION_FORMAT" = "แปลโดย %@";
+"LYRICS_PROVIDER_NO_MATCH" = "ไม่ตรงกัน";
+"LYRICS_PROVIDER_TIMEOUT" = "หมดเวลา";
+"LYRICS_PROVIDER_FALLBACK" = "ผู้แปล";
+"LYRICS_ERROR_NO_DESCRIPTION" = "ไม่มีคำอธิบายวิดีโอ";
+"LYRICS_ERROR_NO_LLM" = "ยังไม่ได้ตั้งค่า LLM";
+"LYRICS_ERROR_DESCRIPTION_NO_LYRICS" = "ไม่พบเนื้อเพลงในคำอธิบาย";
+"LYRICS_ERROR_NETEASE_CRYPTO" = "การเข้ารหัสล้มเหลว";
+"LYRICS_ERROR_NETEASE_BAD_JSON" = "การตอบกลับไม่ถูกต้อง";
+"LYRICS_ERROR_MUSIXMATCH_NO_TOKEN" = "ไม่มีโทเค็น";
+"LYRICS_ERROR_MUSIXMATCH_BAD_JSON" = "การตอบกลับไม่ถูกต้อง";
+"LYRICS_ERROR_LRCLIB_BAD_JSON" = "การตอบกลับไม่ถูกต้อง";
+"LYRICS_ERROR_LRCLIB_TIMEOUT" = "คำขอหมดเวลา";
+"LYRICS_ERROR_INNERTUBE_FETCH" = "ดึงข้อมูลไม่สำเร็จ";
+"LYRICS_ERROR_DESCRIPTION_EXTRACT" = "แยกข้อมูลไม่สำเร็จ";
+"LYRICS_ERROR_TITLE_NORMALIZE" = "ปรับรูปแบบชื่อเพลงไม่สำเร็จ";
+"LYRICS_ERROR_HTTP_STATUS_FORMAT" = "HTTP %ld";
+"LYRICS_ERROR_NETEASE_API_FORMAT" = "ข้อผิดพลาด API %ld";
+"TRANSLATION_CACHE_CLEARED_FORMAT" = "เนื้อเพลง: %lu\nคำแปล: %lu\nอักษรโรมัน: ล้างหน่วยความจำแล้ว";
+
+"SCROBBLING_SETTINGS" = "Scrobbling";
+"SCROBBLE_MASTER_ENABLE" = "เปิดใช้งาน scrobbling";
+"SCROBBLE_MASTER_FOOTER" = "สวิตช์หลัก เมื่อปิดอยู่ จะไม่ส่งประวัติการฟังไปยังบริการใดๆ";
+
+"SCROBBLE_LASTFM_HEADER" = "Last.fm";
+"SCROBBLE_LASTFM_ENABLE" = "ส่งไปยัง Last.fm";
+"SCROBBLE_LASTFM_FOOTER" = "ลงทะเบียนแอปพลิเคชัน API ที่ last.fm/api/account/create วาง API key และ secret ที่นี่ จากนั้นกดยืนยันตัวตน";
+"SCROBBLE_API_KEY" = "API key";
+"SCROBBLE_API_SECRET" = "API secret";
+"SCROBBLE_LASTFM_AUTHENTICATE" = "ยืนยันตัวตน";
+"SCROBBLE_LASTFM_FINISH_AUTH" = "ฉันอนุมัติแล้ว — เสร็จสิ้น";
+"SCROBBLE_LASTFM_SIGN_OUT" = "ออกจากระบบ";
+"SCROBBLE_LASTFM_OPEN_BROWSER" = "เปิด Safari เพื่ออนุมัติ";
+"SCROBBLE_LASTFM_OPEN_BROWSER_MSG" = "Safari จะเปิด Last.fm เพื่อให้คุณอนุญาตแอปนี้ หลังอนุมัติแล้วกลับมาที่นี่และกดปุ่มเดิมอีกครั้งเพื่อทำให้เสร็จ";
+"SCROBBLE_LASTFM_OPEN_SAFARI" = "เปิด Safari";
+"SCROBBLE_LASTFM_AUTHENTICATED" = "เชื่อมต่อ Last.fm แล้ว";
+"SCROBBLE_LASTFM_AUTH_FAILED" = "การยืนยันตัวตน Last.fm ล้มเหลว";
+
+"SCROBBLE_LISTENBRAINZ_HEADER" = "ListenBrainz";
+"SCROBBLE_LISTENBRAINZ_ENABLE" = "ส่งไปยัง ListenBrainz";
+"SCROBBLE_LISTENBRAINZ_FOOTER" = "คัดลอก User Token ของคุณจาก listenbrainz.org/profile/ แล้ววางที่นี่ จำเป็นต้องเปลี่ยน API root เฉพาะกรณีที่คุณโฮสต์เอง";
+"SCROBBLE_USER_TOKEN" = "User token";
+"SCROBBLE_API_ROOT" = "URL หลักของ API";
+"SCROBBLE_LISTENBRAINZ_VALIDATE" = "ตรวจสอบ token";
+"SCROBBLE_LISTENBRAINZ_OK" = "Token ListenBrainz ใช้งานได้";
+"SCROBBLE_LISTENBRAINZ_FAIL" = "Token ListenBrainz ใช้งานไม่ได้";
+
+"SCROBBLE_STATUS" = "สถานะ";
+"SCROBBLE_CONNECTED_AS" = "เชื่อมต่อในชื่อ %@";
+"SCROBBLE_NOT_CONNECTED" = "ยังไม่ได้เชื่อมต่อ";
+
+"SCROBBLE_DEBUG_LOGS" = "บันทึกการดีบัก";
+"SCROBBLE_DEBUG_LOGS_DESC" = "พิมพ์ข้อมูลวินิจฉัย scrobble ไปยังบันทึกของอุปกรณ์";
+
+"TRANSLATION_SELECT_MODEL" = "เลือกโมเดล";
+"TRANSLATION_MODEL_ENTER_MANUALLY" = "ป้อนเอง";
+"TRANSLATION_MODEL_FETCH_FAILED" = "ดึงรายการโมเดลไม่สำเร็จ";
+"TRANSLATION_MODEL_NEED_KEY" = "กรอกคีย์ API ก่อน";
+
+"TRANSLATION_TEST_MODEL" = "ทดสอบโมเดล";
+"TRANSLATION_TEST_SUCCESS" = "โมเดลใช้งานได้";
+"TRANSLATION_TEST_FAILED" = "ทดสอบไม่สำเร็จ";
+"TRANSLATION_TEST_NO_PROVIDER" = "เลือกผู้ให้บริการและกรอกคีย์ API ก่อน";

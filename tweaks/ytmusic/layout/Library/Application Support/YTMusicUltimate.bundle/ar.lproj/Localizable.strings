@@ -1,0 +1,214 @@
+"ENABLED" = "تفعيل YTMEnhanced";
+"RESTART_FOOTER" = "قم بإغلاق وإعادة فتح البرنامج لتطبيق الاعدادات";
+
+"PREMIUM_SETTINGS" = "مميزات البريميوم";
+"NO_ADS" = "بدون اعلانات";
+"NO_ADS_DESC" = "حذف الاعلانات من التطبيق";
+"BACKGROUND_PLAYBACK" = "التشغيل في الخلفية";
+"BACKGROUND_PLAYBACK_DESC" = "تفعيل التشغيل في الخلفية";
+
+"PLAYER_SETTINGS" = "إعدادات المشغل";
+"DOWNLOAD_AUDIO" = "تحميل الموسيقي";
+"DOWNLOAD_AUDIO_DESC" = "يضيف خيار تنزيل الصوت عند الضغط على زر YTMEnhanced في المشغل";
+"DOWNLOAD_COVER" = "تحميل صورة الغلاف";
+"DOWNLOAD_COVER_DESC" = "يضيف خيار تنزيل صورة الغلاف عند الضغط على زر YTMEnhanced في المشغل";
+"PLAYBACK_RATE_BUTTON" = "إظهار زر تقييم التشغيل";
+"PLAYBACK_RATE_BUTTON_DESC" = "التحكم بسرعة التشغيل";
+"VOLBAR" = "شريط الصوت";
+"VOLBAR_DESC" = "يضيف شريط الصوت إلى المشغل";
+"NO_AUTORADIO" = "تعطيل الراديو";
+"NO_AUTORADIO_DESC" = "تعطيل ميزة التشغيل اللانهائي للموسيقي";
+"SKIP_CONTENT_WARNING" = "تخطي تحذيرات المحتوي";
+"SKIP_CONTENT_WARNING_DESC" = "يقوم بتخطي التحذيرات بخصوص المحتوي العائلي";
+"AV_DEFAULT_MODE" = "الوضع التلقائي للمشغل";
+
+"SKIP_NONMUSIC_PARTS" = "SponsorBlock";
+"SKIP_NONMUSIC_PARTS_DESC" = "تخطي قسم الاعلانات في موسيقي الفيديو";
+"SB_BEHAVIOR" = "Behavior";
+"SB_SKIP" = "Skip";
+"SB_ASK" = "Ask";
+"SB_NOTIF_DURATION" = "Notification duration (sec)";
+
+"SEEK_BUTTONS" = "استبدال الإعجاب/عدم الإعجاب بأزرار أمامية وخلفية";
+"SEEK_TIME_FOOTER" = "حدد وقت التقدم بالثواني\n\nالافتراضي:\nالتقدم للخلف = 10 ثوانٍ\nالتقدم للأمام = 30 ثانية\n\nالانتقال إلى الموسيقي التالية والسابقة عن طريق الضغط لفترة طويلة على الأزرار.";
+"DEFAULT" = "افتراضي";
+
+"THEME_SETTINGS" = "اختيارات المظهر";
+"OLED_DARK_THEME" = "الوضع الداكن";
+"OLED_DARK_THEME_DESC" = "تفعيل الوضع الداكن";
+"OLED_DARK_KEYBOARD" = "الوضع الداكن في لوحة المفاتيح";
+"OLED_DARK_KEYBOARD_DESC" = "تفعيل الوضع الداكن في لوحة المفاتيح";
+"LOW_CONTRAST" = "تباين منخفض";
+"LOW_CONTRAST_DESC" = "انخفاض تباين النص والأزرار";
+
+"NAVBAR_SETTINGS" = "خيارات الشريط العلوي";
+"DONT_STICK_HEADERS" = "تعطيل ميزة العناوين اللاصقة";
+"DONT_STICK_HEADERS_DESC" = "يقوم بتعطيل التصاق العناوين بالشاشة";
+"HIDE_HISTORY_BUTTON" = " إخفاء زر سجل التصفح";
+"HIDE_HISTORY_BUTTON_DESC" = "يقوم بإخفاء زر سجل التصفح من الشاشة الرئيسية";
+"HIDE_CAST_BUTTON" = "إخفاء زر الكاست";
+"HIDE_CAST_BUTTON_DESC" = "يقوم بإخفاء زر الكاست من الشاشة الرئيسية";
+"HIDE_FILTER_BUTTON" = "إخفاء زر الفلترة";
+"HIDE_FILTER_BUTTON_DESC" = "يقوم بإخفاء زر فلترة المكتبة/التنزيلات من شريط التنقل";
+
+"TABBAR_SETTINGS" = "خيارات الشريط السفلي";
+"STARTUP_TAB" = "الصفحة الافتراضية";
+"DOWNLOADS" = "التحميلات";
+
+"TAB_SETTINGS" = "إعدادات الشريط السفلي";
+"REMOVE_TABBAR_LABELS" = "حذف اسماء التبويب";
+"HIDE_HOME" = "أخفاء تبويب الصفحة الرئيسية ";
+"HIDE_SAMPLES" = "إخفاء تبويب العينات";
+"HIDE_EXPLORE" = "إخفاء تبويب الاستكشاف";
+"HIDE_LIBRARY" = "إخفاء تبويب المكتبة";
+"HIDE_DOWNLOADS" = "خفاء تبويب التنزيلات";
+
+"CLEAR_CACHE" = "مسح الذاكرة المؤقتة";
+
+"LINKS" = "الروابط";
+"TWITTER" = "تابع %@ على تويتر"; 
+"TWITTER_DESC" = "تابعني للحصول على التحديثات";
+"DISCORD" = "انضم الينا في ديسكورد";
+"DISCORD_DESC" = "الإبلاغ عن الأخطاء وطلب الميزات";
+"SOURCE_CODE" = "مشروع مفتوح المصدر";
+"SOURCE_CODE_DESC" = "ألق نظرة على الكود";
+
+"CLOSE" = "يغلق";
+"WARNING" = "تحذير";
+"LOGIN_INFO" = "تم تسجيل الدخول بنجاح سيتم إعادة تشغيل البرنامج";
+"RETRY_LOGIN" = "Workaround activated.\n\nPlease try again.";
+"APPLY_MESSAGE" = "سيتم غلق البرنامج لتطبيق الاعدادات هل انت متأكد؟";
+"CANCEL" = "إلغاء";
+"YES" = "نعم, موافق";
+"REGIONAL_RESTRICTION" = "يبدو أن موسيقى يوتيوب مقيدة في بلدك. يرجى استخدام VPN للوصول إلى موسيقى يوتيوب.";
+
+"DONT_RUSH" = "!لا تستعجل ارجوك";
+"DONT_RUSH_DESC" = "لا تستعجل قم بتشغيل الموسيقي اولاً ";
+"SELECT_ACTION" = "اختر الفعل";
+"DOWNLOADING" = "يتم التحميل";
+"DOWNLOAD_PREMIUM" = "Download (Premium required)";
+"OOPS" = "هناك شئ خطأ";
+"LINK_NOT_FOUND" = "Link not found";
+"SAVED_TO_PHOTOS" = "تم الحفظ في البوم الصور";
+"DONE" = "تم الانتهاء بنجاح";
+"FOUND_SEGMENT" = "Found offtopic segment";
+"SEGMENT_SKIPPED" = "Offtopic has been skipped";
+"SKIP" = "Skip";
+"UNSKIP" = "Unskip";
+
+"EMPTY" = "المحتوي الذي تم تحميله سيظهر هنا";
+"REMOVE_ALL" = "مسح كل التحميلات";
+"SHARE_ALL" = "مشاركة كل التحميلات";
+"DELETE_MESSAGE" = "هل انت متأكد انك تريد الحذف ؟";
+"ALL_DOWNLOADS" = "كل التحميلات";  //keep it lowercase
+"DELETE" = "حذف";
+"RENAME" = "Rename";
+
+"TRANSLATION_SETTINGS" = "كلمات الأغاني المتزامنة";
+"BILINGUAL_LYRICS" = "كلمات ثنائية اللغة";
+"BILINGUAL_LYRICS_DESC" = "تعرض أسطر الترجمة أسفل الكلمات الأصلية";
+"TRANSLATION_PROVIDER" = "مزود الخدمة";
+"TRANSLATION_FOLLOW_APP_LANG" = "اتباع لغة التطبيق";
+"TRANSLATION_TARGET_LANG" = "اللغة المستهدفة";
+"TRANSLATION_API_KEY" = "مفتاح API";
+"TRANSLATION_MODEL" = "النموذج";
+"TRANSLATION_BASE_URL" = "عنوان URL الأساسي";
+"TRANSLATION_CLEAR_CACHE" = "مسح ذاكرة الكلمات والترجمة المؤقتة";
+"PROVIDER_GOOGLE" = "ترجمة Google";
+"PROVIDER_ANTHROPIC" = "Anthropic";
+"PROVIDER_GEMINI" = "Gemini";
+"PROVIDER_OPENAI" = "متوافق مع OpenAI";
+"SYNCED_LYRICS" = "طبقة كلمات الأغاني المتزامنة";
+"LYRICS_SOURCE" = "مصدر الكلمات";
+"LYRICS_SOURCE_AUTO" = "تلقائي";
+"LYRICS_EFFECT_FANCY" = "متقن";
+"LYRICS_EFFECT_SCALE" = "تكبير";
+"LYRICS_EFFECT_OFFSET" = "إزاحة";
+"LYRICS_EFFECT_FOCUS" = "تركيز";
+"LYRICS_DEFAULT_TEXT" = "نص السطر الفارغ";
+"LYRICS_CHINESE_CONVERSION" = "تحويل الصينية";
+"LYRICS_CHINESE_DISABLED" = "معطل";
+"LYRICS_CHINESE_S2T" = "من المبسطة إلى التقليدية";
+"LYRICS_CHINESE_T2S" = "من التقليدية إلى المبسطة";
+"LYRICS_ROMANIZATION" = "كتابة لاتينية";
+"LYRICS_SHOW_INEXACT" = "عرض المطابقات غير الدقيقة";
+"TRANSLATION_DEBUG_LOGS" = "سجلات التصحيح";
+"TRANSLATION_DEBUG_LOGS_DESC" = "يطبع تشخيصات YTMULyrics و YTMUTranslation إلى سجلات الجهاز";
+"LYRICS_PANEL_TITLE" = "كلمات الأغنية";
+"LYRICS_TEXT_SIZE" = "حجم النص";
+"LYRICS_TIMING_OFFSET" = "إزاحة التوقيت";
+"LYRICS_FOCUS_BLUR" = "ضبابية التركيز";
+"LYRICS_TIMECODES" = "رموز الوقت";
+"LYRICS_SELECTED" = "محدد";
+"LYRICS_MATCHED" = "مطابق";
+"LYRICS_CHECKING" = "جارٍ التحقق";
+"LYRICS_NO_MATCH" = "لا يوجد تطابق";
+"LYRICS_RESET" = "إعادة تعيين";
+"LYRICS_STATE_SEARCHING" = "جارٍ البحث عن الكلمات...";
+"LYRICS_STATE_NO_LYRICS" = "لم يتم العثور على كلمات";
+"LYRICS_STATE_OPEN_SONG" = "افتح أغنية لتحميل الكلمات.";
+"LYRICS_ATTRIBUTION_BOTH_FORMAT" = "الكلمات والترجمة عبر %@";
+"LYRICS_ATTRIBUTION_LYRICS_FORMAT" = "الكلمات عبر %@";
+"LYRICS_ATTRIBUTION_TRANSLATION_FORMAT" = "تمت الترجمة عبر %@";
+"LYRICS_PROVIDER_NO_MATCH" = "لا يوجد تطابق";
+"LYRICS_PROVIDER_TIMEOUT" = "انتهت المهلة";
+"LYRICS_PROVIDER_FALLBACK" = "المترجم";
+"LYRICS_ERROR_NO_DESCRIPTION" = "لا يوجد وصف";
+"LYRICS_ERROR_NO_LLM" = "لم يتم إعداد LLM";
+"LYRICS_ERROR_DESCRIPTION_NO_LYRICS" = "لا توجد كلمات في الوصف";
+"LYRICS_ERROR_NETEASE_CRYPTO" = "فشل التشفير";
+"LYRICS_ERROR_NETEASE_BAD_JSON" = "استجابة غير صالحة";
+"LYRICS_ERROR_MUSIXMATCH_NO_TOKEN" = "لا يوجد رمز";
+"LYRICS_ERROR_MUSIXMATCH_BAD_JSON" = "استجابة غير صالحة";
+"LYRICS_ERROR_LRCLIB_BAD_JSON" = "استجابة غير صالحة";
+"LYRICS_ERROR_LRCLIB_TIMEOUT" = "انتهت مهلة الطلب";
+"LYRICS_ERROR_INNERTUBE_FETCH" = "فشل الجلب";
+"LYRICS_ERROR_DESCRIPTION_EXTRACT" = "فشل الاستخراج";
+"LYRICS_ERROR_TITLE_NORMALIZE" = "فشل توحيد العنوان";
+"LYRICS_ERROR_HTTP_STATUS_FORMAT" = "HTTP %ld";
+"LYRICS_ERROR_NETEASE_API_FORMAT" = "خطأ API %ld";
+"TRANSLATION_CACHE_CLEARED_FORMAT" = "الكلمات: %lu\nالترجمات: %lu\nالكتابة اللاتينية: تم مسح الذاكرة";
+
+"SCROBBLING_SETTINGS" = "Scrobbling";
+"SCROBBLE_MASTER_ENABLE" = "تفعيل الـ scrobbling";
+"SCROBBLE_MASTER_FOOTER" = "المفتاح الرئيسي. عند الإيقاف، لن يتم إرسال أي تشغيل إلى أي خدمة.";
+
+"SCROBBLE_LASTFM_HEADER" = "Last.fm";
+"SCROBBLE_LASTFM_ENABLE" = "الإرسال إلى Last.fm";
+"SCROBBLE_LASTFM_FOOTER" = "سجّل تطبيق API على last.fm/api/account/create، ثم ألصق API key وsecret هنا، ثم اضغط مصادقة.";
+"SCROBBLE_API_KEY" = "API key";
+"SCROBBLE_API_SECRET" = "API secret";
+"SCROBBLE_LASTFM_AUTHENTICATE" = "مصادقة";
+"SCROBBLE_LASTFM_FINISH_AUTH" = "وافقت — إنهاء";
+"SCROBBLE_LASTFM_SIGN_OUT" = "تسجيل الخروج";
+"SCROBBLE_LASTFM_OPEN_BROWSER" = "فتح Safari للموافقة";
+"SCROBBLE_LASTFM_OPEN_BROWSER_MSG" = "سيفتح Safari صفحة Last.fm حتى تتمكن من تفويض هذا التطبيق. بعد الموافقة عُد إلى هنا واضغط نفس الزر مرة أخرى لإنهاء العملية.";
+"SCROBBLE_LASTFM_OPEN_SAFARI" = "فتح Safari";
+"SCROBBLE_LASTFM_AUTHENTICATED" = "تم الاتصال بـ Last.fm";
+"SCROBBLE_LASTFM_AUTH_FAILED" = "فشل مصادقة Last.fm";
+
+"SCROBBLE_LISTENBRAINZ_HEADER" = "ListenBrainz";
+"SCROBBLE_LISTENBRAINZ_ENABLE" = "الإرسال إلى ListenBrainz";
+"SCROBBLE_LISTENBRAINZ_FOOTER" = "انسخ User Token الخاص بك من listenbrainz.org/profile/ والصقه هنا. لا يحتاج API root إلى التغيير إلا إذا كنت تستضيف بنفسك.";
+"SCROBBLE_USER_TOKEN" = "User token";
+"SCROBBLE_API_ROOT" = "عنوان API الأساسي";
+"SCROBBLE_LISTENBRAINZ_VALIDATE" = "التحقق من الـ token";
+"SCROBBLE_LISTENBRAINZ_OK" = "Token ListenBrainz صالح";
+"SCROBBLE_LISTENBRAINZ_FAIL" = "Token ListenBrainz غير صالح";
+
+"SCROBBLE_STATUS" = "الحالة";
+"SCROBBLE_CONNECTED_AS" = "متصل باسم %@";
+"SCROBBLE_NOT_CONNECTED" = "غير متصل";
+
+"SCROBBLE_DEBUG_LOGS" = "سجلات التصحيح";
+"SCROBBLE_DEBUG_LOGS_DESC" = "طباعة تشخيص scrobble في سجلات الجهاز";
+
+"TRANSLATION_SELECT_MODEL" = "اختر النموذج";
+"TRANSLATION_MODEL_ENTER_MANUALLY" = "إدخال يدوي";
+"TRANSLATION_MODEL_FETCH_FAILED" = "تعذّر جلب النماذج";
+"TRANSLATION_MODEL_NEED_KEY" = "أدخل مفتاح API أولاً";
+
+"TRANSLATION_TEST_MODEL" = "اختبار النموذج";
+"TRANSLATION_TEST_SUCCESS" = "النموذج يعمل";
+"TRANSLATION_TEST_FAILED" = "فشل الاختبار";
+"TRANSLATION_TEST_NO_PROVIDER" = "اختر مزوّدًا وأدخل مفتاح API أولاً";

@@ -1,0 +1,214 @@
+"ENABLED" = "YTMEnhancedを有効にする";
+"RESTART_FOOTER" = "変更を適用するためにアプリを再起動";
+
+"PREMIUM_SETTINGS" = "プレミアムオプション";
+"NO_ADS" = "広告を非表示";
+"NO_ADS_DESC" = "アプリ内広告を削除";
+"BACKGROUND_PLAYBACK" = "バックグラウンド再生";
+"BACKGROUND_PLAYBACK_DESC" = "バックグラウンド再生を有効化";
+
+"PLAYER_SETTINGS" = "プレーヤーオプション";
+"DOWNLOAD_AUDIO" = "Download audio";
+"DOWNLOAD_AUDIO_DESC" = "Adds the option to download audio by pressing the YTMEnhanced button in the player";
+"DOWNLOAD_COVER" = "Download cover image";
+"DOWNLOAD_COVER_DESC" = "Adds the option to download cover image by pressing the YTMEnhanced button in the player";
+"PLAYBACK_RATE_BUTTON" = "再生速度ボタンを表示";
+"PLAYBACK_RATE_BUTTON_DESC" = "再生速度を変更できます";
+"VOLBAR" = "ボリュームバー";
+"VOLBAR_DESC" = "プレーヤーにボリュームバーを追加する";
+"NO_AUTORADIO" = "ラジオを無効化する";
+"NO_AUTORADIO_DESC" = "エンドレスミュージック機能を無効化";
+"SKIP_CONTENT_WARNING" = "Skip content warning";
+"SKIP_CONTENT_WARNING_DESC" = "Skips warnings about potentially harmful content";
+"AV_DEFAULT_MODE" = "デフォルトの再生モード";
+
+"SKIP_NONMUSIC_PARTS" = "SponsorBlock";
+"SKIP_NONMUSIC_PARTS_DESC" = "ミュージックビデオでの音楽以外のセクションをスキップします";
+"SB_BEHAVIOR" = "Behavior";
+"SB_SKIP" = "Skip";
+"SB_ASK" = "Ask";
+"SB_NOTIF_DURATION" = "Notification duration (sec)";
+
+"SEEK_BUTTONS" = "Replace next/previous with forward and backward buttons";
+"SEEK_TIME_FOOTER" = "Select a seek time in seconds\n\nDefaults:\nSeek backward = 10 sec.\nSeek forward = 30 sec.";
+"DEFAULT" = "Default";
+
+"THEME_SETTINGS" = "テーマオプション";
+"OLED_DARK_THEME" = "有機ELダークテーマ";
+"OLED_DARK_THEME_DESC" = "有機ELダークテーマを有効にします";
+"OLED_DARK_KEYBOARD" = "有機ELダークキーボード";
+"OLED_DARK_KEYBOARD_DESC" = "有機ELダークキーボードを有効にします";
+"LOW_CONTRAST" = "コントラストを下げる";
+"LOW_CONTRAST_DESC" = "文字とボタンのコントラストを下げます";
+
+"NAVBAR_SETTINGS" = "ナビゲーションバーオプション";
+"DONT_STICK_HEADERS" = "Dont stick headers";
+"DONT_STICK_HEADERS_DESC" = "Unsticks pinned at the top of the screen panels";
+"HIDE_HISTORY_BUTTON" = "履歴ボタンを非表示";
+"HIDE_HISTORY_BUTTON_DESC" = "ナビゲーションバーの履歴ボタンを非表示にします";
+"HIDE_CAST_BUTTON" = "キャストボタンを非表示";
+"HIDE_CAST_BUTTON_DESC" = "ナビゲーションバーのキャストボタンを非表示にします";
+"HIDE_FILTER_BUTTON" = "Remove sort filter button";
+"HIDE_FILTER_BUTTON_DESC" = "Removes Library/Downloads filter button from the navigation bar";
+
+"TABBAR_SETTINGS" = "Tab bar options";
+"STARTUP_TAB" = "Startup tab";
+"DOWNLOADS" = "Downloads";
+
+"TAB_SETTINGS" = "Tab settings";
+"REMOVE_TABBAR_LABELS" = "No tab bar labels";
+"HIDE_HOME" = "Hide Home tab";
+"HIDE_SAMPLES" = "Hide Samples tab";
+"HIDE_EXPLORE" = "Hide Explore tab";
+"HIDE_LIBRARY" = "Hide Library tab";
+"HIDE_DOWNLOADS" = "Hide Downloads tab";
+
+"CLEAR_CACHE" = "Clear cache";
+
+"LINKS" = "リンク";
+"TWITTER" = "ツイッターで %@ をフォロー";
+"TWITTER_DESC" = "更新情報を入手する";
+"DISCORD" = "Discordサーバーに参加";
+"DISCORD_DESC" = "バグの報告と機能のリクエスト";
+"SOURCE_CODE" = "ソースコード";
+"SOURCE_CODE_DESC" = "コードを表示する";
+
+"CLOSE" = "閉じる";
+"WARNING" = "警告";
+"LOGIN_INFO" = "App restart required after successful signing into Google account";
+"RETRY_LOGIN" = "Workaround activated.\n\nPlease try again.";
+"APPLY_MESSAGE" = "この操作でYouTube Musicを終了し、変更を適用します。本当にいいですか？";
+"CANCEL" = "キャンセル";
+"YES" = "はい";
+"REGIONAL_RESTRICTION" = "Looks like YouTube Music restricted in your country.\n\n Please use VPN to get access to YouTube Music.";
+
+"DONT_RUSH" = "Don't rush brilliance";
+"DONT_RUSH_DESC" = "Required to play the song to extract the link";
+"SELECT_ACTION" = "Select Action";
+"DOWNLOADING" = "Downloading";
+"DOWNLOAD_PREMIUM" = "Download (Premium required)";
+"OOPS" = "Oops\nsomething went wrong";
+"LINK_NOT_FOUND" = "Link not found";
+"SAVED_TO_PHOTOS" = "Saved to Photos";
+"DONE" = "Done";
+"FOUND_SEGMENT" = "Found offtopic segment";
+"SEGMENT_SKIPPED" = "Offtopic has been skipped";
+"SKIP" = "Skip";
+"UNSKIP" = "Unskip";
+
+"EMPTY" = "Content you download will show here";
+"REMOVE_ALL" = "Remove all audios";
+"SHARE_ALL" = "Share all audios";
+"DELETE_MESSAGE" = "Are you sure you want to delete %@?";
+"ALL_DOWNLOADS" = "all download audios"; //keep it lowercase
+"DELETE" = "Delete";
+"RENAME" = "Rename";
+
+"TRANSLATION_SETTINGS" = "同期歌詞";
+"BILINGUAL_LYRICS" = "バイリンガル歌詞";
+"BILINGUAL_LYRICS_DESC" = "元の歌詞の下に翻訳行を表示します";
+"TRANSLATION_PROVIDER" = "プロバイダー";
+"TRANSLATION_FOLLOW_APP_LANG" = "アプリの言語に合わせる";
+"TRANSLATION_TARGET_LANG" = "翻訳先言語";
+"TRANSLATION_API_KEY" = "APIキー";
+"TRANSLATION_MODEL" = "モデル";
+"TRANSLATION_BASE_URL" = "ベースURL";
+"TRANSLATION_CLEAR_CACHE" = "歌詞と翻訳キャッシュを削除";
+"PROVIDER_GOOGLE" = "Google 翻訳";
+"PROVIDER_ANTHROPIC" = "Anthropic";
+"PROVIDER_GEMINI" = "Gemini";
+"PROVIDER_OPENAI" = "OpenAI互換";
+"SYNCED_LYRICS" = "同期歌詞オーバーレイ";
+"LYRICS_SOURCE" = "歌詞ソース";
+"LYRICS_SOURCE_AUTO" = "自動";
+"LYRICS_EFFECT_FANCY" = "フル";
+"LYRICS_EFFECT_SCALE" = "拡大";
+"LYRICS_EFFECT_OFFSET" = "オフセット";
+"LYRICS_EFFECT_FOCUS" = "フォーカス";
+"LYRICS_DEFAULT_TEXT" = "空行の表示";
+"LYRICS_CHINESE_CONVERSION" = "中国語の簡繁変換";
+"LYRICS_CHINESE_DISABLED" = "無効";
+"LYRICS_CHINESE_S2T" = "簡体字から繁体字";
+"LYRICS_CHINESE_T2S" = "繁体字から簡体字";
+"LYRICS_ROMANIZATION" = "ローマ字化";
+"LYRICS_SHOW_INEXACT" = "あいまい一致を許可";
+"TRANSLATION_DEBUG_LOGS" = "デバッグログ";
+"TRANSLATION_DEBUG_LOGS_DESC" = "YTMULyrics と YTMUTranslation の診断情報をデバイスログに出力します";
+"LYRICS_PANEL_TITLE" = "歌詞";
+"LYRICS_TEXT_SIZE" = "文字サイズ";
+"LYRICS_TIMING_OFFSET" = "タイミング調整";
+"LYRICS_FOCUS_BLUR" = "フォーカスぼかし";
+"LYRICS_TIMECODES" = "タイムコード";
+"LYRICS_SELECTED" = "選択済み";
+"LYRICS_MATCHED" = "一致";
+"LYRICS_CHECKING" = "確認中";
+"LYRICS_NO_MATCH" = "一致なし";
+"LYRICS_RESET" = "リセット";
+"LYRICS_STATE_SEARCHING" = "歌詞を検索中...";
+"LYRICS_STATE_NO_LYRICS" = "歌詞が見つかりません";
+"LYRICS_STATE_OPEN_SONG" = "曲を開いて歌詞を読み込みます。";
+"LYRICS_ATTRIBUTION_BOTH_FORMAT" = "歌詞と翻訳：%@";
+"LYRICS_ATTRIBUTION_LYRICS_FORMAT" = "歌詞：%@";
+"LYRICS_ATTRIBUTION_TRANSLATION_FORMAT" = "翻訳：%@";
+"LYRICS_PROVIDER_NO_MATCH" = "一致なし";
+"LYRICS_PROVIDER_TIMEOUT" = "タイムアウト";
+"LYRICS_PROVIDER_FALLBACK" = "翻訳サービス";
+"LYRICS_ERROR_NO_DESCRIPTION" = "概要欄がありません";
+"LYRICS_ERROR_NO_LLM" = "LLM が設定されていません";
+"LYRICS_ERROR_DESCRIPTION_NO_LYRICS" = "概要欄に歌詞がありません";
+"LYRICS_ERROR_NETEASE_CRYPTO" = "暗号化に失敗しました";
+"LYRICS_ERROR_NETEASE_BAD_JSON" = "無効な応答";
+"LYRICS_ERROR_MUSIXMATCH_NO_TOKEN" = "トークンがありません";
+"LYRICS_ERROR_MUSIXMATCH_BAD_JSON" = "無効な応答";
+"LYRICS_ERROR_LRCLIB_BAD_JSON" = "無効な応答";
+"LYRICS_ERROR_LRCLIB_TIMEOUT" = "リクエストがタイムアウトしました";
+"LYRICS_ERROR_INNERTUBE_FETCH" = "取得に失敗しました";
+"LYRICS_ERROR_DESCRIPTION_EXTRACT" = "抽出に失敗しました";
+"LYRICS_ERROR_TITLE_NORMALIZE" = "タイトルの正規化に失敗しました";
+"LYRICS_ERROR_HTTP_STATUS_FORMAT" = "HTTP %ld";
+"LYRICS_ERROR_NETEASE_API_FORMAT" = "API エラー %ld";
+"TRANSLATION_CACHE_CLEARED_FORMAT" = "歌詞: %lu\n翻訳: %lu\nローマ字: メモリキャッシュを削除しました";
+
+"SCROBBLING_SETTINGS" = "Scrobbling";
+"SCROBBLE_MASTER_ENABLE" = "Scrobblingを有効にする";
+"SCROBBLE_MASTER_FOOTER" = "マスタースイッチ。オフのときはどのサービスにも再生履歴は送信されません。";
+
+"SCROBBLE_LASTFM_HEADER" = "Last.fm";
+"SCROBBLE_LASTFM_ENABLE" = "Last.fmに送信";
+"SCROBBLE_LASTFM_FOOTER" = "last.fm/api/account/createでAPIアプリを登録し、API keyとsecretをここに貼り付けてから「認証」をタップしてください。";
+"SCROBBLE_API_KEY" = "API key";
+"SCROBBLE_API_SECRET" = "API secret";
+"SCROBBLE_LASTFM_AUTHENTICATE" = "認証";
+"SCROBBLE_LASTFM_FINISH_AUTH" = "承認しました — 完了";
+"SCROBBLE_LASTFM_SIGN_OUT" = "サインアウト";
+"SCROBBLE_LASTFM_OPEN_BROWSER" = "Safariを開いて承認";
+"SCROBBLE_LASTFM_OPEN_BROWSER_MSG" = "SafariでLast.fmが開き、このアプリを認可できます。承認後にここへ戻って同じボタンをタップして完了します。";
+"SCROBBLE_LASTFM_OPEN_SAFARI" = "Safariを開く";
+"SCROBBLE_LASTFM_AUTHENTICATED" = "Last.fmに接続済み";
+"SCROBBLE_LASTFM_AUTH_FAILED" = "Last.fmの認証に失敗しました";
+
+"SCROBBLE_LISTENBRAINZ_HEADER" = "ListenBrainz";
+"SCROBBLE_LISTENBRAINZ_ENABLE" = "ListenBrainzに送信";
+"SCROBBLE_LISTENBRAINZ_FOOTER" = "listenbrainz.org/profile/ からUser Tokenをコピーしてここに貼り付けてください。API rootは自分でホストする場合のみ変更が必要です。";
+"SCROBBLE_USER_TOKEN" = "User token";
+"SCROBBLE_API_ROOT" = "API ルート";
+"SCROBBLE_LISTENBRAINZ_VALIDATE" = "トークンを検証";
+"SCROBBLE_LISTENBRAINZ_OK" = "ListenBrainzトークンは有効です";
+"SCROBBLE_LISTENBRAINZ_FAIL" = "ListenBrainzトークンが無効です";
+
+"SCROBBLE_STATUS" = "状態";
+"SCROBBLE_CONNECTED_AS" = "%@として接続済み";
+"SCROBBLE_NOT_CONNECTED" = "未接続";
+
+"SCROBBLE_DEBUG_LOGS" = "デバッグログ";
+"SCROBBLE_DEBUG_LOGS_DESC" = "scrobbleの診断情報をデバイスログに出力します";
+
+"TRANSLATION_SELECT_MODEL" = "モデルを選択";
+"TRANSLATION_MODEL_ENTER_MANUALLY" = "手動で入力";
+"TRANSLATION_MODEL_FETCH_FAILED" = "モデル一覧を取得できませんでした";
+"TRANSLATION_MODEL_NEED_KEY" = "先に API キーを入力してください";
+
+"TRANSLATION_TEST_MODEL" = "モデルをテスト";
+"TRANSLATION_TEST_SUCCESS" = "モデルは正常です";
+"TRANSLATION_TEST_FAILED" = "テスト失敗";
+"TRANSLATION_TEST_NO_PROVIDER" = "先にプロバイダーを選び API キーを入力してください";

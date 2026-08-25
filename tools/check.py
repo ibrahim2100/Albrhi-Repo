@@ -362,7 +362,13 @@ for path in SRC + HDR:
         # Drop escape sequences (\" \\ …) before counting quotes: an escaped quote
         # inside a regex pattern — @"\\b%@=\"([^\"]+)\"" — is not a string boundary,
         # and counting it as one flagged perfectly valid lines.
-        if re.sub(r'\\.', '', code).count('"') % 2:
+        #
+        # **And a character literal holding a quote is not a boundary either.** `if (c == '"')`
+        # is how every hand-written parser reads a quoted field, and there are three of them in
+        # the carried-over YouTube Music lyrics module -- code that compiles today, which by this
+        # file's own oracle makes any finding in it a false positive.
+        counted = re.sub(r"'(?:\\.|[^'])'", '', re.sub(r'\\.', '', code))
+        if counted.count('"') % 2:
             report('unterminated string literal at %s:%d' % (path, n))
 
 # 8. Project symbols used without the header that declares them.

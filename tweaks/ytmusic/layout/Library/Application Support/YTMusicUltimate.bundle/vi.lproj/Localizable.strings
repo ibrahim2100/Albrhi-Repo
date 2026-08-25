@@ -1,0 +1,214 @@
+"ENABLED" = "Bật YTMEnhanced";
+"RESTART_FOOTER" = "Khởi động lại ứng dụng để áp dụng các thay đổi";
+
+"PREMIUM_SETTINGS" = "Tùy chọn Premium";
+"NO_ADS" = "Chặn quảng cáo";
+"NO_ADS_DESC" = "Loại bỏ quảng cáo trong ứng dụng";
+"BACKGROUND_PLAYBACK" = "Phát trong nền";
+"BACKGROUND_PLAYBACK_DESC" = "Bật tính năng phát trong nền";
+
+"PLAYER_SETTINGS" = "Tùy chọn trình phát";
+"DOWNLOAD_AUDIO" = "Tải âm thanh xuống";
+"DOWNLOAD_AUDIO_DESC" = "Thêm tùy chọn tải xuống âm thanh bằng cách nhấn nút YTMEnhanced trong trình phát";
+"DOWNLOAD_COVER" = "Tải ảnh bìa xuống";
+"DOWNLOAD_COVER_DESC" = "Thêm tùy chọn tải xuống ảnh bìa bằng cách nhấn nút YTMEnhanced trong trình phát";
+"PLAYBACK_RATE_BUTTON" = "Nút điều khiển tốc độ";
+"PLAYBACK_RATE_BUTTON_DESC" = "Hiển thị nút điều khiển tốc độ phát";
+"VOLBAR" = "Thanh âm lượng";
+"VOLBAR_DESC" = "Thêm thanh âm lượng vào trình phát";
+"NO_AUTORADIO" = "Tắt tính năng đài phát";
+"NO_AUTORADIO_DESC" = "Không sử dụng tính năng phát nhạc liên tục";
+"SKIP_CONTENT_WARNING" = "Bỏ qua cảnh báo nội dung";
+"SKIP_CONTENT_WARNING_DESC" = "Không hiển thị cảnh báo nội dung độc hại";
+"AV_DEFAULT_MODE" = "Chế độ phát mặc định";
+
+"SKIP_NONMUSIC_PARTS" = "SponsorBlock";
+"SKIP_NONMUSIC_PARTS_DESC" = "Bỏ qua phần không phải nhạc trong video ca nhạc";
+"SB_BEHAVIOR" = "Khi phát hiện";
+"SB_SKIP" = "Bỏ qua";
+"SB_ASK" = "Hỏi";
+"SB_NOTIF_DURATION" = "Thời lượng thông báo (giây)";
+
+"SEEK_BUTTONS" = "Thay thế nút trước hoặc tiếp theo bằng nút tua nhạc";
+"SEEK_TIME_FOOTER" = "Chọn thời lượng tua theo đơn vị giây\n\nMặc định:\nTua lại = 10 giây.\nTua đi = 30 giây.\n\nBạn có thể nhấn giữ nút tua đế chuyển đến bản nhạc trước hoặc tiếp theo tương ứng.";
+"DEFAULT" = "Mặc định";
+
+"THEME_SETTINGS" = "Tùy chọn giao diện";
+"OLED_DARK_THEME" = "Chủ đề OLED";
+"OLED_DARK_THEME_DESC" = "Sử dụng giao diện đen tuyền";
+"OLED_DARK_KEYBOARD" = "Bàn phím OLED";
+"OLED_DARK_KEYBOARD_DESC" = "Sử dụng giao diện bàn phím đen tuyền";
+"LOW_CONTRAST" = "Giảm độ tương phản";
+"LOW_CONTRAST_DESC" = "Giảm độ tương phản của văn bản và các nút chức năng";
+
+"NAVBAR_SETTINGS" = "Tùy chọn thanh điều hướng";
+"DONT_STICK_HEADERS" = "Không cố định thanh trên";
+"DONT_STICK_HEADERS_DESC" = "Tự động ẩn thanh trên khi lướt xem";
+"HIDE_HISTORY_BUTTON" = "Ẩn nút Lịch sử";
+"HIDE_HISTORY_BUTTON_DESC" = "Ẩn nút mở lịch sử phát khỏi thanh điều hướng";
+"HIDE_CAST_BUTTON" = "Ẩn nút Truyền";
+"HIDE_CAST_BUTTON_DESC" = "Ẩn nút truyền nội dung đến thiết bị khác khỏi thanh điều hướng";
+"HIDE_FILTER_BUTTON" = "Ẩn nút Lọc và sắp xếp";
+"HIDE_FILTER_BUTTON_DESC" = "Ẩn nút mở tùy chọn bộ lọc khỏi thanh trên trong tab Thư viện và Tải xuống";
+
+"TABBAR_SETTINGS" = "Tùy chọn thanh tab";
+"STARTUP_TAB" = "Tab khởi động";
+"DOWNLOADS" = "Tải xuống";
+
+"TAB_SETTINGS" = "Cài đặt thanh tab";
+"REMOVE_TABBAR_LABELS" = "Ẩn tên tab";
+"HIDE_HOME" = "Ẩn tab Trang chủ";
+"HIDE_SAMPLES" = "Ẩn tab Đoạn nhạc";
+"HIDE_EXPLORE" = "Ẩn tab Khám phá";
+"HIDE_LIBRARY" = "Ẩn tab Thư viện";
+"HIDE_DOWNLOADS" = "Ẩn tab Tải xuống";
+
+"CLEAR_CACHE" = "Xóa bộ nhớ đệm";
+
+"LINKS" = "Liên kết";
+"TWITTER" = "Theo dõi %@ trên Twitter";
+"TWITTER_DESC" = "Nhận thông tin về các cập nhật mới";
+"DISCORD" = "Tham gia Discord";
+"DISCORD_DESC" = "Báo lỗi và gửi yêu cầu tính năng";
+"SOURCE_CODE" = "Mã nguồn";
+"SOURCE_CODE_DESC" = "Xem mã nguồn";
+
+"CLOSE" = "Đóng";
+"WARNING" = "Cảnh báo";
+"LOGIN_INFO" = "Yêu cầu khởi động lại ứng dụng sau khi đăng nhập thành công vào tài khoản Google";
+"RETRY_LOGIN" = "Đã áp dụng phương thức thay thế.\n\nVui lòng thử lại.";
+"APPLY_MESSAGE" = "Hành động này sẽ đóng YouTube Music để áp dụng các thay đổi. Bạn có chắc chắn muốn thực hiện không?";
+"CANCEL" = "Hủy bỏ";
+"YES" = "Có";
+"REGIONAL_RESTRICTION" = "Có vẻ YouTube Music đã bị hạn chế ở quốc gia của bạn.\n\nVui lòng sử dụng VPN truy cập YouTube Music.";
+
+"DONT_RUSH" = "Đừng vội vàng";
+"DONT_RUSH_DESC" = "Bạn cần phát bài hát để có thể trích xuất liên kết";
+"SELECT_ACTION" = "Chọn tác vụ";
+"DOWNLOAD_PREMIUM" = "Tải xuống (cần có Premium)";
+"DOWNLOADING" = "Đang tải";
+"OOPS" = "Đã xảy ra lỗi";
+"LINK_NOT_FOUND" = "Không tìm thấy liên kết";
+"SAVED_TO_PHOTOS" = "Đã lưu vào Ảnh";
+"DONE" = "Xong";
+"FOUND_SEGMENT" = "Đã phát hiện phân đoạn không liên quan";
+"SEGMENT_SKIPPED" = "Đã bỏ qua phân đoạn không liên quan";
+"SKIP" = "Bỏ qua";
+"UNSKIP" = "Hoàn tác";
+
+"EMPTY" = "Nội dung bạn tải xuống sẽ hiển thị tại đây";
+"REMOVE_ALL" = "Xóa tất cả âm thanh";
+"SHARE_ALL" = "Chia sẻ tất cả âm thanh";
+"DELETE_MESSAGE" = "Bạn có chắc chắn muốn xóa %@ không?";
+"ALL_DOWNLOADS" = "tất cả âm thanh đã tải"; //keep it lowercase
+"DELETE" = "Xóa";
+"RENAME" = "Đặt tên";
+
+"TRANSLATION_SETTINGS" = "Lời bài hát đồng bộ";
+"BILINGUAL_LYRICS" = "Lời bài hát song ngữ";
+"BILINGUAL_LYRICS_DESC" = "Hiển thị dòng dịch bên dưới lời bài hát gốc";
+"TRANSLATION_PROVIDER" = "Nhà cung cấp";
+"TRANSLATION_FOLLOW_APP_LANG" = "Theo ngôn ngữ ứng dụng";
+"TRANSLATION_TARGET_LANG" = "Ngôn ngữ đích";
+"TRANSLATION_API_KEY" = "Khóa API";
+"TRANSLATION_MODEL" = "Mô hình";
+"TRANSLATION_BASE_URL" = "URL gốc";
+"TRANSLATION_CLEAR_CACHE" = "Xóa bộ nhớ đệm lời bài hát và bản dịch";
+"PROVIDER_GOOGLE" = "Google Dịch";
+"PROVIDER_ANTHROPIC" = "Anthropic";
+"PROVIDER_GEMINI" = "Gemini";
+"PROVIDER_OPENAI" = "Tương thích OpenAI";
+"SYNCED_LYRICS" = "Lớp phủ lời bài hát đồng bộ";
+"LYRICS_SOURCE" = "Nguồn lời bài hát";
+"LYRICS_SOURCE_AUTO" = "Tự động";
+"LYRICS_EFFECT_FANCY" = "Đầy đủ";
+"LYRICS_EFFECT_SCALE" = "Co giãn";
+"LYRICS_EFFECT_OFFSET" = "Dịch chuyển";
+"LYRICS_EFFECT_FOCUS" = "Tập trung";
+"LYRICS_DEFAULT_TEXT" = "Nội dung dòng trống";
+"LYRICS_CHINESE_CONVERSION" = "Chuyển đổi tiếng Trung";
+"LYRICS_CHINESE_DISABLED" = "Tắt";
+"LYRICS_CHINESE_S2T" = "Giản thể sang Phồn thể";
+"LYRICS_CHINESE_T2S" = "Phồn thể sang Giản thể";
+"LYRICS_ROMANIZATION" = "Phiên âm Latin";
+"LYRICS_SHOW_INEXACT" = "Hiển thị kết quả khớp gần đúng";
+"TRANSLATION_DEBUG_LOGS" = "Nhật ký gỡ lỗi";
+"TRANSLATION_DEBUG_LOGS_DESC" = "Ghi thông tin chẩn đoán YTMULyrics và YTMUTranslation vào nhật ký thiết bị";
+"LYRICS_PANEL_TITLE" = "Lời bài hát";
+"LYRICS_TEXT_SIZE" = "Cỡ chữ";
+"LYRICS_TIMING_OFFSET" = "Lệch thời gian";
+"LYRICS_FOCUS_BLUR" = "Làm mờ ngoài tâm";
+"LYRICS_TIMECODES" = "Mã thời gian";
+"LYRICS_SELECTED" = "Đã chọn";
+"LYRICS_MATCHED" = "Đã khớp";
+"LYRICS_CHECKING" = "Đang kiểm tra";
+"LYRICS_NO_MATCH" = "Không khớp";
+"LYRICS_RESET" = "Đặt lại";
+"LYRICS_STATE_SEARCHING" = "Đang tìm lời bài hát...";
+"LYRICS_STATE_NO_LYRICS" = "Không tìm thấy lời bài hát";
+"LYRICS_STATE_OPEN_SONG" = "Mở một bài hát để tải lời.";
+"LYRICS_ATTRIBUTION_BOTH_FORMAT" = "Lời và bản dịch từ %@";
+"LYRICS_ATTRIBUTION_LYRICS_FORMAT" = "Lời từ %@";
+"LYRICS_ATTRIBUTION_TRANSLATION_FORMAT" = "Dịch bởi %@";
+"LYRICS_PROVIDER_NO_MATCH" = "không khớp";
+"LYRICS_PROVIDER_TIMEOUT" = "hết thời gian chờ";
+"LYRICS_PROVIDER_FALLBACK" = "trình dịch";
+"LYRICS_ERROR_NO_DESCRIPTION" = "không có phần mô tả";
+"LYRICS_ERROR_NO_LLM" = "chưa cấu hình LLM";
+"LYRICS_ERROR_DESCRIPTION_NO_LYRICS" = "không có lời bài hát trong mô tả";
+"LYRICS_ERROR_NETEASE_CRYPTO" = "mã hóa thất bại";
+"LYRICS_ERROR_NETEASE_BAD_JSON" = "phản hồi không hợp lệ";
+"LYRICS_ERROR_MUSIXMATCH_NO_TOKEN" = "không có token";
+"LYRICS_ERROR_MUSIXMATCH_BAD_JSON" = "phản hồi không hợp lệ";
+"LYRICS_ERROR_LRCLIB_BAD_JSON" = "phản hồi không hợp lệ";
+"LYRICS_ERROR_LRCLIB_TIMEOUT" = "yêu cầu đã hết thời gian chờ";
+"LYRICS_ERROR_INNERTUBE_FETCH" = "tải dữ liệu thất bại";
+"LYRICS_ERROR_DESCRIPTION_EXTRACT" = "trích xuất thất bại";
+"LYRICS_ERROR_TITLE_NORMALIZE" = "chuẩn hóa tiêu đề thất bại";
+"LYRICS_ERROR_HTTP_STATUS_FORMAT" = "HTTP %ld";
+"LYRICS_ERROR_NETEASE_API_FORMAT" = "lỗi API %ld";
+"TRANSLATION_CACHE_CLEARED_FORMAT" = "Lời bài hát: %lu\nBản dịch: %lu\nPhiên âm Latin: đã xóa bộ nhớ";
+
+"SCROBBLING_SETTINGS" = "Scrobbling";
+"SCROBBLE_MASTER_ENABLE" = "Bật scrobbling";
+"SCROBBLE_MASTER_FOOTER" = "Công tắc chính. Khi tắt, không có lượt nghe nào được gửi tới bất kỳ dịch vụ nào.";
+
+"SCROBBLE_LASTFM_HEADER" = "Last.fm";
+"SCROBBLE_LASTFM_ENABLE" = "Gửi đến Last.fm";
+"SCROBBLE_LASTFM_FOOTER" = "Đăng ký một ứng dụng API tại last.fm/api/account/create, dán API key và secret vào đây, rồi nhấn Xác thực.";
+"SCROBBLE_API_KEY" = "API key";
+"SCROBBLE_API_SECRET" = "API secret";
+"SCROBBLE_LASTFM_AUTHENTICATE" = "Xác thực";
+"SCROBBLE_LASTFM_FINISH_AUTH" = "Tôi đã chấp thuận — hoàn tất";
+"SCROBBLE_LASTFM_SIGN_OUT" = "Đăng xuất";
+"SCROBBLE_LASTFM_OPEN_BROWSER" = "Mở Safari để chấp thuận";
+"SCROBBLE_LASTFM_OPEN_BROWSER_MSG" = "Safari sẽ mở Last.fm để bạn ủy quyền ứng dụng này. Sau khi chấp thuận, quay lại đây và nhấn lại cùng nút để hoàn tất.";
+"SCROBBLE_LASTFM_OPEN_SAFARI" = "Mở Safari";
+"SCROBBLE_LASTFM_AUTHENTICATED" = "Đã kết nối Last.fm";
+"SCROBBLE_LASTFM_AUTH_FAILED" = "Xác thực Last.fm thất bại";
+
+"SCROBBLE_LISTENBRAINZ_HEADER" = "ListenBrainz";
+"SCROBBLE_LISTENBRAINZ_ENABLE" = "Gửi đến ListenBrainz";
+"SCROBBLE_LISTENBRAINZ_FOOTER" = "Sao chép User Token của bạn từ listenbrainz.org/profile/ và dán vào đây. API root chỉ cần thay đổi nếu bạn tự host.";
+"SCROBBLE_USER_TOKEN" = "User token";
+"SCROBBLE_API_ROOT" = "Địa chỉ gốc API";
+"SCROBBLE_LISTENBRAINZ_VALIDATE" = "Xác minh token";
+"SCROBBLE_LISTENBRAINZ_OK" = "Token ListenBrainz hợp lệ";
+"SCROBBLE_LISTENBRAINZ_FAIL" = "Token ListenBrainz không hợp lệ";
+
+"SCROBBLE_STATUS" = "Trạng thái";
+"SCROBBLE_CONNECTED_AS" = "Đã kết nối là %@";
+"SCROBBLE_NOT_CONNECTED" = "Chưa kết nối";
+
+"SCROBBLE_DEBUG_LOGS" = "Nhật ký gỡ lỗi";
+"SCROBBLE_DEBUG_LOGS_DESC" = "In chẩn đoán scrobble vào nhật ký thiết bị";
+
+"TRANSLATION_SELECT_MODEL" = "Chọn mô hình";
+"TRANSLATION_MODEL_ENTER_MANUALLY" = "Nhập thủ công";
+"TRANSLATION_MODEL_FETCH_FAILED" = "Không lấy được danh sách mô hình";
+"TRANSLATION_MODEL_NEED_KEY" = "Nhập khóa API trước";
+
+"TRANSLATION_TEST_MODEL" = "Kiểm tra mô hình";
+"TRANSLATION_TEST_SUCCESS" = "Mô hình hoạt động";
+"TRANSLATION_TEST_FAILED" = "Kiểm tra thất bại";
+"TRANSLATION_TEST_NO_PROVIDER" = "Chọn nhà cung cấp và nhập khóa API trước";

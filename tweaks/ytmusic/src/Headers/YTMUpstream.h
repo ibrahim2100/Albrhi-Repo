@@ -34,15 +34,6 @@
 @property (nonatomic, assign, readonly) YTMPlayerControlsView *playerControlsView;
 @end
 
-@interface YTMNowPlayingViewController : UIViewController
-- (void)didTapNextButton;
-- (void)didTapPrevButton;
-- (void)didTapSeekForwardButton;
-- (void)didTapSeekBackwardButton;
-- (void)longPressPrev:(UILongPressGestureRecognizer *)gesture;
-- (void)longPressNext:(UILongPressGestureRecognizer *)gesture;
-@end
-
 @interface GOOHUDMessageAction : NSObject
 @property (nonatomic, copy) NSString *title;
 - (void)setHandler:(void (^)(void))handler;
@@ -57,6 +48,7 @@
 
 @interface YTPlayerViewController : UIViewController
 @property (readonly, nonatomic) NSString *contentVideoID;
+@property (nonatomic, assign, readonly) CGFloat currentVideoTotalMediaTime;
 @property (nonatomic, strong) NSMutableDictionary *sponsorBlockValues;
 - (void)seekToTime:(CGFloat)time;
 - (NSString *)currentVideoID;

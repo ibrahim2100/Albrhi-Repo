@@ -8,6 +8,7 @@
 //  the Logos this repository pins needs %orig alone in a full block.
 //
 #import "../YTMShared.h"
+#import "../Headers/YTMNowPlayingViewController.h"
 #import <objc/runtime.h>
 
 

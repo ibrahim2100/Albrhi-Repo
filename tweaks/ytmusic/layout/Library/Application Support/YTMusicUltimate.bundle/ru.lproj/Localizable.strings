@@ -1,0 +1,214 @@
+"ENABLED" = "Включить YTMEnhanced";
+"RESTART_FOOTER" = "Для применения настроек потребуется перезапуск";
+
+"PREMIUM_SETTINGS" = "Премиум настройки";
+"NO_ADS" = "Отключение рекламы";
+"NO_ADS_DESC" = "Убирает рекламу в приложении";
+"BACKGROUND_PLAYBACK" = "Фоновое воспроизведение";
+"BACKGROUND_PLAYBACK_DESC" = "Позволяет воспроизводить медиаконтент в фоне";
+
+"PLAYER_SETTINGS" = "Настройки плеера";
+"DOWNLOAD_AUDIO" = "Скачать аудио";
+"DOWNLOAD_AUDIO_DESC" = "Добавляет опцию загрузки аудио нажатием на кнопку «YTMEnhanced» в плеере";
+"DOWNLOAD_COVER" = "Скачать обложку";
+"DOWNLOAD_COVER_DESC" = "Добавляет опцию загрузки обложки песни нажатием на кнопку «YTMEnhanced» в плеере";
+"PLAYBACK_RATE_BUTTON" = "Скорость воспроизведения";
+"PLAYBACK_RATE_BUTTON_DESC" = "Добавляет иконку, позволяющую регулировать скорость воспроизведения";
+"VOLBAR" = "Регулировка громкости";
+"VOLBAR_DESC" = "Добавляет полосу регулировки громкости в окне плеера";
+"NO_AUTORADIO" = "Отключить радио";
+"NO_AUTORADIO_DESC" = "Отключает список автовоспроизведения похожих композиций";
+"SKIP_CONTENT_WARNING" = "Пропускать предупреждения";
+"SKIP_CONTENT_WARNING_DESC" = "Пропускает предупреждения о потенциально опасном контенте";
+"AV_DEFAULT_MODE" = "Режим воспроизведения";
+
+"SKIP_NONMUSIC_PARTS" = "SponsorBlock";
+"SKIP_NONMUSIC_PARTS_DESC" = "Перематывает немузыкальные сегменты";
+"SB_BEHAVIOR" = "Поведение";
+"SB_SKIP" = "Перемотать";
+"SB_ASK" = "Спросить";
+"SB_NOTIF_DURATION" = "Длительность уведомлений (сек.)";
+
+"SEEK_BUTTONS" = "Заменить «След.» и «Пред.» на кнопки перемотки";
+"SEEK_TIME_FOOTER" = "Выберите время перемотки в секундах\n\nПо умолчанию:\nПеремотка назад = 10cек.\nПеремотка вперед = 30cек.\n\nПереходить к следующему и предыдущему трекам можно долгим нажатием по кнопкам.";
+"DEFAULT" = "По умолч.";
+
+"THEME_SETTINGS" = "Тема";
+"OLED_DARK_THEME" = "OLED-режим";
+"OLED_DARK_THEME_DESC" = "Активирует OLED-режим для темной темы";
+"OLED_DARK_KEYBOARD" = "OLED-клавиатура";
+"OLED_DARK_KEYBOARD_DESC" = "Активирует OLED-режим для клавиатуры темной темы";
+"LOW_CONTRAST" = "Понизить контрастность";
+"LOW_CONTRAST_DESC" = "Понижает контрастность текста и кнопок";
+
+"NAVBAR_SETTINGS" = "Панель навигации";
+"DONT_STICK_HEADERS" = "Не закреплять наклейки";
+"DONT_STICK_HEADERS_DESC" = "Открепляет наклейки от верхней части экрана";
+"HIDE_HISTORY_BUTTON" = "Скрыть кнопку «История»";
+"HIDE_HISTORY_BUTTON_DESC" = "Убирает кнопку «История» с панели навигации";
+"HIDE_CAST_BUTTON" = "Скрыть кнопку «Транслировать»";
+"HIDE_CAST_BUTTON_DESC" = "Убирает кнопку «Транслировать» с панели навигации";
+"HIDE_FILTER_BUTTON" = "Скрыть кнопку смены раздела";
+"HIDE_FILTER_BUTTON_DESC" = "Убирает кнопку смены раздела (Библиотека/Сохраненные) с панели навигации";
+
+"TABBAR_SETTINGS" = "Панель вкладок";
+"STARTUP_TAB" = "Начальная страница";
+"DOWNLOADS" = "Загрузки";
+
+"TAB_SETTINGS" = "Настройки вкладок";
+"REMOVE_TABBAR_LABELS" = "Скрыть названия вкладок";
+"HIDE_HOME" = "Скрыть вкладку «Главная»";
+"HIDE_SAMPLES" = "Скрыть вкладку «Семплы»";
+"HIDE_EXPLORE" = "Скрыть вкладку «Навигатор»";
+"HIDE_LIBRARY" = "Скрыть вкладку «Библиотека»";
+"HIDE_DOWNLOADS" = "Скрыть вкладку «Загрузки»";
+
+"CLEAR_CACHE" = "Очистить кеш";
+
+"LINKS" = "Ссылки";
+"TWITTER" = "Twitter аккаунт %@";
+"TWITTER_DESC" = "Подпишитесь, чтобы быть в курсе новостей";
+"DISCORD" = "Наш Discord";
+"DISCORD_DESC" = "Место для отчета об ошибках и запросе функций";
+"SOURCE_CODE" = "Исходный код";
+"SOURCE_CODE_DESC" = "Можете взглянуть на исходник";
+
+"CLOSE" = "Закрыть";
+"WARNING" = "Внимание";
+"LOGIN_INFO" = "Необходимо перезапустить приложение после успешной авторизации в аккаунт Google";
+"RETRY_LOGIN" = "Авторизация активирована.\n\nПопробуйте заново.";
+"APPLY_MESSAGE" = "Данное действие приведет к закрытию YouTube Music для применения настроек. Продолжить?";
+"CANCEL" = "Отмена";
+"YES" = "Да";
+"REGIONAL_RESTRICTION" = "Кажется, YouTube Music ограничен в вашей стране.\n\nПодключитесь к VPN для полноценного доступа к YouTube Music.";
+
+"DONT_RUSH" = "Придержи коней";
+"DONT_RUSH_DESC" = "Необходимо сначала воспроизвести песню";
+"SELECT_ACTION" = "Выберите действие";
+"DOWNLOADING" = "Загрузка";
+"DOWNLOAD_PREMIUM" = "Скачать (Требуется подписка)";
+"OOPS" = "Упс\nЧто-то пошло не так";
+"LINK_NOT_FOUND" = "Ссылка не найдена";
+"SAVED_TO_PHOTOS" = "Сохранено в «Фото»";
+"DONE" = "Готово";
+"FOUND_SEGMENT" = "Обнаружен оффтоп-сегмент";
+"SEGMENT_SKIPPED" = "Оффтоп был перемотан";
+"SKIP" = "Перемотать";
+"UNSKIP" = "Вернуть";
+
+"EMPTY" = "Здесь появится скачанный вами контент";
+"REMOVE_ALL" = "Удалить все аудиофайлы";
+"SHARE_ALL" = "Поделиться всеми аудиофайлами";
+"DELETE_MESSAGE" = "Уверены, что хотите удалить %@?";
+"ALL_DOWNLOADS" = "все загруженные аудиофайлы";
+"DELETE" = "Удалить";
+"RENAME" = "Переименовать";
+
+"TRANSLATION_SETTINGS" = "Синхронизированный текст";
+"BILINGUAL_LYRICS" = "Двуязычный текст";
+"BILINGUAL_LYRICS_DESC" = "Показывает переведённые строки под оригинальным текстом";
+"TRANSLATION_PROVIDER" = "Сервис";
+"TRANSLATION_FOLLOW_APP_LANG" = "Следовать языку приложения";
+"TRANSLATION_TARGET_LANG" = "Язык перевода";
+"TRANSLATION_API_KEY" = "API-ключ";
+"TRANSLATION_MODEL" = "Модель";
+"TRANSLATION_BASE_URL" = "Базовый URL";
+"TRANSLATION_CLEAR_CACHE" = "Очистить кеш текста и переводов";
+"PROVIDER_GOOGLE" = "Google Переводчик";
+"PROVIDER_ANTHROPIC" = "Anthropic";
+"PROVIDER_GEMINI" = "Gemini";
+"PROVIDER_OPENAI" = "OpenAI-совместимый";
+"SYNCED_LYRICS" = "Слой синхронизированного текста";
+"LYRICS_SOURCE" = "Источник текста";
+"LYRICS_SOURCE_AUTO" = "Автоматически";
+"LYRICS_EFFECT_FANCY" = "Полный";
+"LYRICS_EFFECT_SCALE" = "Масштабирование";
+"LYRICS_EFFECT_OFFSET" = "Смещение";
+"LYRICS_EFFECT_FOCUS" = "Фокус";
+"LYRICS_DEFAULT_TEXT" = "Текст пустой строки";
+"LYRICS_CHINESE_CONVERSION" = "Конвертация китайского";
+"LYRICS_CHINESE_DISABLED" = "Отключено";
+"LYRICS_CHINESE_S2T" = "Упрощённое в традиционное";
+"LYRICS_CHINESE_T2S" = "Традиционное в упрощённое";
+"LYRICS_ROMANIZATION" = "Романизация";
+"LYRICS_SHOW_INEXACT" = "Показывать неточные совпадения";
+"TRANSLATION_DEBUG_LOGS" = "Журналы отладки";
+"TRANSLATION_DEBUG_LOGS_DESC" = "Выводит диагностику YTMULyrics и YTMUTranslation в системные журналы устройства";
+"LYRICS_PANEL_TITLE" = "Текст песни";
+"LYRICS_TEXT_SIZE" = "Размер текста";
+"LYRICS_TIMING_OFFSET" = "Смещение времени";
+"LYRICS_FOCUS_BLUR" = "Размытие фокуса";
+"LYRICS_TIMECODES" = "Тайм-коды";
+"LYRICS_SELECTED" = "Выбрано";
+"LYRICS_MATCHED" = "Совпадение";
+"LYRICS_CHECKING" = "Проверка";
+"LYRICS_NO_MATCH" = "Нет совпадений";
+"LYRICS_RESET" = "Сбросить";
+"LYRICS_STATE_SEARCHING" = "Поиск текста песни...";
+"LYRICS_STATE_NO_LYRICS" = "Текст песни не найден";
+"LYRICS_STATE_OPEN_SONG" = "Откройте песню, чтобы загрузить текст.";
+"LYRICS_ATTRIBUTION_BOTH_FORMAT" = "Текст и перевод через %@";
+"LYRICS_ATTRIBUTION_LYRICS_FORMAT" = "Текст через %@";
+"LYRICS_ATTRIBUTION_TRANSLATION_FORMAT" = "Перевод через %@";
+"LYRICS_PROVIDER_NO_MATCH" = "нет совпадений";
+"LYRICS_PROVIDER_TIMEOUT" = "истекло время ожидания";
+"LYRICS_PROVIDER_FALLBACK" = "переводчик";
+"LYRICS_ERROR_NO_DESCRIPTION" = "описание недоступно";
+"LYRICS_ERROR_NO_LLM" = "LLM не настроен";
+"LYRICS_ERROR_DESCRIPTION_NO_LYRICS" = "в описании нет текста";
+"LYRICS_ERROR_NETEASE_CRYPTO" = "ошибка шифрования";
+"LYRICS_ERROR_NETEASE_BAD_JSON" = "некорректный ответ";
+"LYRICS_ERROR_MUSIXMATCH_NO_TOKEN" = "нет токена";
+"LYRICS_ERROR_MUSIXMATCH_BAD_JSON" = "некорректный ответ";
+"LYRICS_ERROR_LRCLIB_BAD_JSON" = "некорректный ответ";
+"LYRICS_ERROR_LRCLIB_TIMEOUT" = "время ожидания истекло";
+"LYRICS_ERROR_INNERTUBE_FETCH" = "не удалось загрузить";
+"LYRICS_ERROR_DESCRIPTION_EXTRACT" = "не удалось извлечь";
+"LYRICS_ERROR_TITLE_NORMALIZE" = "не удалось нормализовать название";
+"LYRICS_ERROR_HTTP_STATUS_FORMAT" = "HTTP %ld";
+"LYRICS_ERROR_NETEASE_API_FORMAT" = "ошибка API %ld";
+"TRANSLATION_CACHE_CLEARED_FORMAT" = "Текст: %lu\nПереводы: %lu\nРоманизация: память очищена";
+
+"SCROBBLING_SETTINGS" = "Scrobbling";
+"SCROBBLE_MASTER_ENABLE" = "Включить scrobbling";
+"SCROBBLE_MASTER_FOOTER" = "Главный переключатель. Когда выключен, прослушивания не отправляются ни одному сервису.";
+
+"SCROBBLE_LASTFM_HEADER" = "Last.fm";
+"SCROBBLE_LASTFM_ENABLE" = "Отправлять на Last.fm";
+"SCROBBLE_LASTFM_FOOTER" = "Зарегистрируй API-приложение на last.fm/api/account/create, вставь сюда API key и secret, затем нажми «Войти».";
+"SCROBBLE_API_KEY" = "API key";
+"SCROBBLE_API_SECRET" = "API secret";
+"SCROBBLE_LASTFM_AUTHENTICATE" = "Войти";
+"SCROBBLE_LASTFM_FINISH_AUTH" = "Я одобрил — завершить";
+"SCROBBLE_LASTFM_SIGN_OUT" = "Выйти";
+"SCROBBLE_LASTFM_OPEN_BROWSER" = "Открыть Safari для одобрения";
+"SCROBBLE_LASTFM_OPEN_BROWSER_MSG" = "Safari откроет Last.fm для авторизации этого приложения. После одобрения вернись сюда и снова нажми ту же кнопку, чтобы завершить.";
+"SCROBBLE_LASTFM_OPEN_SAFARI" = "Открыть Safari";
+"SCROBBLE_LASTFM_AUTHENTICATED" = "Last.fm подключён";
+"SCROBBLE_LASTFM_AUTH_FAILED" = "Ошибка авторизации Last.fm";
+
+"SCROBBLE_LISTENBRAINZ_HEADER" = "ListenBrainz";
+"SCROBBLE_LISTENBRAINZ_ENABLE" = "Отправлять на ListenBrainz";
+"SCROBBLE_LISTENBRAINZ_FOOTER" = "Скопируй свой User Token со страницы listenbrainz.org/profile/ и вставь сюда. API root нужно менять только при собственном размещении.";
+"SCROBBLE_USER_TOKEN" = "User token";
+"SCROBBLE_API_ROOT" = "Корень API";
+"SCROBBLE_LISTENBRAINZ_VALIDATE" = "Проверить токен";
+"SCROBBLE_LISTENBRAINZ_OK" = "Токен ListenBrainz действителен";
+"SCROBBLE_LISTENBRAINZ_FAIL" = "Токен ListenBrainz недействителен";
+
+"SCROBBLE_STATUS" = "Состояние";
+"SCROBBLE_CONNECTED_AS" = "Подключён как %@";
+"SCROBBLE_NOT_CONNECTED" = "Не подключён";
+
+"SCROBBLE_DEBUG_LOGS" = "Отладочные логи";
+"SCROBBLE_DEBUG_LOGS_DESC" = "Печатает диагностику scrobble в журнал устройства";
+
+"TRANSLATION_SELECT_MODEL" = "Выбрать модель";
+"TRANSLATION_MODEL_ENTER_MANUALLY" = "Ввести вручную";
+"TRANSLATION_MODEL_FETCH_FAILED" = "Не удалось загрузить модели";
+"TRANSLATION_MODEL_NEED_KEY" = "Сначала введите ключ API";
+
+"TRANSLATION_TEST_MODEL" = "Проверить модель";
+"TRANSLATION_TEST_SUCCESS" = "Модель работает";
+"TRANSLATION_TEST_FAILED" = "Проверка не удалась";
+"TRANSLATION_TEST_NO_PROVIDER" = "Сначала выберите провайдера и введите ключ API";

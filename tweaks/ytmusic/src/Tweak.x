@@ -84,6 +84,31 @@
         if (!settings[@"sbDuration"]) settings[@"sbDuration"] = @10;
         if (!settings[@"seekTime"]) settings[@"seekTime"] = @0;
 
+        //
+        // **The lyrics defaults, which were upstream's own %ctor and are now decided here.**
+        //
+        // Every value is upstream's except the first: `syncedLyricsEnabled` ships **on**, because
+        // it was asked for by name, while upstream leaves it off. What that costs is stated in the
+        // package description rather than left to be discovered -- a lyrics feature asks outside
+        // services what is playing, and there is no version of it that does not.
+        //
+        // Translation stays off, and is inert regardless: it needs a key the user supplies.
+        //
+        settings[@"syncedLyricsEnabled"] = @YES;
+        if (!settings[@"lyricsPreferredSource"]) settings[@"lyricsPreferredSource"] = @"auto";
+        if (!settings[@"lyricsShowInexact"]) settings[@"lyricsShowInexact"] = @YES;
+        if (!settings[@"lyricsRomanization"]) settings[@"lyricsRomanization"] = @YES;
+        if (!settings[@"lyricsConvertChinese"]) settings[@"lyricsConvertChinese"] = @"disabled";
+        if (!settings[@"lyricsShowTimeCodes"]) settings[@"lyricsShowTimeCodes"] = @NO;
+        if (!settings[@"lyricsLineEffect"]) settings[@"lyricsLineEffect"] = @"fancy";
+        if (!settings[@"lyricsFontSize"]) settings[@"lyricsFontSize"] = @"small";
+        if (!settings[@"lyricsTimingOffsetMs"]) settings[@"lyricsTimingOffsetMs"] = @0;
+        if (!settings[@"lyricsTimingOffsetActiveKey"]) settings[@"lyricsTimingOffsetActiveKey"] = @"";
+        if (!settings[@"lyricsTimingOffsets"]) settings[@"lyricsTimingOffsets"] = @{};
+        if (!settings[@"lyricsDefaultText"]) settings[@"lyricsDefaultText"] = @"\u266a";
+        if (!settings[@"lyricsTranslationEnabled"]) settings[@"lyricsTranslationEnabled"] = @NO;
+        settings[@"lyricsArtworkOverlayEnabled"] = @NO;
+
         [defaults setObject:settings forKey:@"YTMUltimate"];
 
         SCIYTMInstallAdBlock();
@@ -95,7 +120,9 @@
         SCIYTMInstallNavBar();
         SCIYTMInstallColours();
         SCIYTMInstallSponsorBlock();
+        SCIYTMInstallSyncedLyrics();
+        SCIYTMInstallSelectableLyrics();
 
-        NSLog(@"[AlbrhiYTM] nine feature groups installed");
+        NSLog(@"[AlbrhiYTM] eleven feature groups installed");
     }
 }

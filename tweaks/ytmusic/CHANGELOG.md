@@ -1,5 +1,40 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.3.0
+
+**Synced lyrics**, carried over from YTMEnhanced under GPLv3: a panel on the now-playing screen fed
+by six providers -- LRCLib, Genius, MusixMatch, NetEase, the video description, and YouTube Music's
+own lyrics where it has them -- with romanisation, a source picker, a timing offset, and selectable
+text. It ships **on**, because that is what was asked for; upstream leaves it off.
+
+**What that costs is in the package description rather than left to be found.** A lyrics feature
+asks outside services what is playing. There is no version of it that does not. Translating those
+lyrics is a separate switch, off, and inert without a key the user supplies.
+
+**And this release is the first here that was verified rather than only compiled.**
+
+`tests/host/run.sh` builds the pure modules -- the LRC parser, the matching pipeline, the caches,
+the romaniser, the description extractor -- against the macOS SDK's iOSSupport frameworks and runs
+them on the Mac. **29 tests, 0 failures**, in about a second. The arrangement is upstream's; what is
+ours is the source list and the resource bundle.
+
+This matters beyond one feature. CLAUDE.md has always said compilation is the second of three gates
+and the third is a device -- **true of every hook, and never true of everything**. Three of this
+project's most expensive bugs lived in exactly this layer: a quality ladder that needed
+`raw → parsed → deduped` counted separately, a parallel array walked by value instead of in
+lockstep, and a date label measured in one coordinate space and drawn in another. All three are pure
+functions of their input. All three could have failed on this Mac in a second.
+
+Two of the three findings came from the tests themselves rather than from the compiler: a paths test
+that fails unless the run script sets `YTMU_CACHES_ROOT` (trimmed out of the first draft), and a
+localization test asserting a resource bundle this package did not ship. The second one was fixed by
+**shipping the bundle** -- 27 languages including Arabic -- rather than by deleting the test, which
+is the difference between a suite that proves something and one that agrees with you.
+
+check.py also gained a fix rather than a rule: `'"'` is a character literal, not the start of a
+string, and three lines of a hand-written parser in the carried-over module were being reported as
+unterminated. The oracle settled it in one command, as it has every time.
+
 ## v0.2.0
 
 Seven more features, carried over from **YTMEnhanced** by py233 (github.com/py233/YTMEnhanced) under

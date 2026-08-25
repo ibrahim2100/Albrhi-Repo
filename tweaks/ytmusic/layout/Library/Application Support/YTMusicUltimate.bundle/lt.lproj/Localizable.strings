@@ -1,0 +1,214 @@
+"ENABLED" = "Įjungti \"YTMEnhanced\"";
+"RESTART_FOOTER" = "Iš naujo paleiskite programą, kad pritaikytumėte pakeitimus";
+
+"PREMIUM_SETTINGS" = "\"Premium\" parinktys";
+"NO_ADS" = "Reklamų panaikinimas";
+"NO_ADS_DESC" = "Pašalinti programoje esančias reklamas";
+"BACKGROUND_PLAYBACK" = "Foninis atkūrimas";
+"BACKGROUND_PLAYBACK_DESC" = "Įjungti foninį atkūrimą";
+
+"PLAYER_SETTINGS" = "Grotuvo nustatymai";
+"DOWNLOAD_AUDIO" = "Atsisiųsti muziką";
+"DOWNLOAD_AUDIO_DESC" = "Prideda galimybę atsisiųti muziką grotuve paspaudžiant YTUltimate mygtuką";
+"DOWNLOAD_COVER" = "Atsisiųsti viršelio atvaizdą";
+"DOWNLOAD_COVER_DESC" = "Prideda galimybę atsisiųsti viršelio atvaizdą grotuve paspaudžiant YTUltimate mygtuką";
+"PLAYBACK_RATE_BUTTON" = "Rodyti atkūrimo spartą";
+"PLAYBACK_RATE_BUTTON_DESC" = "Reguliuoti atkūrimo greitį";
+"VOLBAR" = "Garsumo juosta";
+"VOLBAR_DESC" = "Įtraukti garsumo juostą grotuve";
+"NO_AUTORADIO" = "Išjungti radiją";
+"NO_AUTORADIO_DESC" = "Išjungti begalinės muzikos funkciją";
+"SKIP_CONTENT_WARNING" = "Praleisti įspėjimą apie turinį";
+"SKIP_CONTENT_WARNING_DESC" = "Praleidžia įspėjimą apie potencialiai pavojingą turinį";
+"AV_DEFAULT_MODE" = "Numatytasis atkūrimo režimas";
+
+"SKIP_NONMUSIC_PARTS" = "SponsorBlock";
+"SKIP_NONMUSIC_PARTS_DESC" = "Muzikiniuose vaizdo klipuose praleidžiami su muzika nesusiję skyriai";
+"SB_BEHAVIOR" = "Elgsena";
+"SB_SKIP" = "Praleisti";
+"SB_ASK" = "Klausti";
+"SB_NOTIF_DURATION" = "Pranešimo trukmė (sek)";
+
+"SEEK_BUTTONS" = "Pakeisti mygtukus kitas/buvęs mygtukais sukti į priekį/atgal";
+"SEEK_TIME_FOOTER" = "Pasirinkti pasukimo laiką sekundėmis\n\nNumatytieji:\nSukti atgal = 10 sek.\nSukti į priekį = 30 sek.";
+"DEFAULT" = "Numatytasis";
+
+"THEME_SETTINGS" = "Temos parinktys";
+"OLED_DARK_THEME" = "\"OLED\" tamsi tema";
+"OLED_DARK_THEME_DESC" = "Įgalina \"OLED\" tamsiąją temą";
+"OLED_DARK_KEYBOARD" = "\"OLED\" tamsioji klaviatūra";
+"OLED_DARK_KEYBOARD_DESC" = "Įjungiama \"OLED\" tamsioji klaviatūra";
+"LOW_CONTRAST" = "Žemas kontrastas";
+"LOW_CONTRAST_DESC" = "Mažesnis teksto ir mygtukų kontrastingumas";
+
+"NAVBAR_SETTINGS" = "Navigacijos juostos parinktys";
+"DONT_STICK_HEADERS" = "Nefiksuoti antraščių";
+"DONT_STICK_HEADERS_DESC" = "Panaikina antraščių fiksavimą ekrano viršuje";
+"HIDE_HISTORY_BUTTON" = "Paslėpti istorijos mygtuką";
+"HIDE_HISTORY_BUTTON_DESC" = "Naršymo juostoje paslepia istorijos mygtuką";
+"HIDE_CAST_BUTTON" = "Paslėpti \"Cast\" mygtuką";
+"HIDE_CAST_BUTTON_DESC" = "Naršymo juostoje paslepia \"Cast\" mygtuką";
+"HIDE_FILTER_BUTTON" = "Paslėpti rūšiavimo filtro mygtuką";
+"HIDE_FILTER_BUTTON_DESC" = "Navigacijos juostoje paslepia Bibliotekos/Atsisiuntimų filtro mygtuką";
+
+"TABBAR_SETTINGS" = "Kortelių juostos nustatymai";
+"STARTUP_TAB" = "Pradžios kortelė";
+"DOWNLOADS" = "Atsisiuntimai";
+
+"TAB_SETTINGS" = "Kortelių nustatymai";
+"REMOVE_TABBAR_LABELS" = "Nerodyti kortelių pavadinimų";
+"HIDE_HOME" = "Nerodyti Namų kortelės";
+"HIDE_SAMPLES" = "Nerodyti Pavyzdžių koretelės";
+"HIDE_EXPLORE" = "Nerodyti Naršymo kortelės";
+"HIDE_LIBRARY" = "Nerodyti Bibliotekos kortelės";
+"HIDE_DOWNLOADS" = "Nerodyti Atsisiuntimų kortelės";
+
+"CLEAR_CACHE" = "Išvalyti talpyklą";
+
+"LINKS" = "Nuorodos";
+"TWITTER" = "Sekite %@ \"Twitter\"";
+"TWITTER_DESC" = "Sekite mane dėl atnaujinimų";
+"DISCORD" = "Prisijungti prie \"Discord\"";
+"DISCORD_DESC" = "Pranešti apie klaidas ir papildomų funkcijų užklausas";
+"SOURCE_CODE" = "Šaltinio kodas";
+"SOURCE_CODE_DESC" = "Peržiūrėkite kodą";
+
+"CLOSE" = "Uždaryti";
+"WARNING" = "Įspėjimas";
+"LOGIN_INFO" = "Po sėkmingo prisijungimo prie Google paskyros, programą reikia paleisti iš naujo";
+"RETRY_LOGIN" = "Sprendimas aktyvuotas.\n\nBandykite dar kartą.";
+"APPLY_MESSAGE" = "Atlikus šį veiksmą \"YouTube Music\" bus uždaryta, kad būtų galima taikyti pakeitimus. Ar esate tikri?";
+"CANCEL" = "Atšaukti";
+"YES" = "Taip";
+"REGIONAL_RESTRICTION" = "Panašu, kad Youtube Music naudojimas jūsų šalyje yra apribotas.\n\n Prieigai prie YouTube Music naudokite VPN.";
+
+"DONT_RUSH" = "Don't rush brilliance";
+"DONT_RUSH_DESC" = "Required to play the song to extract the link";
+"SELECT_ACTION" = "Pasirinkite veiksmą";
+"DOWNLOADING" = "Atsisiunčiama";
+"DOWNLOAD_PREMIUM" = "Download (Premium required)";
+"OOPS" = "Oi!\nkažkas atsitiko";
+"LINK_NOT_FOUND" = "Link not found";
+"SAVED_TO_PHOTOS" = "Išsaugota Nuotraukose";
+"DONE" = "Atlikta";
+"FOUND_SEGMENT" = "Rastas segmentas nepriklausantis temai";
+"SEGMENT_SKIPPED" = "Segmentas nepriklausantis temai, praleistas";
+"SKIP" = "Praleisti";
+"UNSKIP" = "Sugrąžinti";
+
+"EMPTY" = "Turinys kurį atsisiųsite bus rodomas čia";
+"REMOVE_ALL" = "Panaikinti visą muziką";
+"SHARE_ALL" = "Dalintis visa muzika";
+"DELETE_MESSAGE" = "Ar esate tikri, kad norite panaikinti %@?";
+"ALL_DOWNLOADS" = "visą atsiųstą muziką"; //keep it lowercase
+"DELETE" = "Panaikinti";
+"RENAME" = "Pervardyti";
+
+"TRANSLATION_SETTINGS" = "Sinchroniniai dainų žodžiai";
+"BILINGUAL_LYRICS" = "Dvikalbiai dainų žodžiai";
+"BILINGUAL_LYRICS_DESC" = "Po originaliomis eilutėmis rodo išverstas eilutes";
+"TRANSLATION_PROVIDER" = "Tiekėjas";
+"TRANSLATION_FOLLOW_APP_LANG" = "Pagal programos kalbą";
+"TRANSLATION_TARGET_LANG" = "Vertimo kalba";
+"TRANSLATION_API_KEY" = "API raktas";
+"TRANSLATION_MODEL" = "Modelis";
+"TRANSLATION_BASE_URL" = "Bazinis URL";
+"TRANSLATION_CLEAR_CACHE" = "Išvalyti dainų žodžių ir vertimo talpyklą";
+"PROVIDER_GOOGLE" = "Google vertėjas";
+"PROVIDER_ANTHROPIC" = "Anthropic";
+"PROVIDER_GEMINI" = "Gemini";
+"PROVIDER_OPENAI" = "Suderinama su OpenAI";
+"SYNCED_LYRICS" = "Sinchroninių dainų žodžių sluoksnis";
+"LYRICS_SOURCE" = "Žodžių šaltinis";
+"LYRICS_SOURCE_AUTO" = "Automatinis";
+"LYRICS_EFFECT_FANCY" = "Pilnas";
+"LYRICS_EFFECT_SCALE" = "Mastelis";
+"LYRICS_EFFECT_OFFSET" = "Poslinkis";
+"LYRICS_EFFECT_FOCUS" = "Židinys";
+"LYRICS_DEFAULT_TEXT" = "Tuščios eilutės tekstas";
+"LYRICS_CHINESE_CONVERSION" = "Kinų rašmenų konvertavimas";
+"LYRICS_CHINESE_DISABLED" = "Išjungta";
+"LYRICS_CHINESE_S2T" = "Iš supaprastintų į tradicinius";
+"LYRICS_CHINESE_T2S" = "Iš tradicinių į supaprastintus";
+"LYRICS_ROMANIZATION" = "Romanizacija";
+"LYRICS_SHOW_INEXACT" = "Rodyti netikslius atitikmenis";
+"TRANSLATION_DEBUG_LOGS" = "Derinimo žurnalai";
+"TRANSLATION_DEBUG_LOGS_DESC" = "Į įrenginio žurnalus įrašo YTMULyrics ir YTMUTranslation diagnostiką";
+"LYRICS_PANEL_TITLE" = "Dainos žodžiai";
+"LYRICS_TEXT_SIZE" = "Teksto dydis";
+"LYRICS_TIMING_OFFSET" = "Laiko poslinkis";
+"LYRICS_FOCUS_BLUR" = "Židinio suliejimas";
+"LYRICS_TIMECODES" = "Laiko kodai";
+"LYRICS_SELECTED" = "Pasirinkta";
+"LYRICS_MATCHED" = "Atitiko";
+"LYRICS_CHECKING" = "Tikrinama";
+"LYRICS_NO_MATCH" = "Nėra atitikmens";
+"LYRICS_RESET" = "Atstatyti";
+"LYRICS_STATE_SEARCHING" = "Ieškoma dainos žodžių...";
+"LYRICS_STATE_NO_LYRICS" = "Dainos žodžių nerasta";
+"LYRICS_STATE_OPEN_SONG" = "Atidarykite dainą, kad būtų įkelti žodžiai.";
+"LYRICS_ATTRIBUTION_BOTH_FORMAT" = "Žodžiai ir vertimas iš %@";
+"LYRICS_ATTRIBUTION_LYRICS_FORMAT" = "Žodžiai iš %@";
+"LYRICS_ATTRIBUTION_TRANSLATION_FORMAT" = "Išversta su %@";
+"LYRICS_PROVIDER_NO_MATCH" = "nėra atitikmens";
+"LYRICS_PROVIDER_TIMEOUT" = "baigėsi laikas";
+"LYRICS_PROVIDER_FALLBACK" = "vertėjas";
+"LYRICS_ERROR_NO_DESCRIPTION" = "aprašymo nėra";
+"LYRICS_ERROR_NO_LLM" = "LLM nesukonfigūruotas";
+"LYRICS_ERROR_DESCRIPTION_NO_LYRICS" = "aprašyme žodžių nėra";
+"LYRICS_ERROR_NETEASE_CRYPTO" = "šifravimas nepavyko";
+"LYRICS_ERROR_NETEASE_BAD_JSON" = "netinkamas atsakymas";
+"LYRICS_ERROR_MUSIXMATCH_NO_TOKEN" = "nėra prieigos rakto";
+"LYRICS_ERROR_MUSIXMATCH_BAD_JSON" = "netinkamas atsakymas";
+"LYRICS_ERROR_LRCLIB_BAD_JSON" = "netinkamas atsakymas";
+"LYRICS_ERROR_LRCLIB_TIMEOUT" = "užklausos laikas baigėsi";
+"LYRICS_ERROR_INNERTUBE_FETCH" = "gauti nepavyko";
+"LYRICS_ERROR_DESCRIPTION_EXTRACT" = "išskirti nepavyko";
+"LYRICS_ERROR_TITLE_NORMALIZE" = "pavadinimo normalizuoti nepavyko";
+"LYRICS_ERROR_HTTP_STATUS_FORMAT" = "HTTP %ld";
+"LYRICS_ERROR_NETEASE_API_FORMAT" = "API klaida %ld";
+"TRANSLATION_CACHE_CLEARED_FORMAT" = "Žodžiai: %lu\nVertimai: %lu\nRomanizacija: atmintis išvalyta";
+
+"SCROBBLING_SETTINGS" = "Scrobbling";
+"SCROBBLE_MASTER_ENABLE" = "Įjungti scrobbling";
+"SCROBBLE_MASTER_FOOTER" = "Pagrindinis jungiklis. Kai išjungtas, perklausos nesiunčiamos jokiai paslaugai.";
+
+"SCROBBLE_LASTFM_HEADER" = "Last.fm";
+"SCROBBLE_LASTFM_ENABLE" = "Siųsti į Last.fm";
+"SCROBBLE_LASTFM_FOOTER" = "Užregistruok API programą adresu last.fm/api/account/create, įklijuok API key ir secret čia, tada paliesk Patvirtinti.";
+"SCROBBLE_API_KEY" = "API key";
+"SCROBBLE_API_SECRET" = "API secret";
+"SCROBBLE_LASTFM_AUTHENTICATE" = "Patvirtinti";
+"SCROBBLE_LASTFM_FINISH_AUTH" = "Patvirtinau — baigti";
+"SCROBBLE_LASTFM_SIGN_OUT" = "Atsijungti";
+"SCROBBLE_LASTFM_OPEN_BROWSER" = "Atidaryti Safari patvirtinimui";
+"SCROBBLE_LASTFM_OPEN_BROWSER_MSG" = "Safari atidarys Last.fm, kad galėtum autorizuoti šią programą. Po patvirtinimo grįžk čia ir vėl paliesk tą patį mygtuką, kad užbaigtum.";
+"SCROBBLE_LASTFM_OPEN_SAFARI" = "Atidaryti Safari";
+"SCROBBLE_LASTFM_AUTHENTICATED" = "Last.fm prisijungta";
+"SCROBBLE_LASTFM_AUTH_FAILED" = "Last.fm autentifikacija nepavyko";
+
+"SCROBBLE_LISTENBRAINZ_HEADER" = "ListenBrainz";
+"SCROBBLE_LISTENBRAINZ_ENABLE" = "Siųsti į ListenBrainz";
+"SCROBBLE_LISTENBRAINZ_FOOTER" = "Nukopijuok savo User Token iš listenbrainz.org/profile/ ir įklijuok čia. API root keisti reikia tik jei pats hostini.";
+"SCROBBLE_USER_TOKEN" = "User token";
+"SCROBBLE_API_ROOT" = "API šakninis adresas";
+"SCROBBLE_LISTENBRAINZ_VALIDATE" = "Patikrinti token";
+"SCROBBLE_LISTENBRAINZ_OK" = "ListenBrainz token galioja";
+"SCROBBLE_LISTENBRAINZ_FAIL" = "ListenBrainz token negalioja";
+
+"SCROBBLE_STATUS" = "Būsena";
+"SCROBBLE_CONNECTED_AS" = "Prisijungta kaip %@";
+"SCROBBLE_NOT_CONNECTED" = "Neprisijungta";
+
+"SCROBBLE_DEBUG_LOGS" = "Derinimo žurnalai";
+"SCROBBLE_DEBUG_LOGS_DESC" = "Spausdina scrobble diagnostiką į įrenginio žurnalus";
+
+"TRANSLATION_SELECT_MODEL" = "Pasirinkti modelį";
+"TRANSLATION_MODEL_ENTER_MANUALLY" = "Įvesti rankiniu būdu";
+"TRANSLATION_MODEL_FETCH_FAILED" = "Nepavyko gauti modelių";
+"TRANSLATION_MODEL_NEED_KEY" = "Pirma įveskite API raktą";
+
+"TRANSLATION_TEST_MODEL" = "Tikrinti modelį";
+"TRANSLATION_TEST_SUCCESS" = "Modelis veikia";
+"TRANSLATION_TEST_FAILED" = "Patikrinimas nepavyko";
+"TRANSLATION_TEST_NO_PROVIDER" = "Pirma pasirinkite tiekėją ir įveskite API raktą";

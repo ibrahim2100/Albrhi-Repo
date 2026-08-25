@@ -1,0 +1,965 @@
+//
+//  SyncedLyrics.x
+//  Albrhi for YouTube Music
+//
+//  Carried over from YTMEnhanced (github.com/py233/YTMEnhanced) under GPLv3. Kept diffable:
+//  the edits are the %group wrapper and its installer, the import paths moved with the file,
+//  and upstream's own %ctor removed -- Albrhi's gate decides, once, in Tweak.x.
+//
+#import <UIKit/UIKit.h>
+#import <MediaPlayer/MediaPlayer.h>
+#import <objc/runtime.h>
+#import <substrate.h>
+#import "../Headers/YTPlayerViewController.h"
+#import "../Headers/YTMWatchViewController.h"
+#import "../Headers/YTMNowPlayingViewController.h"
+#import "YTMULyricsManager.h"
+#import "YTMULyricsPlaybackState.h"
+#import "YTMUSyncedLyricsView.h"
+#import "YTMUInnerTubeDescriptionFetcher.h"
+#import "../Translation/YTMUTranslationContext.h"
+#import "../Utils/YTMUKVC.h"
+
+static BOOL YTMUSyncedLyricsEnabled(void) {
+    NSDictionary *dict = [[NSUserDefaults standardUserDefaults] dictionaryForKey:@"YTMUltimate"] ?: @{};
+    return [dict[@"YTMUltimateIsEnabled"] boolValue] && [dict[@"syncedLyricsEnabled"] boolValue];
+}
+
+static BOOL YTMUArtworkLyricsOverlayEnabled(void) {
+    NSDictionary *dict = [[NSUserDefaults standardUserDefaults] dictionaryForKey:@"YTMUltimate"] ?: @{};
+    return [dict[@"lyricsArtworkOverlayEnabled"] boolValue];
+}
+
+static NSTimeInterval YTMUNormalizedPlaybackTimeMs(YTPlayerViewController *player) {
+    if (!player) return 0;
+    @try {
+        NSTimeInterval rawTime = player.currentVideoMediaTime;
+        NSTimeInterval duration = player.currentVideoTotalMediaTime;
+        // Same unit heuristic as the display-link path; a second copy here
+        // had drifted and handled ms-scale durations differently.
+        NSTimeInterval ms = [[YTMULyricsPlaybackState sharedState] normalizedPlaybackTimeMsForRawTime:rawTime duration:duration];
+        return ms >= 0 ? ms : 0;
+    } @catch (__unused NSException *exception) {
+        return 0;
+    }
+}
+
+static void YTMULogOfficialLyricsProbe(id object, NSString *event, NSString *source, NSData *data, NSString *entityKey) {
+    if (!YTMULyricsDebugLoggingEnabled()) return;
+    static NSMutableSet<NSString *> *seen;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        seen = [NSMutableSet set];
+    });
+
+    NSString *signature = [NSString stringWithFormat:@"%@::%@::%@::%lu::%@",
+                           NSStringFromClass([object class]),
+                           event ?: @"",
+                           source ?: @"",
+                           (unsigned long)data.length,
+                           entityKey ?: @""];
+    @synchronized (seen) {
+        if ([seen containsObject:signature]) return;
+        [seen addObject:signature];
+    }
+    YTMULyricsLog(@"official lyrics probe event=%@ class=%@ source=%@ dataBytes=%lu entityKey=%@",
+                  event ?: @"<unknown>",
+                  NSStringFromClass([object class]),
+                  source.length ? source : @"<empty>",
+                  (unsigned long)data.length,
+                  entityKey.length ? entityKey : @"<empty>");
+}
+
+@interface YTPlayerViewController ()
+@property (nonatomic, retain) YTMUSyncedLyricsView *ytmuSyncedLyricsView;
+- (void)ytmu_attachSyncedLyricsViewIfNeeded;
+- (void)ytmu_layoutSyncedLyricsView;
+@end
+
+static NSString *YTMUStringFromObject(id object) {
+    if ([object isKindOfClass:[NSString class]]) return object;
+    if ([object respondsToSelector:@selector(stringValue)]) return [object stringValue];
+    return @"";
+}
+
+static id YTMUObjectForKey(id object, NSString *key) {
+    if (!object || !key.length) return nil;
+    if ([object isKindOfClass:[NSDictionary class]]) return ((NSDictionary *)object)[key];
+    return YTMUSafeValueForKey(object, key);
+}
+
+static NSArray *YTMUArrayFromObject(id object) {
+    if ([object isKindOfClass:[NSArray class]]) return object;
+    if ([object isKindOfClass:[NSSet class]]) return [(NSSet *)object allObjects];
+    return nil;
+}
+
+static id YTMUFirstObjectAtKeys(id root, NSArray<NSString *> *keys) {
+    id current = root;
+    for (NSString *key in keys) {
+        current = YTMUObjectForKey(current, key);
+        if (!current) return nil;
+    }
+    return current;
+}
+
+static id YTMUMicroformatRendererFromPlayerResponse(id playerResponse) {
+    id playerData = YTMUObjectForKey(playerResponse, @"playerData");
+    id microformat = YTMUFirstObjectAtKeys(playerData, @[@"microformat", @"microformatDataRenderer"]) ?:
+                     YTMUFirstObjectAtKeys(playerResponse, @[@"microformat", @"microformatDataRenderer"]) ?:
+                     YTMUObjectForKey(playerData, @"microformat") ?:
+                     YTMUObjectForKey(playerResponse, @"microformat");
+    return microformat;
+}
+
+static NSString *YTMUAlternativeTitleFromMicroformat(id microformat, NSString *currentTitle) {
+    NSArray *linkAlternates = YTMUArrayFromObject(YTMUObjectForKey(microformat, @"linkAlternates"));
+    for (id link in linkAlternates ?: @[]) {
+        NSString *title = YTMUStringFromObject(YTMUObjectForKey(link, @"title"));
+        if (!title.length) continue;
+        if (currentTitle.length && [YTMULyricsCompactString(title) isEqualToString:YTMULyricsCompactString(currentTitle)]) continue;
+        return title;
+    }
+    return @"";
+}
+
+// NSObject's default `-description` returns something like
+// "<ClassName: 0xADDR>". KVC accessing the `description` key on any
+// Obj-C object falls through to this method, which is how we ended up
+// with a 31-char "description" that's actually just a debug pointer
+// string. Filter it out — anything matching this shape is NOT the YT
+// video description we want.
+static BOOL YTMUIsObjectDebugString(NSString *str) {
+    if (!str.length || str.length > 200) return NO;
+    if (![str hasPrefix:@"<"] || ![str hasSuffix:@">"]) return NO;
+    return [str rangeOfString:@"0x"].location != NSNotFound;
+}
+
+// Strict string-only KVC reader. Returns @"" when the value is missing,
+// not a string, or matches the NSObject -description debug format.
+static NSString *YTMUSafeStringForKey(id object, NSString *key) {
+    if (!object || !key.length) return @"";
+    id value = nil;
+    if ([object isKindOfClass:[NSDictionary class]]) {
+        value = ((NSDictionary *)object)[key];
+    } else {
+        value = YTMUSafeValueForKey(object, key);
+    }
+    if (![value isKindOfClass:[NSString class]]) return @"";
+    NSString *str = (NSString *)value;
+    return YTMUIsObjectDebugString(str) ? @"" : str;
+}
+
+// Pull the long-form video description out of the player response. YT
+// Music's client does NOT consistently populate `videoDetails.shortDescription`
+// — for music-video uploads it's frequently empty even though the same
+// video on www.youtube.com has a multi-KB description with full lyrics.
+// We probe every known path and pick the longest real string.
+//
+// `lengthsLog` (out, optional) is filled with a human-readable breakdown
+// of every path's length so the caller can log which one won.
+static NSString *YTMUDescriptionFromPlayerResponse(id playerResponse, id details, id microformat,
+                                                   NSString *_Nullable *lengthsLog) {
+    NSString *fromDetails = YTMUSafeStringForKey(details, @"shortDescription");
+
+    NSString *fromMicroformatSimple = @"";
+    NSString *fromMicroformatRuns = @"";
+    // We use YTMUObjectForKey to descend into `description` here only
+    // when the parent is an NSDictionary — that avoids hitting NSObject's
+    // -description method as a side effect.
+    id microformatDescription = nil;
+    if ([microformat isKindOfClass:[NSDictionary class]]) {
+        microformatDescription = ((NSDictionary *)microformat)[@"description"];
+    }
+    if ([microformatDescription isKindOfClass:[NSDictionary class]]) {
+        fromMicroformatSimple = YTMUSafeStringForKey(microformatDescription, @"simpleText");
+        NSArray *runs = YTMUArrayFromObject(((NSDictionary *)microformatDescription)[@"runs"]);
+        if (runs.count) {
+            NSMutableString *joined = [NSMutableString string];
+            for (id run in runs) {
+                NSString *text = YTMUSafeStringForKey(run, @"text");
+                if (text.length) [joined appendString:text];
+            }
+            fromMicroformatRuns = joined;
+        }
+    }
+
+    NSString *best = @"";
+    NSString *bestSource = @"<none>";
+    if (fromDetails.length > best.length)           { best = fromDetails;           bestSource = @"details.shortDescription"; }
+    if (fromMicroformatSimple.length > best.length) { best = fromMicroformatSimple; bestSource = @"microformat.description.simpleText"; }
+    if (fromMicroformatRuns.length > best.length)   { best = fromMicroformatRuns;   bestSource = @"microformat.description.runs"; }
+
+    if (lengthsLog) {
+        *lengthsLog = [NSString stringWithFormat:@"details=%lu microformat.simple=%lu microformat.runs=%lu chosen=%@",
+                       (unsigned long)fromDetails.length,
+                       (unsigned long)fromMicroformatSimple.length,
+                       (unsigned long)fromMicroformatRuns.length,
+                       bestSource];
+    }
+    return best;
+}
+
+// Decide whether the canonical (InnerTube videoDetails) title beats
+// the player-side title. We override only when the canonical version
+// strictly contains the player title and is meaningfully longer, OR
+// when the canonical version carries non-ASCII characters (CJK, etc.)
+// that the player title is missing — both cases the player title is
+// the simplified album-track name and the canonical title is the
+// full video title used by lyric DBs.
+//
+// We deliberately avoid replacing in the other direction: if the
+// player title is already more specific (rare but possible when
+// canonical is something generic like "Music Video"), keep the
+// player title.
+static BOOL YTMUStringHasNonASCII(NSString *str) {
+    for (NSUInteger i = 0; i < str.length; i++) {
+        if ([str characterAtIndex:i] >= 0x80) return YES;
+    }
+    return NO;
+}
+
+static BOOL YTMUCanonicalTitleIsBetter(NSString *canonical, NSString *player) {
+    if (!canonical.length) return NO;
+    if (!player.length) return YES;
+
+    // Trivial: identical case-insensitive — nothing to gain.
+    if ([[canonical lowercaseString] isEqualToString:[player lowercaseString]]) return NO;
+
+    // Player title is contained in canonical: canonical is the same
+    // song with extra context (subtitle, "feat. X", original-language
+    // form). Override.
+    NSString *lowerCanonical = [canonical lowercaseString];
+    NSString *lowerPlayer = [player lowercaseString];
+    if (player.length >= 2 && [lowerCanonical containsString:lowerPlayer] &&
+        canonical.length >= player.length + 3) {
+        return YES;
+    }
+
+    // Canonical has CJK / non-ASCII while player is plain ASCII.
+    // That's the classic YT Music "song" title pattern: the song-
+    // metadata title gets romanized down to ASCII while the video
+    // title preserves the original kanji/kana. Lyric DBs index by
+    // the original-language title, so prefer the canonical.
+    if (YTMUStringHasNonASCII(canonical) && !YTMUStringHasNonASCII(player)) {
+        return YES;
+    }
+
+    return NO;
+}
+
+static NSArray<NSString *> *YTMUTagsFromMicroformat(id microformat) {
+    NSArray *rawTags = YTMUArrayFromObject(YTMUObjectForKey(microformat, @"tags"));
+    NSMutableArray<NSString *> *tags = [NSMutableArray array];
+    NSMutableSet<NSString *> *seen = [NSMutableSet set];
+    for (id raw in rawTags ?: @[]) {
+        NSString *tag = YTMUStringFromObject(raw);
+        NSString *key = YTMULyricsCompactString(tag);
+        if (!tag.length || !key.length || [seen containsObject:key]) continue;
+        [seen addObject:key];
+        [tags addObject:tag];
+        if (tags.count >= 12) break;
+    }
+    return tags;
+}
+
+static YTPlayerViewController *YTMUPlayerFromCandidate(id candidate) {
+    Class playerClass = NSClassFromString(@"YTPlayerViewController");
+    if (playerClass && [candidate isKindOfClass:playerClass]) {
+        return candidate;
+    }
+
+    id player = YTMUSafeValueForKey(candidate, @"playerViewController");
+    if (playerClass && [player isKindOfClass:playerClass]) {
+        return player;
+    }
+
+    id parent = YTMUSafeValueForKey(candidate, @"parentViewController");
+    if (parent && parent != candidate) {
+        return YTMUPlayerFromCandidate(parent);
+    }
+
+    return nil;
+}
+
+static NSString *YTMUClassAndPointer(id object) {
+    return object ? [NSString stringWithFormat:@"%@<%p>", NSStringFromClass([object class]), object] : @"<nil>";
+}
+
+static BOOL YTMURefreshLyricsFromPlayer(YTPlayerViewController *player, NSString *source, BOOL force) {
+    if (!player) return NO;
+    [[YTMULyricsPlaybackState sharedState] notePlayerViewController:player];
+
+    NSString *videoId = @"";
+    NSTimeInterval duration = 0;
+    @try {
+        videoId = player.currentVideoID ?: player.contentVideoID ?: @"";
+        duration = player.currentVideoTotalMediaTime;
+    } @catch (__unused NSException *exception) {
+        videoId = @"";
+        duration = 0;
+    }
+    if (!videoId.length) {
+        videoId = YTMUStringFromObject(YTMUSafeValueForKey(player, @"currentVideoID"));
+        if (!videoId.length) videoId = YTMUStringFromObject(YTMUSafeValueForKey(player, @"contentVideoID"));
+    }
+    if (duration <= 0) {
+        duration = [YTMUSafeValueForKey(player, @"currentVideoTotalMediaTime") doubleValue];
+    }
+
+    // CRITICAL: `playerResponse` is the full video-context player
+    // response — its videoDetails.title carries the COMPLETE upload
+    // title (e.g. "Qeiru - ハテ (feat. IA)") which lyric DBs like
+    // NetEase index by. `contentPlayerResponse` is YT Music's
+    // song-mode wrapper which simplifies the title to just the
+    // album-track name (e.g. "Terminal") and strips out the part
+    // that makes the song actually findable in NetEase.
+    //
+    // An earlier change here flipped these around after seeing
+    // `contentPlayerResponse` in the runtime selector list — that
+    // regressed every CJK song whose YT Music "song title" diverges
+    // from the actual video title. We probe `playerResponse` first
+    // and only fall back to `contentPlayerResponse` if the former
+    // is unavailable.
+    id playerResponse = YTMUSafeValueForKey(player, @"playerResponse");
+    if (!playerResponse) playerResponse = YTMUSafeValueForKey(player, @"contentPlayerResponse");
+    id playerData = YTMUSafeValueForKey(playerResponse, @"playerData");
+    id details = YTMUSafeValueForKey(playerData, @"videoDetails");
+    NSString *title = YTMUStringFromObject(YTMUSafeValueForKey(details, @"title"));
+    NSString *artist = YTMUStringFromObject(YTMUSafeValueForKey(details, @"author"));
+    NSString *album = YTMUStringFromObject(YTMUSafeValueForKey(details, @"album"));
+    NSDictionary *nowPlaying = [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo ?: @{};
+    if (!title.length) title = YTMUStringFromObject(nowPlaying[MPMediaItemPropertyTitle]);
+    if (!artist.length) artist = YTMUStringFromObject(nowPlaying[MPMediaItemPropertyArtist]);
+
+    if (!videoId.length && !title.length) {
+        static NSMutableSet<NSString *> *missingSources;
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            missingSources = [NSMutableSet set];
+        });
+        @synchronized (missingSources) {
+            if (![missingSources containsObject:source ?: @"<unknown>"]) {
+                [missingSources addObject:source ?: @"<unknown>"];
+                if (YTMULyricsDebugLoggingEnabled()) {
+                    YTMULyricsLog(@"player metadata unavailable source=%@ player=%@", source, YTMUClassAndPointer(player));
+                }
+            }
+        }
+        return NO;
+    }
+
+    // Dedup first. This function runs from every viewDidLayoutSubviews of
+    // two view controllers, so the common case is "same song as last time"
+    // — decide that from the three cheap fields before touching the
+    // microformat / description / tag extraction below.
+    NSString *signature = [NSString stringWithFormat:@"%@|%@|%@", videoId ?: @"", title ?: @"", artist ?: @""];
+    static NSString *lastSignature;
+    BOOL shouldRefresh = force;
+    @synchronized ([YTMULyricsManager class]) {
+        if (![signature isEqualToString:lastSignature]) {
+            shouldRefresh = YES;
+            lastSignature = [signature copy];
+        }
+    }
+    if (!shouldRefresh) return NO;
+
+    id microformat = YTMUMicroformatRendererFromPlayerResponse(playerResponse);
+    NSString *descriptionLengths = nil;
+    NSString *shortDescription = YTMUDescriptionFromPlayerResponse(playerResponse, details, microformat, &descriptionLengths);
+    NSString *alternativeTitle = YTMUAlternativeTitleFromMicroformat(microformat, title);
+    NSArray<NSString *> *tags = YTMUTagsFromMicroformat(microformat);
+    if (!album.length) album = YTMUStringFromObject(nowPlaying[MPMediaItemPropertyAlbumTitle]);
+    if (!alternativeTitle.length) alternativeTitle = YTMUAlternativeTitleFromMicroformat(microformat, title);
+    if (duration <= 0) duration = [nowPlaying[MPMediaItemPropertyPlaybackDuration] doubleValue];
+
+    [[YTMUTranslationContext sharedContext] updateWithVideoId:videoId title:title artist:artist];
+
+    if (YTMULyricsDebugLoggingEnabled()) {
+        NSDictionary *flags = [[NSUserDefaults standardUserDefaults] dictionaryForKey:@"YTMUltimate"] ?: @{};
+        YTMULyricsLog(@"player metadata source=%@ player=%@ videoId=%@ title=%@ alt=%@ artist=%@ duration=%.1f tags=%lu master=%@ synced=%@ bilingual=%@",
+                      source ?: @"<unknown>",
+                      YTMUClassAndPointer(player),
+                      videoId.length ? videoId : @"<empty>",
+                      title.length ? title : @"<empty>",
+                      alternativeTitle.length ? alternativeTitle : @"<empty>",
+                      artist.length ? artist : @"<empty>",
+                      duration,
+                      (unsigned long)tags.count,
+                      [flags[@"YTMUltimateIsEnabled"] boolValue] ? @"YES" : @"NO",
+                      [flags[@"syncedLyricsEnabled"] boolValue] ? @"YES" : @"NO",
+                      ([flags[@"lyricsTranslationEnabled"] boolValue] || [flags[@"bilingualLyrics"] boolValue]) ? @"YES" : @"NO");
+        // YT Music's client strips the description out of its player
+        // response — `videoDetails.shortDescription` is empty for almost
+        // every music video and the microformat block is never present
+        // (verified via reflection dumps). We log which (if any) of the
+        // local paths produced the description; the InnerTube fetcher
+        // wired in below picks up when none did.
+        YTMULyricsLog(@"player metadata description %@", descriptionLengths ?: @"<no probe>");
+    }
+
+    YTMULyricsSearchInfo *info = [[YTMULyricsSearchInfo alloc] init];
+    info.videoId = videoId;
+    info.title = title;
+    info.alternativeTitle = alternativeTitle.length ? alternativeTitle : title;
+    info.artist = artist;
+    info.album = album;
+    info.duration = duration;
+    info.tags = tags ?: @[];
+    // YouTube descriptions cap at 5000 characters server-side. We allow up
+    // to 32KB defensively (in case a client is bundling extra metadata)
+    // and pass the full block downstream. Trimming aggressively here
+    // would defeat the description-lyrics extractor — uploaders frequently
+    // open with credits/links/CC notice and only paste lyrics deep into
+    // the description.
+    if (shortDescription.length > 32 * 1024) shortDescription = [shortDescription substringToIndex:32 * 1024];
+    info.shortDescription = shortDescription ?: @"";
+
+    // YT Music's player response gives us a "song"-shaped view of
+    // metadata: description is stripped and the title is often the
+    // simplified album-track name (e.g. just "Terminal") rather than
+    // the full video title (e.g. "ハテ - Terminal (feat. IA)"). The
+    // InnerTube fetcher pulls the canonical video-side metadata; if
+    // it's already cached, inject it synchronously here so the lyrics
+    // pipeline searches with the right title from the start.
+    if (videoId.length) {
+        YTMUInnerTubeMetadata *cached = [[YTMUInnerTubeDescriptionFetcher sharedFetcher]
+                                            cachedMetadataForVideoId:videoId];
+        if (cached) {
+            if (!info.shortDescription.length && cached.videoDescription.length) {
+                NSString *capped = cached.videoDescription.length > 32 * 1024
+                    ? [cached.videoDescription substringToIndex:32 * 1024]
+                    : cached.videoDescription;
+                info.shortDescription = capped;
+                YTMULyricsLog(@"innertube cache hit (sync) videoId=%@ descLen=%lu",
+                              videoId, (unsigned long)capped.length);
+            }
+            // Override title only when the canonical version is genuinely
+            // more informative — i.e. it strictly contains the player
+            // title or carries non-ASCII characters the player title
+            // didn't have. NetEase indexes by the video title for
+            // doujin / vocaloid uploads, so using the simplified song
+            // title routinely hits an unrelated track that just happens
+            // to share the simplified name (K-pop "Terminal" matched
+            // for Qeiru's "ハテ - Terminal (feat. IA)").
+            if (cached.canonicalTitle.length &&
+                ![cached.canonicalTitle isEqualToString:info.title] &&
+                YTMUCanonicalTitleIsBetter(cached.canonicalTitle, info.title)) {
+                YTMULyricsLog(@"innertube canonical title override videoId=%@ player=\"%@\" → canonical=\"%@\"",
+                              videoId, info.title, cached.canonicalTitle);
+                if (info.title.length && !info.alternativeTitle.length) {
+                    info.alternativeTitle = info.title;
+                }
+                info.title = cached.canonicalTitle;
+            }
+        }
+    }
+
+    [[YTMULyricsManager sharedManager] refreshWithInfo:info];
+
+    // Cache miss: kick off an async InnerTube fetch. On success the
+    // fetcher writes to disk cache; we then re-run refreshWithInfo
+    // with the full metadata. Subsequent plays take the synchronous
+    // cache-hit path above.
+    if (videoId.length) {
+        BOOL needsDescription = !info.shortDescription.length;
+        BOOL alreadyCached = ([[YTMUInnerTubeDescriptionFetcher sharedFetcher]
+                                  cachedMetadataForVideoId:videoId] != nil);
+        if (!alreadyCached) {
+            NSString *capturedVideoId = [videoId copy];
+            YTMULyricsSearchInfo *infoSnapshot = [info copy];
+            BOOL captureNeedsDescription = needsDescription;
+            [[YTMUInnerTubeDescriptionFetcher sharedFetcher]
+                fetchMetadataForVideoId:capturedVideoId
+                              completion:^(YTMUInnerTubeMetadata *_Nullable meta, NSError *_Nullable error) {
+                if (!meta) return;
+
+                BOOL haveBetterTitle = meta.canonicalTitle.length &&
+                                        ![meta.canonicalTitle isEqualToString:infoSnapshot.title] &&
+                                        YTMUCanonicalTitleIsBetter(meta.canonicalTitle, infoSnapshot.title);
+                BOOL haveDescription = captureNeedsDescription && meta.videoDescription.length;
+                if (!haveBetterTitle && !haveDescription) return;
+
+                // Dedup re-refreshes: same videoId, multiple callbacks
+                // racing during a single in-flight fetch. One refresh
+                // per videoId per process lifetime is enough; the
+                // disk cache takes over after that.
+                static NSMutableSet<NSString *> *injectedVideoIds;
+                static dispatch_once_t injectOnce;
+                dispatch_once(&injectOnce, ^{ injectedVideoIds = [NSMutableSet set]; });
+                @synchronized (injectedVideoIds) {
+                    if ([injectedVideoIds containsObject:capturedVideoId]) return;
+                    [injectedVideoIds addObject:capturedVideoId];
+                }
+
+                // Build the re-run base from the freshest info the manager
+                // has for this videoId (if still the active song). YouTube
+                // Music's per-track state updates in two waves: a
+                // viewDidLayoutSubviews fires with the new videoId while
+                // duration / artist / etc. still hold the *previous* song's
+                // values, then didActivateVideo lands a few tens of
+                // milliseconds later with the real numbers. Our fetch was
+                // started during the first wave, so `infoSnapshot.duration`
+                // is whatever stale value the player happened to be holding
+                // — and NetEase's ranking is duration-weighted, so feeding
+                // it a 348s duration for what is really a 164s track makes
+                // every actual match look like a wrong-song hit
+                // (durationDelta ≈ 184s drops the score below acceptance).
+                // Pulling from `lastSearchInfo` here picks up the
+                // didActivateVideo correction. If the user has navigated
+                // away to a different song in the meantime, fall through
+                // and skip — applying meta to a different song would be
+                // worse than not applying it.
+                YTMULyricsSearchInfo *currentInfo = [YTMULyricsManager sharedManager].lastSearchInfo;
+                YTMULyricsSearchInfo *updated;
+                if (currentInfo && [currentInfo.videoId isEqualToString:capturedVideoId]) {
+                    updated = [currentInfo copy];
+                } else {
+                    updated = [infoSnapshot copy];
+                }
+                if (haveDescription) {
+                    NSString *capped = meta.videoDescription.length > 32 * 1024
+                        ? [meta.videoDescription substringToIndex:32 * 1024]
+                        : meta.videoDescription;
+                    updated.shortDescription = capped;
+                }
+                if (haveBetterTitle) {
+                    if (updated.title.length && !updated.alternativeTitle.length) {
+                        updated.alternativeTitle = updated.title;
+                    }
+                    updated.title = meta.canonicalTitle;
+                }
+                YTMULyricsLog(@"innertube metadata injected videoId=%@ desc=%@ title=%@ duration=%.1f — re-running refresh",
+                              capturedVideoId,
+                              haveDescription ? @"YES" : @"no",
+                              haveBetterTitle ? @"YES" : @"no",
+                              updated.duration);
+                [[YTMULyricsManager sharedManager] refreshWithInfo:updated];
+            }];
+        }
+    }
+
+    return YES;
+}
+
+static char YTMUPlayerRefreshRetryTokenKey;
+
+static void YTMUSchedulePlayerRefreshRetries(YTPlayerViewController *player, NSString *source) {
+    if (!player) return;
+    NSUInteger token = [objc_getAssociatedObject(player, &YTMUPlayerRefreshRetryTokenKey) unsignedIntegerValue] + 1;
+    objc_setAssociatedObject(player, &YTMUPlayerRefreshRetryTokenKey, @(token), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+    NSArray<NSNumber *> *delays = @[@0.25, @0.75, @1.5, @2.5];
+    __weak YTPlayerViewController *weakPlayer = player;
+    for (NSUInteger idx = 0; idx < delays.count; idx++) {
+        NSTimeInterval delay = delays[idx].doubleValue;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            YTPlayerViewController *strongPlayer = weakPlayer;
+            if (!strongPlayer) return;
+            if ([objc_getAssociatedObject(strongPlayer, &YTMUPlayerRefreshRetryTokenKey) unsignedIntegerValue] != token) return;
+            NSString *retrySource = [NSString stringWithFormat:@"%@.retry%lu", source ?: @"player", (unsigned long)(idx + 1)];
+            YTMURefreshLyricsFromPlayer(strongPlayer, retrySource, NO);
+        });
+    }
+}
+
+static void YTMUHandlePlayerCandidate(id candidate, NSString *source, BOOL force) {
+    YTPlayerViewController *player = YTMUPlayerFromCandidate(candidate);
+    if (!player) {
+        static NSMutableSet<NSString *> *missingSources;
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            missingSources = [NSMutableSet set];
+        });
+        @synchronized (missingSources) {
+            if (![missingSources containsObject:source ?: @"<unknown>"]) {
+                [missingSources addObject:source ?: @"<unknown>"];
+                if (YTMULyricsDebugLoggingEnabled()) {
+                    YTMULyricsLog(@"no player candidate source=%@ object=%@", source, YTMUClassAndPointer(candidate));
+                }
+            }
+        }
+        return;
+    }
+
+    if ([player respondsToSelector:@selector(ytmu_attachSyncedLyricsViewIfNeeded)]) {
+        [player ytmu_attachSyncedLyricsViewIfNeeded];
+    }
+    [[YTMULyricsPlaybackState sharedState] notePlayerViewController:player];
+    YTMURefreshLyricsFromPlayer(player, source, force);
+    if (force) YTMUSchedulePlayerRefreshRetries(player, source);
+}
+
+static NSString *YTMUHasSelector(Class cls, SEL selector) {
+    return (cls && [cls instancesRespondToSelector:selector]) ? @"YES" : @"NO";
+}
+
+static void YTMULogInterestingSelectors(Class cls) {
+    if (!YTMULyricsDebugLoggingEnabled()) return;
+    if (!cls) return;
+
+    unsigned int count = 0;
+    Method *methods = class_copyMethodList(cls, &count);
+    NSMutableArray<NSString *> *names = [NSMutableArray array];
+    NSArray<NSString *> *needles = @[@"Activate", @"VideoTime", @"playbackController", @"playerViewController", @"currentVideo", @"playerResponse"];
+    for (unsigned int i = 0; i < count; i++) {
+        NSString *name = NSStringFromSelector(method_getName(methods[i]));
+        for (NSString *needle in needles) {
+            if ([name rangeOfString:needle options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                [names addObject:name];
+                break;
+            }
+        }
+        if (names.count >= 70) break;
+    }
+    free(methods);
+
+    YTMULyricsLog(@"runtime selectors class=%@ count=%u interesting=%@",
+                  NSStringFromClass(cls),
+                  count,
+                  names.count ? [names componentsJoinedByString:@", "] : @"<none>");
+}
+
+static void YTMULogRuntimeDiagnostics(void) {
+    if (!YTMULyricsDebugLoggingEnabled()) return;
+    YTMULyricsLog(@"build stamp %s %s", __DATE__, __TIME__);
+
+    NSArray<NSString *> *classes = @[
+        @"YTPlayerViewController",
+        @"YTMWatchViewController",
+        @"YTMNowPlayingViewController",
+        @"YTMPlayerViewController",
+        @"YTMPlayerTabViewController"
+    ];
+    for (NSString *name in classes) {
+        Class cls = NSClassFromString(name);
+        YTMULyricsLog(@"runtime class %@ present=%@ viewDidAppear=%@ viewDidLayout=%@ playerVC=%@ didActivate3=%@ pvDidActivate=%@ timeSingle=%@ timePotential=%@",
+                      name,
+                      cls ? @"YES" : @"NO",
+                      YTMUHasSelector(cls, @selector(viewDidAppear:)),
+                      YTMUHasSelector(cls, @selector(viewDidLayoutSubviews)),
+                      YTMUHasSelector(cls, @selector(playerViewController)),
+                      YTMUHasSelector(cls, @selector(playbackController:didActivateVideo:withPlaybackData:)),
+                      YTMUHasSelector(cls, @selector(playerViewController:didActivateVideo:)),
+                      YTMUHasSelector(cls, @selector(singleVideo:currentVideoTimeDidChange:)),
+                      YTMUHasSelector(cls, @selector(potentiallyMutatedSingleVideo:currentVideoTimeDidChange:)));
+        YTMULogInterestingSelectors(cls);
+    }
+}
+
+static void (*YTMUOrigYTPlayerPlaybackControllerDidActivateVideoWithPlayerResponse)(id, SEL, id, id);
+static void YTMUHookYTPlayerPlaybackControllerDidActivateVideoWithPlayerResponse(id self, SEL _cmd, id arg1, id arg2) {
+    if (YTMUOrigYTPlayerPlaybackControllerDidActivateVideoWithPlayerResponse) {
+        YTMUOrigYTPlayerPlaybackControllerDidActivateVideoWithPlayerResponse(self, _cmd, arg1, arg2);
+    }
+    if (YTMULyricsDebugLoggingEnabled()) YTMULyricsLog(@"dynamic callback %@ class=%@", NSStringFromSelector(_cmd), NSStringFromClass([self class]));
+    YTMUHandlePlayerCandidate(self, NSStringFromSelector(_cmd), YES);
+}
+
+static void (*YTMUOrigYTPlayerPlaybackControllerDidActivateVideo)(id, SEL, id);
+static void YTMUHookYTPlayerPlaybackControllerDidActivateVideo(id self, SEL _cmd, id arg1) {
+    if (YTMUOrigYTPlayerPlaybackControllerDidActivateVideo) {
+        YTMUOrigYTPlayerPlaybackControllerDidActivateVideo(self, _cmd, arg1);
+    }
+    if (YTMULyricsDebugLoggingEnabled()) YTMULyricsLog(@"dynamic callback %@ class=%@", NSStringFromSelector(_cmd), NSStringFromClass([self class]));
+    YTMUHandlePlayerCandidate(self, NSStringFromSelector(_cmd), YES);
+}
+
+static void (*YTMUOrigWatchPlayerDidActivate)(id, SEL, id, id);
+static void YTMUHookWatchPlayerDidActivate(id self, SEL _cmd, id player, id video) {
+    if (YTMUOrigWatchPlayerDidActivate) {
+        YTMUOrigWatchPlayerDidActivate(self, _cmd, player, video);
+    }
+    if (YTMULyricsDebugLoggingEnabled()) YTMULyricsLog(@"dynamic callback %@ class=%@ player=%@", NSStringFromSelector(_cmd), NSStringFromClass([self class]), YTMUClassAndPointer(player));
+    YTMUHandlePlayerCandidate(player ?: self, NSStringFromSelector(_cmd), YES);
+}
+
+static void (*YTMUOrigWatchPlayerActivatedWithVideo)(id, SEL, id, id);
+static void YTMUHookWatchPlayerActivatedWithVideo(id self, SEL _cmd, id player, id video) {
+    if (YTMUOrigWatchPlayerActivatedWithVideo) {
+        YTMUOrigWatchPlayerActivatedWithVideo(self, _cmd, player, video);
+    }
+    if (YTMULyricsDebugLoggingEnabled()) YTMULyricsLog(@"dynamic callback %@ class=%@ player=%@", NSStringFromSelector(_cmd), NSStringFromClass([self class]), YTMUClassAndPointer(player));
+    YTMUHandlePlayerCandidate(player ?: self, NSStringFromSelector(_cmd), YES);
+}
+
+static void (*YTMUOrigWatchPlayerDidActivateNewPlayback)(id, SEL, id, id);
+static void YTMUHookWatchPlayerDidActivateNewPlayback(id self, SEL _cmd, id player, id video) {
+    if (YTMUOrigWatchPlayerDidActivateNewPlayback) {
+        YTMUOrigWatchPlayerDidActivateNewPlayback(self, _cmd, player, video);
+    }
+    if (YTMULyricsDebugLoggingEnabled()) YTMULyricsLog(@"dynamic callback %@ class=%@ player=%@", NSStringFromSelector(_cmd), NSStringFromClass([self class]), YTMUClassAndPointer(player));
+    YTMUHandlePlayerCandidate(player ?: self, NSStringFromSelector(_cmd), YES);
+}
+
+static void (*YTMUOrigWatchPlayerWillActivate)(id, SEL, id, id);
+static void YTMUHookWatchPlayerWillActivate(id self, SEL _cmd, id player, id video) {
+    if (YTMUOrigWatchPlayerWillActivate) {
+        YTMUOrigWatchPlayerWillActivate(self, _cmd, player, video);
+    }
+    if (YTMULyricsDebugLoggingEnabled()) YTMULyricsLog(@"dynamic callback %@ class=%@ player=%@", NSStringFromSelector(_cmd), NSStringFromClass([self class]), YTMUClassAndPointer(player));
+    YTMUHandlePlayerCandidate(player ?: self, NSStringFromSelector(_cmd), NO);
+}
+
+static void YTMUInstallMessageHook(Class cls, SEL selector, IMP replacement, IMP *original, NSString *label) {
+    BOOL hasMethod = cls && class_getInstanceMethod(cls, selector) != NULL;
+    YTMULyricsLog(@"dynamic hook candidate %@ %@ installed=%@",
+                  label ?: NSStringFromClass(cls),
+                  NSStringFromSelector(selector),
+                  hasMethod ? @"YES" : @"NO");
+    if (hasMethod) {
+        MSHookMessageEx(cls, selector, replacement, original);
+    }
+}
+
+static void YTMUInstallDynamicHooks(void) {
+    Class playerClass = NSClassFromString(@"YTPlayerViewController");
+    YTMUInstallMessageHook(playerClass,
+                           @selector(playbackControllerDidActivateVideo:withPlayerResponse:),
+                           (IMP)YTMUHookYTPlayerPlaybackControllerDidActivateVideoWithPlayerResponse,
+                           (IMP *)&YTMUOrigYTPlayerPlaybackControllerDidActivateVideoWithPlayerResponse,
+                           @"YTPlayerViewController");
+    YTMUInstallMessageHook(playerClass,
+                           @selector(playbackControllerDidActivateVideo:),
+                           (IMP)YTMUHookYTPlayerPlaybackControllerDidActivateVideo,
+                           (IMP *)&YTMUOrigYTPlayerPlaybackControllerDidActivateVideo,
+                           @"YTPlayerViewController");
+
+    Class watchClass = NSClassFromString(@"YTMWatchViewController");
+    YTMUInstallMessageHook(watchClass,
+                           @selector(playerViewController:didActivateVideo:),
+                           (IMP)YTMUHookWatchPlayerDidActivate,
+                           (IMP *)&YTMUOrigWatchPlayerDidActivate,
+                           @"YTMWatchViewController");
+    YTMUInstallMessageHook(watchClass,
+                           @selector(playerViewController:activatedWithVideo:),
+                           (IMP)YTMUHookWatchPlayerActivatedWithVideo,
+                           (IMP *)&YTMUOrigWatchPlayerActivatedWithVideo,
+                           @"YTMWatchViewController");
+    YTMUInstallMessageHook(watchClass,
+                           @selector(playerViewController:didActivateNewPlaybackWithContentVideo:),
+                           (IMP)YTMUHookWatchPlayerDidActivateNewPlayback,
+                           (IMP *)&YTMUOrigWatchPlayerDidActivateNewPlayback,
+                           @"YTMWatchViewController");
+    YTMUInstallMessageHook(watchClass,
+                           @selector(playerViewController:willActivateVideo:),
+                           (IMP)YTMUHookWatchPlayerWillActivate,
+                           (IMP *)&YTMUOrigWatchPlayerWillActivate,
+                           @"YTMWatchViewController");
+}
+
+@interface YTClientLyricsDataModel : NSObject
+- (NSString *)lyricsSource;
+- (NSData *)data;
+@end
+
+@interface YTMusicLyricsEntityModel : NSObject
+- (id)clientLyricsData;
+- (NSData *)data;
+- (NSString *)entityKey;
+@end
+
+%group YTMSyncedLyrics
+
+%hook YTPlayerViewController
+
+%property (nonatomic, retain) YTMUSyncedLyricsView *ytmuSyncedLyricsView;
+
+- (void)viewDidAppear:(BOOL)animated {
+    %orig;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        YTMULyricsLog(@"hook YTPlayerViewController.viewDidAppear fired (class=%@)", NSStringFromClass([self class]));
+    });
+    [self ytmu_attachSyncedLyricsViewIfNeeded];
+}
+
+- (void)viewDidLayoutSubviews {
+    %orig;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        YTMULyricsLog(@"hook YTPlayerViewController.viewDidLayoutSubviews fired");
+    });
+    [self ytmu_layoutSyncedLyricsView];
+}
+
+- (void)playbackController:(id)arg1 didActivateVideo:(id)arg2 withPlaybackData:(id)arg3 {
+    %orig;
+    YTMULyricsLog(@"hook didActivateVideo class=%@", NSStringFromClass([self class]));
+    YTMUHandlePlayerCandidate(self, @"YTPlayerViewController.didActivateVideo", YES);
+}
+
+- (void)singleVideo:(id)video currentVideoTimeDidChange:(id)time {
+    %orig;
+    NSTimeInterval timeMs = YTMUNormalizedPlaybackTimeMs(self);
+    [[YTMULyricsPlaybackState sharedState] notePlayerViewController:self];
+    [[YTMULyricsPlaybackState sharedState] notePlaybackTimeMs:timeMs];
+    [self.ytmuSyncedLyricsView updatePlaybackTimeMs:timeMs];
+}
+
+- (void)potentiallyMutatedSingleVideo:(id)video currentVideoTimeDidChange:(id)time {
+    %orig;
+    NSTimeInterval timeMs = YTMUNormalizedPlaybackTimeMs(self);
+    [[YTMULyricsPlaybackState sharedState] notePlayerViewController:self];
+    [[YTMULyricsPlaybackState sharedState] notePlaybackTimeMs:timeMs];
+    [self.ytmuSyncedLyricsView updatePlaybackTimeMs:timeMs];
+}
+
+%new
+- (void)ytmu_attachSyncedLyricsViewIfNeeded {
+    if (!YTMUArtworkLyricsOverlayEnabled()) {
+        if (self.ytmuSyncedLyricsView) {
+            self.ytmuSyncedLyricsView.hidden = YES;
+            [self.ytmuSyncedLyricsView removeFromSuperview];
+            self.ytmuSyncedLyricsView = nil;
+        }
+        return;
+    }
+    if (!YTMUSyncedLyricsEnabled()) {
+        self.ytmuSyncedLyricsView.hidden = YES;
+        return;
+    }
+    if (!self.ytmuSyncedLyricsView) {
+        self.ytmuSyncedLyricsView = [[YTMUSyncedLyricsView alloc] initWithFrame:CGRectZero];
+        self.ytmuSyncedLyricsView.playerViewController = self;
+        self.ytmuSyncedLyricsView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
+        [self.view addSubview:self.ytmuSyncedLyricsView];
+        YTMULyricsLog(@"synced lyrics view attached player=%@ container=%@", YTMUClassAndPointer(self), YTMUClassAndPointer(self.view));
+        [self ytmu_layoutSyncedLyricsView];
+        [self.ytmuSyncedLyricsView reloadFromManager];
+    }
+}
+
+%new
+- (void)ytmu_layoutSyncedLyricsView {
+    if (!self.ytmuSyncedLyricsView) return;
+    UIEdgeInsets safe = self.view.safeAreaInsets;
+    CGFloat width = self.view.bounds.size.width - 20;
+    CGFloat height = MIN(MAX(self.view.bounds.size.height * 0.38, 210), 360);
+    CGFloat y = self.view.bounds.size.height - height - safe.bottom - 14;
+    self.ytmuSyncedLyricsView.frame = CGRectMake(10, MAX(safe.top + 12, y), width, height);
+}
+
+%end
+
+%hook YTMWatchViewController
+
+- (void)viewDidAppear:(BOOL)animated {
+    %orig;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        YTMULyricsLog(@"hook YTMWatchViewController.viewDidAppear fired class=%@", NSStringFromClass([self class]));
+    });
+    YTMUHandlePlayerCandidate(self, @"YTMWatchViewController.viewDidAppear", YES);
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.8 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        YTMUHandlePlayerCandidate(self, @"YTMWatchViewController.viewDidAppear.delayed", NO);
+    });
+}
+
+- (void)viewDidLayoutSubviews {
+    %orig;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        YTMULyricsLog(@"hook YTMWatchViewController.viewDidLayoutSubviews fired class=%@", NSStringFromClass([self class]));
+    });
+    YTMUHandlePlayerCandidate(self, @"YTMWatchViewController.viewDidLayoutSubviews", NO);
+}
+
+- (void)playbackControllerStateDidChange {
+    %orig;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        YTMULyricsLog(@"hook YTMWatchViewController.playbackControllerStateDidChange fired class=%@", NSStringFromClass([self class]));
+    });
+    YTMUHandlePlayerCandidate(self, @"YTMWatchViewController.playbackControllerStateDidChange", NO);
+}
+
+%end
+
+%hook YTMNowPlayingViewController
+
+- (void)viewDidAppear:(BOOL)animated {
+    %orig;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        YTMULyricsLog(@"hook YTMNowPlayingViewController.viewDidAppear fired class=%@", NSStringFromClass([self class]));
+    });
+    YTMUHandlePlayerCandidate(self, @"YTMNowPlayingViewController.viewDidAppear", NO);
+}
+
+- (void)viewDidLayoutSubviews {
+    %orig;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        YTMULyricsLog(@"hook YTMNowPlayingViewController.viewDidLayoutSubviews fired class=%@", NSStringFromClass([self class]));
+    });
+    YTMUHandlePlayerCandidate(self, @"YTMNowPlayingViewController.viewDidLayoutSubviews", NO);
+}
+
+%end
+
+%end
+
+%group YTMUOfficialLyricsProbe
+
+%hook YTClientLyricsDataModel
+
+- (NSString *)lyricsSource {
+    NSString *source = %orig;
+    NSData *data = nil;
+    @try {
+        data = [self data];
+    } @catch (__unused NSException *exception) {
+        data = nil;
+    }
+    YTMULogOfficialLyricsProbe(self, @"clientLyricsData.lyricsSource", source, data, @"");
+    return source;
+}
+
+%end
+
+%hook YTMusicLyricsEntityModel
+
+- (id)clientLyricsData {
+    id clientData = %orig;
+    NSString *source = @"";
+    if ([clientData respondsToSelector:@selector(lyricsSource)]) {
+        source = [clientData lyricsSource];
+    }
+    NSData *data = nil;
+    NSString *entityKey = @"";
+    @try {
+        data = [self data];
+        entityKey = [self entityKey];
+    } @catch (__unused NSException *exception) {
+        data = nil;
+        entityKey = @"";
+    }
+    YTMULogOfficialLyricsProbe(self, @"musicLyricsEntity.clientLyricsData", source, data, entityKey);
+    return clientData;
+}
+
+%end
+
+%end
+
+//
+// **Upstream's %ctor, minus the part Albrhi owns.**
+//
+// The seeding of a dozen lyrics defaults moved to Tweak.x, where every other switch in this tweak
+// is decided once and after the gate. What stays is the rest of what that constructor did, in the
+// order it did it -- including the class check before the official-lyrics probe, which is upstream
+// being careful for the same reason this project is: a %hook on a class this build does not have
+// is a method invented for an API nobody calls.
+//
+void SCIYTMInstallSyncedLyrics(void) {
+    %init(YTMSyncedLyrics);
+
+    YTMULogRuntimeDiagnostics();
+    YTMUInstallDynamicHooks();
+
+    if (NSClassFromString(@"YTClientLyricsDataModel") || NSClassFromString(@"YTMusicLyricsEntityModel")) {
+        %init(YTMUOfficialLyricsProbe);
+        YTMULyricsLog(@"official lyrics probe installed");
+    }
+}

@@ -1,0 +1,214 @@
+"ENABLED" = "Abilita YTMEnhanced";
+"RESTART_FOOTER" = "Riavvia l'app per applicare le modifiche";
+
+"PREMIUM_SETTINGS" = "Opzioni Premium";
+"NO_ADS" = "No pubblicità";
+"NO_ADS_DESC" = "Rimuove le pubblicità nell'app";
+"BACKGROUND_PLAYBACK" = "Riproduzione in background";
+"BACKGROUND_PLAYBACK_DESC" = "Abilita la riproduzione in background";
+
+"PLAYER_SETTINGS" = "Opzioni del Player";
+"DOWNLOAD_AUDIO" = "Scarica audio";
+"DOWNLOAD_AUDIO_DESC" = "Aggiunge l'opzione per scaricare l'audio premendo il bottone YTMEnhanced nel player";
+"DOWNLOAD_COVER" = "Scarica immagine di copertina";
+"DOWNLOAD_COVER_DESC" = "Aggiunge l'opzione per scaricare l'immagine di copertina premendo il bottone YTMEnhanced nel player";
+"PLAYBACK_RATE_BUTTON" = "Mostra bottone velocità di riproduzione";
+"PLAYBACK_RATE_BUTTON_DESC" = "Modifica la velocità di riproduzione";
+"VOLBAR" = "Barra del volume";
+"VOLBAR_DESC" = "Aggiunge una barra del volume al player";
+"NO_AUTORADIO" = "Disattiva radio";
+"NO_AUTORADIO_DESC" = "Disattiva funzione musica infinita";
+"SKIP_CONTENT_WARNING" = "Salta content warning";
+"SKIP_CONTENT_WARNING_DESC" = "Salta il warning per contenuti potenzialmente pericolosi";
+"AV_DEFAULT_MODE" = "Modalità di riproduzione di default";
+
+"SKIP_NONMUSIC_PARTS" = "SponsorBlock";
+"SKIP_NONMUSIC_PARTS_DESC" = "Salta segmenti non musicali nei video";
+"SB_BEHAVIOR" = "Comportamento";
+"SB_SKIP" = "Salta";
+"SB_ASK" = "Chiedi";
+"SB_NOTIF_DURATION" = "Durata notifica (sec)";
+
+"SEEK_BUTTONS" = "Cambia bottoni successivo/precedente con forward/backward"; 
+"SEEK_TIME_FOOTER" = "Seleziona un tempo in secondi\n\nDefault:\nIndietro = 10 sec.\nAvanti = 30 sec.\n\nPassa alla canzone successiva o precedente tenendo premuto i bottoni.";
+"DEFAULT" = "Default";
+
+"THEME_SETTINGS" = "Opzioni tema";
+"OLED_DARK_THEME" = "Tema scuro OLED";
+"OLED_DARK_THEME_DESC" = "Attiva il Tema scuro OLED";
+"OLED_DARK_KEYBOARD" = "Tastiera scura OLED";
+"OLED_DARK_KEYBOARD_DESC" = "Attiva la Tastiera scura OLED";
+"LOW_CONTRAST" = "Basso contrasto";
+"LOW_CONTRAST_DESC" = "Abbassa il contrasto per testo e bottoni";
+
+"NAVBAR_SETTINGS" = "Opzioni barra di navigazione";
+"DONT_STICK_HEADERS" = "Non appiccicare gli header";
+"DONT_STICK_HEADERS_DESC" = "Non appiccicare i pannelli fissati nella parte superiore dello schermo";
+"HIDE_HISTORY_BUTTON" = "Nascondi tasto cronologia";
+"HIDE_HISTORY_BUTTON_DESC" = "Nasconde il tasto cronologia nella barra di navigazione";
+"HIDE_CAST_BUTTON" = "Nascondi tasto cast";
+"HIDE_CAST_BUTTON_DESC" = "Nasconde il tasto cast nella barra di navigazione";
+"HIDE_FILTER_BUTTON" = "Rimuovi il tasto ordina/filtra";
+"HIDE_FILTER_BUTTON_DESC" = "Rimuove il tasto filtra Libreria/Download dalla barra di navigazione";
+
+"TABBAR_SETTINGS" = "Opzioni barra Tab";
+"STARTUP_TAB" = "Tab di avvio";
+"DOWNLOADS" = "Download";
+
+"TAB_SETTINGS" = "Impostazioni Tab";
+"REMOVE_TABBAR_LABELS" = "Nascondi etichette";
+"HIDE_HOME" = "Nascondi tab Home";
+"HIDE_SAMPLES" = "Nascondi tab Samples";
+"HIDE_EXPLORE" = "Nascondi tab Esplora";
+"HIDE_LIBRARY" = "Nascondi tab Libreria";
+"HIDE_DOWNLOADS" = "Nascondi tab Download";
+
+"CLEAR_CACHE" = "Cancella cache";
+
+"LINKS" = "Link";
+"TWITTER" = "Segui %@ su Twitter";
+"TWITTER_DESC" = "Seguimi per aggiornamenti";
+"DISCORD" = "Entra nel Discord";
+"DISCORD_DESC" = "Segnala bug e richiedi funzionalità";
+"SOURCE_CODE" = "Codice sorgente";
+"SOURCE_CODE_DESC" = "Dai un'occhiata al codice";
+
+"CLOSE" = "Chiudi";
+"WARNING" = "Attenzione";
+"LOGIN_INFO" = "Riavvio dell'app richiesto dopo l'accesso all'account Google";
+"RETRY_LOGIN" = "Workaround attivato.\n\nRiprova.";
+"APPLY_MESSAGE" = "YouTube Music verrà chiuso per applicare le modifiche. Sei sicuro?";
+"CANCEL" = "Cancella";
+"YES" = "Sì";
+"REGIONAL_RESTRICTION" = "Sembra che YouTube Music sia limitato nel tuo Paese.\n\nUsa una VPN per avere accesso a YouTube Music.";
+
+"DONT_RUSH" = "Non correre splendore";
+"DONT_RUSH_DESC" = "È richiesto riprodurre la canzone per estrarre il link"; 
+"SELECT_ACTION" = "Seleziona azione";
+"DOWNLOAD_PREMIUM" = "Download (È richiesto il Premium)";
+"DOWNLOADING" = "Scaricando";
+"OOPS" = "Oops\nqualcosa è andato storto";
+"LINK_NOT_FOUND" = "Link non trovato";
+"SAVED_TO_PHOTOS" = "Salvato nelle foto";
+"DONE" = "Fatto";
+"FOUND_SEGMENT" = "Trovato segmento offtopic";
+"SEGMENT_SKIPPED" = "Offtopic skippato";
+"SKIP" = "Skip";
+"UNSKIP" = "Unskip";
+
+"EMPTY" = "I contenuti che scaricherai verranno mostrati qui";
+"REMOVE_ALL" = "Rimuovi tutti gli audio";
+"SHARE_ALL" = "Condividi tutti gli audio";
+"DELETE_MESSAGE" = "Sei sicuro di voler cancellare %@?";
+"ALL_DOWNLOADS" = "scarica tutti gli audio"; //keep it lowercase
+"DELETE" = "Cancella";
+"RENAME" = "Rinomina";
+
+"TRANSLATION_SETTINGS" = "Testi sincronizzati";
+"BILINGUAL_LYRICS" = "Testi bilingue";
+"BILINGUAL_LYRICS_DESC" = "Mostra le righe tradotte sotto i testi originali";
+"TRANSLATION_PROVIDER" = "Fornitore";
+"TRANSLATION_FOLLOW_APP_LANG" = "Segui la lingua dell'app";
+"TRANSLATION_TARGET_LANG" = "Lingua di destinazione";
+"TRANSLATION_API_KEY" = "Chiave API";
+"TRANSLATION_MODEL" = "Modello";
+"TRANSLATION_BASE_URL" = "URL base";
+"TRANSLATION_CLEAR_CACHE" = "Cancella cache di testi e traduzioni";
+"PROVIDER_GOOGLE" = "Google Traduttore";
+"PROVIDER_ANTHROPIC" = "Anthropic";
+"PROVIDER_GEMINI" = "Gemini";
+"PROVIDER_OPENAI" = "Compatibile con OpenAI";
+"SYNCED_LYRICS" = "Overlay testi sincronizzati";
+"LYRICS_SOURCE" = "Fonte dei testi";
+"LYRICS_SOURCE_AUTO" = "Automatico";
+"LYRICS_EFFECT_FANCY" = "Completo";
+"LYRICS_EFFECT_SCALE" = "Scala";
+"LYRICS_EFFECT_OFFSET" = "Scostamento";
+"LYRICS_EFFECT_FOCUS" = "Messa a fuoco";
+"LYRICS_DEFAULT_TEXT" = "Testo riga vuota";
+"LYRICS_CHINESE_CONVERSION" = "Conversione cinese";
+"LYRICS_CHINESE_DISABLED" = "Disabilitato";
+"LYRICS_CHINESE_S2T" = "Semplificato a tradizionale";
+"LYRICS_CHINESE_T2S" = "Tradizionale a semplificato";
+"LYRICS_ROMANIZATION" = "Romanizzazione";
+"LYRICS_SHOW_INEXACT" = "Mostra corrispondenze imprecise";
+"TRANSLATION_DEBUG_LOGS" = "Log di debug";
+"TRANSLATION_DEBUG_LOGS_DESC" = "Stampa nei log del dispositivo le diagnostiche di YTMULyrics e YTMUTranslation";
+"LYRICS_PANEL_TITLE" = "Testi";
+"LYRICS_TEXT_SIZE" = "Dimensione testo";
+"LYRICS_TIMING_OFFSET" = "Offset temporale";
+"LYRICS_FOCUS_BLUR" = "Sfocatura focus";
+"LYRICS_TIMECODES" = "Codici temporali";
+"LYRICS_SELECTED" = "Selezionato";
+"LYRICS_MATCHED" = "Corrisponde";
+"LYRICS_CHECKING" = "Verifica in corso";
+"LYRICS_NO_MATCH" = "Nessuna corrispondenza";
+"LYRICS_RESET" = "Reimposta";
+"LYRICS_STATE_SEARCHING" = "Ricerca testi in corso...";
+"LYRICS_STATE_NO_LYRICS" = "Nessun testo trovato";
+"LYRICS_STATE_OPEN_SONG" = "Apri una canzone per caricare i testi.";
+"LYRICS_ATTRIBUTION_BOTH_FORMAT" = "Testi e traduzione tramite %@";
+"LYRICS_ATTRIBUTION_LYRICS_FORMAT" = "Testi tramite %@";
+"LYRICS_ATTRIBUTION_TRANSLATION_FORMAT" = "Tradotto tramite %@";
+"LYRICS_PROVIDER_NO_MATCH" = "nessuna corrispondenza";
+"LYRICS_PROVIDER_TIMEOUT" = "tempo scaduto";
+"LYRICS_PROVIDER_FALLBACK" = "traduttore";
+"LYRICS_ERROR_NO_DESCRIPTION" = "nessuna descrizione disponibile";
+"LYRICS_ERROR_NO_LLM" = "nessun LLM configurato";
+"LYRICS_ERROR_DESCRIPTION_NO_LYRICS" = "nessun testo nella descrizione";
+"LYRICS_ERROR_NETEASE_CRYPTO" = "crittografia non riuscita";
+"LYRICS_ERROR_NETEASE_BAD_JSON" = "risposta non valida";
+"LYRICS_ERROR_MUSIXMATCH_NO_TOKEN" = "nessun token";
+"LYRICS_ERROR_MUSIXMATCH_BAD_JSON" = "risposta non valida";
+"LYRICS_ERROR_LRCLIB_BAD_JSON" = "risposta non valida";
+"LYRICS_ERROR_LRCLIB_TIMEOUT" = "richiesta scaduta";
+"LYRICS_ERROR_INNERTUBE_FETCH" = "recupero non riuscito";
+"LYRICS_ERROR_DESCRIPTION_EXTRACT" = "estrazione non riuscita";
+"LYRICS_ERROR_TITLE_NORMALIZE" = "normalizzazione del titolo non riuscita";
+"LYRICS_ERROR_HTTP_STATUS_FORMAT" = "HTTP %ld";
+"LYRICS_ERROR_NETEASE_API_FORMAT" = "errore API %ld";
+"TRANSLATION_CACHE_CLEARED_FORMAT" = "Testi: %lu\nTraduzioni: %lu\nRomanizzazione: memoria cancellata";
+
+"SCROBBLING_SETTINGS" = "Scrobbling";
+"SCROBBLE_MASTER_ENABLE" = "Attiva scrobbling";
+"SCROBBLE_MASTER_FOOTER" = "Interruttore principale. Quando spento, nessun ascolto viene inviato ad alcun servizio.";
+
+"SCROBBLE_LASTFM_HEADER" = "Last.fm";
+"SCROBBLE_LASTFM_ENABLE" = "Invia a Last.fm";
+"SCROBBLE_LASTFM_FOOTER" = "Registra un'applicazione API su last.fm/api/account/create, incolla qui API key e secret, poi tocca Autentica.";
+"SCROBBLE_API_KEY" = "API key";
+"SCROBBLE_API_SECRET" = "API secret";
+"SCROBBLE_LASTFM_AUTHENTICATE" = "Autentica";
+"SCROBBLE_LASTFM_FINISH_AUTH" = "Ho approvato — completa";
+"SCROBBLE_LASTFM_SIGN_OUT" = "Esci";
+"SCROBBLE_LASTFM_OPEN_BROWSER" = "Apri Safari per approvare";
+"SCROBBLE_LASTFM_OPEN_BROWSER_MSG" = "Safari aprirà Last.fm così potrai autorizzare quest'app. Dopo l'approvazione torna qui e tocca di nuovo il pulsante per completare.";
+"SCROBBLE_LASTFM_OPEN_SAFARI" = "Apri Safari";
+"SCROBBLE_LASTFM_AUTHENTICATED" = "Last.fm connesso";
+"SCROBBLE_LASTFM_AUTH_FAILED" = "Autenticazione Last.fm fallita";
+
+"SCROBBLE_LISTENBRAINZ_HEADER" = "ListenBrainz";
+"SCROBBLE_LISTENBRAINZ_ENABLE" = "Invia a ListenBrainz";
+"SCROBBLE_LISTENBRAINZ_FOOTER" = "Copia il tuo User Token da listenbrainz.org/profile/ e incollalo qui. L'API root va cambiato solo se ospiti la tua istanza.";
+"SCROBBLE_USER_TOKEN" = "User token";
+"SCROBBLE_API_ROOT" = "URL base dell'API";
+"SCROBBLE_LISTENBRAINZ_VALIDATE" = "Valida token";
+"SCROBBLE_LISTENBRAINZ_OK" = "Token ListenBrainz valido";
+"SCROBBLE_LISTENBRAINZ_FAIL" = "Token ListenBrainz non valido";
+
+"SCROBBLE_STATUS" = "Stato";
+"SCROBBLE_CONNECTED_AS" = "Connesso come %@";
+"SCROBBLE_NOT_CONNECTED" = "Non connesso";
+
+"SCROBBLE_DEBUG_LOGS" = "Log di debug";
+"SCROBBLE_DEBUG_LOGS_DESC" = "Stampa la diagnostica scrobble nei log del dispositivo";
+
+"TRANSLATION_SELECT_MODEL" = "Seleziona modello";
+"TRANSLATION_MODEL_ENTER_MANUALLY" = "Inserisci manualmente";
+"TRANSLATION_MODEL_FETCH_FAILED" = "Impossibile recuperare i modelli";
+"TRANSLATION_MODEL_NEED_KEY" = "Inserisci prima la tua chiave API";
+
+"TRANSLATION_TEST_MODEL" = "Prova modello";
+"TRANSLATION_TEST_SUCCESS" = "Il modello funziona";
+"TRANSLATION_TEST_FAILED" = "Test non riuscito";
+"TRANSLATION_TEST_NO_PROVIDER" = "Seleziona un provider e inserisci una chiave API prima";

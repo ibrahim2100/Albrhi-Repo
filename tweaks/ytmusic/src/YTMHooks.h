@@ -39,3 +39,15 @@ void SCIYTMInstallColours(void);
 /// being played.** Off unless switched on, and its row says so -- the same line this project drew
 /// at tikwm.com in the TikTok tweak rather than letting a privacy cost arrive quietly.
 void SCIYTMInstallSponsorBlock(void);
+
+/// Synced lyrics: a panel on the now-playing screen, fed by six providers -- LRCLib, Genius,
+/// MusixMatch, NetEase, the video description, and YouTube Music's own lyrics when it has them.
+///
+/// **It asks outside services what is playing.** That is what a lyrics feature is, and it cannot
+/// be done locally; the switch is on because it was asked for, and the package description says
+/// plainly what leaves the device. Translation of those lyrics is a separate switch, off, and does
+/// nothing at all without a key the user supplies.
+void SCIYTMInstallSyncedLyrics(void);
+
+/// The lyrics panel's own screen: selectable text, a source picker, timing offset, romanisation.
+void SCIYTMInstallSelectableLyrics(void);

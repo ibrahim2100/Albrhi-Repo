@@ -1,0 +1,214 @@
+"ENABLED" = "YTMEnhanced'i etkinleştir";
+"RESTART_FOOTER" = "Değişiklikleri uygulamak için uygulamayı yeniden başlatın";
+
+"PREMIUM_SETTINGS" = "Premium ayarları";
+"NO_ADS" = "Reklam engelleme";
+"NO_ADS_DESC" = "Uygulama içi reklamları kaldırır";
+"BACKGROUND_PLAYBACK" = "Arka planda oynatma";
+"BACKGROUND_PLAYBACK_DESC" = "Arka planda oynatma özelliğini etkinleştirir";
+
+"PLAYER_SETTINGS" = "Oynatıcı ayarları";
+"DOWNLOAD_AUDIO" = "Ses indir";
+"DOWNLOAD_AUDIO_DESC" = "Oynatıcıdaki YTMEnhanced butonuna basarak ses indirme özelliğini ekler";
+"DOWNLOAD_COVER" = "Albüm resmi indir";
+"DOWNLOAD_COVER_DESC" = "Oynatıcıdaki YTMEnhanced butonuna basarak albüm resmi indirme özelliğini ekler";
+"PLAYBACK_RATE_BUTTON" = "Oynatma hızı düğmesini göster";
+"PLAYBACK_RATE_BUTTON_DESC" = "Oynatma hızını ayarla";
+"VOLBAR" = "Ses çubuğu";
+"VOLBAR_DESC" = "Oynatıcıya bir ses çubuğu ekler";
+"NO_AUTORADIO" = "Radyoyu devre dışı bırak";
+"NO_AUTORADIO_DESC" = "Kesintisiz müzik özelliğini kaldırır";
+"SKIP_CONTENT_WARNING" = "İçerik uyarısını atla";
+"SKIP_CONTENT_WARNING_DESC" = "Potansiyel zararlı içerik uyarılarını atlar";
+"AV_DEFAULT_MODE" = "Varsayılan oynatma modu";
+
+"SKIP_NONMUSIC_PARTS" = "SponsorBlock";
+"SKIP_NONMUSIC_PARTS_DESC" = "Müzik videolarında müzik olmayan bölümleri atlar";
+"SB_BEHAVIOR" = "Davranış";
+"SB_SKIP" = "Atla";
+"SB_ASK" = "Sor";
+"SB_NOTIF_DURATION" = "Bildirim süresi (saniye)";
+
+"SEEK_BUTTONS" = "Önceki ve Sonraki düğmelerini Hızlı ileri ve Geri Sar düğmeleriyle değiştir";
+"SEEK_TIME_FOOTER" = "Sarma süresini seçiniz\n\Varsayılanlar:\nGeri Sar = 10 sn.\nHızlı ileri = 30 sn.\n\nButonlara uzun basılarak sonraki ve önceki parçalara geçebilirsiniz.";
+"DEFAULT" = "Varsayılan";
+
+"THEME_SETTINGS" = "Tema ayarları";
+"OLED_DARK_THEME" = "OLED Koyu Tema";
+"OLED_DARK_THEME_DESC" = "OLED Koyu Temasını Etkinleştirir";
+"OLED_DARK_KEYBOARD" = "OLED Koyu Klavye";
+"OLED_DARK_KEYBOARD_DESC" = "OLED Koyu Klavyeyi Etkinleştirir";
+"LOW_CONTRAST" = "Düşük kontrast";
+"LOW_CONTRAST_DESC" = "Metin ve düğmeler için daha düşük kontrast";
+
+"NAVBAR_SETTINGS" = "Gezinme çubuğu ayarları";
+"DONT_STICK_HEADERS" = "Başlıkları sabitleme";
+"DONT_STICK_HEADERS_DESC" = "Sekmelerin üst kısmına sabitlenmiş çubukları ayırır";
+"HIDE_HISTORY_BUTTON" = "Geçmiş düğmesini gizle";
+"HIDE_HISTORY_BUTTON_DESC" = "Gezinme çubuğundaki geçmiş düğmesini gizler";
+"HIDE_CAST_BUTTON" = "Yayınla düğmesini gizle";
+"HIDE_CAST_BUTTON_DESC" = "Gezinme çubuğundaki yayınlama düğmesini gizler";
+"HIDE_FILTER_BUTTON" = "\"Filtrele\" düğmesini gizle";
+"HIDE_FILTER_BUTTON_DESC" = "Gezinme çubuğundaki Kitaplık/İndirilenler düğmesini gizler";
+
+"TABBAR_SETTINGS" = "Sekme çubuğu ayarları";
+"STARTUP_TAB" = "Başlangıç sekmesi";
+"DOWNLOADS" = "İndirilenler";
+
+"TAB_SETTINGS" = "Sekme çubuğu";
+"REMOVE_TABBAR_LABELS" = "Etiketsiz sekme çubukları";
+"HIDE_HOME" = "Ana Sayfa Sekmesini Gizle";
+"HIDE_SAMPLES" = "Sana Özel Sekmesini Gizle";
+"HIDE_EXPLORE" = "Keşfet Sekmesini Gizle";
+"HIDE_LIBRARY" = "Kitaplık Sekmesini Gizle";
+"HIDE_DOWNLOADS" = "İndirilenler Sekmesini Gizle";
+
+"CLEAR_CACHE" = "Önbelleği temizle";
+
+"LINKS" = "Bağlantılar";
+"TWITTER" = "Twitter'da %@'i takip edin";
+"TWITTER_DESC" = "Güncellemeler için beni takip edin";
+"DISCORD" = "Discord'a Katılın";
+"DISCORD_DESC" = "Hataları bildirin ve özellikler talep edin";
+"SOURCE_CODE" = "Kaynak kodu";
+"SOURCE_CODE_DESC" = "Koda bir göz atın";
+
+"CLOSE" = "Kapat";
+"WARNING" = "Uyarı";
+"LOGIN_INFO" = "Google hesabına başarılı girişten sonra uygulamanın yeniden başlatılması gerekir";
+"RETRY_LOGIN" = "Çözüm yolu etkinleştirildi.\n\nLütfen tekrar dene.";
+"APPLY_MESSAGE" = "Bu eylem, değişikliklerin uygulanması için YouTube Music'i kapatacak. Devam etmek istediğine emin misin?";
+"CANCEL" = "İptal";
+"YES" = "Evet";
+"REGIONAL_RESTRICTION" = "YouTube Music, ülkende kısıtlanmış gibi görünüyor.\n\nYouTube Music'e erişim sağlamak için lütfen VPN kullan.";
+
+"DONT_RUSH" = "Mükemmellik aceleye gelmez";
+"DONT_RUSH_DESC" = "İndirmeyi başlatmak için şarkıyı çalmak gerkekli";
+"SELECT_ACTION" = "Eylem Seç";
+"DOWNLOADING" = "İndiriliyor";
+"DOWNLOAD_PREMIUM" = "İndir (Premium gerekli)";
+"OOPS" = "Tüh\nbir şeyler ters gitti";
+"LINK_NOT_FOUND" = "Bağlantı bulunamadı";
+"SAVED_TO_PHOTOS" = "Fotoğraflar'a kaydedildi";
+"DONE" = "Bitti";
+"FOUND_SEGMENT" = "Konu dışı bölüm bulundu";
+"SEGMENT_SKIPPED" = "Konu dışı kısım atlandı";
+"SKIP" = "Atla";
+"UNSKIP" = "Atlama";
+
+"EMPTY" = "İndirdiğiniz içerikler burada gözükecek";
+"REMOVE_ALL" = "Tüm sesleri kaldır";
+"SHARE_ALL" = "Tüm sesleri paylaş";
+"DELETE_MESSAGE" = "Bunu silmek istediğine emin misin: %@?";
+"ALL_DOWNLOADS" = "tüm indirilmiş sesler"; //keep it lowercase
+"DELETE" = "Sil";
+"RENAME" = "Kaydet";
+
+"TRANSLATION_SETTINGS" = "Senkronize Şarkı Sözleri";
+"BILINGUAL_LYRICS" = "İki dilli şarkı sözleri";
+"BILINGUAL_LYRICS_DESC" = "Orijinal sözlerin altında çevrilmiş satırları gösterir";
+"TRANSLATION_PROVIDER" = "Sağlayıcı";
+"TRANSLATION_FOLLOW_APP_LANG" = "Uygulama dilini izle";
+"TRANSLATION_TARGET_LANG" = "Hedef dil";
+"TRANSLATION_API_KEY" = "API anahtarı";
+"TRANSLATION_MODEL" = "Model";
+"TRANSLATION_BASE_URL" = "Temel URL";
+"TRANSLATION_CLEAR_CACHE" = "Şarkı sözü ve çeviri önbelleğini temizle";
+"PROVIDER_GOOGLE" = "Google Çeviri";
+"PROVIDER_ANTHROPIC" = "Anthropic";
+"PROVIDER_GEMINI" = "Gemini";
+"PROVIDER_OPENAI" = "OpenAI uyumlu";
+"SYNCED_LYRICS" = "Senkronize şarkı sözleri katmanı";
+"LYRICS_SOURCE" = "Sözlerin kaynağı";
+"LYRICS_SOURCE_AUTO" = "Otomatik";
+"LYRICS_EFFECT_FANCY" = "Tam";
+"LYRICS_EFFECT_SCALE" = "Ölçek";
+"LYRICS_EFFECT_OFFSET" = "Kayma";
+"LYRICS_EFFECT_FOCUS" = "Odak";
+"LYRICS_DEFAULT_TEXT" = "Boş satır metni";
+"LYRICS_CHINESE_CONVERSION" = "Çince dönüştürme";
+"LYRICS_CHINESE_DISABLED" = "Devre dışı";
+"LYRICS_CHINESE_S2T" = "Basitleştirilmişten Geleneksele";
+"LYRICS_CHINESE_T2S" = "Gelenekselden Basitleştirilmişe";
+"LYRICS_ROMANIZATION" = "Latinleştirme";
+"LYRICS_SHOW_INEXACT" = "Tam olmayan eşleşmeleri göster";
+"TRANSLATION_DEBUG_LOGS" = "Hata ayıklama günlükleri";
+"TRANSLATION_DEBUG_LOGS_DESC" = "YTMULyrics ve YTMUTranslation tanılama bilgilerini cihaz günlüklerine yazar";
+"LYRICS_PANEL_TITLE" = "Şarkı Sözleri";
+"LYRICS_TEXT_SIZE" = "Metin boyutu";
+"LYRICS_TIMING_OFFSET" = "Zamanlama kayması";
+"LYRICS_FOCUS_BLUR" = "Odak bulanıklığı";
+"LYRICS_TIMECODES" = "Zaman kodları";
+"LYRICS_SELECTED" = "Seçili";
+"LYRICS_MATCHED" = "Eşleşti";
+"LYRICS_CHECKING" = "Kontrol ediliyor";
+"LYRICS_NO_MATCH" = "Eşleşme yok";
+"LYRICS_RESET" = "Sıfırla";
+"LYRICS_STATE_SEARCHING" = "Şarkı sözleri aranıyor...";
+"LYRICS_STATE_NO_LYRICS" = "Şarkı sözü bulunamadı";
+"LYRICS_STATE_OPEN_SONG" = "Şarkı sözlerini yüklemek için bir şarkı açın.";
+"LYRICS_ATTRIBUTION_BOTH_FORMAT" = "Sözler ve çeviri %@ aracılığıyla";
+"LYRICS_ATTRIBUTION_LYRICS_FORMAT" = "Sözler %@ aracılığıyla";
+"LYRICS_ATTRIBUTION_TRANSLATION_FORMAT" = "%@ aracılığıyla çevrildi";
+"LYRICS_PROVIDER_NO_MATCH" = "eşleşme yok";
+"LYRICS_PROVIDER_TIMEOUT" = "zaman aşımı";
+"LYRICS_PROVIDER_FALLBACK" = "çevirmen";
+"LYRICS_ERROR_NO_DESCRIPTION" = "açıklama yok";
+"LYRICS_ERROR_NO_LLM" = "LLM yapılandırılmamış";
+"LYRICS_ERROR_DESCRIPTION_NO_LYRICS" = "açıklamada şarkı sözü yok";
+"LYRICS_ERROR_NETEASE_CRYPTO" = "şifreleme başarısız";
+"LYRICS_ERROR_NETEASE_BAD_JSON" = "geçersiz yanıt";
+"LYRICS_ERROR_MUSIXMATCH_NO_TOKEN" = "token yok";
+"LYRICS_ERROR_MUSIXMATCH_BAD_JSON" = "geçersiz yanıt";
+"LYRICS_ERROR_LRCLIB_BAD_JSON" = "geçersiz yanıt";
+"LYRICS_ERROR_LRCLIB_TIMEOUT" = "istek zaman aşımına uğradı";
+"LYRICS_ERROR_INNERTUBE_FETCH" = "alma başarısız";
+"LYRICS_ERROR_DESCRIPTION_EXTRACT" = "çıkarma başarısız";
+"LYRICS_ERROR_TITLE_NORMALIZE" = "başlık normalleştirme başarısız";
+"LYRICS_ERROR_HTTP_STATUS_FORMAT" = "HTTP %ld";
+"LYRICS_ERROR_NETEASE_API_FORMAT" = "API hatası %ld";
+"TRANSLATION_CACHE_CLEARED_FORMAT" = "Sözler: %lu\nÇeviriler: %lu\nLatinleştirme: bellek temizlendi";
+
+"SCROBBLING_SETTINGS" = "Scrobbling";
+"SCROBBLE_MASTER_ENABLE" = "Scrobbling'i etkinleştir";
+"SCROBBLE_MASTER_FOOTER" = "Ana anahtar. Kapalıyken hiçbir servise dinleme gönderilmez.";
+
+"SCROBBLE_LASTFM_HEADER" = "Last.fm";
+"SCROBBLE_LASTFM_ENABLE" = "Last.fm'e gönder";
+"SCROBBLE_LASTFM_FOOTER" = "last.fm/api/account/create adresinde bir API uygulaması oluştur, API key ile secret'ı buraya yapıştır ve Kimlik Doğrula'ya dokun.";
+"SCROBBLE_API_KEY" = "API key";
+"SCROBBLE_API_SECRET" = "API secret";
+"SCROBBLE_LASTFM_AUTHENTICATE" = "Kimlik doğrula";
+"SCROBBLE_LASTFM_FINISH_AUTH" = "Onayladım — bitir";
+"SCROBBLE_LASTFM_SIGN_OUT" = "Çıkış yap";
+"SCROBBLE_LASTFM_OPEN_BROWSER" = "Onaylamak için Safari'yi aç";
+"SCROBBLE_LASTFM_OPEN_BROWSER_MSG" = "Safari, bu uygulamayı yetkilendirebilmen için Last.fm'i açacak. Onayladıktan sonra buraya dön ve bitirmek için aynı düğmeye tekrar dokun.";
+"SCROBBLE_LASTFM_OPEN_SAFARI" = "Safari'yi aç";
+"SCROBBLE_LASTFM_AUTHENTICATED" = "Last.fm bağlandı";
+"SCROBBLE_LASTFM_AUTH_FAILED" = "Last.fm kimlik doğrulama başarısız";
+
+"SCROBBLE_LISTENBRAINZ_HEADER" = "ListenBrainz";
+"SCROBBLE_LISTENBRAINZ_ENABLE" = "ListenBrainz'e gönder";
+"SCROBBLE_LISTENBRAINZ_FOOTER" = "User Token'ı listenbrainz.org/profile/ adresinden kopyala ve buraya yapıştır. API root yalnızca kendi sunucunu kullanıyorsan değişmeli.";
+"SCROBBLE_USER_TOKEN" = "User token";
+"SCROBBLE_API_ROOT" = "API kök adresi";
+"SCROBBLE_LISTENBRAINZ_VALIDATE" = "Token'ı doğrula";
+"SCROBBLE_LISTENBRAINZ_OK" = "ListenBrainz token geçerli";
+"SCROBBLE_LISTENBRAINZ_FAIL" = "ListenBrainz token geçersiz";
+
+"SCROBBLE_STATUS" = "Durum";
+"SCROBBLE_CONNECTED_AS" = "%@ olarak bağlı";
+"SCROBBLE_NOT_CONNECTED" = "Bağlı değil";
+
+"SCROBBLE_DEBUG_LOGS" = "Hata ayıklama günlükleri";
+"SCROBBLE_DEBUG_LOGS_DESC" = "Scrobble tanılamasını cihaz günlüklerine yazar";
+
+"TRANSLATION_SELECT_MODEL" = "Model seç";
+"TRANSLATION_MODEL_ENTER_MANUALLY" = "Elle gir";
+"TRANSLATION_MODEL_FETCH_FAILED" = "Modeller alınamadı";
+"TRANSLATION_MODEL_NEED_KEY" = "Önce API anahtarını gir";
+
+"TRANSLATION_TEST_MODEL" = "Modeli test et";
+"TRANSLATION_TEST_SUCCESS" = "Model çalışıyor";
+"TRANSLATION_TEST_FAILED" = "Test başarısız";
+"TRANSLATION_TEST_NO_PROVIDER" = "Önce bir sağlayıcı seç ve API anahtarı gir";

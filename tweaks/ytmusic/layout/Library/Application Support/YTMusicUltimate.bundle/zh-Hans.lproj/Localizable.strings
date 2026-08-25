@@ -1,0 +1,214 @@
+"ENABLED" = "启用 YTMEnhanced";
+"RESTART_FOOTER" = "重启 App 以应用更改";
+
+"PREMIUM_SETTINGS" = "Premium 功能";
+"NO_ADS" = "去广告";
+"NO_ADS_DESC" = "去除 App 内的广告";
+"BACKGROUND_PLAYBACK" = "后台播放";
+"BACKGROUND_PLAYBACK_DESC" = "启用后台播放";
+
+"PLAYER_SETTINGS" = "播放器选项";
+"DOWNLOAD_AUDIO" = "下载音频";
+"DOWNLOAD_AUDIO_DESC" = "在播放器的 YTMEnhanced 按钮中加入下载音频选项";
+"DOWNLOAD_COVER" = "下载封面";
+"DOWNLOAD_COVER_DESC" = "在播放器的 YTMEnhanced 按钮中加入下载封面图选项";
+"PLAYBACK_RATE_BUTTON" = "显示播放速度按钮";
+"PLAYBACK_RATE_BUTTON_DESC" = "调节播放速度";
+"VOLBAR" = "音量条";
+"VOLBAR_DESC" = "在播放器中添加音量调节条";
+"NO_AUTORADIO" = "关闭电台";
+"NO_AUTORADIO_DESC" = "禁用自动续播电台的功能";
+"SKIP_CONTENT_WARNING" = "跳过内容警告";
+"SKIP_CONTENT_WARNING_DESC" = "跳过潜在敏感内容的警告提示";
+"AV_DEFAULT_MODE" = "默认播放模式";
+
+"SKIP_NONMUSIC_PARTS" = "SponsorBlock";
+"SKIP_NONMUSIC_PARTS_DESC" = "跳过 MV 中不属于歌曲的部分";
+"SB_BEHAVIOR" = "处理方式";
+"SB_SKIP" = "跳过";
+"SB_ASK" = "询问";
+"SB_NOTIF_DURATION" = "通知显示时长（秒）";
+
+"SEEK_BUTTONS" = "用「快退/快进」替换「上一首/下一首」按钮";
+"SEEK_TIME_FOOTER" = "选择跳转秒数。\n\n默认：\n快退 = 10 秒\n快进 = 30 秒\n\n长按按钮可切换上一首 / 下一首。";
+"DEFAULT" = "默认";
+
+"THEME_SETTINGS" = "主题选项";
+"OLED_DARK_THEME" = "OLED 深色主题";
+"OLED_DARK_THEME_DESC" = "启用 OLED 深色主题";
+"OLED_DARK_KEYBOARD" = "OLED 深色键盘";
+"OLED_DARK_KEYBOARD_DESC" = "启用 OLED 深色键盘";
+"LOW_CONTRAST" = "低对比度";
+"LOW_CONTRAST_DESC" = "降低文字和按钮的对比度";
+
+"NAVBAR_SETTINGS" = "导航栏选项";
+"DONT_STICK_HEADERS" = "不固定分区标题";
+"DONT_STICK_HEADERS_DESC" = "不让分区标题始终钉在屏幕顶部";
+"HIDE_HISTORY_BUTTON" = "隐藏历史按钮";
+"HIDE_HISTORY_BUTTON_DESC" = "在导航栏中隐藏播放历史按钮";
+"HIDE_CAST_BUTTON" = "隐藏投屏按钮";
+"HIDE_CAST_BUTTON_DESC" = "在导航栏中隐藏投屏按钮";
+"HIDE_FILTER_BUTTON" = "隐藏分类按钮";
+"HIDE_FILTER_BUTTON_DESC" = "在导航栏中隐藏「媒体库 / 下载」分类按钮";
+
+"TABBAR_SETTINGS" = "标签栏选项";
+"STARTUP_TAB" = "启动后默认页";
+"DOWNLOADS" = "下载";
+
+"TAB_SETTINGS" = "标签栏项设置";
+"REMOVE_TABBAR_LABELS" = "隐藏标签文字";
+"HIDE_HOME" = "隐藏「首页」标签";
+"HIDE_SAMPLES" = "隐藏「选段」标签";
+"HIDE_EXPLORE" = "隐藏「探索」标签";
+"HIDE_LIBRARY" = "隐藏「媒体库」标签";
+"HIDE_DOWNLOADS" = "隐藏「下载」标签";
+
+"CLEAR_CACHE" = "清除缓存";
+
+"LINKS" = "相关链接";
+"TWITTER" = "在 Twitter 关注 %@";
+"TWITTER_DESC" = "关注以获取更新动态";
+"DISCORD" = "加入 Discord";
+"DISCORD_DESC" = "反馈问题、请求新功能";
+"SOURCE_CODE" = "源代码";
+"SOURCE_CODE_DESC" = "查看本项目源代码";
+
+"CLOSE" = "关闭";
+"WARNING" = "警告";
+"LOGIN_INFO" = "成功登录 Google 账号后需要重启 App";
+"RETRY_LOGIN" = "登录权限已修复。\n\n请重试。";
+"APPLY_MESSAGE" = "此操作将关闭 YouTube Music 以应用更改，确定继续吗？";
+"CANCEL" = "取消";
+"YES" = "确定";
+"REGIONAL_RESTRICTION" = "当前国家 / 地区似乎无法访问 YouTube Music。\n\n请使用 VPN 后再试。";
+
+"DONT_RUSH" = "请稍候";
+"DONT_RUSH_DESC" = "需要先开始播放歌曲才能提取链接";
+"SELECT_ACTION" = "选择操作";
+"DOWNLOAD_PREMIUM" = "下载（需 Premium）";
+"DOWNLOADING" = "下载中";
+"OOPS" = "出错了\n好像哪里不太对";
+"LINK_NOT_FOUND" = "未找到链接";
+"SAVED_TO_PHOTOS" = "已保存到照片";
+"DONE" = "完成";
+"FOUND_SEGMENT" = "检测到非音乐片段";
+"SEGMENT_SKIPPED" = "已跳过非音乐片段";
+"SKIP" = "跳过";
+"UNSKIP" = "取消跳过";
+
+"EMPTY" = "下载的内容会显示在这里";
+"REMOVE_ALL" = "删除所有音频";
+"SHARE_ALL" = "分享所有音频";
+"DELETE_MESSAGE" = "确定要删除 %@ 吗？";
+"ALL_DOWNLOADS" = "所有已下载的音频"; //keep it lowercase
+"DELETE" = "删除";
+"RENAME" = "重命名";
+
+"TRANSLATION_SETTINGS" = "同步歌词";
+"BILINGUAL_LYRICS" = "双语歌词";
+"BILINGUAL_LYRICS_DESC" = "在每行原歌词下方显示一行译文";
+"TRANSLATION_PROVIDER" = "服务商";
+"TRANSLATION_FOLLOW_APP_LANG" = "跟随应用语言";
+"TRANSLATION_TARGET_LANG" = "目标语言";
+"TRANSLATION_API_KEY" = "API 密钥";
+"TRANSLATION_MODEL" = "模型";
+"TRANSLATION_BASE_URL" = "Base URL";
+"TRANSLATION_CLEAR_CACHE" = "清除歌词和翻译缓存";
+"PROVIDER_GOOGLE" = "Google 翻译";
+"PROVIDER_ANTHROPIC" = "Anthropic";
+"PROVIDER_GEMINI" = "Gemini";
+"PROVIDER_OPENAI" = "OpenAI 兼容";
+"SYNCED_LYRICS" = "同步歌词浮层";
+"LYRICS_SOURCE" = "歌词来源";
+"LYRICS_SOURCE_AUTO" = "自动";
+"LYRICS_EFFECT_FANCY" = "完整效果";
+"LYRICS_EFFECT_SCALE" = "缩放";
+"LYRICS_EFFECT_OFFSET" = "偏移";
+"LYRICS_EFFECT_FOCUS" = "聚焦";
+"LYRICS_DEFAULT_TEXT" = "空白行符号";
+"LYRICS_CHINESE_CONVERSION" = "简繁转换";
+"LYRICS_CHINESE_DISABLED" = "关闭";
+"LYRICS_CHINESE_S2T" = "简体转繁体";
+"LYRICS_CHINESE_T2S" = "繁体转简体";
+"LYRICS_ROMANIZATION" = "罗马音";
+"LYRICS_SHOW_INEXACT" = "允许非精确匹配";
+"TRANSLATION_DEBUG_LOGS" = "调试日志";
+"TRANSLATION_DEBUG_LOGS_DESC" = "向设备日志输出 YTMULyrics 和 YTMUTranslation 的诊断信息";
+"LYRICS_PANEL_TITLE" = "歌词";
+"LYRICS_TEXT_SIZE" = "字号";
+"LYRICS_TIMING_OFFSET" = "时间偏移";
+"LYRICS_FOCUS_BLUR" = "聚焦模糊";
+"LYRICS_TIMECODES" = "时间码";
+"LYRICS_SELECTED" = "已选";
+"LYRICS_MATCHED" = "已匹配";
+"LYRICS_CHECKING" = "检索中";
+"LYRICS_NO_MATCH" = "无匹配";
+"LYRICS_RESET" = "重置";
+"LYRICS_STATE_SEARCHING" = "正在搜索歌词…";
+"LYRICS_STATE_NO_LYRICS" = "未找到歌词";
+"LYRICS_STATE_OPEN_SONG" = "打开一首歌曲以加载歌词。";
+"LYRICS_ATTRIBUTION_BOTH_FORMAT" = "歌词和翻译来自 %@";
+"LYRICS_ATTRIBUTION_LYRICS_FORMAT" = "歌词来自 %@";
+"LYRICS_ATTRIBUTION_TRANSLATION_FORMAT" = "翻译来自 %@";
+"LYRICS_PROVIDER_NO_MATCH" = "无匹配";
+"LYRICS_PROVIDER_TIMEOUT" = "超时";
+"LYRICS_PROVIDER_FALLBACK" = "翻译服务";
+"LYRICS_ERROR_NO_DESCRIPTION" = "无视频简介";
+"LYRICS_ERROR_NO_LLM" = "未配置 LLM";
+"LYRICS_ERROR_DESCRIPTION_NO_LYRICS" = "简介中未发现歌词";
+"LYRICS_ERROR_NETEASE_CRYPTO" = "加密失败";
+"LYRICS_ERROR_NETEASE_BAD_JSON" = "响应数据异常";
+"LYRICS_ERROR_MUSIXMATCH_NO_TOKEN" = "未获取到 token";
+"LYRICS_ERROR_MUSIXMATCH_BAD_JSON" = "响应数据异常";
+"LYRICS_ERROR_LRCLIB_BAD_JSON" = "响应数据异常";
+"LYRICS_ERROR_LRCLIB_TIMEOUT" = "请求超时";
+"LYRICS_ERROR_INNERTUBE_FETCH" = "拉取失败";
+"LYRICS_ERROR_DESCRIPTION_EXTRACT" = "提取失败";
+"LYRICS_ERROR_TITLE_NORMALIZE" = "标题规范化失败";
+"LYRICS_ERROR_HTTP_STATUS_FORMAT" = "HTTP %ld";
+"LYRICS_ERROR_NETEASE_API_FORMAT" = "API 错误 %ld";
+"TRANSLATION_CACHE_CLEARED_FORMAT" = "歌词：%lu\n翻译：%lu\n罗马音：已清除内存缓存";
+
+"SCROBBLING_SETTINGS" = "听歌记录上传";
+"SCROBBLE_MASTER_ENABLE" = "启用上传";
+"SCROBBLE_MASTER_FOOTER" = "总开关。关闭后不会向任何服务上传听歌记录。";
+
+"SCROBBLE_LASTFM_HEADER" = "Last.fm";
+"SCROBBLE_LASTFM_ENABLE" = "发送到 Last.fm";
+"SCROBBLE_LASTFM_FOOTER" = "在 last.fm/api/account/create 申请一个 API 应用,把 API key 和 secret 粘到这里,然后点「授权」。";
+"SCROBBLE_API_KEY" = "API key";
+"SCROBBLE_API_SECRET" = "API secret";
+"SCROBBLE_LASTFM_AUTHENTICATE" = "授权";
+"SCROBBLE_LASTFM_FINISH_AUTH" = "我已经在 Safari 里授权了 - 完成";
+"SCROBBLE_LASTFM_SIGN_OUT" = "退出登录";
+"SCROBBLE_LASTFM_OPEN_BROWSER" = "打开 Safari 授权";
+"SCROBBLE_LASTFM_OPEN_BROWSER_MSG" = "Safari 会打开 Last.fm 授权页。完成授权后回来点同一个按钮完成第二步。";
+"SCROBBLE_LASTFM_OPEN_SAFARI" = "打开 Safari";
+"SCROBBLE_LASTFM_AUTHENTICATED" = "Last.fm 已连接";
+"SCROBBLE_LASTFM_AUTH_FAILED" = "Last.fm 授权失败";
+
+"SCROBBLE_LISTENBRAINZ_HEADER" = "ListenBrainz";
+"SCROBBLE_LISTENBRAINZ_ENABLE" = "发送到 ListenBrainz";
+"SCROBBLE_LISTENBRAINZ_FOOTER" = "从 listenbrainz.org/profile/ 复制 User Token 粘到这里。除非你自建,否则 API 根地址保持默认即可。";
+"SCROBBLE_USER_TOKEN" = "User token";
+"SCROBBLE_API_ROOT" = "API 根地址";
+"SCROBBLE_LISTENBRAINZ_VALIDATE" = "验证 token";
+"SCROBBLE_LISTENBRAINZ_OK" = "ListenBrainz token 有效";
+"SCROBBLE_LISTENBRAINZ_FAIL" = "ListenBrainz token 无效";
+
+"SCROBBLE_STATUS" = "状态";
+"SCROBBLE_CONNECTED_AS" = "已连接:%@";
+"SCROBBLE_NOT_CONNECTED" = "未连接";
+
+"SCROBBLE_DEBUG_LOGS" = "调试日志";
+"SCROBBLE_DEBUG_LOGS_DESC" = "把 scrobble 诊断信息输出到设备日志";
+
+"TRANSLATION_SELECT_MODEL" = "选择模型";
+"TRANSLATION_MODEL_ENTER_MANUALLY" = "手动输入";
+"TRANSLATION_MODEL_FETCH_FAILED" = "无法获取模型列表";
+"TRANSLATION_MODEL_NEED_KEY" = "请先填写 API key";
+
+"TRANSLATION_TEST_MODEL" = "测试模型";
+"TRANSLATION_TEST_SUCCESS" = "模型可用";
+"TRANSLATION_TEST_FAILED" = "测试失败";
+"TRANSLATION_TEST_NO_PROVIDER" = "请先选择 provider 并填写 API key";

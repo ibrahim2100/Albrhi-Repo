@@ -1,0 +1,214 @@
+"ENABLED" = "Enable YTMEnhanced";
+"RESTART_FOOTER" = "Restart the app to apply changes";
+
+"PREMIUM_SETTINGS" = "Premium options";
+"NO_ADS" = "No ads";
+"NO_ADS_DESC" = "Removes ads in the app";
+"BACKGROUND_PLAYBACK" = "Background playback";
+"BACKGROUND_PLAYBACK_DESC" = "Enables background playback";
+
+"PLAYER_SETTINGS" = "Player options";
+"DOWNLOAD_AUDIO" = "Download audio";
+"DOWNLOAD_AUDIO_DESC" = "Adds an audio download option to the player's YTMEnhanced button";
+"DOWNLOAD_COVER" = "Download cover image";
+"DOWNLOAD_COVER_DESC" = "Adds a cover-image download option to the player's YTMEnhanced button";
+"PLAYBACK_RATE_BUTTON" = "Show playback rate button";
+"PLAYBACK_RATE_BUTTON_DESC" = "Adjust playback speed";
+"VOLBAR" = "Volume bar";
+"VOLBAR_DESC" = "Adds a volume bar to the player";
+"NO_AUTORADIO" = "Disable radio";
+"NO_AUTORADIO_DESC" = "Disables the endless music feature";
+"SKIP_CONTENT_WARNING" = "Skip content warning";
+"SKIP_CONTENT_WARNING_DESC" = "Skips warnings about potentially harmful content";
+"AV_DEFAULT_MODE" = "Default playback mode";
+
+"SKIP_NONMUSIC_PARTS" = "SponsorBlock";
+"SKIP_NONMUSIC_PARTS_DESC" = "Skips non-music sections in music videos";
+"SB_BEHAVIOR" = "Behavior";
+"SB_SKIP" = "Skip";
+"SB_ASK" = "Ask";
+"SB_NOTIF_DURATION" = "Notification duration (sec)";
+
+"SEEK_BUTTONS" = "Replace next/previous with forward and backward buttons";
+"SEEK_TIME_FOOTER" = "Select a seek time in seconds.\n\nDefaults:\nSeek backward = 10 sec\nSeek forward = 30 sec\n\nLong-press the buttons to skip to the next or previous track.";
+"DEFAULT" = "Default";
+
+"THEME_SETTINGS" = "Theme options";
+"OLED_DARK_THEME" = "OLED dark theme";
+"OLED_DARK_THEME_DESC" = "Enables the OLED dark theme";
+"OLED_DARK_KEYBOARD" = "OLED dark keyboard";
+"OLED_DARK_KEYBOARD_DESC" = "Enables the OLED dark keyboard";
+"LOW_CONTRAST" = "Low contrast";
+"LOW_CONTRAST_DESC" = "Lowers contrast for text and buttons";
+
+"NAVBAR_SETTINGS" = "Navigation bar options";
+"DONT_STICK_HEADERS" = "Don't pin section headers";
+"DONT_STICK_HEADERS_DESC" = "Stops section headers from sticking to the top of the screen";
+"HIDE_HISTORY_BUTTON" = "Hide history button";
+"HIDE_HISTORY_BUTTON_DESC" = "Hides the history button in the navigation bar";
+"HIDE_CAST_BUTTON" = "Hide cast button";
+"HIDE_CAST_BUTTON_DESC" = "Hides the cast button in the navigation bar";
+"HIDE_FILTER_BUTTON" = "Remove sort filter button";
+"HIDE_FILTER_BUTTON_DESC" = "Removes the Library/Downloads filter button from the navigation bar";
+
+"TABBAR_SETTINGS" = "Tab bar options";
+"STARTUP_TAB" = "Startup tab";
+"DOWNLOADS" = "Downloads";
+
+"TAB_SETTINGS" = "Tab settings";
+"REMOVE_TABBAR_LABELS" = "Hide labels";
+"HIDE_HOME" = "Hide Home tab";
+"HIDE_SAMPLES" = "Hide Samples tab";
+"HIDE_EXPLORE" = "Hide Explore tab";
+"HIDE_LIBRARY" = "Hide Library tab";
+"HIDE_DOWNLOADS" = "Hide Downloads tab";
+
+"CLEAR_CACHE" = "Clear cache";
+
+"LINKS" = "Links";
+"TWITTER" = "Follow %@ on Twitter";
+"TWITTER_DESC" = "Follow for updates";
+"DISCORD" = "Join the Discord";
+"DISCORD_DESC" = "Report bugs and request features";
+"SOURCE_CODE" = "Source code";
+"SOURCE_CODE_DESC" = "Take a look at the code";
+
+"CLOSE" = "Close";
+"WARNING" = "Warning";
+"LOGIN_INFO" = "App restart required after signing into your Google account";
+"RETRY_LOGIN" = "Workaround activated.\n\nPlease try again.";
+"APPLY_MESSAGE" = "This will close YouTube Music to apply changes. Continue?";
+"CANCEL" = "Cancel";
+"YES" = "Yes";
+"REGIONAL_RESTRICTION" = "YouTube Music appears to be restricted in your country.\n\nPlease use a VPN to access YouTube Music.";
+
+"DONT_RUSH" = "Don't rush brilliance";
+"DONT_RUSH_DESC" = "The song must be playing to extract the link";
+"SELECT_ACTION" = "Select Action";
+"DOWNLOAD_PREMIUM" = "Download (Premium required)";
+"DOWNLOADING" = "Downloading";
+"OOPS" = "Oops\nSomething went wrong";
+"LINK_NOT_FOUND" = "Link not found";
+"SAVED_TO_PHOTOS" = "Saved to Photos";
+"DONE" = "Done";
+"FOUND_SEGMENT" = "Non-music segment detected";
+"SEGMENT_SKIPPED" = "Non-music segment skipped";
+"SKIP" = "Skip";
+"UNSKIP" = "Unskip";
+
+"EMPTY" = "Content you download will show up here";
+"REMOVE_ALL" = "Remove all audios";
+"SHARE_ALL" = "Share all audios";
+"DELETE_MESSAGE" = "Are you sure you want to delete %@?";
+"ALL_DOWNLOADS" = "all downloaded audio"; //keep it lowercase
+"DELETE" = "Delete";
+"RENAME" = "Rename";
+
+"TRANSLATION_SETTINGS" = "Synced lyrics";
+"BILINGUAL_LYRICS" = "Bilingual lyrics";
+"BILINGUAL_LYRICS_DESC" = "Shows a translated line below each original lyric line";
+"TRANSLATION_PROVIDER" = "Provider";
+"TRANSLATION_FOLLOW_APP_LANG" = "Follow app language";
+"TRANSLATION_TARGET_LANG" = "Target language";
+"TRANSLATION_API_KEY" = "API key";
+"TRANSLATION_MODEL" = "Model";
+"TRANSLATION_BASE_URL" = "Base URL";
+"TRANSLATION_CLEAR_CACHE" = "Clear lyrics and translation cache";
+"PROVIDER_GOOGLE" = "Google Translate";
+"PROVIDER_ANTHROPIC" = "Anthropic";
+"PROVIDER_GEMINI" = "Gemini";
+"PROVIDER_OPENAI" = "OpenAI-compatible";
+"SYNCED_LYRICS" = "Synced lyrics overlay";
+"LYRICS_SOURCE" = "Lyrics source";
+"LYRICS_SOURCE_AUTO" = "Auto";
+"LYRICS_EFFECT_FANCY" = "Fancy";
+"LYRICS_EFFECT_SCALE" = "Scale";
+"LYRICS_EFFECT_OFFSET" = "Offset";
+"LYRICS_EFFECT_FOCUS" = "Focus";
+"LYRICS_DEFAULT_TEXT" = "Empty line symbol";
+"LYRICS_CHINESE_CONVERSION" = "Chinese conversion";
+"LYRICS_CHINESE_DISABLED" = "Off";
+"LYRICS_CHINESE_S2T" = "Simplified to Traditional";
+"LYRICS_CHINESE_T2S" = "Traditional to Simplified";
+"LYRICS_ROMANIZATION" = "Romanization";
+"LYRICS_SHOW_INEXACT" = "Allow inexact matches";
+"TRANSLATION_DEBUG_LOGS" = "Debug logs";
+"TRANSLATION_DEBUG_LOGS_DESC" = "Prints YTMULyrics and YTMUTranslation diagnostics to device logs";
+"LYRICS_PANEL_TITLE" = "Lyrics";
+"LYRICS_TEXT_SIZE" = "Text size";
+"LYRICS_TIMING_OFFSET" = "Timing offset";
+"LYRICS_FOCUS_BLUR" = "Focus blur";
+"LYRICS_TIMECODES" = "Timecodes";
+"LYRICS_SELECTED" = "Selected";
+"LYRICS_MATCHED" = "Matched";
+"LYRICS_CHECKING" = "Checking";
+"LYRICS_NO_MATCH" = "No match";
+"LYRICS_RESET" = "Reset";
+"LYRICS_STATE_SEARCHING" = "Searching for lyrics…";
+"LYRICS_STATE_NO_LYRICS" = "No lyrics found";
+"LYRICS_STATE_OPEN_SONG" = "Open a song to load lyrics.";
+"LYRICS_ATTRIBUTION_BOTH_FORMAT" = "Lyrics and translation via %@";
+"LYRICS_ATTRIBUTION_LYRICS_FORMAT" = "Lyrics via %@";
+"LYRICS_ATTRIBUTION_TRANSLATION_FORMAT" = "Translated via %@";
+"LYRICS_PROVIDER_NO_MATCH" = "no match";
+"LYRICS_PROVIDER_TIMEOUT" = "timed out";
+"LYRICS_PROVIDER_FALLBACK" = "translator";
+"LYRICS_ERROR_NO_DESCRIPTION" = "no description available";
+"LYRICS_ERROR_NO_LLM" = "no LLM configured";
+"LYRICS_ERROR_DESCRIPTION_NO_LYRICS" = "no lyrics in description";
+"LYRICS_ERROR_NETEASE_CRYPTO" = "encryption failed";
+"LYRICS_ERROR_NETEASE_BAD_JSON" = "invalid response";
+"LYRICS_ERROR_MUSIXMATCH_NO_TOKEN" = "no token";
+"LYRICS_ERROR_MUSIXMATCH_BAD_JSON" = "invalid response";
+"LYRICS_ERROR_LRCLIB_BAD_JSON" = "invalid response";
+"LYRICS_ERROR_LRCLIB_TIMEOUT" = "request timed out";
+"LYRICS_ERROR_INNERTUBE_FETCH" = "fetch failed";
+"LYRICS_ERROR_DESCRIPTION_EXTRACT" = "extract failed";
+"LYRICS_ERROR_TITLE_NORMALIZE" = "normalize failed";
+"LYRICS_ERROR_HTTP_STATUS_FORMAT" = "HTTP %ld";
+"LYRICS_ERROR_NETEASE_API_FORMAT" = "API error %ld";
+"TRANSLATION_CACHE_CLEARED_FORMAT" = "Lyrics: %lu\nTranslations: %lu\nRomanization: in-memory cache cleared";
+
+"SCROBBLING_SETTINGS" = "Scrobbling";
+"SCROBBLE_MASTER_ENABLE" = "Enable scrobbling";
+"SCROBBLE_MASTER_FOOTER" = "Master switch. When off, no listens are submitted to any provider.";
+
+"SCROBBLE_LASTFM_HEADER" = "Last.fm";
+"SCROBBLE_LASTFM_ENABLE" = "Send to Last.fm";
+"SCROBBLE_LASTFM_FOOTER" = "Register an API application at last.fm/api/account/create, paste the API key and secret here, then tap Authenticate.";
+"SCROBBLE_API_KEY" = "API key";
+"SCROBBLE_API_SECRET" = "API secret";
+"SCROBBLE_LASTFM_AUTHENTICATE" = "Authenticate";
+"SCROBBLE_LASTFM_FINISH_AUTH" = "I've approved — finish";
+"SCROBBLE_LASTFM_SIGN_OUT" = "Sign out";
+"SCROBBLE_LASTFM_OPEN_BROWSER" = "Open Safari to approve";
+"SCROBBLE_LASTFM_OPEN_BROWSER_MSG" = "Safari will open Last.fm so you can authorize this app. After approving, come back here and tap the button again to finish.";
+"SCROBBLE_LASTFM_OPEN_SAFARI" = "Open Safari";
+"SCROBBLE_LASTFM_AUTHENTICATED" = "Last.fm connected";
+"SCROBBLE_LASTFM_AUTH_FAILED" = "Last.fm authentication failed";
+
+"SCROBBLE_LISTENBRAINZ_HEADER" = "ListenBrainz";
+"SCROBBLE_LISTENBRAINZ_ENABLE" = "Send to ListenBrainz";
+"SCROBBLE_LISTENBRAINZ_FOOTER" = "Copy your user token from listenbrainz.org/profile/ and paste it here. The API root only needs changing if you self-host.";
+"SCROBBLE_USER_TOKEN" = "User token";
+"SCROBBLE_API_ROOT" = "API root";
+"SCROBBLE_LISTENBRAINZ_VALIDATE" = "Validate token";
+"SCROBBLE_LISTENBRAINZ_OK" = "ListenBrainz token valid";
+"SCROBBLE_LISTENBRAINZ_FAIL" = "ListenBrainz token invalid";
+
+"SCROBBLE_STATUS" = "Status";
+"SCROBBLE_CONNECTED_AS" = "Connected as %@";
+"SCROBBLE_NOT_CONNECTED" = "Not connected";
+
+"SCROBBLE_DEBUG_LOGS" = "Debug logs";
+"SCROBBLE_DEBUG_LOGS_DESC" = "Prints scrobble diagnostics to device logs";
+
+"TRANSLATION_SELECT_MODEL" = "Select model";
+"TRANSLATION_MODEL_ENTER_MANUALLY" = "Enter manually";
+"TRANSLATION_MODEL_FETCH_FAILED" = "Couldn't fetch models";
+"TRANSLATION_MODEL_NEED_KEY" = "Enter your API key first";
+
+"TRANSLATION_TEST_MODEL" = "Test model";
+"TRANSLATION_TEST_SUCCESS" = "Model is working";
+"TRANSLATION_TEST_FAILED" = "Test failed";
+"TRANSLATION_TEST_NO_PROVIDER" = "Select a provider and enter an API key first";

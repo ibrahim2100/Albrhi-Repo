@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.58.14
+
+Albrhi for YouTube Music 0.3.0: synced lyrics with romanisation and a source picker, carried over
+from YTMEnhanced under GPLv3 and verified by a 29-test suite that runs on the build machine.
+
 ## v1.58.13
 
 Albrhi for YouTube Music 0.2.0: the speed control, seek buttons, no autoplay radio, casting, hidden
