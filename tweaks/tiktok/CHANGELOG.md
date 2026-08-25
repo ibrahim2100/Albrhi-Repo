@@ -1,5 +1,28 @@
 # Albrhi for TikTok — what changed
 
+## v0.19.14
+
+**Two things a long press on a comment can do now, and both live on one class the binary named.**
+
+Forty `AWE*Comment*` classes were searched and none of them owned the comment menu. It is
+`TTKCommentAppReviewsLongPressHelper` — under `TTK`, where TikTok has been moving things — and it
+holds `-buildActionSheetForModel:index:`, `-copyCommentContent:` and `-addCopyActionToSheet:content:`
+between them.
+
+**Save media from a comment.** When a comment carries a picture, a sticker or an animated one, a
+*Save* row appears in **TikTok's own long-press sheet** — built as an `AWEUserSheetAction` and handed
+to the sheet's own `-addAction:`. Presenting a sheet of our own would have covered theirs, and
+replacing theirs would have taken away Copy, Delete and Translate: a correct feature applied one
+step further than it was asked for, which this project has done once already.
+
+**Copy a comment without the name in front of it.** `-copyCommentContent:` runs first and what it
+left on the pasteboard is trimmed afterwards. **A post-condition holds whatever the implementation
+does** — the safer half of the same idea as hooking a setter rather than a getter — and it avoids
+guessing what a private method's argument is. It is conservative: a leading `@handle` or `Name:` is
+removed only when something remains after it, so a comment that *is* a mention keeps its text.
+
+Both halves check their own selector's type encoding before installing, and each installs alone.
+
 ## v0.19.13
 
 **The settings screen is a list of sections you open, not one long scroll.**

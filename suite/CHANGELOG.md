@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.58.23
+
+Albrhi for TikTok 0.19.14: save a comment's picture from TikTok's own long-press menu, and copy a
+comment without its author's name in front of the words.
+
 ## v1.58.22
 
 Albrhi for TikTok 0.19.13: the settings screen is a list of sections you open, each on its own page.
