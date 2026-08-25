@@ -1,8 +1,8 @@
 Package: com.albrhi.ytmusic
 Name: Albrhi for YouTube Music
-Version: 0.1.1
+Version: 0.2.0
 Architecture: iphoneos-arm64
-Description: No ads in YouTube Music, and playback that keeps going in the background. WITHOUT PREMIUM: this tweak does not unlock a paid subscription and does not report you as a subscriber. It blocks advertising and stops the background-playback upsell, which it does on a free account exactly as on a paid one.
+Description: No ads in YouTube Music, playback that keeps going in the background, the hidden speed control, seek buttons in place of previous/next, no autoplay radio, casting, an OLED theme and SponsorBlock. WITHOUT PREMIUM: this tweak does not unlock a paid subscription and does not report you as a subscriber -- every feature here works the same on a free account as on a paid one. Hooks carried over from YTMusicUltimate by dayanch96 and YTMEnhanced by py233, both GPLv3; their Premium claim is deliberately not included. SponsorBlock asks sponsor.ajay.app about the track and is off until you switch it on.
 Section: Tweaks
 Depends: mobilesubstrate, firmware (>= 15.0)
 Conflicts: com.albrhi.ytmusic.roothide, com.dvntm.ytmultimate

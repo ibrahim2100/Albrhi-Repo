@@ -1,5 +1,44 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.2.0
+
+Seven more features, carried over from **YTMEnhanced** by py233 (github.com/py233/YTMEnhanced) under
+GPLv3 -- itself derived from YTMusicUltimate, which this tweak was already built from. The
+attribution ships in `control`, here, and in the package notice.
+
+- **The speed control YouTube Music already has and hides**, on the player.
+- **Seek buttons**: previous and next become back and forward, with the original behaviour still
+  there on a long press.
+- **No autoplay radio** after the queue ends, refused on every class that decides it.
+- **Casting**, enabled where the app gates it.
+- **The history, cast and filter buttons** in the navigation bar, hidden on request.
+- **A true-black theme**, keyboard included.
+- **SponsorBlock**, for the one category a music app has: `music_offtopic`.
+
+**Three of them are off until switched on, each for its own reason.** SponsorBlock sends the track's
+id to sponsor.ajay.app, which is a third party learning what is being played -- the same cost
+tikwm.com carries in the TikTok tweak, and the same answer: a switch that starts off and a row that
+says what turning it on does. The theme and the hidden buttons are appearance, and changing how
+somebody's app looks on the day they update is not a default anyone asked for.
+
+**`PremiumStatus.x` is not here, and that is the fourth time this project has said so.** It answers
+`-isPremiumSubscriber` with YES on six classes. The same shape was refused by name for Locket's
+`Check0verPlus` and again for Spotify. Nothing carried over here ever asks what the account is.
+
+Four edits were needed to make the carried-over files build, and each is a rule this repository
+already had:
+
+- One-line `%orig` bodies opened out, and `cond ? %orig(NO) : %orig;` split -- the Logos pinned here
+  needs `%orig` alone in a full block and refuses two of them in one expression.
+- **`%orig` as the middle operand of a ternary** does not compile, while `? nil : %orig` and
+  `%orig ?: fallback()` do. check.py grew a rule for it, narrowed twice against the other tweaks
+  before it landed.
+- `NavBar` renamed from `.xm` to `.x`: nothing in it is C++, and in a `.xm` its installer is emitted
+  with C++ mangling while the header declares it plainly, so the link fails on a symbol that is
+  there under another name.
+- The seek buttons' `-valueForKey:` on `_nowPlayingView` is now guarded by a real runtime question.
+  `-valueForKey:` runs the app's own code; this project crashed Instagram once by trusting it.
+
 ## v0.1.1
 
 **The rootless build failed and every local build had passed, because every local build was

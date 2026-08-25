@@ -57,12 +57,45 @@
         settings[@"YTMUltimateIsEnabled"] = @YES;
         settings[@"noAds"] = @YES;
         settings[@"backgroundPlayback"] = @YES;
+        settings[@"playbackRateButton"] = @YES;
+        settings[@"seekButtons"] = @YES;
+        settings[@"disableAutoRadio"] = @YES;
+
+        //
+        // **Off unless asked for, and each for its own reason rather than one blanket default.**
+        //
+        // SponsorBlock sends the video's id to sponsor.ajay.app, which is a third party learning
+        // what is being played -- the same cost tikwm.com carries in the TikTok tweak, where the
+        // answer was a switch that is off and a row that says what enabling it does. The OLED
+        // theme and the hidden navigation buttons are simply appearance, and changing how somebody's
+        // app looks the first time they update is not a default anyone asked for.
+        //
+        if (!settings[@"sponsorBlock"]) settings[@"sponsorBlock"] = @NO;
+        if (!settings[@"oledTheme"]) settings[@"oledTheme"] = @NO;
+        if (!settings[@"oledKeyboard"]) settings[@"oledKeyboard"] = @NO;
+        if (!settings[@"lowContrast"]) settings[@"lowContrast"] = @NO;
+        if (!settings[@"hideHistoryButton"]) settings[@"hideHistoryButton"] = @NO;
+        if (!settings[@"hideCastButton"]) settings[@"hideCastButton"] = @NO;
+        if (!settings[@"hideFilterButton"]) settings[@"hideFilterButton"] = @NO;
+
+        // Upstream's SponsorBlock constructor seeded these two and was removed with the rest;
+        // its values are kept because they are the behaviour, not a preference nobody set.
+        if (!settings[@"sbSkipMode"]) settings[@"sbSkipMode"] = @0;
+        if (!settings[@"sbDuration"]) settings[@"sbDuration"] = @10;
+        if (!settings[@"seekTime"]) settings[@"seekTime"] = @0;
 
         [defaults setObject:settings forKey:@"YTMUltimate"];
 
         SCIYTMInstallAdBlock();
         SCIYTMInstallBackground();
+        SCIYTMInstallPlaybackRate();
+        SCIYTMInstallSeekButtons();
+        SCIYTMInstallAutoPlay();
+        SCIYTMInstallCast();
+        SCIYTMInstallNavBar();
+        SCIYTMInstallColours();
+        SCIYTMInstallSponsorBlock();
 
-        NSLog(@"[AlbrhiYTM] ads and background playback installed");
+        NSLog(@"[AlbrhiYTM] nine feature groups installed");
     }
 }

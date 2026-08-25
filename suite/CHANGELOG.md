@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.58.13
+
+Albrhi for YouTube Music 0.2.0: the speed control, seek buttons, no autoplay radio, casting, hidden
+navigation buttons, an OLED theme and SponsorBlock -- carried over from YTMEnhanced under GPLv3,
+without its Premium claim.
+
 ## v1.58.12
 
 Albrhi Panel 0.9.22: a master switch above every tweak, a guide page with each tweak's verified

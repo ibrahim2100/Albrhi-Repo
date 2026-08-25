@@ -305,6 +305,23 @@ for path in LOGOS:
         elif l.count('%orig') > 1:
             report('two %%orig in one expression at %s:%d -- give each its own line' % (path, n))
 
+        # **And %orig as the *middle* operand of a ternary, which is narrower than it sounds.**
+        #
+        # `return cond ? %orig : seekTime();` fails to compile: the #line directive the expansion
+        # emits swallows the `: seekTime()` that follows. Meanwhile `return cond ? nil : %orig;`
+        # and `return %orig ?: fallback();` both build clean and appear throughout this repository.
+        #
+        # **Written twice too broadly before it landed, and the oracle caught both.** First as
+        # "%orig anywhere in a ternary", which fires on the working `? nil : %orig`. Then as
+        # "anything follows %orig on the line", which fires on six lines that compile today --
+        # `%orig(MAX(a, b));`, `%orig ?: f(self);` -- because a multi-argument call has plenty
+        # after it and a `?:` is not a middle position at all. The other tweaks build under
+        # -Werror, so any finding in them is a false positive by definition, and that is what
+        # turned "does this rule cry wolf" from a judgement into a command.
+        elif re.search(r'\?\s*%orig(\([^()]*\))?\s*:', l):
+            report('%%orig is the middle operand of a ternary at %s:%d -- '
+                   'what follows it is swallowed by the expansion' % (path, n))
+
 # 5. Unterminated string literals - Objective-C has no multi-line strings.
 #    Comments must be stripped with string-awareness, or the "//" in every https://
 #    URL truncates the line and every URL looks like an unterminated literal.
