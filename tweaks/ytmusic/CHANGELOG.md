@@ -1,5 +1,24 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.4.0
+
+**The settings screen, which ten features were shipped without.**
+
+0.2.0 and 0.3.0 carried the hooks and not the page that controls them. The report was exactly that
+— *no settings, no options, nothing, and I never saw the lyrics* — and it was right: there was no
+way to reach a single switch, no source picker, no romanisation toggle, and nothing to confirm that
+lyrics were even turned on. A tweak whose options cannot be reached is a tweak with no options.
+
+It is carried over from YTMEnhanced under GPLv3 like the rest: a row in YouTube Music's own account
+menu that opens the page, with Player, Theme, Navigation bar, Tab bar and Translation inside it.
+
+**Two rows deliberately did not come.** *Premium* drives `-isPremiumSubscriber`, which this project
+refused by name for Locket and again for Spotify — and keeping a switch for hooks that were refused
+would be a screen that lies. *Scrobbling* configures code that is not here at all, which is the same
+lie pointing the other way. The destination list was edited in lockstep with the row list, because
+two parallel arrays edited apart is a fault this project has already paid for once, and it stays
+plausible while being wrong throughout.
+
 ## v0.3.0
 
 **Synced lyrics**, carried over from YTMEnhanced under GPLv3: a panel on the now-playing screen fed

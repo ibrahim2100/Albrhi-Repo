@@ -122,7 +122,9 @@
         SCIYTMInstallSponsorBlock();
         SCIYTMInstallSyncedLyrics();
         SCIYTMInstallSelectableLyrics();
+        SCIYTMInstallSettings();
+        SCIYTMInstallOtherSettings();
 
-        NSLog(@"[AlbrhiYTM] eleven feature groups installed");
+        NSLog(@"[AlbrhiYTM] thirteen feature groups installed, settings included");
     }
 }

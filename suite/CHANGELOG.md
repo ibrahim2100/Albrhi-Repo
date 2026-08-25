@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.58.17
+
+Albrhi for YouTube Music 0.4.0: the settings screen — reached from the account menu — which the last
+two releases shipped ten features without.
+
 ## v1.58.16
 
 Albrhi for Instagram 4.1.13: a saved AV1 reel keeps its ten bits and its HLG/BT.2020 description,

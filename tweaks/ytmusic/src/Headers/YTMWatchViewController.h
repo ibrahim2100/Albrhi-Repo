@@ -1,5 +1,7 @@
-// A shim: the carried-over files import this path by name. See Localization.h.
-#import "YTMUpstream.h"
+#import "YTPlayerViewController.h"
 
 @interface YTMWatchViewController : UIViewController
+@property (nonatomic, weak, readwrite) YTPlayerViewController *playerViewController;
+
+- (void)resetMiniplayerRestrictions;
 @end

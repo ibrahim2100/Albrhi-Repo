@@ -51,3 +51,14 @@ void SCIYTMInstallSyncedLyrics(void);
 
 /// The lyrics panel's own screen: selectable text, a source picker, timing offset, romanisation.
 void SCIYTMInstallSelectableLyrics(void);
+
+/// The settings screen itself: a row in YouTube Music's own account menu that opens Albrhi's page.
+///
+/// **Ten features shipped without it.** 0.2.0 and 0.3.0 carried the hooks and not the page that
+/// controls them, which is a tweak with no way to reach a single option -- reported exactly that
+/// way. The Premium and scrobbling rows are gone from it: one for a feature deliberately not
+/// carried, one for code that is not here.
+void SCIYTMInstallSettings(void);
+
+/// The tab-bar and chip-cloud hooks the settings page switches.
+void SCIYTMInstallOtherSettings(void);
