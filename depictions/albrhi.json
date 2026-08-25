@@ -106,6 +106,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v1.58.18",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• Albrhi for Instagram 4.1.14: two diagnostics corrected — one could not recognise the tweak's own date format, the other named a missing hook and not the working one —…",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v1.58.17",
           "useBoldText": true
         },
@@ -131,20 +145,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v1.58.15",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• Albrhi for Instagram 4.1.12: the AV1 transcode stops synthesising film grain it is about to re-encode, and reuses the encoder's own pixel buffers instead of allocating…",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -155,7 +155,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.58.17"
+          "text": "1.58.18"
         },
         {
           "class": "DepictionTableTextView",
