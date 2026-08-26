@@ -1,5 +1,24 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.8.2
+
+**0.8.1 crashed, and it crashed on a rule this project had already written down.**
+
+The glyph came from a `%hook` on `YTMPivotBarItemStyle`'s drawing method — **and a `%hook` on a
+method a class does not declare does not politely do nothing: Logos adds it.** The `%orig` inside
+then jumps to an implementation that was never there. The rule is in CLAUDE.md in the Watch tweak's
+own words — *a hook on a method a class does not declare is inventing an API Apple never calls* —
+and it was written for exactly this shape.
+
+The icon now lives in a group of its own, installed only when the runtime confirms the class really
+declares that selector. **Without the glyph the tab still works**, which is why this is a check
+rather than a fallback.
+
+Two more of the same family, hardened in the same pass: a class method is asked for with
+`+respondsToSelector:` before being sent, because an unrecognised class method is a crash and not a
+nil; and the node behind a tap is asked whether it answers `-key` at all — that hook runs on **every
+tap in the app**, so an object of an unexpected type reaching it is not a rare case.
+
 ## v0.8.1
 
 Two reports from a device, and the second is this project's oldest mistake arriving again.

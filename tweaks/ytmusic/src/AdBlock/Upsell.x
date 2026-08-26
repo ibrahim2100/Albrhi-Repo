@@ -549,8 +549,12 @@ static const int kSCIYTMDownloadsIconType = 9931;
             icon.iconType = kSCIYTMDownloadsIconType;
             item.icon = icon;
 
-            item.title = [NSClassFromString(@"YTIFormattedString")
-                formattedStringWithString:SCILocalized(@"downloads_title")];
+            // A class method asked of a class that does not have it is an unrecognised selector,
+            // which is a crash and not a nil -- so it is asked whether it answers first.
+            Class formatted = NSClassFromString(@"YTIFormattedString");
+            if ([formatted respondsToSelector:@selector(formattedStringWithString:)]) {
+                item.title = [formatted formattedStringWithString:SCILocalized(@"downloads_title")];
+            }
 
             YTIBrowseEndpoint *browse = [[NSClassFromString(@"YTIBrowseEndpoint") alloc] init];
             browse.browseId = kSCIYTMDownloadsPivot;
@@ -583,35 +587,6 @@ static const int kSCIYTMDownloadsIconType = 9931;
     }
 
     %orig;
-}
-
-%end
-
-//
-// **The glyph itself, drawn from the bundle this package already ships.**
-//
-// `YTMusicUltimate.bundle` carries `icons/downloads` and its selected variant at every scale --
-// they came with the resources when the lyrics module was carried over, and they are the app's own
-// visual language rather than an SF Symbol that would sit differently from its four neighbours.
-//
-%hook YTMPivotBarItemStyle
-
-- (UIImage *)pivotBarItemIconImageWithIconType:(int)type
-                                         color:(UIColor *)color
-                                   useNewIcons:(BOOL)isNew
-                                      selected:(BOOL)isSelected {
-    if (type != kSCIYTMDownloadsIconType) return %orig;
-
-    Class loaderClass = NSClassFromString(@"YTAssetLoader");
-    NSBundle *bundle = NSBundle.ytmu_defaultBundle;
-    if (!loaderClass || !bundle) return %orig;
-
-    YTAssetLoader *loader = [[loaderClass alloc] initWithBundle:bundle];
-    UIImage *image = [loader imageNamed:isSelected ? @"icons/downloads_selected" : @"icons/downloads"];
-
-    // A missing image means the app draws whatever it would have drawn, which is a blank tab rather
-    // than a crash -- and the tab still works.
-    return image ?: %orig;
 }
 
 %end
@@ -657,4 +632,57 @@ static const int kSCIYTMDownloadsIconType = 9931;
 
 %end
 
-void SCIYTMInstallUpsell(void) { %init(YTMUpsell); }
+//
+// **The glyph itself, drawn from the bundle this package already ships.**
+//
+// `YTMusicUltimate.bundle` carries `icons/downloads` and its selected variant at every scale --
+// they came with the resources when the lyrics module was carried over, and they are the app's own
+// visual language rather than an SF Symbol that would sit differently from its four neighbours.
+//
+%group YTMDownloadsIcon
+
+%hook YTMPivotBarItemStyle
+
+- (UIImage *)pivotBarItemIconImageWithIconType:(int)type
+                                         color:(UIColor *)color
+                                   useNewIcons:(BOOL)isNew
+                                      selected:(BOOL)isSelected {
+    if (type != kSCIYTMDownloadsIconType) return %orig;
+
+    Class loaderClass = NSClassFromString(@"YTAssetLoader");
+    NSBundle *bundle = NSBundle.ytmu_defaultBundle;
+    if (!loaderClass || !bundle) return %orig;
+
+    YTAssetLoader *loader = [[loaderClass alloc] initWithBundle:bundle];
+    UIImage *image = [loader imageNamed:isSelected ? @"icons/downloads_selected" : @"icons/downloads"];
+
+    // A missing image means the app draws whatever it would have drawn, which is a blank tab rather
+    // than a crash -- and the tab still works.
+    return image ?: %orig;
+}
+
+%end
+
+%end
+
+void SCIYTMInstallUpsell(void) {
+    %init(YTMUpsell);
+
+    //
+    // **The icon hook is installed only if the method is really there, and 0.8.1 crashed for want
+    // of this check.**
+    //
+    // A `%hook` on a method a class does not declare does not politely do nothing: **Logos adds
+    // it**, and the `%orig` inside it then jumps to an implementation that was never there. This
+    // project wrote that rule down for the Watch tweak -- *a hook on a method a class does not
+    // declare is inventing an API Apple never calls* -- and it is exactly what shipped here.
+    //
+    // Without the glyph the tab still works, which is why this is a check and not a fallback.
+    //
+    Class style = NSClassFromString(@"YTMPivotBarItemStyle");
+    SEL drawing = @selector(pivotBarItemIconImageWithIconType:color:useNewIcons:selected:);
+
+    if (style && class_getInstanceMethod(style, drawing)) {
+        %init(YTMDownloadsIcon);
+    }
+}

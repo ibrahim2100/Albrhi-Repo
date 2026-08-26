@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.59.8
+
+Albrhi for YouTube Music 0.8.2: fixes the crash 0.8.1 introduced — a hook on a method the class does
+not declare, which Logos adds rather than skips.
+
 ## v1.59.7
 
 Albrhi for YouTube Music 0.8.1: the Downloads tab gets its glyph, and the download button is matched

@@ -343,6 +343,13 @@ NSArray<NSString *> *SCIYTMSeenKeys(void) {
     // second time. The ancestor check is gone with it: the app draws this badge on the now-playing
     // screen, and demanding a class name as well was a second way to miss for no second reason.
     //
+    // The ivar holds whatever this build put there. Asking an object for a selector it does not
+    // have is an unrecognised selector, not a nil -- and this hook runs on every tap in the app.
+    if (![node respondsToSelector:@selector(key)]) {
+        %orig;
+        return;
+    }
+
     SCIYTMRememberKey(node.key);
 
     if (!node.key.length ||
