@@ -84,6 +84,10 @@
         if (!settings[@"sbDuration"]) settings[@"sbDuration"] = @10;
         if (!settings[@"seekTime"]) settings[@"seekTime"] = @0;
 
+        // Audio by default, which is what a music app is for -- and it is upstream's own default
+        // too. Written only when unset, so a choice made in the settings screen survives.
+        if (!settings[@"audioVideoMode"]) settings[@"audioVideoMode"] = @0;
+
         //
         // **The lyrics defaults, which were upstream's own %ctor and are now decided here.**
         //
@@ -117,6 +121,7 @@
         SCIYTMInstallSeekButtons();
         SCIYTMInstallAutoPlay();
         SCIYTMInstallCast();
+        SCIYTMInstallAVSwitching();
         SCIYTMInstallNavBar();
         SCIYTMInstallColours();
         SCIYTMInstallSponsorBlock();
@@ -125,6 +130,6 @@
         SCIYTMInstallSettings();
         SCIYTMInstallOtherSettings();
 
-        NSLog(@"[AlbrhiYTM] thirteen feature groups installed, settings included");
+        NSLog(@"[AlbrhiYTM] fourteen feature groups installed, settings included");
     }
 }

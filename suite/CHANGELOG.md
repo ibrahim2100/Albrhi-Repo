@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.59.2
+
+Albrhi for YouTube Music 0.5.0: choose whether a track plays as audio or as video, with the switch
+opened on tracks that hide it — the setting existed since 0.4.0 and nothing read it until now.
+
 ## v1.59.1
 
 Albrhi for YouTube 1.22.0: a SponsorBlock marker is tied to the bar it belongs to, so a second

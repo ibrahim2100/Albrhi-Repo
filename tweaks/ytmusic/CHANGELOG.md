@@ -1,5 +1,23 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.5.0
+
+**Audio or video, and a default between them** — the one feature of the upstream port whose
+neighbours were carried over and which was left behind.
+
+YouTube Music decides for itself whether a track plays as audio or as its video, and hides the
+switch on most of them. These hooks open it everywhere — the mode controller, the queue config, the
+quality pickers, the playability renderer — and honour a stored default.
+
+**And the settings row for it was already here, writing a key nobody read.** `Player settings`
+carried the audio/video segmented control from the moment the settings screen was ported in 0.4.0:
+it stored `audioVideoMode` faithfully, and nothing in the tweak ever looked at it. A control that
+saves a value no code consults is the same lie as a switch that changes nothing, and it shipped for
+two releases.
+
+Audio is the default, which is what a music app is for and what upstream chose too. It is written
+only when unset, so a choice made on that screen survives an update.
+
 ## v0.4.1
 
 **The settings screen crashed the moment it opened, and the cause is one this project had already

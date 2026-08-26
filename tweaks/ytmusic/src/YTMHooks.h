@@ -62,3 +62,10 @@ void SCIYTMInstallSettings(void);
 
 /// The tab-bar and chip-cloud hooks the settings page switches.
 void SCIYTMInstallOtherSettings(void);
+
+/// Audio or video, and a default between them.
+///
+/// YouTube Music decides which of the two a track plays as, and hides the switch on most of them.
+/// These hooks open it everywhere and honour a stored default -- `audioVideoMode`, 0 for audio and
+/// 1 for video, which is upstream's own key and stays so the ported file remains diffable.
+void SCIYTMInstallAVSwitching(void);
