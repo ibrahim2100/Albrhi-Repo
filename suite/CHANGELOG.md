@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.59.5
+
+Albrhi for YouTube Music 0.7.0: save a track through the app's own download button — no FFmpeg, and
+no Premium page involved.
+
 ## v1.59.4
 
 Albrhi for YouTube Music 0.6.1: the Upgrade tab is removed from the tab bar, which 0.6.0 missed.

@@ -76,3 +76,10 @@ void SCIYTMInstallAVSwitching(void);
 /// **Not the subscription, claimed.** Every `-isPremiumSubscriber` and its relatives stayed
 /// upstream; see the file's own header for the list and the line between them.
 void SCIYTMInstallUpsell(void);
+
+/// Saving a track, through the download badge YouTube Music already draws.
+///
+/// The stream is `streamingData.hlsManifestURL` -- the same source the YouTube tweak reads -- and
+/// the join is `AVAssetExportPresetPassthrough`, which is what upstream's `-c copy` amounts to.
+/// No FFmpeg, and no second button beside the app's own.
+void SCIYTMInstallDownload(void);

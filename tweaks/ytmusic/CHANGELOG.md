@@ -1,5 +1,36 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.7.0
+
+**Saving a track — through the download button YouTube Music already draws, and without FFmpeg.**
+
+Measured before it was built, and the measurement settled two questions that had been argued about
+for days:
+
+- **The stream is `streamingData.hlsManifestURL`** — the same source the YouTube tweak here already
+  reads. There is no SABR wall in this app and no client to impersonate.
+- **The upstream port's entire use of FFmpeg is `-i <hls> -c copy out.m4a`** — a stream copy, not a
+  re-encode. That is `AVAssetExportPresetPassthrough`, which is how every download in this
+  repository is already joined. **Sixteen megabytes of dependency for one remux** was the thing
+  worth measuring, and it buys nothing here.
+
+The button is the app's own download badge. YouTube Music draws it and gates it behind Premium; the
+tap is intercepted before that gate rather than a second button being placed beside it — so it is
+where somebody already looks for it, and the app's Premium page is never involved.
+
+Three things carried over from what the YouTube tweak learned the hard way, rather than rediscovered:
+**segments are packed ADTS behind one ID3 tag each** (join them naively and the file has twenty-odd
+tags buried in it, which is what "the download had no audio" was); a raw AAC file has no index, so
+its duration is waited for before an export range is built from it; and the audio group id is a
+name, so `234` and `233` are tried and then **any** `TYPE=AUDIO` line is accepted.
+
+The file lands in Files, under Albrhi, as `Artist - Title.m4a`.
+
+**What this is not: it does not appear in YouTube Music's own Downloads page.** That page is the
+Premium-gated offline library, and putting files into its store would be claiming an entitlement —
+the same line refused in 0.6.0 by name. A page of our own with the app's playback behaviour is the
+next release, not this one.
+
 ## v0.6.1
 
 **The Upgrade tab is gone too** — it was still there in 0.6.0, and the reason is a rule this project

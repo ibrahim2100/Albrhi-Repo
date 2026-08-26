@@ -117,6 +117,7 @@
 
         SCIYTMInstallAdBlock();
         SCIYTMInstallUpsell();
+        SCIYTMInstallDownload();
         SCIYTMInstallBackground();
         SCIYTMInstallPlaybackRate();
         SCIYTMInstallSeekButtons();
@@ -131,6 +132,6 @@
         SCIYTMInstallSettings();
         SCIYTMInstallOtherSettings();
 
-        NSLog(@"[AlbrhiYTM] fifteen feature groups installed, settings included");
+        NSLog(@"[AlbrhiYTM] sixteen feature groups installed, settings included");
     }
 }

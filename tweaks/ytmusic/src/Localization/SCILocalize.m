@@ -7,7 +7,7 @@
 
 #import "SCILocalize.h"
 
-NSString *SCIVersionString = @"v0.6.1";  // AlbrhiYTM
+NSString *SCIVersionString = @"v0.7.0";  // AlbrhiYTM
 
 /// Short, because everything a person reads about this tweak is drawn by Albrhi Panel: it patches
 /// one app, so it takes one row on the app list rather than a page of its own.
@@ -22,6 +22,17 @@ static void SCIBuildTables(void) {
         @"sb_unskip": @"Unskip",
         @"sb_skipped": @"Segment skipped",
         @"sb_found": @"Segment found",
+        @"download_started": @"Saving",
+        @"download_started_note": @"The track is being fetched. You will be told when it is done.",
+        @"download_saved": @"Saved",
+        @"download_saved_at": @"%@.m4a is in Files, under Albrhi.",
+        @"download_failed": @"Not saved",
+        @"download_no_audio": @"This track's manifest offers no audio rendition.",
+        @"download_no_segments": @"The audio playlist listed no segments.",
+        @"download_empty": @"Every segment came back empty.",
+        @"download_not_written": @"The file could not be written.",
+        @"download_remux_failed": @"The audio was fetched but could not be put in an m4a container.",
+        @"ok": @"OK",
     };
 
     _arTable = @{
@@ -31,6 +42,17 @@ static void SCIBuildTables(void) {
         @"sb_unskip": @"تراجع",
         @"sb_skipped": @"تُخطّي المقطع",
         @"sb_found": @"وُجد مقطع",
+        @"download_started": @"جارٍ الحفظ",
+        @"download_started_note": @"يجري جلب المقطع، وستُخبَر عند انتهائه.",
+        @"download_saved": @"حُفظ",
+        @"download_saved_at": @"‏%@.m4a في تطبيق الملفات، داخل مجلد Albrhi.",
+        @"download_failed": @"لم يُحفظ",
+        @"download_no_audio": @"بيان هذا المقطع لا يعرض تمثيلة صوتية.",
+        @"download_no_segments": @"قائمة الصوت لم تذكر أي مقطع.",
+        @"download_empty": @"كل المقاطع عادت فارغة.",
+        @"download_not_written": @"تعذّرت كتابة الملف.",
+        @"download_remux_failed": @"جُلب الصوت ولم يُمكن وضعه في حاوية m4a.",
+        @"ok": @"حسناً",
     };
 }
 
