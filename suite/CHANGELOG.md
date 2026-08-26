@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.59.3
+
+Albrhi for YouTube Music 0.6.0: the upgrade page and the recurring subscribe prompt are hidden —
+the advertisement, not the subscription.
+
 ## v1.59.2
 
 Albrhi for YouTube Music 0.5.0: choose whether a track plays as audio or as video, with the switch

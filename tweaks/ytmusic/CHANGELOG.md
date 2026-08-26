@@ -1,5 +1,27 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.6.0
+
+**The advertisement for Premium is hidden. The subscription is still not claimed.**
+
+The upgrade page, the periodic *subscribe* prompt, the upsell dialogs, the promo sheets and
+interstitials, the memento promotions, the side-panel upgrade entry, the offline and background
+upsell renderers, and the throttle that decides when to show the next one — all refused.
+
+**This required reading upstream's file method by method rather than judging it whole.** 0.2.0
+refused `PremiumStatus.x` entirely, which was right at the time and too blunt: it is two different
+things in one file. Hooks that answer *is this account paying* with YES are taking money from the
+app's developers. Hooks that stop the app **asking you to pay** are closing an advertisement, and
+the app behaves for a free account exactly as it did before.
+
+**What did not come, named rather than implied:** `-isPremiumSubscriber` and its setter on five
+classes; `isCurrentUserPremium`, `isMobileAudioTier` and the queue's version of it; the flags that
+pretend the build is internal or under test; and a `-init` that wrote `_isMobileAudioTierMode` into
+a private ivar by KVC — the same claim, written by hand.
+
+Forty-six one-line `if (…) %orig;` bodies were opened out for the Logos this repository pins, which
+check.py caught before the compiler did.
+
 ## v0.5.0
 
 **Audio or video, and a default between them** — the one feature of the upstream port whose

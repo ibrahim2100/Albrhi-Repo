@@ -69,3 +69,10 @@ void SCIYTMInstallOtherSettings(void);
 /// These hooks open it everywhere and honour a stored default -- `audioVideoMode`, 0 for audio and
 /// 1 for video, which is upstream's own key and stays so the ported file remains diffable.
 void SCIYTMInstallAVSwitching(void);
+
+/// The advertisement for Premium, hidden -- upsell dialogs, promo sheets, interstitials, the
+/// side-panel upgrade entry, and the throttle that schedules the next one.
+///
+/// **Not the subscription, claimed.** Every `-isPremiumSubscriber` and its relatives stayed
+/// upstream; see the file's own header for the list and the line between them.
+void SCIYTMInstallUpsell(void);

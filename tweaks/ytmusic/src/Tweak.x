@@ -116,6 +116,7 @@
         [defaults setObject:settings forKey:@"YTMUltimate"];
 
         SCIYTMInstallAdBlock();
+        SCIYTMInstallUpsell();
         SCIYTMInstallBackground();
         SCIYTMInstallPlaybackRate();
         SCIYTMInstallSeekButtons();
@@ -130,6 +131,6 @@
         SCIYTMInstallSettings();
         SCIYTMInstallOtherSettings();
 
-        NSLog(@"[AlbrhiYTM] fourteen feature groups installed, settings included");
+        NSLog(@"[AlbrhiYTM] fifteen feature groups installed, settings included");
     }
 }
