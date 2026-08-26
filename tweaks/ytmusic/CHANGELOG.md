@@ -1,5 +1,24 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.8.3
+
+**The crash, actually found — and 0.8.2 had fixed the wrong thing.**
+
+The evidence was in the order of two reports. 0.8.0 did not crash and its download button showed the
+Premium prompt; 0.8.1 crashed. What 0.8.1 changed was the key match — and the old condition read
+`key is "music_download_badge_1" || view._viewControllerForAncestor is not now-playing`. **The first
+half never matched, so short-circuit evaluation meant the second half was never reached.** The
+moment the match widened, a tap arrived at `-_viewControllerForAncestor` for the first time, and
+that private `UIView` method is not on this build: an unrecognised selector, which is a crash.
+
+**A crash that appears when a feature starts working was not introduced by the change that exposed
+it.** 0.8.2 guarded the icon hook — a real fault, and not this one.
+
+The controller behind a view is found with `-respondsToSelector:` first and the **responder chain**
+otherwise, which is public API and always answers. And the same private call in the account-menu
+settings button — carried over later and never guarded — is fixed in the same pass, before it fails
+the first time somebody opens that menu.
+
 ## v0.8.2
 
 **0.8.1 crashed, and it crashed on a rule this project had already written down.**

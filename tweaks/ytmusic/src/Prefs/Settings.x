@@ -12,6 +12,7 @@
 //  deliberately not carried, one for code that is not here.
 //
 #import <UIKit/UIKit.h>
+#import <objc/message.h>
 #import "YTMUltimateSettingsController.h"
 #import "../Headers/Localization.h"
 
@@ -41,6 +42,30 @@
 @property (nonatomic, weak, readwrite) YTMLightweightMessageCell *delegate;
 @end
 
+//
+// **The same private method that crashed the downloader, guarded the same way.**
+//
+// `-_viewControllerForAncestor` is a private `UIView` method: it is exact where it exists and an
+// unrecognised selector where it does not. The lyrics module already asks `-respondsToSelector:`
+// before sending it; this file, carried over later, did not -- and it would have failed the first
+// time somebody opened the account menu on a build without it.
+//
+static UIViewController *SCIYTMSettingsOwner(UIView *view) {
+    if (!view) return nil;
+
+    SEL ancestor = NSSelectorFromString(@"_viewControllerForAncestor");
+    if ([view respondsToSelector:ancestor]) {
+        id owner = ((id (*)(id, SEL))objc_msgSend)(view, ancestor);
+        if ([owner isKindOfClass:[UIViewController class]]) return owner;
+    }
+
+    for (UIResponder *responder = view; responder; responder = responder.nextResponder) {
+        if ([responder isKindOfClass:[UIViewController class]]) return (UIViewController *)responder;
+    }
+
+    return nil;
+}
+
 %group SettingsPage
 %hook YTMAvatarAccountView
 
@@ -64,7 +89,7 @@
         //Push the settings view controller.
         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:[[YTMUltimateSettingsController alloc] init]];
         [nav setModalPresentationStyle: UIModalPresentationFullScreen];
-        [self._viewControllerForAncestor presentViewController:nav animated:YES completion:nil];
+        [SCIYTMSettingsOwner(self) presentViewController:nav animated:YES completion:nil];
     }];
 
     button.tintColor = [UIColor redColor];
@@ -96,7 +121,7 @@
 // Remove the subscribe to premium button on new versions
 %hook YTMNavigationDrawerPromoView
 - (void)loadModel:(id)model {
-    if ([self._viewControllerForAncestor isKindOfClass:%c(YTMAvatarAccountViewController)]) {
+    if ([SCIYTMSettingsOwner(self) isKindOfClass:%c(YTMAvatarAccountViewController)]) {
         return [self removeFromSuperview];
     }
 

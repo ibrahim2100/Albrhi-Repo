@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.59.9
+
+Albrhi for YouTube Music 0.8.3: the real cause of the crash — a private UIView method reached for
+the first time when the download match widened, now guarded with a responder-chain fallback.
+
 ## v1.59.8
 
 Albrhi for YouTube Music 0.8.2: fixes the crash 0.8.1 introduced — a hook on a method the class does

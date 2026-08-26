@@ -10,10 +10,6 @@
 @property (nonatomic, copy, readonly) NSString *key;
 @end
 
-@interface UIView (SCIYTMAncestor)
-- (id)_viewControllerForAncestor;
-@end
-
 @interface ELMTouchCommandPropertiesHandler : NSObject
 @end
 
@@ -280,6 +276,35 @@ static void SCIYTMDownloadTrack(NSURL *manifestURL, NSString *title, NSString *a
     }] resume];
 }
 
+///
+/// The view controller a view belongs to, without betting on a private method.
+///
+/// **This is where 0.8.1 crashed, and 0.8.0 did not — for a reason worth keeping.** The old code
+/// called `-_viewControllerForAncestor`, a private `UIView` method, as the *second* operand of an
+/// `||` whose first operand never matched. Short-circuit evaluation meant it was never reached; the
+/// moment 0.8.1 widened the key match, the tap arrived there for the first time and the selector
+/// was not on this build.
+///
+/// **A crash that appears when a feature starts working was not introduced by the change that
+/// exposed it.** The private method is still tried, because it is exact when it exists, and the
+/// responder chain answers the same question with public API when it does not.
+///
+static UIViewController *SCIYTMOwningController(UIView *view) {
+    if (!view) return nil;
+
+    SEL ancestor = NSSelectorFromString(@"_viewControllerForAncestor");
+    if ([view respondsToSelector:ancestor]) {
+        id owner = ((id (*)(id, SEL))objc_msgSend)(view, ancestor);
+        if ([owner isKindOfClass:[UIViewController class]]) return owner;
+    }
+
+    for (UIResponder *responder = view; responder; responder = responder.nextResponder) {
+        if ([responder isKindOfClass:[UIViewController class]]) return (UIViewController *)responder;
+    }
+
+    return nil;
+}
+
 // MARK: - What the tap actually was
 
 ///
@@ -358,7 +383,7 @@ NSArray<NSString *> *SCIYTMSeenKeys(void) {
         return;
     }
 
-    id playingVC = [recogniser.view _viewControllerForAncestor];
+    id playingVC = SCIYTMOwningController(recogniser.view);
     id playerVC = SCIYTMValue(playingVC, @"playerViewController") ?: SCIYTMValue(playingVC, @"playerVC");
 
     id playerResponse = SCIYTMValue(playerVC, @"playerResponse")
