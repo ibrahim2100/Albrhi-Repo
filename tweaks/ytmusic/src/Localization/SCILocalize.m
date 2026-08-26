@@ -7,7 +7,7 @@
 
 #import "SCILocalize.h"
 
-NSString *SCIVersionString = @"v0.7.0";  // AlbrhiYTM
+NSString *SCIVersionString = @"v0.8.0";  // AlbrhiYTM
 
 /// Short, because everything a person reads about this tweak is drawn by Albrhi Panel: it patches
 /// one app, so it takes one row on the app list rather than a page of its own.
@@ -33,6 +33,13 @@ static void SCIBuildTables(void) {
         @"download_not_written": @"The file could not be written.",
         @"download_remux_failed": @"The audio was fetched but could not be put in an m4a container.",
         @"ok": @"OK",
+        @"downloads_title": @"Downloads",
+        @"downloads_empty": @"Nothing saved yet",
+        @"downloads_empty_note": @"Play a track and tap the download button. What you save appears here and in Files, under Albrhi.",
+        @"downloads_share": @"Share",
+        @"downloads_delete": @"Delete",
+        @"downloads_delete_title": @"Delete this track?",
+        @"cancel": @"Cancel",
     };
 
     _arTable = @{
@@ -53,6 +60,13 @@ static void SCIBuildTables(void) {
         @"download_not_written": @"تعذّرت كتابة الملف.",
         @"download_remux_failed": @"جُلب الصوت ولم يُمكن وضعه في حاوية m4a.",
         @"ok": @"حسناً",
+        @"downloads_title": @"التنزيلات",
+        @"downloads_empty": @"لا شيء محفوظ بعد",
+        @"downloads_empty_note": @"شغّل مقطعاً واضغط زر التنزيل. ما تحفظه يظهر هنا وفي تطبيق الملفات داخل مجلد Albrhi.",
+        @"downloads_share": @"مشاركة",
+        @"downloads_delete": @"حذف",
+        @"downloads_delete_title": @"حذف هذا المقطع؟",
+        @"cancel": @"إلغاء",
     };
 }
 

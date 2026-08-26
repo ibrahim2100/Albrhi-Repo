@@ -1,5 +1,30 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.8.0
+
+**A Downloads tab where the Upgrade tab used to be, and a player that behaves like the app's.**
+
+The Upgrade item is **replaced in place** rather than removed: taking it out left four tabs and a
+gap where a fifth had been laid out for. The slot now carries the app's own download glyph, the
+word Downloads in your language, and a browse id of ours — and if any of the renderer classes it is
+built from is missing on a build, the item is removed exactly as 0.6.1 did. **Either way the bar
+works**, which is the only acceptable shape for a change to somebody's tab bar.
+
+**The screen is files, not a database.** A track is an `.m4a` in `Documents/Albrhi` and its name is
+its metadata — delete one in the Files app and it is gone from here, with no code involved. Tap to
+play, swipe to share or delete, and deleting asks first because it is the one thing on the screen
+that cannot be taken back.
+
+**Playing uses `AVPlayer`, and the Lock Screen does not care.** What makes a track behave like the
+app's own is `MPNowPlayingInfoCenter` and the remote command centre: title, artist and duration on
+the Lock Screen, headphone buttons, Control Centre, and next/previous walking the list you started
+from. The audio session is deliberately left as YouTube Music configured it — a second opinion about
+the session is how two players end up fighting over the route.
+
+**One limit, stated rather than discovered:** whoever registers the remote commands last owns them,
+so when this stops playing the app takes them back the next time it starts something. Handing them
+over by hand is a race over state neither side owns, and losing it quietly would be worse.
+
 ## v0.7.0
 
 **Saving a track — through the download button YouTube Music already draws, and without FFmpeg.**

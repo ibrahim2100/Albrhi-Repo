@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.59.6
+
+Albrhi for YouTube Music 0.8.0: the Upgrade tab becomes a Downloads tab, with a player that puts
+what you saved on the Lock Screen.
+
 ## v1.59.5
 
 Albrhi for YouTube Music 0.7.0: save a track through the app's own download button — no FFmpeg, and

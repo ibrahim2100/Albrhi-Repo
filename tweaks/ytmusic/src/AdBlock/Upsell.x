@@ -28,6 +28,19 @@
 //  YTMusicUltimate by dayanch96.
 //
 #import "../YTMShared.h"
+#import "../Localization/SCILocalize.h"
+#import "../Download/SCIYTMDownloadsController.h"
+#import <objc/runtime.h>
+
+/// The browse id this tweak's own tab answers to. One constant, because a pivot identifier, a
+/// target id, a browse id and the check that routes them are four places one string has to match.
+static NSString *const kSCIYTMDownloadsPivot = @"FEalbrhi_downloads";
+
+/// Logos leaves a hooked class a forward declaration, and this one is asked for its `view` and its
+/// child controllers -- all three of which need a complete type. check.py has a rule for exactly
+/// this, and it caught this file before the compiler did.
+@interface YTMBrowseViewController : UIViewController
+@end
 #import "../Headers/YTIPivotBarRenderer.h"
 #import "../Headers/YTIPivotBarSupportedRenderers.h"
 
@@ -506,10 +519,96 @@
                 return [[[entry pivotBarItemRenderer] pivotIdentifier] isEqualToString:@"SPunlimited"];
             }];
 
-        if (index != NSNotFound) [items removeObjectAtIndex:index];
+        if (index != NSNotFound) {
+            //
+            // **Replaced in place rather than removed, which is the whole point of the slot.**
+            //
+            // Taking the Upgrade tab out leaves four tabs and a gap where a fifth used to be.
+            // Building a new item and putting it at the same index keeps the bar the shape the
+            // app laid out for, and turns an advertisement into the one screen this tweak has
+            // that the app has no equivalent of.
+            //
+            YTIPivotBarItemRenderer *item = [[NSClassFromString(@"YTIPivotBarItemRenderer") alloc] init];
+            item.pivotIdentifier = kSCIYTMDownloadsPivot;
+            item.targetId = kSCIYTMDownloadsPivot;
+
+            YTIIcon *icon = [[NSClassFromString(@"YTIIcon") alloc] init];
+            icon.iconType = 1;                      // the app's own download glyph
+            item.icon = icon;
+
+            item.title = [NSClassFromString(@"YTIFormattedString")
+                formattedStringWithString:SCILocalized(@"downloads_title")];
+
+            YTIBrowseEndpoint *browse = [[NSClassFromString(@"YTIBrowseEndpoint") alloc] init];
+            browse.browseId = kSCIYTMDownloadsPivot;
+
+            YTICommand *command = [[NSClassFromString(@"YTICommand") alloc] init];
+            command.browseEndpoint = browse;
+            item.navigationEndpoint = command;
+
+            YTIAccessibilityData *label = [[NSClassFromString(@"YTIAccessibilityData") alloc] init];
+            label.label = SCILocalized(@"downloads_title");
+
+            YTIAccessibilitySupportedDatas *accessibility =
+                [[NSClassFromString(@"YTIAccessibilitySupportedDatas") alloc] init];
+            accessibility.accessibilityData = label;
+            item.accessibility = accessibility;
+
+            YTIPivotBarSupportedRenderers *slot =
+                [[NSClassFromString(@"YTIPivotBarSupportedRenderers") alloc] init];
+            slot.pivotBarItemRenderer = item;
+
+            // Every class above is asked for by name and any of them being absent means the item
+            // cannot be built -- in which case the Upgrade tab is removed and nothing takes its
+            // place, which is exactly 0.6.1's behaviour and is a working screen either way.
+            if (item && icon && browse && command && slot.pivotBarItemRenderer) {
+                [items replaceObjectAtIndex:index withObject:slot];
+            } else {
+                [items removeObjectAtIndex:index];
+            }
+        }
     }
 
     %orig;
+}
+
+%end
+
+//
+// **And the screen behind it.**
+//
+// The app routes a tab by its browse id, so the controller it builds for ours is empty -- ours is
+// added as a child of it instead. Upstream does the same thing for its own tab, and the shape is
+// the one that survives: the app owns the navigation, we own one view inside it.
+//
+%hook YTMBrowseViewController
+
+- (void)viewDidLoad {
+    %orig;
+
+    if (!YTMU(@"YTMUltimateIsEnabled")) return;
+
+    // Two ivar names across builds, both asked for before either is read -- `-valueForKey:` on a
+    // name a build does not have runs the app's own code on the way to failing.
+    id endpoint = nil;
+    if (class_getInstanceVariable([self class], "_navEndpoint") != NULL) {
+        endpoint = [self valueForKey:@"_navEndpoint"];
+    } else if (class_getInstanceVariable([self class], "_navigationEndpoint") != NULL) {
+        endpoint = [self valueForKey:@"_navigationEndpoint"];
+    }
+
+    if (!endpoint) return;
+
+    YTIBrowseEndpoint *browse = [endpoint browseEndpoint];
+    if (![[browse browseId] isEqualToString:kSCIYTMDownloadsPivot]) return;
+
+    SCIYTMDownloadsController *downloads = [[SCIYTMDownloadsController alloc] init];
+
+    [self addChildViewController:downloads];
+    downloads.view.frame = self.view.bounds;
+    downloads.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    [self.view addSubview:downloads.view];
+    [downloads didMoveToParentViewController:self];
 }
 
 %end

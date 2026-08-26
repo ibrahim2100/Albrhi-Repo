@@ -1401,8 +1401,8 @@ far less surface area than a real compressor for a few-kilobyte archive.
 ## Known state
 
 Instagram **4.1.14** · YouTube **1.22.0** · X **0.14.0** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
-Spotify **0.2.3** · YT Music **0.7.0** ·
-NextUp **0.1.5** · suite **1.59.5**. **CarPlay is gone** — removed from this repository, to be
+Spotify **0.2.3** · YT Music **0.8.0** ·
+NextUp **0.1.5** · suite **1.59.6**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being
