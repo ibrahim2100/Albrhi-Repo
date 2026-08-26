@@ -1,5 +1,19 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.6.1
+
+**The Upgrade tab is gone too** — it was still there in 0.6.0, and the reason is a rule this project
+keeps and I broke while extracting.
+
+The hook that removes it lives on `YTPivotBarView`, and I excluded that class from the extraction on
+the strength of its **name**: the downloads feature hooks the same class, in a different file, for a
+different purpose, and that file was not carried over. **The same class serving two features is not
+two copies of one feature.** Judging by the class name instead of by what the method does is exactly
+the mistake the rule is about, and it cost a release.
+
+It removes one entry from the tab bar's own renderer list — the one whose pivot identifier is
+`SPunlimited` — and leaves everything else in the list untouched.
+
 ## v0.6.0
 
 **The advertisement for Premium is hidden. The subscription is still not claimed.**

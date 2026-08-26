@@ -1,5 +1,9 @@
 # Albrhi Changelog
 
+## v1.59.4
+
+Albrhi for YouTube Music 0.6.1: the Upgrade tab is removed from the tab bar, which 0.6.0 missed.
+
 ## v1.59.3
 
 Albrhi for YouTube Music 0.6.0: the upgrade page and the recurring subscribe prompt are hidden —

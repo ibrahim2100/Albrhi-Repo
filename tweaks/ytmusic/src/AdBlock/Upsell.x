@@ -28,21 +28,9 @@
 //  YTMusicUltimate by dayanch96.
 //
 #import "../YTMShared.h"
+#import "../Headers/YTIPivotBarRenderer.h"
+#import "../Headers/YTIPivotBarSupportedRenderers.h"
 
-
-@interface YTIPivotBarItemRenderer : NSObject
-@property(copy, nonatomic) NSString *pivotIdentifier;
-- (NSString *)pivotIdentifier;
-@end
-
-@interface YTIPivotBarSupportedRenderers : NSObject
-@property(retain, nonatomic) YTIPivotBarItemRenderer *pivotBarItemRenderer;
-- (YTIPivotBarItemRenderer *)pivotBarItemRenderer;
-@end
-
-@interface YTIPivotBarRenderer : NSObject
-- (NSMutableArray <YTIPivotBarSupportedRenderers *> *)itemsArray;
-@end
 
 @interface YTMWatchViewController : NSObject
 @end
@@ -492,6 +480,38 @@
         %orig;
     }
 }
+%end
+
+//
+// **The Upgrade tab itself, and the reason it was missing until 0.6.1.**
+//
+// This hook was dropped from the extraction on the strength of its *class name*: `YTPivotBarView`
+// is also what the downloads feature hooks, in a different file, for a different purpose -- and
+// that file was not carried over, so the class was excluded wholesale. **The same class serving two
+// features is not two copies of one feature**, and judging by name rather than by what the method
+// does is precisely the mistake this project keeps a rule about.
+//
+// It removes one item from the tab bar's own renderer list: the one whose pivot identifier is
+// `SPunlimited`, which is the Upgrade tab. Nothing else in the list is touched, and `%orig` runs
+// with the shortened array so the app builds its bar from what is left.
+//
+%hook YTPivotBarView
+
+- (void)setRenderer:(YTIPivotBarRenderer *)renderer {
+    if (YTMU(@"YTMUltimateIsEnabled")) {
+        NSMutableArray<YTIPivotBarSupportedRenderers *> *items = [renderer itemsArray];
+
+        NSUInteger index = [items indexOfObjectPassingTest:
+            ^BOOL(YTIPivotBarSupportedRenderers *entry, NSUInteger idx, BOOL *stop) {
+                return [[[entry pivotBarItemRenderer] pivotIdentifier] isEqualToString:@"SPunlimited"];
+            }];
+
+        if (index != NSNotFound) [items removeObjectAtIndex:index];
+    }
+
+    %orig;
+}
+
 %end
 
 %end
