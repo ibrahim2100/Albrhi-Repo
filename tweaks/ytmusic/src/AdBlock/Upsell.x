@@ -30,11 +30,16 @@
 #import "../YTMShared.h"
 #import "../Localization/SCILocalize.h"
 #import "../Download/SCIYTMDownloadsController.h"
+#import "../Utils/NSBundle+YTMU.h"
 #import <objc/runtime.h>
 
 /// The browse id this tweak's own tab answers to. One constant, because a pivot identifier, a
 /// target id, a browse id and the check that routes them are four places one string has to match.
 static NSString *const kSCIYTMDownloadsPivot = @"FEalbrhi_downloads";
+
+/// The icon type our own tab asks to be drawn with. High enough that the app has no meaning for it,
+/// so the hook that draws it cannot be confused with a real one.
+static const int kSCIYTMDownloadsIconType = 9931;
 
 /// Logos leaves a hooked class a forward declaration, and this one is asked for its `view` and its
 /// child controllers -- all three of which need a complete type. check.py has a rule for exactly
@@ -532,8 +537,16 @@ static NSString *const kSCIYTMDownloadsPivot = @"FEalbrhi_downloads";
             item.pivotIdentifier = kSCIYTMDownloadsPivot;
             item.targetId = kSCIYTMDownloadsPivot;
 
+            //
+            // **A type nobody else uses, so the drawing hook below can recognise it.**
+            //
+            // 0.8.0 asked for type 1 and got whatever the app draws for 1 -- which on this build is
+            // nothing, so the tab arrived without a glyph. The type is only a number the style
+            // object is asked to render; the picture comes from the hook underneath, and it needs
+            // a number it can tell apart from the app's own.
+            //
             YTIIcon *icon = [[NSClassFromString(@"YTIIcon") alloc] init];
-            icon.iconType = 1;                      // the app's own download glyph
+            icon.iconType = kSCIYTMDownloadsIconType;
             item.icon = icon;
 
             item.title = [NSClassFromString(@"YTIFormattedString")
@@ -570,6 +583,35 @@ static NSString *const kSCIYTMDownloadsPivot = @"FEalbrhi_downloads";
     }
 
     %orig;
+}
+
+%end
+
+//
+// **The glyph itself, drawn from the bundle this package already ships.**
+//
+// `YTMusicUltimate.bundle` carries `icons/downloads` and its selected variant at every scale --
+// they came with the resources when the lyrics module was carried over, and they are the app's own
+// visual language rather than an SF Symbol that would sit differently from its four neighbours.
+//
+%hook YTMPivotBarItemStyle
+
+- (UIImage *)pivotBarItemIconImageWithIconType:(int)type
+                                         color:(UIColor *)color
+                                   useNewIcons:(BOOL)isNew
+                                      selected:(BOOL)isSelected {
+    if (type != kSCIYTMDownloadsIconType) return %orig;
+
+    Class loaderClass = NSClassFromString(@"YTAssetLoader");
+    NSBundle *bundle = NSBundle.ytmu_defaultBundle;
+    if (!loaderClass || !bundle) return %orig;
+
+    YTAssetLoader *loader = [[loaderClass alloc] initWithBundle:bundle];
+    UIImage *image = [loader imageNamed:isSelected ? @"icons/downloads_selected" : @"icons/downloads"];
+
+    // A missing image means the app draws whatever it would have drawn, which is a blank tab rather
+    // than a crash -- and the tab still works.
+    return image ?: %orig;
 }
 
 %end

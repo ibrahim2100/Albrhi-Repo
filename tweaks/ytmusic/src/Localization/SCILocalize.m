@@ -7,7 +7,7 @@
 
 #import "SCILocalize.h"
 
-NSString *SCIVersionString = @"v0.8.0";  // AlbrhiYTM
+NSString *SCIVersionString = @"v0.8.1";  // AlbrhiYTM
 
 /// Short, because everything a person reads about this tweak is drawn by Albrhi Panel: it patches
 /// one app, so it takes one row on the app list rather than a page of its own.
@@ -40,6 +40,8 @@ static void SCIBuildTables(void) {
         @"downloads_delete": @"Delete",
         @"downloads_delete_title": @"Delete this track?",
         @"cancel": @"Cancel",
+        @"download_no_manifest": @"The download badge was found, but this track's player response carries no stream to fetch.",
+        @"downloads_keys": @"Buttons seen so far: %@",
     };
 
     _arTable = @{
@@ -67,6 +69,8 @@ static void SCIBuildTables(void) {
         @"downloads_delete": @"حذف",
         @"downloads_delete_title": @"حذف هذا المقطع؟",
         @"cancel": @"إلغاء",
+        @"download_no_manifest": @"وُجد زرّ التنزيل، لكن استجابة المشغّل لهذا المقطع لا تحمل تيّاراً يُجلب.",
+        @"downloads_keys": @"الأزرار التي رُصدت: %@",
     };
 }
 

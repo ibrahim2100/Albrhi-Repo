@@ -280,6 +280,33 @@ static void SCIYTMDownloadTrack(NSURL *manifestURL, NSString *title, NSString *a
     }] resume];
 }
 
+// MARK: - What the tap actually was
+
+///
+/// The last few node keys this handler saw, for the one question a failure here raises: *what is
+/// the download badge called on this build?*
+///
+/// A counter would not answer it and a log nobody reads is not a diagnostic -- these are shown on
+/// the Downloads screen when nothing has been saved, which is exactly when somebody is asking.
+///
+static NSMutableArray<NSString *> *sciSeenKeys = nil;
+
+void SCIYTMRememberKey(NSString *key) {
+    if (!key.length) return;
+
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{ sciSeenKeys = [NSMutableArray array]; });
+
+    if ([sciSeenKeys containsObject:key]) return;
+
+    [sciSeenKeys addObject:key];
+    while (sciSeenKeys.count > 12) [sciSeenKeys removeObjectAtIndex:0];
+}
+
+NSArray<NSString *> *SCIYTMSeenKeys(void) {
+    return [sciSeenKeys copy] ?: @[];
+}
+
 // MARK: - The app's own button
 
 %group SCIYTMDownloadGroup
@@ -304,9 +331,22 @@ static void SCIYTMDownloadTrack(NSURL *manifestURL, NSString *title, NSString *a
     ELMNodeController *node = [self valueForKey:@"_controller"];
     UIGestureRecognizer *recogniser = [self valueForKey:@"_tapRecognizer"];
 
-    // One badge among many taps: the download one on the now-playing screen and nothing else.
-    if (![node.key isEqualToString:@"music_download_badge_1"] ||
-        ![[recogniser.view _viewControllerForAncestor] isKindOfClass:NSClassFromString(@"YTMNowPlayingViewController")]) {
+    //
+    // **Matched on what the key means, not on one literal -- and every key seen is remembered.**
+    //
+    // 0.7.0 demanded `music_download_badge_1` exactly, copied from a reference tweak, and on a real
+    // device the tap went straight past it to YouTube Music's own Premium prompt. That is this
+    // project's oldest lesson arriving again: **a reference's constant is its build, not yours.**
+    //
+    // Any node whose key names a download is taken now, and the last few keys are kept so the next
+    // report says what this build actually calls it rather than leaving it to be guessed at a
+    // second time. The ancestor check is gone with it: the app draws this badge on the now-playing
+    // screen, and demanding a class name as well was a second way to miss for no second reason.
+    //
+    SCIYTMRememberKey(node.key);
+
+    if (!node.key.length ||
+        [node.key rangeOfString:@"download" options:NSCaseInsensitiveSearch].location == NSNotFound) {
         %orig;
         return;
     }
@@ -322,9 +362,15 @@ static void SCIYTMDownloadTrack(NSURL *manifestURL, NSString *title, NSString *a
 
     NSString *manifest = SCIYTMString(streaming, @"hlsManifestURL");
     if (!manifest.length) {
-        // Nothing to download from: let the app do whatever it was going to do, rather than
-        // swallowing a tap and leaving the button dead.
-        %orig;
+        //
+        // **The badge was ours and the stream was not there, which is a different failure from not
+        // recognising the badge -- so it is said differently.**
+        //
+        // Falling through to `%orig` here would show the Premium prompt and leave the two causes
+        // indistinguishable: this project has spent releases on reports that could not separate
+        // *the hook never ran* from *the hook ran and found nothing*.
+        //
+        SCIYTMTell(SCILocalized(@"download_failed"), SCILocalized(@"download_no_manifest"));
         return;
     }
 

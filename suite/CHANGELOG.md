@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.59.7
+
+Albrhi for YouTube Music 0.8.1: the Downloads tab gets its glyph, and the download button is matched
+by what its key means rather than by a constant copied from another tweak.
+
 ## v1.59.6
 
 Albrhi for YouTube Music 0.8.0: the Upgrade tab becomes a Downloads tab, with a player that puts

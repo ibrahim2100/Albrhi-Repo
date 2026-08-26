@@ -24,6 +24,14 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// Node keys this tweak has seen a tap on, newest last. Shown on the Downloads screen when nothing
+/// has been saved, because *what is the download badge called on this build* is the only question a
+/// failure here raises.
+NSArray<NSString *> *SCIYTMSeenKeys(void);
+
+/// Records one, ignoring repeats.
+void SCIYTMRememberKey(NSString *key);
+
 /// Intercepts the app's own download badge on the now-playing screen.
 void SCIYTMInstallDownload(void);
 

@@ -1,5 +1,30 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.8.1
+
+Two reports from a device, and the second is this project's oldest mistake arriving again.
+
+**The tab had no glyph.** 0.8.0 asked for icon type 1 and got whatever the app draws for 1, which on
+this build is nothing. The type is only a number handed to the style object; the picture comes from
+a hook, and it needs a number the app has no meaning for. The tab now asks for a type of its own and
+draws `icons/downloads` from the bundle this package already ships — the same artwork the app's four
+other tabs are drawn in, rather than an SF Symbol sitting differently beside them. A missing image
+falls through to whatever the app would have drawn, so the tab works either way.
+
+**The download button showed the Premium prompt**, which means the interception never fired. It
+demanded the node key `music_download_badge_1` — **a constant copied from a reference tweak**, and
+this repository's oldest and most expensive lesson is that a reference's constant is its build and
+not yours: `bestURLtoDownload`, `downloadAddr` and `bitRate` each cost releases for the same reason.
+
+Any node whose key names a download is taken now, and **every key seen is remembered and shown on
+the Downloads screen while nothing has been saved** — which is exactly when somebody is asking what
+their build calls that button. The ancestor-class check went with it: it was a second way to miss
+for no second reason.
+
+And a badge that is ours with no stream behind it now says so instead of falling through to the
+Premium prompt. **Those are two different failures** — the hook never ran, or it ran and found
+nothing — and this project has spent releases on reports that could not tell them apart.
+
 ## v0.8.0
 
 **A Downloads tab where the Upgrade tab used to be, and a player that behaves like the app's.**

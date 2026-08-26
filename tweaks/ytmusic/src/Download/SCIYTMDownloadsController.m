@@ -1,5 +1,6 @@
 #import "SCIYTMDownloadsController.h"
 #import "SCIYTMLibrary.h"
+#import "SCIYTMDownload.h"
 #import "../Localization/SCILocalize.h"
 
 @interface SCIYTMDownloadsController ()
@@ -40,7 +41,16 @@
 
     if (!self.tracks.count) {
         cell.textLabel.text = SCILocalized(@"downloads_empty");
-        cell.detailTextLabel.text = SCILocalized(@"downloads_empty_note");
+
+        // **The empty state is where the diagnosis belongs.** Somebody reading this row is somebody
+        // whose download did not happen, and the one fact that explains it is what the button they
+        // pressed is called on their build.
+        NSArray<NSString *> *keys = SCIYTMSeenKeys();
+        cell.detailTextLabel.text = keys.count
+            ? [NSString stringWithFormat:@"%@\n\n%@", SCILocalized(@"downloads_empty_note"),
+                [NSString stringWithFormat:SCILocalized(@"downloads_keys"),
+                    [keys componentsJoinedByString:@", "]]]
+            : SCILocalized(@"downloads_empty_note");
         cell.detailTextLabel.numberOfLines = 0;
         cell.textLabel.textColor = [UIColor secondaryLabelColor];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
