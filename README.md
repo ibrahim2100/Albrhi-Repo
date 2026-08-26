@@ -774,7 +774,7 @@ anything or losing its settings. Reopen the app for the change to take effect.
 - [ ] Take that test arrangement to the other tweaks — the DASH ladder, the quality ranking and the
       version comparison are all pure functions of their input
 - [ ] **Albrhi CarPlay, rebuilt from scratch in its own repository** — removed from this one
-- [ ] Tie a SponsorBlock marker to the video its bar belongs to — today one global serves every bar
+- [x] Tie a SponsorBlock marker to the bar it belongs to — one global served every bar until 1.22.0
 - [ ] Settings profiles — several configurations, switched per account
 - [ ] Crash protection that isolates and disables a faulting feature rather than the whole tweak
 

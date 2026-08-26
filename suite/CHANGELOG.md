@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.59.1
+
+Albrhi for YouTube 1.22.0: a SponsorBlock marker is tied to the bar it belongs to, so a second
+progress bar no longer suppresses or fights the first.
+
 ## v1.59.0
 
 Albrhi for TikTok 0.20.0: the settings screen rebuilt from nothing — an identity card, a grid of

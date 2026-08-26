@@ -3,6 +3,25 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.22.0
+
+**A SponsorBlock marker belongs to the bar it is drawn on** — a roadmap item since the markers
+shipped, and it was still true.
+
+The signature that decides whether markers need redrawing was one variable for the whole app. That
+is right while exactly one progress bar exists and wrong the moment two do — the watch page and the
+miniplayer, the player and a Shorts bar. Whichever laid out last owned it: **a bar the same width as
+its neighbour saw a matching signature and skipped drawing its markers entirely**, and bars of
+different widths overwrote each other on every pass, so the check that exists to stop a redraw per
+frame stopped nothing.
+
+It lives on the bar now, as an associated object. This project has met the same shape twice before —
+a diagnostic recording the last event instead of a tally, and a date label measured in one
+coordinate space and drawn in another. **State that belongs to a view belongs on the view.**
+
+Nothing needs clearing when the video changes: every signature carries the video id, so each bar's
+stored value goes stale on its own account, whichever bars happen to exist at the time.
+
 ## v1.21.0
 
 **Simultaneous downloads are a setting**, under Downloads: four, six or eight pieces at once, with

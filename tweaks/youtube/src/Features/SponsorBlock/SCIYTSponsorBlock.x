@@ -60,14 +60,38 @@ static double sciTotalTime = 0;
 /// down and rebuilt every marker view on each pass: five segments meant five UIView
 /// allocations per layout, for a picture that had not changed. Redrawing is only needed
 /// when the segments change, the bar resizes, or a switch is flipped.
-static NSString *sciMarkerSignature = nil;
+///
+/// **Kept on the bar rather than in one variable, because there is never only one bar.**
+///
+/// A single global signature is right while exactly one progress bar exists, and wrong the moment
+/// two do -- the watch page and the miniplayer, the player and a Shorts bar. Whichever laid out
+/// last owned the variable: a bar the same width as its neighbour saw a matching signature and
+/// **skipped drawing its markers entirely**, and bars of different widths overwrote each other's
+/// signature on every pass, so the check that exists to prevent a redraw per frame prevented
+/// nothing.
+///
+/// This project has met the same shape twice already -- a diagnostic that recorded the last event
+/// instead of a tally, and a date label measured in one space and drawn in another. **State that
+/// belongs to a view belongs on the view**, and an associated object is what says so.
+///
+static const void *kSCIMarkerSignature = &kSCIMarkerSignature;
+
+static NSString *SCIMarkerSignatureFor(UIView *bar) {
+    return objc_getAssociatedObject(bar, kSCIMarkerSignature);
+}
+
+static void SCISetMarkerSignature(UIView *bar, NSString *signature) {
+    objc_setAssociatedObject(bar, kSCIMarkerSignature, signature, OBJC_ASSOCIATION_COPY_NONATOMIC);
+}
 
 static void SCIResetForNewVideo(NSString *videoID) {
     sciCurrentVideoID = [videoID copy];
     sciSegments = nil;
     sciSkipped = [NSMutableSet set];
     sciTotalTime = 0;
-    sciMarkerSignature = nil;
+
+    // Nothing to clear per bar: every signature carries the video id, so a new video makes each
+    // bar's stored signature stale on its own account, whichever bars happen to exist.
 }
 
 /// The video's identifier, whatever this build happens to call it.
@@ -262,11 +286,12 @@ static void SCIDrawMarkers(UIView *bar, double barTotalTime) {
         sciCurrentVideoID ?: @"-", wanted ? 1 : 0, (unsigned long)sciSegments.count,
         totalForSignature, (double)bar.bounds.size.width];
 
-    if ([signature isEqualToString:sciMarkerSignature] &&
+    if ([signature isEqualToString:SCIMarkerSignatureFor(bar)] &&
         [bar viewWithTag:SCIMarkerTag] != nil) {
         return;
     }
-    sciMarkerSignature = signature;
+
+    SCISetMarkerSignature(bar, signature);
 
     // Removed before every early return below, so switching the feature off or moving to
     // a video with no segments clears what the last one drew.
