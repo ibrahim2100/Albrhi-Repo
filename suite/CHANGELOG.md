@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.59.10
+
+Albrhi for YouTube Music 0.8.4: the download interception stands down until a crash log names the
+cause. The tab, the downloads screen and the player are unchanged.
+
 ## v1.59.9
 
 Albrhi for YouTube Music 0.8.3: the real cause of the crash — a private UIView method reached for

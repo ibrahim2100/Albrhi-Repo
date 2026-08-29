@@ -117,7 +117,20 @@
 
         SCIYTMInstallAdBlock();
         SCIYTMInstallUpsell();
-        SCIYTMInstallDownload();
+        //
+        // **Stood down until a crash log names its cause, and that is a retreat on purpose.**
+        //
+        // 0.8.0 shipped this screen and this tab and did not crash; every version since has, and
+        // two diagnoses of mine were wrong -- the icon hook in 0.8.2 and the private ancestor call
+        // in 0.8.3 were both real faults and neither was *the* fault. The only behaviour that
+        // separates 0.8.0 from the versions that crash is this hook running on taps it used to
+        // skip, so it is the one thing removed while the evidence is fetched.
+        //
+        // **This project's rule is that a crash is worse than the thing it prevents**, and three
+        // installs of a crashing app is already more than that rule allows. The tab, the downloads
+        // screen, the player and the upsell hiding all stay -- everything 0.8.0 had.
+        //
+        // SCIYTMInstallDownload();
         SCIYTMInstallBackground();
         SCIYTMInstallPlaybackRate();
         SCIYTMInstallSeekButtons();

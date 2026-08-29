@@ -1,5 +1,25 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.8.4
+
+**The download interception is stood down until a crash log names its cause.**
+
+Three releases in a row crashed, and **two of my diagnoses were wrong**: the icon hook fixed in
+0.8.2 and the private ancestor call fixed in 0.8.3 were both real faults, and neither was *the*
+fault. Guessing a third time would cost another install of an app that does not open.
+
+The only behaviour separating 0.8.0 — which showed the page and did not crash — from every version
+since is this hook running on taps it previously skipped. So that is the one thing removed. **The
+tab, the downloads screen, the player and the upsell hiding all stay**; this release is 0.8.0's
+behaviour with 0.8.2's and 0.8.3's guards kept, since both fixed genuine faults on the way past.
+
+**A crash is worse than the thing it prevents**, and three installs of a crashing app is already
+more than that rule allows.
+
+What settles it is one file: **Settings → Privacy & Security → Analytics & Improvements → Analytics
+Data**, the newest entry beginning `YouTubeMusic`. Its first two lines name the thread and the
+selector, which ends this in one reading rather than a fourth guess.
+
 ## v0.8.3
 
 **The crash, actually found — and 0.8.2 had fixed the wrong thing.**
