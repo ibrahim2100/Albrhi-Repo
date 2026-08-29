@@ -1,5 +1,26 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.8.5
+
+**The crash was a number.**
+
+0.8.1 gave the new tab an icon type of **9931** — a value chosen precisely because the app has no
+meaning for it, so a drawing hook could recognise it. **The app draws the tab bar at launch**,
+reached a type it has no case for, and stopped opening.
+
+Three releases went past it. The download interception was removed, and two real but unrelated
+faults were found and fixed, and the crash survived all of them — because none of them was a number
+in a renderer. **Each fix made the tweak better and none of them made the app open**, which is the
+signature of a diagnosis aimed at the wrong change.
+
+The type is back to `1`, which is what 0.8.0 shipped and what opened. The custom drawing hook is
+gone with it: at type 1 it could not tell our tab from the app's own, and a tab that needs no hook
+is a tab that cannot crash. **The glyph is given up rather than paid for a fourth time.**
+
+**A value an app has never seen is not an identifier, it is an input** — the same rule this project
+already keeps in another form when it reads a method's type encoding from the runtime instead of
+assuming one.
+
 ## v0.8.4
 
 **The download interception is stood down until a crash log names its cause.**

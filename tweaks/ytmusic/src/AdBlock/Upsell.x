@@ -37,10 +37,6 @@
 /// target id, a browse id and the check that routes them are four places one string has to match.
 static NSString *const kSCIYTMDownloadsPivot = @"FEalbrhi_downloads";
 
-/// The icon type our own tab asks to be drawn with. High enough that the app has no meaning for it,
-/// so the hook that draws it cannot be confused with a real one.
-static const int kSCIYTMDownloadsIconType = 9931;
-
 /// Logos leaves a hooked class a forward declaration, and this one is asked for its `view` and its
 /// child controllers -- all three of which need a complete type. check.py has a rule for exactly
 /// this, and it caught this file before the compiler did.
@@ -538,15 +534,20 @@ static const int kSCIYTMDownloadsIconType = 9931;
             item.targetId = kSCIYTMDownloadsPivot;
 
             //
-            // **A type nobody else uses, so the drawing hook below can recognise it.**
+            // **Back to 1, and the glyph is given up rather than paid for again.**
             //
-            // 0.8.0 asked for type 1 and got whatever the app draws for 1 -- which on this build is
-            // nothing, so the tab arrived without a glyph. The type is only a number the style
-            // object is asked to render; the picture comes from the hook underneath, and it needs
-            // a number it can tell apart from the app's own.
+            // 0.8.1 asked for an icon type nobody else uses -- 9931 -- so the drawing hook could
+            // recognise it. **The app draws this bar at launch**, reached a type it has no case
+            // for, and stopped opening. Three releases went past that: the download interception
+            // was removed, two real but unrelated faults were fixed, and the crash survived all of
+            // them because none of them was a number in a renderer.
+            //
+            // **A value the app has never seen is not an identifier, it is an input** -- and this
+            // project has the rule for it in another form already: an encoding read from the
+            // runtime rather than assumed. Type 1 is what 0.8.0 shipped and 0.8.0 opened.
             //
             YTIIcon *icon = [[NSClassFromString(@"YTIIcon") alloc] init];
-            icon.iconType = kSCIYTMDownloadsIconType;
+            icon.iconType = 1;
             item.icon = icon;
 
             // A class method asked of a class that does not have it is an unrecognised selector,
@@ -632,39 +633,6 @@ static const int kSCIYTMDownloadsIconType = 9931;
 
 %end
 
-//
-// **The glyph itself, drawn from the bundle this package already ships.**
-//
-// `YTMusicUltimate.bundle` carries `icons/downloads` and its selected variant at every scale --
-// they came with the resources when the lyrics module was carried over, and they are the app's own
-// visual language rather than an SF Symbol that would sit differently from its four neighbours.
-//
-%group YTMDownloadsIcon
-
-%hook YTMPivotBarItemStyle
-
-- (UIImage *)pivotBarItemIconImageWithIconType:(int)type
-                                         color:(UIColor *)color
-                                   useNewIcons:(BOOL)isNew
-                                      selected:(BOOL)isSelected {
-    if (type != kSCIYTMDownloadsIconType) return %orig;
-
-    Class loaderClass = NSClassFromString(@"YTAssetLoader");
-    NSBundle *bundle = NSBundle.ytmu_defaultBundle;
-    if (!loaderClass || !bundle) return %orig;
-
-    YTAssetLoader *loader = [[loaderClass alloc] initWithBundle:bundle];
-    UIImage *image = [loader imageNamed:isSelected ? @"icons/downloads_selected" : @"icons/downloads"];
-
-    // A missing image means the app draws whatever it would have drawn, which is a blank tab rather
-    // than a crash -- and the tab still works.
-    return image ?: %orig;
-}
-
-%end
-
-%end
-
 void SCIYTMInstallUpsell(void) {
     %init(YTMUpsell);
 
@@ -679,10 +647,6 @@ void SCIYTMInstallUpsell(void) {
     //
     // Without the glyph the tab still works, which is why this is a check and not a fallback.
     //
-    Class style = NSClassFromString(@"YTMPivotBarItemStyle");
-    SEL drawing = @selector(pivotBarItemIconImageWithIconType:color:useNewIcons:selected:);
-
-    if (style && class_getInstanceMethod(style, drawing)) {
-        %init(YTMDownloadsIcon);
-    }
+    // The icon group is gone with the custom type it existed to recognise. A tab drawn with the
+    // app's own type 1 needs no hook, and needing no hook is why it cannot crash.
 }

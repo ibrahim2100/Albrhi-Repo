@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.59.11
+
+Albrhi for YouTube Music 0.8.5: the crash was an icon type the app has no case for, reached while
+drawing the tab bar at launch. Back to the value 0.8.0 shipped.
+
 ## v1.59.10
 
 Albrhi for YouTube Music 0.8.4: the download interception stands down until a crash log names the
