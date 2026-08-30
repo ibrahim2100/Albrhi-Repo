@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.62.2
+
+Albrhi for YouTube Music 0.8.7: the download diagnosis moves to the first settings screen, under the
+master switch — the Downloads tab's empty state is not where somebody whose button asks them to
+subscribe ever looks.
+
 ## v1.62.1
 
 Albrhi for YouTube Music 0.8.6: **the Downloads screen now says why a download did not happen.**

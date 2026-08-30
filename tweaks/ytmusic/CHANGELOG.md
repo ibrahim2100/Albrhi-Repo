@@ -1,5 +1,24 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.8.7
+
+**The download diagnosis is on the first settings screen now, under the master switch.**
+
+0.8.6 put it on the Downloads tab's empty state, which is right for somebody staring at an empty
+library and wrong for somebody whose complaint is *the button asks me to subscribe* — that person
+never gets as far as a library. It is a subtitle on the row everybody sees first.
+
+A subtitle rather than a new section, deliberately: this screen's row counts are a hand-written
+`switch`, and adding a section to it without updating that is exactly what crashed it once already.
+
+**Also confirmed by reading the reference tweak's source rather than guessing:** YTMusicUltimate
+does not unlock Premium, does not fake an entitlement and does not hide the prompt. It intercepts
+the same tap this does and offers its own download beside a third action that calls `%orig` and
+takes you to YouTube Music's own subscribe screen. There is no hidden trick being missed here — and
+its interception is *narrower* than this one, requiring the exact node key `music_download_badge_1`
+and the now-playing screen as an ancestor, both of which this build dropped after that literal key
+failed to match on a device.
+
 ## v0.8.6
 
 **The download button still shows the Premium prompt, and the empty Downloads screen could not say

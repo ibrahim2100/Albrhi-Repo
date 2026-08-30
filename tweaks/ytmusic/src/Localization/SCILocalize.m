@@ -7,7 +7,7 @@
 
 #import "SCILocalize.h"
 
-NSString *SCIVersionString = @"v0.8.6";  // AlbrhiYTM
+NSString *SCIVersionString = @"v0.8.7";  // AlbrhiYTM
 
 /// Short, because everything a person reads about this tweak is drawn by Albrhi Panel: it patches
 /// one app, so it takes one row on the app list rather than a page of its own.
