@@ -1,5 +1,29 @@
 # Albrhi for X — what changed
 
+## v0.18.0
+
+**Opening links in Safari is a feature switch, not a browser class — and the device report said so
+after three releases of hooking the wrong thing.**
+
+The sequence is worth keeping. 0.17.2 fixed how the URL was read from `SFSafariViewController`;
+the feature still did nothing, because X names that class **once** in all its binaries. 0.17.5 moved
+to `T1WebViewController`; still nothing, because what X presents is a preloaded sibling. 0.17.6
+moved to their shared base and recorded every class it turned away — and the report came back
+**`0 left to X`**. Not "the wrong class went past": *nothing* went past.
+`-_t1_loadInitialURL` is never called at all.
+
+The same report, further down, has `ios_in_app_article_webview_enabled` **asked 72 times and
+answered on**. That is the decision, and X makes it long before any browser object exists to hook.
+Answering it is what the switch layer in this tweak has done successfully for 422 keys across
+217,869 questions on this very device.
+
+So it is a named feature now, beside the others, and the standalone preference is gone — **one
+answer to one question.** The browser hooks stay, asking the feature rather than a preference of
+their own: they cost nothing and cover a build that starts routing links through a class after all.
+
+**Three releases were spent on classes because the question looked like a class question.** The
+recorder was built for exactly this, its report had the answer in it, and nobody read that far.
+
 ## v0.17.6
 
 **Confirmed working: the post-as-a-picture is no longer mirrored.** The measured flip correction was

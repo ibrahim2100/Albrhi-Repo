@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.61.9
+
+Albrhi for X 0.18.0: **opening links in Safari turned out to be a feature switch, not a browser
+class.** Three releases hooked browser classes and the device report finally said `0 left to X` —
+nothing was going through any of them. The same report showed
+`ios_in_app_article_webview_enabled` asked 72 times and answered on, which is the decision X
+actually makes. It is a named feature now, answered by the switch layer.
+
 ## v1.61.8
 
 Albrhi for X 0.17.6: **the post-as-a-picture is confirmed fixed**, and open-in-Safari moves to

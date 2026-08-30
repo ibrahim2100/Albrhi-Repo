@@ -104,8 +104,9 @@
 /// Stops the search box offering what was typed before.
 #define SCIPrefNoSearchHistory   @"no_search_history"
 
-/// Opens links in Safari rather than X's own browser.
-#define SCIPrefOpenInSafari      @"open_in_safari"
+// Opening links in Safari is a named feature rather than a preference here: the decision X
+// actually makes is a feature switch (`ios_in_app_article_webview_enabled`), found in a
+// device report after two releases spent hooking browser classes. See SCITWFeatures.m.
 
 /// Face ID or a passcode before X will show anything.
 #define SCIPrefAppLock           @"app_lock"

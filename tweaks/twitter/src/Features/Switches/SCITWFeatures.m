@@ -209,6 +209,21 @@ static SCITWFeature *Feature(NSString *identifier,
                 @"media_poll_sensitive_media_banner_enabled": @NO,
             }),
 
+            // Links, out of the app.
+            //
+            // **The key was found in a device report rather than reasoned about**, which is
+            // the whole reason this recorder exists. Two releases hooked browser classes:
+            // `SFSafariViewController`, which X names once in all its binaries, and then
+            // `T1BaseWebViewController`, whose `-_t1_loadInitialURL` the report then showed
+            // was never called at all -- `0 left to X`, so nothing had gone past it. The
+            // same report showed `ios_in_app_article_webview_enabled` asked **72 times** and
+            // answered on. That is the decision, and X makes it before any browser class
+            // exists to hook.
+            Feature(@"safari", @"f_safari", @"f_safari_note", NO,
+                    @"safari", [UIColor systemBlueColor], @{
+                @"ios_in_app_article_webview_enabled": @NO,
+            }),
+
             Feature(@"gif", @"f_gif", @"f_gif_note", NO,
                     @"photo.fill.on.rectangle.fill", [UIColor systemPinkColor], @{
                 @"photo_ignore_autoplay_settings_for_gif": @NO,

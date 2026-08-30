@@ -4,6 +4,7 @@
 #import "SCITWLinks.h"
 #import "Prefs.h"
 #import "SCILog.h"
+#import "Features/Switches/SCITWFeatures.h"
 
 @interface T1BaseWebViewController : UIViewController
 @property (nonatomic, copy, readonly) NSURL *rootURL;
@@ -139,7 +140,7 @@ static char kSCISafariURL;
 - (void)viewWillAppear:(BOOL)animated {
     %orig;
 
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefOpenInSafari]) return;
+    if (![SCITWFeatures isOnIdentifier:@"safari"]) return;
 
     NSURL *url = objc_getAssociatedObject(self, &kSCISafariURL);
     if (!url) {
@@ -202,7 +203,7 @@ static NSSet<NSString *> *SCILinkBrowsers(void) {
 /// after this, the report says exactly which class opened it -- which is the question two
 /// releases have now been spent guessing at.
 - (void)_t1_loadInitialURL {
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefOpenInSafari]) {
+    if (![SCITWFeatures isOnIdentifier:@"safari"]) {
         %orig;
         return;
     }

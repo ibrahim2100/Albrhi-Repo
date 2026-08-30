@@ -636,6 +636,17 @@ over 345,902 questions on X 12.14, which is what 0.2.0's seventeen named feature
 from. Every key in that table was observed being asked; what each one *means* is still read
 from its name, and the screen says so rather than implying more certainty than there is.
 
+**Three releases hooked browser classes for a decision that was a feature switch, and the report
+had said so all along.** X's open-in-Safari went through `SFSafariViewController` (a name X uses
+once in all its binaries), then `T1WebViewController`, then their shared base with every rejected
+class recorded — and the device answered **`0 left to X`**: not the wrong class, *no* class.
+`-_t1_loadInitialURL` is never called. The same report listed
+`ios_in_app_article_webview_enabled` asked **72 times** and answered on, which is where X decides,
+long before a browser object exists to hook. **A count of zero on a "how many did we turn away"
+line is not a near miss — it says the hook is on a path nothing takes**, and that is the moment to
+stop refining the hook. The recorder in this tweak exists for exactly this question and its report
+already held the answer.
+
 **When a family of classes shares a base, hook the base and allow-list the members.** X's
 open-in-Safari was hooked on `T1WebViewController` with an exact-class compare, and links still
 opened in the app: what X presents for a tapped link is a *preloaded* controller, a sibling
@@ -1602,9 +1613,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.25.1** · X **0.17.6** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.25.1** · X **0.18.0** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.8.5** ·
-NextUp **0.1.5** · suite **1.61.8**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.61.9**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

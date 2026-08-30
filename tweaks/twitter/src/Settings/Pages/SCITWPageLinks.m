@@ -35,11 +35,6 @@
                              symbol:@"eye"
                                tint:[UIColor systemTealColor]
                             prefKey:SCIPrefExpandLinks],
-                [SCITWRow switchRow:SCILocalized(@"set_open_safari")
-                               note:SCILocalized(@"set_open_safari_note")
-                             symbol:@"safari"
-                               tint:[UIColor systemBlueColor]
-                            prefKey:SCIPrefOpenInSafari],
                 [SCITWRow switchRow:SCILocalized(@"set_no_search_history")
                                note:SCILocalized(@"set_no_search_history_note")
                              symbol:@"magnifyingglass"
