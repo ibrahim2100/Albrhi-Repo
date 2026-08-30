@@ -956,6 +956,15 @@ in the tweak's directory so `make-suite.sh` does not also pull it into the combi
 Separate workflows rather than one job per tweak, so a tweak that will not compile can
 never block another tweak's release.
 
+**And it does not keep `buildsuite.yml` from *demanding* that tweak either — taking a tweak out
+of the suite touches three places, not two.** Spotify left the package with a `.no-suite` marker
+and a trigger exclusion, both correct, and the next suite release failed outright: the workflow's
+own "holds every tweak" assertion still listed `AlbrhiSpotify.dylib` and `.plist`, so it demanded a
+file `make-suite.sh` had just been told to skip. The build was fine; the check was wrong, and it
+failed *after* compiling everything. That assertion exists to catch a tweak silently dropping out
+of the package, which makes it exactly the thing that must move when one is dropped on purpose —
+the marker, the trigger's `paths:` list, and the assertion, checked together.
+
 **The `.no-suite` marker keeps a tweak out of the package; it does not keep
 `buildsuite.yml` from running on that tweak's commits, and those are two different
 things.** `buildsuite.yml`'s own trigger watched `tweaks/**`, which matches

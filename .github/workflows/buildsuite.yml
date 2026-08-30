@@ -24,9 +24,10 @@ on:
             - 'main'
         paths:
             # Anything that changes what ends up in the package, which is every tweak
-            # this workflow actually bundles -- Instagram, YouTube, X, TikTok, Spotify,
-            # YouTube Music and the panel. NextUp and Watch are excluded on purpose:
-            # neither is in the package (.no-suite marks both), so a commit that only
+            # this workflow actually bundles -- Instagram, YouTube, X, TikTok,
+            # YouTube Music and the panel. NextUp, Watch and Spotify are excluded on
+            # purpose: none is in the package (.no-suite marks all three), so a commit
+            # that only
             # touches one has nothing for this workflow to do, and running it anyway is
             # exactly the confusion a report named directly -- a standalone tweak's push
             # rebuilding every bundled tweak for no reason, on every single commit.
@@ -196,10 +197,8 @@ jobs:
                     DynamicLibraries/AlbrhiTW.dylib \
                     DynamicLibraries/AlbrhiTW.plist \
                     DynamicLibraries/AlbrhiTT.dylib \
-                    DynamicLibraries/AlbrhiSpotify.dylib \
                     DynamicLibraries/AlbrhiYTM.dylib \
                     DynamicLibraries/AlbrhiTT.plist \
-                    DynamicLibraries/AlbrhiSpotify.plist \
                     DynamicLibraries/AlbrhiYTM.plist \
                     PreferenceBundles/AlbrhiPanel.bundle/AlbrhiPanel \
                     PreferenceLoader/Preferences/AlbrhiPanel.plist
