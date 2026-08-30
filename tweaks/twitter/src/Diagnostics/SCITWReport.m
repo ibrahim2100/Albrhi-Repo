@@ -55,6 +55,45 @@ NSString *SCITWReportText(void) {
     [text appendFormat:@"features on: %@\n\n",
         on.count ? [on componentsJoinedByString:@", "] : @"none"];
 
+    //
+    // **What each switched-on feature actually did, key by key.**
+    //
+    // "The option does not work" has three different causes and the list above cannot tell them
+    // apart: the feature is off; it is on and the app never asks that key; or it is on, the app
+    // asks, the override is applied — and the thing on screen is not decided by that key at all.
+    // Only the third means the key is wrong, and only the third is worth a new hook.
+    //
+    // This project has written the same rule twice already, about a diagnostic that recorded the
+    // last event instead of a tally and about a counter sitting off the path that runs. **A report
+    // that cannot separate causes sends the next release at the wrong one** -- which is exactly
+    // what happened to the TikTok download button for three releases.
+    //
+    for (SCITWFeature *feature in [SCITWFeatures all]) {
+        if (![SCITWFeatures isOn:feature]) continue;
+
+        [text appendFormat:@"  %@:\n", feature.identifier];
+
+        for (NSString *key in feature.keys) {
+            SCITWSwitchRecord *seen = nil;
+            for (SCITWSwitchRecord *record in [SCITWSwitches records]) {
+                if ([record.key isEqualToString:key]) { seen = record; break; }
+            }
+
+            NSNumber *wanted = feature.keys[key];
+
+            if (!seen) {
+                [text appendFormat:@"    %@ — never asked\n", key];
+            } else {
+                [text appendFormat:@"    %@ — asked %lu, app said %@, we answer %@\n",
+                    key, (unsigned long)seen.asked,
+                    seen.appAnswer ? @"on" : @"off",
+                    wanted.boolValue ? @"on" : @"off"];
+            }
+        }
+    }
+
+    [text appendString:@"\n"];
+
     NSDictionary<NSString *, NSNumber *> *overrides = [SCITWSwitches allOverrides];
     NSDictionary<NSString *, NSNumber *> *fromFeatures = [SCITWSwitches featureOverrides];
 

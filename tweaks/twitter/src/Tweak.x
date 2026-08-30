@@ -12,7 +12,7 @@
 #import "Features/Media/SCITWAvatarSave.h"
 #import "Features/Playback/SCITWPictureInPicture.h"
 
-NSString *SCIVersionString = @"v0.14.0";  // AlbrhiTW
+NSString *SCIVersionString = @"v0.15.0";  // AlbrhiTW
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written

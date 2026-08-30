@@ -1,5 +1,30 @@
 # Albrhi for X — what changed
 
+## v0.15.0
+
+**The report now says what a switched-on feature actually did, key by key** — because *the option
+does not work* has three causes and nothing here could tell them apart.
+
+For every feature that is on, each of its keys is listed with how often X asked for it, what the app
+answered, and what Albrhi answers instead. That separates:
+
+- **the feature is off** — it says so;
+- **it is on and X never asks that key** — `never asked`, so the key is inert on this build and a
+  different one is needed;
+- **it is on, X asks, and we answer** — the key works and *the thing on screen is not decided by
+  it*. Only this third case justifies a new hook, and only this case was indistinguishable before.
+
+Two features were reported as not working, and the measurement already narrows them.
+`voice_rooms_consumption_enabled` is asked **784 times** in a session, so *Hide Spaces* is being
+applied and whatever remains on screen comes from somewhere else — a module the server injects,
+not a client switch. And `ios_tab_bar_default_show_communities` is asked **twice**, with `default`
+in its name: it seeds the tab bar's initial state, so flipping it after first launch cannot add a
+tab. **Neither is fixed by a better key**, and this release does not pretend otherwise.
+
+This project has recorded the same rule twice — a diagnostic that logged the last event instead of a
+tally, and a counter sitting off the path that runs. **A report that cannot separate causes sends
+the next release at the wrong one**, which cost the TikTok download button three of them.
+
 ## v0.14.0
 
 **Three of the four save-button surfaces, removed.** Reported from a device: the save

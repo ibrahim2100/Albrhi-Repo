@@ -1,0 +1,15 @@
+Albrhi for Spotify is built and released on its own, not inside com.albrhi.
+
+**Why it left the suite: one dependency that a rootless Sileo cannot resolve.**
+
+This is the only tweak here written in Swift with Orion, and its dylib links
+`@rpath/Orion.framework/Orion` -- a real dependency, satisfied by the `dev.theos.orion` package,
+which is not in the default repositories of a rootless jailbreak. So `com.albrhi` declared a
+dependency Sileo could not find, and **the whole suite refused to install** -- reported as "the
+source does not work on rootless", which is exactly what it was.
+
+The suite is the front door: it has to install for everyone. Spotify's own package still declares
+Orion, and anyone who wants it adds the Theos repository once.
+
+`tools/make-suite.sh` skips any tweak directory carrying this file, and `buildsuite.yml`'s trigger
+excludes it for the same reason NextUp and Watch are excluded -- see CLAUDE.md.

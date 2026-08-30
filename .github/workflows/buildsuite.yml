@@ -39,6 +39,7 @@ on:
             - 'tweaks/**'
             - '!tweaks/nextup/**'
             - '!tweaks/watch/**'
+            - '!tweaks/spotify/**'
             - 'shared/**'
             - 'tools/**'
             - 'extra-debs/**'

@@ -1,5 +1,29 @@
 # Albrhi Changelog
 
+## v1.60.1
+
+Albrhi for X 0.15.0: the diagnostics report says, for every feature that is on, which of its keys X
+actually asks for and what each was answered.
+
+## v1.60.0
+
+**The source would not install on a rootless Sileo, and the cause was one line.**
+
+`com.albrhi` declared `Depends: … dev.theos.orion (>= 1.0.0)`. That is a real dependency — Albrhi
+for Spotify is the only tweak here written in Swift with Orion, and its dylib genuinely links
+`@rpath/Orion.framework/Orion`, confirmed by reading the published package rather than assumed. But
+**`dev.theos.orion` is not in the default repositories of a rootless jailbreak**, so Sileo could not
+resolve it and refused the whole package. Everything else in the suite was fine and none of it could
+be installed.
+
+**The front door has to open for everyone.** Spotify leaves the suite — it now carries a `.no-suite`
+marker like NextUp and Watch, is excluded from this workflow's trigger, and its identities are out of
+the suite's `Conflicts`/`Replaces` so the two can sit side by side. `com.albrhi` depends on
+`mobilesubstrate` and `preferenceloader` and nothing else.
+
+Verified on the built package rather than intended: the Depends line is two names, and no
+`AlbrhiSpotify.dylib` is inside.
+
 ## v1.59.11
 
 Albrhi for YouTube Music 0.8.5: the crash was an icon type the app has no case for, reached while
