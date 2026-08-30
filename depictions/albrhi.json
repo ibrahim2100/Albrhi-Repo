@@ -106,12 +106,12 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.59.11",
+          "title": "v1.60.3",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• Albrhi for YouTube Music 0.8.5: the crash was an icon type the app has no case for, reached while drawing the tab bar at launch.",
+          "markdown": "• Albrhi for X 0.16.0: **Hide Spaces and More tabs are enforced where X decides, not through a feature switch it ignores.** The per-key report added in 0.15.0 showed…",
           "useSpacing": true
         },
         {
@@ -120,12 +120,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.59.10",
+          "title": "v1.60.2",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• Albrhi for YouTube Music 0.8.4: the download interception stands down until a crash log names the cause.",
+          "markdown": "• **The source address is lower case now, and the old one stops working.**",
           "useSpacing": true
         },
         {
@@ -134,12 +134,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.59.9",
+          "title": "v1.60.1",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• Albrhi for YouTube Music 0.8.3: the real cause of the crash — a private UIView method reached for the first time when the download match widened, now guarded with a…",
+          "markdown": "• Albrhi for X 0.15.0: the diagnostics report says, for every feature that is on, which of its keys X actually asks for and what each was answered.",
           "useSpacing": true
         },
         {
@@ -155,7 +155,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.59.11"
+          "text": "1.60.3"
         },
         {
           "class": "DepictionTableTextView",
@@ -183,13 +183,13 @@
         {
           "class": "DepictionTableButtonView",
           "title": "Source code",
-          "action": "https://github.com/ibrahim2100/Albrhi-Repo",
+          "action": "https://github.com/ibrahim2100/albrhi-repo",
           "openExternal": true
         },
         {
           "class": "DepictionTableButtonView",
           "title": "Report an issue",
-          "action": "https://github.com/ibrahim2100/Albrhi-Repo/issues/new",
+          "action": "https://github.com/ibrahim2100/albrhi-repo/issues/new",
           "openExternal": true
         },
         {
