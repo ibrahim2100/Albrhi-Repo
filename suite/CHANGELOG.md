@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.62.0
+
+Albrhi for X 0.18.1: **two switches for one intention, removed.** Hiding suggested accounts had a
+blunt switch that hid every instance of a class and a filter that recognises the suggestion itself;
+the view count had a named feature and a button-hider on another page. The better half of each pair
+stays, and the preferences go with the rows.
+
 ## v1.61.9
 
 Albrhi for X 0.18.0: **opening links in Safari turned out to be a feature switch, not a browser

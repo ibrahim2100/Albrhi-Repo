@@ -1,5 +1,24 @@
 # Albrhi for X — what changed
 
+## v0.18.1
+
+**Two switches for one intention, twice over — and one pair was sitting next to itself on the same
+page.**
+
+*Who to follow* had two: `hide_suggested_accounts`, which hid **every** `T1UserRecommendationView`
+in the app, and the timeline filter, which recognises the suggestion's own view model. The first
+existed because nothing in a class dump says where X uses that class, so it could only hide all of
+them or none — and the device reported `0 hidden` for it. It is gone; the filter does the same job
+by knowing what it is looking at.
+
+*The view count* had two as well, on different pages: a named feature answering
+`view_counts_public_visibility_enabled` — a question X asks nearly four thousand times in a session
+— and a switch that hid the analytics button after X had drawn it. The feature wins for a reason
+beyond tidiness: `TTAStatusInlineActionsView` lays its buttons out by hand, so a hidden one can
+leave its space behind, while a count that is never drawn leaves nothing.
+
+Both removals take the preference with them, so nothing is left storing a value no code reads.
+
 ## v0.18.0
 
 **Opening links in Safari is a feature switch, not a browser class — and the device report said so

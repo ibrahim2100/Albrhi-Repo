@@ -21,11 +21,6 @@
             [SCITWSection titled:SCILocalized(@"section_posts")
                           footer:SCILocalized(@"section_posts_note")
                             rows:@[
-                [SCITWRow switchRow:SCILocalized(@"set_hide_view_count")
-                               note:nil
-                             symbol:@"chart.bar"
-                               tint:[UIColor systemIndigoColor]
-                            prefKey:SCIPrefHideViewCount],
                 [SCITWRow switchRow:SCILocalized(@"set_hide_bookmark")
                                note:nil
                              symbol:@"bookmark"

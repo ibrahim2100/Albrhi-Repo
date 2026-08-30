@@ -30,11 +30,6 @@
                              symbol:@"megaphone.fill"
                                tint:[UIColor systemOrangeColor]
                             prefKey:SCIPrefHidePromoted],
-                [SCITWRow switchRow:SCILocalized(@"albrhi_hide_suggested")
-                               note:SCILocalized(@"albrhi_hide_suggested_note")
-                             symbol:@"person.2.fill"
-                               tint:[UIColor systemOrangeColor]
-                            prefKey:SCIPrefHideSuggested],
                 [SCITWRow switchRow:SCILocalized(@"set_hide_who_to_follow")
                                note:SCILocalized(@"set_hide_who_to_follow_note")
                              symbol:@"person.crop.circle.badge.plus"

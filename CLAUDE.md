@@ -636,6 +636,17 @@ over 345,902 questions on X 12.14, which is what 0.2.0's seventeen named feature
 from. Every key in that table was observed being asked; what each one *means* is still read
 from its name, and the screen says so rather than implying more certainty than there is.
 
+**Two switches for one intention is a bug even when both work, and adding features in bulk is how
+it happens.** X 0.17.0 brought fifteen features in one pass and two of them duplicated something
+already there: hiding suggested accounts had a blunt switch that hid *every*
+`T1UserRecommendationView` alongside a timeline filter that recognises the suggestion's own view
+model, and those two sat next to each other on one page; the view count had a named feature
+answering `view_counts_public_visibility_enabled` and, on another page, a switch that hid the button
+after X had drawn it. **Keep the half that knows what it is looking at**, and prefer answering the
+app's own question over hiding a view — `TTAStatusInlineActionsView` lays its buttons out by hand,
+so a hidden one leaves its space behind while a count never drawn leaves nothing. Delete the
+preference with the row, or a value nothing reads outlives the feature.
+
 **Three releases hooked browser classes for a decision that was a feature switch, and the report
 had said so all along.** X's open-in-Safari went through `SFSafariViewController` (a name X uses
 once in all its binaries), then `T1WebViewController`, then their shared base with every rejected
@@ -1613,9 +1624,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.25.1** · X **0.18.0** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.25.1** · X **0.18.1** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.8.5** ·
-NextUp **0.1.5** · suite **1.61.9**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.62.0**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

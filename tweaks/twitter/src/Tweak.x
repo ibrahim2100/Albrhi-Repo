@@ -7,7 +7,6 @@
 #import "Features/Media/SCITWMediaHooks.h"
 #import "Features/Media/SCITWImmersiveButton.h"
 #import "Features/Ads/SCITWPromotedFilter.h"
-#import "Features/Ads/SCITWSuggestedFilter.h"
 #import "Features/Confirm/SCITWRepostConfirm.h"
 #import "Features/Media/SCITWAvatarSave.h"
 #import "Features/Playback/SCITWPictureInPicture.h"
@@ -20,7 +19,7 @@
 #import "Features/Profile/SCITWProfileCopy.h"
 #import "Features/Lock/SCITWAppLock.h"
 
-NSString *SCIVersionString = @"v0.18.0";  // AlbrhiTW
+NSString *SCIVersionString = @"v0.18.1";  // AlbrhiTW
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written
@@ -31,7 +30,6 @@ NSString *SCIVersionString = @"v0.18.0";  // AlbrhiTW
         SCIPrefSwitchLayer: @YES,
         SCIPrefInlineButton: @YES,
         SCIPrefHidePromoted: @NO,
-        SCIPrefHideSuggested: @NO,
         SCIPrefConfirmRepost: @NO,
         SCIPrefSaveAvatar: @YES,
         SCIPrefVerboseLogging: @NO,
@@ -83,11 +81,6 @@ NSString *SCIVersionString = @"v0.18.0";  // AlbrhiTW
     // switch. Its own hook, on the same three classes the save button already found, and
     // off by default until a device confirms it.
     SCITWInstallPromotedFilter();
-
-    // A blunter version of the same idea: T1UserRecommendationView is confirmed real, but
-    // nothing in this class dump says where X uses it, so this hides every instance rather
-    // than only the unwanted kind -- off by default, for the same reason.
-    SCITWInstallSuggestedFilter();
 
     // A confirmation before a repost goes out -- off by default, since X's own button
     // already costs one tap and a second is a real cost to weigh, not a free safety net.

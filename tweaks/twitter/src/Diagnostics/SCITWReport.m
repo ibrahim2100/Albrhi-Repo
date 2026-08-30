@@ -5,7 +5,6 @@
 #import "Features/Switches/SCITWFeatures.h"
 #import "Features/Media/SCITWImmersiveButton.h"
 #import "Features/Ads/SCITWPromotedFilter.h"
-#import "Features/Ads/SCITWSuggestedFilter.h"
 #import "Features/Confirm/SCITWRepostConfirm.h"
 #import "Features/Media/SCITWAvatarSave.h"
 #import "Features/Playback/SCITWPictureInPicture.h"
@@ -43,7 +42,6 @@ NSString *SCITWReportText(void) {
     // to paste, and until now there was nothing to paste.
     [text appendFormat:@"immersive button: %@\n", SCITWImmersiveButtonReport()];
     [text appendFormat:@"promoted-tweet filter: %@\n", SCITWPromotedFilterReport()];
-    [text appendFormat:@"suggested-account filter: %@\n", SCITWSuggestedFilterReport()];
     [text appendFormat:@"repost confirm: %@\n", SCITWRepostConfirmReport()];
     [text appendFormat:@"avatar save: %@\n", SCITWAvatarSaveReport()];
     [text appendFormat:@"picture-in-picture: %@\n", SCITWPictureInPictureReport()];

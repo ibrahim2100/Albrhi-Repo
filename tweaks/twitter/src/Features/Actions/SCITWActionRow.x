@@ -5,7 +5,7 @@
 #import "Localization/SCILocalize.h"
 
 static BOOL sciRowPresent = NO, sciSharePresent = NO;
-static NSUInteger sciHidViewCount = 0, sciHidBookmark = 0, sciRendered = 0;
+static NSUInteger sciHidBookmark = 0, sciRendered = 0;
 
 static BOOL sciOn(NSString *key) {
     return [[NSUserDefaults standardUserDefaults] boolForKey:key];
@@ -50,8 +50,11 @@ static NSUInteger SCISetHidden(UIView *root, NSString *className, BOOL hidden) {
              account:(id)account {
     %orig;
 
-    sciHidViewCount += SCISetHidden((UIView *)self, @"TTAStatusInlineAnalyticsButton",
-                                    sciOn(SCIPrefHideViewCount));
+    // The view count is not hidden here. It has its own named feature, which answers
+    // `view_counts_public_visibility_enabled` -- a question X asks nearly four thousand
+    // times in a session -- so the count is never drawn rather than drawn and covered. Two
+    // switches for one intention is the mistake this removes, and the better half wins:
+    // this row lays its buttons out by hand, so a hidden one can leave its space behind.
     sciHidBookmark += SCISetHidden((UIView *)self, @"TTAStatusInlineBookmarkButton",
                                    sciOn(SCIPrefHideBookmark));
 }
@@ -237,8 +240,8 @@ NSString *SCITWActionRowReport(void) {
     if (!sciRowPresent) {
         [parts addObject:@"TTAStatusInlineActionsView not in this build"];
     } else {
-        [parts addObject:[NSString stringWithFormat:@"view count hidden %lu · bookmark hidden %lu",
-                          (unsigned long)sciHidViewCount, (unsigned long)sciHidBookmark]];
+        [parts addObject:[NSString stringWithFormat:@"bookmark hidden %lu",
+                          (unsigned long)sciHidBookmark]];
     }
 
     if (!sciSharePresent) {

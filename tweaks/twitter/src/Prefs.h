@@ -76,13 +76,11 @@
 /// screen's own avatar-tap gesture.
 #define SCIPrefSaveAvatar        @"save_avatar"
 
-/// Hides "who to follow" cards wherever `T1UserRecommendationView` draws one.
-///
-/// **A blunt tool, and marked as one.** That view is confirmed real; where X uses it is
-/// not -- a dedicated page someone opens on purpose looks identical, from this class
-/// alone, to the same card appearing uninvited in a timeline, and this cannot tell the two
-/// apart. Off by default until a report says whether that trade is worth it.
-#define SCIPrefHideSuggested     @"hide_suggested_accounts"
+// `hide_suggested_accounts` is gone. It hid every T1UserRecommendationView blindly, which
+// is what "nothing says where X uses this class" leaves you with, and the timeline filter
+// does the same job by matching the view model -- so the two were one intention with two
+// switches, next to each other on one page.
+
 
 #define SCIPrefVerboseLogging   @"verbose_logging"
 
@@ -119,7 +117,9 @@
 
 // MARK: - The row of buttons under a post
 
-#define SCIPrefHideViewCount     @"hide_view_count"
+// `hide_view_count` is gone as well: the named feature answers
+// `view_counts_public_visibility_enabled` instead, so the count is never drawn rather
+// than drawn and covered over.
 #define SCIPrefHideBookmark      @"hide_bookmark_button"
 
 /// A long press on share renders the post as an image.
