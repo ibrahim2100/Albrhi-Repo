@@ -194,13 +194,13 @@
         {
           "class": "DepictionTableButtonView",
           "title": "Source code",
-          "action": "https://github.com/ibrahim2100/Albrhi-Repo",
+          "action": "https://github.com/ibrahim2100/albrhi-repo",
           "openExternal": true
         },
         {
           "class": "DepictionTableButtonView",
           "title": "Report an issue",
-          "action": "https://github.com/ibrahim2100/Albrhi-Repo/issues/new",
+          "action": "https://github.com/ibrahim2100/albrhi-repo/issues/new",
           "openExternal": true
         },
         {
