@@ -12,8 +12,9 @@
 #import "Features/Media/SCITWAvatarSave.h"
 #import "Features/Playback/SCITWPictureInPicture.h"
 #import "Features/Tabs/SCITWTabEntries.h"
+#import "Features/Spaces/SCITWSpacesBar.h"
 
-NSString *SCIVersionString = @"v0.16.1";  // AlbrhiTW
+NSString *SCIVersionString = @"v0.16.2";  // AlbrhiTW
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written
@@ -102,6 +103,10 @@ NSString *SCIVersionString = @"v0.16.1";  // AlbrhiTW
     // and it is deliberately outside the switch-layer gate below, because it is not a
     // switch answer. It is the decision the switch was supposed to reach.
     SCITWInstallTabEntries();
+
+    // The Spaces bar above the timeline, which is what "Hide Spaces" is actually about.
+    // Two releases moved tabs instead, correctly and to no effect on this surface.
+    SCITWInstallSpacesBar();
 
     if ([[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefSwitchLayer]) {
         // Before the hooks, not after. X asks its first questions while the app is still

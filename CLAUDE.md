@@ -569,6 +569,16 @@ over 345,902 questions on X 12.14, which is what 0.2.0's seventeen named feature
 from. Every key in that table was observed being asked; what each one *means* is still read
 from its name, and the screen says so rather than implying more certainty than there is.
 
+**And "Hide Spaces" was aiming at the wrong surface the whole time — it was never a tab.** Two
+releases moved tabs, correctly, while the thing being complained about was the row of live audio
+rooms above the Home timeline. That strip is set up by `-_t1_initializeFleets` (named for Fleets,
+which once occupied it) on `THFHomeTimelineItemsViewController` — `v16@0:8`, in the **main
+executable**, not in `T1Twitter.framework`, which is why a framework-only search would miss it.
+The call is withheld rather than the bar emptied. **The lesson is about the question, not the
+class:** "the switch does not work" was answered three times without once establishing *which
+surface* the user was looking at, and the fix arrived only after the reference tweak's own source
+named the method. Ask which surface before choosing a lever.
+
 **Adding a tab and removing one are not the same operation, and 0.16.0 proved it by doing one and
 not the other.** The identical hook that put Communities and Profile in the bar failed to take
 Spaces out, on the same device, in the same release. `-isExcludedFromTabBar` is consulted while X
@@ -1450,7 +1460,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.23.0** · X **0.16.1** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.23.0** · X **0.16.2** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.8.5** ·
 NextUp **0.1.5** · suite **1.60.5**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.

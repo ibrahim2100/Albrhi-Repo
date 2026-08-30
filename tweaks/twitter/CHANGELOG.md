@@ -1,5 +1,27 @@
 # Albrhi for X — what changed
 
+## v0.16.2
+
+**"Hide Spaces" was aiming at the wrong surface for two releases, and the surface was never a
+tab.** 0.16.0 excluded the Spaces tab entry, 0.16.1 filtered the tab bar itself; both do exactly
+what they say, and neither touches the row of live audio rooms above the Home timeline, which is
+what the switch was always about.
+
+That strip is set up by **`-_t1_initializeFleets`** — named for Fleets, the feature that once
+occupied it — and refusing to make the call means the bar is never built. Withheld rather than
+emptied: nothing downstream is handed a half-built bar, which is the distinction between refusing a
+delivery and feeding nil into a state machine that expects one.
+
+Confirmed against X 12.20 rather than carried over: the method is `v16@0:8` on
+`THFHomeTimelineItemsViewController`, in the **main executable** and not in `T1Twitter.framework`.
+Its older sibling `T1HomeTimelineItemsViewController` is not in this build at all; it is hooked
+anyway for older versions, and each class is checked with `class_getInstanceMethod` before its group
+is initialised — because a `%hook` on a method a class does not declare **adds** it, which would
+invent an API X never calls.
+
+The tab work from the two previous releases stays. It is correct, it is what put Communities and
+Profile in the bar, and it is a second surface rather than a mistake to undo.
+
 ## v0.16.1
 
 **Hiding Spaces at the tab entry failed for the same reason the feature switch did, one layer

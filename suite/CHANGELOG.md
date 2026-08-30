@@ -2,6 +2,11 @@
 
 ## v1.60.5
 
+Albrhi for X 0.16.2: **"Hide Spaces" now hides the Spaces bar above the Home timeline**, which is
+the surface it was always about. Two releases moved tabs instead — correctly, and to no effect
+here. The strip is set up by `-_t1_initializeFleets` on `THFHomeTimelineItemsViewController`, and
+the call is withheld rather than the bar emptied.
+
 Albrhi for YouTube 1.23.0: **the bottom tab bar can be arranged** — drag to reorder, drag across to
 switch a tab off, in Settings › Interface › Tab bar. It rides the same path the Download Centre tab
 already proved: YouTube hands its bar a protobuf and the array is rewritten on the way through, so
