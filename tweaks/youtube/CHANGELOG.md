@@ -3,6 +3,27 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.25.0
+
+**The floating download button is gone, and the bar can never hold more than six.**
+
+The floating button predated the real tab and stayed on as a fallback for a build whose pivot bar
+this tweak could not read. What it actually did was appear whenever anything went wrong — and in
+1.24.0 the thing that went wrong was a bug of ours: hiding the create button left no room for the
+tab, so the Centre came back as a red circle floating over the bar. **A fallback that covers for a
+fault reports the fault as a cosmetic complaint**, which is exactly how it was reported. The Centre
+is a tab or it is nothing; if the tab cannot be built the diagnostics say so, and Settings still
+opens it.
+
+**Six is now enforced at the exit**, after everything that could add a tab has run — the arranger,
+both appends, and anything added later by someone who has not read either. `YTPivotBarView` declares
+`itemView1` … `itemView6` and no seventh, so an over-long array is not a preference being missed,
+it is items that cannot be drawn. The trim is reported when it happens rather than done quietly.
+
+**And the Download Centre's own switch is gone too.** It was a second answer to the question the
+arranging screen already asks — the same mistake History's switch was, removed for the same reason.
+Drag Downloads to the inactive list to switch it off, like every other tab.
+
 ## v1.24.1
 
 **Hiding the `+` did not make room, and the Download Centre lost its tab because of it.**

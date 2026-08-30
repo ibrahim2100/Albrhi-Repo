@@ -84,10 +84,6 @@
                            detail:SCILocalized(@"set_parallel_note")
                            symbol:@"arrow.down.to.line"
                            action:^{ [SCIYTDownloadsPage askForParallel]; }],
-            [SCIRow switchRow:SCILocalized(@"set_tab_button")
-                       detail:nil
-                       symbol:@"square.grid.2x2"
-                      prefKey:SCIPrefTabButton],
             [SCIRow switchRow:SCILocalized(@"set_shorts_button")
                        detail:SCILocalized(@"set_shorts_button_note")
                        symbol:@"play.rectangle.on.rectangle"

@@ -45,9 +45,6 @@
 /// Ours, and nothing else's. Long enough that YouTube could not have one like it.
 static NSString *const kSCIPivotIdentifier = @"albrhi.downloads.pivot";
 
-/// Whether a real tab was built. The floating button stands down when one was.
-static BOOL sciNativeTabAttached = NO;
-
 /// Marks the one item view showing our tab. Item views are reused between tabs, so this
 /// belongs on the view and not in a variable.
 static char kSCIIsOurItemView;
@@ -168,10 +165,13 @@ static BOOL SCIPaintIcon(UIView *view) {
     @try {
         NSMutableArray *items = [renderer valueForKey:@"itemsArray"];
 
-        // History first, and outside the Download Centre's own switch: the two tabs are
-        // separate features and somebody who turned the downloads tab off has not asked to
-        // lose this one with it. Appended once, and never when a tab for it already exists
-        // -- YouTube ships one on some accounts, and two History tabs is worse than none.
+        // Both tabs are offered here and switched off in one place only: the arranging
+        // screen. The Download Centre had a switch of its own until 1.25.0, which was a
+        // second answer to the question that screen already asks -- the same mistake
+        // History's own switch was, removed for the same reason.
+        //
+        // Appended once, and never when a tab for it already exists: YouTube ships a
+        // History tab on some accounts, and two of them is worse than none.
         if (SCIYTHistoryTabWanted() && items) {
             BOOL haveHistory = NO;
             for (id entry in items) {
@@ -187,12 +187,6 @@ static BOOL SCIPaintIcon(UIView *view) {
                 id history = SCIYTMakeHistoryItem();
                 if (history) [items addObject:history];
             }
-        }
-
-        if (!SCIPrefEnabled(SCIPrefTabButton)) {
-            SCIYTTabBarArrange(items);
-            %orig;
-            return;
         }
 
         // Appended once. -setRenderer: is called again on every page style change, on
@@ -226,7 +220,6 @@ static BOOL SCIPaintIcon(UIView *view) {
                 [SCIYTDiagnostics recordTabState:@"the pivot bar classes are not on this build"];
             } else {
                 [items addObject:wrapper];
-                sciNativeTabAttached = YES;
                 [SCIYTDiagnostics recordTabState:
                     [NSString stringWithFormat:@"item added, now %lu tabs",
                         (unsigned long)items.count]];
@@ -235,6 +228,20 @@ static BOOL SCIPaintIcon(UIView *view) {
         // After both appends, never before: a tab has to be in the array for the stored
         // order to be able to place it anywhere other than the end.
         SCIYTTabBarArrange(items);
+
+        // The last word on the count, and it belongs here rather than only inside the
+        // arranger. `YTPivotBarView` declares itemView1 … itemView6 and no seventh, so an
+        // array longer than six is not a preference this tweak is failing to honour -- it
+        // is a bar with items that cannot be drawn. Every path that adds anything passes
+        // through this line, including one added later by someone who has not read the
+        // arranger, which is the whole point of a guard sitting at the exit.
+        if (items.count > SCIYTTabBarMaximum) {
+            [SCIYTDiagnostics recordTabState:
+                [NSString stringWithFormat:@"%lu tabs trimmed to %lu",
+                    (unsigned long)items.count, (unsigned long)SCIYTTabBarMaximum]];
+            [items removeObjectsInRange:NSMakeRange(SCIYTTabBarMaximum,
+                                                    items.count - SCIYTTabBarMaximum)];
+        }
     } @catch (NSException *exception) {
         [SCIYTDiagnostics recordTabState:
             [NSString stringWithFormat:@"refused: %@", exception.reason ?: @"?"]];
@@ -469,63 +476,21 @@ static void SCIReportContentStack(UIViewController *bar) {
 %end
 
 
-#pragma mark - The fallback
+#pragma mark - No fallback, deliberately
 
-static char kSCITabButtonAdded;
-
-/// Whether this controller is the bar along the bottom.
 ///
-/// Only consulted for the floating button, which is now what happens when the real tab
-/// could not be built.
-static BOOL SCIIsTabBarController(UIViewController *controller) {
-    NSString *name = NSStringFromClass([controller class]);
-    if (![name hasPrefix:@"YT"]) return NO;
+/// **There used to be a floating button here and it is gone on purpose.**
+///
+/// It predated the real tab and was kept as a fallback for a build whose pivot bar this
+/// tweak could not read. What it actually did was appear whenever anything went wrong with
+/// the tab -- and one of those things was a bug of ours, in 1.24.0, where hiding the create
+/// button left no room for the tab: the report said the Centre had no tab, the screen showed
+/// a red circle floating over the bar, and the two readings of "it works" and "it looks
+/// broken" were both true at once.
+///
+/// A fallback that hides a fault is worse than no fallback. The Centre is a tab or it is
+/// nothing, and if the tab cannot be built the diagnostics say so plainly -- the Centre is
+/// still reachable from Settings, which is where a way in belongs when the way in that was
+/// designed is not working.
+///
 
-    return [name containsString:@"PivotBar"] || [name containsString:@"TabBar"];
-}
-
-static void SCIAddTabButton(UIViewController *controller) {
-    if (!controller.view || objc_getAssociatedObject(controller, &kSCITabButtonAdded)) return;
-    objc_setAssociatedObject(controller, &kSCITabButtonAdded, @YES, OBJC_ASSOCIATION_RETAIN);
-
-    UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
-
-    [button setImage:[SCIYTIcon downloadMarkOfSize:24 filled:YES]
-            forState:UIControlStateNormal];
-
-    button.tintColor = SCIAccent();
-    button.translatesAutoresizingMaskIntoConstraints = NO;
-
-    [button addTarget:[SCIYTDownloadCenter class]
-               action:@selector(present)
-     forControlEvents:UIControlEventTouchUpInside];
-
-    [controller.view addSubview:button];
-
-    [NSLayoutConstraint activateConstraints:@[
-        [button.trailingAnchor constraintEqualToAnchor:controller.view.trailingAnchor constant:-6],
-        [button.centerYAnchor constraintEqualToAnchor:controller.view.centerYAnchor],
-        [button.widthAnchor constraintEqualToConstant:38],
-        [button.heightAnchor constraintEqualToConstant:38]
-    ]];
-
-    SCILogV(@"tab: fallback button added to %@", NSStringFromClass([controller class]));
-}
-
-%hook UIViewController
-
-- (void)viewDidAppear:(BOOL)animated {
-    %orig;
-
-    if (!SCIPrefEnabled(SCIPrefTabButton)) return;
-
-    // Only when there is no real tab. The old behaviour, kept for the case the renderer
-    // route does not attach -- a build that changed the pivot bar should cost the tab its
-    // looks, not cost anyone the way in.
-    if (sciNativeTabAttached) return;
-    if (!SCIIsTabBarController(self)) return;
-
-    SCIAddTabButton(self);
-}
-
-%end

@@ -30,7 +30,6 @@
 /// someone's video lived. Now it stays in the Download Centre and going to Photos is a
 /// swipe, or this switch for anyone who wants the old ending back.
 #define SCIPrefAutoPhotos       @"auto_save_photos"
-#define SCIPrefTabButton        @"tab_download_button"
 
 /// The tab bar's own arrangement. Two arrays of `pivotIdentifier` strings rather than one
 /// switch per tab: an order and a visibility are a single decision, and storing them apart

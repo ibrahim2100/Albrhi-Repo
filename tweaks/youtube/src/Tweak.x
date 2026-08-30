@@ -6,7 +6,7 @@
 #import "Diagnostics/SCIYTDiagnostics.h"
 #import "Features/Display/SCIYTDimmer.h"
 
-NSString *SCIVersionString = @"v1.24.1";  // AlbrhiYT
+NSString *SCIVersionString = @"v1.25.0";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.
@@ -100,7 +100,6 @@ NSString *SCIVersionString = @"v1.24.1";  // AlbrhiYT
         // The button beside You is on: a Download Centre nobody can find is a Download
         // Centre that does not exist. Saving to Photos automatically is off, which is
         // the whole point of having somewhere else to put a download.
-        SCIPrefTabButton: @YES,
         SCIPrefShortsButton: @YES,
         SCIPrefAutoPhotos: @NO,
 

@@ -320,6 +320,15 @@ missing but the question. When a guard and the thing it guards resolve the same 
 by different routes, the guard is wrong by construction, and it fails silently in the
 direction of doing less.
 
+**A fallback that covers for a fault turns a bug into a cosmetic complaint.** YouTube's floating
+download button existed for a pivot bar this tweak could not read, and it fired on *any* failure to
+build the tab — including 1.24.0's own bug, where hiding the create button left no room. What
+arrived was "the downloads became separate from the screen", not "the tab is missing", and the two
+readings were both true. The button is deleted rather than narrowed: the Centre is a tab or it is
+nothing, the diagnostics say which, and Settings is the way in that does not depend on the bar.
+**Ask of any fallback what it would look like if the primary path had a bug** — if the answer is
+"working, slightly differently", it is hiding the report you need.
+
 **A limit enforced in two places is two limits, and they applied in the wrong order.** Both of the
 tabs this tweak adds are appended before the arrangement runs, and each append refused at six — so
 History took the sixth slot *while the create button was still in the array*, the Download Centre
@@ -1506,9 +1515,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.24.1** · X **0.16.2** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.25.0** · X **0.16.2** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.8.5** ·
-NextUp **0.1.5** · suite **1.60.9**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.61.0**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

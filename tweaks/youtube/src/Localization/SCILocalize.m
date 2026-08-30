@@ -344,7 +344,6 @@ static void SCIBuildTables(void) {
         // Settings.
         @"set_auto_photos": @"Also save to Photos",
         @"set_auto_photos_note": @"Off: downloads stay in the Download Centre and go to Photos only when you send them.",
-        @"set_tab_button": @"Button beside You",
         @"set_downloads_title": @"Downloads",
         @"set_open_centre": @"Download Centre",
         @"dl_saved_silent": @"Saved, but without sound — the audio track would not download.",
@@ -701,7 +700,6 @@ static void SCIBuildTables(void) {
         // الإعدادات.
         @"set_auto_photos": @"احفظ في الصور أيضًا",
         @"set_auto_photos_note": @"مُطفأ: تبقى التحميلات في مركز التحميلات ولا تذهب إلى الصور إلا حين ترسلها.",
-        @"set_tab_button": @"زر بجانب «أنت»",
         @"set_downloads_title": @"التحميلات",
         @"set_open_centre": @"مركز التحميلات",
         @"dl_saved_silent": @"حُفظ لكن بلا صوت — تعذّر تنزيل مسار الصوت.",

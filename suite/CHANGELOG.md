@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.61.0
+
+Albrhi for YouTube 1.25.0: **the floating download button is gone and the tab bar can never hold
+more than six.** The floating button was a fallback that appeared whenever the real tab failed —
+including when the failure was a bug of ours — so a fault arrived looking like a cosmetic
+complaint. The Download Centre is a tab or it is nothing. Its own switch is gone as well: the
+arranging screen already asks that question, so switching it off is dragging it to the inactive
+list, like every other tab.
+
 ## v1.60.9
 
 Albrhi for YouTube 1.24.1: **hiding the `+` now makes room.** With the create button off and History
