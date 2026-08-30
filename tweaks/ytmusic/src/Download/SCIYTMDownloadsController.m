@@ -19,6 +19,23 @@
     self.title = SCILocalized(@"downloads_title");
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedRowHeight = 64;
+
+    //
+    // **The page was starting at the very top of the app and ending behind the tab bar.**
+    //
+    // It is added as a child filling the parent's bounds, which is right -- the background
+    // should cover the whole screen -- but the *list* has to keep clear of the status bar
+    // above and the pivot bar below. Those insets are not a number worth writing down: the
+    // app publishes them, through the safe area it hands its own children, and it moves them
+    // when a bar appears or the player docks.
+    //
+    // `Always` rather than `Automatic`: automatic only adjusts a scroll view the system
+    // believes is the controller's primary one, and this table belongs to a child controller
+    // somebody else installed -- exactly the case where it declines and the content starts
+    // under the clock.
+    //
+    self.tableView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentAlways;
+    self.tableView.insetsContentViewsToSafeArea = YES;
 }
 
 - (void)viewWillAppear:(BOOL)animated {

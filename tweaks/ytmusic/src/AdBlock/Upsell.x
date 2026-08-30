@@ -623,9 +623,20 @@ static NSString *const kSCIYTMDownloadsPivot = @"FEalbrhi_downloads";
     SCIYTMDownloadsController *downloads = [[SCIYTMDownloadsController alloc] init];
 
     [self addChildViewController:downloads];
-    downloads.view.frame = self.view.bounds;
-    downloads.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+
+    // Constraints rather than a frame and a resizing mask. The frame version was set once,
+    // from bounds that were not final, and never asked again -- so a rotation, a docked
+    // player or a keyboard left the page the size the screen used to be. Anchors resolve at
+    // layout time, every time, which is the same lesson TikTok's own button paid for.
+    downloads.view.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:downloads.view];
+    [NSLayoutConstraint activateConstraints:@[
+        [downloads.view.topAnchor constraintEqualToAnchor:self.view.topAnchor],
+        [downloads.view.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
+        [downloads.view.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+        [downloads.view.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+    ]];
+
     [downloads didMoveToParentViewController:self];
 }
 
