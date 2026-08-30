@@ -40,6 +40,9 @@ void SCIYTMRememberKey(NSString *key);
 /// a different next step, so each is counted separately.
 NSString *SCIYTMDownloadReport(void);
 
+/// How many times the install was attempted. One means the constructor was enough.
+NSUInteger SCIYTMInstallAttempts(void);
+
 /// Intercepts the app's own download badge on the now-playing screen.
 void SCIYTMInstallDownload(void);
 

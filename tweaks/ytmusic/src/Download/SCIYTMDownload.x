@@ -361,6 +361,7 @@ NSArray<NSString *> *SCIYTMSeenKeys(void) {
 
 static char kSCIYTMPressAdded;
 static BOOL sciPressInstalled = NO;
+static NSUInteger sciInstallAttempts = 0;
 static NSUInteger sciPressesAdded = 0, sciPressesFired = 0;
 
 @interface SCIYTMPressHandler : NSObject
@@ -547,13 +548,15 @@ static NSUInteger sciPressesAdded = 0, sciPressesFired = 0;
 %end
 
 NSString *SCIYTMDownloadReport(void) {
+    NSString *tries = [NSString stringWithFormat:@" (%lu install attempt(s))",
+                       (unsigned long)sciInstallAttempts];
     NSString *press = sciPressInstalled
         ? [NSString stringWithFormat:@" · long press: %lu screen(s), %lu used",
            (unsigned long)sciPressesAdded, (unsigned long)sciPressesFired]
         : @" · long press: YTMNowPlayingViewController not in this build";
 
     if (!sciDownloadInstalled) {
-        return [@"the badge class is not in this build" stringByAppendingString:press];
+        return [[@"the badge class never appeared" stringByAppendingString:press] stringByAppendingString:tries];
     }
     if (sciTapsSeen == 0) {
         return [@"badge hooked, no tap has reached it" stringByAppendingString:press];
@@ -567,17 +570,52 @@ NSString *SCIYTMDownloadReport(void) {
              (unsigned long)sciStarted, (unsigned long)sciNoManifest] stringByAppendingString:press];
 }
 
-void SCIYTMInstallDownload(void) {
-    // The long press is installed even when the badge class is missing, so losing one door does
-    // not lose both.
-    if (NSClassFromString(@"YTMNowPlayingViewController")) {
+/// Installs whichever of the two doors this build has, and says how many tries it took.
+///
+/// **Both classes reported "not in this build" on a device that certainly has them** -- the badge
+/// handler and the now-playing controller are both in YouTube Music's own binary, read out of it
+/// directly. What was wrong was *when* they were asked: a tweak's `%ctor` runs before the app's own
+/// Objective-C metadata is registered, so `NSClassFromString` answers nil for a class that will
+/// exist a moment later. The answer is not "the class is missing" -- it is "you asked too early",
+/// and the two are indistinguishable from a single call.
+///
+/// So the question is asked again: once when the app says it has finished launching, and once more
+/// on a short delay for a build that installs these classes later still. Each attempt is counted,
+/// and the report says which one succeeded -- because "worked on the second try" and "worked
+/// immediately" are different facts about a build, and only one of them means the constructor is
+/// the right place.
+static void SCIYTMTryInstall(void) {
+    sciInstallAttempts++;
+
+    if (!sciPressInstalled && NSClassFromString(@"YTMNowPlayingViewController")) {
         %init(SCIYTMPressGroup);
         sciPressInstalled = YES;
     }
 
-    Class handler = NSClassFromString(@"ELMTouchCommandPropertiesHandler");
-    if (!handler) return;
+    if (!sciDownloadInstalled && NSClassFromString(@"ELMTouchCommandPropertiesHandler")) {
+        %init(SCIYTMDownloadGroup);
+        sciDownloadInstalled = YES;
+    }
+}
 
-    %init(SCIYTMDownloadGroup);
-    sciDownloadInstalled = YES;
+NSUInteger SCIYTMInstallAttempts(void) { return sciInstallAttempts; }
+
+void SCIYTMInstallDownload(void) {
+    SCIYTMTryInstall();
+    if (sciPressInstalled && sciDownloadInstalled) return;
+
+    // Asked again when the app itself says it is up. `%init` on a group already initialised
+    // would install the same hooks twice, so each group is guarded by its own flag rather
+    // than by whether this function has run before.
+    [[NSNotificationCenter defaultCenter]
+        addObserverForName:UIApplicationDidFinishLaunchingNotification
+                    object:nil
+                     queue:[NSOperationQueue mainQueue]
+                usingBlock:^(__unused NSNotification *note) { SCIYTMTryInstall(); }];
+
+    // And once more after that, for a build whose classes arrive with a framework loaded on
+    // first use. Two seconds is long enough to be after launch and short enough to be before
+    // anybody has reached a song.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{ SCIYTMTryInstall(); });
 }

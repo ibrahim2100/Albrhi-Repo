@@ -831,6 +831,18 @@ itself, and then **proves the flavour from the staged paths rather than the file
 shipped a "roothide" package built from a rootless tree and it installed as rootless, because
 that is what it was. It refuses to copy a mismatch out.
 
+**`NSClassFromString` inside a `%ctor` can answer nil for a class the app certainly has, and the
+report then says "not in this build".** YouTube Music's download badge handler and its now-playing
+controller are both in the app's own binary — read out of it directly — and both were reported
+absent on a device running that very build. A tweak's constructor runs before the app's own
+Objective-C metadata is registered, so the class exists a moment later and the question was simply
+asked too early. **"The class is missing" and "you asked too early" are the same answer from a
+single call**, which is what made this cost two rounds. Ask again on
+`UIApplicationDidFinishLaunchingNotification`, and once more on a short delay for a class that
+arrives with a lazily loaded framework — and **count the attempts in the report**, because "worked
+on the second try" and "worked immediately" are different facts about a build and only one of them
+means the constructor is the right place.
+
 **One non-ASCII character moves a string literal out of `__cstring`, and `strings` then reports it
 missing.** A report line beginning `@" \u00b7 long press: …"` was nowhere in the built object under
 `strings` or `grep`, while the Logos symbols for the same code were plainly there -- so a build that
