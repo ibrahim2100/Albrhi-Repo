@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.61.6
+
+Albrhi for X 0.17.4: **the post-as-a-picture was mirrored, and now is not.** UIKit mirrors
+right-to-left content with a transform and `-renderInContext:` does not apply the receiver's own, so
+the picture came out as the raw unflipped arrangement — bitmaps included. Whether a subtree is
+mirrored is now measured by converting two of its own points into window coordinates, and the
+context is flipped to match.
+
 ## v1.61.5
 
 Albrhi for X 0.17.3: **the post-as-a-picture no longer comes out laid out left-to-right.** UIKit

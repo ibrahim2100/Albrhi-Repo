@@ -101,26 +101,35 @@ static BOOL SCIImageIsBlank(UIImage *image) {
 
 /// Renders the post the share button belongs to, exactly as it is drawn.
 ///
-/// **The whole picture came out laid out left-to-right, and the cause is re-layout, not a
-/// mirror.** A mirrored image would have mirrored the glyphs too; these were the right way
-/// round and merely in the wrong order, and the share button had moved from the bottom left
-/// of the screen to the bottom right of the picture. That is UIKit's right-to-left support
-/// doing exactly what it does — **RTL is implemented as mirrored layout, decided at layout
-/// time from the view's trait environment** — and being asked to lay the subtree out again
-/// inside an image context, which has no window and no traits, so it resolves as
-/// left-to-right and rebuilds the whole thing the other way round. The text goes with it:
-/// re-laid-out runs get an LTR base direction, so a word reads from its last letter.
+/// **The picture came back mirrored, and the emblem in it is what proved that.** 0.17.3
+/// read the report as re-layout -- the share button had moved sides and Arabic read from
+/// the wrong end -- and re-layout cannot reverse a *bitmap*. A photograph in the post was
+/// mirrored too, and `@SaudiDCD` came out as `DCDibuaS@` with the letters themselves the
+/// wrong way round. Only a horizontal flip of the whole context does that.
 ///
-/// `-drawViewHierarchyInRect:afterScreenUpdates:YES` asks for precisely that re-layout, and
-/// 0.17.2 turned it on for an unrelated and real reason. **The answer is not to re-lay-out
-/// at all.** `-renderInContext:` walks the layer tree and draws what each layer already
-/// holds — text that was rasterised while the view was on screen, in the order it was drawn
-/// there — so there is no layout pass to get the direction wrong, and nothing for the
-/// bidirectional algorithm to redo.
+/// **Where the flip comes from: UIKit mirrors right-to-left content with a transform, and
+/// `-renderInContext:` does not apply the receiver's own.** So on screen the subtree is laid
+/// out one way and flipped by a transform above it, which reads correctly; rendered without
+/// that transform it is the raw, unflipped -- that is, mirrored -- arrangement, bitmaps
+/// included, because the bitmaps are stored pre-mirrored to survive the flip.
 ///
-/// The hierarchy call is kept as the fallback, with `NO`, which at least does not re-lay-out
-/// either. The report names which path drew each picture.
-static NSUInteger sciDrewByLayer = 0, sciDrewByHierarchy = 0;
+/// **It is measured rather than assumed.** Two points of the subject's own bounds are
+/// converted into window coordinates: if its left edge lands to the *right* of its right
+/// edge, everything between here and the window is mirrored, whatever applied it and
+/// wherever it sits in the ancestry. The context is then flipped to match before anything is
+/// drawn. A build that stops mirroring this way measures as not mirrored and nothing is
+/// applied, so the correction cannot become the next bug.
+static NSUInteger sciDrewByLayer = 0, sciDrewByHierarchy = 0, sciDrewMirrored = 0;
+
+/// Whether this view is drawn through a horizontal flip somewhere above it.
+static BOOL SCISubtreeIsMirrored(UIView *view) {
+    UIView *reference = view.window ?: view.superview;
+    if (!reference) return NO;
+
+    CGPoint left = [view convertPoint:CGPointZero toView:reference];
+    CGPoint right = [view convertPoint:CGPointMake(view.bounds.size.width, 0) toView:reference];
+    return right.x < left.x;
+}
 
 static UIImage *SCIRenderAncestor(UIView *view) {
     UIView *subject = view;
@@ -131,24 +140,36 @@ static UIImage *SCIRenderAncestor(UIView *view) {
     if (subject.bounds.size.width < 1 || subject.bounds.size.height < 1) return nil;
 
     // Laid out before it is drawn, on screen where the traits are real. Nothing after this
-    // point is allowed to lay anything out again.
+    // point lays anything out again -- the layer render draws what is already rasterised.
     [subject layoutIfNeeded];
+
+    CGSize size = subject.bounds.size;
+    BOOL mirrored = SCISubtreeIsMirrored(subject);
+    if (mirrored) sciDrewMirrored++;
 
     UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat preferredFormat];
     format.opaque = NO;
     UIGraphicsImageRenderer *renderer =
-        [[UIGraphicsImageRenderer alloc] initWithSize:subject.bounds.size format:format];
+        [[UIGraphicsImageRenderer alloc] initWithSize:size format:format];
 
     UIImage *image = [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+        if (mirrored) {
+            CGContextTranslateCTM(context.CGContext, size.width, 0);
+            CGContextScaleCTM(context.CGContext, -1, 1);
+        }
         [subject.layer renderInContext:context.CGContext];
     }];
     sciDrewByLayer++;
 
     // A layer tree that rendered nothing leaves a fully transparent picture -- a visual
-    // effect view or a hosted surface is the usual reason. Falling back is worth it there,
-    // and the fallback uses NO so it cannot reintroduce the re-layout this exists to avoid.
+    // effect view or a hosted surface is the usual reason. The fallback uses NO, which does
+    // not re-lay-out, and takes the same correction.
     if (image && SCIImageIsBlank(image)) {
-        image = [renderer imageWithActions:^(__unused UIGraphicsImageRendererContext *context) {
+        image = [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+            if (mirrored) {
+                CGContextTranslateCTM(context.CGContext, size.width, 0);
+                CGContextScaleCTM(context.CGContext, -1, 1);
+            }
             [subject drawViewHierarchyInRect:subject.bounds afterScreenUpdates:NO];
         }];
         sciDrewByLayer--;

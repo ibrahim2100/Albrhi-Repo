@@ -636,6 +636,18 @@ over 345,902 questions on X 12.14, which is what 0.2.0's seventeen named feature
 from. Every key in that table was observed being asked; what each one *means* is still read
 from its name, and the screen says so rather than implying more certainty than there is.
 
+**A description of a fault is evidence; a picture of it is proof — and here they disagreed.** X's
+post-to-image came out reversed, described as the share button changing sides and Arabic reading
+from the wrong end. That reads as re-layout, and one release was spent on that reading, reasoning
+that a mirror would have reversed the glyphs too. The screenshot ended it in a glance: the post's
+own *photograph* was mirrored and `@SaudiDCD` read `DCDibuaS@`. **Re-layout cannot reverse a
+bitmap.** The cause is that UIKit mirrors right-to-left content with a transform and
+`-renderInContext:` does not apply the receiver's own, so the render is the raw unflipped
+arrangement, with bitmaps that are stored pre-mirrored to survive the flip. **Ask for the artefact
+before theorising about the report** — and the correction is measured, not assumed: convert two of
+the subject's own bounds points into window coordinates and see whether left lands right of right,
+so a build that stops mirroring this way needs no correction and gets none.
+
 **Rendering a view into an image context re-lays it out, and RTL is layout.** X's post-to-image
 feature produced a cell laid out left-to-right: the share button moved from the bottom left of the
 screen to the bottom right of the picture, and Arabic words read from their last letter. **The
@@ -1570,9 +1582,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.25.1** · X **0.17.3** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.25.1** · X **0.17.4** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.8.5** ·
-NextUp **0.1.5** · suite **1.61.5**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.61.6**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

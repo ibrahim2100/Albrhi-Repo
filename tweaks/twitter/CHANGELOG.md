@@ -1,5 +1,27 @@
 # Albrhi for X — what changed
 
+## v0.17.4
+
+**It was a mirror after all, and the emblem in the picture is what proved it.**
+
+0.17.3 read the description — the share button on the wrong side, Arabic reading from the wrong
+end — as a re-layout, and argued that a mirrored image would have mirrored the glyphs. The picture
+itself settled it: the post's own photograph was mirrored, `@SaudiDCD` came out as `DCDibuaS@` with
+the letters reversed, and **re-layout cannot reverse a bitmap.** A description of a fault is
+evidence; a picture of it is proof, and the two disagreed.
+
+**UIKit mirrors right-to-left content with a transform, and `-renderInContext:` does not apply the
+receiver's own.** On screen the subtree is laid out one way and flipped by a transform above it,
+which reads correctly. Rendered without that transform it is the raw, unflipped arrangement —
+mirrored — with the bitmaps included, because they are stored pre-mirrored to survive the flip.
+
+**The correction is measured, not assumed.** Two points of the subject's own bounds are converted
+into window coordinates: if its left edge lands to the right of its right edge, everything between
+it and the window is mirrored — whatever applied the flip and wherever it sits in the ancestry. The
+context is flipped to match before anything is drawn. A build that stops mirroring this way measures
+as not mirrored, nothing is applied, and the correction cannot become the next bug. The report counts
+how many pictures needed it.
+
 ## v0.17.3
 
 **The post-as-a-picture came out laid out left-to-right, and the description of the fault is what
