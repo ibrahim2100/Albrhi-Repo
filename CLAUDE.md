@@ -823,6 +823,13 @@ itself, and then **proves the flavour from the staged paths rather than the file
 shipped a "roothide" package built from a rootless tree and it installed as rootless, because
 that is what it was. It refuses to copy a mismatch out.
 
+**Publishing is paused on the owner's instruction, and this is the rule while it is.** Nothing is
+pushed to `main` and no release is cut until they say so — a version that goes out is a version
+strangers update to without knowing what changed, and a measurement loop turns the changelog into a
+list of guesses. Builds are **roothide only** (that is the owner's own device) and go to
+`~/Desktop/Albrhi/`; version numbers stay where they are until a release is actually wanted. Last
+published: suite **1.62.2**.
+
 **While the source is paused, builds go to `~/Desktop/Albrhi-TikTok` and versions do not move.**
 A version number means something was published; nothing is being published during a measurement
 loop, and bumping one per attempt turns the changelog into a list of guesses.
