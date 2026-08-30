@@ -254,6 +254,33 @@ static NSMutableOrderedSet<NSString *> *sciPlaybackFailures = nil;
     [self writeReportToFile];
 }
 
+static NSMutableDictionary<NSString *, NSArray<NSNumber *> *> *sciFeedDoors = nil;
+
++ (void)recordFeedEntryPoint:(NSString *)where
+                        seen:(NSUInteger)seen
+                     dropped:(NSUInteger)dropped {
+    if (!where.length) return;
+    if (!sciFeedDoors) sciFeedDoors = [NSMutableDictionary dictionary];
+
+    NSArray<NSNumber *> *running = sciFeedDoors[where];
+    NSUInteger totalSeen = running.firstObject.unsignedIntegerValue + seen;
+    NSUInteger totalDropped = running.lastObject.unsignedIntegerValue + dropped;
+    sciFeedDoors[where] = @[@(totalSeen), @(totalDropped)];
+    [self writeReportToFile];
+}
+
++ (NSString *)feedEntryPoints {
+    if (!sciFeedDoors.count) return @"no feed batch has arrived yet";
+
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+    for (NSString *where in [sciFeedDoors.allKeys sortedArrayUsingSelector:@selector(compare:)]) {
+        NSArray<NSNumber *> *pair = sciFeedDoors[where];
+        [parts addObject:[NSString stringWithFormat:@"%@ %@ seen / %@ dropped",
+                          where, pair.firstObject, pair.lastObject]];
+    }
+    return [parts componentsJoinedByString:@" · "];
+}
+
 + (void)recordFeedBrake:(NSString *)detail {
     if (!detail.length) return;
     sciFeedBrake = [detail copy];
@@ -915,7 +942,7 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     // What the feed filter saw. 0.20.1 shipped a wider ad list and this line to judge it by,
     // and the line never got written -- so the release changed what is hidden and removed
     // the only way to tell what it hid.
-    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_feed"), [self feedState]];
+    [out appendFormat:@"%@\n  %@\n  %@\n\n", SCILocalized(@"diag_feed"), [self feedState], [self feedEntryPoints]];
 
     // The actual content of the last batch the filter let through -- not just how many,
     // which section identifiers, so a scattered ad on Home can be matched to the exact

@@ -3,6 +3,30 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.25.1
+
+**An ad at launch that disappears after a pull to refresh is a filter watching one door out
+of three.**
+
+Reported exactly that way, with the guess that it was about ordering. It is not ordering: the ad
+filter runs from `%ctor`, long before the first feed request. It is that
+`YTInnerTubeCollectionViewController` fills `sectionRenderers` through **three** methods, all
+confirmed on YouTube 21.34.3 and all taking an array of the same section renderers:
+
+- `-addSectionsFromArray:` — the one this tweak has always filtered
+- `-insertSections:byPosition:error:`
+- `-insertSections:byRelativePositionInSectionList:error:`
+
+A batch delivered through either insert path went past a filter that only watched the add path, and
+the refresh afterwards came through the add path and looked like it had fixed itself. All three are
+filtered now, by one function, with the same identifier list and the same brake.
+
+**And the report names the door.** Each entry point tallies what it saw and what it dropped
+separately, because "Sponsored is still showing" has three different causes that used to look
+identical: no hook running at all, a hook running and not recognising what it saw, or a batch
+arriving through a door with no filter on it. Two of those were already distinguishable; the third
+was not, and it is the one that was actually happening.
+
 ## v1.25.0
 
 **The floating download button is gone, and the bar can never hold more than six.**

@@ -161,6 +161,17 @@
 + (void)recordFeedSections:(NSUInteger)seen dropped:(NSUInteger)dropped;
 + (NSString *)feedState;
 
+/// Which entry point delivered a batch of feed sections, and what happened to it.
+///
+/// `sectionRenderers` is filled by three different methods, and a filter on one of them
+/// leaves the other two open -- which is what an ad appearing at launch and vanishing after
+/// a pull to refresh looks like. Tallied per door, so the next report names it instead of
+/// only saying that something got through.
++ (void)recordFeedEntryPoint:(NSString *)where
+                        seen:(NSUInteger)seen
+                     dropped:(NSUInteger)dropped;
++ (NSString *)feedEntryPoints;
+
 /// Whether YouTube's own two SABR gates were consulted, and what was answered.
 ///
 /// This is the whole of the SABR investigation until a report comes back. SABR is why every

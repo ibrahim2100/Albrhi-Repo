@@ -320,6 +320,18 @@ missing but the question. When a guard and the thing it guards resolve the same 
 by different routes, the guard is wrong by construction, and it fails silently in the
 direction of doing less.
 
+**One collection, three ways in, and a filter on one of them looks like a filter that sometimes
+works.** YouTube's `YTInnerTubeCollectionViewController` fills `sectionRenderers` through
+`-addSectionsFromArray:`, `-insertSections:byPosition:error:` and
+`-insertSections:byRelativePositionInSectionList:error:`. Only the first was hooked, so an ad
+arrived at launch and was gone after a pull to refresh — the refresh coming through the filtered
+door and reading as a fix. **The reported symptom named the shape of the fault exactly and was
+attributed to hook ordering**, which it was not: the filter installs from `%ctor`, long before the
+first request. When a filter works intermittently and the intermittency tracks *how* the data
+arrived rather than *when*, count the entry points before suspecting timing — and tally them
+separately, since "it still shows ads" has one more cause than the two the counters already told
+apart.
+
 **A fallback that covers for a fault turns a bug into a cosmetic complaint.** YouTube's floating
 download button existed for a pivot bar this tweak could not read, and it fired on *any* failure to
 build the tab — including 1.24.0's own bug, where hiding the create button left no room. What
@@ -1515,9 +1527,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.25.0** · X **0.16.2** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.25.1** · X **0.16.2** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.8.5** ·
-NextUp **0.1.5** · suite **1.61.0**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.61.1**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

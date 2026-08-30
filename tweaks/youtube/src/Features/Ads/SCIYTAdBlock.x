@@ -174,25 +174,30 @@ static BOOL SCISectionIsPromoted(id section) {
     return NO;
 }
 
-%hook YTInnerTubeCollectionViewController
-
-- (void)addSectionsFromArray:(NSArray *)sections {
-    if (!SCIPrefEnabled(SCIPrefHideAds) || !sections.count) {
-        %orig;
-        return;
-    }
+/// Filters one batch of section renderers, whichever entry point delivered it.
+///
+/// **There is more than one, and hooking only the first is the likeliest reason an ad shows
+/// at launch and is gone after a pull to refresh.** `sectionRenderers` is populated by
+/// `-addSectionsFromArray:` *and* by `-insertSections:byPosition:error:` and
+/// `-insertSections:byRelativePositionInSectionList:error:` — all three confirmed on
+/// YouTube 21.34.3, all three taking an array of the same renderers. A feed built through
+/// one of the insert paths went past a filter that only watched the add path, and the
+/// refresh afterwards came through the add path and looked fixed.
+///
+/// `where` is carried through into the diagnostics so the next report names the door the
+/// ad came in by, rather than saying only that something got through.
+static NSArray *SCIFilterSections(NSArray *sections, NSString *where) {
+    if (!SCIPrefEnabled(SCIPrefHideAds) || !sections.count) return sections;
 
     NSMutableArray *kept = [NSMutableArray arrayWithCapacity:sections.count];
     for (id section in sections) {
-        if (!SCISectionIsPromoted(section)) {
-            [kept addObject:section];
-        }
+        if (!SCISectionIsPromoted(section)) [kept addObject:section];
     }
 
     // The brake.
     //
-    // 0.20.1 widened this list and emptied the home feed: the test is a substring match
-    // against a section's whole description, and a section's description contains its
+    // 0.20.1 widened the identifier list and emptied the home feed: the test is a substring
+    // match against a section's whole description, and a section's description contains its
     // items -- so a marker that identifies an advertisement *inside* a shelf condemns the
     // shelf and every real video in it. It took a device report to notice, and by then it
     // was released.
@@ -205,23 +210,26 @@ static BOOL SCISectionIsPromoted(id section) {
     if (sections.count >= 4 && kept.count * 3 < sections.count * 2) {
         [SCIYTDiagnostics recordFeedSections:sections.count dropped:0];
         [SCIYTDiagnostics recordFeedBrake:
-            [NSString stringWithFormat:@"refused to drop %lu of %lu — that is not an ad filter",
-             (unsigned long)(sections.count - kept.count), (unsigned long)sections.count]];
-        %orig;
-        return;
+            [NSString stringWithFormat:@"%@: refused to drop %lu of %lu — that is not an ad filter",
+             where, (unsigned long)(sections.count - kept.count), (unsigned long)sections.count]];
+        return sections;
     }
 
     if (kept.count != sections.count) {
-        SCILogV(@"ads: %lu of %lu sections kept",
-                (unsigned long)kept.count, (unsigned long)sections.count);
+        SCILogV(@"ads: %@ kept %lu of %lu sections",
+                where, (unsigned long)kept.count, (unsigned long)sections.count);
     }
 
-    // Counted so "Sponsored is still showing" has an answer. There are two completely
-    // different reasons for it and the same complaint covers both: this hook never running
-    // -- the feed being built somewhere else entirely -- or it running and not recognising
-    // what it saw. A total of zero says the first; a total with nothing dropped says the
-    // second, and the next step differs.
+    // Counted so "Sponsored is still showing" has an answer. There are three completely
+    // different reasons for it and one complaint covers all of them: no hook running at all
+    // -- the feed being built somewhere else again -- a hook running and not recognising
+    // what it saw, or the batch arriving through a door with no filter on it. A total of
+    // zero says the first; a total with nothing dropped says the second; and the entry
+    // point recorded beside the count is what separates the third.
     [SCIYTDiagnostics recordFeedSections:sections.count dropped:sections.count - kept.count];
+    [SCIYTDiagnostics recordFeedEntryPoint:where
+                                      seen:sections.count
+                                   dropped:sections.count - kept.count];
 
     // What is left after filtering -- the sections the identifier list did not recognise.
     // Reported separately from the counts above because a scattered ad on Home is this
@@ -229,11 +237,25 @@ static BOOL SCISectionIsPromoted(id section) {
     // to look at what came through right after seeing it happen.
     [SCIYTDiagnostics recordFeedKeptSample:kept];
 
-    // Filtered on the way in, so the sections are never built into views at all --
-    // as opposed to hiding cells afterwards, which leaves gaps in the feed where the
-    // cell used to be.
-    sections = kept;
-    %orig;
+    return kept;
+}
+
+%hook YTInnerTubeCollectionViewController
+
+// Filtered on the way in, so the sections are never built into views at all -- as opposed
+// to hiding cells afterwards, which leaves gaps in the feed where the cell used to be.
+- (void)addSectionsFromArray:(NSArray *)sections {
+    %orig(SCIFilterSections(sections, @"add"));
+}
+
+- (BOOL)insertSections:(NSArray *)sections byPosition:(int)position error:(id *)error {
+    return %orig(SCIFilterSections(sections, @"insert"), position, error);
+}
+
+- (BOOL)insertSections:(NSArray *)sections
+        byRelativePositionInSectionList:(id)list
+                                  error:(id *)error {
+    return %orig(SCIFilterSections(sections, @"insert-relative"), list, error);
 }
 
 %end

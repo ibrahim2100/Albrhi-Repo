@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.61.1
+
+Albrhi for YouTube 1.25.1: **an ad showing at launch and gone after a refresh was a filter watching
+one door out of three.** `YTInnerTubeCollectionViewController` fills its section list through
+`-addSectionsFromArray:` and two `-insertSections:` methods; only the first was filtered, so a feed
+built through an insert path went past untouched and the refresh afterwards looked like a fix. All
+three are filtered now, and the diagnostics tally each door separately.
+
 ## v1.61.0
 
 Albrhi for YouTube 1.25.0: **the floating download button is gone and the tab bar can never hold
