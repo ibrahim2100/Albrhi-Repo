@@ -1,4 +1,4 @@
-#import "../Model/SCITWSectionRegistry.h"
+#import "../Model/SCITWPageRegistry.h"
 #import "Features/Media/SCITWMedia.h"
 #import "Features/Media/SCITWDownload.h"
 #import "Localization/SCILocalize.h"
@@ -11,13 +11,18 @@
 /// nothing. This project puts confirmations only where a mis-tap becomes something
 /// somebody else sees.
 ///
-@interface SCITWSectionMedia : NSObject
+@interface SCITWPageMedia : NSObject
 @end
 
-@implementation SCITWSectionMedia
+@implementation SCITWPageMedia
 
 + (void)load {
-    [SCITWSectionRegistry registerBuilderWithOrder:5 builder:^NSArray<SCITWSection *> *(__unused UIViewController *host) {
+    [SCITWPageRegistry registerPageWithOrder:70
+                                   title:SCILocalized(@"section_media")
+                                    note:SCILocalized(@"media_footer")
+                                  symbol:@"photo.stack.fill"
+                                    tint:[UIColor systemPinkColor]
+                                 builder:^NSArray<SCITWSection *> *(__unused UIViewController *host) {
         NSArray<SCITWMediaItem *> *media = [SCITWMedia recent];
         if (!media.count) return @[];
 

@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.61.3
+
+Albrhi for X 0.17.1: **the settings are pages now**, the way the YouTube tweak's are — a first
+screen listing eight categories, each opening its own screen built by its own file. One class draws
+every row on both screens, and a page with nothing in it is not listed at all, which is how the
+feature page disappears with the switch layer rather than offering switches that decide nothing.
+
 ## v1.61.2
 
 Albrhi for X 0.17.0: **fifteen new features and a settings screen rebuilt around them.** Copied

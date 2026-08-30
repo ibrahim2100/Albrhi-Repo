@@ -1,4 +1,4 @@
-#import "../Model/SCITWSectionRegistry.h"
+#import "../Model/SCITWPageRegistry.h"
 #import "Prefs.h"
 #import "Localization/SCILocalize.h"
 
@@ -8,13 +8,18 @@
 /// came looking for -- the ad filters and the switch layer are things they will find, and
 /// the download button is the thing they wanted.
 ///
-@interface SCITWSectionAlbrhi : NSObject
+@interface SCITWPageAlbrhi : NSObject
 @end
 
-@implementation SCITWSectionAlbrhi
+@implementation SCITWPageAlbrhi
 
 + (void)load {
-    [SCITWSectionRegistry registerBuilderWithOrder:10 builder:^NSArray<SCITWSection *> *(__unused UIViewController *host) {
+    [SCITWPageRegistry registerPageWithOrder:10
+                                   title:SCILocalized(@"section_albrhi")
+                                    note:SCILocalized(@"page_albrhi_note")
+                                  symbol:@"arrow.down.circle.fill"
+                                    tint:[UIColor systemBlueColor]
+                                 builder:^NSArray<SCITWSection *> *(__unused UIViewController *host) {
         return @[
             [SCITWSection titled:SCILocalized(@"section_albrhi")
                           footer:nil

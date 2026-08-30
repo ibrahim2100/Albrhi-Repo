@@ -1,5 +1,27 @@
 # Albrhi for X — what changed
 
+## v0.17.1
+
+**The settings are pages now, the way the YouTube tweak's are** — a first screen listing eight
+categories, each opening its own screen, each built by its own file.
+
+0.17.0 split the screen into a file per section, which was half the job: the files were separate
+and the *screen* was not. Nine sections and something over thirty rows in one table meant finding
+the link cleaner took scrolling past the save button, the timeline filters, the feature list and the
+diagnostics. Every one of those is now a row that opens onto its own page.
+
+**One class draws every row, on both screens.** `SCITWTable` holds the rendering and the first
+screen and every page inherit it, differing only in what `-buildSections` returns — drawing a switch
+in two places is how one of them ends up with a font the other has not got.
+
+**A page with nothing in it is not listed at all.** That is how the feature page disappears when the
+switch layer is off, rather than offering a screen of switches that decide nothing, and how a page
+for a class this build does not carry never opens onto an empty table. Both screens rebuild on
+appearing, so a count on a diagnostics row is current and a page that stopped applying while it was
+closed is gone when you come back.
+
+The switch layer stays on the first screen, above the list, drawn as the heading it is.
+
 ## v0.17.0
 
 **Fifteen features, and a settings screen rebuilt from scratch around them.**

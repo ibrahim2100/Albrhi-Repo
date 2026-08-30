@@ -1,4 +1,4 @@
-#import "../Model/SCITWSectionRegistry.h"
+#import "../Model/SCITWPageRegistry.h"
 #import "Prefs.h"
 #import "Localization/SCILocalize.h"
 
@@ -9,13 +9,18 @@
 /// project is Arabic, and forcing left-to-right changes the direction of every piece of text
 /// X draws rather than only the one that annoyed somebody.
 ///
-@interface SCITWSectionExtras : NSObject
+@interface SCITWPageExtras : NSObject
 @end
 
-@implementation SCITWSectionExtras
+@implementation SCITWPageExtras
 
 + (void)load {
-    [SCITWSectionRegistry registerBuilderWithOrder:50 builder:^NSArray<SCITWSection *> *(__unused UIViewController *host) {
+    [SCITWPageRegistry registerPageWithOrder:50
+                                   title:SCILocalized(@"section_extras")
+                                    note:SCILocalized(@"page_extras_note")
+                                  symbol:@"sparkles"
+                                    tint:[UIColor systemTealColor]
+                                 builder:^NSArray<SCITWSection *> *(__unused UIViewController *host) {
         SCITWRow *rtl = [SCITWRow switchRow:SCILocalized(@"set_disable_rtl")
                                        note:SCILocalized(@"set_disable_rtl_note")
                                      symbol:@"text.alignleft"

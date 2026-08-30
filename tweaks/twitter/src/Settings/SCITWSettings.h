@@ -14,10 +14,11 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "SCITWTable.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface SCITWSettings : UITableViewController
+@interface SCITWSettings : SCITWTable
 
 /// Puts the screen on top of whatever X is showing.
 ///

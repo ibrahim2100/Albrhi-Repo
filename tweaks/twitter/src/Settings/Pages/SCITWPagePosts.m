@@ -1,17 +1,22 @@
-#import "../Model/SCITWSectionRegistry.h"
+#import "../Model/SCITWPageRegistry.h"
 #import "Prefs.h"
 #import "Localization/SCILocalize.h"
 
 ///
 /// The post itself: the row of buttons under it, and how its picture is drawn.
 ///
-@interface SCITWSectionPosts : NSObject
+@interface SCITWPagePosts : NSObject
 @end
 
-@implementation SCITWSectionPosts
+@implementation SCITWPagePosts
 
 + (void)load {
-    [SCITWSectionRegistry registerBuilderWithOrder:40 builder:^NSArray<SCITWSection *> *(__unused UIViewController *host) {
+    [SCITWPageRegistry registerPageWithOrder:40
+                                   title:SCILocalized(@"section_posts")
+                                    note:SCILocalized(@"section_posts_note")
+                                  symbol:@"text.bubble.fill"
+                                    tint:[UIColor systemIndigoColor]
+                                 builder:^NSArray<SCITWSection *> *(__unused UIViewController *host) {
         return @[
             [SCITWSection titled:SCILocalized(@"section_posts")
                           footer:SCILocalized(@"section_posts_note")

@@ -1,4 +1,4 @@
-#import "../Model/SCITWSectionRegistry.h"
+#import "../Model/SCITWPageRegistry.h"
 #import "../SCITWKeysList.h"
 #import "Features/Switches/SCITWSwitches.h"
 #import "Diagnostics/SCITWReport.h"
@@ -15,17 +15,22 @@
 /// pretending to be one -- the TikTok settings screen shipped exactly that and it was the
 /// first thing reported about it.
 ///
-@interface SCITWSectionAdvanced : NSObject
+@interface SCITWPageAdvanced : NSObject
 @end
 
-@implementation SCITWSectionAdvanced
+@implementation SCITWPageAdvanced
 
 + (void)load {
-    [SCITWSectionRegistry registerBuilderWithOrder:90 builder:^NSArray<SCITWSection *> *(UIViewController *host) {
+    [SCITWPageRegistry registerPageWithOrder:90
+                                   title:SCILocalized(@"section_advanced")
+                                    note:SCILocalized(@"page_advanced_note")
+                                  symbol:@"wrench.and.screwdriver.fill"
+                                    tint:[UIColor systemGrayColor]
+                                 builder:^NSArray<SCITWSection *> *(UIViewController *host) {
         __weak UIViewController *weakHost = host;
 
         // The switch layer itself is not here any more -- it heads the screen, in
-        // SCITWSectionLayer. What is left is the two things you reach *because* of it: the
+        // SCITWPageLayer. What is left is the two things you reach *because* of it: the
         // raw key list, and the log.
         SCITWSection *layer =
             [SCITWSection titled:SCILocalized(@"section_advanced")

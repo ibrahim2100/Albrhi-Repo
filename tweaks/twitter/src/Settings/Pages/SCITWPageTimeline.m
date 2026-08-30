@@ -1,4 +1,4 @@
-#import "../Model/SCITWSectionRegistry.h"
+#import "../Model/SCITWPageRegistry.h"
 #import "Prefs.h"
 #import "Localization/SCILocalize.h"
 
@@ -9,13 +9,18 @@
 /// heading and every one of them ships off: taking a module away is a choice, and choosing
 /// it for everybody is not this tweak's call.
 ///
-@interface SCITWSectionTimeline : NSObject
+@interface SCITWPageTimeline : NSObject
 @end
 
-@implementation SCITWSectionTimeline
+@implementation SCITWPageTimeline
 
 + (void)load {
-    [SCITWSectionRegistry registerBuilderWithOrder:30 builder:^NSArray<SCITWSection *> *(__unused UIViewController *host) {
+    [SCITWPageRegistry registerPageWithOrder:30
+                                   title:SCILocalized(@"section_timeline")
+                                    note:SCILocalized(@"section_timeline_note")
+                                  symbol:@"list.bullet.rectangle"
+                                    tint:[UIColor systemOrangeColor]
+                                 builder:^NSArray<SCITWSection *> *(__unused UIViewController *host) {
         return @[
             [SCITWSection titled:SCILocalized(@"section_timeline")
                           footer:SCILocalized(@"section_timeline_note")

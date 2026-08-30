@@ -1,4 +1,4 @@
-#import "../Model/SCITWSectionRegistry.h"
+#import "../Model/SCITWPageRegistry.h"
 #import "Prefs.h"
 #import "Localization/SCILocalize.h"
 
@@ -9,13 +9,18 @@
 /// copied link carrying the account that shared it, a `t.co` hiding where a tap goes, a
 /// search box remembering, and a phone handed to somebody for a moment.
 ///
-@interface SCITWSectionLinks : NSObject
+@interface SCITWPageLinks : NSObject
 @end
 
-@implementation SCITWSectionLinks
+@implementation SCITWPageLinks
 
 + (void)load {
-    [SCITWSectionRegistry registerBuilderWithOrder:20 builder:^NSArray<SCITWSection *> *(__unused UIViewController *host) {
+    [SCITWPageRegistry registerPageWithOrder:20
+                                   title:SCILocalized(@"section_links")
+                                    note:SCILocalized(@"section_links_note")
+                                  symbol:@"lock.shield.fill"
+                                    tint:[UIColor systemGreenColor]
+                                 builder:^NSArray<SCITWSection *> *(__unused UIViewController *host) {
         return @[
             [SCITWSection titled:SCILocalized(@"section_links")
                           footer:SCILocalized(@"section_links_note")

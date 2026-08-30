@@ -20,7 +20,7 @@
 #import "Features/Profile/SCITWProfileCopy.h"
 #import "Features/Lock/SCITWAppLock.h"
 
-NSString *SCIVersionString = @"v0.17.0";  // AlbrhiTW
+NSString *SCIVersionString = @"v0.17.1";  // AlbrhiTW
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written

@@ -1,4 +1,4 @@
-#import "../Model/SCITWSectionRegistry.h"
+#import "../Model/SCITWPageRegistry.h"
 #import "Features/Switches/SCITWFeatures.h"
 #import "Prefs.h"
 #import "Localization/SCILocalize.h"
@@ -12,13 +12,18 @@
 /// drifting apart is exactly what happens when a table gains a row and a screen fifty lines
 /// below does not.
 ///
-@interface SCITWSectionFeatures : NSObject
+@interface SCITWPageFeatures : NSObject
 @end
 
-@implementation SCITWSectionFeatures
+@implementation SCITWPageFeatures
 
 + (void)load {
-    [SCITWSectionRegistry registerBuilderWithOrder:60 builder:^NSArray<SCITWSection *> *(__unused UIViewController *host) {
+    [SCITWPageRegistry registerPageWithOrder:60
+                                   title:SCILocalized(@"section_features")
+                                    note:SCILocalized(@"features_footer")
+                                  symbol:@"switch.2"
+                                    tint:[UIColor systemPurpleColor]
+                                 builder:^NSArray<SCITWSection *> *(__unused UIViewController *host) {
         if (![[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefSwitchLayer]) {
             // The layer is off, so the rows would be switches that decide nothing. Shown as
             // nothing at all rather than as a section that silently does not apply.
