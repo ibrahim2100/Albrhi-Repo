@@ -9,6 +9,7 @@
 #import "Features/Confirm/SCITWRepostConfirm.h"
 #import "Features/Media/SCITWAvatarSave.h"
 #import "Features/Playback/SCITWPictureInPicture.h"
+#import "Features/Tabs/SCITWTabEntries.h"
 
 NSString *SCITWReportText(void) {
     NSMutableString *text = [NSMutableString string];
@@ -40,6 +41,7 @@ NSString *SCITWReportText(void) {
     [text appendFormat:@"avatar save: %@\n", SCITWAvatarSaveReport()];
     [text appendFormat:@"picture-in-picture: %@\n", SCITWPictureInPictureReport()];
     [text appendFormat:@"in-video button: %@\n", SCITWInVideoButtonReport()];
+    [text appendFormat:@"%@\n", SCITWTabEntriesReport()];
 
     NSArray<SCITWSwitchRecord *> *records = [SCITWSwitches records];
     [text appendFormat:@"switches seen: %lu over %lu questions\n\n",

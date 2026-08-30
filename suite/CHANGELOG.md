@@ -1,5 +1,15 @@
 # Albrhi Changelog
 
+## v1.60.3
+
+Albrhi for X 0.16.0: **Hide Spaces and More tabs are enforced where X decides, not through a
+feature switch it ignores.** The per-key report added in 0.15.0 showed
+`voice_rooms_consumption_enabled` answered 784 times with the Spaces tab still in place, and
+`ios_tab_bar_default_show_communities` asked twice — a key whose own name says it only seeds the
+bar a new account starts with. Every tab in the bottom bar answers `-isExcludedFromTabBar`, so
+that is what the two switches now move.
+
+
 ## v1.60.2
 
 **The source address is lower case now, and the old one stops working.**

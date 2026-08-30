@@ -569,6 +569,21 @@ over 345,902 questions on X 12.14, which is what 0.2.0's seventeen named feature
 from. Every key in that table was observed being asked; what each one *means* is still read
 from its name, and the screen says so rather than implying more certainty than there is.
 
+**A feature switch answered 784 times and still ignored is not the gate, and only a per-key
+tally could say so.** Two X switches were reported as doing nothing. `voice_rooms_consumption_enabled`
+was asked 784 times and answered `NO` on every one, with the Spaces tab exactly where it was;
+`ios_tab_bar_default_show_communities` was asked **twice**, and `default` in its own name is the
+tell — it seeds the bar a *new* account starts with, so a saved tab configuration wins ever after.
+Neither override was failing to apply, which is the one thing four releases of switch work could
+not distinguish from the switch being wrong. **The bottom bar's own entries answer the question
+instead**: every tab is an `…AppNavigationTabEntry` — Home, Communities, Profile, Voice, Grok,
+fifteen more — and each declares `-isExcludedFromTabBar` (`B16@0:8`) and `-isTabViewSideBarOnly`,
+read out of 12.20's class metadata rather than guessed. Force both together: the second is the iPad
+half of the same decision, and a tab admitted to the bar while still marked sidebar-only appears on
+one device and not the other. And the report separates *not in this build* from *hooked, never
+asked* from *asked and answered*, because those need three different investigations and silence
+looks identical in all three.
+
 **`app_attest_*` is not offered, rather than offered with a warning.** Those keys are how X
 proves to its servers that the device is unmodified. Switching them off is not a privacy
 setting — it is telling the server something it will not believe, on an account that can be
@@ -1411,9 +1426,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.22.0** · X **0.15.0** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.22.0** · X **0.16.0** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.8.5** ·
-NextUp **0.1.5** · suite **1.60.2**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.60.3**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

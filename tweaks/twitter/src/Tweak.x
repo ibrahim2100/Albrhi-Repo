@@ -11,8 +11,9 @@
 #import "Features/Confirm/SCITWRepostConfirm.h"
 #import "Features/Media/SCITWAvatarSave.h"
 #import "Features/Playback/SCITWPictureInPicture.h"
+#import "Features/Tabs/SCITWTabEntries.h"
 
-NSString *SCIVersionString = @"v0.15.0";  // AlbrhiTW
+NSString *SCIVersionString = @"v0.16.0";  // AlbrhiTW
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written
@@ -94,6 +95,13 @@ NSString *SCIVersionString = @"v0.15.0";  // AlbrhiTW
     // picture-in-picture. This counts the values X sets on its own instead, so a real
     // toggle can be built from what a report says rather than from a guess.
     SCITWInstallPictureInPictureRecorder();
+
+    // Two feature switches that were reported as doing nothing, enforced where X actually
+    // decides instead. This is installed unconditionally, and each hook asks its own
+    // feature before answering, so the tab bar is untouched until a switch is turned on --
+    // and it is deliberately outside the switch-layer gate below, because it is not a
+    // switch answer. It is the decision the switch was supposed to reach.
+    SCITWInstallTabEntries();
 
     if ([[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefSwitchLayer]) {
         // Before the hooks, not after. X asks its first questions while the app is still

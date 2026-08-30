@@ -281,6 +281,13 @@ static SCITWFeature *Feature(NSString *identifier,
     return [[NSUserDefaults standardUserDefaults] boolForKey:[self preferenceFor:feature]];
 }
 
++ (BOOL)isOnIdentifier:(NSString *)identifier {
+    for (SCITWFeature *feature in [self all]) {
+        if ([feature.identifier isEqualToString:identifier]) return [self isOn:feature];
+    }
+    return NO;
+}
+
 + (void)setOn:(BOOL)on feature:(SCITWFeature *)feature {
     [[NSUserDefaults standardUserDefaults] setBool:on forKey:[self preferenceFor:feature]];
     [self apply];

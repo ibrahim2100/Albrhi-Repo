@@ -73,6 +73,13 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)isOn:(SCITWFeature *)feature;
 + (void)setOn:(BOOL)on feature:(SCITWFeature *)feature;
 
+/// The same question by identifier, for code that enforces a feature outside the switch
+/// layer. A hook cannot hold a `SCITWFeature *` -- it runs from inside X, long after the
+/// table was built -- and reading the preference key by hand in each such file is how the
+/// prefix and the identifier drift apart. Answers NO for an identifier no feature carries,
+/// rather than assuming the caller spelled it right.
++ (BOOL)isOnIdentifier:(NSString *)identifier;
+
 /// Recomputes the feature layer from every switched-on feature and hands it to
 /// SCITWSwitches. Called at launch and after any change.
 + (void)apply;

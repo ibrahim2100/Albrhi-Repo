@@ -1,5 +1,36 @@
 # Albrhi for X — what changed
 
+## v0.16.0
+
+**Hide Spaces and More tabs were pulling the wrong lever, and 0.15.0's report is what said so.**
+
+Both were built entirely as feature-switch overrides, and the per-key evidence added last release
+showed neither switch was failing to apply:
+
+- `voice_rooms_consumption_enabled` was asked **784 times** and answered `NO` every time, and the
+  Spaces tab stayed exactly where it was. A key X consults constantly and still ignores for this
+  surface is not the gate.
+- `ios_tab_bar_default_show_communities` was asked **twice**, and its own name carries `default`:
+  it seeds the bar a new account starts with. A saved tab configuration wins ever after, which is
+  why the switch did nothing on an account that has one — that is to say, on every real account.
+
+**X 12.20's own class metadata names the real decision.** Every tab in the bottom bar is an
+`…AppNavigationTabEntry` — Home, Communities, Profile, Voice, Grok, fifteen more — and each answers
+`-isExcludedFromTabBar` (`B16@0:8`) and `-isTabViewSideBarOnly`. One BOOL per tab, asked by X
+itself. So the two switches are enforced there instead: **Hide Spaces** excludes the Voice entry,
+**More tabs** includes Communities and Profile. Their feature-switch keys are untouched and still
+apply, since they cover surfaces beyond the tab bar.
+
+Both getters are forced together on purpose. `-isTabViewSideBarOnly` is the iPad half of the same
+decision, and a tab admitted to the bar while still marked sidebar-only appears on one device and
+not the other.
+
+**And the report separates the three ways this can come back empty**, because they need three
+different answers: the class not being in this build, the hook attaching and X never consulting it,
+and the getter being asked and answered. Silence meaning any of the three is what cost the previous
+two releases.
+
+
 ## v0.15.0
 
 **The report now says what a switched-on feature actually did, key by key** — because *the option
