@@ -92,14 +92,22 @@ static SCIYTMSaveSheet *sciLiveSheet = nil;
     note.textColor = [UIColor secondaryLabelColor];
     note.numberOfLines = 0;
 
-    self.nameField = [self fieldWithText:name placeholder:SCILocalized(@"dl_confirm_name")
-                                  symbol:@"textformat"];
-    self.sectionField = [self fieldWithText:section placeholder:SCILocalized(@"dl_confirm_section")
-                                     symbol:@"folder"];
+    //
+    // **The row is what comes back, and the field is handed over separately.**
+    //
+    // The first version returned the field and put `field.superview` into the stack. A view
+    // retains its *subviews*, never its superview -- so the row, owned by nothing once the
+    // helper returned, was released immediately and `superview` was left pointing at freed
+    // memory. That is the crash: it happened the moment the card was built, which is the
+    // moment the download button was pressed.
+    //
+    UIView *nameRow = [self rowWithText:name placeholder:SCILocalized(@"dl_confirm_name")
+                                 symbol:@"textformat" field:&_nameField];
+    UIView *sectionRow = [self rowWithText:section placeholder:SCILocalized(@"dl_confirm_section")
+                                    symbol:@"folder" field:&_sectionField];
 
     UIStackView *stack = [[UIStackView alloc] initWithArrangedSubviews:@[heading, note,
-                                                                        self.nameField.superview,
-                                                                        self.sectionField.superview]];
+                                                                        nameRow, sectionRow]];
     stack.axis = UILayoutConstraintAxisVertical;
     stack.spacing = 12;
     stack.translatesAutoresizingMaskIntoConstraints = NO;
@@ -115,7 +123,6 @@ static SCIYTMSaveSheet *sciLiveSheet = nil;
         chips.axis = UILayoutConstraintAxisHorizontal;
         chips.spacing = 8;
         chips.translatesAutoresizingMaskIntoConstraints = NO;
-        [strip addSubview:chips];
 
         for (NSString *existing in sections) {
             UIButton *chip = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -173,9 +180,12 @@ static SCIYTMSaveSheet *sciLiveSheet = nil;
     } completion:nil];
 }
 
-/// A field inside its own rounded row, with an icon. Returned as the field; its `superview` is the
-/// row, which is what goes into the stack.
-- (UITextField *)fieldWithText:(NSString *)text placeholder:(NSString *)placeholder symbol:(NSString *)symbol {
+/// A field inside its own rounded row, with an icon. **The row is returned** and the field is
+/// written into `outField`, because whoever holds the row is the only thing keeping it alive.
+- (UIView *)rowWithText:(NSString *)text
+            placeholder:(NSString *)placeholder
+                 symbol:(NSString *)symbol
+                  field:(UITextField * __strong *)outField {
     UIView *row = [[UIView alloc] init];
     row.backgroundColor = [UIColor tertiarySystemBackgroundColor];
     row.layer.cornerRadius = 12;
@@ -204,7 +214,9 @@ static SCIYTMSaveSheet *sciLiveSheet = nil;
         [field.trailingAnchor constraintEqualToAnchor:row.trailingAnchor constant:-12],
         [field.centerYAnchor constraintEqualToAnchor:row.centerYAnchor],
     ]];
-    return field;
+
+    if (outField) *outField = field;
+    return row;
 }
 
 - (UIButton *)buttonWithTitle:(NSString *)title filled:(BOOL)filled action:(SEL)action {

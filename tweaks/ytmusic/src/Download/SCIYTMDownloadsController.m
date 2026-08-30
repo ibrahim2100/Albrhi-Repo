@@ -86,12 +86,23 @@ static CGFloat SCIYTMBottomBarHeight(UIWindow *window) {
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
 
-    UIEdgeInsets safe = self.view.window.safeAreaInsets;
+    // The key window when this view has none of its own: a child added to a parent that is
+    // itself off screen for a moment reports no window, and reading zero from that is how an
+    // inset comes out right on the second layout pass and wrong on the first -- which is the
+    // one that decides where the list appears.
+    UIWindow *window = self.view.window;
+    if (!window) {
+        for (UIWindow *candidate in [UIApplication sharedApplication].windows) {
+            if (candidate.isKeyWindow) { window = candidate; break; }
+        }
+    }
+
+    UIEdgeInsets safe = window.safeAreaInsets;
 
     // The pivot bar sits above the home indicator and is the app's own chrome rather than a
     // system inset, so its height is asked of the app: whatever the window reports below the
     // safe area is what the bar and the docked player occupy together.
-    CGFloat bar = SCIYTMBottomBarHeight(self.view.window);
+    CGFloat bar = SCIYTMBottomBarHeight(window);
     UIEdgeInsets wanted = UIEdgeInsetsMake(safe.top, 0, MAX(safe.bottom, bar), 0);
 
     if (UIEdgeInsetsEqualToEdgeInsets(self.tableView.contentInset, wanted)) return;
