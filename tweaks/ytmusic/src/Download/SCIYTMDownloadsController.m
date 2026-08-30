@@ -7,6 +7,12 @@
 @property (nonatomic, strong) NSArray<SCIYTMTrack *> *tracks;
 @property (nonatomic, strong) UITableView *tableView;
 
+/// The screen's own heading: what this page is, and how much is in it. A navigation bar would
+/// have been the ordinary answer and there is none here -- the page is a child inside the app's
+/// own browse controller, which has its own chrome and no title to lend us.
+@property (nonatomic, strong) UIView *header;
+@property (nonatomic, strong) UILabel *headerCount;
+
 /// The transport, drawn by us because the app's belongs to the app's player.
 ///
 /// **This is the whole of "I cannot pause or skip".** A file of ours plays through our own
@@ -35,8 +41,12 @@
 
     self.view.backgroundColor = [UIColor systemBackgroundColor];
 
+    [self buildHeader];
+
     self.tableView = [[UITableView alloc] initWithFrame:CGRectZero
                                                   style:UITableViewStyleInsetGrouped];
+    self.tableView.backgroundColor = [UIColor clearColor];
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
     [self.view addSubview:self.tableView];
@@ -79,7 +89,68 @@
     // or deleted from the Files app, must be right when it comes back. Listing a folder is cheap
     // enough that a cache would only be a way to be wrong.
     self.tracks = SCIYTMSavedTracks();
+    [self refreshHeader];
     [self.tableView reloadData];
+    [self.view setNeedsLayout];
+}
+
+#pragma mark - The heading
+
+- (void)buildHeader {
+    self.header = [[UIView alloc] init];
+    [self.view addSubview:self.header];
+
+    UIImageView *mark = [[UIImageView alloc] initWithImage:
+        [UIImage systemImageNamed:@"arrow.down.circle.fill"
+                withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:30
+                                                                                  weight:UIImageSymbolWeightSemibold]]];
+    mark.tintColor = SCIYTMBarAccent();
+    mark.contentMode = UIViewContentModeScaleAspectFit;
+    mark.translatesAutoresizingMaskIntoConstraints = NO;
+    [mark.widthAnchor constraintEqualToConstant:34].active = YES;
+    [mark.heightAnchor constraintEqualToConstant:34].active = YES;
+
+    UILabel *title = [[UILabel alloc] init];
+    title.text = SCILocalized(@"downloads_title");
+    title.font = [UIFont systemFontOfSize:26 weight:UIFontWeightBold];
+    title.textColor = [UIColor labelColor];
+
+    self.headerCount = [[UILabel alloc] init];
+    self.headerCount.font = [UIFont systemFontOfSize:13];
+    self.headerCount.textColor = [UIColor secondaryLabelColor];
+
+    UIStackView *text = [[UIStackView alloc] initWithArrangedSubviews:@[title, self.headerCount]];
+    text.axis = UILayoutConstraintAxisVertical;
+    text.spacing = 1;
+
+    UIStackView *row = [[UIStackView alloc] initWithArrangedSubviews:@[mark, text]];
+    row.axis = UILayoutConstraintAxisHorizontal;
+    row.alignment = UIStackViewAlignmentCenter;
+    row.spacing = 12;
+    row.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.header addSubview:row];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [row.leadingAnchor constraintEqualToAnchor:self.header.leadingAnchor constant:20],
+        [row.trailingAnchor constraintLessThanOrEqualToAnchor:self.header.trailingAnchor constant:-20],
+        [row.centerYAnchor constraintEqualToAnchor:self.header.centerYAnchor],
+    ]];
+}
+
+/// The count and the size on disk, refreshed with the list.
+///
+/// Bytes rather than a track count alone: *how much of my phone is this* is the question a
+/// downloads screen is actually asked, and it is the one the Files app cannot answer for a folder
+/// buried three levels down.
+- (void)refreshHeader {
+    unsigned long long total = 0;
+    for (SCIYTMTrack *track in self.tracks) total += track.bytes;
+
+    NSString *size = [NSByteCountFormatter stringFromByteCount:(long long)total
+                                                     countStyle:NSByteCountFormatterCountStyleFile];
+    self.headerCount.text = self.tracks.count
+        ? [NSString stringWithFormat:@"%lu · %@", (unsigned long)self.tracks.count, size]
+        : SCILocalized(@"downloads_empty");
 }
 
 #pragma mark - The transport
@@ -259,12 +330,31 @@ static CGFloat SCIYTMBottomBarHeight(UIWindow *window) {
 ///
 /// The safe area moves: a call banner appears, the device rotates, the player docks over the
 /// bottom. Anything read once at load is the value the screen had before any of that.
+/// The real safe area, taken as the largest any window reports.
+///
+/// **`isKeyWindow` is not a reliable way to find the screen.** A keyboard window, a text-effects
+/// window or any overlay can be key at the moment this runs, and those report insets of zero --
+/// which is a top inset of nothing on a notched phone, and a list that starts under the clock.
+/// Five earlier fixes were each undone by something; this one was measuring the wrong window.
+///
+/// The largest is the right answer rather than a guess: an overlay never reports *more* than the
+/// screen it sits on, so the maximum is the screen's own.
+static UIEdgeInsets SCIYTMScreenSafeArea(void) {
+    UIEdgeInsets widest = UIEdgeInsetsZero;
+
+    for (UIWindow *window in [UIApplication sharedApplication].windows) {
+        UIEdgeInsets insets = window.safeAreaInsets;
+        widest.top = MAX(widest.top, insets.top);
+        widest.bottom = MAX(widest.bottom, insets.bottom);
+        widest.left = MAX(widest.left, insets.left);
+        widest.right = MAX(widest.right, insets.right);
+    }
+    return widest;
+}
+
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
 
-    // The key window when this view has none of its own: a child added to a parent that is
-    // off screen for a moment reports no window, and reading zero from that is how a measurement
-    // comes out wrong on the first pass -- the one that decides where things appear.
     UIWindow *window = self.view.window;
     if (!window) {
         for (UIWindow *candidate in [UIApplication sharedApplication].windows) {
@@ -272,14 +362,20 @@ static CGFloat SCIYTMBottomBarHeight(UIWindow *window) {
         }
     }
 
-    UIEdgeInsets safe = window.safeAreaInsets;
+    UIEdgeInsets safe = SCIYTMScreenSafeArea();
     CGFloat width = CGRectGetWidth(self.view.bounds);
     CGFloat height = CGRectGetHeight(self.view.bounds);
 
+    // **How far down this view already sits.** If the parent has already placed us below the
+    // status bar, adding the safe area again would push the list down twice -- the opposite
+    // mistake, and just as visible. Asked of the window rather than assumed either way.
+    CGFloat originInWindow = [self.view convertPoint:CGPointZero toView:nil].y;
+    CGFloat top = MAX(0, safe.top - originInWindow);
+
     // What the app has parked at the bottom: its tab bar, and its own mini player above it when
-    // something of YouTube Music's is playing. Both measured off the views themselves -- their
-    // heights belong to the app, differ by device, and change as the player docks and undocks.
-    CGFloat chrome = MAX(safe.bottom, SCIYTMBottomBarHeight(window) + SCIYTMMiniPlayerHeight(window));
+    // something of YouTube Music's is playing. Both measured off the views themselves.
+    CGFloat chrome = MAX(safe.bottom,
+                         SCIYTMBottomBarHeight(window) + SCIYTMMiniPlayerHeight(window));
 
     CGFloat transportHeight = self.playerBar.hidden ? 0 : 52;
     CGFloat transportGap = self.playerBar.hidden ? 0 : 8;
@@ -288,11 +384,11 @@ static CGFloat SCIYTMBottomBarHeight(UIWindow *window) {
                                       height - chrome - transportGap - transportHeight,
                                       width - 24, transportHeight);
 
-    // **The table's frame, not its inset.** It begins below the status bar because that is where
-    // it is put, which nothing downstream can argue with.
-    CGFloat top = safe.top;
-    self.tableView.frame = CGRectMake(0, top, width,
-                                      height - top - chrome - transportGap - transportHeight);
+    self.header.frame = CGRectMake(0, top, width, self.header.hidden ? 0 : 74);
+    CGFloat listTop = top + (self.header.hidden ? 0 : 74);
+
+    self.tableView.frame = CGRectMake(0, listTop, width,
+                                      height - listTop - chrome - transportGap - transportHeight);
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
