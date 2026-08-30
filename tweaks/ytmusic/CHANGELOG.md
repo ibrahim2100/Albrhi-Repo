@@ -1,5 +1,25 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.8.6
+
+**The download button still shows the Premium prompt, and the empty Downloads screen could not say
+why.**
+
+Three completely different failures wear that same face: the interception never installing, the
+class it hooks never being called for that tap, and being called on every tap but never recognising
+the badge. Each needs a different next step, and until now the screen showed only the node keys it
+had seen — which is blank in the first two cases and blank in the third if no tap ever carried a
+key.
+
+Each is counted separately now, and the Downloads screen says which one happened in one line: the
+class not being in the build, the hook never reached, taps seen but none naming a download, or the
+badge recognised with a count of what came of it.
+
+Nothing about the Premium gate itself changed, and nothing will: this intercepts the tap and runs
+Albrhi's own downloader instead. It does not unlock YouTube Music's offline library, which is a paid
+feature and the same line this project drew at Locket's entitlement patch and at Spotify's Premium
+spoof.
+
 ## v0.8.5
 
 **The crash was a number.**

@@ -315,6 +315,8 @@ static UIViewController *SCIYTMOwningController(UIView *view) {
 /// the Downloads screen when nothing has been saved, which is exactly when somebody is asking.
 ///
 static NSMutableArray<NSString *> *sciSeenKeys = nil;
+static BOOL sciDownloadInstalled = NO;
+static NSUInteger sciTapsSeen = 0, sciBadgeTaps = 0, sciNoManifest = 0, sciStarted = 0;
 
 void SCIYTMRememberKey(NSString *key) {
     if (!key.length) return;
@@ -339,6 +341,11 @@ NSArray<NSString *> *SCIYTMSeenKeys(void) {
 %hook ELMTouchCommandPropertiesHandler
 
 - (void)handleTap {
+    // Counted before anything else, including the enabled check: "did this hook ever run"
+    // is the first of the three questions a Premium prompt could be answering, and it is
+    // the only one that cannot be worked out afterwards.
+    sciTapsSeen++;
+
     //
     // **The app's own download badge, intercepted before its Premium gate.**
     //
@@ -377,11 +384,14 @@ NSArray<NSString *> *SCIYTMSeenKeys(void) {
 
     SCIYTMRememberKey(node.key);
 
+
     if (!node.key.length ||
         [node.key rangeOfString:@"download" options:NSCaseInsensitiveSearch].location == NSNotFound) {
         %orig;
         return;
     }
+
+    sciBadgeTaps++;
 
     id playingVC = SCIYTMOwningController(recogniser.view);
     id playerVC = SCIYTMValue(playingVC, @"playerViewController") ?: SCIYTMValue(playingVC, @"playerVC");
@@ -402,10 +412,12 @@ NSArray<NSString *> *SCIYTMSeenKeys(void) {
         // indistinguishable: this project has spent releases on reports that could not separate
         // *the hook never ran* from *the hook ran and found nothing*.
         //
+        sciNoManifest++;
         SCIYTMTell(SCILocalized(@"download_failed"), SCILocalized(@"download_no_manifest"));
         return;
     }
 
+    sciStarted++;
     SCIYTMTell(SCILocalized(@"download_started"), SCILocalized(@"download_started_note"));
 
     SCIYTMDownloadTrack([NSURL URLWithString:manifest],
@@ -417,9 +429,27 @@ NSArray<NSString *> *SCIYTMSeenKeys(void) {
 
 %end
 
+NSString *SCIYTMDownloadReport(void) {
+    if (!sciDownloadInstalled) {
+        return @"ELMTouchCommandPropertiesHandler is not in this build — nothing intercepts the badge";
+    }
+    if (!YTMU(@"YTMUltimateIsEnabled")) return @"Albrhi is switched off for this app";
+    if (sciTapsSeen == 0) {
+        return @"hooked, but no tap has reached it — the badge is handled somewhere else";
+    }
+    if (sciBadgeTaps == 0) {
+        return [NSString stringWithFormat:@"%lu tap(s) seen, none named a download badge",
+                (unsigned long)sciTapsSeen];
+    }
+    return [NSString stringWithFormat:@"%lu tap(s), %lu on the badge, %lu started, %lu with no stream",
+            (unsigned long)sciTapsSeen, (unsigned long)sciBadgeTaps,
+            (unsigned long)sciStarted, (unsigned long)sciNoManifest];
+}
+
 void SCIYTMInstallDownload(void) {
     Class handler = NSClassFromString(@"ELMTouchCommandPropertiesHandler");
     if (!handler) return;
 
     %init(SCIYTMDownloadGroup);
+    sciDownloadInstalled = YES;
 }

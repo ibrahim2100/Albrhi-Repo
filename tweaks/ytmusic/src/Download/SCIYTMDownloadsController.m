@@ -45,12 +45,13 @@
         // **The empty state is where the diagnosis belongs.** Somebody reading this row is somebody
         // whose download did not happen, and the one fact that explains it is what the button they
         // pressed is called on their build.
+        NSString *state = SCIYTMDownloadReport();
         NSArray<NSString *> *keys = SCIYTMSeenKeys();
         cell.detailTextLabel.text = keys.count
-            ? [NSString stringWithFormat:@"%@\n\n%@", SCILocalized(@"downloads_empty_note"),
+            ? [NSString stringWithFormat:@"%@\n\n%@", [SCILocalized(@"downloads_empty_note") stringByAppendingFormat:@"\n\n%@", state],
                 [NSString stringWithFormat:SCILocalized(@"downloads_keys"),
                     [keys componentsJoinedByString:@", "]]]
-            : SCILocalized(@"downloads_empty_note");
+            : [SCILocalized(@"downloads_empty_note") stringByAppendingFormat:@"\n\n%@", state];
         cell.detailTextLabel.numberOfLines = 0;
         cell.textLabel.textColor = [UIColor secondaryLabelColor];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;

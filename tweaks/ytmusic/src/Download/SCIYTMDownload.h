@@ -32,6 +32,14 @@ NSArray<NSString *> *SCIYTMSeenKeys(void);
 /// Records one, ignoring repeats.
 void SCIYTMRememberKey(NSString *key);
 
+/// One line saying what the interception has actually done.
+///
+/// **Three failures wear the same face here — the Premium prompt** — and until now the empty
+/// Downloads screen could not tell them apart: the hook not installing at all, the hook installing
+/// and never being called, or being called on every tap and never recognising the badge. Each needs
+/// a different next step, so each is counted separately.
+NSString *SCIYTMDownloadReport(void);
+
 /// Intercepts the app's own download badge on the now-playing screen.
 void SCIYTMInstallDownload(void);
 

@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.62.1
+
+Albrhi for YouTube Music 0.8.6: **the Downloads screen now says why a download did not happen.**
+The Premium prompt appearing has three separate causes — the interception not installing, its class
+never being called for that tap, or the badge not being recognised — and they were indistinguishable
+until now. Each is counted, and the empty screen names the one that occurred.
+
 ## v1.62.0
 
 Albrhi for X 0.18.1: **two switches for one intention, removed.** Hiding suggested accounts had a
