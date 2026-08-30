@@ -5,7 +5,7 @@
 #import "Prefs.h"
 #import "SCILog.h"
 
-@interface T1WebViewController : UIViewController
+@interface T1BaseWebViewController : UIViewController
 @property (nonatomic, copy, readonly) NSURL *rootURL;
 @end
 
@@ -17,6 +17,7 @@ static BOOL sciEntityURLPresent = NO;
 static NSUInteger sciLinksExpanded = 0, sciLinksCleaned = 0;
 static NSUInteger sciOpenedInSafari = 0, sciSafariNoURL = 0, sciWebViewSkipped = 0;
 static BOOL sciWebViewPresent = NO;
+static NSMutableOrderedSet<NSString *> *sciSkippedClasses = nil;
 
 /// Kept so a rewrite of the pasteboard cannot start a loop: writing a cleaned URL fires the
 /// change notification again, and without remembering what we just wrote the observer would
@@ -161,32 +162,55 @@ static char kSCISafariURL;
 %end
 
 
+/// The web controllers that are a link somebody tapped.
+///
+/// **An allow list, not a deny list, and that is the whole safety of this feature.** Twenty-six
+/// classes descend from `T1BaseWebViewController`, and most of them are not links at all:
+/// the bouncer, the login challenge and the password reset are sign-in; Stripe, payments and
+/// the one-dollar screen are billing; analytics, Birdwatch, business application, jobs
+/// settings and the bio editor are ordinary app screens that happen to be drawn with a web
+/// view. Sending any of those to Safari would not be this feature -- it would be breaking
+/// logging in, paying, or a settings screen. Listing what to *exclude* means a class added
+/// by a future X update is excluded by default only if somebody remembers to add it; listing
+/// what to *include* means it is left alone until somebody looks.
+static NSSet<NSString *> *SCILinkBrowsers(void) {
+    static NSSet *browsers = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        browsers = [NSSet setWithArray:@[
+            @"T1WebViewController",
+            @"_TtC14T1TwitterSwift26PreloadedWebviewController",
+            @"_TtC14T1TwitterSwift26MediaWebsiteViewController",
+        ]];
+    });
+    return browsers;
+}
+
 %group LinksWebView
 
-%hook T1WebViewController
+%hook T1BaseWebViewController
 
-/// X's own in-app browser, which is what actually opens a link.
+/// X's own in-app browser, at the moment before the page is fetched.
 ///
-/// **`SFSafariViewController` was the wrong class entirely.** 0.17.2 fixed how the URL was
-/// read from it and the feature still did nothing, because X barely uses that class -- the
-/// name appears once across its binaries. The browser is `T1WebViewController`, and
-/// `-_t1_loadInitialURL` on its base is the moment before the page is fetched, with the
-/// address already in `rootURL`.
+/// **Hooked on the base rather than on one subclass**, because 0.17.5 hooked
+/// `T1WebViewController` exactly and links still opened in the app: what X actually presents
+/// for a tapped link is a *preloaded* controller, a different class descending from the same
+/// place. The base is where `-_t1_loadInitialURL` and `rootURL` are declared, so it is the
+/// one hook that sees every one of them.
 ///
-/// **Only the plain browser, never a subclass.** `T1BouncerWebViewController`,
-/// `T1LoginChallengeWebViewController`, `T1MonetizationWebViewController` and the rest
-/// descend from the same base, and they are sign-in, verification and billing flows -- each
-/// one carrying state that belongs to the app session. Sending those to Safari would not be
-/// this feature, it would be breaking the ability to log in. The exact class is compared,
-/// not `-isKindOfClass:`.
+/// Every class that is turned away is recorded by name. If a link still opens in the app
+/// after this, the report says exactly which class opened it -- which is the question two
+/// releases have now been spent guessing at.
 - (void)_t1_loadInitialURL {
     if (![[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefOpenInSafari]) {
         %orig;
         return;
     }
 
-    if ([self class] != NSClassFromString(@"T1WebViewController")) {
+    NSString *name = NSStringFromClass([self class]);
+    if (![SCILinkBrowsers() containsObject:name]) {
         sciWebViewSkipped++;
+        if (name.length) [sciSkippedClasses addObject:name];
         %orig;
         return;
     }
@@ -231,12 +255,16 @@ NSString *SCITWLinksReport(void) {
         ? [NSString stringWithFormat:@"%lu copied link(s) cleaned", (unsigned long)sciLinksCleaned]
         : @"pasteboard not watched"];
     if (!sciWebViewPresent) {
-        [parts addObject:@"T1WebViewController not in this build"];
+        [parts addObject:@"T1BaseWebViewController not in this build"];
     } else {
         [parts addObject:[NSString stringWithFormat:
-                          @"%lu opened in Safari, %lu with no url, %lu left to X (sign-in and billing)",
+                          @"%lu opened in Safari, %lu with no url, %lu left to X%@",
                           (unsigned long)sciOpenedInSafari, (unsigned long)sciSafariNoURL,
-                          (unsigned long)sciWebViewSkipped]];
+                          (unsigned long)sciWebViewSkipped,
+                          sciSkippedClasses.count
+                              ? [@" — " stringByAppendingString:
+                                 [[sciSkippedClasses array] componentsJoinedByString:@", "]]
+                              : @""]];
     }
 
     return [@"links: " stringByAppendingString:[parts componentsJoinedByString:@" · "]];
@@ -263,7 +291,8 @@ void SCITWInstallLinks(void) {
     // uses it: a build that starts using it costs nothing to have covered already.
     %init(LinksSafari);
 
-    sciWebViewPresent = (NSClassFromString(@"T1WebViewController") != nil);
+    sciSkippedClasses = [NSMutableOrderedSet orderedSet];
+    sciWebViewPresent = (NSClassFromString(@"T1BaseWebViewController") != nil);
     if (sciWebViewPresent) {
         %init(LinksWebView);
     }

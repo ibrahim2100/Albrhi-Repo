@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.61.8
+
+Albrhi for X 0.17.6: **the post-as-a-picture is confirmed fixed**, and open-in-Safari moves to
+`T1BaseWebViewController` — what X presents for a tapped link is a preloaded controller, not the
+class 0.17.5 compared against. Which controllers count as links is an allow list, because most of
+the twenty-six descending from that base are sign-in, billing or ordinary app screens drawn with a
+web view. Every class turned away is named in the diagnostics report.
+
 ## v1.61.7
 
 Albrhi for X 0.17.5: **links now really do open in Safari.** The hook was on

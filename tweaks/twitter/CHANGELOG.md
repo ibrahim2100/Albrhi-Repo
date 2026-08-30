@@ -1,5 +1,31 @@
 # Albrhi for X — what changed
 
+## v0.17.6
+
+**Confirmed working: the post-as-a-picture is no longer mirrored.** The measured flip correction was
+right, and that feature is done.
+
+**Links still opened in the app, because the class X presents for a tapped link is not the one that
+was hooked.** 0.17.5 hooked `T1WebViewController` and compared the exact class; what X actually
+shows is a *preloaded* controller — a different class descending from the same base, so the compare
+turned it away.
+
+The hook is on `T1BaseWebViewController` now, which is where `-_t1_loadInitialURL` and `rootURL` are
+declared and therefore the one place that sees every one of the twenty-six controllers descending
+from it.
+
+**Which of those are treated as links is an allow list, and that is the whole safety of the
+feature.** Most of those classes are not links at all: the bouncer, the login challenge and the
+password reset are sign-in; Stripe, payments and the one-dollar screen are billing; analytics,
+Birdwatch, the business application, jobs settings and the bio editor are ordinary app screens that
+happen to be drawn with a web view. **A deny list would send a class added by a future X update
+straight to Safari** until somebody remembered to add it; an allow list leaves it alone until
+somebody looks.
+
+**And every class turned away is now recorded by name in the report** — the question two releases
+have been spent guessing at. If a link still opens in the app, the report says which class opened
+it.
+
 ## v0.17.5
 
 **Opening links in Safari was hooking the wrong class entirely.**
