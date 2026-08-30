@@ -713,6 +713,15 @@ counter is indistinguishable from a feature that works. The same shape sat one l
 post-to-image renderer, where `-drawViewHierarchyInRect:afterScreenUpdates:NO` returns a BOOL that
 was being discarded.
 
+**The safe area describes the device, never the app's own bars — and a screen placed inside
+somebody else's controller has to clear both.** YouTube Music's Downloads page cleared the status
+bar correctly and its heading still vanished, under the app's own header with the logo in it. The
+safe area knows about the notch, the clock and the home indicator; it knows nothing about a bar the
+app drew for itself directly beneath them. The same is true at the bottom, where the tab bar and
+the docked mini player sit *inside* the safe area. **Measure the app's chrome off the views
+themselves and take whichever ends lower** — by shape rather than by one class name, so a renamed
+header keeps working and a build without one contributes nothing.
+
 **Five fixes for one symptom, all of them correct, all of them undone — because the wrong thing
 was being adjusted.** YouTube Music's Downloads list kept starting under the status bar, and every
 attempt moved `contentInset`: measured from the parent (a parent hosting content in its own chrome

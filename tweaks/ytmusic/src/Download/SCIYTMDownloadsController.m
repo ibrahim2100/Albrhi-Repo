@@ -307,6 +307,49 @@ static CGFloat SCIYTMHeightOfClass(UIWindow *window, NSString *className) {
     return 0;
 }
 
+/// Where the app's own top bar ends, in window coordinates.
+///
+/// **The header went under the YouTube Music logo, and the safe area was never going to say so.**
+/// The safe area describes the *device* -- the notch, the clock, the home indicator -- and knows
+/// nothing about a bar the app drew itself. YouTube Music keeps its logo and search in a header of
+/// its own, directly below the status bar, and content that merely clears the safe area is content
+/// underneath it.
+///
+/// Found by shape rather than by one class name: any visible view whose class reads as a header or
+/// a navigation bar, sitting in the top third of the window, and wide enough to be chrome rather
+/// than a control inside it. A build that renames its header keeps working; a build with no header
+/// contributes nothing and the safe area alone decides.
+static CGFloat SCIYTMTopChromeBottom(UIWindow *window) {
+    if (!window) return 0;
+
+    CGFloat lowest = 0;
+    CGFloat limit = CGRectGetHeight(window.bounds) / 3;
+
+    NSMutableArray<UIView *> *queue = [NSMutableArray arrayWithObject:window];
+    while (queue.count) {
+        UIView *view = queue.firstObject;
+        [queue removeObjectAtIndex:0];
+
+        if (view.hidden || view.alpha < 0.01) continue;
+
+        NSString *name = NSStringFromClass([view class]);
+        BOOL looksLikeChrome = [name containsString:@"FlexibleHeader"] ||
+                               [name containsString:@"NavigationBar"] ||
+                               [name isEqualToString:@"YTMSearchBarView"];
+
+        if (looksLikeChrome) {
+            CGRect inWindow = [view convertRect:view.bounds toView:window];
+            BOOL nearTop = CGRectGetMinY(inWindow) < limit;
+            BOOL wideEnough = CGRectGetWidth(inWindow) > CGRectGetWidth(window.bounds) * 0.6;
+
+            if (nearTop && wideEnough) lowest = MAX(lowest, CGRectGetMaxY(inWindow));
+            continue;
+        }
+        [queue addObjectsFromArray:view.subviews];
+    }
+    return lowest;
+}
+
 /// The app's own mini player, when one of its tracks is docked above the tab bar.
 ///
 /// **This is why our transport ended up underneath it.** The bar was placed above the tab bar and
@@ -370,7 +413,11 @@ static UIEdgeInsets SCIYTMScreenSafeArea(void) {
     // status bar, adding the safe area again would push the list down twice -- the opposite
     // mistake, and just as visible. Asked of the window rather than assumed either way.
     CGFloat originInWindow = [self.view convertPoint:CGPointZero toView:nil].y;
-    CGFloat top = MAX(0, safe.top - originInWindow);
+
+    // Below the device's own furniture *and* the app's. Whichever ends lower is the one that
+    // matters, and on this app it is the header with the logo in it.
+    CGFloat clearsTo = MAX(safe.top, SCIYTMTopChromeBottom(window));
+    CGFloat top = MAX(0, clearsTo - originInWindow);
 
     // What the app has parked at the bottom: its tab bar, and its own mini player above it when
     // something of YouTube Music's is playing. Both measured off the views themselves.
