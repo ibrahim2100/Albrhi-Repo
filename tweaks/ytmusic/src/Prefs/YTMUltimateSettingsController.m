@@ -1,6 +1,7 @@
 #import "../Headers/ABCSwitch.h"
 #import "YTMUltimateSettingsController.h"
 #import "../Download/SCIYTMDownload.h"
+#import "../Localization/SCILocalize.h"
 
 @implementation YTMUltimateSettingsController
 
@@ -107,7 +108,19 @@
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
     if (section == 0) {
-        return LOC(@"RESTART_FOOTER");
+        //
+        // **The diagnosis lives in the footer, not in the row.**
+        //
+        // It was a cell subtitle for two rounds and was never seen. A footer is drawn by the
+        // table itself, wraps to as many lines as it needs, and cannot be squeezed out by a
+        // row height -- which is the failure a subtitle has already had here twice, once by
+        // being clipped away entirely and once by overlapping the row below.
+        //
+        // The build number goes with it, because "is the new build even running" was the
+        // question two rounds could not answer from the outside.
+        //
+        return [NSString stringWithFormat:@"%@\n\nAlbrhi %@\n%@",
+                LOC(@"RESTART_FOOTER"), SCIVersionString, SCIYTMDownloadReport()];
     } if (section == 3) {
         NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
         NSString *appVersion = infoDictionary[@"CFBundleShortVersionString"];
@@ -170,9 +183,6 @@
         // A subtitle rather than a new section: this screen's row counts are a hand-written
         // switch, and adding a fourth section to it is exactly what crashed it once already.
         //
-        cell.detailTextLabel.text = SCIYTMDownloadReport();
-        cell.detailTextLabel.numberOfLines = 0;
-        cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
         cell.textLabel.textColor = [UIColor colorWithRed:230/255.0 green:75/255.0 blue:75/255.0 alpha:255/255.0];
         cell.imageView.image = [UIImage systemImageNamed:@"power"];
         cell.imageView.tintColor = [UIColor colorWithRed:230/255.0 green:75/255.0 blue:75/255.0 alpha:255/255.0];

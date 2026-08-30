@@ -379,7 +379,6 @@ static NSUInteger sciPressesAdded = 0, sciPressesFired = 0;
 
 - (void)handle:(UILongPressGestureRecognizer *)gesture {
     if (gesture.state != UIGestureRecognizerStateBegan) return;
-    if (!YTMU(@"YTMUltimateIsEnabled")) return;
 
     sciPressesFired++;
 
@@ -460,8 +459,19 @@ static NSUInteger sciPressesAdded = 0, sciPressesFired = 0;
     // have runs the app's own code on the way to failing, and this project has a crash on record
     // for exactly that. A build without them takes `%orig` and nothing is lost.
     //
-    if (!YTMU(@"YTMUltimateIsEnabled") ||
-        class_getInstanceVariable([self class], "_controller") == NULL ||
+    //
+    // **The master switch is deliberately not asked here, because upstream does not ask it
+    // either.**
+    //
+    // Its `-handleTap` checks the two ivars, the node key and the ancestor, and nothing
+    // else -- `YTMUltimateIsEnabled` gates its *other* features, never this one. This build
+    // asked it first, which adds a way for the download to do nothing that the tweak it was
+    // ported from does not have: a dictionary written by a different process, an upgrade
+    // that lands before the constructor rewrites it, a master switch turned off once and
+    // forgotten. The whole tweak is already behind Albrhi's panel gate in `%ctor`; a second
+    // gate on one feature is a second way to fail, and this feature has failed enough.
+    //
+    if (class_getInstanceVariable([self class], "_controller") == NULL ||
         class_getInstanceVariable([self class], "_tapRecognizer") == NULL) {
         %orig;
         return;
@@ -545,7 +555,6 @@ NSString *SCIYTMDownloadReport(void) {
     if (!sciDownloadInstalled) {
         return [@"the badge class is not in this build" stringByAppendingString:press];
     }
-    if (!YTMU(@"YTMUltimateIsEnabled")) return @"Albrhi is switched off for this app";
     if (sciTapsSeen == 0) {
         return [@"badge hooked, no tap has reached it" stringByAppendingString:press];
     }
