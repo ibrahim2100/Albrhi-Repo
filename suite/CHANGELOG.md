@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.61.5
+
+Albrhi for X 0.17.3: **the post-as-a-picture no longer comes out laid out left-to-right.** UIKit
+implements right-to-left as mirrored layout decided from the view's traits, and an image context
+has none — so drawing the hierarchy there rebuilt the whole cell the other way round, button and
+all, and gave the text an LTR base direction. It renders the layer tree instead, which draws what
+each layer already holds and never lays anything out again.
+
 ## v1.61.4
 
 Albrhi for X 0.17.2: **opening links in Safari never worked** — the hook asked

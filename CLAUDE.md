@@ -636,6 +636,19 @@ over 345,902 questions on X 12.14, which is what 0.2.0's seventeen named feature
 from. Every key in that table was observed being asked; what each one *means* is still read
 from its name, and the screen says so rather than implying more certainty than there is.
 
+**Rendering a view into an image context re-lays it out, and RTL is layout.** X's post-to-image
+feature produced a cell laid out left-to-right: the share button moved from the bottom left of the
+screen to the bottom right of the picture, and Arabic words read from their last letter. **The
+report ruled out the obvious answer by itself** — a mirrored image mirrors the glyphs, and these
+were the right way round, so nothing had been flipped; the layout had been rebuilt. UIKit
+implements right-to-left as *mirrored layout*, resolved at layout time from the view's trait
+environment, and an image context has no window and no traits, so it resolves left-to-right and
+re-lays out the whole subtree — text runs included, which then get an LTR base direction.
+`-drawViewHierarchyInRect:afterScreenUpdates:YES` asks for that re-layout by definition;
+`-renderInContext:` does not, because it draws what each layer already holds. **When a snapshot
+comes out differently from the screen, ask whether the snapshot path lays out again** — and note
+that this is a right-to-left bug that would never be seen in an English-only test.
+
 **A fallback for an unlikely case became the code path for the only case, and nothing said so.**
 X's open-in-Safari hook read the URL with `[self valueForKey:@"initialURL"]` — a name
 `SFSafariViewController` does not expose — so it was nil every time, and the branch written for
@@ -1557,9 +1570,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.25.1** · X **0.17.2** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.25.1** · X **0.17.3** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.8.5** ·
-NextUp **0.1.5** · suite **1.61.4**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.61.5**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

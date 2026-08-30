@@ -63,26 +63,64 @@ static NSUInteger SCISetHidden(UIView *root, NSString *className, BOOL hidden) {
 
 #pragma mark - A post as a picture
 
+/// Whether a rendered picture is entirely transparent.
+///
+/// Sampled at nine points rather than scanned: this runs on a long press, on the main
+/// thread, and reading every pixel of a full-width cell to answer "did anything draw" would
+/// cost more than the drawing did. Nine points across the frame cannot miss a picture and
+/// cannot be fooled by one that is genuinely blank.
+static BOOL SCIImageIsBlank(UIImage *image) {
+    CGImageRef cgImage = image.CGImage;
+    if (!cgImage) return YES;
+
+    size_t width = CGImageGetWidth(cgImage), height = CGImageGetHeight(cgImage);
+    if (!width || !height) return YES;
+
+    CGColorSpaceRef space = CGColorSpaceCreateDeviceRGB();
+    for (int row = 1; row <= 3; row++) {
+        for (int column = 1; column <= 3; column++) {
+            uint8_t pixel[4] = {0, 0, 0, 0};
+            CGContextRef context =
+                CGBitmapContextCreate(pixel, 1, 1, 8, 4, space,
+                                      kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+            if (!context) { CGColorSpaceRelease(space); return NO; }
+
+            CGContextTranslateCTM(context,
+                                  -(CGFloat)(width * column / 4),
+                                  -(CGFloat)(height * row / 4));
+            CGContextDrawImage(context, CGRectMake(0, 0, (CGFloat)width, (CGFloat)height), cgImage);
+            CGContextRelease(context);
+
+            if (pixel[3] != 0) { CGColorSpaceRelease(space); return NO; }
+        }
+    }
+    CGColorSpaceRelease(space);
+    return YES;
+}
+
+
 /// Renders the post the share button belongs to, exactly as it is drawn.
 ///
-/// **`-drawViewHierarchyInRect:afterScreenUpdates:NO` was the wrong call, and it is the one
-/// every tweak that does this uses.** `NO` does not copy the pixels already on screen -- it
-/// asks the render server for whatever it last had for these layers, which for a view that
-/// has not been composited in its current state is stale or incomplete. `YES` commits the
-/// pending changes and renders properly, which is also the only version that re-runs text
-/// layout with the view's real environment rather than with whatever the cached run held.
+/// **The whole picture came out laid out left-to-right, and the cause is re-layout, not a
+/// mirror.** A mirrored image would have mirrored the glyphs too; these were the right way
+/// round and merely in the wrong order, and the share button had moved from the bottom left
+/// of the screen to the bottom right of the picture. That is UIKit's right-to-left support
+/// doing exactly what it does — **RTL is implemented as mirrored layout, decided at layout
+/// time from the view's trait environment** — and being asked to lay the subtree out again
+/// inside an image context, which has no window and no traits, so it resolves as
+/// left-to-right and rebuilds the whole thing the other way round. The text goes with it:
+/// re-laid-out runs get an LTR base direction, so a word reads from its last letter.
 ///
-/// It returns a BOOL, and that return is checked here rather than ignored: a failed draw
-/// falls back to the layer, which copies each layer's own rasterised contents and cannot
-/// re-lay-out anything at all.
+/// `-drawViewHierarchyInRect:afterScreenUpdates:YES` asks for precisely that re-layout, and
+/// 0.17.2 turned it on for an unrelated and real reason. **The answer is not to re-lay-out
+/// at all.** `-renderInContext:` walks the layer tree and draws what each layer already
+/// holds — text that was rasterised while the view was on screen, in the order it was drawn
+/// there — so there is no layout pass to get the direction wrong, and nothing for the
+/// bidirectional algorithm to redo.
 ///
-/// **What this does not claim to fix is Arabic coming out reversed** -- reported against
-/// every tweak that offers this feature. Two different faults produce that complaint and
-/// they need opposite repairs: a *mirrored* image, where the avatar and the icons are
-/// flipped too, versus *reordered* text, where the pictures are fine and only the letters
-/// are out of order. The report says which path drew the picture so the next round starts
-/// from a fact.
-static NSUInteger sciDrewByHierarchy = 0, sciDrewByLayer = 0;
+/// The hierarchy call is kept as the fallback, with `NO`, which at least does not re-lay-out
+/// either. The report names which path drew each picture.
+static NSUInteger sciDrewByLayer = 0, sciDrewByHierarchy = 0;
 
 static UIImage *SCIRenderAncestor(UIView *view) {
     UIView *subject = view;
@@ -92,7 +130,8 @@ static UIImage *SCIRenderAncestor(UIView *view) {
     }
     if (subject.bounds.size.width < 1 || subject.bounds.size.height < 1) return nil;
 
-    // Laid out before it is drawn. A subject mid-layout renders as it is, not as it will be.
+    // Laid out before it is drawn, on screen where the traits are real. Nothing after this
+    // point is allowed to lay anything out again.
     [subject layoutIfNeeded];
 
     UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat preferredFormat];
@@ -100,14 +139,22 @@ static UIImage *SCIRenderAncestor(UIView *view) {
     UIGraphicsImageRenderer *renderer =
         [[UIGraphicsImageRenderer alloc] initWithSize:subject.bounds.size format:format];
 
-    __block BOOL drawn = NO;
-    UIImage *image = [renderer imageWithActions:^(__unused UIGraphicsImageRendererContext *context) {
-        drawn = [subject drawViewHierarchyInRect:subject.bounds afterScreenUpdates:YES];
-        if (!drawn) [subject.layer renderInContext:UIGraphicsGetCurrentContext()];
+    UIImage *image = [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+        [subject.layer renderInContext:context.CGContext];
     }];
+    sciDrewByLayer++;
 
-    if (drawn) sciDrewByHierarchy++;
-    else sciDrewByLayer++;
+    // A layer tree that rendered nothing leaves a fully transparent picture -- a visual
+    // effect view or a hosted surface is the usual reason. Falling back is worth it there,
+    // and the fallback uses NO so it cannot reintroduce the re-layout this exists to avoid.
+    if (image && SCIImageIsBlank(image)) {
+        image = [renderer imageWithActions:^(__unused UIGraphicsImageRendererContext *context) {
+            [subject drawViewHierarchyInRect:subject.bounds afterScreenUpdates:NO];
+        }];
+        sciDrewByLayer--;
+        sciDrewByHierarchy++;
+    }
+
     return image;
 }
 

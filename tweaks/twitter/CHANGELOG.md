@@ -1,5 +1,33 @@
 # Albrhi for X — what changed
 
+## v0.17.3
+
+**The post-as-a-picture came out laid out left-to-right, and the description of the fault is what
+solved it.**
+
+Reported precisely: the share button sits at the bottom **left** on screen and appeared at the
+bottom **right** in the picture, and the letters were the right way round but read from the wrong
+end — «تابع» starting at its last letter. That rules out a mirror in one line: a mirrored image
+mirrors the glyphs too, and these were correct. What moved was the *layout*.
+
+**UIKit implements right-to-left as mirrored layout, decided at layout time from the view's trait
+environment.** An image context has no window and no traits, so a hierarchy asked to draw itself
+there resolves as left-to-right and rebuilds the entire subtree the other way round — the button
+included. The text follows: re-laid-out runs are given an LTR base direction, so a word reads from
+its last letter.
+
+`-drawViewHierarchyInRect:afterScreenUpdates:YES` asks for exactly that re-layout, and 0.17.2
+switched it on for a real and unrelated reason. **The answer is not to re-lay-out at all.**
+`-renderInContext:` walks the layer tree and draws what each layer already holds — text rasterised
+while the view was on screen, in the order it was drawn there. There is no layout pass to get the
+direction wrong and nothing for the bidirectional algorithm to redo.
+
+The hierarchy call stays as a fallback for a layer tree that renders nothing — a visual effect view
+is the usual reason — and uses `NO`, which does not re-lay-out either. Whether the fallback ran is
+decided by sampling nine points of the result for a non-zero alpha rather than by scanning every
+pixel, since this runs on the main thread while a finger is held down. The report says which path
+drew each picture.
+
 ## v0.17.2
 
 **Opening links in Safari did nothing, every time, and said nothing about it.**
