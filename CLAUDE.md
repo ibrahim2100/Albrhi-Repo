@@ -210,11 +210,22 @@ business deleting a package it never carried.
 The repository doubles as an **APT source**: it builds itself, publishes releases,
 and serves a Sileo/Zebra repo from GitHub Pages.
 
-- Repo: `github.com/ibrahim2100/Albrhi-Repo`
-- Source: `https://ibrahim2100.github.io/Albrhi-Repo/`
+- Repo: `github.com/ibrahim2100/albrhi-repo`
+- Source: `https://ibrahim2100.github.io/albrhi-repo/`
 - Control panel: `…/deb-edit/`
 - The tested versions above are the newest builds the developer's phone accepts. Not a
   compatibility ceiling; nothing is pinned to a version number.
+
+**The repository name is lower case, and that is load-bearing rather than a style choice.**
+Sileo on a rootless device could not read the source at all — no `Release` file found — while
+roothide read the identical address without complaint. GitHub Pages paths are **case sensitive**,
+the repository was `Albrhi-Repo`, and the request arriving at Pages was lower case: 404, measured
+directly (`/albrhi-repo/Release` 404 against `/Albrhi-Repo/Release` 200, before the rename). Adding
+the source again with the exact capitals changed nothing, which is what ruled out a typo and pointed
+at the client lower-casing the path. **A source that serves perfectly and a source nobody can read
+are indistinguishable from this machine** — the index was measured end to end and was sound
+throughout. The fix was renaming the repository; nothing in the index or the workflow was wrong.
+Do not reintroduce capitals into the repository name or into any published path.
 
 ---
 
@@ -1402,7 +1413,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.14** · YouTube **1.22.0** · X **0.15.0** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.8.5** ·
-NextUp **0.1.5** · suite **1.60.1**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.60.2**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

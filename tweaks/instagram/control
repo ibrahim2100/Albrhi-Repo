@@ -52,13 +52,13 @@ Description: Download anything, hide the noise, browse invisibly — in Arabic o
  Developed by Ibrahim Ismail AL-Rahn. Based on SCInsta by SoCuul, rebuilt with AI
  assistance to improve code quality, design, performance and user experience. Free and
  open source under the GNU GPL v3, with original authorship credited and preserved.
-Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Homepage: https://github.com/ibrahim2100/albrhi-repo
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Author: Ibrahim Ismail AL-Rahn (based on SCInsta by SoCuul, GPLv3)
 Section: Tweaks
-Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.html
-SileoDepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi.json
+Icon: https://ibrahim2100.github.io/albrhi-repo/CydiaIcon.png
+Depiction: https://ibrahim2100.github.io/albrhi-repo/depictions/albrhi.html
+SileoDepiction: https://ibrahim2100.github.io/albrhi-repo/depictions/albrhi.json
 Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak.roothide
 Replaces: com.albrhi.tweak.roothide

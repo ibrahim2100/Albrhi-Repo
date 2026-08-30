@@ -1,5 +1,29 @@
 # Albrhi Changelog
 
+## v1.60.2
+
+**The source address is lower case now, and the old one stops working.**
+
+Sileo on the rootless device could not read the source at all — not "would not install", but never
+found a `Release` file. The address was correct and GitHub Pages answered 404 anyway, because Pages
+paths are case sensitive and the request arriving there was lower case while the repository was
+named `Albrhi-Repo`. Re-adding it with the exact capitals changed nothing, and roothide reading the
+very same address ruled out a fault in the index itself, which was measured end to end and is sound.
+
+The repository is renamed to `albrhi-repo`, so **the source is now**:
+
+`https://ibrahim2100.github.io/albrhi-repo/`
+
+Anyone who added the old capitalised address must remove it and add this one; GitHub does not
+redirect Pages paths after a rename. Every URL in this repository moved with it — the package
+metadata, the update check in the panel, the about footers and the readme — and the workflow needed
+no edit, because it builds the address from the repository's own name rather than writing it down.
+
+Packages published *before* this release still carry the old address in their own `Icon` and
+`Depiction` fields, so their pages will not draw in Sileo until each is published again. Installing
+is unaffected: the index addresses its `.deb` files relatively.
+
+
 ## v1.60.1
 
 Albrhi for X 0.15.0: the diagnostics report says, for every feature that is on, which of its keys X

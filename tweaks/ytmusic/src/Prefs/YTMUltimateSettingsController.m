@@ -286,7 +286,7 @@
 
     if (indexPath.section == 3) {
         // In step with the rows above, which is the same lockstep this file's own crash was about.
-        NSArray *urls = @[@"https://github.com/ibrahim2100/Albrhi-Repo",
+        NSArray *urls = @[@"https://github.com/ibrahim2100/albrhi-repo",
                           @"https://github.com/py233/YTMEnhanced"];
 
         if (indexPath.row >= 0 && indexPath.row < urls.count) {

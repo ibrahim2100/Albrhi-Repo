@@ -9,7 +9,7 @@
 ///
 
 #define SCIRepoOwner    @"ibrahim2100"
-#define SCIRepoName     @"Albrhi-Repo"
+#define SCIRepoName     @"albrhi-repo"
 
 #define SCIRepoURL      [NSString stringWithFormat:@"https://github.com/%@/%@", SCIRepoOwner, SCIRepoName]
 #define SCIIssuesURL    [NSString stringWithFormat:@"%@/issues/new", SCIRepoURL]

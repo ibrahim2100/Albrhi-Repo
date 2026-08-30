@@ -24,10 +24,10 @@
 
 ### 📦 Add the source to your package manager
 
-**`https://ibrahim2100.github.io/Albrhi-Repo/`**
+**`https://ibrahim2100.github.io/albrhi-repo/`**
 
-[![Add to Sileo](https://img.shields.io/badge/Add%20to-Sileo-2C7CF0?style=for-the-badge&logo=apple&logoColor=white)](https://sharerepo.stkc.win/?repo=https://ibrahim2100.github.io/Albrhi-Repo/)
-[![Add to Zebra](https://img.shields.io/badge/Add%20to-Zebra-D4462D?style=for-the-badge&logo=apple&logoColor=white)](https://sharerepo.stkc.win/?repo=https://ibrahim2100.github.io/Albrhi-Repo/)
+[![Add to Sileo](https://img.shields.io/badge/Add%20to-Sileo-2C7CF0?style=for-the-badge&logo=apple&logoColor=white)](https://sharerepo.stkc.win/?repo=https://ibrahim2100.github.io/albrhi-repo/)
+[![Add to Zebra](https://img.shields.io/badge/Add%20to-Zebra-D4462D?style=for-the-badge&logo=apple&logoColor=white)](https://sharerepo.stkc.win/?repo=https://ibrahim2100.github.io/albrhi-repo/)
 
 </div>
 
@@ -45,7 +45,7 @@ download.
 Tap a button above, or add it by hand:
 
 ```
-https://ibrahim2100.github.io/Albrhi-Repo/
+https://ibrahim2100.github.io/albrhi-repo/
 ```
 
 - **Sileo** → Sources → **＋** → paste the URL.
@@ -82,7 +82,7 @@ the change to take effect.
 <br/>
 
 **From a GitHub release** — download the `.deb` for your setup from the
-[Releases page](https://github.com/ibrahim2100/Albrhi-Repo/releases) and open it in your package manager.
+[Releases page](https://github.com/ibrahim2100/albrhi-repo/releases) and open it in your package manager.
 
 **Sideloading (no jailbreak)** — inject the `Albrhi_*.dylib` into a decrypted Instagram IPA with
 LiveContainer, Sideloadly or cyan.
@@ -624,8 +624,8 @@ phone and sends a report in one tap.
 Requires [Theos](https://theos.dev) with an iOS SDK and toolchain.
 
 ```bash
-git clone https://github.com/ibrahim2100/Albrhi-Repo.git
-cd Albrhi-Repo
+git clone https://github.com/ibrahim2100/albrhi-repo.git
+cd albrhi-repo
 git submodule update --init --recursive
 ./build.sh instagram rootless
 ```

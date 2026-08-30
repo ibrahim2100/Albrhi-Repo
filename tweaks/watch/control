@@ -22,13 +22,13 @@ Description: Pair an Apple Watch running a watchOS your iPhone does not official
  the settings page, the diagnostics and the bilingual interface.
  .
  Maintained by Ibrahim Ismail AL-Rahn. Free and open source.
-Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Homepage: https://github.com/ibrahim2100/albrhi-repo
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Author: 34306 (pairing core, MIT), packaged and extended by Ibrahim Ismail AL-Rahn
 Section: Tweaks
-Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-watch.html
-SileoDepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-watch.json
+Icon: https://ibrahim2100.github.io/albrhi-repo/CydiaIcon.png
+Depiction: https://ibrahim2100.github.io/albrhi-repo/depictions/albrhi-watch.html
+SileoDepiction: https://ibrahim2100.github.io/albrhi-repo/depictions/albrhi-watch.json
 Depends: mobilesubstrate, preferenceloader, firmware (>= 15.0)
 Conflicts: com.albrhi.watch.roothide, com.34306.watched, app.legizmo.moonstone, app.legizmo
 Replaces: com.albrhi.watch.roothide

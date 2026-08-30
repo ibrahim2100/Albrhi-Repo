@@ -16,11 +16,11 @@ Description: Albrhi's settings, in the iOS Settings app.
  Arabic and English.
  .
  Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
-Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Homepage: https://github.com/ibrahim2100/albrhi-repo
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Author: Ibrahim Ismail AL-Rahn
 Section: Tweaks
-Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
+Icon: https://ibrahim2100.github.io/albrhi-repo/CydiaIcon.png
 Depends: mobilesubstrate, preferenceloader
 Conflicts: com.albrhi.panel.roothide
 Replaces: com.albrhi.panel.roothide

@@ -605,7 +605,7 @@ No changes to the tweak. Published during work on the source repository.
 ## v3.1.6
 
 - **The source address changed** to
-  [ibrahim2100.github.io/Albrhi-Repo](https://ibrahim2100.github.io/Albrhi-Repo/).
+  [ibrahim2100.github.io/albrhi-repo](https://ibrahim2100.github.io/albrhi-repo/).
   If you added the old one, add this instead.
 - Albrhi now has a proper package page in Sileo, with the feature list, what
   changed, and version details.
@@ -618,7 +618,7 @@ No changes to the tweak. Published during work on the source repository.
 
 **New**
 - Albrhi has its own source: add
-  [ibrahim2100.github.io/Albrhi-Repo](https://ibrahim2100.github.io/Albrhi-Repo/)
+  [ibrahim2100.github.io/albrhi-repo](https://ibrahim2100.github.io/albrhi-repo/)
   in Sileo or Zebra and updates arrive on their own.
 
 ## v3.1.4 — First public beta

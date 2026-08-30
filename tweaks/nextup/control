@@ -32,13 +32,13 @@ Description: See and skip what plays next, from the Lock Screen.
  .
  Ported and maintained by Ibrahim Ismail AL-Rahn. Free and open source under the GNU
  GPL v3; the full licence text ships with the source.
-Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Homepage: https://github.com/ibrahim2100/albrhi-repo
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Author: Yves <github.com/Yves000> (original NextUp 3), ported by Ibrahim Ismail AL-Rahn
 Section: Tweaks
-Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-nextup.html
-SileoDepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-nextup.json
+Icon: https://ibrahim2100.github.io/albrhi-repo/CydiaIcon.png
+Depiction: https://ibrahim2100.github.io/albrhi-repo/depictions/albrhi-nextup.html
+SileoDepiction: https://ibrahim2100.github.io/albrhi-repo/depictions/albrhi-nextup.json
 Depends: mobilesubstrate, preferenceloader, com.opa334.libsandy
 Conflicts: com.albrhi.nextup.roothide, com.yves.nextup3
 Replaces: com.albrhi.nextup.roothide

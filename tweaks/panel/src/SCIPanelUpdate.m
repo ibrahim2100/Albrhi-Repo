@@ -51,7 +51,7 @@ static NSString *SCINewestVersionIn(NSString *text) {
 void SCIPanelCheckForUpdate(void (^completion)(NSString *latest, NSString *installed, BOOL newer)) {
     NSString *installed = SCIPanelInstalledSuiteVersion();
 
-    NSURL *url = [NSURL URLWithString:@"https://ibrahim2100.github.io/Albrhi-Repo/Packages"];
+    NSURL *url = [NSURL URLWithString:@"https://ibrahim2100.github.io/albrhi-repo/Packages"];
 
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url
                                                           cachePolicy:NSURLRequestReloadIgnoringLocalCacheData

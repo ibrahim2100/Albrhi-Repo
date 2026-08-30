@@ -52,13 +52,13 @@ Description: Save any video, photo or GIF — no ads, no Grok, less tracking. Ar
  either; everything here is written for this project.
  .
  Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
-Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Homepage: https://github.com/ibrahim2100/albrhi-repo
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Author: Ibrahim Ismail AL-Rahn
 Section: Tweaks
-Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-twitter.html
-SileoDepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-twitter.json
+Icon: https://ibrahim2100.github.io/albrhi-repo/CydiaIcon.png
+Depiction: https://ibrahim2100.github.io/albrhi-repo/depictions/albrhi-twitter.html
+SileoDepiction: https://ibrahim2100.github.io/albrhi-repo/depictions/albrhi-twitter.json
 Depends: mobilesubstrate
 Conflicts: com.albrhi.twitter.roothide
 Replaces: com.albrhi.twitter.roothide
