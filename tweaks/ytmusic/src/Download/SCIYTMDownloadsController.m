@@ -105,12 +105,12 @@ static CGFloat SCIYTMBottomBarHeight(UIWindow *window) {
     CGFloat bar = SCIYTMBottomBarHeight(window);
     UIEdgeInsets wanted = UIEdgeInsetsMake(safe.top, 0, MAX(safe.bottom, bar), 0);
 
-    if (UIEdgeInsetsEqualToEdgeInsets(self.tableView.contentInset, wanted)) return;
+    BOOL wasAtTop = self.tableView.contentOffset.y <= -self.tableView.contentInset.top + 0.5;
 
-    CGFloat wasAtTop = self.tableView.contentOffset.y <= -self.tableView.contentInset.top + 0.5;
-
-    self.tableView.contentInset = wanted;
-    self.tableView.verticalScrollIndicatorInsets = wanted;
+    if (!UIEdgeInsetsEqualToEdgeInsets(self.tableView.contentInset, wanted)) {
+        self.tableView.contentInset = wanted;
+        self.tableView.verticalScrollIndicatorInsets = wanted;
+    }
 
     //
     // **Setting an inset does not move what is already there, and that is the whole of the
@@ -124,7 +124,19 @@ static CGFloat SCIYTMBottomBarHeight(UIWindow *window) {
     //
     // Only when the list was at its top: somebody who has scrolled down keeps their place.
     //
-    if (wasAtTop) {
+    //
+    // **Checked on every pass, not only when the inset changes.**
+    //
+    // The previous version returned early once the inset already matched -- and a
+    // `-reloadData` puts the offset back to zero while leaving the inset alone, so the list
+    // slid back under the clock every time it was refreshed and the one line that would have
+    // fixed it had been skipped. Three attempts at this bug were each a different cause, and
+    // this was the fourth: a correct value, correctly applied, and then quietly undone.
+    //
+    // An offset of exactly zero with a top inset present is never a place a person scrolled
+    // to; it is the value a fresh or reloaded table starts at.
+    //
+    if (wasAtTop || fabs(self.tableView.contentOffset.y) < 0.5) {
         self.tableView.contentOffset = CGPointMake(0, -wanted.top);
     }
 }

@@ -76,6 +76,19 @@ static SCIYTMSaveSheet *sciLiveSheet = nil;
                                                                                   weight:UIImageSymbolWeightSemibold]]];
     mark.tintColor = SCIYTMAccent();
 
+    // Sized, and told not to stretch. An image view in a horizontal stack has only its
+    // intrinsic size to argue with, and a symbol rendered at 26 points does not stop the
+    // stack handing it the width left over from a short title -- which is how a small mark
+    // comes out as a wide one.
+    mark.contentMode = UIViewContentModeScaleAspectFit;
+    mark.translatesAutoresizingMaskIntoConstraints = NO;
+    [mark.widthAnchor constraintEqualToConstant:30].active = YES;
+    [mark.heightAnchor constraintEqualToConstant:30].active = YES;
+    [mark setContentHuggingPriority:UILayoutPriorityRequired
+                            forAxis:UILayoutConstraintAxisHorizontal];
+    [mark setContentCompressionResistancePriority:UILayoutPriorityRequired
+                                          forAxis:UILayoutConstraintAxisHorizontal];
+
     UILabel *title = [[UILabel alloc] init];
     title.text = SCILocalized(@"dl_confirm_title");
     title.font = [UIFont systemFontOfSize:19 weight:UIFontWeightBold];
