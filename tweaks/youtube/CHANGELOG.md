@@ -3,6 +3,22 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.23.1
+
+**History can be one of the tabs**, off by default, in the same section.
+
+Unlike the Download Centre tab, this one is not handled here at all: `FEhistory` is a browse
+endpoint YouTube already knows, so the tab carries a real `navigationEndpoint` and YouTube resolves
+the page itself — its own loading, its own back behaviour, its own selection state. **The chain was
+read off the app's own metadata hop by hop rather than guessed:** `YTIPivotBarItemRenderer` declares
+`navigationEndpoint : YTICommand`, `YTICommand` declares `browseEndpoint : YTIBrowseEndpoint`, and
+that declares `browseId : NSString`. Every step failing is recorded by name, so "no History tab" says
+which field refused rather than nothing at all.
+
+The clock is painted onto the tab afterwards rather than set through the renderer, for the reason
+the Download Centre tab already carries: a `YTIIcon` wants an `iconType` enum whose values are not
+readable from the binary, and a guessed number draws the wrong picture or none.
+
 ## v1.23.0
 
 **The tab bar is yours to arrange** — drag to reorder, drag across to switch a tab off.

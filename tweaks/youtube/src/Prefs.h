@@ -38,6 +38,10 @@
 /// is what a fresh install has and what "reset" writes back.
 #define SCIPrefTabOrder         @"tab_bar_order"
 #define SCIPrefTabHidden        @"tab_bar_hidden"
+
+/// A History tab in the bottom bar. Off by default: YouTube did not put it there, and a tab
+/// appearing on its own after an update is a surprise rather than a feature.
+#define SCIPrefTabHistory       @"tab_bar_history"
 /// How many segment downloads run at once, per host. Zero means "not set", which reads as the
 /// tested default rather than as none -- see SCIYTParts.
 #define SCIPrefParallel         @"download_parallel"

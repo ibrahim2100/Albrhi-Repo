@@ -320,6 +320,18 @@ missing but the question. When a guard and the thing it guards resolve the same 
 by different routes, the guard is wrong by construction, and it fails silently in the
 direction of doing less.
 
+**A chain confirmed hop by hop is the only kind that has worked here, and YouTube's History tab is
+the fourth instance.** The tab needed a navigation endpoint, and the fields were read from the app's
+own class metadata rather than from any tweak's strings: `YTIPivotBarItemRenderer` declares
+`navigationEndpoint : YTICommand`, `YTICommand` declares `browseEndpoint : YTIBrowseEndpoint`, and
+that declares `browseId : NSString` — three hops, each naming the next class in its declared
+property *type*, which is exactly what `tools/objc-classes.py` prints and why it prints it. The tab
+is then YouTube's own: `FEhistory` is a browse id the app already resolves, so there is no tap
+handling here at all, no loading state and no back behaviour of ours to keep in sync. **The icon is
+still painted onto the button afterwards**, because `YTIIcon`'s `iconType` is an enum whose values
+are not readable from the binary — the same refusal the Download Centre tab already made, unchanged
+by having read more of the app.
+
 **SABR cannot be turned off from inside the app. This was measured to the end — do not
 try again without new evidence.** Every format on YouTube 21.30.5 answers with an empty
 `?cpn=` URL, because the client asks a server-side controller for byte ranges instead of
@@ -1460,9 +1472,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.23.0** · X **0.16.2** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.23.1** · X **0.16.2** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.8.5** ·
-NextUp **0.1.5** · suite **1.60.5**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.60.6**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

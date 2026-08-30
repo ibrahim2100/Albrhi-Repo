@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.60.6
+
+Albrhi for YouTube 1.23.1: **History can be one of the bottom bar's tabs**, off by default, beside
+the arranging added in 1.60.5. `FEhistory` is a browse endpoint YouTube already resolves, so the tab
+carries a real `navigationEndpoint` and the page, its loading and its back behaviour are YouTube's
+own — nothing of it is handled here. The field chain was read hop by hop off the app's own class
+metadata rather than guessed, and each step failing is reported by name.
+
 ## v1.60.5
 
 Albrhi for X 0.16.2: **"Hide Spaces" now hides the Spaces bar above the Home timeline**, which is

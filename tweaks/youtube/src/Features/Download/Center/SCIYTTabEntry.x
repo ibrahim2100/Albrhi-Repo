@@ -9,6 +9,7 @@
 #import "../../../Localization/SCILocalize.h"
 #import "../../../Diagnostics/SCIYTDiagnostics.h"
 #import "../../Tabs/SCIYTTabBar.h"
+#import "../../Tabs/SCIYTHistoryTab.h"
 
 ///
 /// The way into the Download Centre, as one of YouTube's own tabs.
@@ -166,6 +167,25 @@ static BOOL SCIPaintIcon(UIView *view) {
     // artefact of install order, not something a reader of either file could see.
     @try {
         NSMutableArray *items = [renderer valueForKey:@"itemsArray"];
+
+        // History first, and outside the Download Centre's own switch: the two tabs are
+        // separate features and somebody who turned the downloads tab off has not asked to
+        // lose this one with it. Appended once, and never when a tab for it already exists
+        // -- YouTube ships one on some accounts, and two History tabs is worse than none.
+        if (SCIYTHistoryTabWanted() && items) {
+            BOOL haveHistory = NO;
+            for (id entry in items) {
+                id inner = nil;
+                @try { inner = [entry valueForKey:@"pivotBarItemRenderer"]; }
+                @catch (__unused NSException *e) { }
+                if (SCIYTIsHistoryRenderer(inner)) { haveHistory = YES; break; }
+            }
+            if (!haveHistory && items.count < 6) {
+                id history = SCIYTMakeHistoryItem();
+                if (history) [items addObject:history];
+            }
+        }
+
         if (!SCIPrefEnabled(SCIPrefTabButton)) {
             SCIYTTabBarArrange(items);
             %orig;
@@ -206,8 +226,8 @@ static BOOL SCIPaintIcon(UIView *view) {
                         (unsigned long)items.count]];
             }
         }
-        // After the append, never before: our own tab has to be in the array for the
-        // stored order to be able to place it anywhere other than the end.
+        // After both appends, never before: a tab has to be in the array for the stored
+        // order to be able to place it anywhere other than the end.
         SCIYTTabBarArrange(items);
     } @catch (NSException *exception) {
         [SCIYTDiagnostics recordTabState:
@@ -233,15 +253,19 @@ static BOOL SCIPaintIcon(UIView *view) {
     // has a -setRenderer: and no -renderer, so on the next layout pass there is no way to
     // ask the view what it is showing -- and item views are reused, so one global "ours"
     // flag would paint whichever tab inherited the view next.
-    objc_setAssociatedObject(self, &kSCIIsOurItemView,
-                             SCIIsOurRenderer(renderer) ? @YES : nil,
-                             OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    // Two tabs of ours can share this class, so the association records *which* -- a bare
+    // yes/no would paint the download arrow onto History the moment a view was reused.
+    NSString *mark = SCIIsOurRenderer(renderer) ? @"downloads"
+                   : (SCIYTIsHistoryRenderer(renderer) ? @"history" : nil);
+    objc_setAssociatedObject(self, &kSCIIsOurItemView, mark, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
-    if (!SCIIsOurRenderer(renderer)) return;
+    if (!mark) return;
 
+    BOOL painted = NO;
+    if ([mark isEqualToString:@"history"]) painted = SCIYTPaintHistoryIcon((UIView *)self);
+    else painted = SCIPaintIcon((UIView *)self);
     [SCIYTDiagnostics recordTabState:
-        SCIPaintIcon((UIView *)self) ? @"tab built, mark painted"
-                                     : @"tab built, nothing found to paint"];
+        painted ? @"tab built, mark painted" : @"tab built, nothing found to paint"];
 }
 
 /// Painted again on layout, because once is not enough.
@@ -253,7 +277,9 @@ static BOOL SCIPaintIcon(UIView *view) {
 - (void)layoutSubviews {
     %orig;
 
-    if (objc_getAssociatedObject(self, &kSCIIsOurItemView)) SCIPaintIcon((UIView *)self);
+    NSString *mark = objc_getAssociatedObject(self, &kSCIIsOurItemView);
+    if ([mark isEqualToString:@"history"]) SCIYTPaintHistoryIcon((UIView *)self);
+    else if (mark) SCIPaintIcon((UIView *)self);
 }
 
 %end

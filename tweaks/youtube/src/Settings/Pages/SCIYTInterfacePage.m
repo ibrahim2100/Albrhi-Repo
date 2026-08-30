@@ -51,6 +51,10 @@
                            detail:SCILocalized(@"set_tabs_arrange_note")
                            symbol:@"square.grid.2x2"
                            action:^{ [SCIYTTabBarController present]; }],
+            [SCIRow switchRow:SCILocalized(@"set_tab_history")
+                       detail:SCILocalized(@"set_tab_history_note")
+                       symbol:@"clock.arrow.circlepath"
+                      prefKey:SCIPrefTabHistory],
         ];
 
         SCISection *bar = [[SCISection alloc] init];

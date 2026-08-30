@@ -7,6 +7,8 @@
 #import "../Features/Download/SCIYTDownload.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
+#import "../Features/Tabs/SCIYTTabBar.h"
+#import "../Features/Tabs/SCIYTHistoryTab.h"
 
 ///
 /// The classes worth reporting on, and why each one is here.
@@ -897,6 +899,8 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     // Which counter buttons were seen and what each said before anything was written into
     // button -- or on none -- this is the line that says why.
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_tab"), [self tabState]];
+    [out appendFormat:@"  %@\n", SCIYTTabBarReport()];
+    [out appendFormat:@"  %@\n\n", SCIYTHistoryTabReport()];
 
     // What the saved-media player last handed the lock screen, for whichever kinds were
     // actually played -- the fact needed to settle whether "sound does not show" is a
