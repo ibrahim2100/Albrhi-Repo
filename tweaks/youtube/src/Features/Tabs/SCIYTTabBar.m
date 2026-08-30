@@ -1,4 +1,5 @@
 #import "SCIYTTabBar.h"
+#import <objc/message.h>
 #import "../../Prefs.h"
 #import "../../SCILog.h"
 #import "../../Localization/SCILocalize.h"
@@ -90,15 +91,62 @@ void SCIYTTabBarSetActiveOrder(NSArray<NSString *> *active, NSArray<NSString *> 
 /// KVC rather than a message send, for the reason the Download Centre tab already records:
 /// these are GPBMessage subclasses whose fields resolve dynamically, so
 /// `-respondsToSelector:` answers NO for a field `-valueForKey:` reads perfectly well.
+id SCIYTTabBarInnerRenderer(id entry) {
+    if (!entry) return nil;
+
+    // YouTube's own convenience accessor first, which answers whichever of the two kinds
+    // this entry holds. The explicit fields are the fallback for a build without it -- and
+    // the icon-only one is asked for by name because it is the create button, the entry
+    // this whole helper exists for.
+    @try {
+        // objc_msgSend rather than -performSelector:, which ARC refuses to reason about
+        // under -Werror because it cannot see the selector's memory semantics.
+        SEL both = NSSelectorFromString(@"yt_pivotBarItem");
+        if ([entry respondsToSelector:both]) {
+            id inner = ((id (*)(id, SEL))objc_msgSend)(entry, both);
+            if (inner) return inner;
+        }
+        id inner = [entry valueForKey:@"pivotBarItemRenderer"];
+        if (inner) return inner;
+        return [entry valueForKey:@"pivotBarIconOnlyItemRenderer"];
+    } @catch (__unused NSException *exception) {
+        return nil;
+    }
+}
+
 static NSString *SCIIdentifierOf(id entry) {
     @try {
-        id inner = [entry valueForKey:@"pivotBarItemRenderer"];
+        id inner = SCIYTTabBarInnerRenderer(entry);
         if (!inner) return nil;
         id identifier = [inner valueForKey:@"pivotIdentifier"];
         return [identifier isKindOfClass:[NSString class]] ? identifier : nil;
     } @catch (__unused NSException *exception) {
         return nil;
     }
+}
+
+NSString *SCIYTTabBarSymbolFor(NSString *identifier) {
+    static NSDictionary *symbols = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        symbols = @{
+            @"FEwhat_to_watch": @"house.fill",
+            @"FEshorts": @"play.rectangle.fill",
+            @"FEsubscriptions": @"rectangle.stack.fill.badge.play",
+            @"FElibrary": @"person.crop.circle",
+            @"FEexplore": @"safari",
+            @"FEhistory": @"clock.arrow.circlepath",
+            @"FEuploads": @"video.badge.plus",
+        };
+    });
+
+    if ([identifier isEqualToString:kSCIDownloadsPivot]) return @"arrow.down.circle.fill";
+    NSString *symbol = symbols[identifier];
+    if (symbol) return symbol;
+
+    // The create button and anything else unnamed. A circle with a plus is right for the
+    // first and honest for the rest: the strip is a sketch of the bar, not a copy of it.
+    return @"plus.circle.fill";
 }
 
 void SCIYTTabBarArrange(NSMutableArray *items) {

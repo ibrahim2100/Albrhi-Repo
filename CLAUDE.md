@@ -320,6 +320,16 @@ missing but the question. When a guard and the thing it guards resolve the same 
 by different routes, the guard is wrong by construction, and it fails silently in the
 direction of doing less.
 
+**One container, two payload kinds, and reading only the first makes a real item look like no item
+at all.** YouTube's `YTIPivotBarSupportedRenderers` holds either a `pivotBarItemRenderer` or a
+`pivotBarIconOnlyItemRenderer`; the `+` create button is the second. Asking only for the first
+returned nil, which read as "this entry has no identifier" rather than as "this entry is the other
+kind" — so the create button could not be listed, named or moved, and the six-tab limit looked
+tighter than it is. YouTube's own `-yt_pivotBarItem` answers whichever kind an entry holds, and both
+kinds carry `pivotIdentifier`. **A nil from a field lookup means the field is absent, never that
+the object is empty** — the same shape as `IGMedia.video` returning a hollow object and as
+`hasPlayableVideo:` being read as "therefore a photo".
+
 **The pivot bar's six-tab limit is `YTPivotBarView`'s own structure, measured rather than
 believed.** The class declares `itemView1` … `itemView6` as six separate properties, with
 `itemViews` the array of them — so a seventh item renderer has no view to be drawn in, and the
@@ -1486,9 +1496,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.23.2** · X **0.16.2** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.24.0** · X **0.16.2** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.8.5** ·
-NextUp **0.1.5** · suite **1.60.7**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.60.8**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

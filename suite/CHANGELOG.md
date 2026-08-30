@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.60.8
+
+Albrhi for YouTube 1.24.0: **the `+` create button can be switched off**, and the arranging screen
+now draws the bar it is editing. The `+` had been invisible to that screen because
+`YTIPivotBarSupportedRenderers` carries two kinds of item and this tweak read only one of them —
+the create button is the other, so it came back with no identifier and could not be named, listed
+or moved.
+
 ## v1.60.7
 
 Albrhi for YouTube 1.23.2: **the History switch is gone and History is a row in the arranging

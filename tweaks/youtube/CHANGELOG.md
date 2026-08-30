@@ -3,6 +3,24 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.24.0
+
+**The `+` button can be switched off now, and the reason it could not be is worth stating: it was
+never on the screen to switch off.**
+
+`YTIPivotBarSupportedRenderers` carries **two** kinds of item — `pivotBarItemRenderer` and
+`pivotBarIconOnlyItemRenderer` — and the create button in the middle of the bar is the second. Every
+lookup here asked only for the first, so the `+` came back with no identifier at all: invisible to
+the arranging screen, and untouchable by the arranger, which will not move an entry it cannot name.
+Both kinds carry `pivotIdentifier`, so reading whichever one an entry actually holds turns the
+create button into an ordinary row — drag it down and the bar has five, or five and something of
+yours in its place.
+
+**And the screen now draws the bar it is editing**, above the two lists, updating as rows move. It
+is a sketch rather than a copy, and says so by being one: the icons are SF Symbols chosen here, not
+YouTube's own artwork, because the real icon lives in a `YTIIcon` whose `iconType` enum is not
+readable from the binary. What it shows is order and count, which is exactly what is being edited.
+
 ## v1.23.2
 
 **The History switch is gone, and History is a row in the arranging screen instead** — which is

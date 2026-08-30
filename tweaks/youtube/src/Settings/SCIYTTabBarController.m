@@ -6,6 +6,7 @@
 @interface SCIYTTabBarController ()
 @property (nonatomic, strong) NSMutableArray<NSString *> *active;
 @property (nonatomic, strong) NSMutableArray<NSString *> *inactive;
+@property (nonatomic, strong) UIStackView *preview;
 @end
 
 @implementation SCIYTTabBarController
@@ -75,6 +76,84 @@
                                          style:UIBarButtonItemStylePlain
                                         target:self
                                         action:@selector(reset)];
+
+    self.tableView.tableHeaderView = [self buildPreview];
+}
+
+/// A sketch of the bar, above the lists.
+///
+/// **A sketch and not a copy, deliberately.** The icons are SF Symbols chosen here, not
+/// YouTube's own artwork — the real icons come from a `YTIIcon` whose `iconType` enum is not
+/// readable from the binary, which is the same reason the Download Centre tab paints its
+/// mark rather than setting one. So this shows *order and count*, which is what is being
+/// edited, and does not pretend to show the finished bar.
+- (UIView *)buildPreview {
+    UIView *container = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 0, 92)];
+
+    UILabel *caption = [[UILabel alloc] init];
+    caption.text = SCILocalized(@"tabs_preview");
+    caption.font = [UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];
+    caption.textColor = [UIColor secondaryLabelColor];
+    caption.translatesAutoresizingMaskIntoConstraints = NO;
+    [container addSubview:caption];
+
+    UIView *bar = [[UIView alloc] init];
+    bar.backgroundColor = [UIColor secondarySystemBackgroundColor];
+    bar.layer.cornerRadius = 14;
+    bar.translatesAutoresizingMaskIntoConstraints = NO;
+    [container addSubview:bar];
+
+    self.preview = [[UIStackView alloc] init];
+    self.preview.axis = UILayoutConstraintAxisHorizontal;
+    self.preview.distribution = UIStackViewDistributionFillEqually;
+    self.preview.alignment = UIStackViewAlignmentCenter;
+    self.preview.translatesAutoresizingMaskIntoConstraints = NO;
+    [bar addSubview:self.preview];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [caption.topAnchor constraintEqualToAnchor:container.topAnchor constant:4],
+        [caption.leadingAnchor constraintEqualToAnchor:container.layoutMarginsGuide.leadingAnchor],
+        [bar.topAnchor constraintEqualToAnchor:caption.bottomAnchor constant:6],
+        [bar.leadingAnchor constraintEqualToAnchor:container.layoutMarginsGuide.leadingAnchor],
+        [bar.trailingAnchor constraintEqualToAnchor:container.layoutMarginsGuide.trailingAnchor],
+        [bar.bottomAnchor constraintEqualToAnchor:container.bottomAnchor constant:-8],
+        [self.preview.topAnchor constraintEqualToAnchor:bar.topAnchor constant:8],
+        [self.preview.bottomAnchor constraintEqualToAnchor:bar.bottomAnchor constant:-8],
+        [self.preview.leadingAnchor constraintEqualToAnchor:bar.leadingAnchor constant:8],
+        [self.preview.trailingAnchor constraintEqualToAnchor:bar.trailingAnchor constant:-8],
+    ]];
+
+    [self refreshPreview];
+    return container;
+}
+
+- (void)refreshPreview {
+    for (UIView *view in self.preview.arrangedSubviews) [view removeFromSuperview];
+
+    for (NSString *identifier in self.active) {
+        UIStackView *column = [[UIStackView alloc] init];
+        column.axis = UILayoutConstraintAxisVertical;
+        column.alignment = UIStackViewAlignmentCenter;
+        column.spacing = 2;
+
+        UIImageView *icon = [[UIImageView alloc]
+            initWithImage:[UIImage systemImageNamed:SCIYTTabBarSymbolFor(identifier)]];
+        icon.tintColor = [UIColor labelColor];
+        icon.contentMode = UIViewContentModeScaleAspectFit;
+        [icon.heightAnchor constraintEqualToConstant:20].active = YES;
+
+        UILabel *label = [[UILabel alloc] init];
+        label.text = SCIYTTabBarDisplayName(identifier);
+        label.font = [UIFont systemFontOfSize:9];
+        label.textColor = [UIColor secondaryLabelColor];
+        label.textAlignment = NSTextAlignmentCenter;
+        label.adjustsFontSizeToFitWidth = YES;
+        label.minimumScaleFactor = 0.7;
+
+        [column addArrangedSubview:icon];
+        [column addArrangedSubview:label];
+        [self.preview addArrangedSubview:column];
+    }
 }
 
 - (void)finish {
@@ -85,6 +164,7 @@
     SCIYTTabBarSetActiveOrder(@[], @[]);
     [self buildLists];
     [self.tableView reloadData];
+    [self refreshPreview];
 }
 
 /// Saved on every change rather than on Done, so a screen dismissed by swiping it away --
@@ -176,6 +256,7 @@ moveRowAtIndexPath:(NSIndexPath *)from
     [destination insertObject:identifier atIndex:index];
 
     [self save];
+    [self refreshPreview];
 }
 
 #pragma mark - Presenting

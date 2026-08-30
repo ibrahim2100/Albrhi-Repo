@@ -175,10 +175,10 @@ static BOOL SCIPaintIcon(UIView *view) {
         if (SCIYTHistoryTabWanted() && items) {
             BOOL haveHistory = NO;
             for (id entry in items) {
-                id inner = nil;
-                @try { inner = [entry valueForKey:@"pivotBarItemRenderer"]; }
-                @catch (__unused NSException *e) { }
-                if (SCIYTIsHistoryRenderer(inner)) { haveHistory = YES; break; }
+                if (SCIYTIsHistoryRenderer(SCIYTTabBarInnerRenderer(entry))) {
+                    haveHistory = YES;
+                    break;
+                }
             }
             if (!haveHistory && items.count < 6) {
                 id history = SCIYTMakeHistoryItem();
@@ -197,9 +197,7 @@ static BOOL SCIPaintIcon(UIView *view) {
         // each time until it ran out of item views.
         BOOL already = NO;
         for (id entry in items) {
-            id inner = nil;
-            @try { inner = [entry valueForKey:@"pivotBarItemRenderer"]; } @catch (__unused NSException *e) { }
-            if (SCIIsOurRenderer(inner)) { already = YES; break; }
+            if (SCIIsOurRenderer(SCIYTTabBarInnerRenderer(entry))) { already = YES; break; }
         }
 
         // The bar holds six item views and no more. Five tabs is the usual shape, so ours

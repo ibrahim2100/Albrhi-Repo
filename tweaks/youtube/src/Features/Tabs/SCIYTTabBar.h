@@ -38,6 +38,21 @@ NSArray<NSString *> *SCIYTTabBarSeenIdentifiers(void);
 /// Records an identifier the bar was handed. Cheap and idempotent.
 void SCIYTTabBarNoteIdentifier(NSString *identifier);
 
+/// The item renderer inside one entry of the bar's items array, whichever kind it is.
+///
+/// **There are two, and reading only the first is why the create button could not be
+/// switched off.** `YTIPivotBarSupportedRenderers` carries either a `pivotBarItemRenderer`
+/// or a `pivotBarIconOnlyItemRenderer`, and the `+` in the middle of the bar is the second
+/// kind — so every lookup that asked only for the first found nothing, and an entry with no
+/// identifier is one this screen cannot list and this arranger will not move. Both carry
+/// `pivotIdentifier`, so once the right one is read the create button is an ordinary row.
+id SCIYTTabBarInnerRenderer(id entry);
+
+/// An SF Symbol standing in for a tab, for the preview strip on the settings screen. Never
+/// for the bar itself — YouTube draws that, and a symbol of ours there would be a guess at
+/// its icon rather than a sketch of it.
+NSString *SCIYTTabBarSymbolFor(NSString *identifier);
+
 /// A human name for an identifier: YouTube's own tabs get their localized name, ours gets
 /// the Download Centre's, and anything unrecognised is shown by its raw identifier rather
 /// than hidden -- an unnamed tab is still a tab somebody may want to move.
