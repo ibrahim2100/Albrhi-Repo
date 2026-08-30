@@ -1,6 +1,7 @@
 #import "../SCIYTSettingsRegistry.h"
 #import "../../Prefs.h"
 #import "../../Localization/SCILocalize.h"
+#import "../SCIYTTabBarController.h"
 
 ///
 /// Parts of YouTube's own screen you can switch off.
@@ -40,6 +41,16 @@
                        detail:SCILocalized(@"hide_info_cards_note")
                        symbol:@"info.circle"
                       prefKey:SCIPrefHideInfoCards],
+        ];
+
+        SCISection *tabs = [[SCISection alloc] init];
+        tabs.title = SCILocalized(@"section_tab_bar");
+        tabs.footer = SCILocalized(@"section_tab_bar_note");
+        tabs.rows = @[
+            [SCIRow disclosureRow:SCILocalized(@"set_tabs_arrange")
+                           detail:SCILocalized(@"set_tabs_arrange_note")
+                           symbol:@"square.grid.2x2"
+                           action:^{ [SCIYTTabBarController present]; }],
         ];
 
         SCISection *bar = [[SCISection alloc] init];
@@ -91,7 +102,7 @@
                       prefKey:SCIPrefOverlayEndTime],
         ];
 
-        return @[player, bar, overlay, elsewhere];
+        return @[player, tabs, bar, overlay, elsewhere];
     }];
 }
 

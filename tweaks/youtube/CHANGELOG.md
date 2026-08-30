@@ -3,6 +3,31 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.23.0
+
+**The tab bar is yours to arrange** — drag to reorder, drag across to switch a tab off.
+Settings › Interface › Tab bar.
+
+The mechanism is one the Download Centre tab already proved: YouTube builds its bar from a
+protobuf and hands it over through `-setRenderer:`, so the array is rewritten on the way through.
+Nothing is drawn by this tweak; YouTube builds each tab itself, with its own label, spacing and
+selection behaviour.
+
+**Every decision is made on the tab's `pivotIdentifier`, never on its position.** An index changes
+with the account, the page style and whatever YouTube is trying this week; the identifier does not.
+That is also why our own Downloads tab can be placed anywhere rather than only last.
+
+**The list is what your device reported, not a table copied from another tweak.** Every identifier
+the bar is handed is remembered, and the screen offers exactly those — so the first visit before
+the bar has ever been built says so plainly instead of drawing an empty list. Each row shows the
+raw identifier under its name, so what the screen calls "Shorts" and what the diagnostics report
+calls `FEshorts` are visibly the same thing.
+
+Three refusals are deliberate. A tab the stored order has never heard of keeps its place instead of
+disappearing, so a tab YouTube adds tomorrow still appears. An arrangement matching nothing at all
+leaves the bar untouched rather than emptying it. And the last active tab cannot be dragged away,
+refused at the drop rather than snapped back afterwards.
+
 ## v1.22.0
 
 **A SponsorBlock marker belongs to the bar it is drawn on** — a roadmap item since the markers

@@ -8,6 +8,7 @@
 #import "../../../Prefs.h"
 #import "../../../Localization/SCILocalize.h"
 #import "../../../Diagnostics/SCIYTDiagnostics.h"
+#import "../../Tabs/SCIYTTabBar.h"
 
 ///
 /// The way into the Download Centre, as one of YouTube's own tabs.
@@ -153,13 +154,23 @@ static BOOL SCIPaintIcon(UIView *view) {
 %hook YTPivotBarView
 
 - (void)setRenderer:(id)renderer {
-    if (!SCIPrefEnabled(SCIPrefTabButton) || !renderer) {
+    if (!renderer) {
         %orig;
         return;
     }
 
+    // Two things happen to this array and they are deliberately in one hook rather than
+    // two: our tab is appended, and then the whole bar is arranged. Written as separate
+    // %hooks in separate files they would still both run, but which ran first would decide
+    // whether our own tab could be placed anywhere but last -- and hook order is an
+    // artefact of install order, not something a reader of either file could see.
     @try {
         NSMutableArray *items = [renderer valueForKey:@"itemsArray"];
+        if (!SCIPrefEnabled(SCIPrefTabButton)) {
+            SCIYTTabBarArrange(items);
+            %orig;
+            return;
+        }
 
         // Appended once. -setRenderer: is called again on every page style change, on
         // rotation, and when the account switches; without this the bar would gain a tab
@@ -195,6 +206,9 @@ static BOOL SCIPaintIcon(UIView *view) {
                         (unsigned long)items.count]];
             }
         }
+        // After the append, never before: our own tab has to be in the array for the
+        // stored order to be able to place it anywhere other than the end.
+        SCIYTTabBarArrange(items);
     } @catch (NSException *exception) {
         [SCIYTDiagnostics recordTabState:
             [NSString stringWithFormat:@"refused: %@", exception.reason ?: @"?"]];

@@ -31,6 +31,13 @@
 /// swipe, or this switch for anyone who wants the old ending back.
 #define SCIPrefAutoPhotos       @"auto_save_photos"
 #define SCIPrefTabButton        @"tab_download_button"
+
+/// The tab bar's own arrangement. Two arrays of `pivotIdentifier` strings rather than one
+/// switch per tab: an order and a visibility are a single decision, and storing them apart
+/// is how a tab ends up hidden and first at the same time. Both empty means untouched, which
+/// is what a fresh install has and what "reset" writes back.
+#define SCIPrefTabOrder         @"tab_bar_order"
+#define SCIPrefTabHidden        @"tab_bar_hidden"
 /// How many segment downloads run at once, per host. Zero means "not set", which reads as the
 /// tested default rather than as none -- see SCIYTParts.
 #define SCIPrefParallel         @"download_parallel"

@@ -1,5 +1,15 @@
 # Albrhi Changelog
 
+## v1.60.5
+
+Albrhi for YouTube 1.23.0: **the bottom tab bar can be arranged** — drag to reorder, drag across to
+switch a tab off, in Settings › Interface › Tab bar. It rides the same path the Download Centre tab
+already proved: YouTube hands its bar a protobuf and the array is rewritten on the way through, so
+YouTube still draws every tab itself. Decisions are made on each tab's `pivotIdentifier` rather
+than its position, and the list offered is what the device's own bar reported rather than a table
+copied from elsewhere.
+
+
 ## v1.60.4
 
 Albrhi for X 0.16.1: **Hide Spaces now filters the tab bar itself.** Excluding the tab entry was
