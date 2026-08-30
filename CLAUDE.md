@@ -320,6 +320,12 @@ missing but the question. When a guard and the thing it guards resolve the same 
 by different routes, the guard is wrong by construction, and it fails silently in the
 direction of doing less.
 
+**The pivot bar's six-tab limit is `YTPivotBarView`'s own structure, measured rather than
+believed.** The class declares `itemView1` … `itemView6` as six separate properties, with
+`itemViews` the array of them — so a seventh item renderer has no view to be drawn in, and the
+limit is not a number this tweak chose. It had been asserted in a comment for several releases
+before anyone checked, which is the same shape as every other inherited assertion here.
+
 **A feature that adds an item to a fixed-size list belongs in whatever screen manages that list,
 not in a switch beside it.** The History tab shipped with its own switch for one release: the bar
 holds six tabs, so switching it on added a *seventh* rather than replacing anything, and there was

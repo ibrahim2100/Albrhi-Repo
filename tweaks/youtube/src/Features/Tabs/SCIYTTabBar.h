@@ -49,7 +49,16 @@ NSArray<NSString *> *SCIYTTabBarActiveOrder(void);
 NSArray<NSString *> *SCIYTTabBarHiddenIdentifiers(void);
 void SCIYTTabBarSetActiveOrder(NSArray<NSString *> *active, NSArray<NSString *> *hidden);
 
-/// The bar holds six item views and no more, which is YouTube's limit and not ours.
+/// Six, and it is a fact about `YTPivotBarView` rather than a policy of this tweak.
+///
+/// Measured, not inherited from the comment that used to assert it: the class declares
+/// `itemView1` … `itemView6` as six separate properties, and `itemViews` is the array of
+/// those. There is no seventh, so a seventh item renderer has nothing to be drawn in.
+///
+/// Going past it would mean building a tab view of our own, adding it to the bar's content
+/// view and positioning it from `-layoutSubviews` — owning the layout, the selected state,
+/// the page style and the scrub gesture. That is the floating-button approach this feature
+/// was written to replace, and it is why the number is not a setting.
 extern const NSUInteger SCIYTTabBarMaximum;
 
 /// Rewrites `items` in place: drops what is switched off, orders the rest. Anything the
