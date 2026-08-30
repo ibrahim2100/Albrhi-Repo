@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.60.4
+
+Albrhi for X 0.16.1: **Hide Spaces now filters the tab bar itself.** Excluding the tab entry was
+enough to *add* Communities and Profile in 0.16.0 and not enough to *remove* Spaces, because an
+account with a saved tab bar keeps it. The final `-setTabViews:` array is filtered instead, on the
+tab's own `scribePage` name, and the report prints every name the bar carried.
+
+
 ## v1.60.3
 
 Albrhi for X 0.16.0: **Hide Spaces and More tabs are enforced where X decides, not through a

@@ -23,6 +23,7 @@ static BOOL sciSpacesOn(void) { return [SCITWFeatures isOnIdentifier:@"spaces"];
 // counter cannot say which -- the same tally-versus-snapshot lesson TikTok's own status
 // row cost three releases.
 static BOOL sciCommunitiesPresent = NO, sciProfilePresent = NO, sciVoicePresent = NO;
+static BOOL sciTabBarPresent = NO;
 static NSUInteger sciCommunitiesAsked = 0, sciProfileAsked = 0, sciVoiceAsked = 0;
 static NSUInteger sciCommunitiesForced = 0, sciProfileForced = 0, sciVoiceForced = 0;
 
@@ -85,6 +86,74 @@ static NSUInteger sciCommunitiesForced = 0, sciProfileForced = 0, sciVoiceForced
 %end
 
 
+///
+/// The tab entry was not enough for Spaces, and the reason is the same trap the feature
+/// switch fell into. `-isExcludedFromTabBar` is consulted while X composes the set of tabs
+/// it *could* show; an account that already has a saved bar keeps the bar it saved, so
+/// excluding the entry changes what a new account would get and nothing else -- exactly
+/// what `ios_tab_bar_default_show_communities` did, one layer down.
+///
+/// So the final array is filtered as well. `-setTabViews:` is the last point at which the
+/// bar is told what to draw, after any saved configuration, and each `T1TabView` carries
+/// `scribePage` -- the tab's own stable name. The Spaces tab is `audiospace`, which is a
+/// token X itself carries (four times in `T1Twitter`), not a name invented here.
+///
+/// Communities went the other way and worked at the entry, so that half is left where it
+/// is: this filter only removes.
+///
+
+@interface T1TabView : UIView
+@property (nonatomic, copy, readonly) NSString *scribePage;
+@end
+
+static NSString *const kSCITWSpacesTabPage = @"audiospace";
+
+static NSUInteger sciTabViewsSeen = 0, sciTabViewsRemoved = 0;
+// Every name the bar has actually carried, so a build that calls the Spaces tab something
+// else is diagnosable from one report instead of another round of guessing at tokens.
+static NSMutableOrderedSet<NSString *> *sciTabPagesSeen = nil;
+
+%group TabBarFilter
+
+%hook T1TabBarViewController
+
+- (void)setTabViews:(NSArray *)tabViews {
+    if (!sciSpacesOn() || tabViews.count == 0) {
+        %orig;
+        return;
+    }
+
+    NSMutableArray *kept = [NSMutableArray arrayWithCapacity:tabViews.count];
+    for (id tab in tabViews) {
+        sciTabViewsSeen++;
+
+        NSString *page = nil;
+        if ([tab respondsToSelector:@selector(scribePage)]) page = [(T1TabView *)tab scribePage];
+        if (page.length) [sciTabPagesSeen addObject:page];
+
+        if (page.length && [page caseInsensitiveCompare:kSCITWSpacesTabPage] == NSOrderedSame) {
+            sciTabViewsRemoved++;
+            continue;
+        }
+        [kept addObject:tab];
+    }
+
+    // Never hand back an empty bar. A filter that can remove every tab is a filter that can
+    // leave the app with no navigation at all, and a wrong token is exactly how that
+    // happens -- the same reason the download button was not hidden when a lookup failed.
+    if (kept.count == 0) {
+        %orig;
+        return;
+    }
+
+    %orig(kept);
+}
+
+%end
+
+%end
+
+
 static NSString *SCITWTabEntryLine(NSString *name, BOOL present, NSUInteger asked,
                                    NSUInteger forced, BOOL featureOn) {
     if (!present) return [NSString stringWithFormat:@"  %@ — not in this build", name];
@@ -112,10 +181,23 @@ NSString *SCITWTabEntriesReport(void) {
     [text appendString:@"\n"];
     [text appendString:SCITWTabEntryLine(@"Spaces", sciVoicePresent,
                                          sciVoiceAsked, sciVoiceForced, sciSpacesOn())];
+
+    [text appendString:@"\n"];
+    if (!sciTabBarPresent) {
+        [text appendString:@"  tab bar — T1TabBarViewController not in this build"];
+    } else if (sciTabViewsSeen == 0) {
+        [text appendString:@"  tab bar — hooked, never set (X did not hand it any tabs)"];
+    } else {
+        [text appendFormat:@"  tab bar — %lu tab(s) seen, %lu removed, pages: %@",
+                (unsigned long)sciTabViewsSeen, (unsigned long)sciTabViewsRemoved,
+                [[sciTabPagesSeen array] componentsJoinedByString:@", "]];
+    }
     return text;
 }
 
 void SCITWInstallTabEntries(void) {
+    sciTabPagesSeen = [NSMutableOrderedSet orderedSet];
+
     sciCommunitiesPresent =
         (NSClassFromString(@"_TtC14T1TwitterSwift34T1CommunitiesAppNavigationTabEntry") != nil);
     sciProfilePresent =
@@ -133,6 +215,11 @@ void SCITWInstallTabEntries(void) {
         %init(TabVoice);
     }
 
-    SCILogV(@"tab entries: communities %d, profile %d, voice %d",
-            sciCommunitiesPresent, sciProfilePresent, sciVoicePresent);
+    sciTabBarPresent = (NSClassFromString(@"T1TabBarViewController") != nil);
+    if (sciTabBarPresent) {
+        %init(TabBarFilter);
+    }
+
+    SCILogV(@"tab entries: communities %d, profile %d, voice %d, bar %d",
+            sciCommunitiesPresent, sciProfilePresent, sciVoicePresent, sciTabBarPresent);
 }

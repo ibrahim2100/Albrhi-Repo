@@ -569,6 +569,16 @@ over 345,902 questions on X 12.14, which is what 0.2.0's seventeen named feature
 from. Every key in that table was observed being asked; what each one *means* is still read
 from its name, and the screen says so rather than implying more certainty than there is.
 
+**Adding a tab and removing one are not the same operation, and 0.16.0 proved it by doing one and
+not the other.** The identical hook that put Communities and Profile in the bar failed to take
+Spaces out, on the same device, in the same release. `-isExcludedFromTabBar` is consulted while X
+composes the set of tabs it *could* show — so an account with a saved bar keeps what it saved, and
+an exclusion only changes what a **new** account is handed. That is `ios_tab_bar_default_show_communities`
+again, one layer down, and it was not visible until a feature pointed the other way was tried.
+Removal has to happen at `-setTabViews:` on `T1TabBarViewController`, the last point before the bar
+draws, matching each `T1TabView` on its own `scribePage` (`audiospace` for Spaces, a token X itself
+carries). **A hook that works is evidence about the direction it was tested in and nothing more.**
+
 **Confirmed on a device in 0.16.0: Communities and Profile now appear in the bottom bar.** The
 `…AppNavigationTabEntry` route is therefore the real one and the feature-switch route never was,
 which settles four releases of switch work. The Spaces half rides the identical mechanism pointed
@@ -1440,9 +1450,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.22.0** · X **0.16.0** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.22.0** · X **0.16.1** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.8.5** ·
-NextUp **0.1.5** · suite **1.60.3**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.60.4**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

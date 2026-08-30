@@ -1,5 +1,27 @@
 # Albrhi for X — what changed
 
+## v0.16.1
+
+**Hiding Spaces at the tab entry failed for the same reason the feature switch did, one layer
+down.** Communities and Profile appeared on a device in 0.16.0 and Spaces did not, which is the
+part worth explaining: `-isExcludedFromTabBar` is consulted while X composes the set of tabs it
+*could* show. An account that already has a saved bar keeps the bar it saved — so excluding an
+entry changes what a **new** account would be given and nothing else, exactly as
+`ios_tab_bar_default_show_communities` did. Adding to the set works; removing from it does not.
+
+So the final array is filtered too. `-setTabViews:` on `T1TabBarViewController` is the last point
+at which the bar is told what to draw, after any saved configuration, and each `T1TabView` carries
+`scribePage` — the tab's own stable name. The Spaces tab is **`audiospace`**, a token X itself
+carries rather than a name invented here.
+
+**The filter refuses to hand back an empty bar.** A wrong token would otherwise leave the app with
+no navigation at all, which is the same rule that keeps the download button visible when a lookup
+fails: refusing belongs at the irreversible action, never where it can remove the way out.
+
+**And the report now prints every tab name the bar actually carried.** If a build calls the Spaces
+tab something else, one report says so — instead of another round of guessing at tokens.
+
+
 ## v0.16.0
 
 **Hide Spaces and More tabs were pulling the wrong lever, and 0.15.0's report is what said so.**
