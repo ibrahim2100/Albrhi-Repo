@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.61.4
+
+Albrhi for X 0.17.2: **opening links in Safari never worked** — the hook asked
+`SFSafariViewController` for a property name it does not expose, got nil, and treated that as
+"leave this link alone", which was every link. The URL comes from the initialiser now. The
+post-as-a-picture renderer had the same shape of fault one level down and now forces a real render
+pass and checks whether it succeeded.
+
 ## v1.61.3
 
 Albrhi for X 0.17.1: **the settings are pages now**, the way the YouTube tweak's are — a first

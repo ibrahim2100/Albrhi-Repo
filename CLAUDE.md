@@ -636,6 +636,16 @@ over 345,902 questions on X 12.14, which is what 0.2.0's seventeen named feature
 from. Every key in that table was observed being asked; what each one *means* is still read
 from its name, and the screen says so rather than implying more certainty than there is.
 
+**A fallback for an unlikely case became the code path for the only case, and nothing said so.**
+X's open-in-Safari hook read the URL with `[self valueForKey:@"initialURL"]` — a name
+`SFSafariViewController` does not expose — so it was nil every time, and the branch written for
+"we could not tell where this link goes, leave it alone" ran for every link ever opened. The
+feature did nothing, and the report had no line that would have shown it. **Take the value from the
+initialiser, where the caller certainly had it**, and count the failing branch: a fallback with no
+counter is indistinguishable from a feature that works. The same shape sat one level down in the
+post-to-image renderer, where `-drawViewHierarchyInRect:afterScreenUpdates:NO` returns a BOOL that
+was being discarded.
+
 **A settings screen addressed by index is three lists of one truth, and a control that governs
 what is below it belongs above it.** X's screen had five section constants, seven row constants, a
 hand-written row count and a `switch` per section deciding what each number meant — the exact shape
@@ -1547,9 +1557,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.25.1** · X **0.17.1** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.25.1** · X **0.17.2** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.8.5** ·
-NextUp **0.1.5** · suite **1.61.3**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.61.4**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

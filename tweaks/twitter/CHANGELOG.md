@@ -1,5 +1,33 @@
 # Albrhi for X — what changed
 
+## v0.17.2
+
+**Opening links in Safari did nothing, every time, and said nothing about it.**
+
+The hook asked `SFSafariViewController` for `initialURL` with KVC. That is not a name the
+class exposes, so the answer was always nil — and a missing URL was treated as "leave this one
+alone", which is the branch that ran for every link ever opened. **A fallback for an unlikely case
+was the code path for the only case**, and the report had no line that would have shown it.
+
+The URL is taken from the initialiser now, where it is certainly in hand: both `-initWithURL:` and
+`-initWithURL:configuration:` are hooked, because X may call either, and the URL is kept on the
+controller itself. The report counts links opened *and* controllers that arrived with no URL, so
+that state can never be silent again.
+
+**And the post-as-a-picture renderer was making the same class of mistake one level down.**
+`-drawViewHierarchyInRect:afterScreenUpdates:NO` does not copy what is on screen — it asks the
+render server for whatever it last held for those layers, which for a view not composited in its
+current state is stale or incomplete. It is also the call every tweak offering this feature uses.
+It is `YES` now, after an explicit layout pass, and **its BOOL return is checked** rather than
+discarded: a failed draw falls back to rendering the layer, which copies each layer's own
+rasterised contents and cannot re-lay-out anything.
+
+**Whether that fixes Arabic coming out reversed is not claimed.** Two different faults produce that
+complaint and they need opposite repairs — a *mirrored* image, where the avatar and icons are
+flipped as well, versus *reordered* text, where the pictures are fine and only the letters are out
+of order. The report now names which path drew the picture, so the next round starts from a fact
+rather than from a guess.
+
 ## v0.17.1
 
 **The settings are pages now, the way the YouTube tweak's are** — a first screen listing eight

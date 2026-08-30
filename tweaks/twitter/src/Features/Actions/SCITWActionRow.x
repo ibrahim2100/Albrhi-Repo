@@ -65,10 +65,25 @@ static NSUInteger SCISetHidden(UIView *root, NSString *className, BOOL hidden) {
 
 /// Renders the post the share button belongs to, exactly as it is drawn.
 ///
-/// `-drawViewHierarchyInRect:afterScreenUpdates:` rather than a layer render: the second
-/// draws the layer tree and misses anything UIKit composites afterwards, which on a post is
-/// most of the text. Walking up to the row's own superview gets the whole cell rather than
-/// the button.
+/// **`-drawViewHierarchyInRect:afterScreenUpdates:NO` was the wrong call, and it is the one
+/// every tweak that does this uses.** `NO` does not copy the pixels already on screen -- it
+/// asks the render server for whatever it last had for these layers, which for a view that
+/// has not been composited in its current state is stale or incomplete. `YES` commits the
+/// pending changes and renders properly, which is also the only version that re-runs text
+/// layout with the view's real environment rather than with whatever the cached run held.
+///
+/// It returns a BOOL, and that return is checked here rather than ignored: a failed draw
+/// falls back to the layer, which copies each layer's own rasterised contents and cannot
+/// re-lay-out anything at all.
+///
+/// **What this does not claim to fix is Arabic coming out reversed** -- reported against
+/// every tweak that offers this feature. Two different faults produce that complaint and
+/// they need opposite repairs: a *mirrored* image, where the avatar and the icons are
+/// flipped too, versus *reordered* text, where the pictures are fine and only the letters
+/// are out of order. The report says which path drew the picture so the next round starts
+/// from a fact.
+static NSUInteger sciDrewByHierarchy = 0, sciDrewByLayer = 0;
+
 static UIImage *SCIRenderAncestor(UIView *view) {
     UIView *subject = view;
     for (int depth = 0; depth < 8 && subject.superview; depth++) {
@@ -77,10 +92,22 @@ static UIImage *SCIRenderAncestor(UIView *view) {
     }
     if (subject.bounds.size.width < 1 || subject.bounds.size.height < 1) return nil;
 
-    UIGraphicsBeginImageContextWithOptions(subject.bounds.size, NO, 0);
-    [subject drawViewHierarchyInRect:subject.bounds afterScreenUpdates:NO];
-    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
+    // Laid out before it is drawn. A subject mid-layout renders as it is, not as it will be.
+    [subject layoutIfNeeded];
+
+    UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat preferredFormat];
+    format.opaque = NO;
+    UIGraphicsImageRenderer *renderer =
+        [[UIGraphicsImageRenderer alloc] initWithSize:subject.bounds.size format:format];
+
+    __block BOOL drawn = NO;
+    UIImage *image = [renderer imageWithActions:^(__unused UIGraphicsImageRendererContext *context) {
+        drawn = [subject drawViewHierarchyInRect:subject.bounds afterScreenUpdates:YES];
+        if (!drawn) [subject.layer renderInContext:UIGraphicsGetCurrentContext()];
+    }];
+
+    if (drawn) sciDrewByHierarchy++;
+    else sciDrewByLayer++;
     return image;
 }
 
@@ -146,8 +173,13 @@ NSString *SCITWActionRowReport(void) {
                           (unsigned long)sciHidViewCount, (unsigned long)sciHidBookmark]];
     }
 
-    if (!sciSharePresent) [parts addObject:@"share button absent"];
-    else [parts addObject:[NSString stringWithFormat:@"rendered %lu", (unsigned long)sciRendered]];
+    if (!sciSharePresent) {
+        [parts addObject:@"share button absent"];
+    } else {
+        [parts addObject:[NSString stringWithFormat:@"rendered %lu (%lu hierarchy, %lu layer)",
+                          (unsigned long)sciRendered, (unsigned long)sciDrewByHierarchy,
+                          (unsigned long)sciDrewByLayer]];
+    }
 
     return [@"action row: " stringByAppendingString:[parts componentsJoinedByString:@" · "]];
 }
