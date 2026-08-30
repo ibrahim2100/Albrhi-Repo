@@ -831,6 +831,16 @@ itself, and then **proves the flavour from the staged paths rather than the file
 shipped a "roothide" package built from a rootless tree and it installed as rootless, because
 that is what it was. It refuses to copy a mismatch out.
 
+**One non-ASCII character moves a string literal out of `__cstring`, and `strings` then reports it
+missing.** A report line beginning `@" \u00b7 long press: …"` was nowhere in the built object under
+`strings` or `grep`, while the Logos symbols for the same code were plainly there -- so a build that
+was entirely correct read as a build that had silently dropped half a function. Clang stores a
+CFString literal containing any non-ASCII character as **UTF-16 in `__TEXT,__ustring`**; the ASCII
+tools cannot see it and answer zero *confidently*, which is the same shape as the `otool`
+little-endian trap already recorded for `tools/objc-classes.py`. **Verify a string's presence by
+dumping both sections, or verify with a symbol instead** -- `_logos_orig$Group$Class$selector` is
+ASCII whatever the strings around it are, and it is what settled this one.
+
 **Holding the version while the content changes makes a local build indistinguishable from the one
 already installed, and the device is the thing that cannot tell.** The publish pause below says
 version numbers do not move — which is right for the *changelog*, and wrong for the `.deb` somebody
