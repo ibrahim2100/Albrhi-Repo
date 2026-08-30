@@ -1,5 +1,6 @@
 #import "SCIYTTabBarController.h"
 #import "../Features/Tabs/SCIYTTabBar.h"
+#import "../Features/Tabs/SCIYTHistoryTab.h"
 #import "../Localization/SCILocalize.h"
 
 @interface SCIYTTabBarController ()
@@ -24,7 +25,13 @@
 /// stored order does not mention joins the active list at the end, which is exactly where
 /// the arranger would put it.
 - (void)buildLists {
-    NSArray<NSString *> *seen = SCIYTTabBarSeenIdentifiers();
+    // History is offered whether or not it has ever been seen, because it cannot be seen
+    // until it is switched on -- it is a tab this tweak adds, not one YouTube handed over.
+    // Everything else on this screen is something the bar actually reported.
+    NSMutableArray<NSString *> *candidates =
+        [NSMutableArray arrayWithArray:SCIYTTabBarSeenIdentifiers()];
+    if (![candidates containsObject:SCIYTHistoryPivot]) [candidates addObject:SCIYTHistoryPivot];
+    NSArray<NSString *> *seen = candidates;
     NSArray<NSString *> *storedOrder = SCIYTTabBarActiveOrder();
     NSArray<NSString *> *storedHidden = SCIYTTabBarHiddenIdentifiers();
 
@@ -36,8 +43,16 @@
     }
     for (NSString *identifier in seen) {
         if ([self.active containsObject:identifier]) continue;
-        if ([storedHidden containsObject:identifier]) [self.inactive addObject:identifier];
-        else [self.active addObject:identifier];
+
+        // A tab YouTube handed over defaults to active -- it is already in the bar, and a
+        // fresh install should change nothing. History defaults the other way for the same
+        // reason: YouTube did not put it there, so switching it on is a deliberate act.
+        BOOL defaultsOff = [identifier isEqualToString:SCIYTHistoryPivot];
+        if ([storedHidden containsObject:identifier] || defaultsOff) {
+            [self.inactive addObject:identifier];
+        } else {
+            [self.active addObject:identifier];
+        }
     }
 }
 
@@ -93,7 +108,7 @@
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
-    if (section != 0) return nil;
+    if (section == 1) return SCILocalized(@"tabs_inactive_note");
     if (!SCIYTTabBarSeenIdentifiers().count) return SCILocalized(@"tabs_empty_note");
     return SCILocalized(@"tabs_max_note");
 }

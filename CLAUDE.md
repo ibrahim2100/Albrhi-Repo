@@ -320,6 +320,14 @@ missing but the question. When a guard and the thing it guards resolve the same 
 by different routes, the guard is wrong by construction, and it fails silently in the
 direction of doing less.
 
+**A feature that adds an item to a fixed-size list belongs in whatever screen manages that list,
+not in a switch beside it.** The History tab shipped with its own switch for one release: the bar
+holds six tabs, so switching it on added a *seventh* rather than replacing anything, and there was
+nowhere to say what it should replace. A switch that adds a tab and a screen that arranges tabs are
+two answers to one question — the same shape as X's named features versus hand-set keys, where
+keeping two maps of one decision was where the bugs lived. History is a row in the arranging screen
+now, starting inactive, and one screen enforces the limit for every tab at once.
+
 **A chain confirmed hop by hop is the only kind that has worked here, and YouTube's History tab is
 the fourth instance.** The tab needed a navigation endpoint, and the fields were read from the app's
 own class metadata rather than from any tweak's strings: `YTIPivotBarItemRenderer` declares
@@ -1472,9 +1480,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.23.1** · X **0.16.2** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.23.2** · X **0.16.2** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.8.5** ·
-NextUp **0.1.5** · suite **1.60.6**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.60.7**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

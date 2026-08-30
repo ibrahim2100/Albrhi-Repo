@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.60.7
+
+Albrhi for YouTube 1.23.2: **the History switch is gone and History is a row in the arranging
+screen.** A switch that adds a tab and a screen that arranges tabs are two answers to one question,
+and the bar holds six — so switching it on added a seventh rather than replacing anything. Drag it
+up to switch it on, drag something else down to make room.
+
 ## v1.60.6
 
 Albrhi for YouTube 1.23.1: **History can be one of the bottom bar's tabs**, off by default, beside

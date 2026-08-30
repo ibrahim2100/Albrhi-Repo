@@ -3,6 +3,21 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.23.2
+
+**The History switch is gone, and History is a row in the arranging screen instead** — which is
+where it should have been in the first release that had it.
+
+A switch that adds a tab and a screen that arranges tabs are two answers to one question, and the
+bar holds six. So switching History on put it **on top of** a full bar rather than in place of
+anything, and there was nowhere to say what it should replace. It now sits in the inactive list like
+any other tab: drag it up to switch it on, drag something else down to make room, and the same
+six-tab limit applies to all of them at once because one screen is enforcing it.
+
+It is the only row on that screen that is not something YouTube handed over — everything else is
+read from the bar itself — so it is offered whether or not it has ever been seen, and it starts in
+the inactive list because YouTube did not put it there.
+
 ## v1.23.1
 
 **History can be one of the tabs**, off by default, in the same section.

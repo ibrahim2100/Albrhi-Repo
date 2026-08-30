@@ -2,6 +2,7 @@
 #import <objc/message.h>
 #import "../../Tweak.h"
 #import "../../Prefs.h"
+#import "SCIYTTabBar.h"
 #import "../../SCILog.h"
 #import "../../Localization/SCILocalize.h"
 
@@ -10,8 +11,16 @@ NSString *const SCIYTHistoryPivot = @"FEhistory";
 static NSString *sciHistoryState = nil;
 static BOOL sciHistoryBuilt = NO;
 
+/// Wanted when the arrangement puts it among the active tabs, and never from a switch of
+/// its own.
+///
+/// It had one for exactly one release, and that was the bug: a switch that adds a tab and a
+/// screen that arranges tabs are two answers to one question, so History arrived *on top of*
+/// a full bar rather than in place of something. It is a row in the arranging screen now --
+/// off means sitting in the inactive list, which is also how every other tab is switched
+/// off, and the six-tab limit is enforced by the same screen for all of them at once.
 BOOL SCIYTHistoryTabWanted(void) {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefTabHistory];
+    return [SCIYTTabBarActiveOrder() containsObject:SCIYTHistoryPivot];
 }
 
 /// KVC throughout, deliberately.
