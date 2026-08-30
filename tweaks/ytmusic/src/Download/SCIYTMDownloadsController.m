@@ -5,6 +5,7 @@
 
 @interface SCIYTMDownloadsController ()
 @property (nonatomic, strong) NSArray<SCIYTMTrack *> *tracks;
+@property (nonatomic, strong) UITableView *tableView;
 
 /// The transport, drawn by us because the app's belongs to the app's player.
 ///
@@ -25,12 +26,20 @@
 @implementation SCIYTMDownloadsController
 
 - (instancetype)init {
-    self = [super initWithStyle:UITableViewStyleInsetGrouped];
+    self = [super initWithNibName:nil bundle:nil];
     return self;
 }
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+
+    self.view.backgroundColor = [UIColor systemBackgroundColor];
+
+    self.tableView = [[UITableView alloc] initWithFrame:CGRectZero
+                                                  style:UITableViewStyleInsetGrouped];
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+    [self.view addSubview:self.tableView];
 
     [self buildPlayerBar];
     self.title = SCILocalized(@"downloads_title");
@@ -205,6 +214,37 @@ static NSString *SCIYTMClock(double seconds) {
 }
 
 
+/// The height of one view of a named class, wherever it sits in the window.
+///
+/// Measured rather than written down: these heights belong to YouTube Music, differ by device, and
+/// change as the player docks. A view that is not there, or is hidden, contributes nothing -- which
+/// costs a little space and never buries a control under the app's own.
+static CGFloat SCIYTMHeightOfClass(UIWindow *window, NSString *className) {
+    Class target = NSClassFromString(className);
+    if (!window || !target) return 0;
+
+    NSMutableArray<UIView *> *queue = [NSMutableArray arrayWithObject:window];
+    while (queue.count) {
+        UIView *view = queue.firstObject;
+        [queue removeObjectAtIndex:0];
+
+        if ([view isKindOfClass:target] && !view.hidden && view.alpha > 0.01) {
+            return view.bounds.size.height;
+        }
+        [queue addObjectsFromArray:view.subviews];
+    }
+    return 0;
+}
+
+/// The app's own mini player, when one of its tracks is docked above the tab bar.
+///
+/// **This is why our transport ended up underneath it.** The bar was placed above the tab bar and
+/// nothing else, and YouTube Music parks its own player in exactly that space the moment it is
+/// playing something.
+static CGFloat SCIYTMMiniPlayerHeight(UIWindow *window) {
+    return SCIYTMHeightOfClass(window, @"YTMMiniPlayerView");
+}
+
 /// How much of the bottom the app's own tab bar is occupying.
 ///
 /// **Measured off the bar itself rather than written down.** Its height is a number that belongs
@@ -212,20 +252,7 @@ static NSString *SCIYTMClock(double seconds) {
 /// a constant here would be right on one phone. A bar that cannot be found returns zero, which
 /// costs a little space at the bottom and never hides a row behind something.
 static CGFloat SCIYTMBottomBarHeight(UIWindow *window) {
-    Class barClass = NSClassFromString(@"YTPivotBarView");
-    if (!window || !barClass) return 0;
-
-    NSMutableArray<UIView *> *queue = [NSMutableArray arrayWithObject:window];
-    while (queue.count) {
-        UIView *view = queue.firstObject;
-        [queue removeObjectAtIndex:0];
-
-        if ([view isKindOfClass:barClass] && !view.hidden && view.alpha > 0.01) {
-            return view.bounds.size.height;
-        }
-        [queue addObjectsFromArray:view.subviews];
-    }
-    return 0;
+    return SCIYTMHeightOfClass(window, @"YTPivotBarView");
 }
 
 /// Kept in step on every layout pass, not set once.
@@ -236,9 +263,8 @@ static CGFloat SCIYTMBottomBarHeight(UIWindow *window) {
     [super viewDidLayoutSubviews];
 
     // The key window when this view has none of its own: a child added to a parent that is
-    // itself off screen for a moment reports no window, and reading zero from that is how an
-    // inset comes out right on the second layout pass and wrong on the first -- which is the
-    // one that decides where the list appears.
+    // off screen for a moment reports no window, and reading zero from that is how a measurement
+    // comes out wrong on the first pass -- the one that decides where things appear.
     UIWindow *window = self.view.window;
     if (!window) {
         for (UIWindow *candidate in [UIApplication sharedApplication].windows) {
@@ -247,56 +273,26 @@ static CGFloat SCIYTMBottomBarHeight(UIWindow *window) {
     }
 
     UIEdgeInsets safe = window.safeAreaInsets;
+    CGFloat width = CGRectGetWidth(self.view.bounds);
+    CGFloat height = CGRectGetHeight(self.view.bounds);
 
-    // The pivot bar sits above the home indicator and is the app's own chrome rather than a
-    // system inset, so its height is asked of the app: whatever the window reports below the
-    // safe area is what the bar and the docked player occupy together.
-    CGFloat bar = SCIYTMBottomBarHeight(window);
-    CGFloat bottom = MAX(safe.bottom, bar);
+    // What the app has parked at the bottom: its tab bar, and its own mini player above it when
+    // something of YouTube Music's is playing. Both measured off the views themselves -- their
+    // heights belong to the app, differ by device, and change as the player docks and undocks.
+    CGFloat chrome = MAX(safe.bottom, SCIYTMBottomBarHeight(window) + SCIYTMMiniPlayerHeight(window));
 
-    // The transport sits above the app's own bar, and the list keeps clear of both.
-    CGFloat transport = self.playerBar.hidden ? 0 : 64;
+    CGFloat transportHeight = self.playerBar.hidden ? 0 : 52;
+    CGFloat transportGap = self.playerBar.hidden ? 0 : 8;
 
     self.playerBar.frame = CGRectMake(12,
-                                      CGRectGetHeight(self.view.bounds) - bottom - 60,
-                                      CGRectGetWidth(self.view.bounds) - 24, 52);
+                                      height - chrome - transportGap - transportHeight,
+                                      width - 24, transportHeight);
 
-    UIEdgeInsets wanted = UIEdgeInsetsMake(safe.top, 0, bottom + transport, 0);
-
-    BOOL wasAtTop = self.tableView.contentOffset.y <= -self.tableView.contentInset.top + 0.5;
-
-    if (!UIEdgeInsetsEqualToEdgeInsets(self.tableView.contentInset, wanted)) {
-        self.tableView.contentInset = wanted;
-        self.tableView.verticalScrollIndicatorInsets = wanted;
-    }
-
-    //
-    // **Setting an inset does not move what is already there, and that is the whole of the
-    // bug this line fixes.**
-    //
-    // A scroll view keeps its `contentOffset` when its inset changes, so an offset of zero --
-    // which is where a freshly loaded list sits -- stops meaning "the top" the moment a top
-    // inset exists and starts meaning "scrolled up by exactly that much". The first row goes
-    // under the clock, which is precisely what was reported after the inset itself was
-    // already correct.
-    //
-    // Only when the list was at its top: somebody who has scrolled down keeps their place.
-    //
-    //
-    // **Checked on every pass, not only when the inset changes.**
-    //
-    // The previous version returned early once the inset already matched -- and a
-    // `-reloadData` puts the offset back to zero while leaving the inset alone, so the list
-    // slid back under the clock every time it was refreshed and the one line that would have
-    // fixed it had been skipped. Three attempts at this bug were each a different cause, and
-    // this was the fourth: a correct value, correctly applied, and then quietly undone.
-    //
-    // An offset of exactly zero with a top inset present is never a place a person scrolled
-    // to; it is the value a fresh or reloaded table starts at.
-    //
-    if (wasAtTop || fabs(self.tableView.contentOffset.y) < 0.5) {
-        self.tableView.contentOffset = CGPointMake(0, -wanted.top);
-    }
+    // **The table's frame, not its inset.** It begins below the status bar because that is where
+    // it is put, which nothing downstream can argue with.
+    CGFloat top = safe.top;
+    self.tableView.frame = CGRectMake(0, top, width,
+                                      height - top - chrome - transportGap - transportHeight);
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {

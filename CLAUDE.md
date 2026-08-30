@@ -713,6 +713,17 @@ counter is indistinguishable from a feature that works. The same shape sat one l
 post-to-image renderer, where `-drawViewHierarchyInRect:afterScreenUpdates:NO` returns a BOOL that
 was being discarded.
 
+**Five fixes for one symptom, all of them correct, all of them undone — because the wrong thing
+was being adjusted.** YouTube Music's Downloads list kept starting under the status bar, and every
+attempt moved `contentInset`: measured from the parent (a parent hosting content in its own chrome
+hands children a zero safe area), then applied without moving the existing `contentOffset`, then
+read from a view whose `window` was nil on the first layout pass, then guarded by an early return
+that a `-reloadData` walked straight past. A `UITableViewController`'s view **is** its table, so
+inset was the only lever there was. Making it a plain controller with a table inside gave a
+*frame* to place, and a frame that starts below the safe area cannot be argued with by a reload, an
+offset or a parent. **When the third fix for one symptom is still the same kind of fix, change what
+you are adjusting rather than how.**
+
 **`UITableViewAutomaticDimension` does nothing without `estimatedRowHeight`, and the failure looks
 like the row's second line not existing.** YouTube Music's settings screen returned automatic
 dimension from `-heightForRowAtIndexPath:` and set no estimate; every row was one line, so it looked
