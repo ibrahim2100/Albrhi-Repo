@@ -1,4 +1,5 @@
 #import "SCIYTMDownload.h"
+#import "SCIYTMLibrary.h"
 #import "../YTMShared.h"
 #import "../Localization/SCILocalize.h"
 
@@ -184,7 +185,8 @@ static NSString *SCIYTMSafeName(NSString *name) {
 /// port this was measured against. What the export does is put those frames in an MPEG-4 container
 /// so the Files app, the Music app and anything else can read them.
 ///
-static void SCIYTMDownloadTrack(NSURL *manifestURL, NSString *title, NSString *artist) {
+static void SCIYTMDownloadTrack(NSURL *manifestURL, NSString *title, NSString *artist,
+                                NSString *chosenName, NSString *section) {
     NSURLSession *session = [NSURLSession sharedSession];
 
     [[session dataTaskWithURL:manifestURL completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
@@ -224,13 +226,21 @@ static void SCIYTMDownloadTrack(NSURL *manifestURL, NSString *title, NSString *a
                 return;
             }
 
-            NSString *folder = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject
-                stringByAppendingPathComponent:@"Albrhi"];
+            NSString *folder = SCIYTMLibraryFolder();
+            if (section.length) {
+                folder = [folder stringByAppendingPathComponent:SCIYTMSafeName(section)];
+            }
             [[NSFileManager defaultManager] createDirectoryAtPath:folder
                                       withIntermediateDirectories:YES attributes:nil error:nil];
 
-            NSString *name = artist.length ? [NSString stringWithFormat:@"%@ - %@", SCIYTMSafeName(artist), SCIYTMSafeName(title)]
-                                           : SCIYTMSafeName(title);
+            // The name the person typed wins; the artist-and-title pair is only the suggestion
+            // it started from. Sanitised either way -- a slash in a name is a directory nobody
+            // asked for.
+            NSString *name = chosenName.length
+                ? SCIYTMSafeName(chosenName)
+                : (artist.length ? [NSString stringWithFormat:@"%@ - %@",
+                                    SCIYTMSafeName(artist), SCIYTMSafeName(title)]
+                                 : SCIYTMSafeName(title));
 
             NSURL *raw = [NSURL fileURLWithPath:[folder stringByAppendingPathComponent:
                 [NSString stringWithFormat:@"%@.aac", name]]];
@@ -361,6 +371,98 @@ static id SCIYTMPlayerControllerNear(UIView *view) {
     return nil;
 }
 
+/// The sections that already exist under the library folder.
+///
+/// Read from disk rather than kept in a preference: the folder *is* the truth, so a section made
+/// in the Files app appears here and one deleted there stops being offered, with no state of ours
+/// to fall out of step. The same reasoning the library itself is built on.
+static NSArray<NSString *> *SCIYTMSections(void) {
+    NSString *root = SCIYTMLibraryFolder();
+    NSMutableArray<NSString *> *sections = [NSMutableArray array];
+
+    for (NSString *name in [[NSFileManager defaultManager] contentsOfDirectoryAtPath:root error:nil]) {
+        BOOL directory = NO;
+        NSString *path = [root stringByAppendingPathComponent:name];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&directory] && directory) {
+            [sections addObject:name];
+        }
+    }
+    return [sections sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+}
+
+/// Asks before saving: what to call it, and where to put it.
+///
+/// **A confirmation, not an interruption.** The name is filled in with what the track is already
+/// called, and the section defaults to the last one used, so the whole thing is one tap for anybody
+/// who does not care -- and two fields for anybody who does. Nothing is fetched until it is
+/// confirmed, so cancelling costs nothing.
+static void SCIYTMAskThenDownload(NSString *manifest, NSString *title, NSString *artist) {
+    NSString *suggested = artist.length
+        ? [NSString stringWithFormat:@"%@ - %@", artist, title]
+        : (title ?: @"track");
+
+    NSString *lastSection =
+        [[NSUserDefaults standardUserDefaults] stringForKey:@"AlbrhiYTMLastSection"] ?: @"";
+
+    UIAlertController *sheet =
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"dl_confirm_title")
+                                            message:SCILocalized(@"dl_confirm_note")
+                                     preferredStyle:UIAlertControllerStyleAlert];
+
+    [sheet addTextFieldWithConfigurationHandler:^(UITextField *field) {
+        field.text = suggested;
+        field.placeholder = SCILocalized(@"dl_confirm_name");
+        field.clearButtonMode = UITextFieldViewModeWhileEditing;
+    }];
+
+    [sheet addTextFieldWithConfigurationHandler:^(UITextField *field) {
+        field.text = lastSection;
+        // The existing sections are named in the placeholder rather than in a picker: a list of
+        // folders is short, and a free field is the only thing that can also *make* one.
+        NSArray<NSString *> *existing = SCIYTMSections();
+        field.placeholder = existing.count
+            ? [NSString stringWithFormat:@"%@ — %@", SCILocalized(@"dl_confirm_section"),
+               [existing componentsJoinedByString:@", "]]
+            : SCILocalized(@"dl_confirm_section");
+        field.clearButtonMode = UITextFieldViewModeWhileEditing;
+    }];
+
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"dl_confirm_save")
+                                              style:UIAlertActionStyleDefault
+                                            handler:^(__unused UIAlertAction *action) {
+        NSString *name = sheet.textFields.firstObject.text;
+        NSString *section = sheet.textFields.lastObject.text;
+
+        [[NSUserDefaults standardUserDefaults] setObject:(section ?: @"")
+                                                  forKey:@"AlbrhiYTMLastSection"];
+
+        sciStarted++;
+        SCIYTMTell(SCILocalized(@"download_started"), SCILocalized(@"download_started_note"));
+        SCIYTMDownloadTrack([NSURL URLWithString:manifest], title, artist, name, section);
+    }]];
+
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
+                                              style:UIAlertActionStyleCancel
+                                            handler:nil]];
+
+    UIViewController *top = nil;
+    for (UIWindow *window in [UIApplication sharedApplication].windows) {
+        if (window.isKeyWindow) { top = window.rootViewController; break; }
+    }
+    while (top.presentedViewController) top = top.presentedViewController;
+
+    // No screen to ask on is not a reason to save something nobody confirmed -- and not a reason
+    // to lose the download either. It goes ahead with the suggested name and the last section,
+    // which is exactly what the sheet would have offered.
+    if (!top) {
+        sciStarted++;
+        SCIYTMDownloadTrack([NSURL URLWithString:manifest], title, artist, suggested, lastSection);
+        return;
+    }
+
+    [top presentViewController:sheet animated:YES completion:nil];
+}
+
 // MARK: - A surface of our own
 
 ///
@@ -424,12 +526,9 @@ static NSUInteger sciPressesAdded = 0, sciPressesFired = 0;
         return;
     }
 
-    sciStarted++;
-    SCIYTMTell(SCILocalized(@"download_started"), SCILocalized(@"download_started_note"));
-
-    SCIYTMDownloadTrack([NSURL URLWithString:manifest],
-                        SCIYTMString(details, @"title") ?: @"track",
-                        SCIYTMString(details, @"author"));
+    SCIYTMAskThenDownload(manifest,
+                          SCIYTMString(details, @"title") ?: @"track",
+                          SCIYTMString(details, @"author"));
 }
 
 @end
@@ -558,12 +657,9 @@ static NSUInteger sciPressesAdded = 0, sciPressesFired = 0;
         return;
     }
 
-    sciStarted++;
-    SCIYTMTell(SCILocalized(@"download_started"), SCILocalized(@"download_started_note"));
-
-    SCIYTMDownloadTrack([NSURL URLWithString:manifest],
-                        SCIYTMString(details, @"title") ?: @"track",
-                        SCIYTMString(details, @"author"));
+    SCIYTMAskThenDownload(manifest,
+                          SCIYTMString(details, @"title") ?: @"track",
+                          SCIYTMString(details, @"author"));
 }
 
 %end

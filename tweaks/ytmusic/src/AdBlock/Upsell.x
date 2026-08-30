@@ -633,6 +633,91 @@ static NSString *const kSCIYTMDownloadsPivot = @"FEalbrhi_downloads";
 
 %end
 
+#pragma mark - The tab's picture
+
+///
+/// **The icon is painted onto the button, not asked for through the renderer.**
+///
+/// `YTIIcon` wants an `iconType`, and 0.8.1 proved what a value the app has no case for costs: it
+/// reached the tab bar's own renderer at launch and stopped the app opening. Type 1 is what 0.8.0
+/// shipped and what opens, so the renderer keeps it -- and the real artwork, which this package
+/// already ships in `YTMusicUltimate.bundle/icons`, is drawn over the button afterwards.
+///
+/// The same technique the YouTube tweak's Download Centre tab uses, for the same reason: a pivot
+/// tab is drawn by a button, and a button's own image view either does not exist until it has an
+/// image or is overwritten on its next layout. Setting it through the button is what sticks, and it
+/// is what allows a selected state as well.
+///
+static char kSCIYTMIsOurTab;
+
+static UIImage *SCIYTMDownloadsIcon(BOOL selected) {
+    NSString *name = selected ? @"icons/downloads_selected" : @"icons/downloads";
+    UIImage *image = [UIImage imageNamed:name inBundle:NSBundle.ytmu_defaultBundle
+               compatibleWithTraitCollection:nil];
+
+    // Template rendering, so the bar's own tint decides the colour -- a flat white glyph would be
+    // invisible in a light theme, and this app has three.
+    return [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+}
+
+static BOOL SCIYTMPaintTab(UIView *view) {
+    UIImage *plain = SCIYTMDownloadsIcon(NO);
+    UIImage *chosen = SCIYTMDownloadsIcon(YES) ?: plain;
+    if (!plain || !view) return NO;
+
+    NSMutableArray<UIView *> *queue = [NSMutableArray arrayWithObject:view];
+    while (queue.count) {
+        UIView *next = queue.firstObject;
+        [queue removeObjectAtIndex:0];
+
+        if ([next isKindOfClass:[UIButton class]]) {
+            UIButton *button = (UIButton *)next;
+            [button setImage:plain forState:UIControlStateNormal];
+            [button setImage:chosen forState:UIControlStateSelected];
+            [button setImage:chosen forState:UIControlStateHighlighted];
+            return YES;
+        }
+        [queue addObjectsFromArray:next.subviews];
+    }
+    return NO;
+}
+
+%group SCIYTMTabIcon
+
+%hook YTPivotBarItemView
+
+- (void)setRenderer:(id)renderer {
+    %orig;
+
+    // Marked on the view rather than remembered in a variable: item views are reused between
+    // tabs, so one global flag would paint whichever tab inherited the view next.
+    BOOL ours = NO;
+    @try {
+        id inner = [renderer valueForKey:@"pivotBarItemRenderer"];
+        id identifier = inner ? [inner valueForKey:@"pivotIdentifier"] : nil;
+        ours = [identifier isKindOfClass:[NSString class]] &&
+               [identifier isEqualToString:kSCIYTMDownloadsPivot];
+    } @catch (__unused NSException *exception) { }
+
+    objc_setAssociatedObject(self, &kSCIYTMIsOurTab, ours ? @YES : nil,
+                             OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    if (ours) SCIYTMPaintTab((UIView *)self);
+}
+
+/// Painted again on layout, because once is not enough: the insides are built lazily and the
+/// button reloads its own image when its state changes. Idempotent, so running every pass costs
+/// a cache lookup.
+- (void)layoutSubviews {
+    %orig;
+
+    if (objc_getAssociatedObject(self, &kSCIYTMIsOurTab)) SCIYTMPaintTab((UIView *)self);
+}
+
+%end
+
+%end
+
+
 void SCIYTMInstallUpsell(void) {
     %init(YTMUpsell);
 
@@ -649,4 +734,9 @@ void SCIYTMInstallUpsell(void) {
     //
     // The icon group is gone with the custom type it existed to recognise. A tab drawn with the
     // app's own type 1 needs no hook, and needing no hook is why it cannot crash.
+
+    // The artwork, on whichever build has the item view to paint it on.
+    if (NSClassFromString(@"YTPivotBarItemView")) {
+        %init(SCIYTMTabIcon);
+    }
 }
