@@ -149,6 +149,10 @@ NSString *SCIYTTabBarSymbolFor(NSString *identifier) {
     return @"plus.circle.fill";
 }
 
+BOOL SCIYTTabBarWillArrange(void) {
+    return SCIYTTabBarActiveOrder().count > 0 || SCIYTTabBarHiddenIdentifiers().count > 0;
+}
+
 void SCIYTTabBarArrange(NSMutableArray *items) {
     if (!items.count) return;
 
@@ -169,6 +173,13 @@ void SCIYTTabBarArrange(NSMutableArray *items) {
     sciLastSeenCount = items.count;
 
     if (!order.count && !hidden.count) {
+        // Untouched, but still capped. This is the only place the six is enforced, so that
+        // an append and a removal cannot each apply it separately and disagree -- which is
+        // exactly how hiding the create button failed to make room for anything.
+        if (items.count > SCIYTTabBarMaximum) {
+            [items removeObjectsInRange:NSMakeRange(SCIYTTabBarMaximum,
+                                                    items.count - SCIYTTabBarMaximum)];
+        }
         sciLastKeptCount = items.count;
         sciLastDroppedCount = 0;
         return;

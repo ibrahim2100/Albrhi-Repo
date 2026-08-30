@@ -180,7 +180,10 @@ static BOOL SCIPaintIcon(UIView *view) {
                     break;
                 }
             }
-            if (!haveHistory && items.count < 6) {
+            // No count check. History is only ever wanted when an arrangement exists, and
+            // the arrangement is what makes room -- checking the count here is what made
+            // hiding the create button fail to free a slot.
+            if (!haveHistory) {
                 id history = SCIYTMakeHistoryItem();
                 if (history) [items addObject:history];
             }
@@ -208,7 +211,12 @@ static BOOL SCIPaintIcon(UIView *view) {
             // itself is one nobody reads to the end of.
         } else if (!items) {
             [SCIYTDiagnostics recordTabState:@"the bar has no items array"];
-        } else if (items.count >= 6) {
+        } else if (items.count >= SCIYTTabBarMaximum && !SCIYTTabBarWillArrange()) {
+            // Full, and nothing is going to remove anything. With an arrangement stored the
+            // append goes ahead and the arranger settles the count afterwards -- one place
+            // enforcing the limit instead of two that can each refuse in turn, which is how
+            // hiding the create button and adding History left the Download Centre with no
+            // tab and the old floating button back in its place.
             [SCIYTDiagnostics recordTabState:
                 [NSString stringWithFormat:@"the bar is already full (%lu tabs)",
                     (unsigned long)items.count]];

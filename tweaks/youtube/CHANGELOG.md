@@ -3,6 +3,24 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.24.1
+
+**Hiding the `+` did not make room, and the Download Centre lost its tab because of it.**
+
+Reported exactly: with the create button switched off and History switched on, the bar came back
+with five tabs and the Download Centre was a floating button again rather than a tab.
+
+The limit was being enforced in two places that each applied it in turn. Both tabs of ours are
+appended to the array *before* the arrangement runs, and each append refused at six — so History
+took the sixth slot while the create button was still in the array, and the Download Centre was
+turned away as "already full". The create button was then removed a moment later, leaving five and
+no tab for the Centre, which is why the old floating button came back.
+
+**The six is enforced in one place now**: the arranger, which is the only code that also *removes*
+anything. An append may exceed it whenever an arrangement is stored, because a hidden tab is about
+to be dropped and the list truncated. With no arrangement stored nothing will be removed, so the
+cap still applies at the append — one rule, stated once, with the reason it differs.
+
 ## v1.24.0
 
 **The `+` button can be switched off now, and the reason it could not be is worth stating: it was

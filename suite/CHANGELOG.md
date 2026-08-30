@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.60.9
+
+Albrhi for YouTube 1.24.1: **hiding the `+` now makes room.** With the create button off and History
+on, the bar came back with five tabs and the Download Centre reverted to its floating button: the
+six-tab limit was being applied by each append and again by the arranger, so History took the last
+slot while the create button was still there and the Centre was refused as "full" — moments before
+the create button was removed. The limit lives in the arranger alone now, which is the only code
+that also removes anything.
+
 ## v1.60.8
 
 Albrhi for YouTube 1.24.0: **the `+` create button can be switched off**, and the arranging screen

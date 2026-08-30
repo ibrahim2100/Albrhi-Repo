@@ -320,6 +320,16 @@ missing but the question. When a guard and the thing it guards resolve the same 
 by different routes, the guard is wrong by construction, and it fails silently in the
 direction of doing less.
 
+**A limit enforced in two places is two limits, and they applied in the wrong order.** Both of the
+tabs this tweak adds are appended before the arrangement runs, and each append refused at six — so
+History took the sixth slot *while the create button was still in the array*, the Download Centre
+was turned away as "already full", and the create button was then removed a moment later. Five tabs
+and the old floating button back, from two pieces of code that were each individually right. The
+cap belongs to whichever step also *removes* things, and every other step defers to it: here that
+is the arranger, and an append may exceed six exactly when an arrangement is stored to bring it
+back down. **Adding and removing in one pass means the intermediate count is not a real count**, and
+nothing should refuse work based on it.
+
 **One container, two payload kinds, and reading only the first makes a real item look like no item
 at all.** YouTube's `YTIPivotBarSupportedRenderers` holds either a `pivotBarItemRenderer` or a
 `pivotBarIconOnlyItemRenderer`; the `+` create button is the second. Asking only for the first
@@ -1496,9 +1506,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.24.0** · X **0.16.2** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.24.1** · X **0.16.2** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.8.5** ·
-NextUp **0.1.5** · suite **1.60.8**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.60.9**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

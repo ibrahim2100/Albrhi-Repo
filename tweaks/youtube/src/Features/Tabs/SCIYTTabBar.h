@@ -76,6 +76,15 @@ void SCIYTTabBarSetActiveOrder(NSArray<NSString *> *active, NSArray<NSString *> 
 /// was written to replace, and it is why the number is not a setting.
 extern const NSUInteger SCIYTTabBarMaximum;
 
+/// Whether a stored arrangement exists, and therefore whether `SCIYTTabBarArrange` is going
+/// to rewrite the bar after the tabs of ours are appended.
+///
+/// **This is what decides whether an append may exceed six.** It matters because the
+/// arrangement is what *removes* things: with one stored, appending a seventh is fine
+/// because a hidden tab is about to be dropped and the list truncated; with none stored,
+/// nothing will be removed and a seventh would simply have no view to be drawn in.
+BOOL SCIYTTabBarWillArrange(void);
+
 /// Rewrites `items` in place: drops what is switched off, orders the rest. Anything the
 /// user has never seen keeps its place at the end rather than being dropped, so a tab
 /// YouTube adds tomorrow appears instead of silently vanishing.
