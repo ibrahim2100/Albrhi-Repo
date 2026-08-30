@@ -1,5 +1,28 @@
 # Albrhi for X — what changed
 
+## v0.17.5
+
+**Opening links in Safari was hooking the wrong class entirely.**
+
+0.17.2 fixed *how* the URL was read from `SFSafariViewController`, and the feature still did nothing
+— because X barely uses that class. The name appears **once** across its binaries. Fixing the read
+was fixing a detail of a hook that was never going to fire, which is what happens when a fault is
+repaired without first checking that the thing being repaired is the thing being used.
+
+X's own browser is `T1WebViewController`, and `-_t1_loadInitialURL` on its base is the moment before
+the page is fetched, with the address already in `rootURL`. That is the hook now: the link goes to
+Safari and the browser is taken off screen without loading anything. Presented and pushed are both
+undone, because a link from the timeline is presented and one from a profile is pushed.
+
+**Only the plain browser, never a subclass.** `T1BouncerWebViewController`,
+`T1LoginChallengeWebViewController`, `T1MonetizationWebViewController` and the rest descend from the
+same base and are sign-in, verification and billing flows, each carrying session state. Sending
+those to Safari would not be this feature, it would be breaking the ability to log in — so the exact
+class is compared rather than `-isKindOfClass:`, and the report counts how many were deliberately
+left to X.
+
+The `SFSafariViewController` hook stays. It costs nothing and covers a build that starts using it.
+
 ## v0.17.4
 
 **It was a mirror after all, and the emblem in the picture is what proved it.**

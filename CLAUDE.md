@@ -636,6 +636,16 @@ over 345,902 questions on X 12.14, which is what 0.2.0's seventeen named feature
 from. Every key in that table was observed being asked; what each one *means* is still read
 from its name, and the screen says so rather than implying more certainty than there is.
 
+**Repairing a hook without checking the class is used is repairing a detail of something that was
+never going to run.** X's open-in-Safari feature was hooked on `SFSafariViewController`; 0.17.2
+found a real bug in how it read the URL, fixed it, and the feature still did nothing — because that
+class is named **once** across all of X's binaries. The browser is `T1WebViewController`, whose base
+declares `rootURL` and `-_t1_loadInitialURL`. **One grep for the class name would have come before
+two releases of fixing its contents.** And the fix has a boundary worth keeping: the bouncer, login
+challenge, monetization and password-reset browsers all descend from the same base, so the *exact*
+class is compared rather than `-isKindOfClass:` — sending a sign-in flow to Safari is not this
+feature, it is breaking the ability to log in.
+
 **A description of a fault is evidence; a picture of it is proof — and here they disagreed.** X's
 post-to-image came out reversed, described as the share button changing sides and Arabic reading
 from the wrong end. That reads as re-layout, and one release was spent on that reading, reasoning
@@ -1582,9 +1592,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.25.1** · X **0.17.4** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.25.1** · X **0.17.5** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.8.5** ·
-NextUp **0.1.5** · suite **1.61.6**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.61.7**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

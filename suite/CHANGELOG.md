@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.61.7
+
+Albrhi for X 0.17.5: **links now really do open in Safari.** The hook was on
+`SFSafariViewController`, a class X names once across all its binaries — X's own browser is
+`T1WebViewController`, and that is what is hooked now, at the moment before the page is fetched.
+Sign-in, verification and billing browsers descend from the same base and are deliberately left
+alone: sending those to Safari would break logging in.
+
 ## v1.61.6
 
 Albrhi for X 0.17.4: **the post-as-a-picture was mirrored, and now is not.** UIKit mirrors

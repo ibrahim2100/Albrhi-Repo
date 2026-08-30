@@ -5,13 +5,18 @@
 #import "Prefs.h"
 #import "SCILog.h"
 
+@interface T1WebViewController : UIViewController
+@property (nonatomic, copy, readonly) NSURL *rootURL;
+@end
+
 @interface TFSTwitterEntityURL : NSObject
 @property (nonatomic, copy, readonly) NSString *expandedURL;
 @end
 
 static BOOL sciEntityURLPresent = NO;
 static NSUInteger sciLinksExpanded = 0, sciLinksCleaned = 0;
-static NSUInteger sciOpenedInSafari = 0, sciSafariNoURL = 0;
+static NSUInteger sciOpenedInSafari = 0, sciSafariNoURL = 0, sciWebViewSkipped = 0;
+static BOOL sciWebViewPresent = NO;
 
 /// Kept so a rewrite of the pasteboard cannot start a loop: writing a cleaned URL fires the
 /// change notification again, and without remembering what we just wrote the observer would
@@ -156,6 +161,62 @@ static char kSCISafariURL;
 %end
 
 
+%group LinksWebView
+
+%hook T1WebViewController
+
+/// X's own in-app browser, which is what actually opens a link.
+///
+/// **`SFSafariViewController` was the wrong class entirely.** 0.17.2 fixed how the URL was
+/// read from it and the feature still did nothing, because X barely uses that class -- the
+/// name appears once across its binaries. The browser is `T1WebViewController`, and
+/// `-_t1_loadInitialURL` on its base is the moment before the page is fetched, with the
+/// address already in `rootURL`.
+///
+/// **Only the plain browser, never a subclass.** `T1BouncerWebViewController`,
+/// `T1LoginChallengeWebViewController`, `T1MonetizationWebViewController` and the rest
+/// descend from the same base, and they are sign-in, verification and billing flows -- each
+/// one carrying state that belongs to the app session. Sending those to Safari would not be
+/// this feature, it would be breaking the ability to log in. The exact class is compared,
+/// not `-isKindOfClass:`.
+- (void)_t1_loadInitialURL {
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefOpenInSafari]) {
+        %orig;
+        return;
+    }
+
+    if ([self class] != NSClassFromString(@"T1WebViewController")) {
+        sciWebViewSkipped++;
+        %orig;
+        return;
+    }
+
+    NSURL *url = self.rootURL;
+    if (!url) {
+        sciSafariNoURL++;
+        %orig;
+        return;
+    }
+
+    sciOpenedInSafari++;
+    [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+
+    // Taken off screen without loading anything. Presented and pushed are both real here --
+    // a link from the timeline is presented, one from a profile is pushed -- so both are
+    // undone rather than assuming the shape of the stack.
+    UIViewController *controller = (UIViewController *)self;
+    if (controller.presentingViewController) {
+        [controller dismissViewControllerAnimated:NO completion:nil];
+    } else if (controller.navigationController.viewControllers.count > 1) {
+        [controller.navigationController popViewControllerAnimated:NO];
+    }
+}
+
+%end
+
+%end
+
+
 NSString *SCITWLinksReport(void) {
     NSMutableArray<NSString *> *parts = [NSMutableArray array];
 
@@ -169,8 +230,14 @@ NSString *SCITWLinksReport(void) {
     [parts addObject:sciPasteboardObserver
         ? [NSString stringWithFormat:@"%lu copied link(s) cleaned", (unsigned long)sciLinksCleaned]
         : @"pasteboard not watched"];
-    [parts addObject:[NSString stringWithFormat:@"%lu opened in Safari, %lu with no url",
-                      (unsigned long)sciOpenedInSafari, (unsigned long)sciSafariNoURL]];
+    if (!sciWebViewPresent) {
+        [parts addObject:@"T1WebViewController not in this build"];
+    } else {
+        [parts addObject:[NSString stringWithFormat:
+                          @"%lu opened in Safari, %lu with no url, %lu left to X (sign-in and billing)",
+                          (unsigned long)sciOpenedInSafari, (unsigned long)sciSafariNoURL,
+                          (unsigned long)sciWebViewSkipped]];
+    }
 
     return [@"links: " stringByAppendingString:[parts componentsJoinedByString:@" · "]];
 }
@@ -192,9 +259,14 @@ void SCITWInstallLinks(void) {
         SCICleanPasteboard();
     }];
 
-    // SafariServices is Apple's, so the class is always there -- no presence check to make
-    // and nothing to report as absent.
+    // SafariServices is Apple's, so the class is always there. Kept even though X barely
+    // uses it: a build that starts using it costs nothing to have covered already.
     %init(LinksSafari);
+
+    sciWebViewPresent = (NSClassFromString(@"T1WebViewController") != nil);
+    if (sciWebViewPresent) {
+        %init(LinksWebView);
+    }
 
     SCILogV(@"links: entity url %d, pasteboard watched, safari hooked", sciEntityURLPresent);
 }
