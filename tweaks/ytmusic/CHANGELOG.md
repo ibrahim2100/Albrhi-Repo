@@ -1,5 +1,48 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.9.0
+
+**Downloading works, and the reason it never had is worth more than the feature.**
+
+The installer had been **commented out since 0.8.4** — stood down as a suspect while a crash was
+investigated, cleared in 0.8.5 when the real cause was found elsewhere, and never returned to duty.
+Every round of work on downloading after that was on code that could not run, and the reports were
+honest the whole time: they said no class had been found, which was true, because nothing had ever
+asked. A commented-out call is invisible to every diagnostic there is. What exposed it was counting
+the *install attempts* and seeing zero on a build whose report was otherwise healthy.
+
+Two more faults were underneath it. `NSClassFromString` in a `%ctor` answers nil for a class the app
+certainly has — the constructor runs before the app's own Objective-C metadata is registered — so
+the install is retried when the app finishes launching and once more after that. And the badge asked
+the now-playing controller for `playerViewController`, which its **parent** declares; the long press
+walked to the parent and worked, the badge did not, and reported *this track carries no stream*, a
+sentence about the content when the fault was the lookup.
+
+**What downloading now is.** A confirmation card of Albrhi's own — the mark, the red, a name filled
+in from the track, and a section to keep it in, with the sections that already exist offered as taps
+because a folder is easier to choose than to spell. Sections are folders read off disk, so one made
+in the Files app appears and one deleted there stops being offered. A second way in, a long press
+anywhere on the now-playing screen, which depends on no server-generated name at all. And a banner
+in place of the modal alert that used to ask for a tap to acknowledge something that had gone right.
+
+**A transport of our own.** "I cannot pause or skip" had one cause and it was not interference: a
+file of ours plays through our own player while every control on screen belonged to YouTube Music's.
+The Downloads screen has play and pause, previous and next, and a scrubber with elapsed and total —
+and the audio session is re-asserted on resume, because the app takes it back whenever its own
+player starts.
+
+**And the page finally sits where it should.** Seven attempts, seven different causes: the inset
+measured from a parent that hands children a zero safe area; applied without moving the existing
+offset; read from a view whose window was nil; undone by `-reloadData`; read from whichever window
+happened to be key, which can be a keyboard overlay reporting zero; the transport placed above the
+tab bar and under the app's own mini player; and finally the safe area itself, which describes the
+device and knows nothing about the header the app draws below it. The list is given a *frame* now,
+below whichever of the two ends lower, with the app's chrome measured off its own views by shape
+rather than by name.
+
+The Downloads tab has its artwork, painted onto the button rather than asked for through a renderer
+— an icon type the app has no case for is what stopped it opening in 0.8.1.
+
 ## v0.8.7
 
 **The download diagnosis is on the first settings screen now, under the master switch.**

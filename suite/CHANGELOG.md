@@ -1,5 +1,22 @@
 # Albrhi Changelog
 
+## v1.63.0
+
+**Albrhi for YouTube Music 0.9.0: downloading works.**
+
+It never had, and the reason is the release's real finding: the installer had been commented out
+since 0.8.4, stood down as a crash suspect, cleared in 0.8.5 and never switched back on. Every round
+of work after that was on code that could not run, and the diagnostics said only that no class had
+been found — which was true, because nothing had ever asked.
+
+What is there now: a confirmation card in Albrhi's own colours that asks for a name and a section,
+sections that are folders on disk, a long press on the now-playing screen as a second way in that
+depends on no server-generated name, a banner instead of a modal alert, a transport of our own with
+play, pause, previous, next and a scrubber, the tab's artwork, and a Downloads page that finally
+clears both the device's safe area and the app's own header and bars — all of them measured off the
+views themselves rather than written down.
+
+
 ## v1.62.2
 
 Albrhi for YouTube Music 0.8.7: the download diagnosis moves to the first settings screen, under the

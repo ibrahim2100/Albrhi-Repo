@@ -903,12 +903,10 @@ dpkg sorts above `1.62.2` and below `1.62.3`, so the published number space is u
 local build still installs. Bump it on every local build during a measurement loop, exactly as a
 released build bumps its own.
 
-**Publishing is paused on the owner's instruction, and this is the rule while it is.** Nothing is
-pushed to `main` and no release is cut until they say so — a version that goes out is a version
-strangers update to without knowing what changed, and a measurement loop turns the changelog into a
-list of guesses. Builds are **roothide only** (that is the owner's own device) and go to
-`~/Desktop/Albrhi/`; version numbers stay where they are until a release is actually wanted. Last
-published: suite **1.62.2**.
+**Publishing resumed on 2026-08-30 after a measurement loop; the `+N` rule below is what that
+loop taught.** While a pause is on, nothing is pushed and no release is cut — a version that goes
+out is a version strangers update to without knowing what changed. Local builds during a pause are
+roothide only and go to `~/Desktop/Albrhi/`.
 
 **While the source is paused, builds go to `~/Desktop/Albrhi-TikTok` and versions do not move.**
 A version number means something was published; nothing is being published during a measurement
@@ -1712,8 +1710,8 @@ far less surface area than a real compressor for a few-kilobyte archive.
 ## Known state
 
 Instagram **4.1.14** · YouTube **1.25.1** · X **0.18.1** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
-Spotify **0.2.3** · YT Music **0.8.7** ·
-NextUp **0.1.5** · suite **1.62.2**. **CarPlay is gone** — removed from this repository, to be
+Spotify **0.2.3** · YT Music **0.9.0** ·
+NextUp **0.1.5** · suite **1.63.0**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being
