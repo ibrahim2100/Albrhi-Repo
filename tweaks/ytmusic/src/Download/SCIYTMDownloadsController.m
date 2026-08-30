@@ -34,8 +34,16 @@
     // somebody else installed -- exactly the case where it declines and the content starts
     // under the clock.
     //
-    self.tableView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentAlways;
-    self.tableView.insetsContentViewsToSafeArea = YES;
+    //
+    // **Measured from the window, because the parent's safe area is not to be trusted here.**
+    //
+    // `Always` was tried first and the first row still went under the clock: the adjustment is
+    // computed from *this view's* safe area, and a parent that has already consumed its own --
+    // which a controller hosting its content inside its own chrome does -- hands its children
+    // an inset of zero. The window is the one view that always knows where the status bar and
+    // the home indicator are, so the inset is taken from there and applied by hand.
+    //
+    self.tableView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -46,6 +54,50 @@
     // enough that a cache would only be a way to be wrong.
     self.tracks = SCIYTMSavedTracks();
     [self.tableView reloadData];
+}
+
+/// How much of the bottom the app's own tab bar is occupying.
+///
+/// **Measured off the bar itself rather than written down.** Its height is a number that belongs
+/// to YouTube Music, changes with the device and changes again when the player docks above it, and
+/// a constant here would be right on one phone. A bar that cannot be found returns zero, which
+/// costs a little space at the bottom and never hides a row behind something.
+static CGFloat SCIYTMBottomBarHeight(UIWindow *window) {
+    Class barClass = NSClassFromString(@"YTPivotBarView");
+    if (!window || !barClass) return 0;
+
+    NSMutableArray<UIView *> *queue = [NSMutableArray arrayWithObject:window];
+    while (queue.count) {
+        UIView *view = queue.firstObject;
+        [queue removeObjectAtIndex:0];
+
+        if ([view isKindOfClass:barClass] && !view.hidden && view.alpha > 0.01) {
+            return view.bounds.size.height;
+        }
+        [queue addObjectsFromArray:view.subviews];
+    }
+    return 0;
+}
+
+/// Kept in step on every layout pass, not set once.
+///
+/// The safe area moves: a call banner appears, the device rotates, the player docks over the
+/// bottom. Anything read once at load is the value the screen had before any of that.
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+
+    UIEdgeInsets safe = self.view.window.safeAreaInsets;
+
+    // The pivot bar sits above the home indicator and is the app's own chrome rather than a
+    // system inset, so its height is asked of the app: whatever the window reports below the
+    // safe area is what the bar and the docked player occupy together.
+    CGFloat bar = SCIYTMBottomBarHeight(self.view.window);
+    UIEdgeInsets wanted = UIEdgeInsetsMake(safe.top, 0, MAX(safe.bottom, bar), 0);
+
+    if (!UIEdgeInsetsEqualToEdgeInsets(self.tableView.contentInset, wanted)) {
+        self.tableView.contentInset = wanted;
+        self.tableView.verticalScrollIndicatorInsets = wanted;
+    }
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {

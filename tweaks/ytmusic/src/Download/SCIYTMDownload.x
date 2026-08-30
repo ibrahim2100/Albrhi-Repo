@@ -143,25 +143,92 @@ static NSData *SCIYTMStripTag(NSData *segment) {
 
 // MARK: - Saying what happened
 
+/// A banner in Albrhi's own colours, not a system alert with an OK button.
+///
+/// **What was here interrupted.** Every finished download put a modal alert on screen and asked
+/// for a tap to dismiss something that had gone right -- over a music app, mid-song, for a result
+/// nobody needed to acknowledge. A banner says the same thing and takes itself away.
+///
+/// Failures stay longer than successes and are red rather than tinted: a save that did not happen
+/// is the one message here somebody has to actually read.
 static void SCIYTMTell(NSString *title, NSString *message) {
     dispatch_async(dispatch_get_main_queue(), ^{
         UIWindow *key = nil;
         for (UIWindow *window in [UIApplication sharedApplication].windows) {
             if (window.isKeyWindow) { key = window; break; }
         }
+        if (!key) return;
 
-        UIViewController *top = key.rootViewController;
-        while (top.presentedViewController) top = top.presentedViewController;
-        if (!top) return;
+        BOOL failed = [title isEqualToString:SCILocalized(@"download_failed")];
 
-        UIAlertController *alert =
-            [UIAlertController alertControllerWithTitle:title
-                                                message:message
-                                         preferredStyle:UIAlertControllerStyleAlert];
-        [alert addAction:[UIAlertAction actionWithTitle:SCILocalized(@"ok")
-                                                  style:UIAlertActionStyleDefault
-                                                handler:nil]];
-        [top presentViewController:alert animated:YES completion:nil];
+        UIView *banner = [[UIView alloc] init];
+        banner.translatesAutoresizingMaskIntoConstraints = NO;
+        banner.backgroundColor = failed ? [UIColor systemRedColor]
+                                        : [UIColor colorWithRed:230/255.0 green:75/255.0
+                                                            blue:75/255.0 alpha:1];
+        banner.layer.cornerRadius = 16;
+        banner.layer.cornerCurve = kCACornerCurveContinuous;
+        banner.alpha = 0;
+
+        // The tweak's own mark, so a banner is recognisably Albrhi's rather than an unlabelled
+        // rectangle that could have come from the app.
+        UIImageView *mark = [[UIImageView alloc] initWithImage:
+            [UIImage systemImageNamed:(failed ? @"exclamationmark.triangle.fill"
+                                              : @"arrow.down.circle.fill")]];
+        mark.tintColor = [UIColor whiteColor];
+        mark.contentMode = UIViewContentModeScaleAspectFit;
+
+        UILabel *heading = [[UILabel alloc] init];
+        heading.text = title;
+        heading.font = [UIFont systemFontOfSize:15 weight:UIFontWeightSemibold];
+        heading.textColor = [UIColor whiteColor];
+
+        UILabel *detail = [[UILabel alloc] init];
+        detail.text = message;
+        detail.font = [UIFont systemFontOfSize:13];
+        detail.textColor = [UIColor colorWithWhite:1 alpha:0.85];
+        detail.numberOfLines = 3;
+
+        UIStackView *text = [[UIStackView alloc] initWithArrangedSubviews:@[heading, detail]];
+        text.axis = UILayoutConstraintAxisVertical;
+        text.spacing = 2;
+
+        UIStackView *row = [[UIStackView alloc] initWithArrangedSubviews:@[mark, text]];
+        row.axis = UILayoutConstraintAxisHorizontal;
+        row.alignment = UIStackViewAlignmentCenter;
+        row.spacing = 12;
+        row.translatesAutoresizingMaskIntoConstraints = NO;
+        [banner addSubview:row];
+        [key addSubview:banner];
+
+        [NSLayoutConstraint activateConstraints:@[
+            [mark.widthAnchor constraintEqualToConstant:26],
+            [mark.heightAnchor constraintEqualToConstant:26],
+            [row.topAnchor constraintEqualToAnchor:banner.topAnchor constant:12],
+            [row.bottomAnchor constraintEqualToAnchor:banner.bottomAnchor constant:-12],
+            [row.leadingAnchor constraintEqualToAnchor:banner.leadingAnchor constant:14],
+            [row.trailingAnchor constraintEqualToAnchor:banner.trailingAnchor constant:-14],
+            // Below the safe area, so it never sits on the clock -- the mistake the Downloads
+            // page itself made.
+            [banner.topAnchor constraintEqualToAnchor:key.safeAreaLayoutGuide.topAnchor constant:8],
+            [banner.leadingAnchor constraintGreaterThanOrEqualToAnchor:key.leadingAnchor constant:12],
+            [banner.trailingAnchor constraintLessThanOrEqualToAnchor:key.trailingAnchor constant:-12],
+            [banner.centerXAnchor constraintEqualToAnchor:key.centerXAnchor],
+        ]];
+
+        banner.transform = CGAffineTransformMakeTranslation(0, -20);
+        [UIView animateWithDuration:0.28 delay:0 usingSpringWithDamping:0.8
+              initialSpringVelocity:0 options:0 animations:^{
+            banner.alpha = 1;
+            banner.transform = CGAffineTransformIdentity;
+        } completion:nil];
+
+        [UIView animateWithDuration:0.25 delay:(failed ? 4.5 : 2.2) options:0 animations:^{
+            banner.alpha = 0;
+            banner.transform = CGAffineTransformMakeTranslation(0, -20);
+        } completion:^(__unused BOOL finished) {
+            [banner removeFromSuperview];
+        }];
     });
 }
 
