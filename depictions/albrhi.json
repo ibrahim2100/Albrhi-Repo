@@ -106,6 +106,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v1.61.6",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• Albrhi for X 0.17.4: **the post-as-a-picture was mirrored, and now is not.** UIKit mirrors right-to-left content with a transform and `-renderInContext:` does not apply…",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v1.61.5",
           "useBoldText": true
         },
@@ -131,20 +145,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v1.61.3",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• Albrhi for X 0.17.1: **the settings are pages now**, the way the YouTube tweak's are — a first screen listing eight categories, each opening its own screen built by its…",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -155,7 +155,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.61.5"
+          "text": "1.61.6"
         },
         {
           "class": "DepictionTableTextView",
