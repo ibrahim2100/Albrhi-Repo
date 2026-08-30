@@ -831,6 +831,17 @@ itself, and then **proves the flavour from the staged paths rather than the file
 shipped a "roothide" package built from a rootless tree and it installed as rootless, because
 that is what it was. It refuses to copy a mismatch out.
 
+**A commented-out call is invisible to every diagnostic that exists, and a feature suspended as a
+crash suspect must be returned to duty when it is cleared.** YouTube Music's download installer was
+commented out in 0.8.4 while a crash was investigated; 0.8.5 found the real cause elsewhere — an
+`iconType` the app has no case for, hit while drawing the tab bar — and fixed it. **Nobody
+un-commented the suspect.** Every round of work on downloading afterwards was on code that could
+not run, and the reports were internally consistent the whole time: they said no class had been
+found, which was true, because nothing had ever asked. What exposed it was counting the *install
+attempts* and seeing **zero** on a build whose report was otherwise healthy. **Count the thing that
+is supposed to have happened, not only its result** — a result has many explanations and an attempt
+count has one.
+
 **`NSClassFromString` inside a `%ctor` can answer nil for a class the app certainly has, and the
 report then says "not in this build".** YouTube Music's download badge handler and its now-playing
 controller are both in the app's own binary — read out of it directly — and both were reported

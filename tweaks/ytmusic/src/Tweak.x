@@ -118,19 +118,21 @@
         SCIYTMInstallAdBlock();
         SCIYTMInstallUpsell();
         //
-        // **Stood down until a crash log names its cause, and that is a retreat on purpose.**
+        // **Stood down in 0.8.4 as a suspect, cleared in 0.8.5, and left switched off after —
+        // which is why every round of work on downloading since then was on code that could
+        // not run.**
         //
-        // 0.8.0 shipped this screen and this tab and did not crash; every version since has, and
-        // two diagnoses of mine were wrong -- the icon hook in 0.8.2 and the private ancestor call
-        // in 0.8.3 were both real faults and neither was *the* fault. The only behaviour that
-        // separates 0.8.0 from the versions that crash is this hook running on taps it used to
-        // skip, so it is the one thing removed while the evidence is fetched.
+        // The crash it was suspended for was real and this was not its cause: 0.8.5 found
+        // `iconType` being set to a value the app has no case for, hit while drawing the tab
+        // bar at launch, and fixed it. The suspect was never returned to duty, and nothing
+        // said so -- the report could only observe that no class had been found, because
+        // nothing had ever asked.
         //
-        // **This project's rule is that a crash is worse than the thing it prevents**, and three
-        // installs of a crashing app is already more than that rule allows. The tab, the downloads
-        // screen, the player and the upsell hiding all stay -- everything 0.8.0 had.
+        // **A commented-out call is invisible to every diagnostic that exists.** The install
+        // counter added the round before this one is what finally showed it: zero attempts,
+        // on a build whose report was otherwise perfectly healthy.
         //
-        // SCIYTMInstallDownload();
+        SCIYTMInstallDownload();
         SCIYTMInstallBackground();
         SCIYTMInstallPlaybackRate();
         SCIYTMInstallSeekButtons();
