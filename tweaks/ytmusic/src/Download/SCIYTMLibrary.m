@@ -162,6 +162,64 @@ static void SCIYTMPlayAt(NSUInteger index) {
     SCIYTMDescribeToSystem(track);
 }
 
+SCIYTMTrack *SCIYTMCurrentTrack(void) {
+    return sciIndex < sciQueue.count ? sciQueue[sciIndex] : nil;
+}
+
+BOOL SCIYTMIsPlaying(void) {
+    return sciPlayer && sciPlayer.rate > 0.01;
+}
+
+void SCIYTMTogglePlayPause(void) {
+    if (!sciPlayer) return;
+
+    if (SCIYTMIsPlaying()) {
+        [sciPlayer pause];
+    } else {
+        // Re-asserted on every resume. The app takes the session back whenever its own player
+        // starts, and a track resumed after that would otherwise play into a route somebody
+        // else owns -- which is what "I cannot start it again" looks like from outside.
+        [[AVAudioSession sharedInstance] setActive:YES error:nil];
+        [sciPlayer play];
+    }
+    SCIYTMDescribeToSystem(SCIYTMCurrentTrack());
+}
+
+void SCIYTMNext(void) {
+    if (sciIndex + 1 < sciQueue.count) SCIYTMPlayAt(sciIndex + 1);
+}
+
+void SCIYTMPrevious(void) {
+    // Back to the start of this track first, which is what every music player does and what
+    // makes a single press useful when there is nothing before it.
+    double elapsed = CMTimeGetSeconds(sciPlayer.currentTime);
+    if (elapsed > 3 || sciIndex == 0) {
+        SCIYTMSeekTo(0);
+        return;
+    }
+    SCIYTMPlayAt(sciIndex - 1);
+}
+
+void SCIYTMProgress(double *elapsed, double *duration) {
+    if (elapsed) *elapsed = 0;
+    if (duration) *duration = 0;
+    if (!sciPlayer.currentItem) return;
+
+    double now = CMTimeGetSeconds(sciPlayer.currentTime);
+    double total = CMTimeGetSeconds(sciPlayer.currentItem.duration);
+
+    if (elapsed && isfinite(now)) *elapsed = now;
+    if (duration && isfinite(total)) *duration = total;
+}
+
+void SCIYTMSeekTo(double seconds) {
+    if (!sciPlayer.currentItem) return;
+
+    [sciPlayer seekToTime:CMTimeMakeWithSeconds(seconds, NSEC_PER_SEC)
+          toleranceBefore:kCMTimeZero toleranceAfter:kCMTimeZero];
+    SCIYTMDescribeToSystem(SCIYTMCurrentTrack());
+}
+
 void SCIYTMPlay(SCIYTMTrack *track, NSArray<SCIYTMTrack *> *queue) {
     sciQueue = queue.count ? queue : (track ? @[track] : @[]);
 

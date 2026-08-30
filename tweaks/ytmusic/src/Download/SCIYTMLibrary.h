@@ -41,4 +41,22 @@ void SCIYTMPlay(SCIYTMTrack *track, NSArray<SCIYTMTrack *> *queue);
 /// Whether something of ours is playing, for the row that shows it.
 NSURL *_Nullable SCIYTMNowPlayingURL(void);
 
+/// The controls the Downloads screen draws.
+///
+/// **Ours, and independent of the app's.** YouTube Music's transport belongs to YouTube Music's
+/// player -- pressing its play button while one of our files is playing tells the wrong player to
+/// start, which is why the two appeared to fight. These act on our own `AVPlayer` and nothing else,
+/// and the screen that draws them is the one place they exist.
+SCIYTMTrack *_Nullable SCIYTMCurrentTrack(void);
+BOOL SCIYTMIsPlaying(void);
+void SCIYTMTogglePlayPause(void);
+void SCIYTMNext(void);
+void SCIYTMPrevious(void);
+
+/// Where the current track is, in seconds. Both are zero when nothing is playing, and `duration`
+/// stays zero until the asset has said how long it is -- a slider built from an unknown duration
+/// is a slider that jumps when the answer arrives.
+void SCIYTMProgress(double *elapsed, double *duration);
+void SCIYTMSeekTo(double seconds);
+
 NS_ASSUME_NONNULL_END

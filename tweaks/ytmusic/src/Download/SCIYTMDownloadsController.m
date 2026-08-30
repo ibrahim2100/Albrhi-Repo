@@ -5,6 +5,21 @@
 
 @interface SCIYTMDownloadsController ()
 @property (nonatomic, strong) NSArray<SCIYTMTrack *> *tracks;
+
+/// The transport, drawn by us because the app's belongs to the app's player.
+///
+/// **This is the whole of "I cannot pause or skip".** A file of ours plays through our own
+/// `AVPlayer`; YouTube Music's play button, its scrubber and its next button all speak to its
+/// own player and always did. Nothing was fighting -- there was simply no control anywhere
+/// that addressed the thing making the sound. Now there is, on the screen the track was
+/// started from.
+@property (nonatomic, strong) UIView *playerBar;
+@property (nonatomic, strong) UILabel *playingLabel;
+@property (nonatomic, strong) UILabel *elapsedLabel;
+@property (nonatomic, strong) UIButton *playButton;
+@property (nonatomic, strong) UISlider *scrubber;
+@property (nonatomic, strong) NSTimer *ticker;
+@property (nonatomic, assign) BOOL scrubbing;
 @end
 
 @implementation SCIYTMDownloadsController
@@ -16,6 +31,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+
+    [self buildPlayerBar];
     self.title = SCILocalized(@"downloads_title");
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedRowHeight = 64;
@@ -55,6 +72,138 @@
     self.tracks = SCIYTMSavedTracks();
     [self.tableView reloadData];
 }
+
+#pragma mark - The transport
+
+static UIColor *SCIYTMBarAccent(void) {
+    return [UIColor colorWithRed:230/255.0 green:75/255.0 blue:75/255.0 alpha:1];
+}
+
+static NSString *SCIYTMClock(double seconds) {
+    if (!isfinite(seconds) || seconds < 0) seconds = 0;
+    int whole = (int)seconds;
+    return [NSString stringWithFormat:@"%d:%02d", whole / 60, whole % 60];
+}
+
+- (UIButton *)transportButton:(NSString *)symbol action:(SEL)action big:(BOOL)big {
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
+    UIImageSymbolConfiguration *config =
+        [UIImageSymbolConfiguration configurationWithPointSize:(big ? 28 : 20)
+                                                        weight:UIImageSymbolWeightSemibold];
+    [button setImage:[UIImage systemImageNamed:symbol withConfiguration:config]
+            forState:UIControlStateNormal];
+    button.tintColor = big ? SCIYTMBarAccent() : [UIColor labelColor];
+    [button addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
+    return button;
+}
+
+- (void)buildPlayerBar {
+    self.playerBar = [[UIView alloc] init];
+    self.playerBar.backgroundColor = [UIColor secondarySystemBackgroundColor];
+    self.playerBar.layer.cornerRadius = 18;
+    self.playerBar.layer.cornerCurve = kCACornerCurveContinuous;
+    self.playerBar.translatesAutoresizingMaskIntoConstraints = NO;
+    self.playerBar.hidden = YES;
+
+    // On the view above the table rather than in it. A footer scrolls away, and a transport
+    // that scrolls away is a transport somebody has to go looking for.
+    [self.view addSubview:self.playerBar];
+
+    self.playingLabel = [[UILabel alloc] init];
+    self.playingLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightSemibold];
+    self.playingLabel.textColor = [UIColor labelColor];
+    self.playingLabel.lineBreakMode = NSLineBreakByTruncatingTail;
+
+    self.elapsedLabel = [[UILabel alloc] init];
+    self.elapsedLabel.font = [UIFont monospacedDigitSystemFontOfSize:12
+                                                              weight:UIFontWeightRegular];
+    self.elapsedLabel.textColor = [UIColor secondaryLabelColor];
+
+    self.scrubber = [[UISlider alloc] init];
+    self.scrubber.minimumTrackTintColor = SCIYTMBarAccent();
+    [self.scrubber addTarget:self action:@selector(scrubBegan)
+            forControlEvents:UIControlEventTouchDown];
+    [self.scrubber addTarget:self action:@selector(scrubEnded)
+            forControlEvents:UIControlEventTouchUpInside | UIControlEventTouchUpOutside];
+
+    UIButton *previous = [self transportButton:@"backward.fill" action:@selector(previousTapped) big:NO];
+    self.playButton = [self transportButton:@"pause.circle.fill" action:@selector(playTapped) big:YES];
+    UIButton *next = [self transportButton:@"forward.fill" action:@selector(nextTapped) big:NO];
+
+    UIStackView *controls = [[UIStackView alloc] initWithArrangedSubviews:@[previous, self.playButton, next]];
+    controls.axis = UILayoutConstraintAxisHorizontal;
+    controls.alignment = UIStackViewAlignmentCenter;
+    controls.spacing = 18;
+
+    UIStackView *middle = [[UIStackView alloc] initWithArrangedSubviews:@[self.playingLabel, self.scrubber]];
+    middle.axis = UILayoutConstraintAxisVertical;
+    middle.spacing = 0;
+
+    UIStackView *row = [[UIStackView alloc] initWithArrangedSubviews:@[middle, self.elapsedLabel, controls]];
+    row.axis = UILayoutConstraintAxisHorizontal;
+    row.alignment = UIStackViewAlignmentCenter;
+    row.spacing = 10;
+    row.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.playerBar addSubview:row];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [row.topAnchor constraintEqualToAnchor:self.playerBar.topAnchor constant:8],
+        [row.bottomAnchor constraintEqualToAnchor:self.playerBar.bottomAnchor constant:-8],
+        [row.leadingAnchor constraintEqualToAnchor:self.playerBar.leadingAnchor constant:14],
+        [row.trailingAnchor constraintEqualToAnchor:self.playerBar.trailingAnchor constant:-14],
+        [controls.widthAnchor constraintEqualToConstant:120],
+    ]];
+
+    // A tick rather than a periodic time observer: the observer belongs to the player and this
+    // screen can be closed while the track keeps going, which would leave an observer holding a
+    // controller nobody can see. A timer invalidated on disappear cannot.
+    self.ticker = [NSTimer scheduledTimerWithTimeInterval:0.5 repeats:YES block:^(NSTimer *timer) {
+        [self refreshTransport];
+    }];
+}
+
+- (void)refreshTransport {
+    SCIYTMTrack *track = SCIYTMCurrentTrack();
+    self.playerBar.hidden = (track == nil);
+    if (!track) return;
+
+    self.playingLabel.text = track.title;
+
+    NSString *pauseOrPlay = SCIYTMIsPlaying() ? @"pause.circle.fill" : @"play.circle.fill";
+    [self.playButton setImage:
+        [UIImage systemImageNamed:pauseOrPlay
+                withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:28
+                                                                                  weight:UIImageSymbolWeightSemibold]]
+                     forState:UIControlStateNormal];
+
+    double elapsed = 0, duration = 0;
+    SCIYTMProgress(&elapsed, &duration);
+    self.elapsedLabel.text = [NSString stringWithFormat:@"%@ / %@",
+                              SCIYTMClock(elapsed), SCIYTMClock(duration)];
+
+    // Not while a finger is on it: a slider that is being dragged and written to at the same
+    // time fights the person holding it.
+    if (!self.scrubbing && duration > 0) {
+        self.scrubber.maximumValue = (float)duration;
+        self.scrubber.value = (float)elapsed;
+    }
+}
+
+- (void)scrubBegan { self.scrubbing = YES; }
+
+- (void)scrubEnded {
+    self.scrubbing = NO;
+    SCIYTMSeekTo(self.scrubber.value);
+}
+
+- (void)playTapped { SCIYTMTogglePlayPause(); [self refreshTransport]; }
+- (void)nextTapped { SCIYTMNext(); [self refreshTransport]; }
+- (void)previousTapped { SCIYTMPrevious(); [self refreshTransport]; }
+
+- (void)dealloc {
+    [self.ticker invalidate];
+}
+
 
 /// How much of the bottom the app's own tab bar is occupying.
 ///
@@ -103,7 +252,16 @@ static CGFloat SCIYTMBottomBarHeight(UIWindow *window) {
     // system inset, so its height is asked of the app: whatever the window reports below the
     // safe area is what the bar and the docked player occupy together.
     CGFloat bar = SCIYTMBottomBarHeight(window);
-    UIEdgeInsets wanted = UIEdgeInsetsMake(safe.top, 0, MAX(safe.bottom, bar), 0);
+    CGFloat bottom = MAX(safe.bottom, bar);
+
+    // The transport sits above the app's own bar, and the list keeps clear of both.
+    CGFloat transport = self.playerBar.hidden ? 0 : 64;
+
+    self.playerBar.frame = CGRectMake(12,
+                                      CGRectGetHeight(self.view.bounds) - bottom - 60,
+                                      CGRectGetWidth(self.view.bounds) - 24, 52);
+
+    UIEdgeInsets wanted = UIEdgeInsetsMake(safe.top, 0, bottom + transport, 0);
 
     BOOL wasAtTop = self.tableView.contentOffset.y <= -self.tableView.contentInset.top + 0.5;
 
