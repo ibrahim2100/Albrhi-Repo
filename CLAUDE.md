@@ -636,6 +636,26 @@ over 345,902 questions on X 12.14, which is what 0.2.0's seventeen named feature
 from. Every key in that table was observed being asked; what each one *means* is still read
 from its name, and the screen says so rather than implying more certainty than there is.
 
+**A settings screen addressed by index is three lists of one truth, and a control that governs
+what is below it belongs above it.** X's screen had five section constants, seven row constants, a
+hand-written row count and a `switch` per section deciding what each number meant — the exact shape
+that crashed the YouTube Music settings screen when a fourth list was added and one was not updated.
+It is a registry now: a row carries its own title, preference key and action, a section's length is
+`rows.count`, and each section registers itself in `+load` from its own file. **A builder returning
+no rows is not drawn**, which is how the feature list *disappears* when the switch layer is off
+rather than sitting there as switches that decide nothing — and that same fact is why the layer's
+own switch moved from the last row of Advanced to the head of the screen.
+
+**And BHTwitter's list is a map of BHTwitter's build, which cost nothing this time because it was
+checked first.** Four of its switches have no target in X 12.20 (`_t1_showPremiumUpsellIfNeeded`,
+`-isVODCaptionsEnabled`, `TFNTableView -setShowsVerticalScrollIndicator:`, and the cache clear), and
+two classes had simply been renamed — `TTMUploadConfiguration` for
+`TFNTwitterMediaUploadConfiguration`, `TTSSearchTypeaheadViewController` for
+`T1SearchTypeaheadViewController`. Every one was settled by reading the app's own class metadata
+before a hook was written, which is the discipline three earlier releases on three different apps
+paid for. **A switch that decides nothing is worse than a missing one**: it reads as a feature that
+does not work, and it is indistinguishable from one that broke.
+
 **And "Hide Spaces" was aiming at the wrong surface the whole time — it was never a tab.** Two
 releases moved tabs, correctly, while the thing being complained about was the row of live audio
 rooms above the Home timeline. That strip is set up by `-_t1_initializeFleets` (named for Fleets,
@@ -1527,9 +1547,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.25.1** · X **0.16.2** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.25.1** · X **0.17.0** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.8.5** ·
-NextUp **0.1.5** · suite **1.61.1**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.61.2**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

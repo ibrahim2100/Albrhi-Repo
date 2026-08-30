@@ -13,8 +13,14 @@
 #import "Features/Playback/SCITWPictureInPicture.h"
 #import "Features/Tabs/SCITWTabEntries.h"
 #import "Features/Spaces/SCITWSpacesBar.h"
+#import "Features/Links/SCITWLinks.h"
+#import "Features/Timeline/SCITWTimelineFilter.h"
+#import "Features/Actions/SCITWActionRow.h"
+#import "Features/Extras/SCITWExtras.h"
+#import "Features/Profile/SCITWProfileCopy.h"
+#import "Features/Lock/SCITWAppLock.h"
 
-NSString *SCIVersionString = @"v0.16.2";  // AlbrhiTW
+NSString *SCIVersionString = @"v0.17.0";  // AlbrhiTW
 
 %ctor {
     // Defaults registered rather than assumed: reading a key that was never written
@@ -107,6 +113,20 @@ NSString *SCIVersionString = @"v0.16.2";  // AlbrhiTW
     // The Spaces bar above the timeline, which is what "Hide Spaces" is actually about.
     // Two releases moved tabs instead, correctly and to no effect on this surface.
     SCITWInstallSpacesBar();
+
+    // Everything below is installed unconditionally and gated inside, one preference each.
+    // None of them answers a feature switch, so none belongs behind the switch layer -- and
+    // a person who turned that layer off to rule it out of a problem should not lose the
+    // link cleaner with it.
+    SCITWInstallLinks();
+    SCITWInstallTimelineFilter();
+    SCITWInstallActionRow();
+    SCITWInstallExtras();
+    SCITWInstallProfileCopy();
+
+    // Last, and after everything else has attached: it puts a cover over the app, and a
+    // failure here should not be able to stop a hook that was going to install after it.
+    SCITWInstallAppLock();
 
     if ([[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefSwitchLayer]) {
         // Before the hooks, not after. X asks its first questions while the app is still

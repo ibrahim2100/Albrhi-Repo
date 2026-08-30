@@ -1,4 +1,6 @@
 #import "SCITWSettings.h"
+#import <objc/runtime.h>
+#import "Model/SCITWSectionRegistry.h"
 #import "SCITWKeysList.h"
 #import "Tweak.h"          // SCIVersionString, for the card
 #import "Prefs.h"
@@ -29,26 +31,17 @@
 /// when this project took on X -- and a screen that made that scroll past seventeen switch
 /// names first would be arranging itself around what is easy to list, not around what
 /// somebody opened it to do.
-static const NSInteger SCITWSectionAlbrhi   = 0;
-static const NSInteger SCITWSectionMedia    = 1;
-static const NSInteger SCITWSectionFeatures = 2;
-static const NSInteger SCITWSectionStatus   = 3;
-static const NSInteger SCITWSectionKeys     = 4;
 
 /// The rows in section zero, in order.
-static const NSInteger SCITWAlbrhiSaveButton = 0;
-static const NSInteger SCITWAlbrhiSaveAvatar = 1;
-static const NSInteger SCITWAlbrhiConfirmRepost = 2;
-static const NSInteger SCITWAlbrhiHidePromoted = 3;
-static const NSInteger SCITWAlbrhiHideSuggested = 4;
-static const NSInteger SCITWAlbrhiSwitchLayer = 5;
-static const NSInteger SCITWAlbrhiLogging = 6;
-static const NSInteger SCITWAlbrhiRowCount = 7;
 
 @interface SCITWSettings ()
-@property (nonatomic, strong) NSArray<SCITWSwitchRecord *> *all;
-@property (nonatomic, strong) NSArray<SCITWMediaItem *> *media;
+/// Everything drawn, rebuilt on every reload. There is no other list.
+@property (nonatomic, strong) NSArray<SCITWSection *> *sections;
 @end
+
+/// Ties a switch back to the row that made it. An index would be the parallel-list mistake
+/// this whole rewrite exists to remove.
+static char kSCIRowForSwitch;
 
 
 /// A small colour-badge icon, drawn the way Settings.app draws its own rows: a rounded
@@ -69,8 +62,8 @@ static const NSInteger SCITWAlbrhiRowCount = 7;
 /// a section where every row is already told apart by its own name -- the curated sections
 /// below are few enough, and different enough from each other, that an icon is worth its
 /// keep on them and would be noise repeated three hundred times on that one.
-static UIImage *SCITWBadge(NSString *symbolName, UIColor *color) {
-    CGSize size = CGSizeMake(29, 29);
+static UIImage *SCITWBadgeOfSide(NSString *symbolName, UIColor *color, CGFloat side) {
+    CGSize size = CGSizeMake(side, side);
 
     UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat preferredFormat];
     format.opaque = NO;
@@ -80,12 +73,12 @@ static UIImage *SCITWBadge(NSString *symbolName, UIColor *color) {
     return [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
         UIBezierPath *background =
             [UIBezierPath bezierPathWithRoundedRect:CGRectMake(0, 0, size.width, size.height)
-                                        cornerRadius:7];
+                                        cornerRadius:side * 0.24];
         [(color ?: [UIColor systemGrayColor]) setFill];
         [background fill];
 
         UIImageSymbolConfiguration *config =
-            [UIImageSymbolConfiguration configurationWithPointSize:15
+            [UIImageSymbolConfiguration configurationWithPointSize:side * 0.52
                                                              weight:UIImageSymbolWeightMedium];
         UIImage *glyph = [[UIImage systemImageNamed:symbolName withConfiguration:config]
             imageWithTintColor:[UIColor whiteColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
@@ -94,6 +87,11 @@ static UIImage *SCITWBadge(NSString *symbolName, UIColor *color) {
         [glyph drawAtPoint:CGPointMake((size.width - glyph.size.width) / 2,
                                        (size.height - glyph.size.height) / 2)];
     }];
+}
+
+/// The ordinary row size, which is every caller but the prominent one.
+static UIImage *SCITWBadge(NSString *symbolName, UIColor *color) {
+    return SCITWBadgeOfSide(symbolName, color, 29);
 }
 
 
@@ -229,11 +227,12 @@ static UIImage *SCITWBadge(NSString *symbolName, UIColor *color) {
     pills.spacing = 8;
     pills.distribution = UIStackViewDistributionFillEqually;
 
-    // Read from what this screen already loaded, so the card can never disagree with the
-    // list below it -- the failure mode of every status display that keeps its own copy.
+    // Asked of the same sources the rows are built from, rather than of a copy this screen
+    // keeps -- a status display holding its own snapshot is how a card and the list under it
+    // come to disagree.
     BOOL providers = [SCITWSwitches attachedProviders].count > 0;
-    BOOL seen = self.all.count > 0;
-    BOOL media = self.media.count > 0;
+    BOOL seen = [SCITWSwitches records].count > 0;
+    BOOL media = [SCITWMedia recent].count > 0;
 
     [pills addArrangedSubview:[self pillWithTitle:SCILocalized(@"pill_switches") on:providers]];
     [pills addArrangedSubview:[self pillWithTitle:SCILocalized(@"pill_seen") on:seen]];
@@ -335,337 +334,133 @@ static UIImage *SCITWBadge(NSString *symbolName, UIColor *color) {
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
+#pragma mark - Table
+
+///
+/// The whole screen, from what the sections registered.
+///
+/// Rebuilt on every reload rather than kept: an info row reads its value through a block at
+/// draw time, and a section whose feature is switched off returns no rows and disappears.
+/// Nothing here knows what any section contains, which is the point -- the version this
+/// replaced addressed rows by index through five section constants and seven row constants,
+/// and a `switch` per section deciding what each number meant.
+///
 - (void)reload {
-    self.media = [SCITWMedia recent];
-    self.all = [SCITWSwitches records];
+    self.sections = [SCITWSectionRegistry sectionsForHost:self];
     [self.tableView reloadData];
 }
 
-#pragma mark - Table
-
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 5;
+    return (NSInteger)self.sections.count;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (section == SCITWSectionAlbrhi) return SCITWAlbrhiRowCount;
-    if (section == SCITWSectionStatus) return 4;
-    if (section == SCITWSectionMedia) return self.media.count ?: 1;
-    if (section == SCITWSectionFeatures) return [SCITWFeatures all].count;
-    // Keys: one link row, not the list itself -- see SCITWKeysList.
-    return 1;
+    return (NSInteger)self.sections[(NSUInteger)section].rows.count;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    if (section == SCITWSectionAlbrhi) return SCILocalized(@"section_albrhi");
-    if (section == SCITWSectionStatus) return SCILocalized(@"section_status");
-    if (section == SCITWSectionMedia) return SCILocalized(@"section_media");
-    if (section == SCITWSectionFeatures) return SCILocalized(@"section_features");
-    return SCILocalized(@"section_keys");
+    return self.sections[(NSUInteger)section].title;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
-    if (section == SCITWSectionAlbrhi) return SCILocalized(@"albrhi_footer");
-    if (section == SCITWSectionMedia) return SCILocalized(@"media_footer");
-    if (section == SCITWSectionFeatures) return SCILocalized(@"features_footer");
-    if (section == SCITWSectionKeys) return SCILocalized(@"keys_footer");
-    return nil;
+    return self.sections[(NSUInteger)section].footer;
+}
+
+- (SCITWRow *)rowAt:(NSIndexPath *)indexPath {
+    return self.sections[(NSUInteger)indexPath.section].rows[(NSUInteger)indexPath.row];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView
          cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UITableViewCell *cell =
-        [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1
-                               reuseIdentifier:nil];
-    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    SCITWRow *row = [self rowAt:indexPath];
 
-    if (indexPath.section == SCITWSectionStatus) {
-        [self fillStatusCell:cell row:indexPath.row];
-        return cell;
+    // Never dequeued across kinds. A switch cell reused as an info row keeps its accessory
+    // view, which is how a settings screen ends up with a switch beside a number.
+    NSString *identifier = [NSString stringWithFormat:@"row-%ld", (long)row.kind];
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
+    if (!cell) {
+        UITableViewCellStyle style = row.kind == SCITWRowKindInfo ? UITableViewCellStyleValue1
+                                                                  : UITableViewCellStyleSubtitle;
+        cell = [[UITableViewCell alloc] initWithStyle:style reuseIdentifier:identifier];
     }
 
-    if (indexPath.section == SCITWSectionMedia) {
-        UITableViewCell *row =
-            [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle
-                                   reuseIdentifier:nil];
-        [self fillMediaCell:row row:indexPath.row];
-        return row;
-    }
-
-    if (indexPath.section == SCITWSectionAlbrhi) {
-        UITableViewCell *row =
-            [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle
-                                   reuseIdentifier:nil];
-        [self fillAlbrhiCell:row row:indexPath.row];
-        return row;
-    }
-
-    if (indexPath.section == SCITWSectionFeatures) {
-        // Its own cell, because a feature row is a title over an explanation and Value1
-        // puts the two side by side -- which truncates the explanation to nothing on a
-        // phone, and the explanation is the part that says what the switch costs.
-        UITableViewCell *row =
-            [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle
-                                   reuseIdentifier:nil];
-        [self fillFeatureCell:row row:indexPath.row];
-        return row;
-    }
-
-    // Keys: a single link row, not the three hundred and fifty behind it. Count read live
-    // from SCITWSwitches so the row is honest about how many there are without needing the
-    // list itself loaded here.
-    cell.textLabel.text = SCILocalized(@"keys_link_title");
-    cell.detailTextLabel.text =
-        [NSString stringWithFormat:@"%lu", (unsigned long)self.all.count];
+    cell.textLabel.text = row.title;
+    cell.textLabel.numberOfLines = 0;
+    cell.detailTextLabel.numberOfLines = 0;
     cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
-    cell.imageView.image = SCITWBadge(@"list.bullet.rectangle", [UIColor systemGrayColor]);
-    cell.selectionStyle = UITableViewCellSelectionStyleDefault;
-    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+
+    // A prominent row is the same row drawn larger, not a different cell class: a bigger
+    // badge, a bold title and a tinted panel behind it. Everything reset on the other
+    // branch as well, because cells are reused and a font left bold is how one setting
+    // starts looking like the heading of the next.
+    if (row.prominent) {
+        cell.imageView.image = row.symbol.length ? SCITWBadgeOfSide(row.symbol, row.tint, 40)
+                                                 : nil;
+        cell.textLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleHeadline];
+        cell.backgroundColor = [(row.tint ?: [UIColor systemBlueColor]) colorWithAlphaComponent:0.10];
+    } else {
+        cell.imageView.image = row.symbol.length ? SCITWBadge(row.symbol, row.tint) : nil;
+        cell.textLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleBody];
+        cell.backgroundColor = [UIColor secondarySystemGroupedBackgroundColor];
+    }
+
+    // A warning colour rather than only a note. Every cautious row removes a disclosure,
+    // changes what X is told about the device, or turns on something X ships switched off,
+    // and a note nobody reads is not a warning.
+    cell.textLabel.textColor = row.cautious ? [UIColor systemOrangeColor] : [UIColor labelColor];
+
+    switch (row.kind) {
+        case SCITWRowKindSwitch: {
+            cell.detailTextLabel.text = row.note;
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+            cell.accessoryType = UITableViewCellAccessoryNone;
+
+            UISwitch *toggle = [[UISwitch alloc] init];
+            toggle.on = [[NSUserDefaults standardUserDefaults] boolForKey:row.prefKey];
+            objc_setAssociatedObject(toggle, &kSCIRowForSwitch, row, OBJC_ASSOCIATION_RETAIN);
+            [toggle addTarget:self
+                       action:@selector(switchFlipped:)
+             forControlEvents:UIControlEventValueChanged];
+            cell.accessoryView = toggle;
+            break;
+        }
+        case SCITWRowKindAction: {
+            cell.detailTextLabel.text = row.note;
+            cell.accessoryView = nil;
+            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+            cell.selectionStyle = UITableViewCellSelectionStyleDefault;
+            break;
+        }
+        case SCITWRowKindInfo: {
+            cell.detailTextLabel.text = row.value ? row.value() : nil;
+            cell.accessoryView = nil;
+            cell.accessoryType = UITableViewCellAccessoryNone;
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+            break;
+        }
+    }
+
     return cell;
 }
 
-- (void)fillMediaCell:(UITableViewCell *)cell row:(NSInteger)row {
-    if (!self.media.count) {
-        cell.textLabel.text = SCILocalized(@"media_empty");
-        cell.textLabel.numberOfLines = 0;
-        cell.textLabel.textColor = [UIColor secondaryLabelColor];
-        cell.selectionStyle = UITableViewCellSelectionStyleNone;
-        return;
-    }
+- (void)switchFlipped:(UISwitch *)toggle {
+    SCITWRow *row = objc_getAssociatedObject(toggle, &kSCIRowForSwitch);
+    if (!row.prefKey) return;
 
-    SCITWMediaItem *item = self.media[row];
+    [[NSUserDefaults standardUserDefaults] setBool:toggle.isOn forKey:row.prefKey];
+    if (row.onChange) row.onChange(toggle.isOn);
 
-    NSString *kind = SCILocalized(item.kind == SCITWMediaKindVideo ? @"media_video"
-                                : item.kind == SCITWMediaKindGif   ? @"media_gif"
-                                                                   : @"media_image");
-
-    // The alt text where the poster wrote one, and the kind where they did not. "Video"
-    // eleven times down a list is a list nobody can pick from, and alt text is the only
-    // caption X hands us for a piece of media.
-    cell.textLabel.text = item.note.length ? item.note : kind;
-    cell.textLabel.numberOfLines = 2;
-
-    NSMutableArray<NSString *> *parts = [NSMutableArray arrayWithObject:kind];
-    if (item.duration > 0.5) {
-        [parts addObject:[NSString stringWithFormat:@"%d:%02d",
-            (int)(item.duration / 60), (int)item.duration % 60]];
-    }
-    cell.detailTextLabel.text = [parts componentsJoinedByString:@" · "];
-    cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
-
-    cell.accessoryType = UITableViewCellAccessoryDetailButton;
-
-    NSString *icon = item.kind == SCITWMediaKindImage ? @"photo.fill" : @"play.rectangle.fill";
-    UIColor *color = item.kind == SCITWMediaKindImage ? [UIColor systemBlueColor]
-                                                       : [UIColor systemPurpleColor];
-    cell.imageView.image = SCITWBadge(icon, color);
-}
-
-/// The tweak's own three settings, which had no row until now.
-///
-/// Read and written straight through NSUserDefaults, the way every hook in this tweak reads
-/// them. No indirection worth adding for three booleans, and using the same call the hooks
-/// use means a switch here and a hook there can never disagree about where the value lives.
-- (void)fillAlbrhiCell:(UITableViewCell *)cell row:(NSInteger)row {
-    NSString *key = nil;
-    NSString *title = nil;
-    NSString *note = nil;
-    NSString *icon = nil;
-    UIColor *color = nil;
-    BOOL defaultOn = YES;
-
-    if (row == SCITWAlbrhiSaveButton) {
-        key = SCIPrefInlineButton;
-        title = SCILocalized(@"albrhi_save_button");
-        note = SCILocalized(@"albrhi_save_button_note");
-        icon = @"arrow.down.circle.fill";
-        color = [UIColor systemBlueColor];
-    } else if (row == SCITWAlbrhiSaveAvatar) {
-        key = SCIPrefSaveAvatar;
-        title = SCILocalized(@"albrhi_save_avatar");
-        note = SCILocalized(@"albrhi_save_avatar_note");
-        icon = @"person.crop.circle.fill";
-        color = [UIColor systemBlueColor];
-    } else if (row == SCITWAlbrhiConfirmRepost) {
-        key = SCIPrefConfirmRepost;
-        title = SCILocalized(@"albrhi_confirm_repost");
-        note = SCILocalized(@"albrhi_confirm_repost_note");
-        icon = @"arrow.2.squarepath";
-        color = [UIColor systemGreenColor];
-        defaultOn = NO;
-    } else if (row == SCITWAlbrhiHidePromoted) {
-        key = SCIPrefHidePromoted;
-        title = SCILocalized(@"albrhi_hide_promoted");
-        note = SCILocalized(@"albrhi_hide_promoted_note");
-        icon = @"eye.slash.circle.fill";
-        color = [UIColor systemOrangeColor];
-        defaultOn = NO;
-    } else if (row == SCITWAlbrhiHideSuggested) {
-        key = SCIPrefHideSuggested;
-        title = SCILocalized(@"albrhi_hide_suggested");
-        note = SCILocalized(@"albrhi_hide_suggested_note");
-        icon = @"person.2.slash.fill";
-        color = [UIColor systemOrangeColor];
-        defaultOn = NO;
-    } else if (row == SCITWAlbrhiSwitchLayer) {
-        key = SCIPrefSwitchLayer;
-        title = SCILocalized(@"albrhi_switch_layer");
-        note = SCILocalized(@"albrhi_switch_layer_note");
-        icon = @"switch.2";
-        color = [UIColor systemOrangeColor];
-    } else {
-        key = SCIPrefVerboseLogging;
-        title = SCILocalized(@"albrhi_logging");
-        note = SCILocalized(@"albrhi_logging_note");
-        icon = @"doc.text.magnifyingglass";
-        color = [UIColor systemGrayColor];
-        defaultOn = NO;
-    }
-
-    cell.textLabel.text = title;
-    cell.detailTextLabel.text = note;
-    cell.detailTextLabel.numberOfLines = 0;
-    cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
-    cell.selectionStyle = UITableViewCellSelectionStyleNone;
-    cell.imageView.image = SCITWBadge(icon, color);
-
-    // Turning the switch layer off makes this tweak do nothing at all, which is a bigger
-    // step than any single feature and is marked the way the cautious features are. The
-    // promoted-tweet filter gets the same colour for the reason its own file gives: it has
-    // not been confirmed on a device, and a row that looks exactly like a settled feature
-    // is a row nobody reads twice before flipping.
-    if (row == SCITWAlbrhiSwitchLayer || row == SCITWAlbrhiHidePromoted
-        || row == SCITWAlbrhiHideSuggested) {
-        cell.textLabel.textColor = [UIColor systemOrangeColor];
-    }
-
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-
-    UISwitch *toggle = [[UISwitch alloc] init];
-    toggle.on = ([defaults objectForKey:key] == nil) ? defaultOn : [defaults boolForKey:key];
-    toggle.tag = row;
-    [toggle addTarget:self
-               action:@selector(albrhiToggled:)
-     forControlEvents:UIControlEventValueChanged];
-    cell.accessoryView = toggle;
-}
-
-- (void)albrhiToggled:(UISwitch *)toggle {
-    // All three named, rather than two named and the third left as the default. A default
-    // that happens to be right is a default that writes the wrong key the moment a fourth
-    // row is added above it -- and check.py failed the build for the unused constant, which
-    // is the same fact from the other end.
-    NSString *key = nil;
-    if (toggle.tag == SCITWAlbrhiSaveButton) key = SCIPrefInlineButton;
-    if (toggle.tag == SCITWAlbrhiSaveAvatar) key = SCIPrefSaveAvatar;
-    if (toggle.tag == SCITWAlbrhiConfirmRepost) key = SCIPrefConfirmRepost;
-    if (toggle.tag == SCITWAlbrhiHidePromoted) key = SCIPrefHidePromoted;
-    if (toggle.tag == SCITWAlbrhiHideSuggested) key = SCIPrefHideSuggested;
-    if (toggle.tag == SCITWAlbrhiSwitchLayer) key = SCIPrefSwitchLayer;
-    if (toggle.tag == SCITWAlbrhiLogging) key = SCIPrefVerboseLogging;
-    if (!key) return;
-
-    [[NSUserDefaults standardUserDefaults] setBool:toggle.on forKey:key];
-
-    // The switch layer is hooked from the constructor, so moving it changes nothing until X
-    // is opened again -- and a switch that appears to do nothing is the complaint this
-    // project has answered most often. Said here rather than discovered.
-    if (toggle.tag == SCITWAlbrhiSwitchLayer) [self say:SCILocalized(@"restart_note")];
-}
-
-- (void)fillFeatureCell:(UITableViewCell *)cell row:(NSInteger)row {
-    SCITWFeature *feature = [SCITWFeatures all][row];
-
-    cell.textLabel.text = SCILocalized(feature.titleKey);
-    cell.detailTextLabel.text = SCILocalized(feature.noteKey);
-    cell.detailTextLabel.numberOfLines = 0;
-    cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
-    cell.selectionStyle = UITableViewCellSelectionStyleNone;
-    cell.imageView.image = SCITWBadge(feature.iconName, feature.iconColor);
-
-    // Marked, not hidden. Each of these removes a disclosure, changes what X is told about
-    // the device, or turns on something X shipped switched off -- and a row that looks
-    // exactly like "hide ads" is a row nobody reads before flipping.
-    if (feature.cautious) cell.textLabel.textColor = [UIColor systemOrangeColor];
-
-    UISwitch *toggle = [[UISwitch alloc] init];
-    toggle.on = [SCITWFeatures isOn:feature];
-    toggle.tag = row;
-    [toggle addTarget:self
-               action:@selector(featureToggled:)
-     forControlEvents:UIControlEventValueChanged];
-    cell.accessoryView = toggle;
-}
-
-- (void)featureToggled:(UISwitch *)toggle {
-    NSArray<SCITWFeature *> *features = [SCITWFeatures all];
-    if (toggle.tag < 0 || (NSUInteger)toggle.tag >= features.count) return;
-
-    [SCITWFeatures setOn:toggle.isOn feature:features[toggle.tag]];
-
-    // The keys section below shows which feature owns each row, so it is now stale. The
-    // features section is not reloaded: doing that mid-animation snaps the switch the user
-    // is still touching back to where it started and reads as the toggle not working.
-    [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:SCITWSectionKeys]
-                  withRowAnimation:UITableViewRowAnimationNone];
-}
-
-- (void)fillStatusCell:(UITableViewCell *)cell row:(NSInteger)row {
-    switch (row) {
-        case 0: {
-            cell.textLabel.text = SCILocalized(@"status_gate");
-            cell.detailTextLabel.text = SCIPanelAllowsThisApp()
-                ? SCILocalized(@"gate_on") : SCILocalized(@"gate_off");
-            cell.detailTextLabel.numberOfLines = 0;
-            cell.imageView.image = SCITWBadge(@"shield.lefthalf.filled", [UIColor systemBlueColor]);
-            break;
-        }
-        case 1: {
-            NSArray<NSString *> *providers = [SCITWSwitches attachedProviders];
-            cell.textLabel.text = SCILocalized(@"status_providers");
-            cell.detailTextLabel.text = providers.count
-                ? [NSString stringWithFormat:@"%lu", (unsigned long)providers.count]
-                : SCILocalized(@"status_providers_none");
-            cell.imageView.image = SCITWBadge(@"link", [UIColor systemIndigoColor]);
-            break;
-        }
-        case 2: {
-            cell.textLabel.text = SCILocalized(@"status_keys");
-            cell.detailTextLabel.text =
-                [NSString stringWithFormat:@"%lu", (unsigned long)self.all.count];
-            cell.imageView.image = SCITWBadge(@"key.fill", [UIColor systemTealColor]);
-            break;
-        }
-        default: {
-            cell.textLabel.text = SCILocalized(@"status_asked");
-            cell.detailTextLabel.text = [NSString stringWithFormat:@"%lu",
-                (unsigned long)[SCITWSwitches totalAsked]];
-            cell.imageView.image = SCITWBadge(@"questionmark.circle.fill", [UIColor systemGrayColor]);
-            break;
-        }
-    }
+    // Reloaded because a switch can change which sections exist -- turning the switch layer
+    // off takes the whole feature list away. Deferred by a runloop turn so the switch
+    // finishes its own animation rather than being torn out mid-slide.
+    dispatch_async(dispatch_get_main_queue(), ^{ [self reload]; });
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 
-    if (indexPath.section == SCITWSectionMedia) {
-        if (!self.media.count) return;
-
-        // Saved on the tap, with no confirmation. Nothing is destroyed and nothing is sent
-        // anywhere -- a sheet asking "are you sure you want to keep this" is a step that
-        // protects against nothing, and this project puts confirmations only where a
-        // mis-tap becomes a notification somebody else sees.
-        [SCITWDownload save:self.media[indexPath.row]];
-        return;
-    }
-
-    if (indexPath.section != SCITWSectionKeys) return;
-
-    // The one row this section has left: push the real list. A search field and an
-    // action sheet per key belong to that screen now, not to this one.
-    SCITWKeysList *keys = [[SCITWKeysList alloc] init];
-    [self.navigationController pushViewController:keys animated:YES];
+    SCITWRow *row = [self rowAt:indexPath];
+    if (row.kind == SCITWRowKindAction && row.action) row.action();
 }
 
 - (void)showMenu:(UIBarButtonItem *)sender {

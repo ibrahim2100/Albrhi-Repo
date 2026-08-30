@@ -85,3 +85,68 @@
 #define SCIPrefHideSuggested     @"hide_suggested_accounts"
 
 #define SCIPrefVerboseLogging   @"verbose_logging"
+
+// MARK: - Links and privacy
+//
+// Read from BHTwitter's own source for *where* each of these lives, never for its code:
+// that repository ships no LICENCE file, so it is architecture only -- the same line this
+// project draws at carsurf, NA9 and VibeTok, and the opposite of what GPLv3 allowed for
+// NextUp and EeveeSpotify.
+
+/// Strips `s` and `t` from an x.com/twitter.com link the moment it is copied. Those two
+/// parameters identify the account that shared it, which is a thing a link should not carry
+/// into somebody else's inbox.
+#define SCIPrefStripTracking     @"strip_tracking_params"
+
+/// Shows where a link actually goes instead of the `t.co` wrapper.
+#define SCIPrefExpandLinks       @"expand_links"
+
+/// Stops the search box offering what was typed before.
+#define SCIPrefNoSearchHistory   @"no_search_history"
+
+/// Opens links in Safari rather than X's own browser.
+#define SCIPrefOpenInSafari      @"open_in_safari"
+
+/// Face ID or a passcode before X will show anything.
+#define SCIPrefAppLock           @"app_lock"
+
+// MARK: - Timeline clutter
+
+#define SCIPrefHideWhoToFollow   @"hide_who_to_follow"
+#define SCIPrefHideTopics        @"hide_topics"
+#define SCIPrefHideTrendVideos   @"hide_trend_videos"
+
+// MARK: - The row of buttons under a post
+
+#define SCIPrefHideViewCount     @"hide_view_count"
+#define SCIPrefHideBookmark      @"hide_bookmark_button"
+
+/// A long press on share renders the post as an image.
+#define SCIPrefTweetToImage      @"tweet_to_image"
+
+// Four of BHTwitter's switches have no target in X 12.20 and are deliberately not defined:
+// `_t1_showPremiumUpsellIfNeeded`, `-isVODCaptionsEnabled` and
+// `TFNTableView -setShowsVerticalScrollIndicator:` are not in the app's class metadata at
+// all, and clearing the app's cache at launch was left out rather than shipped as something
+// that deletes files to no measured benefit. A switch that decides nothing is worse than a
+// missing one: it reads as a feature that does not work.
+
+// MARK: - Extras
+
+#define SCIPrefUndoPost          @"undo_post"
+#define SCIPrefCopyProfileInfo   @"copy_profile_info"
+#define SCIPrefBioTranslate      @"bio_translate"
+#define SCIPrefHighQualityUpload @"high_quality_upload"
+#define SCIPrefFullFrameImages   @"full_frame_images"
+
+/// Forces left-to-right text direction throughout the app.
+///
+/// **Off, and it stays off unless somebody asks for it.** The working language of this
+/// project is Arabic; forcing LTR on `NSParagraphStyle` changes the direction of every
+/// piece of text X draws, not only the one somebody was annoyed by.
+#define SCIPrefDisableRTL        @"disable_rtl"
+
+// MARK: - Confirmations
+
+#define SCIPrefConfirmLike       @"confirm_like"
+#define SCIPrefConfirmFollow     @"confirm_follow"

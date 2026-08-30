@@ -25,10 +25,18 @@
 /// held until the alert's own handler runs it.
 ///
 
+@interface TTAStatusInlineFavoriteButton : UIControl
+@end
+
+@interface TUIFollowControl : UIControl
+@end
+
 @interface TTAStatusInlineRetweetButton : UIControl
 @end
 
 static BOOL sciRepostClassPresent = NO;
+static BOOL sciLikeClassPresent = NO;
+static BOOL sciFollowClassPresent = NO;
 
 /// Where to put the alert: the top of whatever is currently on screen, the same search
 /// every screen-presenting feature in this tweak already uses.
@@ -98,10 +106,123 @@ static UIViewController *SCITWTopViewController(void) {
 %end
 
 
+%group LikeConfirm
+
+%hook TTAStatusInlineFavoriteButton
+
+/// The like button's tap, confirmed the same way the repost's is.
+///
+/// `-didTap` is declared on the shared base `TTAStatusInlineActionButton` and not on this
+/// subclass, which is the safe half of the rule CLAUDE.md states: hooking an *inherited*
+/// method is fine because `%orig` resolves to the superclass's real implementation. What is
+/// never safe is hooking a method no class in the chain implements at all.
+- (void)didTap {
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefConfirmLike]) {
+        %orig;
+        return;
+    }
+
+    // Already liked, so this tap is an *un*like -- and nobody asked to be protected from
+    // taking a like back. Asked of the button rather than of the model, because the button
+    // is the thing whose selected state X keeps in step with what is drawn.
+    if (self.selected) {
+        %orig;
+        return;
+    }
+
+    UIViewController *top = SCITWTopViewController();
+    if (!top) {
+        SCILogV(@"like confirm: no view controller to present on, dropping the tap");
+        return;
+    }
+
+    UIAlertController *sheet =
+        [UIAlertController alertControllerWithTitle:nil
+                                            message:nil
+                                     preferredStyle:UIAlertControllerStyleActionSheet];
+
+    __weak __typeof(self) weakSelf = self;
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"like_confirm_action")
+                                               style:UIAlertActionStyleDefault
+                                             handler:^(UIAlertAction *action) {
+        __typeof(self) strongSelf = weakSelf;
+        if (strongSelf) {
+            %orig;
+        }
+    }]];
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
+                                               style:UIAlertActionStyleCancel
+                                             handler:nil]];
+
+    sheet.popoverPresentationController.sourceView = self;
+    sheet.popoverPresentationController.sourceRect = self.bounds;
+
+    [top presentViewController:sheet animated:YES completion:nil];
+}
+
+%end
+
+%end
+
+
+%group FollowConfirm
+
+%hook TUIFollowControl
+
+/// Following, confirmed. **Unfollowing is not**, and that asymmetry is the same one the
+/// like confirmation makes: `-_unfollowUser:event:` is left alone, because nobody asked to
+/// be protected from taking a follow back.
+///
+/// The arguments are passed through untouched rather than reconstructed -- `sender` and
+/// `event` are X's own, and re-sending them is what makes the confirmed path identical to
+/// the unconfirmed one.
+- (void)_followUser:(id)sender event:(id)event {
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:SCIPrefConfirmFollow]) {
+        %orig;
+        return;
+    }
+
+    UIViewController *top = SCITWTopViewController();
+    if (!top) {
+        SCILogV(@"follow confirm: no view controller to present on, dropping the tap");
+        return;
+    }
+
+    UIAlertController *sheet =
+        [UIAlertController alertControllerWithTitle:nil
+                                            message:nil
+                                     preferredStyle:UIAlertControllerStyleActionSheet];
+
+    __weak __typeof(self) weakSelf = self;
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"follow_confirm_action")
+                                               style:UIAlertActionStyleDefault
+                                             handler:^(UIAlertAction *action) {
+        __typeof(self) strongSelf = weakSelf;
+        if (strongSelf) {
+            %orig;
+        }
+    }]];
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
+                                               style:UIAlertActionStyleCancel
+                                             handler:nil]];
+
+    sheet.popoverPresentationController.sourceView = self;
+    sheet.popoverPresentationController.sourceRect = self.bounds;
+
+    [top presentViewController:sheet animated:YES completion:nil];
+}
+
+%end
+
+%end
+
+
 NSString *SCITWRepostConfirmReport(void) {
-    return sciRepostClassPresent
-        ? @"TTAStatusInlineRetweetButton hooked"
-        : @"TTAStatusInlineRetweetButton not in this build";
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+    [parts addObject:sciRepostClassPresent ? @"repost hooked" : @"repost class absent"];
+    [parts addObject:sciLikeClassPresent ? @"like hooked" : @"like class absent"];
+    [parts addObject:sciFollowClassPresent ? @"follow hooked" : @"follow class absent"];
+    return [parts componentsJoinedByString:@" · "];
 }
 
 void SCITWInstallRepostConfirm(void) {
@@ -113,4 +234,16 @@ void SCITWInstallRepostConfirm(void) {
 
     %init(RepostConfirm);
     SCILogV(@"repost confirmation attached");
+
+    sciLikeClassPresent = (NSClassFromString(@"TTAStatusInlineFavoriteButton") != nil);
+    if (sciLikeClassPresent) {
+        %init(LikeConfirm);
+        SCILogV(@"like confirmation attached");
+    }
+
+    sciFollowClassPresent = (NSClassFromString(@"TUIFollowControl") != nil);
+    if (sciFollowClassPresent) {
+        %init(FollowConfirm);
+        SCILogV(@"follow confirmation attached");
+    }
 }

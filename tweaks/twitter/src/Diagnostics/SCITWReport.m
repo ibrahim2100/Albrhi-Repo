@@ -11,6 +11,12 @@
 #import "Features/Playback/SCITWPictureInPicture.h"
 #import "Features/Tabs/SCITWTabEntries.h"
 #import "Features/Spaces/SCITWSpacesBar.h"
+#import "Features/Links/SCITWLinks.h"
+#import "Features/Timeline/SCITWTimelineFilter.h"
+#import "Features/Actions/SCITWActionRow.h"
+#import "Features/Extras/SCITWExtras.h"
+#import "Features/Profile/SCITWProfileCopy.h"
+#import "Features/Lock/SCITWAppLock.h"
 
 NSString *SCITWReportText(void) {
     NSMutableString *text = [NSMutableString string];
@@ -44,6 +50,12 @@ NSString *SCITWReportText(void) {
     [text appendFormat:@"in-video button: %@\n", SCITWInVideoButtonReport()];
     [text appendFormat:@"%@\n", SCITWTabEntriesReport()];
     [text appendFormat:@"%@\n", SCITWSpacesBarReport()];
+    [text appendFormat:@"%@\n", SCITWLinksReport()];
+    [text appendFormat:@"%@\n", SCITWTimelineFilterReport()];
+    [text appendFormat:@"%@\n", SCITWActionRowReport()];
+    [text appendFormat:@"%@\n", SCITWExtrasReport()];
+    [text appendFormat:@"%@\n", SCITWProfileCopyReport()];
+    [text appendFormat:@"%@\n", SCITWAppLockReport()];
 
     NSArray<SCITWSwitchRecord *> *records = [SCITWSwitches records];
     [text appendFormat:@"switches seen: %lu over %lu questions\n\n",

@@ -19,7 +19,7 @@ $(TWEAK_NAME)_FILES = $(shell find src -type f \( -iname \*.x -o -iname \*.xm -o
 # Photos is here for saving a download, and nothing else. There is still no player and
 # no encoder in this tweak: X hands out finished MP4 files, so a download is a fetch and
 # a write, and AVFoundation would be linked for code that does not exist.
-$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore Photos
+$(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore Photos SafariServices LocalAuthentication
 
 # src/ on the include path, so a header is imported by the name it has rather than by
 # counting ../ from wherever the importing file happens to sit. The other two tweaks

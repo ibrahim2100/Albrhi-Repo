@@ -1,0 +1,56 @@
+#import "../Model/SCITWSectionRegistry.h"
+#import "Prefs.h"
+#import "Localization/SCILocalize.h"
+
+///
+/// The rest: one question each, answered differently.
+///
+/// `disable_rtl` is marked cautious and sits last on purpose. The working language of this
+/// project is Arabic, and forcing left-to-right changes the direction of every piece of text
+/// X draws rather than only the one that annoyed somebody.
+///
+@interface SCITWSectionExtras : NSObject
+@end
+
+@implementation SCITWSectionExtras
+
++ (void)load {
+    [SCITWSectionRegistry registerBuilderWithOrder:50 builder:^NSArray<SCITWSection *> *(__unused UIViewController *host) {
+        SCITWRow *rtl = [SCITWRow switchRow:SCILocalized(@"set_disable_rtl")
+                                       note:SCILocalized(@"set_disable_rtl_note")
+                                     symbol:@"text.alignleft"
+                                       tint:[UIColor systemRedColor]
+                                    prefKey:SCIPrefDisableRTL];
+        rtl.cautious = YES;
+
+        return @[
+            [SCITWSection titled:SCILocalized(@"section_extras")
+                          footer:nil
+                            rows:@[
+                [SCITWRow switchRow:SCILocalized(@"set_undo_post")
+                               note:SCILocalized(@"set_undo_post_note")
+                             symbol:@"arrow.uturn.backward"
+                               tint:[UIColor systemBlueColor]
+                            prefKey:SCIPrefUndoPost],
+                [SCITWRow switchRow:SCILocalized(@"set_copy_profile")
+                               note:SCILocalized(@"set_copy_profile_note")
+                             symbol:@"doc.on.doc"
+                               tint:[UIColor systemTealColor]
+                            prefKey:SCIPrefCopyProfileInfo],
+                [SCITWRow switchRow:SCILocalized(@"set_bio_translate")
+                               note:nil
+                             symbol:@"character.bubble"
+                               tint:[UIColor systemGreenColor]
+                            prefKey:SCIPrefBioTranslate],
+                [SCITWRow switchRow:SCILocalized(@"set_high_quality_upload")
+                               note:SCILocalized(@"set_high_quality_upload_note")
+                             symbol:@"photo.badge.arrow.down"
+                               tint:[UIColor systemIndigoColor]
+                            prefKey:SCIPrefHighQualityUpload],
+                rtl,
+            ]],
+        ];
+    }];
+}
+
+@end

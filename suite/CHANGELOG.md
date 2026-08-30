@@ -1,5 +1,20 @@
 # Albrhi Changelog
 
+## v1.61.2
+
+Albrhi for X 0.17.0: **fifteen new features and a settings screen rebuilt around them.** Copied
+links cleaned of the two parameters that name who shared them, `t.co` expanded, links opened in
+Safari, search history withheld, the app behind Face ID, who-to-follow and topics and trend videos
+refused at the one hook every list X draws goes through, the view count and bookmark button
+hideable, a post rendered as an image, confirmations before a like and a follow, and five smaller
+answers. Four of the reference tweak's switches are deliberately absent because their targets are
+not in X 12.20 at all — a switch that decides nothing is worse than a missing one.
+
+The settings screen is a registry of self-registering sections now, one file each, replacing five
+section constants and seven row constants that had to be kept in step by hand. The switch layer
+heads it rather than ending it, drawn as the heading it is: turning it off does not disable the
+feature list, it removes it.
+
 ## v1.61.1
 
 Albrhi for YouTube 1.25.1: **an ad showing at launch and gone after a refresh was a filter watching

@@ -1,5 +1,64 @@
 # Albrhi for X — what changed
 
+## v0.17.0
+
+**Fifteen features, and a settings screen rebuilt from scratch around them.**
+
+Every one was read out of BHTwitter's own source for *where* it lives — that repository ships
+**no LICENCE file**, so it is architecture only, copied from in no part. The same line this project
+draws at carsurf, NA9 and VibeTok, and the opposite of what GPLv3 allowed for NextUp.
+
+**Links and privacy.** Copied `x.com` links have `s` and `t` stripped — the two parameters that name
+the account a link was shared from. A `t.co` can be shown as where it actually goes. Links can open
+in Safari instead of X's own browser. The search box can stop offering what was typed before,
+withheld at `-setRecentQueries:` so nothing is drawn and then un-drawn. And the app can be put behind
+Face ID: **the cover goes up before the prompt**, so nothing is on screen while the question is
+asked, and a device that can evaluate neither biometry nor a passcode is let straight through rather
+than left staring at a cover it cannot dismiss.
+
+**Between the posts.** Who to follow, topics and trend videos, refused at
+`TFNItemsDataViewController -tableViewCellForItem:atIndexPath:` — one hook for every list X draws,
+matching the *class of the view model* rather than reaching into a view hierarchy. Cells are shown
+as well as hidden on each pass, because they are reused and writing only the hiding branch is how a
+working filter starts eating the timeline.
+
+**On a post.** The view count and the bookmark button can be hidden, and a long press on share
+renders the post as an image. A confirmation can be asked before a like and before a follow —
+**never before an unlike or an unfollow**, since nobody asked to be protected from taking something
+back.
+
+**Extras.** The undo-post toast forced on, bio translation always offered, X's own high-quality
+upload setting shown, and a single photo drawn whole instead of cropped — gated on attachment type 2
+so videos and grids are untouched. Left-to-right text is there as asked for, marked cautious and
+last: the working language here is Arabic and it changes the direction of everything X draws.
+
+**Four of BHTwitter's are deliberately absent, and that is a finding rather than an omission.**
+`_t1_showPremiumUpsellIfNeeded`, `-isVODCaptionsEnabled` and
+`TFNTableView -setShowsVerticalScrollIndicator:` are not in X 12.20 at all — checked against the
+app's own class metadata. Clearing the cache at launch was left out rather than shipped as something
+that deletes files to no measured benefit. **A switch that decides nothing is worse than a missing
+one**: it reads as a feature that does not work.
+
+Two class names had moved and were caught the same way: the upload configuration is
+`TTMUploadConfiguration` here, not `TFNTwitterMediaUploadConfiguration`, and the typeahead is
+`TTSSearchTypeaheadViewController`, not `T1SearchTypeaheadViewController`.
+
+**The settings screen is a registry now, one file per section.** What it replaces addressed its rows
+by index — five section constants, seven row constants, a hand-written row count and a `switch` per
+section deciding what each number meant. Three lists of one truth, which is the exact shape that
+crashed the YouTube Music settings screen. A row now carries its own title, preference key and
+action; a section's length is `rows.count`; and a section registers itself in `+load`, so adding a
+feature adds a file and deleting the file deletes the section. A builder returning no rows is not
+drawn, which is how the feature list disappears when the switch layer is off rather than sitting
+there deciding nothing.
+
+**And the switch layer heads the screen instead of ending it.** It was the last row under Advanced,
+which was the wrong way round: every other section is a thing you choose, while this one decides
+whether a section of the screen exists at all. It is drawn as the heading it is — a larger badge, a
+bold title, a tinted panel — through a `prominent` flag on the row model rather than a design
+special-cased for one switch, so a later row that governs what is under it can be raised the same
+way.
+
 ## v0.16.2
 
 **"Hide Spaces" was aiming at the wrong surface for two releases, and the surface was never a
