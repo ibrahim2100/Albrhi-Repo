@@ -569,6 +569,11 @@ over 345,902 questions on X 12.14, which is what 0.2.0's seventeen named feature
 from. Every key in that table was observed being asked; what each one *means* is still read
 from its name, and the screen says so rather than implying more certainty than there is.
 
+**Confirmed on a device in 0.16.0: Communities and Profile now appear in the bottom bar.** The
+`…AppNavigationTabEntry` route is therefore the real one and the feature-switch route never was,
+which settles four releases of switch work. The Spaces half rides the identical mechanism pointed
+the other way and is not separately confirmed yet.
+
 **A feature switch answered 784 times and still ignored is not the gate, and only a per-key
 tally could say so.** Two X switches were reported as doing nothing. `voice_rooms_consumption_enabled`
 was asked 784 times and answered `NO` on every one, with the Spaces tab exactly where it was;
