@@ -36,6 +36,20 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
+    //
+    // **`UITableViewAutomaticDimension` does nothing without an estimate.**
+    //
+    // `-tableView:heightForRowAtIndexPath:` returns it already, and for one-line rows the
+    // table happened to look right anyway -- so the missing half went unnoticed until a row
+    // needed two lines. The diagnosis line added under the master switch was being drawn
+    // into a row measured as if it were not there, which reads as the line simply not
+    // existing.
+    //
+    // The same fault, in the same shape, is already written down in this repository from the
+    // TikTok settings screen, where a wrapped note was drawn *on top of* the row below it.
+    //
+    self.tableView.estimatedRowHeight = 64;
+
     UIBarButtonItem *closeButton = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"xmark"]
                                                                     style:UIBarButtonItemStylePlain
                                                                    target:self

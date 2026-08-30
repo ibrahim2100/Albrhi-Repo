@@ -713,6 +713,14 @@ counter is indistinguishable from a feature that works. The same shape sat one l
 post-to-image renderer, where `-drawViewHierarchyInRect:afterScreenUpdates:NO` returns a BOOL that
 was being discarded.
 
+**`UITableViewAutomaticDimension` does nothing without `estimatedRowHeight`, and the failure looks
+like the row's second line not existing.** YouTube Music's settings screen returned automatic
+dimension from `-heightForRowAtIndexPath:` and set no estimate; every row was one line, so it looked
+right for as long as nothing needed two. A diagnosis line added under the master switch simply never
+appeared — not clipped in a visible way, not overlapping, just absent, which reads as the code that
+writes it never running. This is the TikTok settings overlap from the other side: same missing
+property, opposite symptom, and neither is a hint that the text is wrong.
+
 **A settings screen addressed by index is three lists of one truth, and a control that governs
 what is below it belongs above it.** X's screen had five section constants, seven row constants, a
 hand-written row count and a `switch` per section deciding what each number meant — the exact shape
