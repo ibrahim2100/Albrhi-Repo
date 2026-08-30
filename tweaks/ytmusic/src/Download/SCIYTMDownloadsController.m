@@ -94,9 +94,27 @@ static CGFloat SCIYTMBottomBarHeight(UIWindow *window) {
     CGFloat bar = SCIYTMBottomBarHeight(self.view.window);
     UIEdgeInsets wanted = UIEdgeInsetsMake(safe.top, 0, MAX(safe.bottom, bar), 0);
 
-    if (!UIEdgeInsetsEqualToEdgeInsets(self.tableView.contentInset, wanted)) {
-        self.tableView.contentInset = wanted;
-        self.tableView.verticalScrollIndicatorInsets = wanted;
+    if (UIEdgeInsetsEqualToEdgeInsets(self.tableView.contentInset, wanted)) return;
+
+    CGFloat wasAtTop = self.tableView.contentOffset.y <= -self.tableView.contentInset.top + 0.5;
+
+    self.tableView.contentInset = wanted;
+    self.tableView.verticalScrollIndicatorInsets = wanted;
+
+    //
+    // **Setting an inset does not move what is already there, and that is the whole of the
+    // bug this line fixes.**
+    //
+    // A scroll view keeps its `contentOffset` when its inset changes, so an offset of zero --
+    // which is where a freshly loaded list sits -- stops meaning "the top" the moment a top
+    // inset exists and starts meaning "scrolled up by exactly that much". The first row goes
+    // under the clock, which is precisely what was reported after the inset itself was
+    // already correct.
+    //
+    // Only when the list was at its top: somebody who has scrolled down keeps their place.
+    //
+    if (wasAtTop) {
+        self.tableView.contentOffset = CGPointMake(0, -wanted.top);
     }
 }
 

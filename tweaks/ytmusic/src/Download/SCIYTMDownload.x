@@ -1,5 +1,6 @@
 #import "SCIYTMDownload.h"
 #import "SCIYTMLibrary.h"
+#import "SCIYTMSaveSheet.h"
 #import "../YTMShared.h"
 #import "../Localization/SCILocalize.h"
 
@@ -471,63 +472,17 @@ static void SCIYTMAskThenDownload(NSString *manifest, NSString *title, NSString 
     NSString *lastSection =
         [[NSUserDefaults standardUserDefaults] stringForKey:@"AlbrhiYTMLastSection"] ?: @"";
 
-    UIAlertController *sheet =
-        [UIAlertController alertControllerWithTitle:SCILocalized(@"dl_confirm_title")
-                                            message:SCILocalized(@"dl_confirm_note")
-                                     preferredStyle:UIAlertControllerStyleAlert];
-
-    [sheet addTextFieldWithConfigurationHandler:^(UITextField *field) {
-        field.text = suggested;
-        field.placeholder = SCILocalized(@"dl_confirm_name");
-        field.clearButtonMode = UITextFieldViewModeWhileEditing;
-    }];
-
-    [sheet addTextFieldWithConfigurationHandler:^(UITextField *field) {
-        field.text = lastSection;
-        // The existing sections are named in the placeholder rather than in a picker: a list of
-        // folders is short, and a free field is the only thing that can also *make* one.
-        NSArray<NSString *> *existing = SCIYTMSections();
-        field.placeholder = existing.count
-            ? [NSString stringWithFormat:@"%@ — %@", SCILocalized(@"dl_confirm_section"),
-               [existing componentsJoinedByString:@", "]]
-            : SCILocalized(@"dl_confirm_section");
-        field.clearButtonMode = UITextFieldViewModeWhileEditing;
-    }];
-
-    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"dl_confirm_save")
-                                              style:UIAlertActionStyleDefault
-                                            handler:^(__unused UIAlertAction *action) {
-        NSString *name = sheet.textFields.firstObject.text;
-        NSString *section = sheet.textFields.lastObject.text;
-
+    [SCIYTMSaveSheet askForName:suggested
+                        section:lastSection
+                       sections:SCIYTMSections()
+                         onSave:^(NSString *name, NSString *section) {
         [[NSUserDefaults standardUserDefaults] setObject:(section ?: @"")
                                                   forKey:@"AlbrhiYTMLastSection"];
 
         sciStarted++;
         SCIYTMTell(SCILocalized(@"download_started"), SCILocalized(@"download_started_note"));
         SCIYTMDownloadTrack([NSURL URLWithString:manifest], title, artist, name, section);
-    }]];
-
-    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
-                                              style:UIAlertActionStyleCancel
-                                            handler:nil]];
-
-    UIViewController *top = nil;
-    for (UIWindow *window in [UIApplication sharedApplication].windows) {
-        if (window.isKeyWindow) { top = window.rootViewController; break; }
-    }
-    while (top.presentedViewController) top = top.presentedViewController;
-
-    // No screen to ask on is not a reason to save something nobody confirmed -- and not a reason
-    // to lose the download either. It goes ahead with the suggested name and the last section,
-    // which is exactly what the sheet would have offered.
-    if (!top) {
-        sciStarted++;
-        SCIYTMDownloadTrack([NSURL URLWithString:manifest], title, artist, suggested, lastSection);
-        return;
-    }
-
-    [top presentViewController:sheet animated:YES completion:nil];
+    }];
 }
 
 // MARK: - A surface of our own
