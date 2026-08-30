@@ -334,6 +334,33 @@ NSArray<NSString *> *SCIYTMSeenKeys(void) {
     return [sciSeenKeys copy] ?: @[];
 }
 
+/// The player controller behind a view on the now-playing screen.
+///
+/// **The property is on the parent, and asking the wrong controller is the whole of the bug this
+/// replaces.** `YTMNowPlayingViewController` does not declare `playerViewController` --
+/// `YTMWatchViewController`, its parent, does. The long press walked to the parent and worked; the
+/// badge asked the now-playing controller directly, got nil, and reported *the badge was found but
+/// this track carries no stream* — a message that describes the track when the fault was the
+/// lookup. **Two doors resolving the same thing two ways is two chances to be wrong**, and only one
+/// of them was.
+///
+/// Both parents are tried and then the owner itself, so a build that moves the property back down
+/// still answers.
+static id SCIYTMPlayerControllerNear(UIView *view) {
+    UIViewController *owner = SCIYTMOwningController(view);
+    if (!owner) return nil;
+
+    UIViewController *candidates[] = { owner.parentViewController,
+                                       owner.parentViewController.parentViewController,
+                                       owner };
+    for (int i = 0; i < 3; i++) {
+        id player = SCIYTMValue(candidates[i], @"playerViewController")
+                 ?: SCIYTMValue(candidates[i], @"playerVC");
+        if (player) return player;
+    }
+    return nil;
+}
+
 // MARK: - A surface of our own
 
 ///
@@ -383,10 +410,7 @@ static NSUInteger sciPressesAdded = 0, sciPressesFired = 0;
 
     sciPressesFired++;
 
-    UIViewController *playing = SCIYTMOwningController(gesture.view);
-    id watch = playing.parentViewController;
-    id playerVC = SCIYTMValue(watch, @"playerViewController")
-               ?: SCIYTMValue(playing, @"playerViewController");
+    id playerVC = SCIYTMPlayerControllerNear(gesture.view);
 
     id playerResponse = SCIYTMValue(playerVC, @"playerResponse")
                      ?: SCIYTMValue(playerVC, @"contentPlayerResponse");
@@ -511,8 +535,7 @@ static NSUInteger sciPressesAdded = 0, sciPressesFired = 0;
 
     sciBadgeTaps++;
 
-    id playingVC = SCIYTMOwningController(recogniser.view);
-    id playerVC = SCIYTMValue(playingVC, @"playerViewController") ?: SCIYTMValue(playingVC, @"playerVC");
+    id playerVC = SCIYTMPlayerControllerNear(recogniser.view);
 
     id playerResponse = SCIYTMValue(playerVC, @"playerResponse")
                      ?: SCIYTMValue(playerVC, @"contentPlayerResponse");

@@ -831,6 +831,15 @@ itself, and then **proves the flavour from the staged paths rather than the file
 shipped a "roothide" package built from a rootless tree and it installed as rootless, because
 that is what it was. It refuses to copy a mismatch out.
 
+**Two doors resolving the same thing two ways is two chances to be wrong, and only one of them
+was.** YouTube Music's download works from a long press and failed from the badge with *the badge
+was found, but this track carries no stream* — a message about the track when the fault was the
+lookup. `YTMNowPlayingViewController` does not declare `playerViewController`; its parent
+`YTMWatchViewController` does. The long press walked to the parent; the badge asked the
+now-playing controller directly and got nil. **A wrong lookup that has a sentence prepared for its
+own failure reads as a fact about the content**, which is how it survived a round. One resolver
+now serves both doors.
+
 **A commented-out call is invisible to every diagnostic that exists, and a feature suspended as a
 crash suspect must be returned to duty when it is cleared.** YouTube Music's download installer was
 commented out in 0.8.4 while a crash was investigated; 0.8.5 found the real cause elsewhere — an
