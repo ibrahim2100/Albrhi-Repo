@@ -831,6 +831,16 @@ itself, and then **proves the flavour from the staged paths rather than the file
 shipped a "roothide" package built from a rootless tree and it installed as rootless, because
 that is what it was. It refuses to copy a mismatch out.
 
+**Holding the version while the content changes makes a local build indistinguishable from the one
+already installed, and the device is the thing that cannot tell.** The publish pause below says
+version numbers do not move — which is right for the *changelog*, and wrong for the `.deb` somebody
+is about to install over a package of the same name. Two rounds were spent on a diagnosis line and
+a new download surface that were never on the phone: the package manager saw `1.62.2` sitting on
+`1.62.2` and did nothing, correctly. **Local builds carry a `+N` suffix** — `1.62.2+1`, `+2` — which
+dpkg sorts above `1.62.2` and below `1.62.3`, so the published number space is untouched and every
+local build still installs. Bump it on every local build during a measurement loop, exactly as a
+released build bumps its own.
+
 **Publishing is paused on the owner's instruction, and this is the rule while it is.** Nothing is
 pushed to `main` and no release is cut until they say so — a version that goes out is a version
 strangers update to without knowing what changed, and a measurement loop turns the changelog into a
