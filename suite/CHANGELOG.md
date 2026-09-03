@@ -1,5 +1,19 @@
 # Albrhi Changelog
 
+## v1.70.0
+
+**Albrhi now requires a licence.**
+
+Without a valid one the tweaks stand down — no hook is installed and every app behaves exactly as
+if Albrhi were not there. Nothing crashes and nothing is half-patched.
+
+If that happens to you, Settings › Albrhi says so at the top of the screen and taps straight
+through to **Licence**, where you can **request a licence** — it makes a short text to send — or
+**enter a code** you were given, which binds itself to your device on the spot.
+
+The layer shipped switched off in 1.68.0 and 1.69.0 on purpose: it was introduced, then proved on
+a real device, and only then turned on.
+
 ## v1.69.0
 
 **Ask for a licence from the phone, and redeem a short code without asking anyone.**
