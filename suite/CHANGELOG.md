@@ -2,6 +2,9 @@
 
 ## v1.74.1
 
+*Released on its own push again — the two standalone tweaks went out from the same commit and
+the shared concurrency group drops whichever run is still queued.*
+
 **"Free" is out of every description.** The tweak needs a licence; a package page saying it is
 free was the first thing anybody read. The licence itself is unchanged and still named in full —
 GPLv3 where it applies, MIT for the Watch pairing core — because dropping a word is not the same
