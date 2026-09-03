@@ -2,6 +2,10 @@
 
 ## v1.71.2
 
+*Released on its own push: the commit that carried this fix also touched `tools/`, which all
+three publishing workflows watch, so the suite's run was dropped by the concurrency group before
+it could release.*
+
 **Settings › Albrhi › Licence showed no state and no expiry date.** The rows were there and empty —
 the one screen whose job is telling you whether Albrhi is licensed was answering with a blank.
 Fixed, and the tooling now refuses the shape that caused it.
