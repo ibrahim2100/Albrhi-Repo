@@ -713,6 +713,27 @@ counter is indistinguishable from a feature that works. The same shape sat one l
 post-to-image renderer, where `-drawViewHierarchyInRect:afterScreenUpdates:NO` returns a BOOL that
 was being discarded.
 
+**A counter that is only written out on the success branch is not a counter, and this one was
+written one branch away from the paragraph explaining why.** YouTube's new download-button hook
+counted taps on the action row and recorded the tally *only* where a download button was
+answered — so a tap on Like moved a number nobody could read, and the report went on printing
+"no tap has reached this hook". The release's own changelog had claimed to remove that exact
+ambiguity. **Incrementing and reporting are two separate acts**, and a count that exists in memory
+and never reaches the report is worth less than no count at all, because it reads as evidence.
+
+**And one number cannot separate four faults.** Not drawn in this build, drawn but carrying no
+download button, carrying one and never pressed, pressed and failed downstream — four different
+investigations. The fix is the one this file already names for install attempts: **count the thing
+that is supposed to have happened, not only its result.** Views counted as they are constructed
+answer "is the class live" with nobody tapping anything.
+
+**A view is not configured when its initialiser returns.** Asking `-hasOfflineButton` at
+construction would answer NO for a button that becomes the download button at
+`-setOfflineStatus:offlineability:` a moment later, reporting `0 of 6` on a build where the
+feature works perfectly — the same "asked too early" trap that had YouTube Music calling a class
+missing from a build that certainly had it. `-didMoveToWindow`, once per instance, is where a
+configured view can be asked about itself.
+
 **A gesture cannot go missing, and it can still be in the way — this project optimised for the
 first and never asked the second.** YouTube's hold-to-save was deliberately put on
 `YTPlayerViewController`'s own `view` rather than on any YouTube view class, and the reasoning was
@@ -1736,9 +1757,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.26.0** · X **0.18.1** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.26.1** · X **0.18.1** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.9.0** ·
-NextUp **0.1.5** · suite **1.64.0**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.64.1**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being
