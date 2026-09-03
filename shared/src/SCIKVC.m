@@ -2,10 +2,13 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 
-/// The three selectors KVC tries, in KVC's own order.
+/// The selectors KVC tries, in KVC's own documented order.
 ///
-/// `-getKey` is last for the same reason it is last in Foundation: it is the oldest of the
-/// three and the least likely to be what a modern class means by the name.
+/// **That order is `getKey`, `key`, `isKey`, `_getKey`, `_key` — `getKey` first, not last.**
+/// This function shipped with it last, on a comment asserting Foundation does the same, which
+/// Foundation does not. It changes nothing unless a class declares two of them and they
+/// disagree; the point is that a replacement for KVC has to match KVC, and an ordering asserted
+/// from memory is not a match.
 static SEL SCIGetterFor(NSString *key, id object) {
     if (!key.length) return NULL;
 
@@ -13,9 +16,11 @@ static SEL SCIGetterFor(NSString *key, id object) {
                              stringByAppendingString:[key substringFromIndex:1]];
 
     NSString *names[] = {
+        [@"get" stringByAppendingString:capitalised],
         key,
         [@"is" stringByAppendingString:capitalised],
-        [@"get" stringByAppendingString:capitalised],
+        [@"_get" stringByAppendingString:capitalised],
+        [@"_" stringByAppendingString:key],
     };
 
     for (NSUInteger i = 0; i < sizeof(names) / sizeof(names[0]); i++) {
@@ -25,17 +30,40 @@ static SEL SCIGetterFor(NSString *key, id object) {
     return NULL;
 }
 
-/// Whether a method hands back an object, read from its own type encoding.
+/// A selector's return-type encoding — from the method if there is one, and from the object's
+/// own method signature if there is not.
+///
+/// **`class_getInstanceMethod` returning NULL does not mean the object cannot answer.** A class
+/// may resolve a selector dynamically (`+resolveInstanceMethod:`) or forward it
+/// (`-forwardingTargetForSelector:`): `-respondsToSelector:` says YES and there is no `Method`
+/// to read an encoding from. `LSApplicationProxy` is exactly such a class, and the first version
+/// of this file treated the missing encoding as "not an object" and answered nil — which is how
+/// Albrhi Panel stopped showing some apps' versions after the sweep that introduced this file.
+/// The reasoning was right and one of its inputs was silently absent.
+///
+/// `-methodSignatureForSelector:` is the answer: it is what the forwarding machinery itself
+/// consults, so it works precisely in the cases the method list does not.
+static const char *SCIReturnEncoding(id object, SEL selector) {
+    Method method = class_getInstanceMethod(object_getClass(object), selector);
+    if (method) {
+        const char *encoding = method_getTypeEncoding(method);
+        if (encoding && encoding[0]) return encoding;
+    }
+
+    if (![object respondsToSelector:@selector(methodSignatureForSelector:)]) return NULL;
+
+    NSMethodSignature *signature = [object methodSignatureForSelector:selector];
+    return signature.methodReturnType;
+}
+
+/// Whether a method hands back an object.
 ///
 /// A getter that returns a scalar cannot be called through an `id`-returning cast: the
 /// value comes back in a different register and of a different width, which is the same
-/// mistake that crashed TikTok twice over a guessed `objc_msgSend` cast. An unreadable or
-/// non-object return is stepped over rather than guessed at.
+/// mistake that crashed TikTok twice over a guessed `objc_msgSend` cast. A return type that
+/// cannot be read at all is stepped over rather than guessed at.
 static BOOL SCIReturnsObject(id object, SEL selector) {
-    Method method = class_getInstanceMethod(object_getClass(object), selector);
-    if (!method) return NO;
-
-    const char *encoding = method_getTypeEncoding(method);
+    const char *encoding = SCIReturnEncoding(object, selector);
     if (!encoding || !encoding[0]) return NO;
 
     // The return type is the first character of a method's encoding. `@` is an object and
@@ -91,8 +119,7 @@ NSNumber *SCISafeNumberForKey(id object, NSString *key) {
         return [boxed isKindOfClass:[NSNumber class]] ? boxed : nil;
     }
 
-    Method method = class_getInstanceMethod(object_getClass(object), getter);
-    const char *encoding = method ? method_getTypeEncoding(method) : NULL;
+    const char *encoding = SCIReturnEncoding(object, getter);
     if (!encoding || !encoding[0]) return nil;
 
     switch (encoding[0]) {
@@ -139,8 +166,7 @@ BOOL SCISafeBoolForKey(id object, NSString *key) {
         return [boxed respondsToSelector:@selector(boolValue)] ? [boxed boolValue] : NO;
     }
 
-    Method method = class_getInstanceMethod(object_getClass(object), getter);
-    const char *encoding = method ? method_getTypeEncoding(method) : NULL;
+    const char *encoding = SCIReturnEncoding(object, getter);
     if (!encoding || !encoding[0]) return NO;
 
     switch (encoding[0]) {

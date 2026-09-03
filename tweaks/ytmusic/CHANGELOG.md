@@ -1,5 +1,32 @@
 # Albrhi for YouTube Music — what changed
 
+## v0.9.2
+
+**A regression from the audit pass, found on a device and fixed: some version numbers and
+protobuf fields read as empty.**
+
+`SCISafeValueForKey` — the guarded accessor that replaced `-valueForKey:` everywhere — checked a
+getter's return type by reading its `Method`. **`class_getInstanceMethod` returning NULL does not
+mean the object cannot answer.** A class may resolve a selector dynamically
+(`+resolveInstanceMethod:`) or forward it: `-respondsToSelector:` says YES and there is no method
+to read an encoding from. The check treated that missing encoding as "not an object" and returned
+nil.
+
+Two whole families of class do exactly this. `LSApplicationProxy`, which is where the panel reads
+every installed app's version from — so rows showed no version. And every protobuf class, which
+is what YouTube's renderers are (`YTIPivotBarItemRenderer` and the rest), read for tab
+identifiers and item lists.
+
+`-methodSignatureForSelector:` is the fix: it is what the forwarding machinery itself consults, so
+it answers precisely where the method list does not. Proved against a class with a dynamically
+resolved accessor before shipping — it now returns what `-valueForKey:` returned, which is the
+whole bar this replacement has to clear.
+
+Also corrected in the same file: KVC tries `getKey` **first**, not last. It shipped last, on a
+comment asserting Foundation does the same. It changes nothing unless a class declares two of
+them and they disagree — but a replacement for KVC has to match KVC, and an order asserted from
+memory is not a match.
+
 ## v0.9.1
 
 **A repository-wide audit pass. No feature changed; what changed is that three rules this

@@ -713,6 +713,22 @@ counter is indistinguishable from a feature that works. The same shape sat one l
 post-to-image renderer, where `-drawViewHierarchyInRect:afterScreenUpdates:NO` returns a BOOL that
 was being discarded.
 
+**`class_getInstanceMethod` returning NULL does not mean the object cannot answer — and reading
+that as "no" broke two whole families of class at once.** `SCISafeValueForKey`, written to retire
+`-valueForKey:`, decided whether a getter returns an object by reading its `Method`'s type
+encoding. A class that resolves a selector with `+resolveInstanceMethod:` or forwards it has no
+`Method` at all while `-respondsToSelector:` still answers YES, so the check read the absence as
+"not an object" and returned nil. **`LSApplicationProxy`** is such a class — the panel stopped
+showing any app's version — and so is **every protobuf class**, which is what YouTube's `YTI*`
+renderers are. `-methodSignatureForSelector:` is what the forwarding machinery itself consults,
+so it answers exactly where the method list does not.
+
+The shape is the one this file already names for `respondsToSelector:` versus what
+`-valueForKey:` could reach: **a runtime query that comes back empty is not the same as a fact
+about the object**, and a replacement for a Foundation behaviour has to be tested against the
+behaviour it replaces rather than reasoned into. A twenty-line harness with a dynamically
+resolved accessor would have caught it before the release did.
+
 **A `#` inside a quoted shell string is not a comment — it is a word, and one of those words
 was `com.albrhi`.** A note explaining `WITHHELD_PACKAGES` was written *between the quotes* of
 that very assignment, so every word of the prose became a withheld package name. The suite's own
@@ -1855,9 +1871,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.15** · YouTube **1.28.0** · X **0.18.2** · Panel **0.9.23** · Watch **0.5.3** · TikTok **0.20.1** ·
-Spotify **0.2.4** · YT Music **0.9.1** ·
-NextUp **0.1.6** · suite **1.67.0**. **CarPlay is gone** — removed from this repository, to be
+Instagram **4.1.16** · YouTube **1.28.1** · X **0.18.2** · Panel **0.9.24** · Watch **0.5.3** · TikTok **0.20.1** ·
+Spotify **0.2.4** · YT Music **0.9.2** ·
+NextUp **0.1.6** · suite **1.67.1**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

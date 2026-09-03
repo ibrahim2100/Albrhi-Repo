@@ -1,5 +1,17 @@
 # Albrhi Changelog
 
+## v1.67.1
+
+**Fixes a regression 1.66.0 introduced: app versions were missing from the panel, and some of
+YouTube's own renderer fields read as empty.**
+
+The guarded accessor that replaced `-valueForKey:` decided whether a getter returns an object by
+reading its method's type encoding — and a class that resolves a selector dynamically has no
+method to read, while still answering `-respondsToSelector:` with YES. `LSApplicationProxy` (every
+installed app's version) and every protobuf class (YouTube's renderers) are both exactly that
+shape. It asks `-methodSignatureForSelector:` now, which is what the runtime's own forwarding
+consults.
+
 ## v1.67.0
 
 **YouTube 1.28.0.** The save button inside the player fades in and out with YouTube's own
