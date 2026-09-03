@@ -771,6 +771,25 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**A key that `list()` returns is not a key that still has a value, and spreading the `null` it
+answers with makes a record out of nothing.** Approving a request in the panel deleted `req:<dev>`
+and the very next `/admin/state` still listed it — Cloudflare KV's list index lags a delete by up
+to about a minute — so `{ key, ...null }` produced a row carrying an id and no fields at all. The
+panel drew a blank row whose approve button then posted `dev: undefined`, which the server
+correctly refused. **From the outside that is a button that does nothing**, and it was reported as
+exactly that.
+
+Three fixes, because it was three faults stacked: the server drops entries whose value is gone
+(a record that is gone is gone, and the honest answer is that there is nothing there); the panel
+removes a row it has already acted on rather than re-asking an index that lags — believing the
+answer you were just given is not optimism, it is declining to prefer the staler of two answers;
+and a button now re-enables in a `finally` and says why it failed, because the version that
+disabled itself and waited for a redraw is what turned a 400 into "it hangs".
+
+**And eventual consistency is not a footnote you write down once.** It was already stated on the
+panel's own face, and it still produced a bug — because knowing a store is eventually consistent
+is not the same as handling every shape that inconsistency arrives in.
+
 **A licence gate with a user-visible off switch is not a gate, and one shipped for a release —
 along with a settable server address, which is the same hole wearing a different hat.** Enforcement
 was a preference so the layer could be introduced before it was enforced, which was the right

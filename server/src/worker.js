@@ -301,12 +301,25 @@ async function deviceRedeem(request, env) {
 // ── Admin ─────────────────────────────────────────────────────────────────────────────
 
 async function adminState(env) {
+  //
+  // **A key `list()` returns is not a key that still has a value**, and spreading the `null` it
+  // answers with produced a row carrying nothing but an id.
+  //
+  // KV's list index is eventually consistent and lags a delete by up to about a minute. So for
+  // that minute an approved request came back as `{key}` alone -- the panel drew a blank row, and
+  // its approve button then posted `dev: undefined`, which the server refused. From the outside
+  // that is a button that does nothing, which is exactly how it was reported.
+  //
+  // Dropped rather than repaired: a record that is gone is gone, and the honest thing for this
+  // call to say is that there is nothing there.
+  //
   const gather = async (prefix) => {
     const { keys } = await env.DB.list({ prefix });
-    return Promise.all(keys.map(async (k) => ({
-      key: k.name.slice(prefix.length),
-      ...(await env.DB.get(k.name, 'json')),
-    })));
+    const rows = await Promise.all(keys.map(async (k) => {
+      const value = await env.DB.get(k.name, 'json');
+      return value ? { key: k.name.slice(prefix.length), ...value } : null;
+    }));
+    return rows.filter(Boolean);
   };
 
   const [requests, licences, codes] = await Promise.all([

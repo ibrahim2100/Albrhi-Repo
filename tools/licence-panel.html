@@ -381,9 +381,19 @@ function actionButton(label, handler, destructive) {
   button.textContent = label;
   if (destructive) button.style.color = "var(--bad)";
   button.onclick = async () => {
+    // Re-enabled in a finally, always. It used to disable itself and wait for a refresh to redraw
+    // the row -- so anything that went wrong in between left a dead button and no explanation,
+    // which is the shape "it hangs" actually took.
     button.disabled = true;
-    await handler();
-    await refresh();
+    try {
+      const ok = await handler();
+      if (ok === false) return;          // the handler has already said why
+      await refresh();
+    } catch (e) {
+      alert("تعذّر تنفيذ العملية.");
+    } finally {
+      button.disabled = false;
+    }
   };
   return button;
 }
@@ -409,10 +419,24 @@ function renderInbox() {
     // Approving here issues immediately with exactly what was asked for -- there is a server to
     // do it, so the two-step "fill the form and press again" the offline panel needed is gone.
     // Changing the terms is what the issue-by-hand card above is for.
+    // Acted on, then removed from the list here rather than waited for.
+    //
+    // KV's index lags a delete by up to a minute, so a refresh straight after approving can still
+    // return the request -- and the row would reappear, looking like the approval had not taken.
+    // The server has already answered; believing it is not optimism, it is not asking the same
+    // question twice and preferring the staler answer.
+    const act = async (path, payload) => {
+      const result = await api(path, payload);
+      if (!result.ok) { alert(result.why); return false; }
+      state.requests = (state.requests || []).filter(r => r.dev !== req.dev);
+      renderInbox();
+      return true;
+    };
+
     actions.append(
-      actionButton("موافقة", () => api("/admin/approve",
+      actionButton("موافقة", () => act("/admin/approve",
         { dev: req.dev, days: req.days, note: req.note })),
-      actionButton("رفض", () => api("/admin/decline", { dev: req.dev }), true),
+      actionButton("رفض", () => act("/admin/decline", { dev: req.dev }), true),
     );
     tr.append(actions);
     body.append(tr);
