@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.72.1
+
+**Withdrawing a licence now stops the device at its next check instead of a week later**, and the
+panel gained a proper delete — separate from revoke, because "taken away" and "never should have
+existed" are different things to be able to tell apart later. The free weeks are listed too, and
+one can be reset for a device that needs another.
+
 ## v1.72.0
 
 **Try Albrhi free for a week, and buy from inside it.**

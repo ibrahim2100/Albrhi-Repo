@@ -496,6 +496,28 @@ async function adminRestore(request, env) {
   return json({ ok: true });
 }
 
+///
+/// Removes a licence outright, and optionally the record that its device used the free week.
+///
+/// **Deleting and revoking are different acts and both are worth having.** Revoking marks the
+/// licence withdrawn and keeps it, so "was this taken away or did I never issue it" is answerable
+/// six months later. Deleting is for a test, a duplicate, or a mistake -- a row that should never
+/// have existed rather than one whose story ended.
+///
+/// The trial marker is only removed when asked for, because it is the one record here that is
+/// meant to outlive everything else: clearing it hands that device another free week.
+///
+async function adminDelete(request, env) {
+  const body = await readBody(request);
+  if (!body || !isDevice(body.dev)) return json({ error: 'bad device' }, 400);
+
+  await env.DB.delete(K.licence(body.dev));
+  await env.DB.delete(K.request(body.dev));
+  if (body.trial) await env.DB.delete(K.trial(body.dev));
+
+  return json({ ok: true, note: `the device stops within ${TOKEN_DAYS} days, or at its next check` });
+}
+
 async function adminCodes(request, env) {
   const body = await readBody(request);
   if (!body) return json({ error: 'bad body' }, 400);
@@ -575,6 +597,7 @@ export default {
         if (path === '/admin/revoke')  return adminRevoke(request, env);
         if (path === '/admin/restore') return adminRestore(request, env);
         if (path === '/admin/codes')   return adminCodes(request, env);
+        if (path === '/admin/delete')  return adminDelete(request, env);
       }
 
       return json({ error: 'no such route' }, 404);

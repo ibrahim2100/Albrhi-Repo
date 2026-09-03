@@ -248,6 +248,23 @@
     <div class="actions"><button class="primary" id="issue" disabled>أصدر</button></div>
   </section>
 
+  <!-- ── trials ─────────────────────────────────────────────────────────────────── -->
+  <section class="card">
+    <h2>الأسابيع المجانية <span id="trialCount" class="pill warn">0</span></h2>
+    <p>
+      سجلٌّ بكلّ جهازٍ أخذ أسبوعه المجاني. لا يُحذف مع الترخيص — وهو ما يجعل التجربة مرّةً لكلّ
+      جهاز بدل مرّةٍ كلّ أسبوع. «إعادة تعيين» تمنح ذلك الجهاز أسبوعاً آخر.
+    </p>
+
+    <div class="tablewrap">
+      <table id="trials" hidden>
+        <thead><tr><th>الجهاز</th><th>أُخذ</th><th>انتهى في</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="empty" id="trialsEmpty">لا أحد أخذ التجربة بعد.</p>
+  </section>
+
   <!-- ── codes ──────────────────────────────────────────────────────────────────── -->
   <section class="card">
     <h2>أكواد قصيرة</h2>
@@ -497,11 +514,63 @@ function renderLicences() {
       lic.revoked
         ? actionButton("إرجاع", async () => { await api("/admin/restore", { dev: lic.key }); await refresh(); })
         : actionButton("سحب", async () => {
-            if (!confirm(`سحب ترخيص ${lic.key}؟ يتوقّف الجهاز خلال سبعة أيام على الأكثر.`)) return;
+            if (!confirm(`سحب ترخيص ${lic.key}؟\n\nيتوقّف الجهاز عند أوّل مزامنة — خلال ست ساعات عادةً، وسبعة أيام على الأكثر.`)) return;
             await api("/admin/revoke", { dev: lic.key });
             await refresh();
           }, true),
+
+      // **Deleting and revoking are different acts, and both are worth having.** Revoking keeps
+      // the row and marks it withdrawn, so "was this taken away or did I never issue it" is
+      // answerable later. Deleting is for a test, a duplicate, or a mistake — a row that should
+      // never have existed rather than one whose story ended.
+      actionButton("حذف", async () => {
+        const alsoTrial = confirm(
+          `حذف ترخيص ${lic.key} نهائياً؟\n\nاضغط «موافق» لحذفه مع سجلّ الأسبوع المجاني (فيستطيع الجهاز تجربته من جديد)،\n` +
+          `أو «إلغاء» ثم أكّد في الرسالة التالية لحذف الترخيص وحده.`);
+
+        if (!alsoTrial && !confirm(`حذف ترخيص ${lic.key} وحده، مع إبقاء سجلّ التجربة؟`)) return;
+
+        const result = await api("/admin/delete", { dev: lic.key, trial: alsoTrial });
+        if (!result.ok) { alert(result.why); return false; }
+
+        // Removed here rather than waited for: KV's index lags a delete, and a row that
+        // reappears reads as a delete that did not take.
+        state.licences = (state.licences || []).filter(l => l.key !== lic.key);
+        if (alsoTrial) state.trials = (state.trials || []).filter(t => t.key !== lic.key);
+        renderLicences();
+        renderTrials();
+        return false;
+      }, true),
     );
+    tr.append(actions);
+    body.append(tr);
+  });
+}
+
+function renderTrials() {
+  const rows = state.trials || [];
+  const body = $("trials").querySelector("tbody");
+  body.innerHTML = "";
+  $("trials").hidden = rows.length === 0;
+  $("trialsEmpty").hidden = rows.length > 0;
+  $("trialCount").textContent = String(rows.length);
+  $("trialCount").className = rows.length ? "pill good" : "pill warn";
+
+  rows.forEach(t => {
+    const tr = document.createElement("tr");
+    tr.append(cell(t.key, true), cell(fmtDate(t.at), true), cell(fmtDate(t.until), true));
+
+    const actions = document.createElement("td");
+    actions.append(actionButton("إعادة تعيين", async () => {
+      if (!confirm(`منح ${t.key} أسبوعاً مجانياً آخر؟`)) return false;
+      const result = await api("/admin/delete", { dev: t.key, trial: true });
+      if (!result.ok) { alert(result.why); return false; }
+      state.trials = (state.trials || []).filter(x => x.key !== t.key);
+      state.licences = (state.licences || []).filter(l => l.key !== t.key);
+      renderTrials();
+      renderLicences();
+      return false;
+    }));
     tr.append(actions);
     body.append(tr);
   });
@@ -546,8 +615,10 @@ async function refresh() {
   $("issue").disabled = false;
   $("mint").disabled = false;
 
-  renderInbox();
+  renderTrials();
+renderInbox();
   renderLicences();
+  renderTrials();
   renderCodes();
 
   lastRefresh = Date.now();

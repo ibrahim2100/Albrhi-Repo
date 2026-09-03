@@ -771,6 +771,20 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**Reporting a refusal is not acting on it, and a licence layer that only reports keeps working.**
+The renewal call received `revoked` from the server, handed that up to the caller, and left the
+signed token in place — valid for its remaining week — so withdrawing a licence changed nothing on
+the device for up to seven days. **The fix was already latent in the design**: everything here
+turns on the difference between the server *deciding* and the server *saying nothing*, and a 200
+carrying `revoked` is unambiguously the first. Acting on that one alone drops the token at the
+next check while a timeout still cannot cost a paying user anything.
+
+**Revoking and deleting are different acts and a panel needs both.** Revoke marks the licence
+withdrawn and keeps it, so "was this taken away or did I never issue it" is answerable six months
+later; delete is for a test, a duplicate or a mistake. The trial marker is only removed when
+explicitly asked for, because it is the one record meant to outlive everything else — clearing it
+hands that device another free week, which is a decision rather than a side effect.
+
 **A trial is a convenience for honest people, not a lock, and it is worth building only if
 nobody mistakes it for one.** The free week is once per device, marked by a KV record that is
 never deleted — the licence it creates expires and can be replaced, so anything shorter-lived
@@ -2101,9 +2115,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.31** · Watch **0.5.3** · TikTok **0.20.1** ·
+Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.32** · Watch **0.5.3** · TikTok **0.20.1** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.1.6** · suite **1.72.0**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.6** · suite **1.72.1**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

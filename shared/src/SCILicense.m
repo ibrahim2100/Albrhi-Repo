@@ -574,7 +574,26 @@ void SCILicenseSyncWithServer(void (^completion)(SCILicenseServerResult)) {
         // rather than offering to ask again, which is what stops one person filling the inbox.
         if ([answer[@"pending"] boolValue]) { finish(SCILicenseServerPending); return; }
 
-        finish(SCIResultForState(answer[@"state"]));
+        SCILicenseServerResult result = SCIResultForState(answer[@"state"]);
+
+        //
+        // **A definite answer is acted on; only an absent one is ignored.**
+        //
+        // The token on the device stays valid by signature for a week, so without this a
+        // withdrawn licence went on working until that week ran out -- reported as exactly
+        // that: "I revoked it and it still works".
+        //
+        // The distinction that makes this safe is the one this whole file is built around: a
+        // 200 carrying `revoked` is the server *deciding*, and a timeout or a captive portal is
+        // the server saying nothing. Only the first reaches here -- `status != 200` returned
+        // above -- so a coffee shop's wifi can still never take a paying user's licence away.
+        //
+        if (result == SCILicenseServerRevoked || result == SCILicenseServerNoLicence ||
+            result == SCILicenseServerExpired) {
+            SCILicenseForgetKey();
+        }
+
+        finish(result);
     });
 }
 

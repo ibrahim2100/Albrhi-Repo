@@ -1,5 +1,23 @@
 # Albrhi Panel Changelog
 
+## v0.9.32
+
+**Revoking a licence did not stop the device, and that was a weakness rather than a wait.**
+
+The token on the phone stays valid by signature for a week, and the renewal call reported the
+withdrawal without acting on it — so a revoked licence went on working until that week ran out.
+Reported as exactly that: revoked it, still running.
+
+**A definite answer is now acted on; only an absent one is ignored.** A `200` carrying `revoked` is
+the server *deciding*, and a timeout or a captive portal is the server saying nothing — and the
+code already separated those, because everything in this layer is built on that distinction. Only
+the first reaches the branch that drops the stored token, so a café's wifi still cannot take a
+paying user's licence away.
+
+The effect: a withdrawal lands at the device's next check — within six hours normally, and
+instantly with **Ask the server now**. Confirmed end to end: free week taken, revoked from the
+panel, one sync, and the gate closed.
+
 ## v0.9.31
 
 **A free week, a lifetime licence, and a screen worth deciding on.**
