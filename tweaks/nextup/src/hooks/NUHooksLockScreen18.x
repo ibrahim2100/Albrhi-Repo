@@ -3,6 +3,7 @@
 // ACUISActivityHostViewController's platter. MUST stay iOS-18-gated: the same host
 // architecture exists on iOS 17, but there the remote scene draws the row itself.
 #import "NUHooksShared.h"
+#import "shared/src/SCIKVC.h"
 
 // On iPad iOS 18 the lock-screen now-playing card is a Live Activity: the media
 // controls are drawn by a remote com.apple.MediaRemoteUI scene (MRULockscreenView),
@@ -31,12 +32,22 @@
 @end
 
 // This host = the Apple Music now-playing LA (not a timer / other activity)?
+//
+// **The one deliberate deviation from upstream in this file, and it is a safety fix.**
+//
+// Upstream reads `_activitySceneDescriptor` with `-valueForKey:` inside an `@try`. That runs
+// the receiver's own code and `@catch` only catches `NSException` -- and this runs *in
+// SpringBoard*, where a feature that fails takes its feature down and a probe that fails
+// takes the home screen down. The port keeps every other line diffable; this one is read
+// through the repository's own guarded accessor instead. Listed in CHANGELOG.md with the
+// rest of the port's changes.
+//
 static BOOL NUIsNowPlayingActivityHost(UIViewController *vc) {
-    @try {
-        id sceneDesc = [vc valueForKey:@"_activitySceneDescriptor"];
-        ACActivityDescriptor *ad = [sceneDesc activityDescriptor];
-        return [[ad platterTargetBundleIdentifier] isEqualToString:@"com.apple.MediaRemoteUI"];
-    } @catch (__unused NSException *e) { return NO; }
+    id sceneDesc = SCISafeValueForKey(vc, @"_activitySceneDescriptor");
+    if (![sceneDesc respondsToSelector:@selector(activityDescriptor)]) return NO;
+
+    ACActivityDescriptor *ad = [sceneDesc activityDescriptor];
+    return [[ad platterTargetBundleIdentifier] isEqualToString:@"com.apple.MediaRemoteUI"];
 }
 
 // The media-suggestions gate for THIS surface only. Everywhere else the row and the player

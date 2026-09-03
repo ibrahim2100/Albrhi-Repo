@@ -1,4 +1,5 @@
 #import "SCIYTDiagnostics.h"
+#import "shared/src/SCIKVC.h"
 #import "../YouTubeHeaders.h"
 #import "../Tweak.h"
 #import "../SCILog.h"
@@ -627,8 +628,8 @@ static void SCIProbeAdSlots(id response) {
     // bug it was written for. Writing a guard on a value I had never once seen produced is
     // the whole of that mistake.
     @try {
-        id details = [response valueForKey:@"videoDetails"];
-        id identifier = details ? [details valueForKey:@"videoId"] : nil;
+        id details = SCISafeValueForKey(response, @"videoDetails");
+        id identifier = details ? SCISafeValueForKey(details, @"videoId") : nil;
 
         if ([identifier isKindOfClass:[NSString class]] && [identifier length]) {
             sciResponseVideoID = [identifier copy];
@@ -1071,7 +1072,7 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     if (!object || !key.length) return nil;
     @try {
         if (![object respondsToSelector:NSSelectorFromString(key)]) return nil;
-        return [object valueForKey:key];
+        return SCISafeValueForKey(object, key);
     } @catch (__unused NSException *exception) {
         return nil;
     }

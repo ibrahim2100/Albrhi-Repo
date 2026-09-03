@@ -7,6 +7,7 @@
 //  and upstream's own %ctor removed -- Albrhi's gate decides, once, in Tweak.x.
 //
 #import <UIKit/UIKit.h>
+#import "shared/src/SCIKVC.h"
 #import <MediaPlayer/MediaPlayer.h>
 #import <objc/runtime.h>
 #import <substrate.h>
@@ -18,7 +19,6 @@
 #import "YTMUSyncedLyricsView.h"
 #import "YTMUInnerTubeDescriptionFetcher.h"
 #import "../Translation/YTMUTranslationContext.h"
-#import "../Utils/YTMUKVC.h"
 
 static BOOL YTMUSyncedLyricsEnabled(void) {
     NSDictionary *dict = [[NSUserDefaults standardUserDefaults] dictionaryForKey:@"YTMUltimate"] ?: @{};
@@ -85,7 +85,7 @@ static NSString *YTMUStringFromObject(id object) {
 static id YTMUObjectForKey(id object, NSString *key) {
     if (!object || !key.length) return nil;
     if ([object isKindOfClass:[NSDictionary class]]) return ((NSDictionary *)object)[key];
-    return YTMUSafeValueForKey(object, key);
+    return SCISafeValueForKey(object, key);
 }
 
 static NSArray *YTMUArrayFromObject(id object) {
@@ -143,7 +143,7 @@ static NSString *YTMUSafeStringForKey(id object, NSString *key) {
     if ([object isKindOfClass:[NSDictionary class]]) {
         value = ((NSDictionary *)object)[key];
     } else {
-        value = YTMUSafeValueForKey(object, key);
+        value = SCISafeValueForKey(object, key);
     }
     if (![value isKindOfClass:[NSString class]]) return @"";
     NSString *str = (NSString *)value;
@@ -269,12 +269,12 @@ static YTPlayerViewController *YTMUPlayerFromCandidate(id candidate) {
         return candidate;
     }
 
-    id player = YTMUSafeValueForKey(candidate, @"playerViewController");
+    id player = SCISafeValueForKey(candidate, @"playerViewController");
     if (playerClass && [player isKindOfClass:playerClass]) {
         return player;
     }
 
-    id parent = YTMUSafeValueForKey(candidate, @"parentViewController");
+    id parent = SCISafeValueForKey(candidate, @"parentViewController");
     if (parent && parent != candidate) {
         return YTMUPlayerFromCandidate(parent);
     }
@@ -300,11 +300,11 @@ static BOOL YTMURefreshLyricsFromPlayer(YTPlayerViewController *player, NSString
         duration = 0;
     }
     if (!videoId.length) {
-        videoId = YTMUStringFromObject(YTMUSafeValueForKey(player, @"currentVideoID"));
-        if (!videoId.length) videoId = YTMUStringFromObject(YTMUSafeValueForKey(player, @"contentVideoID"));
+        videoId = YTMUStringFromObject(SCISafeValueForKey(player, @"currentVideoID"));
+        if (!videoId.length) videoId = YTMUStringFromObject(SCISafeValueForKey(player, @"contentVideoID"));
     }
     if (duration <= 0) {
-        duration = [YTMUSafeValueForKey(player, @"currentVideoTotalMediaTime") doubleValue];
+        duration = [SCISafeValueForKey(player, @"currentVideoTotalMediaTime") doubleValue];
     }
 
     // CRITICAL: `playerResponse` is the full video-context player
@@ -321,13 +321,13 @@ static BOOL YTMURefreshLyricsFromPlayer(YTPlayerViewController *player, NSString
     // from the actual video title. We probe `playerResponse` first
     // and only fall back to `contentPlayerResponse` if the former
     // is unavailable.
-    id playerResponse = YTMUSafeValueForKey(player, @"playerResponse");
-    if (!playerResponse) playerResponse = YTMUSafeValueForKey(player, @"contentPlayerResponse");
-    id playerData = YTMUSafeValueForKey(playerResponse, @"playerData");
-    id details = YTMUSafeValueForKey(playerData, @"videoDetails");
-    NSString *title = YTMUStringFromObject(YTMUSafeValueForKey(details, @"title"));
-    NSString *artist = YTMUStringFromObject(YTMUSafeValueForKey(details, @"author"));
-    NSString *album = YTMUStringFromObject(YTMUSafeValueForKey(details, @"album"));
+    id playerResponse = SCISafeValueForKey(player, @"playerResponse");
+    if (!playerResponse) playerResponse = SCISafeValueForKey(player, @"contentPlayerResponse");
+    id playerData = SCISafeValueForKey(playerResponse, @"playerData");
+    id details = SCISafeValueForKey(playerData, @"videoDetails");
+    NSString *title = YTMUStringFromObject(SCISafeValueForKey(details, @"title"));
+    NSString *artist = YTMUStringFromObject(SCISafeValueForKey(details, @"author"));
+    NSString *album = YTMUStringFromObject(SCISafeValueForKey(details, @"album"));
     NSDictionary *nowPlaying = [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo ?: @{};
     if (!title.length) title = YTMUStringFromObject(nowPlaying[MPMediaItemPropertyTitle]);
     if (!artist.length) artist = YTMUStringFromObject(nowPlaying[MPMediaItemPropertyArtist]);

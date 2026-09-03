@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#import "shared/src/SCIResponder.h"
 #import <objc/runtime.h>
 #import "SCIYTDownload.h"
 #import "../../SCILog.h"
@@ -73,22 +74,6 @@ static void SCIReportButtonState(void) {
 /// window repeatedly, and a count that climbs with scrolling is a log, not a measurement.
 static char kSCICountedOffline;
 
-/// The controller to present from, found by walking up rather than by naming a class.
-///
-/// The action row lives inside whatever YouTube currently calls the video details panel,
-/// and that has been renamed between builds. The responder chain has not.
-static UIViewController *SCIControllerAbove(UIView *view) {
-    UIResponder *responder = view;
-    while (responder && ![responder isKindOfClass:[UIViewController class]]) {
-        responder = responder.nextResponder;
-    }
-
-    UIViewController *presenter = (UIViewController *)responder;
-    while (presenter.presentedViewController) {
-        presenter = presenter.presentedViewController;
-    }
-    return presenter;
-}
 
 
 %hook YTSlimVideoDetailsActionView
@@ -124,7 +109,7 @@ static UIViewController *SCIControllerAbove(UIView *view) {
         return;
     }
 
-    UIViewController *presenter = SCIControllerAbove(self);
+    UIViewController *presenter = SCIControllerForView(self);
     if (!presenter) {
         // Never swallow the tap we could not act on. YouTube's own download is a working
         // feature, and a button that does nothing at all is worse than one that does what

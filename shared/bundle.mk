@@ -23,6 +23,13 @@ endif
 # path it really has rather than by counting ../ from wherever it is used.
 $(BUNDLE_NAME)_CFLAGS += -I$(ROOT)
 
+# The safe accessor, compiled in the same as it is for every tweak.
+#
+# A preference bundle names its own sources with a `find` over its `src/`, so nothing
+# under shared/ arrives on its own -- and the panel reads filter plists' contents off
+# objects it does not own, which is exactly what SCIKVC exists for.
+$(BUNDLE_NAME)_FILES += $(ROOT)/shared/src/SCIKVC.m
+
 $(BUNDLE_NAME)_CFLAGS += -fobjc-arc \
 	-Wno-deprecated-declarations -Wno-nullability-completeness \
 	-Wno-unused-function -Wno-unsupported-availability-guard

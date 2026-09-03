@@ -1,4 +1,5 @@
 #import "../../InstagramHeaders.h"
+#import "shared/src/SCIKVC.h"
 #import <objc/message.h>
 
 extern NSString * const SCIStorySeenSentNotification;
@@ -63,7 +64,7 @@ static id SCICurrentStorySection(UIViewController *viewer) {
                             @"focusedSectionController",
                             @"_currentFullscreenSectionController"]) {
         @try {
-            id candidate = [viewer valueForKey:key];
+            id candidate = SCISafeValueForKey(viewer, key);
             if ([candidate respondsToSelector:@selector(advanceToNextItemWithNavigationAction:)]) {
                 return candidate;
             }

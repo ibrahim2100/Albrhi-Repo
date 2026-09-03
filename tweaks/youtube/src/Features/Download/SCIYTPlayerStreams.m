@@ -1,4 +1,5 @@
 #import "SCIYTPlayerStreams.h"
+#import "shared/src/SCIKVC.h"
 #import "../../SCILog.h"
 #import "../../Diagnostics/SCIYTDiagnostics.h"
 #import <objc/runtime.h>
@@ -24,7 +25,7 @@ static id SCIGet(id object, NSString *name) {
     // selector was an optimisation nobody asked for, applied to a case where the return
     // type is not known in advance.
     @try {
-        id value = [object valueForKey:name];
+        id value = SCISafeValueForKey(object, name);
         if (value) return value;
     } @catch (__unused NSException *exception) {
         // Not KVC-readable. The selector may still exist and return an object.

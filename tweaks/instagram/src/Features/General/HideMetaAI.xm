@@ -1,4 +1,6 @@
 #import "../../Utils.h"
+#import "../../Compat/SCITitleMatch.h"
+#import "shared/src/SCIKVC.h"
 #import "../../InstagramHeaders.h"
 #import "../../Compat/SCIResolve.h"
 
@@ -52,7 +54,7 @@
                 if (_commandResult_command != nil) {
                     
                     // Meta AI
-                    if ([[_commandResult_command title] isEqualToString:@"Meta AI"]) {
+                    if (SCIMatchesEnglishTitle([_commandResult_command title], @[@"Meta AI"], @"Meta AI command")) {
                         SCILogV(@"[SCInsta] Hiding meta ai: direct message composer suggestion");
 
                         shouldHide = YES;
@@ -125,7 +127,7 @@
         SCILogV(@"[SCInsta] Hiding meta ai: imagine tile in media picker");
 
         @try {
-            IGDirectMediaPickerGalleryConfig *galleryConfig = [config valueForKey:@"galleryConfig"];
+            IGDirectMediaPickerGalleryConfig *galleryConfig = SCISafeValueForKey(config, @"galleryConfig");
 
             [galleryConfig setValue:0 forKey:@"isImagineEntryPointEnabled"];
         }
@@ -288,7 +290,7 @@
 
             if (
                 [obj isKindOfClass:%c(IGDirectThreadThemePickerOption)]
-                && [[obj valueForKey:@"themeId"] isEqualToString:@"direct_ai_theme_creation"]
+                && [SCISafeValueForKey(obj, @"themeId") isEqualToString:@"direct_ai_theme_creation"]
             ) {
                 SCILogV(@"[SCInsta] Hiding meta ai: AI generated DM channel themes");
                 
@@ -492,7 +494,7 @@
 
         SCILogV(@"[SCInsta] Hiding meta ai: reconfiguring search bar");
 
-        NSString *placeholder = [config valueForKey:@"placeholder"];
+        NSString *placeholder = SCISafeValueForKey(config, @"placeholder");
 
         if ([placeholder containsString:@"Meta AI"]) {
 
@@ -512,7 +514,7 @@
                 SCILogV(@"[SCInsta] WARNING: %@\n\nFull object: %@", exception.reason, config);
             }
 
-            SCILogV(@"[SCInsta] Changed search bar placeholder from: \"%@\" to \"%@\"", placeholder, [config valueForKey:@"placeholder"]);
+            SCILogV(@"[SCInsta] Changed search bar placeholder from: \"%@\" to \"%@\"", placeholder, SCISafeValueForKey(config, @"placeholder"));
 
             // leftIconStyle
             @try {
@@ -580,7 +582,7 @@
             if ([obj isKindOfClass:%c(IGDirectRecipientCellViewModel)]) {
 
                 // Meta AI (catch-all)
-                if ([[[obj recipient] threadName] isEqualToString:@"Meta AI"]) {
+                if (SCIMatchesEnglishTitle([[obj recipient] threadName], @[@"Meta AI"], @"Meta AI thread")) {
                     SCILogV(@"[SCInsta] Hiding meta ai suggested as recipient (share menu)");
 
                     shouldHide = YES;

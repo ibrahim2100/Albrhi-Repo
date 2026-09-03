@@ -1,5 +1,23 @@
 # Albrhi Changelog
 
+## v1.66.0
+
+**An audit pass over the whole repository. Nothing a user can see changed; a great deal that
+would eventually have been seen did.**
+
+`-valueForKey:` — this project's most expensive habit, documented for a year and used 108 times
+regardless — is gone from every tweak, replaced by a guarded accessor that checks each getter
+before sending it and reads an ivar only when the runtime says it holds an object. It cannot
+come back: `tools/check.py` refuses it now, which is the actual change. A rule that lives only
+in a design document is a rule nobody greps before writing a hook.
+
+Instagram's thirteen features that recognise a row by its English text now say so in Diagnostics
+instead of looking broken on a phone that is not in English. The panel stopped linking two
+frameworks for a picker that left with CarPlay. Twenty dead strings, one dead preference and one
+dead shared header removed. And the localization orphan count, which reported 54 in X where 5
+were real, is trustworthy for the first time — a warning wrong five times in six is a warning
+nobody reads.
+
 ## v1.65.1
 
 **YouTube 1.27.1.** The save button in the player was built and never added to a view — appending

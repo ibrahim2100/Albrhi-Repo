@@ -1,4 +1,6 @@
 #import "../../Utils.h"
+#import "../../Compat/SCITitleMatch.h"
+#import "shared/src/SCIKVC.h"
 #import "../../InstagramHeaders.h"
 #import "../../Compat/SCIResolve.h"
 
@@ -75,7 +77,7 @@
         // Section header 
         if ([obj isKindOfClass:%c(IGLabelItemViewModel)]) {
             // Suggested for you
-            if ([[obj labelTitle] isEqualToString:@"Suggested for you"]) {
+            if (SCIMatchesEnglishTitle([obj labelTitle], @[@"Suggested for you"], @"suggested header")) {
                 if ([SCIUtils getBoolPref:@"no_suggested_users"]) {
                     SCILogV(@"[SCInsta] Hiding suggested users (header: activity feed)");
 
@@ -134,7 +136,7 @@
             else if ([obj isKindOfClass:%c(IGLabelItemViewModel)]) {
 
                 // "Suggested for you" search results header
-                if ([[obj valueForKey:@"labelTitle"] isEqualToString:@"Suggested for you"]) {
+                if (SCIMatchesEnglishTitle(SCISafeValueForKey(obj, @"labelTitle"), @[@"Suggested for you"], @"suggested in search")) {
                     shouldHide = YES;
                 }
 
@@ -219,7 +221,7 @@
             else if ([obj isKindOfClass:%c(IGLabelItemViewModel)]) {
 
                 // "Suggested for you" search results header
-                if ([[obj valueForKey:@"labelTitle"] isEqualToString:@"Suggested for you"]) {
+                if (SCIMatchesEnglishTitle(SCISafeValueForKey(obj, @"labelTitle"), @[@"Suggested for you"], @"suggested in search")) {
                     shouldHide = YES;
                 }
 

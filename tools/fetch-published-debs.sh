@@ -118,6 +118,13 @@ com.albrhi.tweak            com.albrhi.tweak.roothide
 com.albrhi.youtube          com.albrhi.youtube.roothide
 com.albrhi.twitter          com.albrhi.twitter.roothide
 com.albrhi.panel            com.albrhi.panel.roothide
+# TikTok and YouTube Music are in the suite exactly as the four above are, and were missing
+# from this list purely because their own workflows have never published anything -- so the
+# asymmetry cost nothing and looked deliberate. It is a trap either way: whoever gives one of
+# them a publishing step later would find the index offering it beside com.albrhi with no
+# warning. Withholding is an explicit list here, never an absence of action.
+com.albrhi.tiktok           com.albrhi.tiktok.roothide
+com.albrhi.ytmusic          com.albrhi.ytmusic.roothide
 com.albrhi.locket           com.albrhi.locket.roothide
 "
 

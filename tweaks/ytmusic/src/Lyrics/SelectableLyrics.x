@@ -7,6 +7,7 @@
 //  and upstream's own %ctor removed -- Albrhi's gate decides, once, in Tweak.x.
 //
 #import <UIKit/UIKit.h>
+#import "shared/src/SCIKVC.h"
 #import <MediaPlayer/MediaPlayer.h>
 #import <objc/runtime.h>
 #import "../Headers/Localization.h"
@@ -158,7 +159,7 @@ static NSString *YTMULyricsPageNodeAttributedText(id node, NSUInteger depth) {
     NSString *own = nil;
     for (NSString *key in attrKeys) {
         @try {
-            id value = [node valueForKey:key];
+            id value = SCISafeValueForKey(node, key);
             if ([value isKindOfClass:[NSAttributedString class]]) {
                 own = [(NSAttributedString *)value string];
             } else if ([value isKindOfClass:[NSString class]]) {
@@ -173,7 +174,7 @@ static NSString *YTMULyricsPageNodeAttributedText(id node, NSUInteger depth) {
     NSArray<NSString *> *childKeys = @[@"subnodes", @"_subnodes"];
     for (NSString *key in childKeys) {
         @try {
-            id value = [node valueForKey:key];
+            id value = SCISafeValueForKey(node, key);
             if ([value isKindOfClass:[NSArray class]]) {
                 children = value;
             }
@@ -208,7 +209,7 @@ static NSString *YTMULyricsPageCellNodeText(UIView *cell) {
     NSArray<NSString *> *keys = @[@"_node", @"node"];
     for (NSString *key in keys) {
         @try {
-            id node = [cell valueForKey:key];
+            id node = SCISafeValueForKey(cell, key);
             NSString *text = YTMULyricsPageNodeAttributedText(node, 0);
             if (text.length) return text;
         } @catch (__unused NSException *e) {}
@@ -959,7 +960,7 @@ static BOOL YTMULyricsPageTapLooksLikeOfficialLyrics(id handler, YTMNowPlayingVi
 
     YTFormattedStringLabel *officialLyrics = nil;
     @try {
-        officialLyrics = [self valueForKey:@"_descriptionLabel"];
+        officialLyrics = SCISafeValueForKey(self, @"_descriptionLabel");
     } @catch (__unused NSException *exception) {
         officialLyrics = nil;
     }
@@ -988,7 +989,7 @@ static BOOL YTMULyricsPageTapLooksLikeOfficialLyrics(id handler, YTMNowPlayingVi
 
     YTFormattedStringLabel *officialLyrics = nil;
     @try {
-        officialLyrics = [self valueForKey:@"_descriptionLabel"];
+        officialLyrics = SCISafeValueForKey(self, @"_descriptionLabel");
     } @catch (__unused NSException *exception) {
         officialLyrics = nil;
     }
@@ -1017,7 +1018,7 @@ static BOOL YTMULyricsPageTapLooksLikeOfficialLyrics(id handler, YTMNowPlayingVi
 - (void)ytmu_ensureLyricsReplacementViews {
     UIView *container = nil;
     @try {
-        container = [self valueForKey:@"_descriptionContainer"];
+        container = SCISafeValueForKey(self, @"_descriptionContainer");
     } @catch (__unused NSException *exception) {
         container = nil;
     }
@@ -1109,7 +1110,7 @@ static BOOL YTMULyricsPageTapLooksLikeOfficialLyrics(id handler, YTMNowPlayingVi
 
     id delegate = nil;
     @try {
-        delegate = [self valueForKey:@"_delegate"] ?: [self valueForKey:@"delegate"];
+        delegate = SCISafeValueForKey(self, @"_delegate") ?: SCISafeValueForKey(self, @"delegate");
     } @catch (__unused NSException *exception) {
         delegate = nil;
     }

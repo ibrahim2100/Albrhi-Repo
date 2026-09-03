@@ -8,6 +8,7 @@
 //  the Logos this repository pins needs %orig alone in a full block.
 //
 #import "../YTMShared.h"
+#import "shared/src/SCIKVC.h"
 #import "../Headers/YTMNowPlayingViewController.h"
 #import <objc/runtime.h>
 
@@ -46,7 +47,7 @@ static NSInteger seekTime() {
     //
     if (class_getInstanceVariable([self class], "_nowPlayingView") == NULL) return;
 
-    YTMNowPlayingView *nowPlayingView = [self valueForKey:@"_nowPlayingView"];
+    YTMNowPlayingView *nowPlayingView = SCISafeValueForKey(self, @"_nowPlayingView");
 
     if (nowPlayingView) {
         YTMPlayerControlsView *controlsView = nowPlayingView.playerControlsView;

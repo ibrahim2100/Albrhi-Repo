@@ -36,6 +36,8 @@ endif
 $(foreach T,$(TWEAK_NAME),\
 	$(eval $(T)_FILES += $(wildcard $(ROOT)/modules/JGProgressHUD/*.m))\
 	$(eval $(T)_FILES += $(ROOT)/shared/src/SCIPanelGate.m)\
+	$(eval $(T)_FILES += $(ROOT)/shared/src/SCIKVC.m)\
+	$(eval $(T)_FILES += $(ROOT)/shared/src/SCIResponder.m)\
 	$(eval $(T)_FILES += $(ROOT)/shared/src/SCISubstrateShim.m)\
 	$(eval $(T)_CFLAGS += -I$(ROOT) )\
 	$(eval $(T)_CFLAGS += -DDISABLE_ROOTLESS_COMPAT_WARNING -fobjc-arc \

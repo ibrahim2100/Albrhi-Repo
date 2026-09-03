@@ -1,4 +1,5 @@
 #import "../../Utils.h"
+#import "shared/src/SCIKVC.h"
 #import "../../Compat/SCIResolve.h"
 
 ///////////////////////////////////////////////////////////
@@ -240,7 +241,7 @@
 
     if (![SCIUtils getBoolPref:@"like_confirm"]) return;
 
-    UIButton *likeButton = [self valueForKey:@"likeButton"];
+    UIButton *likeButton = SCISafeValueForKey(self, @"likeButton");
     if (!likeButton) return;
 
     // 129115 = L(12) I(9) K(11) E(5)

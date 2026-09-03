@@ -818,8 +818,30 @@ else:
     for key in sorted(en_keys ^ ar_keys):
         report('localization key present in only one table: %s' % key)
 
+    # Two ways a key counts as used, and only the first was counted for a long time.
+    #
+    # `SCILocalized(@"key")` is the direct one. The other is a key handed to something that
+    # will localize it later -- `Feature(@"spaces", @"f_spaces", @"f_spaces_note", ...)` in
+    # the X tweak, a row registry's title key, a diagnostics table. Counting only the direct
+    # form reported **54 orphans in X where 5 were real**, and a warning that is wrong five
+    # times out of six is a warning nobody reads: the five real ones sat in that noise
+    # release after release.
+    #
+    # The bare-string pass is deliberately loose -- any occurrence of the quoted key in any
+    # source file. A key that appears as a string and is never localized is not something
+    # this rule can tell apart from one that is, and guessing wrong in that direction is how
+    # the count became noise in the first place.
     for path in SRC + HDR:
-        used |= set(re.findall(r'SCILocalized\(@"([a-z0-9_]+)"\)', open(path, encoding='utf-8').read()))
+        # The table itself is not a use of its own keys, and forgetting that turns this
+        # count into a constant zero -- which is worse than the over-count it replaced,
+        # because a zero reads as "checked and clean".
+        if os.path.normpath(path) == os.path.normpath(LOC_PATH):
+            continue
+        text = open(path, encoding='utf-8').read()
+        used |= set(re.findall(r'SCILocalized\(@"([a-z0-9_]+)"\)', text))
+        for key in en_keys:
+            if '"%s"' % key in text:
+                used.add(key)
 
     for key in sorted(used - en_keys):
         report('localized key used but never defined: %s' % key)
@@ -956,7 +978,10 @@ for path in SRC:
         report('%s at %s:%d is a static const never used — -Werror fails the build'
                % (name, path, n))
 
-# 12. An SCI function called in this tweak that only exists in another one.
+# 22. An SCI function called in this tweak that only exists in another one.
+#
+#     Numbered 12 until now, which rule 12 above already was. Two rules under one number
+#     is not cosmetic: this file is read by its numbers, and CLAUDE.md refers to them.
 #
 # `SCIPrefEnabled(...)` is the YouTube and Locket tweaks' helper. It was written into the
 # Twitter tweak, whose Prefs.h has never had one, and the build died on the runner after
@@ -1111,6 +1136,45 @@ if os.path.isfile('control'):
             report('control:%d has an unbalanced parenthesis on one line — Theos reads '
                    'the file line by line and refuses to package it: %s'
                    % (_n, _line.strip()))
+
+# 23. `-valueForKey:` on somebody else's object.
+#
+#     **The single most expensive habit in this repository's history**, and until now the
+#     only defence against it was a paragraph in CLAUDE.md that nobody greps before writing
+#     a hook. It is not a probe: it calls the real getter when one exists and reads the
+#     ivar directly when one does not, so it *runs the app's own code* -- and raising is
+#     its last resort, not its first. The follow-badge feature probed twelve guessed keys
+#     with it, on every object up the responder chain, from inside `-layoutSubviews`, and
+#     changing a profile picture crashed Instagram.
+#
+#     `@try` does not redeem it. `@catch` catches `NSException`; a Swift getter that traps,
+#     a failed assertion or a half-initialised object are none of those and end the process
+#     with no handler ever running. The comment asserting otherwise survived several
+#     releases precisely because the crash it caused looked unrelated.
+#
+#     `shared/src/SCIKVC.h` is the replacement: `SCISafeValueForKey`, `SCISafeBoolForKey`
+#     and `SCISafeNumberForKey` resolve a key the same four ways KVC does -- `-key`,
+#     `-isKey`, `-getKey`, then the ivar -- but every getter is checked with
+#     `-respondsToSelector:` and read through a cast taken from its own type encoding, and
+#     the ivar is only read when the runtime says it holds an object.
+#
+#     Foundation's own collections are left alone: `-valueForKey:` on an NSArray or
+#     NSDictionary is a documented, safe operation on a class this project does not hook.
+_KVC_SAFE_RECEIVERS = ('dict', 'dictionary', 'array', 'json', 'attrs', 'attributes',
+                       'info', 'plist', 'defaults', 'userInfo', 'payload')
+for path in SRC + HDR:
+    for _n, _line in enumerate(open(path, encoding='utf-8'), 1):
+        _code = _line.split('//')[0]
+        if 'valueForKey:' not in _code:
+            continue
+        if 'setValue:' in _code:            # -setValue:forKey: is a different method
+            continue
+        _m = re.search(r'\[\s*([A-Za-z_][A-Za-z0-9_]*)\s+valueForKey:', _code)
+        if _m and any(_m.group(1).lower().endswith(w.lower()) for w in _KVC_SAFE_RECEIVERS):
+            continue
+        report('%s:%d uses -valueForKey:, which runs the receiver\'s own code and is not '
+               'made safe by @catch. Use SCISafeValueForKey/BoolForKey/NumberForKey from '
+               'shared/src/SCIKVC.h: %s' % (path, _n, _code.strip()))
 
 # 21. A maintainer script in layout/DEBIAN that is not marked executable.
 #

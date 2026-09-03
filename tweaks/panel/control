@@ -1,6 +1,6 @@
 Package: com.albrhi.panel
 Name: Albrhi Panel (rootless)
-Version: 0.9.22
+Version: 0.9.23
 Architecture: iphoneos-arm64
 Description: Albrhi's settings, in the iOS Settings app.
  .

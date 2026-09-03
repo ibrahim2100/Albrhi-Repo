@@ -83,9 +83,6 @@ static void SCIBuildTables(void) {
         @"row_privacy_profile": @"Profile views",
         @"row_privacy_profile_note": @"Stops the report sent when you open someone's profile.",
 
-        @"pill_ads": @"Ads",
-        @"pill_button": @"Button",
-        @"pill_bypass": @"Bypass",
 
         @"status_gate": @"Panel switch",
         @"gate_on": @"On",
@@ -141,10 +138,8 @@ static void SCIBuildTables(void) {
         @"save_working": @"Saving…",
         @"save_failed": @"Couldn't save it",
         @"save_done": @"Saved to Photos",
-        @"save_done_audio": @"Sound saved",
         @"save_no_permission": @"Photos access is off",
 
-        @"credit": @"Architecture read from BandarHL's and al3raQe's BHTikTok, NA9 For TikTok and VibeTok — none copied from.",
         @"report_copied": @"Report copied",
         @"row_hide_online": @"Never appear online",
         @"row_hide_online_note": @"TikTok stops being told you are active. Four separate reports are refused, and nothing false is sent in their place.",
@@ -223,9 +218,6 @@ static void SCIBuildTables(void) {
         @"row_privacy_profile": @"زيارة البروفايلات",
         @"row_privacy_profile_note": @"يوقف التقرير اللي يُرسل عند فتحك لبروفايل أحد.",
 
-        @"pill_ads": @"الإعلانات",
-        @"pill_button": @"الزر",
-        @"pill_bypass": @"الإخفاء",
 
         @"status_gate": @"مفتاح البانل",
         @"gate_on": @"مفعّل",
@@ -281,10 +273,8 @@ static void SCIBuildTables(void) {
         @"save_working": @"جارِ الحفظ…",
         @"save_failed": @"تعذّر الحفظ",
         @"save_done": @"تم الحفظ في الصور",
-        @"save_done_audio": @"تم حفظ الصوت",
         @"save_no_permission": @"صلاحية الصور مغلقة",
 
-        @"credit": @"البنية مقروءة من BHTikTok لـ BandarHL وal3raQe، وNA9 For TikTok وVibeTok — لا شيء منسوخ منها.",
         @"report_copied": @"تم نسخ التقرير",
         @"row_hide_online": @"لا تظهر متصلاً",
         @"row_hide_online_note": @"يتوقّف إبلاغ تيك توك بأنك نشط. تُرفض أربعة بلاغات منفصلة، ولا يُرسل مكانها شيء غير صحيح.",

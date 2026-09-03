@@ -24,7 +24,9 @@ include $(THEOS)/makefiles/common.mk
 TWEAK_NAME = AlbrhiYTM
 
 AlbrhiYTM_FILES = $(shell find src -type f \( -iname \*.x -o -iname \*.xm -o -iname \*.m \)) \
-	$(ROOT)/shared/src/SCIPanelGate.m
+	$(ROOT)/shared/src/SCIPanelGate.m \
+	$(ROOT)/shared/src/SCIKVC.m \
+	$(ROOT)/shared/src/SCIResponder.m
 
 AlbrhiYTM_CFLAGS = -fobjc-arc -I$(ROOT) -Isrc \
 	-DDISABLE_ROOTLESS_COMPAT_WARNING \

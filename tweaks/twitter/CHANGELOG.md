@@ -1,5 +1,30 @@
 # Albrhi for X — what changed
 
+## v0.18.2
+
+**A repository-wide audit pass. No feature changed; what changed is that three rules this
+project already had in writing are now enforced by the tools instead of remembered.**
+
+**`-valueForKey:` is gone from this tweak.** It is not a probe — it runs the receiver's own
+getter, and reads the ivar directly when there is none, so `@catch` protects nothing: it catches
+`NSException`, while a Swift getter that traps or a half-built object ends the process with no
+handler running. It was documented as this project's most expensive habit for a year and used
+108 times across the repository regardless, because nobody greps a design document before
+writing a hook. Every call now goes through `shared/src/SCIKVC.h`, which resolves a key the same
+four ways KVC does — `-key`, `-isKey`, `-getKey`, then the ivar — but checks each getter with
+`-respondsToSelector:`, reads it through a cast taken from its own type encoding, and touches
+the ivar only when the runtime says it holds an object. **And `tools/check.py` rule 23 refuses
+the old form**, so it cannot come back.
+
+**The localization orphan count is trustworthy for the first time.** It counted a key as used
+only inside `SCILocalized(@"…")`, so keys handed to something that localizes them later read as
+dead — 54 reported in X where 5 were real. A warning wrong five times in six is a warning nobody
+reads, and the real ones sat in that noise for releases. Dead strings removed with it.
+
+`SCIPrefHidePromotedTrends` is deleted. Promoted trends are hidden by the main switch — the same
+discovery on a sibling surface — and the key was defined here and read by nothing, which is the
+shape this project already refuses: a key that decides nothing reads as a feature that broke.
+
 ## v0.18.1
 
 **Two switches for one intention, twice over — and one pair was sitting next to itself on the same

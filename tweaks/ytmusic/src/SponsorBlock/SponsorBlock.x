@@ -8,6 +8,7 @@
 //  the Logos this repository pins needs %orig alone in a full block.
 //
 #import "../YTMShared.h"
+#import "shared/src/SCIKVC.h"
 #import "../Localization/SCILocalize.h"
 
 
@@ -15,7 +16,7 @@
 static id YTMUSponsorBlockSafeValueForKey(id object, NSString *key) {
     if (!object || !key.length) return nil;
     @try {
-        return [object valueForKey:key];
+        return SCISafeValueForKey(object, key);
     } @catch (__unused NSException *exception) {
         return nil;
     }

@@ -37,6 +37,12 @@ TWEAK_NAME = AlbrhiNU
 
 AlbrhiNU_FILES = $(shell find src -type f \( -iname \*.x -o -iname \*.xm -o -iname \*.m \))
 
+# The guarded accessor, named explicitly because this tweak does not include
+# shared/tweak.mk (see the note further down). It replaces one `-valueForKey:` upstream
+# does inside an @try -- which runs the receiver's own code, in SpringBoard, where a probe
+# that fails takes the home screen rather than a feature.
+AlbrhiNU_FILES += $(ROOT)/shared/src/SCIKVC.m
+
 # ImageIO for the artwork downscale; the rest is what the row and the hooks draw with.
 AlbrhiNU_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore ImageIO
 
@@ -44,7 +50,7 @@ AlbrhiNU_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore ImageIO
 # note, kept verbatim in intent because the failure it describes is severe: without it
 # the display's main-thread query blocks forever against a suspended app whose runloop
 # never services the port, and SpringBoard hangs until the watchdog resprings.
-AlbrhiNU_CFLAGS = -Isrc -Isrc/hooks -I$(ROOT)/vendor/LightMessaging -I$(ROOT)/vendor/libSandy \
+AlbrhiNU_CFLAGS = -I$(ROOT) -Isrc -Isrc/hooks -I$(ROOT)/vendor/LightMessaging -I$(ROOT)/vendor/libSandy \
 	-DLIGHTMESSAGING_USE_ROCKETBOOTSTRAP=0 -DLIGHTMESSAGING_TIMEOUT=250 \
 	$(NU_PTRAUTH_CFLAGS)
 

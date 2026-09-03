@@ -1,4 +1,5 @@
 #import "../../Utils.h"
+#import "shared/src/SCIKVC.h"
 #import "../../Compat/SCIResolve.h"
 
 static char targetStaticRef[] = "target";
@@ -257,7 +258,7 @@ static char targetStaticRef[] = "target";
     if (!composerVC) return;
 
     // Get current theme model
-    IGNotesCustomThemeCreationModel *model = [composerVC valueForKey:@"_selectedCustomThemeCreationModel"];
+    IGNotesCustomThemeCreationModel *model = SCISafeValueForKey(composerVC, @"_selectedCustomThemeCreationModel");
     if (!model) {
         // Create new note theme model
         model = [[%c(IGNotesCustomThemeCreationModel) alloc] init];
@@ -265,7 +266,7 @@ static char targetStaticRef[] = "target";
     }
 
     //SCILog(@"Current note theme model: %@", model);
-    [model setValue:[composerVC valueForKey:@"_composerText"] forKey:@"customEmoji"];
+    [model setValue:SCISafeValueForKey(composerVC, @"_composerText") forKey:@"customEmoji"];
 
     // Update saved color target
     if ([target isEqualToString:@"Background"]) {

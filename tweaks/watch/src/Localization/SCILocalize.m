@@ -11,8 +11,6 @@ static NSDictionary *_arTable = nil;
 
 static void SCIBuildTables(void) {
     _enTable = @{
-        @"title": @"Albrhi Watch",
-        @"gate_off": @"Off — turn Albrhi Watch on in Settings › Albrhi",
 
         // Shown on the watch's own Software Update page while the hold is on. iOS says the watch
         // is up to date, because that is what it was told; this says who told it.
@@ -27,8 +25,6 @@ static void SCIBuildTables(void) {
     };
 
     _arTable = @{
-        @"title": @"البرهي للساعة",
-        @"gate_off": @"مطفأة — شغّل البرهي للساعة من الإعدادات › البرهي",
 
         @"hold_notice": @"البرهي للساعة يمنع watchOS 26 وما بعده. هذه الصفحة لا تُظهر تحديثاً لأن "
                         @"البرهي حجبه، لا لأنه غير موجود — والتحديثات الأقدم ما تزال تُعرض. "

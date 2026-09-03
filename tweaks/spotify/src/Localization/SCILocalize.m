@@ -7,7 +7,7 @@
 
 #import "SCILocalize.h"
 
-NSString *SCIVersionString = @"v0.2.3";  // AlbrhiSpotify
+NSString *SCIVersionString = @"v0.2.4";  // AlbrhiSpotify
 
 ///
 /// Short, because almost everything a person reads about this tweak is drawn by Albrhi Panel and
@@ -18,13 +18,9 @@ static NSDictionary *_arTable = nil;
 
 static void SCIBuildTables(void) {
     _enTable = @{
-        @"title": @"Albrhi for Spotify",
-        @"no_premium": @"Ads only. This does not unlock Premium.",
     };
 
     _arTable = @{
-        @"title": @"البرهي لسبوتيفاي",
-        @"no_premium": @"الإعلانات فقط. لا يفتح Premium.",
     };
 }
 

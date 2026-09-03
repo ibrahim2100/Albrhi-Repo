@@ -1,4 +1,5 @@
 #import "../../Utils.h"
+#import "shared/src/SCIKVC.h"
 #import "../../InstagramHeaders.h"
 #import "../../Localization/SCILocalize.h"
 #import "../../Downloader/SCIMediaDownloader.h"
@@ -90,7 +91,7 @@ static id SCIValue(id object, NSString *name) {
     SEL selector = NSSelectorFromString(name);
     if (![object respondsToSelector:selector]) return nil;
 
-    @try { return [object valueForKey:name]; } @catch (__unused id e) { return nil; }
+    @try { return SCISafeValueForKey(object, name); } @catch (__unused id e) { return nil; }
 }
 
 /// The playable URL of a voice message, or nil when this is not one.

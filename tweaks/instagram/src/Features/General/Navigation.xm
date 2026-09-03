@@ -1,4 +1,5 @@
 #import "../../Utils.h"
+#import "shared/src/SCIKVC.h"
 
 BOOL isSurfaceShown(IGMainAppSurfaceIntent *surface) {
     BOOL isShown = YES;
@@ -19,7 +20,7 @@ BOOL isSurfaceShown(IGMainAppSurfaceIntent *surface) {
     }
 
     // Create
-    else if ([(NSNumber *)[surface valueForKey:@"_subtype"] unsignedIntegerValue] == 3 && [SCIUtils getBoolPref:@"hide_create_tab"]) {
+    else if (SCISafeNumberForKey(surface, @"_subtype").unsignedIntegerValue == 3 && [SCIUtils getBoolPref:@"hide_create_tab"]) {
         isShown = NO;
     }
 

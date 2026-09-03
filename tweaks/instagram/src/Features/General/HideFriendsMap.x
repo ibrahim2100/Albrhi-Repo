@@ -1,4 +1,5 @@
 #import "../../Utils.h"
+#import "shared/src/SCIKVC.h"
 #import "../../Compat/SCIResolve.h"
 
 %group SCIgIGDirectNotesTrayRowCell
@@ -15,7 +16,7 @@
 
             if ([obj isKindOfClass:%c(IGDirectNotesTrayUserViewModel)]) {
 
-                if ([[obj valueForKey:@"notePk"] isEqualToString:@"friends_map"]) {
+                if ([SCISafeValueForKey(obj, @"notePk") isEqualToString:@"friends_map"]) {
                     SCILogV(@"[SCInsta] Hiding friends map");
 
                     shouldHide = YES;

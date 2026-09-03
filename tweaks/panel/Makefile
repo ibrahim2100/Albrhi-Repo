@@ -37,11 +37,6 @@ BUNDLE_NAME = AlbrhiPanel
 
 $(BUNDLE_NAME)_FILES = $(shell find src -type f \( -iname \*.m -o -iname \*.mm \))
 
-# PHPickerViewController -- the CarPlay wallpaper picker -- needs PhotosUI. It is the
-# one page in this bundle that needs anything beyond what shared/bundle.mk already
-# links, which is why this is added here rather than there.
-$(BUNDLE_NAME)_FRAMEWORKS += PhotosUI UniformTypeIdentifiers
-
 include $(ROOT)/shared/bundle.mk
 
 

@@ -1,4 +1,5 @@
 #import "SCIYTMDownload.h"
+#import "shared/src/SCIKVC.h"
 #import "SCIYTMLibrary.h"
 #import "SCIYTMSaveSheet.h"
 #import "../YTMShared.h"
@@ -34,7 +35,7 @@ static id SCIYTMValue(id object, NSString *key) {
     if (class_getInstanceVariable([object class], ivar.UTF8String) == NULL) return nil;
 
     @try {
-        return [object valueForKey:key];
+        return SCISafeValueForKey(object, key);
     } @catch (__unused id error) {
         return nil;
     }
@@ -623,8 +624,8 @@ static NSUInteger sciPressesAdded = 0, sciPressesFired = 0;
         return;
     }
 
-    ELMNodeController *node = [self valueForKey:@"_controller"];
-    UIGestureRecognizer *recogniser = [self valueForKey:@"_tapRecognizer"];
+    ELMNodeController *node = SCISafeValueForKey(self, @"_controller");
+    UIGestureRecognizer *recogniser = SCISafeValueForKey(self, @"_tapRecognizer");
 
     //
     // **Matched on what the key means, not on one literal -- and every key seen is remembered.**

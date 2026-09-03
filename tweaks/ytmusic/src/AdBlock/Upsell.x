@@ -28,6 +28,7 @@
 //  YTMusicUltimate by dayanch96.
 //
 #import "../YTMShared.h"
+#import "shared/src/SCIKVC.h"
 #import "../Localization/SCILocalize.h"
 #import "../Download/SCIYTMDownloadsController.h"
 #import "../Utils/NSBundle+YTMU.h"
@@ -610,9 +611,9 @@ static NSString *const kSCIYTMDownloadsPivot = @"FEalbrhi_downloads";
     // name a build does not have runs the app's own code on the way to failing.
     id endpoint = nil;
     if (class_getInstanceVariable([self class], "_navEndpoint") != NULL) {
-        endpoint = [self valueForKey:@"_navEndpoint"];
+        endpoint = SCISafeValueForKey(self, @"_navEndpoint");
     } else if (class_getInstanceVariable([self class], "_navigationEndpoint") != NULL) {
-        endpoint = [self valueForKey:@"_navigationEndpoint"];
+        endpoint = SCISafeValueForKey(self, @"_navigationEndpoint");
     }
 
     if (!endpoint) return;
@@ -704,8 +705,8 @@ static BOOL SCIYTMPaintTab(UIView *view) {
     // tabs, so one global flag would paint whichever tab inherited the view next.
     BOOL ours = NO;
     @try {
-        id inner = [renderer valueForKey:@"pivotBarItemRenderer"];
-        id identifier = inner ? [inner valueForKey:@"pivotIdentifier"] : nil;
+        id inner = SCISafeValueForKey(renderer, @"pivotBarItemRenderer");
+        id identifier = inner ? SCISafeValueForKey(inner, @"pivotIdentifier") : nil;
         ours = [identifier isKindOfClass:[NSString class]] &&
                [identifier isEqualToString:kSCIYTMDownloadsPivot];
     } @catch (__unused NSException *exception) { }

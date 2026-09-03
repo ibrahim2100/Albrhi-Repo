@@ -1,5 +1,5 @@
 #import "YTMULyricsPanelSupport.h"
-#import "../Utils/YTMUKVC.h"
+#import "shared/src/SCIKVC.h"
 #import <MediaPlayer/MediaPlayer.h>
 #import <objc/runtime.h>
 #import "../Headers/Localization.h"
@@ -439,7 +439,7 @@ NSString *YTMULyricsPageViewText(UIView *view) {
 }
 
 id YTMULyricsPageSafeValueForKey(id object, NSString *key) {
-    return YTMUSafeValueForKey(object, key);
+    return SCISafeValueForKey(object, key);
 }
 
 

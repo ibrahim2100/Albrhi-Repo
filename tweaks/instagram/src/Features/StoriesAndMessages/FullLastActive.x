@@ -1,4 +1,5 @@
 #import "../../Utils.h"
+#import "shared/src/SCIKVC.h"
 #import "../../InstagramHeaders.h"
 #import "../General/SCIDateFormat.h"
 
@@ -85,7 +86,7 @@ static NSDate *SCILastActiveDate(id viewModel, NSString *currentText) {
         // Named guesses first — cheap, and right when they are right.
         for (NSString *key in @[@"lastActiveDate", @"lastActive", @"activeDate"]) {
             @try {
-                NSDate *date = SCIDateFromValue([viewModel valueForKey:key]);
+                NSDate *date = SCIDateFromValue(SCISafeValueForKey(viewModel, key));
                 if (date) return date;
             } @catch (__unused id e) {}
         }
@@ -111,7 +112,7 @@ static void SCIUpdateLastActive(UIView *titleView, id viewModel) {
 
     for (NSString *key in @[@"subtitleLabel", @"_subtitleView", @"_transitionalSubtitleLabel"]) {
         UILabel *label = nil;
-        @try { label = [titleView valueForKey:key]; } @catch (__unused id e) { continue; }
+        @try { label = SCISafeValueForKey(titleView, key); } @catch (__unused id e) { continue; }
 
         if (![label isKindOfClass:[UILabel class]] || !label.text.length) continue;
 
@@ -152,7 +153,7 @@ static void SCIUpdateLastActive(UIView *titleView, id viewModel) {
     %orig;
 
     id viewModel = nil;
-    @try { viewModel = [self valueForKey:@"titleViewModel"]; } @catch (__unused id e) {}
+    @try { viewModel = SCISafeValueForKey(self, @"titleViewModel"); } @catch (__unused id e) {}
 
     SCIUpdateLastActive(self, viewModel);
 }

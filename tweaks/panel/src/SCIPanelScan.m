@@ -1,4 +1,5 @@
 #import "SCIPanelScan.h"
+#import "shared/src/SCIKVC.h"
 
 ///
 /// Reading the device rather than being told about it.
@@ -205,7 +206,7 @@
             if (![proxy respondsToSelector:NSSelectorFromString(name)]) continue;
 
             id answer = nil;
-            @try { answer = [proxy valueForKey:name]; } @catch (__unused NSException *e) { }
+            @try { answer = SCISafeValueForKey(proxy, name); } @catch (__unused NSException *e) { }
 
             if ([answer isKindOfClass:[NSString class]] && [answer length]) {
                 versions[identifier.lowercaseString] = answer;

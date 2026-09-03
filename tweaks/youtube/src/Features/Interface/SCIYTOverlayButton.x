@@ -1,4 +1,5 @@
 #import <objc/runtime.h>
+#import "shared/src/SCIResponder.h"
 #import "../../YouTubeHeaders.h"
 #import "../../SCILog.h"
 #import "../../Prefs.h"
@@ -99,15 +100,6 @@ static NSString *SCIEndTimeText(double totalTime, double elapsed) {
 /// The sheet has to be presented from something, and a button knows only its own view. The
 /// responder chain is the one route that needs no class name at all -- which is the point,
 /// on a surface where every class name is already a lead.
-static UIViewController *SCIOwningController(UIView *view) {
-    UIResponder *responder = view;
-    while ((responder = responder.nextResponder)) {
-        if ([responder isKindOfClass:[UIViewController class]]) {
-            return (UIViewController *)responder;
-        }
-    }
-    return nil;
-}
 
 
 %group SCIOverlayTop
@@ -245,7 +237,7 @@ static UIViewController *SCIOwningController(UIView *view) {
     sciOverlayTaps++;
     SCIReportOverlayState([objc_getAssociatedObject(self, &kSCIOverlayJoined) boolValue]);
 
-    UIViewController *host = SCIOwningController(self);
+    UIViewController *host = SCIControllerForView(self);
     if (!host) {
         [SCIYTDiagnostics recordOverlayButton:SCILocalized(@"diag_overlay_no_host")];
         return;

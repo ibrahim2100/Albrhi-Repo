@@ -12,6 +12,7 @@
 //  deliberately not carried, one for code that is not here.
 //
 #import <UIKit/UIKit.h>
+#import "shared/src/SCIKVC.h"
 #import <objc/message.h>
 #import "YTMUltimateSettingsController.h"
 #import "../Headers/Localization.h"
@@ -136,7 +137,7 @@ static UIViewController *SCIYTMSettingsOwner(UIView *view) {
     }
 
     YTMLightweightMessageCell *msgCell = (YTMLightweightMessageCell *)self.delegate;
-    YTIMessageRenderer *renderer = [msgCell valueForKey:@"_renderer"];
+    YTIMessageRenderer *renderer = SCISafeValueForKey(msgCell, @"_renderer");
 
     if (renderer.icon.iconType != 187) {
         return %orig;

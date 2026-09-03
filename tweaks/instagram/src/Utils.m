@@ -1,4 +1,5 @@
 #import "Utils.h"
+#import "shared/src/SCIKVC.h"
 #import "shared/src/SCIPanelGate.h"
 #import <os/lock.h>
 #import "UI/SCIConfirmSheet.h"
@@ -273,7 +274,7 @@ static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
 
     @try {
         if ([user respondsToSelector:@selector(username)]) {
-            NSString *u = [user valueForKey:@"username"];
+            NSString *u = SCISafeValueForKey(user, @"username");
             if ([u isKindOfClass:[NSString class]] && u.length) [parts addObject:[NSString stringWithFormat:@"@%@", u]];
         }
     } @catch (__unused id e) {}
@@ -310,7 +311,7 @@ static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
     @try {
         // `followsCurrentUser` is the authoritative "do they follow me" flag.
         if ([user respondsToSelector:@selector(followsCurrentUser)]) {
-            BOOL followsMe = [[user valueForKey:@"followsCurrentUser"] boolValue];
+            BOOL followsMe = SCISafeBoolForKey(user, @"followsCurrentUser");
             return SCILocalized(followsMe ? @"p_follows_you" : @"p_not_follows_you");
         }
     } @catch (__unused id e) {}
@@ -323,9 +324,9 @@ static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
         for (UIWindow *window in [UIApplication sharedApplication].windows) {
             if (![window respondsToSelector:@selector(userSession)]) continue;
 
-            id session = [window valueForKey:@"userSession"];
-            id user = session ? [session valueForKey:@"user"] : nil;
-            id username = user ? [user valueForKey:@"username"] : nil;
+            id session = SCISafeValueForKey(window, @"userSession");
+            id user = session ? SCISafeValueForKey(session, @"user") : nil;
+            id username = user ? SCISafeValueForKey(user, @"username") : nil;
 
             if ([username isKindOfClass:[NSString class]] && [username length]) return username;
         }
@@ -369,7 +370,7 @@ static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
     // Object shape (IGAPIVideoVersion): -width, -height, -bandwidth return NSNumber (id)
     @try {
         if ([version respondsToSelector:NSSelectorFromString(key)]) {
-            id v = [version valueForKey:key];
+            id v = SCISafeValueForKey(version, key);
             if ([v respondsToSelector:@selector(longLongValue)]) return [v longLongValue];
         }
     } @catch (__unused id e) {}
@@ -388,7 +389,7 @@ static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
         // Instagram builds (urlString / url / progressiveDownloadURL / etc.).
         for (NSString *sel in @[@"urlString", @"url", @"progressiveDownloadURL", @"downloadURL", @"assetURL", @"videoURL"]) {
             if ([version respondsToSelector:NSSelectorFromString(sel)]) {
-                id u = [version valueForKey:sel];
+                id u = SCISafeValueForKey(version, sel);
                 if ([u isKindOfClass:[NSString class]] && [u length]) return u;
                 if ([u isKindOfClass:[NSURL class]]) return [(NSURL *)u absoluteString];
             }
@@ -527,7 +528,7 @@ static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
         // Some builds expose the field only through the API dictionary rather
         // than as a property, so KVC reaches it where respondsToSelector: does not.
         @try {
-            id value = [host valueForKey:@"video_dash_manifest"];
+            id value = SCISafeValueForKey(host, @"video_dash_manifest");
             if ([value isKindOfClass:[NSString class]] && [value length]) return value;
         } @catch (__unused id e) {}
     }
@@ -898,7 +899,7 @@ static os_unfair_lock sBoolPrefLock = OS_UNFAIR_LOCK_INIT;
     if (!media) return nil;
 
     IGVideo *video = nil;
-    @try { video = [media valueForKey:@"video"]; } @catch (__unused id e) {}
+    @try { video = SCISafeValueForKey(media, @"video"); } @catch (__unused id e) {}
     if (!video) return nil;
 
     return [SCIUtils getVideoUrl:video];
@@ -963,7 +964,7 @@ static const void *SCIParentAudioKey = &SCIParentAudioKey;
         for (NSString *accessor in @[@"media", @"feedItem", @"currentMedia", @"item", @"mediaView", @"video"]) {
             @try {
                 if ([media respondsToSelector:NSSelectorFromString(accessor)]) {
-                    id candidate = [media valueForKey:accessor];
+                    id candidate = SCISafeValueForKey(media, accessor);
                     if ([candidate respondsToSelector:@selector(sundialOriginalAudioAsset)]) {
                         media = candidate;
                         break;
@@ -1004,7 +1005,7 @@ static const void *SCIParentAudioKey = &SCIParentAudioKey;
 + (UIViewController *)viewControllerForView:(UIView *)view {
     NSString *viewDelegate = @"viewDelegate";
     if ([view respondsToSelector:NSSelectorFromString(viewDelegate)]) {
-        return [view valueForKey:viewDelegate];
+        return SCISafeValueForKey(view, viewDelegate);
     }
 
     return nil;
@@ -1013,7 +1014,7 @@ static const void *SCIParentAudioKey = &SCIParentAudioKey;
 + (UIViewController *)viewControllerForAncestralView:(UIView *)view {
     NSString *_viewControllerForAncestor = @"_viewControllerForAncestor";
     if ([view respondsToSelector:NSSelectorFromString(_viewControllerForAncestor)]) {
-        return [view valueForKey:_viewControllerForAncestor];
+        return SCISafeValueForKey(view, _viewControllerForAncestor);
     }
 
     return nil;

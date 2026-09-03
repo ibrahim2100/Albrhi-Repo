@@ -1,4 +1,5 @@
 #import <substrate.h>
+#import "shared/src/SCIKVC.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import "../../InstagramHeaders.h"
@@ -43,7 +44,7 @@ static NSString *SCIReelDateTextForBar(UIView *bar) {
     NSDate *date = nil;
     for (NSString *key in @[@"takenAtDate", @"takenAt", @"creationDate"]) {
         id value = nil;
-        @try { value = [media valueForKey:key]; } @catch (__unused id e) {}
+        @try { value = SCISafeValueForKey(media, key); } @catch (__unused id e) {}
 
         if ([value isKindOfClass:[NSDate class]]) { date = value; break; }
 
@@ -77,7 +78,7 @@ static BOOL SCIHasMediaPayload(id candidate) {
 
     for (NSString *key in @[@"video", @"photo"]) {
         @try {
-            if ([candidate valueForKey:key] != nil) return YES;
+            if (SCISafeValueForKey(candidate, key) != nil) return YES;
         } @catch (__unused id e) {}
     }
 
@@ -102,7 +103,7 @@ static id SCIMediaFromOwner(id owner) {
 
     for (NSString *key in keys) {
         id candidate = nil;
-        @try { candidate = [owner valueForKey:key]; } @catch (__unused id e) {}
+        @try { candidate = SCISafeValueForKey(owner, key); } @catch (__unused id e) {}
 
         if (SCIHasMediaPayload(candidate)) return candidate;
 
@@ -110,7 +111,7 @@ static id SCIMediaFromOwner(id owner) {
         if (candidate) {
             for (NSString *inner in @[@"media", @"post", @"feedItem"]) {
                 id nested = nil;
-                @try { nested = [candidate valueForKey:inner]; } @catch (__unused id e) {}
+                @try { nested = SCISafeValueForKey(candidate, inner); } @catch (__unused id e) {}
 
                 if (SCIHasMediaPayload(nested)) return nested;
             }
@@ -141,7 +142,7 @@ static void SCIConsiderMedia(id candidate, id *best, id *firstSeen) {
     if (*best) return;
 
     IGVideo *video = nil;
-    @try { video = [candidate valueForKey:@"video"]; } @catch (__unused id e) {}
+    @try { video = SCISafeValueForKey(candidate, @"video"); } @catch (__unused id e) {}
 
     if ([SCIMediaDownloader hasPlayableVideo:video]) *best = candidate;
 }
@@ -157,14 +158,14 @@ static id SCIMediaForButtonBar(UIView *bar) {
 
     for (NSString *key in @[@"delegate", @"dataSource"]) {
         id owner = nil;
-        @try { owner = [bar valueForKey:key]; } @catch (__unused id e) {}
+        @try { owner = SCISafeValueForKey(bar, key); } @catch (__unused id e) {}
 
         SCIConsiderMedia(SCIMediaFromOwner(owner), &best, &firstSeen);
         if (best) return best;
 
         // Delegates commonly forward to another object holding the media.
         id nested = nil;
-        @try { nested = [owner valueForKey:@"delegate"]; } @catch (__unused id e) {}
+        @try { nested = SCISafeValueForKey(owner, @"delegate"); } @catch (__unused id e) {}
 
         SCIConsiderMedia(SCIMediaFromOwner(nested), &best, &firstSeen);
         if (best) return best;
@@ -198,10 +199,10 @@ static id SCIMediaForButtonBar(UIView *bar) {
 // an unknown media shape just yields nil and the row shows no source.
 static NSString *SCIUsernameForMedia(id media) {
     id user = nil;
-    @try { user = [media valueForKey:@"user"]; } @catch (__unused id e) {}
+    @try { user = SCISafeValueForKey(media, @"user"); } @catch (__unused id e) {}
 
     NSString *username = nil;
-    @try { username = [user valueForKey:@"username"]; } @catch (__unused id e) {}
+    @try { username = SCISafeValueForKey(user, @"username"); } @catch (__unused id e) {}
 
     return [username length] ? [NSString stringWithFormat:@"@%@", username] : nil;
 }
@@ -224,7 +225,7 @@ static void SCIDownloadMedia(id media, UIView *anchorView) {
 static BOOL SCIMediaIsCarousel(id media) {
     if (!media) return NO;
     @try {
-        if ([media respondsToSelector:@selector(isCarousel)]) return [[media valueForKey:@"isCarousel"] boolValue];
+        if ([media respondsToSelector:@selector(isCarousel)]) return SCISafeBoolForKey(media, @"isCarousel");
     } @catch (__unused id e) {}
     return NO;
 }
@@ -234,7 +235,7 @@ static NSArray *SCICarouselChildren(id media) {
 
     for (NSString *key in @[@"carouselMedia", @"items"]) {
         id children = nil;
-        @try { children = [media valueForKey:key]; } @catch (__unused id e) {}
+        @try { children = SCISafeValueForKey(media, key); } @catch (__unused id e) {}
         if ([children isKindOfClass:[NSArray class]] && [(NSArray *)children count] > 1) {
             // Note which post each slide belongs to while both are in hand. Music
             // hangs off the post, so without this a slide asked about its audio has
@@ -259,13 +260,13 @@ static NSArray *SCICarouselChildrenForBar(UIView *bar) {
     while (ancestor && depth++ < 14) {
         for (NSString *key in @[@"media", @"post", @"feedItem", @"mediaCellFeedItem"]) {
             id media = nil;
-            @try { media = [ancestor valueForKey:key]; } @catch (__unused id e) {}
+            @try { media = SCISafeValueForKey(ancestor, key); } @catch (__unused id e) {}
 
             children = SCICarouselChildren(media);
             if (children) return children;
 
             @try {
-                id nested = media ? [media valueForKey:@"media"] : nil;
+                id nested = media ? SCISafeValueForKey(media, @"media") : nil;
                 children = SCICarouselChildren(nested);
                 if (children) return children;
             } @catch (__unused id e) {}
@@ -275,7 +276,7 @@ static NSArray *SCICarouselChildrenForBar(UIView *bar) {
         if ([responder isKindOfClass:[UIViewController class]]) {
             for (NSString *key in @[@"media", @"post", @"feedItem"]) {
                 id media = nil;
-                @try { media = [responder valueForKey:key]; } @catch (__unused id e) {}
+                @try { media = SCISafeValueForKey(responder, key); } @catch (__unused id e) {}
                 children = SCICarouselChildren(media);
                 if (children) return children;
             }

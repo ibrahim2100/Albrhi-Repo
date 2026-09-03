@@ -1,4 +1,5 @@
 #import "SCIDiagnosticsViewController.h"
+#import "../Compat/SCITitleMatch.h"
 #import <objc/runtime.h>
 #import "shared/src/SCIPanelGate.h"
 #import "SCIFeatureAudit.h"
@@ -594,6 +595,7 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
         @{@"header": SCILocalized(@"diag_section_scan"), @"rows": [self scanRows]},
         @{@"header": SCILocalized(@"diag_section_audit"), @"rows": [self featureAuditRows]},
         @{@"header": SCILocalized(@"diag_section_reels"), @"rows": [self reelsAutoScrollRows]},
+        @{@"header": SCILocalized(@"diag_section_titles"), @"rows": [self titleMatchRows]},
         @{@"header": SCILocalized(@"diag_section_daterewrite"), @"rows": [self dateRewriteRows]},
         @{@"header": SCILocalized(@"diag_section_audio"), @"rows": [self audioRows]},
         @{@"header": SCILocalized(@"diag_section_dateformat"), @"rows": [self dateFormatterRows]},
@@ -949,6 +951,23 @@ static NSMutableArray<NSString *> *_dateRewriteSamples = nil;
 
 /// The diagnostics report as plain text. Shared by the copy button and the issue
 /// reporter, so a filed bug always carries exactly what the page shows.
+///
+/// The surfaces that recognise a row by the English words printed on it.
+///
+/// Thirteen comparisons here match a title against an English literal, inherited from
+/// SCInsta -- and Instagram translates those titles, so on a phone that is not in English
+/// none of them ever matches and the switch looks broken rather than inapplicable. There is
+/// no confirmed identifier on these view models to match instead, so rather than guess one
+/// or delete a feature that works for somebody, the counts are shown: `12 seen, 0 matched`
+/// under a line naming the app's own language says exactly what is happening.
+- (NSArray *)titleMatchRows {
+    NSMutableArray *rows = [NSMutableArray array];
+    for (NSString *line in SCIEnglishTitleReport()) {
+        [rows addObject:@{@"title": @"", @"detail": line, @"ok": @YES}];
+    }
+    return rows;
+}
+
 - (NSString *)reportText {
     NSMutableString *report = [NSMutableString stringWithFormat:@"Albrhi %@ diagnostics\n", SCIVersionString];
 

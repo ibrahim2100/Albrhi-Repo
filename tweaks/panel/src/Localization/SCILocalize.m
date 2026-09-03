@@ -17,8 +17,6 @@ static void SCIBuildTables(void) {
         @"panel_on_count": @"%ld of %ld on",
         @"panel_tagline": @"One tweak for every app it supports, switched from here.",
         @"section_apps": @"Apps",
-        @"section_versions": @"Versions",
-        @"versions_footer": @"The app version each tweak was last verified against. A newer app usually still works — this is here so you can see the difference when something does not.",
         @"versions_match": @"%@ · tested",
         @"versions_differ": @"%@ · tested on %@",
         @"versions_tested_only": @"tested on %@",
@@ -112,7 +110,6 @@ static void SCIBuildTables(void) {
         @"nextup_log_footer": @"Off. Turn it on only while something is wrong: it writes what each process is doing — including the titles of what is playing — to /var/mobile/nu/. Reopen the app or respring for it to take effect, and turn it off again afterwards.",
         @"nextup_credit": @"Albrhi NextUp is a port of NextUp 3 by Yves (github.com/Yves000/NextUp3), used under the GNU GPL v3. The design and nearly all of the implementation are his work; this port replaced the settings pane and rebranded the package.",
 
-        @"verbose_logging": @"Verbose logging",
         @"master_title": @"Albrhi",
         @"master_footer": @"One switch above all of them. Turn it off and every Albrhi tweak stands down on the next app launch, without changing a single setting below — for the day an app update breaks something and you would rather not hunt through rows.",
         @"apps_footer_master_off": @"Albrhi is switched off above, so none of these are being applied right now. Their settings are kept exactly as they are.",
@@ -149,8 +146,6 @@ static void SCIBuildTables(void) {
         @"panel_on_count": @"%ld من %ld مُشغَّل",
         @"panel_tagline": @"أداة واحدة لكل تطبيق تدعمه، تتحكم بها من هنا.",
         @"section_apps": @"التطبيقات",
-        @"section_versions": @"الإصدارات",
-        @"versions_footer": @"إصدار التطبيق الذي جُرّبت عليه كل أداة آخر مرة. الإصدار الأحدث يعمل غالباً — وهذا القسم ليظهر لك الفرق حين لا يعمل.",
         @"versions_match": @"%@ · مُجرَّب",
         @"versions_differ": @"%@ · جُرِّب على %@",
         @"versions_tested_only": @"جُرِّب على %@",
@@ -244,7 +239,6 @@ static void SCIBuildTables(void) {
         @"nextup_log_footer": @"مطفأ. شغّله فقط حين يوجد خلل: يكتب ما تفعله كل عملية — ومنه عناوين ما يُشغَّل — في /var/mobile/nu/. أعد فتح التطبيق أو أعد التشغيل ليأخذ مفعوله، ثم أطفئه بعدها.",
         @"nextup_credit": @"البرهي نكست أب نقلٌ لأداة NextUp 3 من Yves ‏(github.com/Yves000/NextUp3)، مستخدمة بموجب رخصة GNU GPL v3. التصميم وأغلب التنفيذ عمله هو؛ وهذا النقل استبدل صفحة الإعدادات وأعاد تسمية الحزمة.",
 
-        @"verbose_logging": @"سجلّ تفصيلي",
         @"master_title": @"البرهي",
         @"master_footer": @"مفتاح واحد فوقها جميعاً. أطفئه فتتوقّف كل أدوات البرهي عند فتح التطبيق التالي، دون أن يتغيّر أي إعداد بالأسفل — ليوم يكسر فيه تحديثُ تطبيقٍ شيئاً ولا تريد البحث بين الصفوف.",
         @"apps_footer_master_off": @"البرهي مطفأ بالأعلى، فلا شيء من هذه مُطبَّق الآن. إعداداتها محفوظة كما هي تماماً.",

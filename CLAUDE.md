@@ -23,7 +23,7 @@ four standing on their own:
 | `tweaks/spotify` | `com.albrhi.spotify` | Spotify — **Swift and Orion, the only one** |
 | `tweaks/ytmusic` | `com.albrhi.ytmusic` | YouTube Music — ads and background playback |
 | `tweaks/panel` | `com.albrhi.panel` | the Settings app — the per-app switches |
-| `suite/` | **`com.albrhi`** | the four social-app tweaks and the panel, in one package |
+| `suite/` | **`com.albrhi`** | the five app tweaks and the panel, in one package |
 | `tweaks/nextup` | `com.albrhi.nextup` | SpringBoard + 5 media apps — what plays next, **a GPLv3 port, released on its own** |
 | `tweaks/watch` | `com.albrhi.watch` | SpringBoard — Apple Watch pairing, **an MIT port, released on its own** |
 
@@ -712,6 +712,53 @@ initialiser, where the caller certainly had it**, and count the failing branch: 
 counter is indistinguishable from a feature that works. The same shape sat one level down in the
 post-to-image renderer, where `-drawViewHierarchyInRect:afterScreenUpdates:NO` returns a BOOL that
 was being discarded.
+
+**A rule that lives only in this file is a rule that gets broken — `-valueForKey:` was
+documented here for a year and used 108 times.** Two paragraphs above explain that it runs the
+receiver's own code and that `@catch` does not protect it, and neither stopped thirty-three
+files from carrying the exact banned shape, `@try { [obj valueForKey:@"x"]; } @catch {}`.
+Nobody greps a design document before writing a hook. **A rule worth keeping belongs in
+`tools/check.py`**, where it is checked every time rather than remembered — that is now rule 23,
+and `shared/src/SCIKVC.h` is what it points at.
+
+**And retiring KVC is not "call the getter instead" — KVC resolves a key four ways.**
+`-key`, `-isKey`, `-getKey`, then the `_key`/`key` ivar. A replacement that checks one selector
+silently stops finding values that were being found, and a `BOOL` property (`-isFoo`) is the
+first thing to break. `SCISafeValueForKey` tries all four; every getter is read through a cast
+taken from **its own type encoding** — the `-bitRate` lesson, applied where it belongs — and the
+ivar is read with `object_getIvar` only when the runtime says it holds an object, which executes
+nothing at all. That last branch is why the replacement is *safer* than KVC rather than merely
+equivalent.
+
+**A scalar getter is a real answer of the wrong kind, and folding it in would hide that.**
+`SCISafeValueForKey` returns nil for one, and a caller that genuinely wants the number asks
+`SCISafeNumberForKey`. Four call sites in the sweep were reading a boxed scalar through KVC —
+`type`, `_subtype`, `followsCurrentUser`, `isCarousel` — and each would have silently become nil
+if the two questions shared a name. **Find those before the sweep, not after**: grep the
+converted sites for `boolValue`, `integerValue` and `isEqual:@(`.
+
+**`extern "C"` is needed in `shared/` too, and rule 15 was not looking there.** It scans a
+tweak's own `src/`, so a C function declared in `shared/src/` and imported from a `.xm` linked
+fine in eight tweaks and failed in the one with Objective-C++ — after every source had compiled.
+The header carries the guard now; the rule's blind spot is worth remembering for the next shared
+header.
+
+**An orphan count that is wrong five times in six is a count nobody reads.** `check.py` counted a
+localization key as used only when it appeared inside `SCILocalized(@"…")`, so keys handed to
+something that localizes them later — `Feature(@"spaces", @"f_spaces", …)` — read as dead: **54
+reported in X where 5 were real**, and those five sat in the noise for releases. Accepting a bare
+quoted occurrence anywhere fixed it, and the first attempt then reported *zero* everywhere,
+because the table file counts as a file and every key appears in it. **A zero is worse than an
+over-count** — it reads as checked and clean.
+
+**Matching a row by the English words printed on it is a feature that only works in English, and
+this repository ships to an Arabic phone.** Thirteen comparisons inherited from SCInsta test a
+view model's title against `@"Ask Meta AI"`, `@"Suggested for you"`, `@"Meta AI"`. Instagram
+translates those. The rule was already written down here for the Watch tweak; what was missing
+was noticing it applied to inherited code too. **Where there is no confirmed identifier to match
+instead, say so rather than guessing one or deleting the feature**: every one of those now goes
+through `SCIMatchesEnglishTitle`, which matches exactly as before and counts what it saw, so the
+report reads `12 seen, 0 matched` under a line naming the app's own language.
 
 **A view in an array is not a view in a hierarchy — and the report said "made and handed to its
 layout" while the screen was empty.** YouTube's in-player save button was built with the app's own
@@ -1435,8 +1482,9 @@ function, so the attribute buys nothing. Rule 19 catches it now.
 Logos emits only a forward declaration and `self.view` fails to compile.
 
 **A `PSListController` subclass that overrides `-specifiers` must assign the result
-to the `_specifiers` ivar itself, not just return it.** `SCICPSettingsController`
-(CarPlay's detail page, pushed from the panel's grouped row) built its row list
+to the `_specifiers` ivar itself, not just return it.** CarPlay's detail page
+(`SCICPSettingsController`, gone with the tweak — the panel's three surviving detail pages
+under `tweaks/panel/src/{NextUp,Spotify,Watch}/` all follow the pattern it cost) built its row list
 correctly and returned it, and the page opened to a black screen with nothing on it
 — reported on-device. `PSListController`'s own machinery reads `_specifiers`
 directly in places an override's return value never reaches; `SCIPanelRoot.m`'s root
@@ -1494,7 +1542,7 @@ column one, which is exactly why it kept working while its neighbours silently d
 ## Verification
 
 `python tools/check.py` — runs in CI before Theos, so a typo fails in seconds
-rather than after a five-minute compile. Nineteen rules, every one of them derived
+rather than after a five-minute compile. Twenty-three rules, every one of them derived
 from a real build failure:
 
 1. duplicate `@interface` definitions
@@ -1653,7 +1701,9 @@ it already made.
 one thing that stops two runs writing `gh-pages` at once, and the arrangement below — a shared
 gather, a stated-and-checked index, a run folding in its own build — exists because two
 publishers really did race. Albrhi NextUp made that current again rather than historical: there
-are two publishers today.
+are **three** publishers today — the suite, NextUp and Watch. `buildsuite.yml`'s own comment
+has said three for longer than this line said two, which is the shape a stale line here always
+takes: the file that is read first is the file that is believed first.
 
 **And a shared concurrency group cancels a *pending* run, which `cancel-in-progress: false`
 does not prevent.** That flag protects a run already executing; a run still queued behind it is
@@ -1790,9 +1840,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.27.1** · X **0.18.1** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
-Spotify **0.2.3** · YT Music **0.9.0** ·
-NextUp **0.1.5** · suite **1.65.1**. **CarPlay is gone** — removed from this repository, to be
+Instagram **4.1.15** · YouTube **1.27.2** · X **0.18.2** · Panel **0.9.23** · Watch **0.5.3** · TikTok **0.20.1** ·
+Spotify **0.2.4** · YT Music **0.9.1** ·
+NextUp **0.1.6** · suite **1.66.0**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

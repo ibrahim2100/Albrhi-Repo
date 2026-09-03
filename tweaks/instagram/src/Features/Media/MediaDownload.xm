@@ -1,4 +1,5 @@
 #import <objc/runtime.h>
+#import "shared/src/SCIKVC.h"
 #import "../../InstagramHeaders.h"
 #import "../../Utils.h"
 #import "../../Downloader/Download.h"
@@ -65,8 +66,8 @@ static void initDownloaders (void) {
     IGUser *user = nil;
 
     // Resolve the underlying user object once.
-    @try { user = [self valueForKey:@"userGQL"]; } @catch (__unused id e) {}
-    if (!user) { @try { user = [self valueForKey:@"user"]; } @catch (__unused id e) {} }
+    @try { user = SCISafeValueForKey(self, @"userGQL"); } @catch (__unused id e) {}
+    if (!user) { @try { user = SCISafeValueForKey(self, @"user"); } @catch (__unused id e) {} }
 
     // 1) Prefer the full-resolution HD URL from the user object.
     @try {

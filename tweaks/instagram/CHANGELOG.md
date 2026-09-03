@@ -4,6 +4,37 @@
 Other versions should work too — the tweak looks for what it needs while the app runs
 rather than expecting a particular version number.
 
+## v4.1.15
+
+**A repository-wide audit pass. No feature changed; what changed is that three rules this
+project already had in writing are now enforced by the tools instead of remembered.**
+
+**`-valueForKey:` is gone from this tweak.** It is not a probe — it runs the receiver's own
+getter, and reads the ivar directly when there is none, so `@catch` protects nothing: it catches
+`NSException`, while a Swift getter that traps or a half-built object ends the process with no
+handler running. It was documented as this project's most expensive habit for a year and used
+108 times across the repository regardless, because nobody greps a design document before
+writing a hook. Every call now goes through `shared/src/SCIKVC.h`, which resolves a key the same
+four ways KVC does — `-key`, `-isKey`, `-getKey`, then the ivar — but checks each getter with
+`-respondsToSelector:`, reads it through a cast taken from its own type encoding, and touches
+the ivar only when the runtime says it holds an object. **And `tools/check.py` rule 23 refuses
+the old form**, so it cannot come back.
+
+**The localization orphan count is trustworthy for the first time.** It counted a key as used
+only inside `SCILocalized(@"…")`, so keys handed to something that localizes them later read as
+dead — 54 reported in X where 5 were real. A warning wrong five times in six is a warning nobody
+reads, and the real ones sat in that noise for releases. Dead strings removed with it.
+
+**Thirteen features here recognise a row by the English words printed on it** — `Ask Meta AI`,
+`Suggested for you`, `Meta AI` — inherited from SCInsta. Instagram translates those titles, so
+on a phone that is not in English none of them can ever match, and the switch looks broken
+rather than inapplicable. There is no identifier on those view models this project has
+confirmed, so rather than guess one or delete a feature that works for somebody, every
+comparison now goes through `SCIMatchesEnglishTitle`: it matches exactly as before and counts
+what it saw, and Diagnostics gained a section reading `12 seen, 0 matched` under a line naming
+the language Instagram is actually showing. A zero there is the evidence needed to replace the
+comparison properly.
+
 ## v4.1.14
 
 **Two diagnostics that were saying untrue things, and the AV1 transcode switched on.**

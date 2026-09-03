@@ -1,4 +1,5 @@
 #import "../../Utils.h"
+#import "shared/src/SCIKVC.h"
 #import "../../InstagramHeaders.h"
 #import "../../Localization/SCILocalize.h"
 
@@ -65,13 +66,13 @@ static SCISendFile *sciPickerDelegate = nil;
 
     id sender = nil;
     for (NSString *key in @[@"messageSender", @"_messageSender", @"sender", @"directMessageSender"]) {
-        @try { sender = [thread valueForKey:key]; } @catch (__unused id e) {}
+        @try { sender = SCISafeValueForKey(thread, key); } @catch (__unused id e) {}
         if (sender) break;
     }
 
     id threadKey = nil;
     for (NSString *key in @[@"threadKey", @"_threadKey"]) {
-        @try { threadKey = [thread valueForKey:key]; } @catch (__unused id e) {}
+        @try { threadKey = SCISafeValueForKey(thread, key); } @catch (__unused id e) {}
         if (threadKey) break;
     }
 

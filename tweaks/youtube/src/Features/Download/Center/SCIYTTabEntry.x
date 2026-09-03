@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#import "shared/src/SCIKVC.h"
 #import "../../../Tweak.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
@@ -67,7 +68,7 @@ static BOOL SCIIsOurRenderer(id renderer) {
     if (!renderer) return NO;
 
     @try {
-        return [[renderer valueForKey:@"pivotIdentifier"] isEqualToString:kSCIPivotIdentifier];
+        return [SCISafeValueForKey(renderer, @"pivotIdentifier") isEqualToString:kSCIPivotIdentifier];
     } @catch (__unused NSException *exception) {
         return NO;
     }
@@ -163,7 +164,7 @@ static BOOL SCIPaintIcon(UIView *view) {
     // whether our own tab could be placed anywhere but last -- and hook order is an
     // artefact of install order, not something a reader of either file could see.
     @try {
-        NSMutableArray *items = [renderer valueForKey:@"itemsArray"];
+        NSMutableArray *items = SCISafeValueForKey(renderer, @"itemsArray");
 
         // Both tabs are offered here and switched off in one place only: the arranging
         // screen. The Download Centre had a switch of its own until 1.25.0, which was a
@@ -411,7 +412,7 @@ static void SCIReportContentStack(UIViewController *bar) {
         // could take the page down.
         NSString *believed = nil;
         @try {
-            believed = [self valueForKey:@"selectedPivotIdentifier"];
+            believed = SCISafeValueForKey(self, @"selectedPivotIdentifier");
         } @catch (__unused NSException *exception) { }
 
         if (sciPivotBeforeOurs && [believed isEqualToString:kSCIPivotIdentifier]) {
@@ -451,7 +452,7 @@ static void SCIReportContentStack(UIViewController *bar) {
         // tab twice must not record our own identifier as the one to go back to.
         if (!sciPivotBeforeOurs) {
             @try {
-                NSString *current = [self valueForKey:@"selectedPivotIdentifier"];
+                NSString *current = SCISafeValueForKey(self, @"selectedPivotIdentifier");
                 if ([current isKindOfClass:[NSString class]] &&
                     ![current isEqualToString:kSCIPivotIdentifier]) {
                     sciPivotBeforeOurs = [current copy];

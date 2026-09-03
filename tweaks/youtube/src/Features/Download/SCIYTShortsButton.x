@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#import "shared/src/SCIKVC.h"
 #import <objc/runtime.h>
 #import "SCIYTDownload.h"
 #import "SCIYTShortsButton.h"
@@ -92,7 +93,7 @@ static UIView *SCIFindActionBar(UIView *overlay) {
     // what the last six releases did.
     NSString *shape = @"?";
     @try {
-        id streams = [response valueForKey:@"streamingData"];
+        id streams = SCISafeValueForKey(response, @"streamingData");
         shape = streams ? @"has streamingData" : @"no streamingData";
     } @catch (__unused NSException *exception) {
         shape = @"no streamingData key";

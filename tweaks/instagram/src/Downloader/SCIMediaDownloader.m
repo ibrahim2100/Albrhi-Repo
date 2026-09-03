@@ -1,4 +1,5 @@
 #import "SCIMediaDownloader.h"
+#import "shared/src/SCIKVC.h"
 #import "../UI/SCIQualitySheet.h"
 #import "Download.h"
 #import "Queue/SCIDownloadQueue.h"
@@ -190,7 +191,7 @@
     if (!media) return nil;
 
     IGVideo *video = nil;
-    @try { video = [media valueForKey:@"video"]; } @catch (__unused id e) {}
+    @try { video = SCISafeValueForKey(media, @"video"); } @catch (__unused id e) {}
 
     // All three are sent through objc_msgSend rather than called: they are selectors
     // confirmed in a class dump of the tested build, not methods InstagramHeaders.h
@@ -250,7 +251,7 @@
     // Video wins — but only a real one. A video post also carries a poster photo,
     // and a photo post carries an empty video.
     IGVideo *video = nil;
-    @try { video = [media valueForKey:@"video"]; } @catch (__unused id e) {}
+    @try { video = SCISafeValueForKey(media, @"video"); } @catch (__unused id e) {}
 
     if ([self hasPlayableVideo:video]) {
         [SCIDiagnostics recordDownloadKind:@"video"];
@@ -495,15 +496,15 @@
             for (NSString *name in itemClasses) {
                 Class c = NSClassFromString(name);
                 if (c && [view isKindOfClass:c]) {
-                    @try { id item = [view valueForKey:@"item"]; if (item) return item; } @catch (__unused id e) {}
+                    @try { id item = SCISafeValueForKey(view, @"item"); if (item) return item; } @catch (__unused id e) {}
                 }
             }
             for (NSString *name in legacyClasses) {
                 Class c = NSClassFromString(name);
                 if (c && [view isKindOfClass:c]) {
                     @try {
-                        id caption = [view valueForKey:@"captionDelegate"];
-                        id item = caption ? [caption valueForKey:@"currentStoryItem"] : nil;
+                        id caption = SCISafeValueForKey(view, @"captionDelegate");
+                        id item = caption ? SCISafeValueForKey(caption, @"currentStoryItem") : nil;
                         if (item) return item;
                     } @catch (__unused id e) {}
                 }

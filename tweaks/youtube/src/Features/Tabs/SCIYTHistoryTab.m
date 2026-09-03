@@ -1,4 +1,5 @@
 #import "SCIYTHistoryTab.h"
+#import "shared/src/SCIKVC.h"
 #import <objc/message.h>
 #import "../../Tweak.h"
 #import "../../Prefs.h"
@@ -43,7 +44,7 @@ static BOOL SCISet(id object, id value, NSString *key, NSString *what) {
 BOOL SCIYTIsHistoryRenderer(id renderer) {
     if (!renderer) return NO;
     @try {
-        id identifier = [renderer valueForKey:@"pivotIdentifier"];
+        id identifier = SCISafeValueForKey(renderer, @"pivotIdentifier");
         return [identifier isKindOfClass:[NSString class]] &&
                [identifier isEqualToString:SCIYTHistoryPivot];
     } @catch (__unused NSException *exception) {

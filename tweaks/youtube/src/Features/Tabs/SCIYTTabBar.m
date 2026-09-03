@@ -1,4 +1,5 @@
 #import "SCIYTTabBar.h"
+#import "shared/src/SCIKVC.h"
 #import <objc/message.h>
 #import "../../Prefs.h"
 #import "../../SCILog.h"
@@ -106,9 +107,9 @@ id SCIYTTabBarInnerRenderer(id entry) {
             id inner = ((id (*)(id, SEL))objc_msgSend)(entry, both);
             if (inner) return inner;
         }
-        id inner = [entry valueForKey:@"pivotBarItemRenderer"];
+        id inner = SCISafeValueForKey(entry, @"pivotBarItemRenderer");
         if (inner) return inner;
-        return [entry valueForKey:@"pivotBarIconOnlyItemRenderer"];
+        return SCISafeValueForKey(entry, @"pivotBarIconOnlyItemRenderer");
     } @catch (__unused NSException *exception) {
         return nil;
     }
@@ -118,7 +119,7 @@ static NSString *SCIIdentifierOf(id entry) {
     @try {
         id inner = SCIYTTabBarInnerRenderer(entry);
         if (!inner) return nil;
-        id identifier = [inner valueForKey:@"pivotIdentifier"];
+        id identifier = SCISafeValueForKey(inner, @"pivotIdentifier");
         return [identifier isKindOfClass:[NSString class]] ? identifier : nil;
     } @catch (__unused NSException *exception) {
         return nil;

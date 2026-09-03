@@ -1,4 +1,5 @@
 #import "../../YouTubeHeaders.h"
+#import "shared/src/SCIResponder.h"
 #import "../../SCILog.h"
 #import "../../Prefs.h"
 #import "../../Localization/SCILocalize.h"
@@ -489,15 +490,7 @@ shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)other 
     // this switch is that a press just did the wrong thing.
     if (!SCIPrefEnabled(SCIPrefHoldToSave)) return;
 
-    UIResponder *responder = recognizer.view;
-    while (responder && ![responder isKindOfClass:[UIViewController class]]) {
-        responder = responder.nextResponder;
-    }
-
-    UIViewController *presenter = (UIViewController *)responder;
-    while (presenter.presentedViewController) {
-        presenter = presenter.presentedViewController;
-    }
+    UIViewController *presenter = SCIControllerForView(recognizer.view);
 
     if (!presenter) {
         SCILogV(@"download: nothing to present the sheet from");

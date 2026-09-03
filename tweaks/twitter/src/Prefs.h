@@ -54,14 +54,12 @@
 /// working, which is why it is safe to default on.
 #define SCIPrefInlineButton     @"inline_download_button"
 
-/// Also hides a promoted trend, on the same status view classes' sibling surface.
-///
-/// Shares the main switch above rather than getting its own: it is the exact same
-/// discovery -- `-isPromoted` reachable from the server-populated model, this time on
-/// `TwitterURT.PromotableTrend` instead of `TFNTwitterStatus` -- and a second on/off row
-/// for "the same thing, somewhere else" is a settings screen asking to be misread as two
-/// different features.
-#define SCIPrefHidePromotedTrends @"hide_promoted_trends"
+// Promoted trends are hidden by the switch above rather than by a key of their own: it is
+// the same discovery on a sibling surface -- `-isPromoted` reachable from the
+// server-populated model, on `TwitterURT.PromotableTrend` instead of `TFNTwitterStatus`.
+// `SCIPrefHidePromotedTrends` used to be defined here for it and was read by nothing, which
+// is the shape this project already refuses elsewhere: a key that decides nothing reads as
+// a feature that broke.
 
 /// Asks before a repost goes out, the way this project already asks before a DM's seen
 /// receipt or an Instagram like -- a mis-tap on Retweet is a mis-tap that reaches every

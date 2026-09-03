@@ -1,5 +1,19 @@
 # Albrhi NextUp — what changed
 
+## v0.1.6
+
+**One line of upstream changed, and it is a safety fix rather than a port change.**
+
+`NUIsNowPlayingActivityHost` read `_activitySceneDescriptor` with `-valueForKey:` inside an
+`@try`. That runs the receiver's own code, and `@catch` only catches `NSException` — and this
+runs **in SpringBoard**, where a feature that fails takes its feature down and a probe that
+fails takes the home screen. It reads through this repository's guarded accessor now
+(`shared/src/SCIKVC.h`), which checks the getter with `-respondsToSelector:` and touches an
+ivar only when the runtime says it holds an object.
+
+Every other line of the port stays diffable against NextUp 3 by Yves, as it was written down
+that it would. The deviation is listed here for the same reason all the others are.
+
 ## v0.1.5
 
 **A ceiling on the log file, which had none.**
