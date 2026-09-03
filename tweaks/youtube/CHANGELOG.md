@@ -3,6 +3,36 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.27.1
+
+**A view in an array is not a view in a hierarchy, and 1.27.0's report said so without anybody
+being able to read it.** `88 overlay(s) seen, 1 button(s) made, built by YouTube's own factory and
+handed to its layout` — every word of that was true, and the screen was empty. The button was
+appended to the array `-topControls` answers with and **never added to any view**, so it had no
+superview, nothing laid it out and nothing drew it. The report counted the *making* and not the
+*placing*, which is this project's own "count the thing that is supposed to have happened" rule
+failing on its second half.
+
+The button is added as a subview now, with constraints, at the top left of the player past the
+collapse chevron — the right of that bar carries cast, subtitles and the overflow menu on a build
+that has all three, and their widths cannot be measured from here. The array append is **deleted**
+rather than kept beside the real placement: it placed nothing, and a mechanism that decides nothing
+reads as one that works. And the report carries the button's resolved frame and whether it is in a
+window, so "made but invisible" can never again look identical to "made and placed".
+
+**The feed ad came back as the same layout with one word removed.** 1.24.0 added
+`video_display_carousel_button_group_layout` from a device report; this report named
+`video_display_button_group_layout`. **A list of layout names is a list of the ads that have
+already got through**, which the comment directly above that list had already said about itself.
+
+So the marking the server puts on an ad goes in instead: `ad_slot_logging_data`, the ad-serving
+telemetry attached under `compatibility_options.ad_logging_data` beside a
+`slot_data { type: SLOT_TYPE_IN_FEED }`. A section that is not an ad has no reason to carry it.
+**Measured before being trusted**, because 0.20.1 emptied the home feed with a substring that was
+too broad: the diagnostics page already flags sections on that marker for its own sample, and over
+66 sections in this report it flagged exactly one — the ad. No further layout names were added,
+because the general marker is what makes the next one unnecessary.
+
 ## v1.27.0
 
 **The device answered: `YTSlimVideoDetailsActionView` is not drawn in 21.32.4 at all.** Not one of

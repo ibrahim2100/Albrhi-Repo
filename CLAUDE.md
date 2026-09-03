@@ -713,6 +713,25 @@ counter is indistinguishable from a feature that works. The same shape sat one l
 post-to-image renderer, where `-drawViewHierarchyInRect:afterScreenUpdates:NO` returns a BOOL that
 was being discarded.
 
+**A view in an array is not a view in a hierarchy — and the report said "made and handed to its
+layout" while the screen was empty.** YouTube's in-player save button was built with the app's own
+factory and appended to the array `-topControls` returns, on the reasoning that the player would
+then position it. It had no superview: nothing laid it out, nothing drew it. Every word of the
+report was accurate and it measured the wrong half. **Counting that a thing was created is not
+counting that it was placed**, which is this file's own "count the attempt, not only the result"
+rule failing one step later than it was written for — so a placement record now carries the
+resolved frame and whether the view is in a window.
+
+**A list of layout names is a list of the ads that already got through.** YouTube's feed filter had
+`video_display_carousel_button_group_layout`, added from a device report; the ad returned as
+`video_display_button_group_layout` — the same name with one word removed. The list's own comment
+had predicted this about itself two entries earlier. What generalises is the marking the *server*
+attaches to something it charges for: `ad_slot_logging_data`, beside a
+`slot_data { type: SLOT_TYPE_IN_FEED }`. **And it was measured before being trusted**, because
+0.20.1 emptied the home feed with a substring that was too broad — the diagnostics page already
+flags on that marker and matched exactly one section in sixty-six. A general marker earns its place
+by being narrow in measurement, not by sounding general.
+
 **A diagnostic written into another feature's slot is worse than no diagnostic, and it hid a
 whole surface for eight releases.** YouTube's in-player save button recorded itself through
 `-recordMarkerBar:` — the SponsorBlock progress-bar line — so the one piece of evidence about an
@@ -1771,9 +1790,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.27.0** · X **0.18.1** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.27.1** · X **0.18.1** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.9.0** ·
-NextUp **0.1.5** · suite **1.65.0**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.65.1**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

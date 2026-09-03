@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.65.1
+
+**YouTube 1.27.1.** The save button in the player was built and never added to a view — appending
+it to YouTube's array of controls placed nothing. It is a real subview now, top left of the
+player, and the report carries its frame. The feed ad that came back was the same layout name with
+one word removed, so the filter now matches the server's own ad-serving marker instead of another
+layout name.
+
 ## v1.65.0
 
 **YouTube 1.27.0.** The report answered plainly: the row of buttons under a video is not drawn from

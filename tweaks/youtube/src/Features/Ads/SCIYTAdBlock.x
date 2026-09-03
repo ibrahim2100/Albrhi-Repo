@@ -134,6 +134,27 @@ static NSArray<NSString *> *SCIPromotedIdentifiers(void) {
             // already warned a hand-written list would miss, and it did, until this one.
             @"video_display_carousel_button_group_layout",
 
+            // And the marking the server puts on an ad regardless of what the layout is
+            // called, which is what this list should have been matching all along.
+            //
+            // The entry above was added from a device report naming
+            // `video_display_carousel_button_group_layout`. The ad came back, and the report
+            // named `video_display_button_group_layout` -- the same layout without the word
+            // "carousel". **A list of layout names is a list of the ads that have already got
+            // through**, and this one had already predicted that about itself two comments up.
+            //
+            // `ad_slot_logging_data` is not a layout. It is the ad-serving telemetry Google
+            // attaches to something it is charging for, and it sits under
+            // `compatibility_options.ad_logging_data` beside a `slot_data { type: SLOT_TYPE_IN_FEED }`.
+            // A section that is not an ad has no reason to carry it.
+            //
+            // **Measured before being trusted, because 0.20.1 emptied the home feed with a
+            // substring that was too broad.** The diagnostics page already flags sections on
+            // `ad_logging_data`/`ad_slot` for its own sample, and over 66 sections in one
+            // report it flagged exactly one: the ad. That is the evidence for this being
+            // narrow, and it is why the general marker goes in and no further layout names do.
+            @"ad_slot_logging_data",
+
             // Community posts promoted into the feed.
             @"post_shelf",
 

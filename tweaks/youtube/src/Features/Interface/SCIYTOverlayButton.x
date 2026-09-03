@@ -51,13 +51,23 @@ static NSUInteger sciOverlayTaps = 0;
 static char kSCIOverlaySaveButton;
 static char kSCIOverlayJoined;
 
+/// The button's own frame, and whether it is in a window.
+///
+/// **1.27.0's report said the button was made and handed to YouTube's layout, and nothing was on
+/// screen — because a button appended to an array had never been added to any view.** The report
+/// was accurate about everything it measured and measured the wrong thing: it counted the making
+/// and not the placing. Both are here now, and a frame of zero says which half failed without
+/// another release to find out.
+static NSString *sciOverlayPlacement = nil;
+
 static void SCIReportOverlayState(BOOL joined) {
     [SCIYTDiagnostics recordOverlayButton:
         [NSString stringWithFormat:SCILocalized(@"diag_overlay_counts"),
             (unsigned long)sciOverlaysSeen,
             (unsigned long)sciOverlayButtonsMade,
             joined ? SCILocalized(@"diag_overlay_native") : SCILocalized(@"diag_overlay_placed"),
-            (unsigned long)sciOverlayTaps]];
+            (unsigned long)sciOverlayTaps,
+            sciOverlayPlacement ?: SCILocalized(@"diag_overlay_unplaced")]];
 }
 
 static const NSInteger SCIOverlayButtonTag = 0x5C10B7;
@@ -167,37 +177,50 @@ static UIViewController *SCIOwningController(UIView *view) {
             objc_setAssociatedObject(self, &kSCIOverlaySaveButton, save, OBJC_ASSOCIATION_RETAIN);
             objc_setAssociatedObject(self, &kSCIOverlayJoined, @(joined), OBJC_ASSOCIATION_RETAIN);
 
-            if (!joined) {
-                // The fallback, unchanged from the releases that shipped it. Pinned to this
-                // view's own safe area rather than laid out beside YouTube's controls: a
-                // constraint against a guide that always exists, rather than a frame recomputed
-                // against siblings whose positions this tweak does not own.
-                save.translatesAutoresizingMaskIntoConstraints = NO;
-                [self addSubview:save];
-                [NSLayoutConstraint activateConstraints:@[
-                    [save.trailingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.trailingAnchor
-                                                        constant:-52],
-                    [save.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor
-                                                    constant:8],
-                    [save.widthAnchor constraintEqualToConstant:32],
-                    [save.heightAnchor constraintEqualToConstant:32]
-                ]];
-            }
+            //
+            // **Added to the view, always — this is the whole of 1.27.1.**
+            //
+            // 1.27.0 built the button with YouTube's own factory and returned it inside the
+            // array `-topControls` answers with, on the reasoning that the player would then
+            // position it. A view that is in an array is not a view that is in a hierarchy:
+            // it had no superview, so there was nothing to lay out and nothing to draw, and
+            // the report said "made and handed to its layout" while the screen was empty.
+            //
+            // The array append is gone rather than kept alongside this. It placed nothing,
+            // and a mechanism that decides nothing is worse than a missing one -- it reads as
+            // a thing that works.
+            //
+            // Top-left, past the collapse chevron. The right of that bar carries cast,
+            // subtitles and the overflow menu on a build that has them all, and this project
+            // has no way to measure their widths from here; the left of it carries one button
+            // and then nothing.
+            //
+            save.translatesAutoresizingMaskIntoConstraints = NO;
+            [self addSubview:save];
+            [NSLayoutConstraint activateConstraints:@[
+                [save.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor
+                                                   constant:56],
+                [save.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor
+                                               constant:8],
+                [save.widthAnchor constraintEqualToConstant:36],
+                [save.heightAnchor constraintEqualToConstant:36]
+            ]];
 
             sciOverlayButtonsMade++;
         }
 
-        SCIReportOverlayState(joined);
+        // Kept in front of whatever the player draws over the picture. Ours is the last thing
+        // added and the first thing a redraw of YouTube's own controls would bury.
+        [self bringSubviewToFront:save];
 
-        // Only when the button is one of YouTube's own. Appending a plain UIButton to an array
-        // whose other members are YTQTMButtons is exactly the guess this file refuses to make
-        // everywhere else -- and it would be made inside the player, where being wrong is a
-        // crash rather than a missing button.
-        if (joined && ![controls containsObject:save]) {
-            NSMutableArray *withOurs = [controls mutableCopy] ?: [NSMutableArray array];
-            [withOurs addObject:save];
-            return withOurs;
-        }
+        sciOverlayPlacement =
+            [NSString stringWithFormat:SCILocalized(@"diag_overlay_frame"),
+                (double)save.frame.origin.x, (double)save.frame.origin.y,
+                (double)save.frame.size.width, (double)save.frame.size.height,
+                save.window ? SCILocalized(@"diag_overlay_in_window")
+                            : SCILocalized(@"diag_overlay_no_window")];
+
+        SCIReportOverlayState(joined);
     } @catch (NSException *exception) {
         // A button is a convenience and the player is not. Anything thrown here costs the
         // button and nothing else -- the same trade every drawing hook in this tweak makes.
