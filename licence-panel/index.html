@@ -126,6 +126,29 @@
   .switch input { width: auto; }
   .switch span { font-size: .88rem; color: var(--muted); }
 
+  /* ── the editor ──────────────────────────────────────────────────────────────────
+     A dialog of the page's own rather than `prompt()`. The browser's box takes one line of
+     text and cannot show a menu at all — so "make this lifetime" had to be typed as a number
+     of days, which is not a thing anybody should have to translate in their head. */
+  .veil {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    display: flex; align-items: center; justify-content: center; padding: 1.25rem;
+    z-index: 50;
+  }
+  .veil[hidden] { display: none; }
+  .dialog {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 1.15rem 1.2rem; width: min(28rem, 100%);
+    max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  }
+  .dialog h3 { margin: 0 0 .2rem; font-size: 1.05rem; }
+  .dialog .sub {
+    margin: 0 0 1rem; color: var(--muted); font-size: .84rem;
+    font-family: var(--mono); direction: ltr; text-align: right;
+  }
+  .dialog .actions { margin-block-start: 1rem; justify-content: flex-start; }
+
   .banner {
     border: 1px solid var(--line); border-inline-start: 3px solid var(--accent);
     background: var(--card); color: var(--fg);
@@ -322,6 +345,52 @@
     </div>
   </section>
 
+  <!-- ── the editor ─────────────────────────────────────────────────────────────── -->
+  <div class="veil" id="veil" hidden>
+    <div class="dialog" role="dialog" aria-modal="true">
+      <h3 id="dlgTitle">تعديل الترخيص</h3>
+      <p class="sub" id="dlgDevice"></p>
+
+      <div id="dlgFields">
+        <label for="dlgName">الاسم</label>
+        <input id="dlgName" class="ar" placeholder="اسم أو ملاحظة">
+
+        <div style="margin-block-start:.8rem">
+          <label for="dlgPlan">المدّة</label>
+          <select id="dlgPlan" class="ar">
+            <option value="keep">اترك التاريخ كما هو</option>
+            <option value="7">أسبوع</option>
+            <option value="30">شهر</option>
+            <option value="180">ستّة أشهر</option>
+            <option value="365">سنة</option>
+            <option value="lifetime">مدى الحياة</option>
+            <option value="custom">مدّة أخرى…</option>
+          </select>
+        </div>
+
+        <div id="dlgCustomWrap" hidden style="margin-block-start:.6rem">
+          <label for="dlgDays">عدد الأيام</label>
+          <input id="dlgDays" type="number" value="365" min="1" max="3650">
+        </div>
+
+        <div id="dlgModeWrap" hidden style="margin-block-start:.6rem">
+          <label for="dlgMode">كيف تُحسب</label>
+          <select id="dlgMode" class="ar">
+            <option value="set">من اليوم — تستبدل ما تبقّى</option>
+            <option value="extend">تُضاف إلى ما تبقّى</option>
+          </select>
+        </div>
+      </div>
+
+      <p class="note" id="dlgNote"></p>
+
+      <div class="actions">
+        <button class="primary" id="dlgSave">حفظ</button>
+        <button id="dlgCancel">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <script>
@@ -511,60 +580,159 @@ function renderLicences() {
     //
     const actions = document.createElement("td");
 
-    const change = async (payload, confirmText) => {
-      if (confirmText && !confirm(confirmText)) return;
+    //
+    // Four buttons and none of them a browser box.
+    //
+    // **Edit** is the one that used to be a `prompt()` asking for a number of days — which could
+    // not offer "lifetime" at all, could not touch the name, and looked like the browser rather
+    // than like this page. It is a dialog now, prefilled, with the plans in a menu.
+    //
+    // **+30** stays as a single tap, because the whole point of it is being one.
+    //
+    const change = async (payload) => {
       const result = await api("/admin/approve", { dev: lic.key, ...payload });
-      if (!result.ok) alert(result.why);
+      if (!result.ok) { alert(result.why); return false; }
       await refresh();
     };
 
     actions.append(
       actionButton("+٣٠", () => change({ mode: "extend", days: 30 })),
-      actionButton("−٣٠", () => change({ mode: "extend", days: -30 },
-        `تقصير ترخيص ${lic.key} بثلاثين يوماً؟`)),
-      actionButton("مدى الحياة", () => change({ mode: "lifetime" },
-        `جعل ترخيص ${lic.key} مدى الحياة؟`)),
-      actionButton("تعديل", () => {
-        const answer = prompt("كم يوماً من اليوم؟ (يستبدل المدّة الحالية)",
-                              String(Math.max(0, days(left))));
-        if (answer === null) return;
-        const value = parseInt(answer, 10);
-        if (!Number.isFinite(value) || value < 0) { alert("رقم غير صالح."); return; }
-        change({ mode: "set", days: value });
-      }),
+
+      actionButton("تعديل", () => { editLicence(lic); return false; }),
+
       lic.revoked
         ? actionButton("إرجاع", async () => { await api("/admin/restore", { dev: lic.key }); await refresh(); })
-        : actionButton("سحب", async () => {
-            if (!confirm(`سحب ترخيص ${lic.key}؟\n\nيتوقّف الجهاز عند أوّل مزامنة — خلال ست ساعات عادةً، وسبعة أيام على الأكثر.`)) return;
-            await api("/admin/revoke", { dev: lic.key });
-            await refresh();
+        : actionButton("سحب", () => {
+            openDialog({
+              title: "سحب الترخيص",
+              device: lic.key,
+              fields: false,
+              save: "اسحب",
+              note: "يتوقّف الجهاز عند أوّل مزامنة — خلال ست ساعات عادةً، وسبعة أيام على الأكثر. " +
+                    "الصفّ يبقى ويُعلَّم مسحوباً، فيمكن إرجاعه.",
+              onSave: async () => {
+                const result = await api("/admin/revoke", { dev: lic.key });
+                if (!result.ok) { $("dlgNote").textContent = result.why; return; }
+                closeDialog();
+                await refresh();
+              },
+            });
+            return false;
           }, true),
 
-      // **Deleting and revoking are different acts, and both are worth having.** Revoking keeps
-      // the row and marks it withdrawn, so "was this taken away or did I never issue it" is
-      // answerable later. Deleting is for a test, a duplicate, or a mistake — a row that should
-      // never have existed rather than one whose story ended.
-      actionButton("حذف", async () => {
-        const alsoTrial = confirm(
-          `حذف ترخيص ${lic.key} نهائياً؟\n\nاضغط «موافق» لحذفه مع سجلّ الأسبوع المجاني (فيستطيع الجهاز تجربته من جديد)،\n` +
-          `أو «إلغاء» ثم أكّد في الرسالة التالية لحذف الترخيص وحده.`);
-
-        if (!alsoTrial && !confirm(`حذف ترخيص ${lic.key} وحده، مع إبقاء سجلّ التجربة؟`)) return;
-
-        const result = await api("/admin/delete", { dev: lic.key, trial: alsoTrial });
-        if (!result.ok) { alert(result.why); return false; }
-
-        // Removed here rather than waited for: KV's index lags a delete, and a row that
-        // reappears reads as a delete that did not take.
-        state.licences = (state.licences || []).filter(l => l.key !== lic.key);
-        if (alsoTrial) state.trials = (state.trials || []).filter(t => t.key !== lic.key);
-        renderLicences();
-        renderTrials();
+      // Deleting and revoking are different acts and both are worth having. Revoke keeps the row
+      // and marks it withdrawn, so "taken away" and "never should have existed" stay tellable
+      // apart. The trial checkbox is a real choice rather than the second of two stacked
+      // confirms whose wording used to carry it.
+      actionButton("حذف", () => {
+        openDialog({
+          title: "حذف الترخيص نهائياً",
+          device: lic.key,
+          fields: false,
+          save: "احذف",
+          note: "يختفي الصفّ ولا يبقى منه شيء. لحذف سجلّ الأسبوع المجاني معه — فيستطيع الجهاز " +
+                "تجربته من جديد — احذفه من قسم «الأسابيع المجانية».",
+          onSave: async () => {
+            const result = await api("/admin/delete", { dev: lic.key });
+            if (!result.ok) { $("dlgNote").textContent = result.why; return; }
+            closeDialog();
+            // Removed here rather than waited for: KV's index lags a delete, and a row that
+            // reappears reads as a delete that did not take.
+            state.licences = (state.licences || []).filter(l => l.key !== lic.key);
+            renderLicences();
+          },
+        });
         return false;
       }, true),
     );
     tr.append(actions);
     body.append(tr);
+  });
+}
+
+//
+// One dialog, used for editing and for anything destructive.
+//
+// `prompt()` and `confirm()` are one line of text and a yes/no — so "make this lifetime" had to
+// be a number of days typed by hand, and deleting needed two stacked confirms whose wording did
+// the work a pair of buttons should. Neither can show a menu, neither can show two fields, and
+// both look like the browser rather than like this page.
+//
+let dialogOnSave = null;
+
+function openDialog({ title, device, note, fields = true, save = "حفظ", onSave }) {
+  $("dlgTitle").textContent = title;
+  $("dlgDevice").textContent = device || "";
+  $("dlgNote").textContent = note || "";
+  $("dlgFields").hidden = !fields;
+  $("dlgSave").textContent = save;
+  dialogOnSave = onSave;
+  $("veil").hidden = false;
+}
+
+function closeDialog() { $("veil").hidden = true; dialogOnSave = null; }
+
+$("dlgCancel").onclick = closeDialog;
+$("veil").onclick = (e) => { if (e.target === $("veil")) closeDialog(); };
+
+// Escape closes it. A dialog you cannot dismiss with the keyboard is a dialog that traps
+// somebody who opened it by accident on a laptop.
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !$("veil").hidden) closeDialog();
+});
+
+$("dlgPlan").onchange = () => {
+  const plan = $("dlgPlan").value;
+  $("dlgCustomWrap").hidden = plan !== "custom";
+  // "How it is counted" only means something when there is a duration to count. Lifetime has no
+  // arithmetic and "leave the date alone" has nothing to add to.
+  $("dlgModeWrap").hidden = (plan === "keep" || plan === "lifetime");
+};
+
+$("dlgSave").onclick = async () => {
+  const handler = dialogOnSave;
+  if (!handler) return;
+  $("dlgSave").disabled = true;
+  try { await handler(); } finally { $("dlgSave").disabled = false; }
+};
+
+/// The edit dialog for one licence, prefilled with what it currently says.
+function editLicence(lic) {
+  $("dlgName").value = lic.note || "";
+  $("dlgPlan").value = "keep";
+  $("dlgDays").value = 365;
+  $("dlgMode").value = "set";
+  $("dlgPlan").onchange();
+
+  openDialog({
+    title: "تعديل الترخيص",
+    device: lic.key,
+    note: lic.until ? ("ينتهي حالياً في " + fmtDate(lic.until)) : "مدى الحياة حالياً",
+    onSave: async () => {
+      const plan = $("dlgPlan").value;
+      const payload = { dev: lic.key, note: $("dlgName").value.trim() };
+
+      if (plan === "lifetime") {
+        payload.mode = "lifetime";
+      } else if (plan === "keep") {
+        // The name alone. `until` with the date it already has changes nothing about the term
+        // and is the only mode that leaves it exactly where it was -- `extend` with zero days is
+        // refused, and rightly, as "no change asked for".
+        payload.mode = "until";
+        payload.until = lic.until || 0;
+        if (!lic.until) payload.mode = "lifetime";
+      } else {
+        payload.mode = $("dlgMode").value;
+        payload.days = plan === "custom" ? (parseInt($("dlgDays").value, 10) || 365)
+                                         : parseInt(plan, 10);
+      }
+
+      const result = await api("/admin/approve", payload);
+      if (!result.ok) { $("dlgNote").textContent = result.why; return; }
+
+      closeDialog();
+      await refresh();
+    },
   });
 }
 
@@ -582,14 +750,23 @@ function renderTrials() {
     tr.append(cell(t.key, true), cell(fmtDate(t.at), true), cell(fmtDate(t.until), true));
 
     const actions = document.createElement("td");
-    actions.append(actionButton("إعادة تعيين", async () => {
-      if (!confirm(`منح ${t.key} أسبوعاً مجانياً آخر؟`)) return false;
-      const result = await api("/admin/delete", { dev: t.key, trial: true });
-      if (!result.ok) { alert(result.why); return false; }
-      state.trials = (state.trials || []).filter(x => x.key !== t.key);
-      state.licences = (state.licences || []).filter(l => l.key !== t.key);
-      renderTrials();
-      renderLicences();
+    actions.append(actionButton("إعادة تعيين", () => {
+      openDialog({
+        title: "منح أسبوع مجاني آخر",
+        device: t.key,
+        fields: false,
+        save: "امنح",
+        note: "يُحذف سجلّ التجربة وأيّ ترخيصٍ قائم لهذا الجهاز، فيستطيع أخذ أسبوعه من جديد.",
+        onSave: async () => {
+          const result = await api("/admin/delete", { dev: t.key, trial: true });
+          if (!result.ok) { $("dlgNote").textContent = result.why; return; }
+          closeDialog();
+          state.trials = (state.trials || []).filter(x => x.key !== t.key);
+          state.licences = (state.licences || []).filter(l => l.key !== t.key);
+          renderTrials();
+          renderLicences();
+        },
+      });
       return false;
     }));
     tr.append(actions);
