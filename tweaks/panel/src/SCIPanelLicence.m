@@ -1,8 +1,8 @@
 #import "SCIPanelLicence.h"
 #import <Preferences/PSSpecifier.h>
 #import "Localization/SCILocalize.h"
-#import "SCIPanelBadge.h"
-#import "SCIPanelButtonAction.h"
+#import "shared/src/Prefs/SCIPanelBadge.h"
+#import "shared/src/Prefs/SCIPanelButtonAction.h"
 #import "shared/src/SCILicense.h"
 #import "shared/src/SCIPanelGate.h"
 #import "SCIPanelPlans.h"

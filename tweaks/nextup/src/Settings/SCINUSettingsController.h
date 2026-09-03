@@ -1,6 +1,6 @@
 //
 //  SCINUSettingsController.h
-//  Albrhi Panel
+//  Albrhi NextUp
 //
 //  Albrhi NextUp's settings page, pushed to from the single row SCIPanelScan collapses
 //  its seven-process filter down to — the same arrangement Albrhi CarPlay uses, and for

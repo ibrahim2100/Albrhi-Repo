@@ -1,6 +1,6 @@
 #import "SCIPanelAppCell.h"
 #import <Preferences/PSSpecifier.h>
-#import "Localization/SCILocalize.h"
+#import "SCILocalizeAPI.h"
 
 ///
 /// The keys this cell reads off its specifier.

@@ -2,9 +2,9 @@
 #import <Preferences/PSSpecifier.h>
 #import <notify.h>
 #import "../Localization/SCILocalize.h"
-#import "../SCIPanelBadge.h"
-#import "../SCIPanelAppCell.h"
-#import "../SCIPanelHeader.h"
+#import "shared/src/Prefs/SCIPanelBadge.h"
+#import "shared/src/Prefs/SCIPanelAppCell.h"
+#import "shared/src/Prefs/SCIPanelHeader.h"
 
 ///
 /// Upstream's preference plumbing, used exactly as upstream's own pane used it.

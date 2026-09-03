@@ -2,9 +2,9 @@
 #import <Preferences/PSSpecifier.h>
 #import <objc/message.h>
 #import "../Localization/SCILocalize.h"
-#import "../SCIPanelBadge.h"
-#import "../SCIPanelHeader.h"
-#import "../SCIPanelButtonAction.h"
+#import "shared/src/Prefs/SCIPanelBadge.h"
+#import "shared/src/Prefs/SCIPanelHeader.h"
+#import "shared/src/Prefs/SCIPanelButtonAction.h"
 
 
 ///

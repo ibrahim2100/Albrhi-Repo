@@ -3,11 +3,11 @@
 #import <UIKit/UIKit.h>
 
 #import "SCIPanelScan.h"
-#import "SCIPanelBadge.h"
-#import "SCIPanelHeader.h"
-#import "SCIPanelAppCell.h"
+#import "shared/src/Prefs/SCIPanelBadge.h"
+#import "shared/src/Prefs/SCIPanelHeader.h"
+#import "shared/src/Prefs/SCIPanelAppCell.h"
 #import "SCIPanelDomain.h"
-#import "SCIPanelButtonAction.h"
+#import "shared/src/Prefs/SCIPanelButtonAction.h"
 #import "SCIPanelBackup.h"
 #import "SCIPanelUpdate.h"
 #import "SCIPanelGuideController.h"
@@ -18,7 +18,7 @@
 #import <objc/message.h>
 #import <objc/runtime.h>
 
-NSString *SCIVersionString = @"v0.9.35";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.9.36";  // AlbrhiPanel
 
 ///
 /// Albrhi's own control panel, in the iOS Settings app.

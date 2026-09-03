@@ -1,5 +1,17 @@
 # Albrhi Watch — what changed
 
+## v0.6.0
+
+**Its own row in Settings, and its own preference bundle to draw it.**
+
+The page lived inside Albrhi Panel, so a device with this tweak and not Albrhi had the tweak
+and no way to configure it — and a tweak about Apple Watch pairing sat inside a panel for
+Instagram, YouTube, X and TikTok.
+
+It is **Settings › Albrhi Watch** now, shipped in this package. No preference moved: the
+switches were always in this tweak's own domain (`com.albrhi.watch`), which is also why the
+master switch here has always been the gate rather than the panel's per-app one.
+
 ## v0.5.3
 
 *Released on its own push. The audit commit that produced it touched `tools/**` and `shared/**`,

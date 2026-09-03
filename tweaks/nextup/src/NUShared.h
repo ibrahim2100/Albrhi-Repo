@@ -15,7 +15,7 @@
 /// exists to stop watching being reported at all.
 ///
 /// So the sinks stay in the binary and `NULogEnabled()` decides, from a preference that is off
-/// until somebody turns it on in Settings › Albrhi › Albrhi NextUp. Read once per process, at the
+/// until somebody turns it on in Settings › Albrhi NextUp. Read once per process, at the
 /// first line anything tries to write: a log switch is used by turning it on, reproducing, and
 /// reading — the reopen is part of that anyway, and nothing is paid on the hot path for a switch
 /// that is off.

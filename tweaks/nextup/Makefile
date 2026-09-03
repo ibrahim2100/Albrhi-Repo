@@ -35,7 +35,9 @@ include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = AlbrhiNU
 
-AlbrhiNU_FILES = $(shell find src -type f \( -iname \*.x -o -iname \*.xm -o -iname \*.m \))
+# src/Settings and src/Localization belong to the preference bundle below, not to a dylib
+# that loads into SpringBoard and five media apps. Pruned rather than left to link by luck.
+AlbrhiNU_FILES = $(shell find src -type f -not -path 'src/Settings/*' -not -path 'src/Localization/*' \( -iname \*.x -o -iname \*.xm -o -iname \*.m \))
 
 # The guarded accessor, named explicitly because this tweak does not include
 # shared/tweak.mk (see the note further down). It replaces one `-valueForKey:` upstream
@@ -117,3 +119,19 @@ include $(THEOS_MAKE_PATH)/tweak.mk
 # compile and link something, and this has no sources at all. layout/ is copied into the
 # package verbatim, which is exactly the job — and it drops the aggregate.mk include that
 # would otherwise sit after shared/tweak.mk has already pulled in tweak.mk.
+
+
+#
+# **And the settings page, as a subproject.**
+#
+# It ships in this package now rather than inside Albrhi Panel. A page that lives in another
+# package is a page that is simply absent whenever that package is not installed -- and Albrhi
+# is a tweak for social apps, which this one has nothing to do with. Separate tweaks, separate
+# rows in Settings.
+#
+# A subproject rather than a second name in TWEAK_NAME: that builds two dylibs, and this is a
+# preference bundle, which is a different kind of thing with a different makefile behind it.
+#
+SUBPROJECTS += prefs
+
+include $(THEOS_MAKE_PATH)/aggregate.mk

@@ -8,7 +8,7 @@
 #import "SCISpotifySettingsController.h"
 #import <Preferences/PSSpecifier.h>
 #import "../Localization/SCILocalize.h"
-#import "../SCIPanelBadge.h"
+#import "shared/src/Prefs/SCIPanelBadge.h"
 
 /// The tweak's own domain, named identically in tweaks/spotify/src/Prefs.swift. Two spellings of
 /// this string is a switch that appears to work and changes nothing.

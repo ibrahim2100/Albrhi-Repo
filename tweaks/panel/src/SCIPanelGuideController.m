@@ -2,7 +2,7 @@
 #import <Preferences/PSSpecifier.h>
 
 #import "SCIPanelScan.h"
-#import "SCIPanelBadge.h"
+#import "shared/src/Prefs/SCIPanelBadge.h"
 #import "Localization/SCILocalize.h"
 
 @implementation SCIPanelGuideController

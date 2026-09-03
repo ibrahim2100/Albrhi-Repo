@@ -28,6 +28,18 @@ $(BUNDLE_NAME)_CFLAGS += -I$(ROOT)
 # A preference bundle names its own sources with a `find` over its `src/`, so nothing
 # under shared/ arrives on its own -- and the panel reads filter plists' contents off
 # objects it does not own, which is exactly what SCIKVC exists for.
+# The preference-bundle kit: the header view, the app cell, the badge art and the button
+# action, shared by every bundle here.
+#
+# They lived inside Albrhi Panel until NextUp and Watch were separated out of it. Each of
+# those now ships a Settings row of its own rather than a page inside Albrhi's, and all
+# three draw the same furniture -- so it moved here rather than being copied twice. Each
+# bundle still supplies its own `SCILocalized`, which is why the kit declares that in
+# SCILocalizeAPI.h instead of importing a table by a relative path.
+$(BUNDLE_NAME)_FILES += $(ROOT)/shared/src/Prefs/SCIPanelHeader.m
+$(BUNDLE_NAME)_FILES += $(ROOT)/shared/src/Prefs/SCIPanelAppCell.m
+$(BUNDLE_NAME)_FILES += $(ROOT)/shared/src/Prefs/SCIPanelButtonAction.m
+
 $(BUNDLE_NAME)_FILES += $(ROOT)/shared/src/SCIKVC.m
 $(BUNDLE_NAME)_FILES += $(ROOT)/shared/src/SCIPanelGate.m
 $(BUNDLE_NAME)_FILES += $(ROOT)/shared/src/SCILicense.m

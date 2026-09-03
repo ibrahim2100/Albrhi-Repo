@@ -316,7 +316,7 @@ void SCIWRunNanoProbe(void) {
     // afterwards is deliberately *not* done -- a switch that resets itself is a switch that lies.
     //
     if (!SCIWReadPreference(SCIWPrefNanoProbe, NO)) {
-        sciwNanoReport = @"off — turn on 'Read the watch's domains' in Settings › Albrhi › "
+        sciwNanoReport = @"off — turn on 'Read the watch's domains' in Settings › "
                          @"Albrhi Watch to take a reading";
         return;
     }

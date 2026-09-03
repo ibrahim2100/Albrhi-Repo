@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>entry</key>
+	<dict>
+		<key>bundle</key>
+		<string>AlbrhiNextUp</string>
+		<key>cell</key>
+		<string>PSLinkCell</string>
+		<key>detail</key>
+		<string>SCINUSettingsController</string>
+		<key>isController</key>
+		<true/>
+
+		<!-- Resolved inside the bundle, never by absolute path: the prefix differs between
+		     rootful, rootless and roothide, and on roothide it is a different random
+		     directory on every device. -->
+		<key>icon</key>
+		<string>AlbrhiIcon.png</string>
+
+		<key>label</key>
+		<string>Albrhi NextUp</string>
+	</dict>
+</dict>
+</plist>

@@ -1,6 +1,6 @@
 //
 //  SCIWatchSettingsController.h
-//  Albrhi Panel
+//  Albrhi Watch
 //
 //  Albrhi Watch's settings page, pushed to from the single row SCIPanelScan collapses its
 //  filter down to.

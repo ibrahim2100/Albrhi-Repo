@@ -1,5 +1,21 @@
 # Albrhi NextUp — what changed
 
+## v0.2.0
+
+**Its own row in Settings, and its own preference bundle to draw it.**
+
+The settings page shipped inside Albrhi Panel — a different package, for a tweak that has
+nothing to do with this one. Installing Albrhi NextUp without Albrhi therefore installed no
+settings at all, and the row for it sat inside a panel for social-app tweaks.
+
+It is **Settings › Albrhi NextUp** now, from a bundle in this package. Nothing about the
+feature changed and no preference moved: the domain was always this port's own
+(`com.yves.nextup3`), so every switch is where it was.
+
+The filter also asks Albrhi's panel to ignore it. Without that the panel would have gone on
+finding this filter and drawing a row per process in it — “SpringBoard”, “Music”, “Spotify” —
+which is the mistake the grouped row existed to prevent, arriving from the other side.
+
 ## v0.1.6
 
 **One line of upstream changed, and it is a safety fix rather than a port change.**

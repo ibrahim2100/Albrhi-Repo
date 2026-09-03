@@ -1,5 +1,5 @@
 #import "SCIPanelHeader.h"
-#import "Localization/SCILocalize.h"
+#import "SCILocalizeAPI.h"
 
 @implementation SCIPanelHeader
 

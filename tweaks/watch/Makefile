@@ -27,7 +27,10 @@ include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = AlbrhiWatch
 
-AlbrhiWatch_FILES = $(shell find src -type f \( -iname \*.x -o -iname \*.xm -o -iname \*.m \))
+# src/Settings is the preference bundle's, not the dylib's -- it is a PSListController and
+# links against Preferences, which SpringBoard's injected dylib has no business pulling in.
+# Pruned here and named by the subproject below, so one file belongs to exactly one binary.
+AlbrhiWatch_FILES = $(shell find src -type f -not -path 'src/Settings/*' \( -iname \*.x -o -iname \*.xm -o -iname \*.m \))
 
 AlbrhiWatch_CFLAGS = -fobjc-arc -I$(ROOT) -Isrc \
 	-DDISABLE_ROOTLESS_COMPAT_WARNING \
@@ -59,3 +62,19 @@ include $(THEOS_MAKE_PATH)/tweak.mk
 # jailbreak prefix applied for whichever scheme is being built, so the notice lands beside the
 # tweak on rootless and roothide alike.
 #
+
+
+#
+# **And the settings page, as a subproject.**
+#
+# It ships in this package now rather than inside Albrhi Panel. A page that lives in another
+# package is a page that is simply absent whenever that package is not installed -- and Albrhi
+# is a tweak for social apps, which this one has nothing to do with. Separate tweaks, separate
+# rows in Settings.
+#
+# A subproject rather than a second name in TWEAK_NAME: that builds two dylibs, and this is a
+# preference bundle, which is a different kind of thing with a different makefile behind it.
+#
+SUBPROJECTS += prefs
+
+include $(THEOS_MAKE_PATH)/aggregate.mk

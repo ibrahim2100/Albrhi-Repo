@@ -1,6 +1,6 @@
 Package: com.albrhi.watch
 Name: Albrhi Watch (rootless)
-Version: 0.5.3
+Version: 0.6.0
 Architecture: iphoneos-arm64
 Description: Pair an Apple Watch running a watchOS your iPhone does not officially support.
  .
@@ -10,7 +10,7 @@ Description: Pair an Apple Watch running a watchOS your iPhone does not official
  supported pairing would, so setup completes and apps install.
  .
  ▍SWITCHED ON FROM ALBRHI
- Settings › Albrhi › Albrhi Watch. Nothing is patched until the master switch is on —
+ Settings › Albrhi Watch. Nothing is patched until the master switch is on —
  this touches pairing, so it is never on because it happened to be installed. A respring
  button sits on the same page, since every change here takes effect at the next launch of
  the process it lives in.

@@ -1,5 +1,17 @@
 # Albrhi Panel Changelog
 
+## v0.9.36
+
+**Albrhi is the social-app tweak, and the panel now says only that.**
+
+Albrhi NextUp and Albrhi Watch each ship their own Settings row and their own preference
+bundle. Their pages, their strings and their rows are out of this package: what is left is
+Instagram, YouTube, X, TikTok, YouTube Music, Spotify and the licence.
+
+The furniture those pages shared — the header, the app cell, the badge art, the button
+action — moved to `shared/src/Prefs/`, so three bundles draw the same thing from one place
+rather than from a copy each.
+
 ## v0.9.35
 
 **A purchase now leaves a record even when the conversation never happens.**

@@ -4,7 +4,7 @@
 /// Every preference this tweak has, named once — and read from a domain both sides agree on.
 ///
 /// **`NSUserDefaults` would not have worked here, and the reason is the whole shape of this
-/// project's panel.** The switches are written by Albrhi Panel, which runs inside Settings, and
+/// project's panel.** The switches are written by this tweak's own preference bundle, inside Settings, and
 /// read by this tweak, which runs inside SpringBoard. `standardUserDefaults` means "the calling
 /// process's own domain", so the panel would write Settings' preferences and SpringBoard would
 /// read its own: two files, one name, and a switch that appears to work and changes nothing.

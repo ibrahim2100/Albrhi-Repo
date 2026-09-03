@@ -31,18 +31,18 @@
         </array>
     </dict>
 
-    <!-- Read by Albrhi Panel's SCIPanelScan, not by MobileSubstrate.
-         Seven Bundles targets would otherwise become seven rows in Settings > Albrhi
-         ("Music", "SpringBoard", "Spotify" and so on), as if this project patched
-         seven separate apps rather than running one feature across the processes it
-         needs. The same collapse CarPlay already uses, and for the same reason: the
-         master switch, the three surface switches and the five per-app switches
-         cannot fit in one plain switch cell, so the row pushes to a real page. -->
-    <key>SCIPanelGroupIdentifier</key>
-    <string>com.albrhi.nextup</string>
-    <key>SCIPanelGroupName</key>
-    <string>Albrhi NextUp</string>
-    <key>SCIPanelDetailController</key>
-    <string>SCINUSettingsController</string>
+    <!-- No SCIPanelGroup* keys, deliberately. They told Albrhi Panel to draw a row for this
+         tweak and push to a page inside its bundle; Albrhi NextUp ships its own Settings row and its
+         own preference bundle now, so the panel has nothing to say about it. Albrhi is the
+         social-app tweak; this is a separate one. -->
+	<!-- And nothing at all in Albrhi's panel.
+
+	     Without this the panel would still find this filter beside its dylib and draw a row
+	     per process in it (“SpringBoard”, “Music”, “Spotify”), which is the exact mistake the
+	     group keys above used to prevent, arriving from the other direction now that the page
+	     has moved out of that bundle. Albrhi NextUp has its own row in Settings; Albrhi is the
+	     social-app tweak and has nothing to say about this one. -->
+	<key>SCIPanelHidden</key>
+	<true/>
 </dict>
 </plist>

@@ -771,6 +771,30 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**A page that ships in another package is a page that is missing whenever that package is
+not.** Albrhi NextUp and Albrhi Watch were separate packages whose settings screens were built
+into Albrhi Panel — so each drew a row inside Settings › Albrhi, a panel for Instagram, YouTube,
+X and TikTok, and installing either tweak on its own installed something with no way to
+configure it. Each ships its own preference bundle and its own Settings row now, as a Theos
+`SUBPROJECTS` bundle beside the dylib (a space-separated `TWEAK_NAME` builds two dylibs, which is
+not what a bundle is), with `src/Settings` pruned from the dylib's own `find` so one file belongs
+to exactly one binary. **Nothing had to be migrated, because both tweaks already wrote into their
+own preference domains** — `com.yves.nextup3` and `com.albrhi.watch` — which is worth checking
+before any separation like this: the coupling was the *bundle*, not the data.
+
+Two things generalise. **The shared furniture belongs in `shared/src/Prefs/`, not in a copy per
+bundle** — the header view, the app cell, the badge art and the button action are compiled by
+every preference bundle from one place now, and the kit declares `SCILocalized` in a header of its
+own rather than importing a table by a relative path that resolves differently per include order.
+And **removing a page from the panel is not the same as removing the tweak from the panel**: with
+the `SCIPanelGroup*` keys gone, `SCIPanelScan` would have found those filters and drawn *a row per
+process* — “SpringBoard”, “Music”, “Spotify” — which is precisely the mistake the grouped row was
+built to prevent, arriving from the far side. `SCIPanelHidden` in each filter is what says "this
+tweak is not Albrhi's".
+
+**And the Arabic name is البرهي, never البرهان.** Eighteen strings across the panel, the YouTube
+tweak and the licence site said the second, which is a different word.
+
 **A screen that reads one field and an editor that writes another is a save that works and looks
 discarded.** The licence table drew `name || note`; the edit dialog was written when only `note`
 existed and never moved. Editing a licence approved from a request — which carries a real `name` —
@@ -2196,9 +2220,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.35** · Watch **0.5.3** · TikTok **0.20.1** ·
+Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.36** · Watch **0.6.0** · TikTok **0.20.1** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.1.6** · suite **1.73.4**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.2.0** · suite **1.74.0**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

@@ -22,15 +22,18 @@
         </array>
     </dict>
 
-    <!-- Read by Albrhi Panel's SCIPanelScan, not by MobileSubstrate. One row named for the
-         tweak rather than a row reading "SpringBoard", pushing to a real page: a master
-         switch, what it answers, the diagnostics and a respring button do not fit in one
-         switch cell. The same collapse Albrhi NextUp uses. -->
-    <key>SCIPanelGroupIdentifier</key>
-    <string>com.albrhi.watch</string>
-    <key>SCIPanelGroupName</key>
-    <string>Albrhi Watch</string>
-    <key>SCIPanelDetailController</key>
-    <string>SCIWatchSettingsController</string>
+    <!-- No SCIPanelGroup* keys, deliberately. They told Albrhi Panel to draw a row for this
+         tweak and push to a page inside its bundle; Albrhi Watch ships its own Settings row and its
+         own preference bundle now, so the panel has nothing to say about it. Albrhi is the
+         social-app tweak; this is a separate one. -->
+	<!-- And nothing at all in Albrhi's panel.
+
+	     Without this the panel would still find this filter beside its dylib and draw a row
+	     per process in it (“SpringBoard”, “Music”, “Spotify”), which is the exact mistake the
+	     group keys above used to prevent, arriving from the other direction now that the page
+	     has moved out of that bundle. Albrhi Watch has its own row in Settings; Albrhi is the
+	     social-app tweak and has nothing to say about this one. -->
+	<key>SCIPanelHidden</key>
+	<true/>
 </dict>
 </plist>

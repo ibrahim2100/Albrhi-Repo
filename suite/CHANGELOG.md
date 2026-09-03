@@ -1,5 +1,21 @@
 # Albrhi Changelog
 
+## v1.74.0
+
+**Albrhi is a tweak for social apps, and only that now.**
+
+Albrhi NextUp and Albrhi Watch were always separate packages, but their settings pages shipped
+inside Albrhi Panel — so each appeared as a row in Settings › Albrhi, and installing either one
+without Albrhi installed a tweak with no way to configure it. Each carries its own preference
+bundle and its own Settings row now: **Settings › Albrhi NextUp** and **Settings › Albrhi
+Watch**, beside Albrhi rather than inside it.
+
+Nothing moved on disk that a device will notice: both tweaks already kept their switches in
+their own preference domains, so every setting is exactly where it was.
+
+Also in this release: the panel says البرهي in Arabic, everywhere. It said البرهان in eighteen
+places — a different word.
+
 ## v1.73.4
 
 *Released on its own push: the fix lives in `tools/` and `server/`, which every publisher watches,

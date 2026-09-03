@@ -259,12 +259,20 @@
         NSDictionary *filter = plist[@"Filter"];
         if (![filter isKindOfClass:[NSDictionary class]]) continue;
 
+        // Two reasons a filter is here and does not belong on this page.
+        //
         // A second dylib belonging to a tweak the panel already has a row for.
         // AlbrhiCPApp filters on com.apple.UIKit/UIKitCore -- MobileSubstrate's
         // Bundles idiom for "every app that draws a window" -- and without this,
         // those two framework identifiers would themselves become rows, exactly the
         // "Camera"/"SpringBoard" mistake SCIPanelGroupIdentifier exists to fix, just
         // for library names instead of app bundle identifiers this time.
+        //
+        // And a tweak that is simply not Albrhi's. Albrhi NextUp and Albrhi Watch are separate
+        // packages with Settings rows of their own; this page is for the social-app tweaks the
+        // suite ships. Without the key their filters would each become several rows here named
+        // for the processes they inject into, which is the "Camera"/"SpringBoard" mistake again
+        // arriving from the far side of a page that has moved out of this bundle.
         if ([plist[@"SCIPanelHidden"] boolValue]) continue;
 
         unsigned long long size =

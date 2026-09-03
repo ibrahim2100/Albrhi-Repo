@@ -1001,7 +1001,12 @@ SCI_DEFINED = re.compile(
     r'(?:^|\s)(?:#define\s+)?(SCI[A-Za-z0-9_]*)\s*\(')
 
 known = set()
-for path in SRC + HDR + glob.glob('../../shared/src/*.h') + glob.glob('../../shared/src/*.m'):
+# `shared/src/**` rather than its top level alone: the preference-bundle kit sits in
+# shared/src/Prefs/, and every bundle here calls into it. A rule that reads one directory
+# deep answers "defined nowhere this tweak can see" about code the compiler finds without
+# difficulty, which is a rule crying wolf at exactly the moment somebody factors something out.
+for path in (SRC + HDR + glob.glob('../../shared/src/**/*.h', recursive=True)
+                       + glob.glob('../../shared/src/**/*.m', recursive=True)):
     try:
         body = open(path, encoding='utf-8').read()
     except OSError:
