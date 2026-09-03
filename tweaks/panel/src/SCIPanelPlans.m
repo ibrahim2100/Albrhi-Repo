@@ -1,6 +1,7 @@
 #import "SCIPanelPlans.h"
 #import "Localization/SCILocalize.h"
 #import "shared/src/SCILicense.h"
+#import "shared/src/SCIPanelGate.h"
 
 ///
 /// Where a buyer reaches Albrhi.
@@ -315,10 +316,84 @@ static const size_t kSCIPlanCount = sizeof(kSCIPlans) / sizeof(kSCIPlans[0]);
 /// copied from one screen into another, is where a sale is lost. So it goes in the message body,
 /// and the clipboard gets it too — a share that fails silently must not take the code with it.
 ///
+///
+/// Name, then number, then the request, then WhatsApp — in that order and for that reason.
+///
+/// **The request is filed before the message is opened.** If it were the other way round, closing
+/// WhatsApp or never sending the message would leave nothing behind: the panel would show no
+/// request, and the only record of somebody wanting to buy something would be a draft on their
+/// phone. Sending it first means a request that reaches the panel even if the conversation never
+/// happens — which is the case worth catching, because that person meant to pay.
+///
 - (void)openContactForPlan:(SCIPlan)plan {
-    NSString *body = [NSString stringWithFormat:SCILocalized(@"plans_message"),
-                      SCILocalized(plan.titleKey), SCILicenseFingerprint()];
+    UIAlertController *form =
+        [UIAlertController alertControllerWithTitle:SCILocalized(plan.titleKey)
+                                            message:SCILocalized(@"plans_who_note")
+                                     preferredStyle:UIAlertControllerStyleAlert];
 
+    [form addTextFieldWithConfigurationHandler:^(UITextField *field) {
+        field.placeholder = SCILocalized(@"plans_who_name");
+        field.autocapitalizationType = UITextAutocapitalizationTypeWords;
+        field.text = SCIPanelReadString(@"licence_buyer_name", nil) ?: @"";
+    }];
+    [form addTextFieldWithConfigurationHandler:^(UITextField *field) {
+        field.placeholder = SCILocalized(@"plans_who_phone");
+        field.keyboardType = UIKeyboardTypePhonePad;
+        field.text = SCIPanelReadString(@"licence_buyer_phone", nil) ?: @"";
+    }];
+
+    __weak __typeof(self) weakSelf = self;
+    [form addAction:[UIAlertAction actionWithTitle:SCILocalized(@"plans_send")
+                                             style:UIAlertActionStyleDefault
+                                           handler:^(__unused UIAlertAction *action) {
+        NSCharacterSet *blank = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+        NSString *name  = [form.textFields.firstObject.text stringByTrimmingCharactersInSet:blank];
+        NSString *phone = [form.textFields.lastObject.text stringByTrimmingCharactersInSet:blank];
+
+        if (!name.length || !phone.length) {
+            weakSelf.status.text = SCILocalized(@"plans_who_missing");
+            return;
+        }
+
+        // Remembered, so a second purchase does not ask again. Written to the panel's own domain,
+        // which is the one this process may write and every part of Albrhi already reads.
+        CFStringRef domain = (__bridge CFStringRef)@"com.albrhi.panel";
+        CFPreferencesSetAppValue(CFSTR("licence_buyer_name"), (__bridge CFStringRef)name, domain);
+        CFPreferencesSetAppValue(CFSTR("licence_buyer_phone"), (__bridge CFStringRef)phone, domain);
+        CFPreferencesAppSynchronize(domain);
+
+        weakSelf.status.text = SCILocalized(@"plans_working");
+
+        SCILicenseRequestFromServer(plan.days, plan.lifetime, name, phone,
+                                    SCILocalized(plan.titleKey),
+                                    ^(SCILicenseServerResult result) {
+            // The message opens either way. A request that did not reach the server is a reason
+            // to talk to somebody, not a reason to stop them talking to you -- and the plan and
+            // the device code are in the message regardless.
+            weakSelf.status.text = (result == SCILicenseServerPending)
+                ? SCILocalized(@"plans_sent")
+                : SCILocalized(@"plans_sent_offline");
+
+            [weakSelf openWhatsAppForPlan:plan name:name phone:phone];
+            if (weakSelf.onChange) weakSelf.onChange();
+        });
+    }]];
+
+    [form addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
+                                             style:UIAlertActionStyleCancel
+                                           handler:nil]];
+
+    UIViewController *host = self.window.rootViewController;
+    while (host.presentedViewController) host = host.presentedViewController;
+    [host presentViewController:form animated:YES completion:nil];
+}
+
+- (void)openWhatsAppForPlan:(SCIPlan)plan name:(NSString *)name phone:(NSString *)phone {
+    NSString *body = [NSString stringWithFormat:SCILocalized(@"plans_message"),
+                      SCILocalized(plan.titleKey), name, phone, SCILicenseFingerprint()];
+
+    // The clipboard as well as the link. A share that fails silently must not take the device
+    // code with it -- that string is the one thing nobody can be asked to reproduce.
     [UIPasteboard generalPasteboard].string = body;
 
     NSString *encoded = [body stringByAddingPercentEncodingWithAllowedCharacters:
@@ -328,8 +403,6 @@ static const size_t kSCIPlanCount = sizeof(kSCIPlans) / sizeof(kSCIPlans[0]);
 
     if (!url) { self.status.text = SCILocalized(@"plans_copied"); return; }
 
-    // Settings may refuse to open a URL from a preference bundle on some builds, and the answer
-    // to that is the clipboard above rather than a dead end.
     [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:^(BOOL ok) {
         if (!ok) self.status.text = SCILocalized(@"plans_copied");
     }];

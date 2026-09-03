@@ -771,6 +771,18 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**File the record before handing the user to another app.** The plans card sends the licence
+request to the server and *then* opens WhatsApp. The other order loses the case worth keeping:
+somebody who closes the message, or never sends it, leaves no request in the panel and no trace
+anywhere except a draft on their own phone — and that person meant to pay. The message opens
+whether or not the request landed, because a failed request is a reason to talk to somebody, not
+a reason to stop them talking to you.
+
+**Two instruments are not two questions.** «Enter a key» and «Enter a code» sat side by side and
+were reported as the same button twice. Which one a person holds is a fact about how their licence
+was issued, not something they should have to classify — one row decides by shape, and routes an
+unrecognised string down the path that can ask the server, so it still gets a real answer.
+
 **A scroll view has no height of its own, and pinning its content to its edges does not give it
 one.** That sets `contentSize`. The plans card had a scroller pinned to it and content pinned to
 the scroller, and nothing in the chain said how tall anything should be — so the card collapsed
@@ -2145,9 +2157,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.34** · Watch **0.5.3** · TikTok **0.20.1** ·
+Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.35** · Watch **0.5.3** · TikTok **0.20.1** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.1.6** · suite **1.72.3**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.6** · suite **1.73.0**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

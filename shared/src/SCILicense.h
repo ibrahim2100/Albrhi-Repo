@@ -236,7 +236,13 @@ void SCILicenseStartTrial(void (^completion)(SCILicenseServerResult result));
 BOOL SCILicenseIsLifetime(void);
 
 /// Asks the server for a licence of `days`, on this device's behalf.
-void SCILicenseRequestFromServer(NSInteger days, NSString *_Nullable note,
+///
+/// `lifetime` overrides `days`. `name` and `contact` are who to answer — without them the panel
+/// is a list of hex strings and approving one means remembering which conversation it belonged
+/// to, which is the bookkeeping the panel exists to remove.
+void SCILicenseRequestFromServer(NSInteger days, BOOL lifetime,
+                                 NSString *_Nullable name, NSString *_Nullable contact,
+                                 NSString *_Nullable note,
                                  void (^completion)(SCILicenseServerResult result));
 
 /// Redeems a short code against the server, which binds it to this device.

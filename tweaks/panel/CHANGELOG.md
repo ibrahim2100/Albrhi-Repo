@@ -1,5 +1,30 @@
 # Albrhi Panel Changelog
 
+## v0.9.35
+
+**A purchase now leaves a record even when the conversation never happens.**
+
+Choosing a paid plan asks for a name and a phone number, **files the request with the server, and
+only then opens WhatsApp**. That order is the whole point: the other way round, closing WhatsApp
+or never sending the message would leave nothing behind — no request in the panel, and the only
+trace of somebody wanting to buy something sitting as a draft on their phone. Sending first
+catches exactly the case worth catching, because that person meant to pay.
+
+The message still opens either way. A request that did not reach the server is a reason to talk to
+somebody, not a reason to stop them talking to you.
+
+The name and number are remembered, so a second purchase does not ask again, and they travel with
+the request — a panel showing nothing but device codes makes approving one an exercise in
+remembering which conversation it belonged to, which is the bookkeeping the panel exists to
+remove.
+
+**And "Enter a key" and "Enter a code" are one row now.** They sat next to each other and read as
+the same button written twice, which is how it was reported. They *are* two instruments, but that
+is a fact about how a licence was issued, not a question the person holding one should have to
+answer: they were sent a string and they want to put it in. A key announces itself with `ALB1.`;
+anything else is treated as a code, which is also the path that can ask the server — so an
+unrecognised string still gets a real answer instead of "that is not a key".
+
 ## v0.9.34
 
 **The card appeared small and empty, and the reason is that a scroll view has no height of its

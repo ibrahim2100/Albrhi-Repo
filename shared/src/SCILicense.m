@@ -632,18 +632,23 @@ BOOL SCILicenseIsLifetime(void) {
     return until.doubleValue == 0;
 }
 
-void SCILicenseRequestFromServer(NSInteger days, NSString *note,
+void SCILicenseRequestFromServer(NSInteger days, BOOL lifetime,
+                                 NSString *name, NSString *contact, NSString *note,
                                  void (^completion)(SCILicenseServerResult)) {
     if (!SCILicenseServerBase()) { completion(SCILicenseServerNotConfigured); return; }
 
     NSMutableDictionary *body = [@{
         @"dev": SCILicenseFingerprint(),
         @"days": @(days < 1 ? 365 : days),
+        @"lifetime": @(lifetime),
     } mutableCopy];
 
-    NSString *trimmed = [note stringByTrimmingCharactersInSet:
-        [NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    if (trimmed.length) body[@"note"] = trimmed;
+    NSCharacterSet *blank = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    for (NSArray *pair in @[@[@"name", name ?: @""], @[@"contact", contact ?: @""],
+                            @[@"note", note ?: @""]]) {
+        NSString *value = [pair[1] stringByTrimmingCharactersInSet:blank];
+        if (value.length) body[pair[0]] = value;
+    }
 
     SCIPostJSON(@"/v1/request", body, ^(NSDictionary *answer, NSInteger status) {
         completion(status == 200 && answer ? SCILicenseServerPending

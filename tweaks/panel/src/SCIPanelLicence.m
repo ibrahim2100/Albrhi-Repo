@@ -126,6 +126,16 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
                                           tint:[UIColor systemIndigoColor]]];
     }
 
+    //
+    // **One row, not two.** «Enter a key» and «Enter a code» sat next to each other and read as
+    // the same button written twice -- reported as exactly that. They are two instruments, but
+    // that is a fact about how a licence was issued, not a question the person holding it should
+    // have to answer: they were sent one string and they want to put it in.
+    //
+    // Which one it is, is decided by looking at it. A key begins `ALB1.`; anything else is a
+    // code. Guessing wrong costs nothing, because the wrong path refuses and the right one is
+    // tried after it.
+    //
     PSSpecifier *enter = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"lic_enter")
                                                         target:self
                                                            set:NULL
@@ -197,15 +207,6 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
     SCISetButtonAction(request, @selector(makeRequest));
     [specifiers addObject:request];
 
-    PSSpecifier *redeem = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"lic_redeem")
-                                                         target:self
-                                                            set:NULL
-                                                            get:NULL
-                                                         detail:Nil
-                                                           cell:PSButtonCell
-                                                           edit:Nil];
-    SCISetButtonAction(redeem, @selector(redeemCode));
-    [specifiers addObject:redeem];
 
     if (SCILicenseRedeemedCode()) {
         [specifiers addObject:[self factTitled:SCILocalized(@"lic_code_in_use")
@@ -272,34 +273,52 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
                                      preferredStyle:UIAlertControllerStyleAlert];
 
     [sheet addTextFieldWithConfigurationHandler:^(UITextField *field) {
-        field.placeholder = @"ALB1.…";
+        field.placeholder = @"ALB-XXXX-XXXX-XXXX";
         field.autocorrectionType = UITextAutocorrectionTypeNo;
-        field.autocapitalizationType = UITextAutocapitalizationTypeNone;
+        field.autocapitalizationType = UITextAutocapitalizationTypeAllCharacters;
         field.clearButtonMode = UITextFieldViewModeWhileEditing;
-        field.text = SCILicenseStoredKey() ?: @"";
     }];
 
     __weak __typeof(self) weakSelf = self;
     [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"lic_apply")
                                               style:UIAlertActionStyleDefault
                                             handler:^(__unused UIAlertAction *action) {
-        NSString *text = sheet.textFields.firstObject.text;
+        NSString *text = [sheet.textFields.firstObject.text stringByTrimmingCharactersInSet:
+                             [NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
-        SCILicenseState state = SCILicenseStateNone;
-        BOOL ok = SCILicenseStoreKey(text, &state);
+        // A signed key announces itself. Everything else is a short code, and the code path is
+        // the one that can ask the server -- so an unrecognised string still gets a real answer
+        // rather than "that is not a key".
+        if ([text.uppercaseString hasPrefix:@"ALB1."]) {
+            SCILicenseState state = SCILicenseStateNone;
+            BOOL ok = SCILicenseStoreKey(text, &state);
+            [weakSelf tell:ok ? SCILocalized(@"lic_accepted") : SCILicenseDescribeState(state)];
+            [weakSelf reloadSpecifiers];
+            return;
+        }
 
-        // The reason, not just a refusal. "expired", "issued to another device" and "not a key"
-        // need three different things done about them, and a single "invalid" makes the person
-        // holding a perfectly good key for their other phone think they were sold nothing.
-        NSString *message = ok ? SCILocalized(@"lic_accepted") : SCILicenseDescribeState(state);
-        [weakSelf tell:message];
-        [weakSelf reloadSpecifiers];
+        SCILicenseRedeemWithServer(text, ^(SCILicenseRedeemResult result) {
+            NSString *message;
+            switch (result) {
+                case SCILicenseRedeemedOK:         message = SCILocalized(@"lic_redeem_ok"); break;
+                case SCILicenseRedeemMalformed:    message = SCILocalized(@"lic_redeem_bad"); break;
+                case SCILicenseRedeemUnknown:      message = SCILocalized(@"lic_redeem_unknown"); break;
+                case SCILicenseRedeemWindowClosed: message = SCILocalized(@"lic_redeem_late"); break;
+                case SCILicenseRedeemOffline:      message = SCILocalized(@"lic_redeem_offline"); break;
+
+                // A code bound to somebody else's phone. Its own sentence, because "already
+                // used" and "no such code" send a person to two different places -- one back to
+                // whoever sold it, the other to check their typing.
+                case SCILicenseRedeemTaken:        message = SCILocalized(@"lic_redeem_taken"); break;
+            }
+            [weakSelf tell:message];
+            [weakSelf reloadSpecifiers];
+        });
     }]];
 
     [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
                                               style:UIAlertActionStyleCancel
                                             handler:nil]];
-
     [self presentViewController:sheet animated:YES completion:nil];
 }
 
@@ -321,53 +340,6 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
 - (void)makeRequest {
     __weak __typeof(self) weakSelf = self;
     [SCIPanelPlans presentFrom:self change:^{ [weakSelf reloadSpecifiers]; }];
-}
-
-///
-/// Redeeming a short code.
-///
-/// The one place in this whole layer that needs the network, and it needs it once: the code is
-/// twelve characters and cannot carry a signature, so the device hashes it and looks that hash up
-/// in a published list. Afterwards the licence is local.
-///
-- (void)redeemCode {
-    UIAlertController *sheet =
-        [UIAlertController alertControllerWithTitle:SCILocalized(@"lic_redeem")
-                                            message:SCILocalized(@"lic_redeem_note")
-                                     preferredStyle:UIAlertControllerStyleAlert];
-
-    [sheet addTextFieldWithConfigurationHandler:^(UITextField *field) {
-        field.placeholder = @"ALB-XXXX-XXXX-XXXX";
-        field.autocorrectionType = UITextAutocorrectionTypeNo;
-        field.autocapitalizationType = UITextAutocapitalizationTypeAllCharacters;
-        field.clearButtonMode = UITextFieldViewModeWhileEditing;
-    }];
-
-    __weak __typeof(self) weakSelf = self;
-    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"lic_redeem_go")
-                                              style:UIAlertActionStyleDefault
-                                            handler:^(__unused UIAlertAction *action) {
-        NSString *typed = sheet.textFields.firstObject.text;
-
-        SCILicenseRedeemWithServer(typed, ^(SCILicenseRedeemResult result) {
-            NSString *message;
-            switch (result) {
-                case SCILicenseRedeemedOK:          message = SCILocalized(@"lic_redeem_ok"); break;
-                case SCILicenseRedeemMalformed:     message = SCILocalized(@"lic_redeem_bad"); break;
-                case SCILicenseRedeemUnknown:       message = SCILocalized(@"lic_redeem_unknown"); break;
-                case SCILicenseRedeemWindowClosed:  message = SCILocalized(@"lic_redeem_late"); break;
-                case SCILicenseRedeemOffline:       message = SCILocalized(@"lic_redeem_offline"); break;
-                case SCILicenseRedeemTaken:         message = SCILocalized(@"lic_redeem_taken"); break;
-            }
-            [weakSelf tell:message];
-            [weakSelf reloadSpecifiers];
-        });
-    }]];
-
-    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
-                                              style:UIAlertActionStyleCancel
-                                            handler:nil]];
-    [self presentViewController:sheet animated:YES completion:nil];
 }
 
 - (void)syncNow {

@@ -251,9 +251,16 @@ async function deviceRequest(request, env) {
 
   // One open request per device, updated rather than appended. Otherwise a person who taps twice
   // fills the inbox with the same question, and the inbox is the thing that has to stay readable.
+  //
+  // **Who is asking travels with it.** A request that is only a device code makes the panel a
+  // list of hex strings: approving one means remembering which conversation it belonged to, which
+  // is exactly the bookkeeping a person came to the panel to avoid.
   await env.DB.put(K.request(body.dev), JSON.stringify({
     dev: body.dev,
     days,
+    lifetime: Boolean(body.lifetime),
+    name: clean(body.name),
+    contact: clean(body.contact),
     note: clean(body.note),
     ts: existing?.ts || now(),
     seen: now(),

@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.73.0
+
+**Buying is one screen now.** Pick a plan, put in your name and number, and the request reaches
+Albrhi before WhatsApp even opens — so it is not lost if you close the message.
+
+And there is one **Enter a licence** row instead of two: paste whatever you were sent, short code
+or long key, and Albrhi works out which it is.
+
 ## v1.72.3
 
 **The plans screen was appearing as a small empty box.** It draws properly now — free week, month,
