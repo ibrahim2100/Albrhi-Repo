@@ -137,6 +137,23 @@ static const size_t kSCIPlanCount = sizeof(kSCIPlans) / sizeof(kSCIPlans[0]);
         [content.widthAnchor constraintEqualToAnchor:scroller.widthAnchor],
     ]];
 
+    //
+    // **A scroll view has no height of its own, and this is what made the card small and empty.**
+    //
+    // Pinning the content to the scroller's edges sets its *contentSize* — it says nothing about
+    // how tall the scroller should be. So nothing in the whole chain gave the card a height: it
+    // collapsed to whatever the solver picked, and `clipsToBounds` hid the five rows inside it.
+    // Every row was built, every label had its text; none of it had anywhere to be drawn.
+    //
+    // The height is asked for at less than required priority so it yields to the two constraints
+    // that keep the card on the screen — top and bottom against the safe area. On a tall phone
+    // the card is exactly as tall as its content; on a short one it stops at the screen and the
+    // content scrolls, which is the whole reason there is a scroll view here at all.
+    //
+    NSLayoutConstraint *height = [scroller.heightAnchor constraintEqualToAnchor:content.heightAnchor];
+    height.priority = UILayoutPriorityDefaultHigh;
+    height.active = YES;
+
     // The card grows with its content and stops at the screen: a fixed height is wrong on every
     // phone but the one it was measured on.
     NSLayoutConstraint *width = [self.card.widthAnchor constraintEqualToConstant:420];

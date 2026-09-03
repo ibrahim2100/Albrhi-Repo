@@ -771,6 +771,19 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**A scroll view has no height of its own, and pinning its content to its edges does not give it
+one.** That sets `contentSize`. The plans card had a scroller pinned to it and content pinned to
+the scroller, and nothing in the chain said how tall anything should be — so the card collapsed
+and `clipsToBounds` hid five perfectly-built rows. It appeared as a small empty box. The scroller
+asks to match its content at less-than-required priority now, so it yields to the constraints
+keeping the card on screen.
+
+**And the thing that ended it was looking.** Three releases were aimed at this screen from
+descriptions — "nothing appears", then "a small empty page". It was compiled into a throwaway iOS
+app, launched in the simulator and photographed, and the answer was immediate. **A UI bug reported
+in words is a UI bug being guessed at**; the simulator is available, the harness took one file, and
+it is the cheapest tool in this repository for anything drawn on a screen.
+
 **`keyWindow` is not a thing to look for inside a preference bundle, and a lookup that fails
 quietly is worse than one that throws.** The plans card searched `UIApplication.windows` for a key
 window and returned when it found none — in Settings, where this runs. The button did nothing, said
@@ -2132,9 +2145,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.33** · Watch **0.5.3** · TikTok **0.20.1** ·
+Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.34** · Watch **0.5.3** · TikTok **0.20.1** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.1.6** · suite **1.72.2**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.6** · suite **1.72.3**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

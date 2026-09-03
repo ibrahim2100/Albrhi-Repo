@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.72.3
+
+**The plans screen was appearing as a small empty box.** It draws properly now — free week, month,
+six months, year, lifetime.
+
 ## v1.72.2
 
 **The "Request a licence" button opens the plans screen now.** It was doing nothing at all on some

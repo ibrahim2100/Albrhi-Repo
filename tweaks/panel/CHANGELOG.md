@@ -1,5 +1,24 @@
 # Albrhi Panel Changelog
 
+## v0.9.34
+
+**The card appeared small and empty, and the reason is that a scroll view has no height of its
+own.**
+
+Pinning the content to the scroller's edges sets its *contentSize*. It says nothing about how tall
+the scroller should be — so nothing in the whole chain gave the card a height. It collapsed to
+whatever the solver picked and `clipsToBounds` hid everything inside it. Every row was built and
+every label had its text; none of it had anywhere to be drawn.
+
+The scroller now asks to be as tall as its content, at less than required priority so it still
+yields to the two constraints keeping the card on screen. A tall phone gets a card exactly as tall
+as its content; a short one stops at the screen and scrolls, which is what the scroll view was for.
+
+**And this was looked at rather than reasoned about.** Three releases were aimed at this one screen
+blind — nothing, then a small empty box. It was built as a throwaway iOS app, run in the simulator,
+and photographed: five rows, header, footer. That took one build and settled what three rounds of
+description could not.
+
 ## v0.9.33
 
 **"Request a licence" did nothing at all, and doing nothing was the bug.**
