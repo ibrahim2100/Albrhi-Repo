@@ -446,8 +446,25 @@ void SCILicenseCheckInIfDue(void) {
 
 #pragma mark - The server
 
+///
+/// Albrhi's own licence server, compiled in.
+///
+/// **Without this every buyer would have to be told a URL and type it correctly before they could
+/// even ask for a licence**, which is not a purchase flow, it is a support thread. The preference
+/// below still overrides it -- for testing, for a staging deployment, and for anybody who would
+/// rather run their own -- but the default is the thing that makes "open Settings and tap Request"
+/// work on a phone that has never been configured.
+///
+/// https, and the check below enforces it rather than trusting this constant: a licence arriving
+/// over plain http could be swapped in flight by anyone on the same wifi.
+static NSString *const kSCIDefaultServer = @"https://albrhi-licence.ibrahimalrahan01.workers.dev";
+
 NSString *SCILicenseServerBase(void) {
     NSString *base = SCIPanelReadString(kSCIServerPref, nil);
+
+    // The compiled-in address when nothing has been set, and only then. A device that has been
+    // pointed somewhere deliberately stays pointed there.
+    if (!base.length) base = kSCIDefaultServer;
     if (!base.length) return nil;
 
     // Trailing slashes trimmed here rather than at four call sites, and https demanded rather

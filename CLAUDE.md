@@ -837,6 +837,41 @@ when they do not match.
 in CI, not in a message. `.gitignore` carries the pattern as a second line of defence, not as the
 arrangement.
 
+**There is a licence server as of Panel 0.9.28 — a Cloudflare Worker in `server/` — and the
+offline path is kept deliberately, not by inertia.** With a server configured, requests arrive on
+their own and the device renews a **seven-day** signed licence in the background. With none, a key
+issued by `tools/licence.py` verifies with no network at all. The second is the way back in when
+the first is unreachable, which is the only thing that makes "the server holds the only signing
+key" a decision rather than a single point of total failure.
+
+**Seven days is the whole live-control design, and both halves matter.** Revocation becomes real —
+withdraw a licence and the device stops within a week, with no list for it to decline to fetch —
+while a flight or a captive portal costs nobody anything, because six days of slack sit behind
+every renewal. Asking the server per launch would revoke faster and make every customer's tweaks
+dead the minute the network is. **A failed check is reported as "nothing was decided", never as a
+licence problem.**
+
+**The server address is compiled in, and that is not a convenience.** Without it every buyer has
+to be told a URL and type it correctly before they can even ask for a licence. The preference
+still overrides it, and the panel names which of the two is in use — "the built-in one" and "one I
+chose" are different facts, and only one of them is worth checking when something stops working.
+
+**The server decides; it is never trusted.** A token that does not verify against the compiled
+public key, or is not for this device, is dropped — so pointing the address at something hostile
+earns a refusal and nothing else. https is required, because a licence over plain http can be
+swapped in flight and the signature still checks out.
+
+**The term and the renewal date are two dates, and the screen must show the term.** The token
+carries `until` alongside `exp` for exactly this: telling somebody who bought a year that their
+licence expires in seven days is a support message the code wrote itself.
+
+**And the whole loop was proved before it shipped, in one harness rather than on a device.** The
+Worker was driven in node with a fake KV, the *panel's own script block* was pointed at it, and
+the token that came out of pressing «موافقة» was handed to the real Objective-C verifier, which
+accepted it. Three separate signers now exist — `licence.py`, the Worker, and the browser panel
+that preceded it — and all three had to agree byte for byte on sorted-key JSON and on P1363→DER,
+which is exactly the kind of agreement that fails silently and mints keys no phone will take.
+
 **`class_getInstanceMethod` returning NULL does not mean the object cannot answer — and reading
 that as "no" broke two whole families of class at once.** `SCISafeValueForKey`, written to retire
 `-valueForKey:`, decided whether a getter returns an object by reading its `Method`'s type
@@ -1186,20 +1221,22 @@ dpkg sorts above `1.62.2` and below `1.62.3`, so the published number space is u
 local build still installs. Bump it on every local build during a measurement loop, exactly as a
 released build bumps its own.
 
-**Publishing is PAUSED as of 2026-09-03. Nothing is pushed and no release is cut.** The licence
-layer is being rebuilt against a real server, and 1.70.0 shipped a fault that made it worth
-stopping: enforcement was turned on while the device fingerprint was computed from a value only
-some processes can read, so the panel said `licensed` and every tweak stood down. **The lesson is
-the one this file already keeps for measurements and now keeps for identity: a value that is not
-readable from every process is not an identity** — `MGCopyAnswer("SerialNumber")` is
-entitlement-gated per process, so Settings sees it and a sandboxed app does not, and the two
-computed different fingerprints from the same device. Proved on this machine by forcing the
-fallback, not inferred from the report.
+**Publishing was paused on 2026-09-03 and resumed the same day, and what the pause bought is worth
+keeping.** 1.70.0 turned enforcement on while the device fingerprint was computed from a value only
+*some* processes can read — so the panel said `licensed` and every tweak stood down. **A value that
+is not readable from every process is not an identity**: `MGCopyAnswer("SerialNumber")` is
+entitlement-gated per process, so Settings sees it and a sandboxed app does not, and one phone
+computed two different fingerprints. Proved on this machine by forcing the fallback, not inferred
+from the report. The identity is a random value the panel provisions once into the domain every
+tweak already reads — no entitlement, identical everywhere by construction, and derived from
+nothing about the phone or its owner.
 
-Local builds during the pause are roothide only and go to `~/Desktop/Albrhi/`. The `+N` rule below
-is what the previous pause taught. While a pause is on, nothing is pushed and no release is cut — a version that goes
-out is a version strangers update to without knowing what changed. Local builds during a pause are
-roothide only and go to `~/Desktop/Albrhi/`.
+The pause also had a second use: the licence layer got a real server behind it before anything
+went out. **Local builds during a pause are roothide only, go to `~/Desktop/Albrhi/`, and carry a
+`+N` suffix** — dpkg sorts `1.70.0+1` above `1.70.0` and below `1.70.1`, so the published number
+space is untouched and every local build still installs over the last one. While a pause is on,
+nothing is pushed and no release is cut: a version that goes out is a version strangers update to
+without knowing what changed.
 
 **While the source is paused, builds go to `~/Desktop/Albrhi-TikTok` and versions do not move.**
 A version number means something was published; nothing is being published during a measurement
@@ -2007,7 +2044,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.28** · Watch **0.5.3** · TikTok **0.20.1** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.1.6** · suite **1.70.0**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.6** · suite **1.71.0**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

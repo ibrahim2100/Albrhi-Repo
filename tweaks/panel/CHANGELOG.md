@@ -2,6 +2,33 @@
 
 ## v0.9.28
 
+**Albrhi's licence server is compiled in, so a request is sent rather than carried.**
+
+Open Settings › Albrhi › Licence on a phone that has never been configured, tap **Request a
+licence**, and it arrives in the seller's panel by itself. Before this the address had to be typed
+in first — which meant every buyer had to be told a URL and get it right before they could even
+ask, and that is a support thread rather than a purchase.
+
+The address can still be overridden, for testing, for a staging deployment, or for anybody who
+would rather run their own; the row says which of the two is in use, because "the built-in one"
+and "one I chose" are different facts and only one of them is worth checking when something stops
+working.
+
+**A licence now renews itself.** The server signs for seven days and the tweak renews in the
+background, so a withdrawn licence stops that device within a week without it ever having to fetch
+a list — and a flight, a captive portal or a bad minute at the host costs nobody anything, because
+six days of slack sit behind every renewal.
+
+**The term and the renewal date are two different dates, and the screen shows the term.** Telling
+somebody who bought a year that their licence expires in seven days is a support message the code
+would have written itself.
+
+Short codes are redeemed through the server too, and a code now binds to the first device that
+uses it: passing it to a friend does nothing. Without a server reachable, redemption falls back to
+the published list exactly as before.
+
+## v0.9.28
+
 **A licence server: requests arrive on their own, and a licence renews itself.**
 
 Settings › Albrhi › Licence gains a **server** section. With an address set, *Request a licence*

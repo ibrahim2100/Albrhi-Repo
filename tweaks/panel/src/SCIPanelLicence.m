@@ -4,6 +4,7 @@
 #import "SCIPanelBadge.h"
 #import "SCIPanelButtonAction.h"
 #import "shared/src/SCILicense.h"
+#import "shared/src/SCIPanelGate.h"
 
 static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
 static NSString *const kSCIEnforceKey  = @"licence_enforced";
@@ -123,16 +124,23 @@ static NSString *const kSCIEnforceKey  = @"licence_enforced";
         [specifiers addObject:remove];
     }
 
-    // The server, if there is one. Above the asking, because whether a server is configured is
-    // what decides *how* asking works -- with one, a request is sent and answered; without one,
-    // it is a text you carry to the seller yourself.
+    // The server. Above the asking, because it is what decides *how* asking works: with one, the
+    // request is sent and answered; without one, it becomes a text carried to the seller by hand.
+    //
+    // **Albrhi's own address is compiled in**, so this is filled on a phone that has never been
+    // configured -- otherwise every buyer would have to be told a URL and type it correctly before
+    // they could even ask, which is a support thread rather than a purchase. The row says which of
+    // the two is in use, because "the default" and "one I chose" are different facts and only one
+    // of them is worth checking when something stops working.
     NSString *server = SCILicenseServerBase();
+    BOOL custom = SCIPanelReadString(@"licence_server", nil).length > 0;
 
     [specifiers addObject:[self groupTitled:SCILocalized(@"lic_server_section")
                                      footer:server ? SCILocalized(@"lic_server_footer")
                                                    : SCILocalized(@"lic_server_none_footer")]];
 
-    [specifiers addObject:[self factTitled:SCILocalized(@"lic_server")
+    [specifiers addObject:[self factTitled:custom ? SCILocalized(@"lic_server_custom")
+                                                  : SCILocalized(@"lic_server")
                                      value:server ?: SCILocalized(@"lic_server_none")
                                     symbol:@"antenna.radiowaves.left.and.right"
                                       tint:server ? [UIColor systemTealColor]

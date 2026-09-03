@@ -1,5 +1,19 @@
 # Albrhi Changelog
 
+## v1.71.0
+
+**Ask for a licence from the phone and it reaches Albrhi directly.**
+
+Settings › Albrhi › Licence › **Request a licence** — pick a duration, add your name, and that is
+the whole of it. Nothing to copy, nothing to send, no address to type. The answer arrives on its
+own the next time the tweak checks in.
+
+Licences renew themselves in the background, so nothing breaks on a flight or behind a hotel's
+wifi, and the screen shows the date your licence actually runs to rather than the date it next
+renews.
+
+Codes are redeemed the same way, and a code now belongs to the first device that uses it.
+
 ## v1.70.0
 
 **Albrhi now requires a licence.**
