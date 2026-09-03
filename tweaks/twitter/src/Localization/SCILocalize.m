@@ -175,7 +175,7 @@ static void SCIBuildTables(void) {
         @"report_failed": @"Could not save the report.",
 
         @"restart_note": @"Some changes only show after you close X and open it again.",
-        @"credit": @"Albrhi — made by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3. Where to hook this app was learned from the published work of BandarHL (BHTwitter) and TWIGalaxy; no code is taken from either.",
+        @"credit": @"Albrhi — made by Ibrahim Ismail AL-Rahn. Open source under the GNU GPL v3. Where to hook this app was learned from the published work of BandarHL (BHTwitter) and TWIGalaxy; no code is taken from either.",
     };
 
     _arTable = @{
@@ -341,7 +341,7 @@ static void SCIBuildTables(void) {
         @"report_failed": @"تعذّر حفظ التقرير.",
 
         @"restart_note": @"بعض التغييرات لا تظهر إلا بعد إغلاق إكس وفتحه من جديد.",
-        @"credit": @"البرهي — تطوير إبراهيم إسماعيل الرهن. حر ومفتوح المصدر تحت رخصة GNU GPL v3. موضع الربط في هذا التطبيق عُرف من عمل BandarHL‏ (BHTwitter) وTWIGalaxy المنشور، ولم يُنسخ منهما أي كود.",
+        @"credit": @"البرهي — تطوير إبراهيم إسماعيل الرهن. مفتوح المصدر تحت رخصة GNU GPL v3. موضع الربط في هذا التطبيق عُرف من عمل BandarHL‏ (BHTwitter) وTWIGalaxy المنشور، ولم يُنسخ منهما أي كود.",
     };
 }
 

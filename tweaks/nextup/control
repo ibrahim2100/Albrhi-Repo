@@ -1,6 +1,6 @@
 Package: com.albrhi.nextup
 Name: Albrhi NextUp (rootless)
-Version: 0.2.0
+Version: 0.2.1
 Architecture: iphoneos-arm64
 Description: See and skip what plays next, from the Lock Screen.
  .
@@ -30,8 +30,8 @@ Description: See and skip what plays next, from the Lock Screen.
  was rebuilt as the page this package ships, and the package was rebranded. Nothing
  about the feature itself is this project's invention.
  .
- Ported and maintained by Ibrahim Ismail AL-Rahn. Free and open source under the GNU
- GPL v3; the full licence text ships with the source.
+ Ported and maintained by Ibrahim Ismail AL-Rahn. Open source under the GNU GPL
+ v3; the full licence text ships with the source.
 Homepage: https://github.com/ibrahim2100/albrhi-repo
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Author: Yves <github.com/Yves000> (original NextUp 3), ported by Ibrahim Ismail AL-Rahn

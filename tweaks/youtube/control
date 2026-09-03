@@ -1,6 +1,6 @@
 Package: com.albrhi.youtube
 Name: Albrhi for YouTube (rootless)
-Version: 1.28.2
+Version: 1.28.3
 Architecture: iphoneos-arm64
 Description: Download videos, no ads, skip the sponsored parts, background playback — in Arabic or English.
  .
@@ -41,7 +41,7 @@ Description: Download videos, no ads, skip the sponsored parts, background playb
  Segment data from SponsorBlock (sponsor.ajay.app), CC BY-NC-SA 4.0. The coloured
  markers are derived from iSponsorBlock by Galactic Dev, GPLv3.
  .
- Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+ Developed by Ibrahim Ismail AL-Rahn. Open source under the GNU GPL v3.
 Homepage: https://github.com/ibrahim2100/albrhi-repo
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Author: Ibrahim Ismail AL-Rahn

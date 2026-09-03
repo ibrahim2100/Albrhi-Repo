@@ -1,6 +1,6 @@
 Package: com.albrhi.watch
 Name: Albrhi Watch (rootless)
-Version: 0.6.0
+Version: 0.6.1
 Architecture: iphoneos-arm64
 Description: Pair an Apple Watch running a watchOS your iPhone does not officially support.
  .
@@ -21,7 +21,8 @@ Description: Pair an Apple Watch running a watchOS your iPhone does not official
  ships with this package as LICENSE-watched. What this project adds is the master switch,
  the settings page, the diagnostics and the bilingual interface.
  .
- Maintained by Ibrahim Ismail AL-Rahn. Free and open source.
+ Maintained by Ibrahim Ismail AL-Rahn. Open source; the pairing core is used under
+ the MIT licence, whose text ships with this package.
 Homepage: https://github.com/ibrahim2100/albrhi-repo
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Author: 34306 (pairing core, MIT), packaged and extended by Ibrahim Ismail AL-Rahn

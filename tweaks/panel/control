@@ -1,6 +1,6 @@
 Package: com.albrhi.panel
 Name: Albrhi Panel (rootless)
-Version: 0.9.36
+Version: 0.9.37
 Architecture: iphoneos-arm64
 Description: Albrhi's settings, in the iOS Settings app.
  .
@@ -15,7 +15,7 @@ Description: Albrhi's settings, in the iOS Settings app.
  .
  Arabic and English.
  .
- Developed by Ibrahim Ismail AL-Rahn. Free and open source under the GNU GPL v3.
+ Developed by Ibrahim Ismail AL-Rahn. Open source under the GNU GPL v3.
 Homepage: https://github.com/ibrahim2100/albrhi-repo
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Author: Ibrahim Ismail AL-Rahn

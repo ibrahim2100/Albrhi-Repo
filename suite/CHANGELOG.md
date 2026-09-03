@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.74.1
+
+**"Free" is out of every description.** The tweak needs a licence; a package page saying it is
+free was the first thing anybody read. The licence itself is unchanged and still named in full —
+GPLv3 where it applies, MIT for the Watch pairing core — because dropping a word is not the same
+as dropping an obligation, and the attribution those licences require is not negotiable.
+
 ## v1.74.0
 
 *Released on its own push, after Albrhi NextUp 0.2.0 and Albrhi Watch 0.6.0 went out from the

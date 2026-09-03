@@ -3,6 +3,13 @@
 **Tested on YouTube 21.32.4.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.28.3
+
+**"Free" is out of every description.** The tweak needs a licence; a package page saying it is
+free was the first thing anybody read. The licence itself is unchanged and still named in full —
+GPLv3 where it applies, MIT for the Watch pairing core — because dropping a word is not the same
+as dropping an obligation, and the attribution those licences require is not negotiable.
+
 ## v1.28.2
 
 **The save button sat on the video's title in fullscreen. It is measured off the app's own top

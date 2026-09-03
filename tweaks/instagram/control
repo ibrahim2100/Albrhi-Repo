@@ -1,6 +1,6 @@
 Package: com.albrhi.tweak
 Name: Albrhi for Instagram (rootless)
-Version: 4.1.16
+Version: 4.1.17
 Architecture: iphoneos-arm64
 Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
  .
@@ -50,8 +50,8 @@ Description: Download anything, hide the noise, browse invisibly — in Arabic o
  tweak looks for what it needs while the app runs, so other versions should work too.
  .
  Developed by Ibrahim Ismail AL-Rahn. Based on SCInsta by SoCuul, rebuilt with AI
- assistance to improve code quality, design, performance and user experience. Free and
- open source under the GNU GPL v3, with original authorship credited and preserved.
+ assistance to improve code quality, design, performance and user experience. Open source
+ under the GNU GPL v3, with original authorship credited and preserved.
 Homepage: https://github.com/ibrahim2100/albrhi-repo
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
 Author: Ibrahim Ismail AL-Rahn (based on SCInsta by SoCuul, GPLv3)

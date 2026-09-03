@@ -4,6 +4,13 @@
 Other versions should work too — the tweak looks for what it needs while the app runs
 rather than expecting a particular version number.
 
+## v4.1.17
+
+**"Free" is out of every description.** The tweak needs a licence; a package page saying it is
+free was the first thing anybody read. The licence itself is unchanged and still named in full —
+GPLv3 where it applies, MIT for the Watch pairing core — because dropping a word is not the same
+as dropping an obligation, and the attribution those licences require is not negotiable.
+
 ## v4.1.16
 
 **A regression from the audit pass, found on a device and fixed: some version numbers and

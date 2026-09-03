@@ -1,5 +1,12 @@
 # Albrhi for TikTok — what changed
 
+## v0.20.2
+
+**"Free" is out of every description.** The tweak needs a licence; a package page saying it is
+free was the first thing anybody read. The licence itself is unchanged and still named in full —
+GPLv3 where it applies, MIT for the Watch pairing core — because dropping a word is not the same
+as dropping an obligation, and the attribution those licences require is not negotiable.
+
 ## v0.20.1
 
 **A repository-wide audit pass. No feature changed; what changed is that three rules this

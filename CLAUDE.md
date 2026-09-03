@@ -771,6 +771,15 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**"Free and open source" came out of every description, and the licence statement did not.**
+The software needs a licence to run, and the first line of every package page said it was free —
+one word, in eight `control` files, the source's own landing page and three in-app credit strings,
+in both languages. What stayed is every word the licences actually oblige: GPLv3 named in full
+where it applies, MIT for the Watch pairing core, and SCInsta's, EeveeSpotify's, NextUp 3's and
+watched's authorship exactly as before. **Dropping a word is not dropping an obligation** — and
+the free trial is untouched, because that is a feature somebody asked for rather than a claim
+about the price.
+
 **A page that ships in another package is a page that is missing whenever that package is
 not.** Albrhi NextUp and Albrhi Watch were separate packages whose settings screens were built
 into Albrhi Panel — so each drew a row inside Settings › Albrhi, a panel for Instagram, YouTube,
@@ -2220,9 +2229,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.36** · Watch **0.6.0** · TikTok **0.20.1** ·
+Instagram **4.1.17** · YouTube **1.28.3** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.2.0** · suite **1.74.0**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.2.1** · suite **1.74.1**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

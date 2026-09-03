@@ -401,7 +401,7 @@ static NSDictionary *_arTable = nil;
         @"wn_u6_detail": @"Settings are read from memory instead of from disk on every frame, and the sticker tray is left alone unless it needs changing.",
 
         @"wn_show_again": @"Show the welcome screen again",
-        @"wn_footnote_welcome": @"Free, open source, and not affiliated with Instagram — they have no idea we are here.",
+        @"wn_footnote_welcome": @"Open source, and not affiliated with Instagram — they have no idea we are here.",
         @"wn_footnote_update": @"No new ads were added in the making of this update.",
 
         // Download Center
@@ -941,7 +941,7 @@ static NSDictionary *_arTable = nil;
         @"wn_u6_detail": @"الإعدادات تُقرأ من الذاكرة بدل القرص مع كل إطار، وصينية الملصقات تُترك كما هي ما لم تحتج تغييرًا.",
 
         @"wn_show_again": @"عرض صفحة الترحيب مرة أخرى",
-        @"wn_footnote_welcome": @"مجاني ومفتوح المصدر، وغير تابع لانستقرام — هم أصلًا لا يعلمون بوجودنا.",
+        @"wn_footnote_welcome": @"مفتوح المصدر، وغير تابع لانستقرام — هم أصلًا لا يعلمون بوجودنا.",
         @"wn_footnote_update": @"لم تُضَف أي إعلانات أثناء إعداد هذا التحديث.",
 
         // مركز التنزيلات

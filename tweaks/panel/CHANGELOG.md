@@ -1,5 +1,12 @@
 # Albrhi Panel Changelog
 
+## v0.9.37
+
+**"Free" is out of every description.** The tweak needs a licence; a package page saying it is
+free was the first thing anybody read. The licence itself is unchanged and still named in full —
+GPLv3 where it applies, MIT for the Watch pairing core — because dropping a word is not the same
+as dropping an obligation, and the attribution those licences require is not negotiable.
+
 ## v0.9.36
 
 **Albrhi is the social-app tweak, and the panel now says only that.**
