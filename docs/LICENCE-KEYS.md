@@ -48,6 +48,52 @@ days later on somebody else's phone:
 - **Every issued key is verified before it is shown.** One that does not check out is not handed
   over — the alternative is finding out through a support thread.
 
+## The request → approve flow
+
+The buyer does not read a device code out any more. In **Settings › Albrhi › Licence** they tap
+**Request a licence**, pick a duration, and get a short string:
+
+```
+ALBREQ1.eyJkYXlzIjoxODAsImRldiI6ImEzMWQ….b4de
+```
+
+They send it however they already talk to you. Paste it into the panel's **الطلبات الواردة** box —
+several at once, one per line — and each becomes a row with the device, the name and the duration
+asked for. **Approve fills the issue form rather than signing behind your back**: the duration and
+the name are still yours to change before the key is minted.
+
+The request is **not signed**, deliberately: there is nothing on a phone to sign it with, and
+nothing in it worth forging — it is a question, and you answer it. The four characters on the end
+are a *check*, for a typo picked up in a chat window, and they are called a check everywhere they
+appear so nobody comes to read them as a signature.
+
+## Short codes
+
+For selling without a conversation: **ALB-4K7M-9QX2-P3RT**, twelve characters, typeable and
+readable down a phone line.
+
+Mint them in the panel — how many, how long the licence runs, and how long the code stays
+redeemable — then copy `codes.json` and replace `licence/codes.json` in this repository. The
+device hashes what was typed and looks that hash up. **The file holds hashes and never codes**, so
+publishing it hands nobody a working code.
+
+The alphabet has no I, L, O or U, and the device folds the confusable characters back in before
+hashing — `ALB-OA82…` and `ALB-0A82…` are the same code, whichever way somebody heard it.
+
+**The clock starts at redemption, not at minting.** A code sold in January and redeemed in March
+runs a year from March; anything else quietly sells somebody two months less than they paid for.
+
+**What cannot be engineered away without a server:** a code is not bound to a device until it is
+redeemed, so one code works for everybody who gets hold of it until its hash is removed from the
+file. Its two protections are the redemption window it carries and removal. That is the trade for
+a code short enough to type, and it is why device-bound keys remain the better instrument for
+anything that matters.
+
+Redemption is the one moment in this whole layer that needs the network, and it needs it once.
+"The list could not be read" is reported as exactly that and never as "no such code" — telling
+somebody their code is wrong because a café's wifi asked them to sign in is the shape of support
+message this design exists to avoid.
+
 ## Issuing from the terminal
 
 The buyer opens **Settings › Albrhi › Licence** and sends the sixteen-character device code.

@@ -15,6 +15,21 @@ static const NSTimeInterval kSCILicenseCheckInterval = 6 * 60 * 60;
 static NSString *const kSCILicenseKeyPref     = @"licence_key";
 static NSString *const kSCILicenseEnforcePref = @"licence_enforced";
 static NSString *const kSCILicenseEndpoint    = @"https://ibrahim2100.github.io/albrhi-repo/licence/revoked.json";
+static NSString *const kSCICodesEndpoint     = @"https://ibrahim2100.github.io/albrhi-repo/licence/codes.json";
+
+static NSString *const kSCICodePref          = @"licence_code";
+static NSString *const kSCICodeHashPref      = @"licence_code_hash";
+static NSString *const kSCICodeDaysPref      = @"licence_code_days";
+static NSString *const kSCICodeAtPref        = @"licence_code_at";
+static NSString *const kSCICodeTierPref      = @"licence_code_tier";
+
+/// The alphabet a code is written in.
+///
+/// Crockford's, and the reason is that these get read down a phone line and typed by hand: I, L,
+/// O and U are gone, so there is no 1/I, no 0/O, and nothing that can be misheard into an
+/// unfortunate word. Anything a person types that *looks* like one of those is folded back in
+/// before the hash is taken, which is the half that actually saves the support message.
+static NSString *const kSCICodeAlphabet = @"0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
 /// The fixed salt. Not a secret — it exists so a fingerprint cannot be recomputed from a serial
 /// number by someone who has only seen the fingerprint and guessed the scheme.
@@ -32,6 +47,11 @@ static const uint8_t kSCILicensePublicKey[65] = {
 };
 
 static BOOL sciFingerprintWeak = YES;
+
+/// Declared here because the overall state consults it and is written above it: the file reads
+/// top-down as key, then code, then the two combined, and reordering it to satisfy the compiler
+/// would put the combination before either half it combines.
+static SCILicenseState SCICodeState(void);
 
 
 #pragma mark - The device
@@ -224,7 +244,18 @@ static BOOL SCIKeyIsRevoked(NSDictionary *payload) {
 SCILicenseState SCILicenseCurrentState(void) {
     NSDictionary *payload = nil;
     SCILicenseState state = SCIEvaluateKey(SCILicenseStoredKey(), &payload);
-    if (state != SCILicenseStateValid) return state;
+
+    // Two ways to be licensed, and the better answer wins.
+    //
+    // A device can hold a key *and* have redeemed a code -- somebody who bought a code and later
+    // got a key issued directly, most obviously. Refusing on the strength of whichever happens to
+    // be worse would take a working licence away from a paying user over a leftover.
+    if (state != SCILicenseStateValid) {
+        SCILicenseState fromCode = SCICodeState();
+        if (fromCode == SCILicenseStateValid) return SCILicenseStateValid;
+        if (state == SCILicenseStateNone && fromCode != SCILicenseStateNone) return fromCode;
+        return state;
+    }
 
     if (SCIKeyIsRevoked(payload)) return SCILicenseStateRevoked;
 
@@ -328,6 +359,206 @@ void SCILicenseCheckInIfDue(void) {
 
 
 #pragma mark - Saying so
+
+#pragma mark - Asking for a licence
+
+/// A short check over the payload. Typos, not tampering.
+///
+/// Named `check` rather than `sig` everywhere it surfaces, because a four-character digest that
+/// looks like a signature is worse than none: somebody would eventually trust it as one.
+static NSString *SCIRequestCheck(NSString *body) {
+    NSData *bytes = [body dataUsingEncoding:NSUTF8StringEncoding];
+    unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+    CC_SHA256(bytes.bytes, (CC_LONG)bytes.length, digest);
+    return [NSString stringWithFormat:@"%02x%02x", digest[0], digest[1]];
+}
+
+NSString *SCILicenseMakeRequest(NSInteger days, NSString *note) {
+    if (days < 1) days = 365;
+
+    NSMutableDictionary *payload = [@{
+        @"v": @1,
+        @"dev": SCILicenseFingerprint(),
+        @"days": @(days),
+        @"ts": @((long long)[NSDate date].timeIntervalSince1970),
+    } mutableCopy];
+
+    NSString *trimmed = [note stringByTrimmingCharactersInSet:
+        [NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (trimmed.length) payload[@"note"] = trimmed;
+
+    // Sorted keys, so the same request made twice is the same string -- which is what lets the
+    // panel recognise a duplicate paste instead of listing it twice.
+    NSData *json = [NSJSONSerialization dataWithJSONObject:payload
+                                                   options:NSJSONWritingSortedKeys
+                                                     error:NULL];
+    if (!json) return nil;
+
+    NSString *body = [[[json base64EncodedStringWithOptions:0]
+        stringByReplacingOccurrencesOfString:@"+" withString:@"-"]
+        stringByReplacingOccurrencesOfString:@"/" withString:@"_"];
+    body = [body stringByReplacingOccurrencesOfString:@"=" withString:@""];
+
+    return [NSString stringWithFormat:@"ALBREQ1.%@.%@", body, SCIRequestCheck(body)];
+}
+
+
+#pragma mark - Redeeming a short code
+
+/// Everything a person might type, folded into the alphabet the code was minted in.
+static NSString *SCINormaliseCode(NSString *typed) {
+    NSMutableString *out = [NSMutableString string];
+
+    for (NSUInteger i = 0; i < typed.length; i++) {
+        unichar c = [typed.uppercaseString characterAtIndex:i];
+
+        // The confusable pairs, folded rather than rejected: somebody reading a code aloud says
+        // "oh" for zero and "eye" for one, and refusing that is refusing the way people actually
+        // pass a code to each other.
+        if (c == 'O') c = '0';
+        if (c == 'I' || c == 'L') c = '1';
+        if (c == 'U') c = 'V';
+
+        if ([kSCICodeAlphabet rangeOfString:[NSString stringWithCharacters:&c length:1]].location
+                != NSNotFound) {
+            [out appendFormat:@"%C", c];
+        }
+    }
+
+    // The ALB prefix is written for the reader, not for the machine, and it is made of alphabet
+    // characters -- so it survives the filter above and has to come off deliberately.
+    if (out.length > 12 && [out hasPrefix:@"A1B"]) [out deleteCharactersInRange:NSMakeRange(0, 3)];
+
+    return out;
+}
+
+/// The lookup key: sixteen hex characters of SHA-256 over the normalised code.
+///
+/// The published list holds these and never the codes themselves, so anybody may read it and
+/// nobody gains a working code by doing so.
+static NSString *SCICodeHash(NSString *normalised) {
+    NSData *bytes = [normalised dataUsingEncoding:NSUTF8StringEncoding];
+    unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+    CC_SHA256(bytes.bytes, (CC_LONG)bytes.length, digest);
+
+    NSMutableString *hex = [NSMutableString string];
+    for (int i = 0; i < 8; i++) [hex appendFormat:@"%02x", digest[i]];
+    return hex;
+}
+
+NSString *SCILicenseRedeemedCode(void) {
+    NSString *code = SCIPanelReadString(kSCICodePref, nil);
+    return code.length ? code : nil;
+}
+
+void SCILicenseForgetCode(void) {
+    for (NSString *key in @[kSCICodePref, kSCICodeHashPref, kSCICodeDaysPref,
+                            kSCICodeAtPref, kSCICodeTierPref]) {
+        CFPreferencesSetAppValue((__bridge CFStringRef)key, NULL,
+                                 (__bridge CFStringRef)@"com.albrhi.panel");
+    }
+    CFPreferencesAppSynchronize((__bridge CFStringRef)@"com.albrhi.panel");
+}
+
+void SCILicenseRedeemCode(NSString *code, void (^completion)(SCILicenseRedeemResult)) {
+    NSString *normalised = SCINormaliseCode(code ?: @"");
+
+    void (^finish)(SCILicenseRedeemResult) = ^(SCILicenseRedeemResult result) {
+        dispatch_async(dispatch_get_main_queue(), ^{ if (completion) completion(result); });
+    };
+
+    if (normalised.length != 12) { finish(SCILicenseRedeemMalformed); return; }
+
+    NSURL *url = [NSURL URLWithString:kSCICodesEndpoint];
+    if (!url) { finish(SCILicenseRedeemOffline); return; }
+
+    NSURLSessionConfiguration *configuration =
+        [NSURLSessionConfiguration ephemeralSessionConfiguration];
+    configuration.timeoutIntervalForRequest = 12;
+    configuration.timeoutIntervalForResource = 20;
+
+    NSURLSession *session = [NSURLSession sessionWithConfiguration:configuration];
+    [[session dataTaskWithURL:url completionHandler:^(NSData *data, NSURLResponse *response,
+                                                      NSError *error) {
+        NSInteger status = [response isKindOfClass:[NSHTTPURLResponse class]]
+            ? ((NSHTTPURLResponse *)response).statusCode : 0;
+
+        // "Could not read the list" is its own answer, never "no such code". Telling somebody
+        // their code is wrong because a coffee shop's wifi asked them to sign in is the shape of
+        // support message this whole file is written to avoid.
+        if (error || status != 200 || !data.length) { finish(SCILicenseRedeemOffline); return; }
+
+        id parsed = [NSJSONSerialization JSONObjectWithData:data options:0 error:NULL];
+        NSDictionary *codes = [parsed isKindOfClass:[NSDictionary class]] ? parsed[@"codes"] : nil;
+        if (![codes isKindOfClass:[NSDictionary class]]) { finish(SCILicenseRedeemOffline); return; }
+
+        NSDictionary *terms = codes[SCICodeHash(normalised)];
+        if (![terms isKindOfClass:[NSDictionary class]]) { finish(SCILicenseRedeemUnknown); return; }
+
+        NSNumber *redeemBy = terms[@"rb"];
+        if ([redeemBy isKindOfClass:[NSNumber class]] &&
+            redeemBy.doubleValue > 0 &&
+            redeemBy.doubleValue <= [NSDate date].timeIntervalSince1970) {
+            finish(SCILicenseRedeemWindowClosed);
+            return;
+        }
+
+        NSNumber *days = terms[@"days"];
+        NSInteger duration = [days isKindOfClass:[NSNumber class]] ? days.integerValue : 0;
+        if (duration < 1) duration = 365;
+
+        NSString *tier = [terms[@"tier"] isKindOfClass:[NSString class]] ? terms[@"tier"] : @"suite";
+
+        // **The clock starts now, not when the code was minted.** A code sold in January and
+        // redeemed in March is a year from March -- anything else quietly sells somebody two
+        // months less than they paid for.
+        CFStringRef domain = (__bridge CFStringRef)@"com.albrhi.panel";
+        CFPreferencesSetAppValue((__bridge CFStringRef)kSCICodePref,
+                                 (__bridge CFStringRef)normalised, domain);
+        CFPreferencesSetAppValue((__bridge CFStringRef)kSCICodeHashPref,
+                                 (__bridge CFStringRef)SCICodeHash(normalised), domain);
+        CFPreferencesSetAppValue((__bridge CFStringRef)kSCICodeDaysPref,
+                                 (__bridge CFNumberRef)@(duration), domain);
+        CFPreferencesSetAppValue((__bridge CFStringRef)kSCICodeAtPref,
+                                 (__bridge CFNumberRef)@((long long)[NSDate date].timeIntervalSince1970),
+                                 domain);
+        CFPreferencesSetAppValue((__bridge CFStringRef)kSCICodeTierPref,
+                                 (__bridge CFStringRef)tier, domain);
+        CFPreferencesAppSynchronize(domain);
+
+        [[NSUserDefaults standardUserDefaults] setDouble:[NSDate date].timeIntervalSince1970
+                                                  forKey:kSCILastCheckDefault];
+        finish(SCILicenseRedeemedOK);
+    }] resume];
+}
+
+/// The state of a redeemed code, if there is one.
+static SCILicenseState SCICodeState(void) {
+    NSString *code = SCILicenseRedeemedCode();
+    if (!code.length) return SCILicenseStateNone;
+
+    NSString *hash = SCIPanelReadString(kSCICodeHashPref, nil);
+
+    // Recomputed rather than trusted. The stored hash is a convenience for the report; the code
+    // itself is what was redeemed, and if the two disagree the stored pair has been edited.
+    if (hash.length && ![hash isEqualToString:SCICodeHash(code)]) return SCILicenseStateMalformed;
+
+    NSArray *revoked = [[NSUserDefaults standardUserDefaults] arrayForKey:kSCIRevokedDefault];
+    if ([revoked isKindOfClass:[NSArray class]] && [revoked containsObject:SCICodeHash(code)]) {
+        return SCILicenseStateRevoked;
+    }
+
+    double activated = SCIPanelReadNumber(kSCICodeAtPref, 0);
+    double days = SCIPanelReadNumber(kSCICodeDaysPref, 0);
+    if (activated <= 0 || days <= 0) return SCILicenseStateMalformed;
+
+    if ([NSDate date].timeIntervalSince1970 > activated + days * 86400) {
+        return SCILicenseStateExpired;
+    }
+
+    return SCILicenseStateValid;
+}
+
 
 NSString *SCILicenseDescribeState(SCILicenseState state) {
     NSString *device = SCILicenseFingerprint();

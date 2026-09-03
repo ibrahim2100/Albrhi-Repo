@@ -117,6 +117,49 @@ NSString *_Nullable SCILicenseStoredKey(void);
 /// Removes it.
 void SCILicenseForgetKey(void);
 
+#pragma mark - Asking for a licence
+
+/// A request to paste into the licence panel: this device, the duration wanted, and a note.
+///
+/// `ALBREQ1.<payload>.<check>` — deliberately not signed, because there is nothing on the device
+/// to sign it with and nothing in it worth forging: a request is a *question*, and the person
+/// answering it decides. The four-character check is for typos, not for tampering, and it is
+/// named that way in the panel so nobody reads it as a signature.
+NSString *SCILicenseMakeRequest(NSInteger days, NSString *_Nullable note);
+
+
+#pragma mark - Redeeming a short code
+
+/// What happened when a code was redeemed.
+typedef NS_ENUM(NSInteger, SCILicenseRedeemResult) {
+    SCILicenseRedeemedOK = 0,
+    SCILicenseRedeemMalformed,     ///< Not the right shape, or a typo the checksum caught.
+    SCILicenseRedeemUnknown,       ///< Correctly shaped and not in the published list.
+    SCILicenseRedeemWindowClosed,  ///< Real, and its redemption window has passed.
+    SCILicenseRedeemOffline,       ///< The list could not be read; nothing was decided.
+};
+
+/// Redeems a short code like `ALB-4K7M-9QX2-P3RT` and binds it to this device.
+///
+/// **A short code cannot carry a signature — it is twelve characters.** So the device hashes what
+/// was typed and looks that hash up in a list published beside the source. The list holds
+/// *hashes*, never codes, so reading it hands nobody a working code; and it is fetched once, at
+/// redemption, after which the licence is local and needs no network again.
+///
+/// The honest limitation, stated here because it cannot be engineered away without a server: an
+/// unbound code is shareable until it is removed from that list. Its protections are the
+/// redemption window it carries and revocation by hash.
+///
+/// Asynchronous, and the completion runs on the main thread.
+void SCILicenseRedeemCode(NSString *code, void (^completion)(SCILicenseRedeemResult result));
+
+/// The code redeemed on this device, normalised, or nil.
+NSString *_Nullable SCILicenseRedeemedCode(void);
+
+/// Forgets it, so another can be entered.
+void SCILicenseForgetCode(void);
+
+
 /// Asks the server whether the stored key is still good, at most once every few hours.
 ///
 /// Never blocks: it returns immediately and the answer lands in the stored state for the next

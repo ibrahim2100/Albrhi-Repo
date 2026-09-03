@@ -92,6 +92,13 @@ BOOL SCIPanelReadBool(NSString *key, BOOL fallback);
 /// microphone is a string ("iphone", "car" or "automatic"), not a boolean.
 NSString *SCIPanelReadString(NSString *key, NSString *fallback);
 
+/// The same, for a number.
+///
+/// A `double` rather than an integer because the two things read this way are a duration in days
+/// and a Unix timestamp, and a timestamp does not fit an `int` on every architecture this builds
+/// for. Absent, or stored as something that is not a number, reads as `fallback`.
+double SCIPanelReadNumber(NSString *key, double fallback);
+
 #ifdef __cplusplus
 }
 #endif

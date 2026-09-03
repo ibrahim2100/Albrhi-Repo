@@ -108,6 +108,11 @@ NSString *SCIPanelReadString(NSString *key, NSString *fallback) {
     return [value isKindOfClass:[NSString class]] ? value : fallback;
 }
 
+double SCIPanelReadNumber(NSString *key, double fallback) {
+    id value = SCIPanelCopyRawValue(key);
+    return [value isKindOfClass:[NSNumber class]] ? [value doubleValue] : fallback;
+}
+
 BOOL SCIPanelAllowsApp(NSString *identifier) {
     // No identity, no question, no injection. Consistent with the opt-in reading below,
     // and it cannot strand anyone: the injection filters bind by bundle identifier, so a

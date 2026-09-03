@@ -757,6 +757,24 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**Three ways in, and they are different instruments.** A device-bound key is the strong one. A
+*request* (`ALBREQ1.…`) is the phone asking for one: unsigned on purpose — nothing on a phone can
+sign it and nothing in it is worth forging, because it is a question and the panel's operator
+answers it. A *short code* (`ALB-4K7M-9QX2-P3RT`) is for selling without a conversation.
+
+**A twelve-character code cannot carry a signature, so it is looked up instead.** The device
+hashes the normalised code and finds that hash in `licence/codes.json`, published beside the
+source — **hashes, never codes**, so publishing it hands nobody a working code. Redemption is the
+one moment in this layer that touches the network and it touches it once. **A code is not bound
+to a device until redeemed**, so one code works for everybody who gets it until its hash is
+removed: that is the trade for being typeable, and it is why keys remain the instrument for
+anything that matters.
+
+**The clock starts at redemption**, or a code sold in January and used in March is two months
+short. And the device and the issuer must agree on the hash byte for byte — including how a
+person's typing is folded (no I, L, O or U; `O`→`0`, `I`/`L`→`1`, `U`→`V`), which was checked
+across dashes, spaces, lower case and a missing prefix rather than assumed.
+
 **Keys are issued from `tools/licence-panel.html`**, deployed to `…/licence-panel/`, which also
 keeps the ledger of who has what and builds `revoked.json`. It is public and inert until a signing
 key is pasted in; signing is WebCrypto, in the browser, and the file has exactly one network call
@@ -1933,7 +1951,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.25** · Watch **0.5.3** · TikTok **0.20.1** ·
+Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.26** · Watch **0.5.3** · TikTok **0.20.1** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
 NextUp **0.1.6** · suite **1.68.1**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.

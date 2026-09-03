@@ -102,6 +102,49 @@ static NSString *const kSCIEnforceKey  = @"licence_enforced";
         [specifiers addObject:remove];
     }
 
+    // Asking for one, and redeeming a code. Both above the gate and below the state, because
+    // this is the order somebody actually moves through the page: what am I, what have I got,
+    // how do I get one.
+    [specifiers addObject:[self groupTitled:SCILocalized(@"lic_get_section")
+                                     footer:SCILocalized(@"lic_get_footer")]];
+
+    PSSpecifier *request = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"lic_request")
+                                                          target:self
+                                                             set:NULL
+                                                             get:NULL
+                                                          detail:Nil
+                                                            cell:PSButtonCell
+                                                            edit:Nil];
+    SCISetButtonAction(request, @selector(makeRequest));
+    [specifiers addObject:request];
+
+    PSSpecifier *redeem = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"lic_redeem")
+                                                         target:self
+                                                            set:NULL
+                                                            get:NULL
+                                                         detail:Nil
+                                                           cell:PSButtonCell
+                                                           edit:Nil];
+    SCISetButtonAction(redeem, @selector(redeemCode));
+    [specifiers addObject:redeem];
+
+    if (SCILicenseRedeemedCode()) {
+        [specifiers addObject:[self factTitled:SCILocalized(@"lic_code_in_use")
+                                         value:SCILicenseRedeemedCode()
+                                        symbol:@"ticket"
+                                          tint:[UIColor systemPurpleColor]]];
+
+        PSSpecifier *forget = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"lic_forget_code")
+                                                             target:self
+                                                                set:NULL
+                                                                get:NULL
+                                                             detail:Nil
+                                                               cell:PSButtonCell
+                                                               edit:Nil];
+        SCISetButtonAction(forget, @selector(forgetCode));
+        [specifiers addObject:forget];
+    }
+
     // The gate itself, last and with the plainest footer on the page.
     //
     // **Off by default and it stays off until somebody turns it on here.** The source has been
@@ -172,6 +215,130 @@ static NSString *const kSCIEnforceKey  = @"licence_enforced";
                                             handler:nil]];
 
     [self presentViewController:sheet animated:YES completion:nil];
+}
+
+///
+/// Asks for a duration, then produces the request text.
+///
+/// **A share sheet, not just a clipboard.** The whole point is that this string has to reach
+/// somebody else, and on a phone that means the app the person already talks to their seller in.
+/// Copying is offered too, because a share sheet on a jailbroken Settings is not a thing to
+/// depend on alone.
+///
+- (void)makeRequest {
+    UIAlertController *sheet =
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"lic_request")
+                                            message:SCILocalized(@"lic_request_note")
+                                     preferredStyle:UIAlertControllerStyleAlert];
+
+    [sheet addTextFieldWithConfigurationHandler:^(UITextField *field) {
+        field.placeholder = SCILocalized(@"lic_request_days");
+        field.keyboardType = UIKeyboardTypeNumberPad;
+        field.text = @"365";
+    }];
+    [sheet addTextFieldWithConfigurationHandler:^(UITextField *field) {
+        field.placeholder = SCILocalized(@"lic_request_who");
+        field.autocapitalizationType = UITextAutocapitalizationTypeWords;
+    }];
+
+    __weak __typeof(self) weakSelf = self;
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"lic_request_make")
+                                              style:UIAlertActionStyleDefault
+                                            handler:^(__unused UIAlertAction *action) {
+        NSInteger days = sheet.textFields.firstObject.text.integerValue;
+        NSString *note = sheet.textFields.lastObject.text;
+
+        NSString *request = SCILicenseMakeRequest(days, note);
+        if (!request.length) { [weakSelf tell:SCILocalized(@"lic_request_failed")]; return; }
+
+        [weakSelf shareRequest:request];
+    }]];
+
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
+                                              style:UIAlertActionStyleCancel
+                                            handler:nil]];
+    [self presentViewController:sheet animated:YES completion:nil];
+}
+
+- (void)shareRequest:(NSString *)request {
+    [UIPasteboard generalPasteboard].string = request;
+
+    UIAlertController *done =
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"lic_request_ready")
+                                            message:request
+                                     preferredStyle:UIAlertControllerStyleAlert];
+
+    [done addAction:[UIAlertAction actionWithTitle:SCILocalized(@"lic_request_share")
+                                             style:UIAlertActionStyleDefault
+                                           handler:^(__unused UIAlertAction *action) {
+        UIActivityViewController *share =
+            [[UIActivityViewController alloc] initWithActivityItems:@[request]
+                                              applicationActivities:nil];
+
+        // An iPad refuses a popover with no anchor, and Settings runs there too.
+        share.popoverPresentationController.sourceView = self.view;
+        share.popoverPresentationController.sourceRect =
+            CGRectMake(CGRectGetMidX(self.view.bounds), CGRectGetMidY(self.view.bounds), 1, 1);
+
+        [self presentViewController:share animated:YES completion:nil];
+    }]];
+
+    [done addAction:[UIAlertAction actionWithTitle:SCILocalized(@"ok_button")
+                                             style:UIAlertActionStyleCancel
+                                           handler:nil]];
+    [self presentViewController:done animated:YES completion:nil];
+}
+
+///
+/// Redeeming a short code.
+///
+/// The one place in this whole layer that needs the network, and it needs it once: the code is
+/// twelve characters and cannot carry a signature, so the device hashes it and looks that hash up
+/// in a published list. Afterwards the licence is local.
+///
+- (void)redeemCode {
+    UIAlertController *sheet =
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"lic_redeem")
+                                            message:SCILocalized(@"lic_redeem_note")
+                                     preferredStyle:UIAlertControllerStyleAlert];
+
+    [sheet addTextFieldWithConfigurationHandler:^(UITextField *field) {
+        field.placeholder = @"ALB-XXXX-XXXX-XXXX";
+        field.autocorrectionType = UITextAutocorrectionTypeNo;
+        field.autocapitalizationType = UITextAutocapitalizationTypeAllCharacters;
+        field.clearButtonMode = UITextFieldViewModeWhileEditing;
+    }];
+
+    __weak __typeof(self) weakSelf = self;
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"lic_redeem_go")
+                                              style:UIAlertActionStyleDefault
+                                            handler:^(__unused UIAlertAction *action) {
+        NSString *typed = sheet.textFields.firstObject.text;
+
+        SCILicenseRedeemCode(typed, ^(SCILicenseRedeemResult result) {
+            NSString *message;
+            switch (result) {
+                case SCILicenseRedeemedOK:          message = SCILocalized(@"lic_redeem_ok"); break;
+                case SCILicenseRedeemMalformed:     message = SCILocalized(@"lic_redeem_bad"); break;
+                case SCILicenseRedeemUnknown:       message = SCILocalized(@"lic_redeem_unknown"); break;
+                case SCILicenseRedeemWindowClosed:  message = SCILocalized(@"lic_redeem_late"); break;
+                case SCILicenseRedeemOffline:       message = SCILocalized(@"lic_redeem_offline"); break;
+            }
+            [weakSelf tell:message];
+            [weakSelf reloadSpecifiers];
+        });
+    }]];
+
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
+                                              style:UIAlertActionStyleCancel
+                                            handler:nil]];
+    [self presentViewController:sheet animated:YES completion:nil];
+}
+
+- (void)forgetCode {
+    SCILicenseForgetCode();
+    [self tell:SCILocalized(@"lic_code_forgotten")];
+    [self reloadSpecifiers];
 }
 
 - (void)removeKey {

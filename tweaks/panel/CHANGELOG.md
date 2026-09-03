@@ -1,5 +1,35 @@
 # Albrhi Panel Changelog
 
+## v0.9.26
+
+**Two ways to get a licence without reading a device code down a phone line.**
+
+**Request a licence** makes a short string carrying this device, the duration wanted and a name,
+with a share sheet to send it. Nothing is transmitted by the tweak — you send it. It is
+deliberately **not signed**: there is nothing on a phone to sign it with and nothing in it worth
+forging, since it is a question and the person answering decides. The four characters on the end
+are a *check* for a typo in transit, and they are called a check everywhere they appear so nobody
+comes to read them as a signature.
+
+**Enter a code** takes a short one like `ALB-4K7M-9QX2-P3RT` and binds it to this device. A code
+that short cannot carry a signature, so the device hashes what was typed and looks that hash up in
+a list published beside the source — the list holds **hashes, never codes**, so reading it hands
+nobody a working code. This is the one moment in the whole licence layer that needs the network,
+and it needs it once; afterwards the licence is local.
+
+The alphabet has no I, L, O or U, and what a person types is folded back before hashing: `ALB-OA82…`
+and `ALB-0A82…` are the same code, whichever way it was heard. Checked against the panel's own
+minting — the device and the issuer agree byte for byte, across dashes, spaces, lower case and a
+missing prefix.
+
+**The clock starts at redemption, not at minting**, or a code sold in January and used in March
+would quietly be two months short.
+
+And five refusals rather than one: wrong shape, no such code, window closed, list unreadable, or
+done. **"The list could not be read" is never reported as "no such code"** — telling somebody
+their code is wrong because a café's wifi asked them to sign in is exactly the support message
+this design exists to avoid.
+
 ## v0.9.25
 
 **A Licence page: the device code to send, the key to enter, and the switch that turns the gate

@@ -409,6 +409,12 @@ jobs:
                 mkdir -p pages/licence
                 cp main/licence/revoked.json pages/licence/revoked.json
 
+                # And the short-code list the same way -- hashes, never codes, so publishing it
+                # is free. Copied rather than generated for the same reason: a human replaces it
+                # from the panel, and anything generated here would overwrite that on the next
+                # release.
+                cp main/licence/codes.json pages/licence/codes.json
+
                 # The licence panel, beside the list it manages. Static: it does nothing at all
                 # until a signing key is loaded into it by hand, and the key never leaves the
                 # browser -- so hosting it publicly costs nothing, the same reasoning the deb
