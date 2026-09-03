@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.73.1
+
+**The licence panel edits properly now** — name and duration together, with lifetime in the menu,
+in a dialog of the page's own rather than a browser prompt. Nothing in the tweaks changed.
+
 ## v1.73.0
 
 **Buying is one screen now.** Pick a plan, put in your name and number, and the request reaches

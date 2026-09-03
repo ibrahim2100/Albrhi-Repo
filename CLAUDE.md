@@ -771,6 +771,14 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**`prompt()` cannot offer a choice, so a control built on one silently narrows what is
+possible.** Editing a licence asked for a number of days in a browser prompt — which meant
+"lifetime" could not be expressed at all, the name could not be touched in the same breath, and
+deleting needed two stacked confirms whose *wording* carried the option a pair of buttons should
+have. Replaced by one dialog belonging to the page, used for editing and for anything
+destructive. **The tell is worth remembering: when an action has more than a yes and a string in
+it, a browser box is not a small compromise — it is the reason half the action is missing.**
+
 **File the record before handing the user to another app.** The plans card sends the licence
 request to the server and *then* opens WhatsApp. The other order loses the case worth keeping:
 somebody who closes the message, or never sends it, leaves no request in the panel and no trace
@@ -2159,7 +2167,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.35** · Watch **0.5.3** · TikTok **0.20.1** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.1.6** · suite **1.73.0**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.6** · suite **1.73.1**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being
