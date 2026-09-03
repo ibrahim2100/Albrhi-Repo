@@ -92,6 +92,20 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
+          "title": "v0.5.3",
+          "useBoldText": true
+        },
+        {
+          "class": "DepictionMarkdownView",
+          "markdown": "• *Released on its own push.",
+          "useSpacing": true
+        },
+        {
+          "class": "DepictionSpacerView",
+          "spacing": 10
+        },
+        {
+          "class": "DepictionSubheaderView",
           "title": "v0.5.2",
           "useBoldText": true
         },
@@ -117,20 +131,6 @@
         {
           "class": "DepictionSpacerView",
           "spacing": 10
-        },
-        {
-          "class": "DepictionSubheaderView",
-          "title": "v0.5.0",
-          "useBoldText": true
-        },
-        {
-          "class": "DepictionMarkdownView",
-          "markdown": "• **The domain names are read off the device and asked about in the same pass.**",
-          "useSpacing": true
-        },
-        {
-          "class": "DepictionSpacerView",
-          "spacing": 10
         }
       ]
     },
@@ -141,7 +141,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "0.5.2"
+          "text": "0.5.3"
         },
         {
           "class": "DepictionTableTextView",
@@ -179,13 +179,13 @@
         {
           "class": "DepictionTableButtonView",
           "title": "Source code",
-          "action": "https://github.com/ibrahim2100/Albrhi-Repo",
+          "action": "https://github.com/ibrahim2100/albrhi-repo",
           "openExternal": true
         },
         {
           "class": "DepictionTableButtonView",
           "title": "Report an issue",
-          "action": "https://github.com/ibrahim2100/Albrhi-Repo/issues/new",
+          "action": "https://github.com/ibrahim2100/albrhi-repo/issues/new",
           "openExternal": true
         },
         {
