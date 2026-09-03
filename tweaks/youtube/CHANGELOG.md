@@ -3,6 +3,26 @@
 **Tested on YouTube 21.32.4.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.28.2
+
+**The save button sat on the video's title in fullscreen. It is measured off the app's own top
+row now instead of pinned to a number.**
+
+Inline, that row holds a collapse chevron and nothing else on the left, so eight points below the
+safe area was clear. In fullscreen YouTube draws the title across it, and eight points below the
+safe area is exactly where the title is.
+
+The obvious fix — detect fullscreen, add a constant — is two guesses at once: that the detection
+is right, and that the constant is. `YTMainAppControlsOverlayView` declares `-topControlsHeight`
+(`d16@0:8`), so the row measures itself and the button goes below whatever is in it, in both
+layouts, without this code knowing which layout it is in. Read after `%orig` in `-layoutSubviews`,
+because `%orig` is what sets that height.
+
+**A height of zero is a row that has not been laid out yet, not a row with no height** — the
+previous value is kept rather than collapsing the button onto the title for a frame. And the
+report carries both the inset used and the row height it came from, so "still overlapping"
+arrives with the two numbers that explain it.
+
 ## v1.28.1
 
 **A regression from the audit pass, found on a device and fixed: some version numbers and

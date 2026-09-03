@@ -58,6 +58,9 @@ static NSUInteger sciOverlayTaps = 0;
 /// separately from its taps.
 static NSUInteger sciOverlayFadeSignals = 0;
 
+/// Where the button ended up vertically, so "it overlaps the title" has a number next to it.
+static CGFloat sciOverlayTopInset = 8;
+
 static char kSCIOverlaySaveButton;
 static char kSCIOverlayJoined;
 
@@ -130,6 +133,28 @@ static NSString *SCIEndTimeText(double totalTime, double elapsed) {
 /// during one; these are the two moments YouTube itself decides.
 static char kSCIOverlayShown;
 static char kSCIOverlayTopShown;
+static char kSCIOverlayTopConstraint;
+
+/// How far below the safe area the button belongs, measured rather than chosen.
+///
+/// **In fullscreen YouTube draws the video's title across the top row**, and a button pinned
+/// eight points below the safe area lands on top of it — reported from the device exactly that
+/// way. The obvious fix is to detect fullscreen and add a number, which is two guesses: that the
+/// detection is right, and that the number is. The class measures the row itself
+/// (`-topControlsHeight`, `d16@0:8`), so the button goes underneath whatever is in it, in both
+/// layouts, by construction.
+///
+/// A height of zero is a row that has not been laid out yet rather than a row with no height, so
+/// the previous value is kept instead of collapsing the button onto the title for one frame.
+static CGFloat SCITopInsetFor(YTMainAppControlsOverlayView *overlay) {
+    if (![overlay respondsToSelector:@selector(topControlsHeight)]) return 8;
+
+    double height = [overlay topControlsHeight];
+    if (!(height > 0) || !isfinite(height)) return 0;   // 0 == "leave it where it is"
+
+    return (CGFloat)height + 6;
+}
+
 
 static void SCISyncSaveButton(YTMainAppControlsOverlayView *overlay, BOOL animated) {
     UIButton *save = objc_getAssociatedObject(overlay, &kSCIOverlaySaveButton);
@@ -249,11 +274,19 @@ static void SCISyncSaveButton(YTMainAppControlsOverlayView *overlay, BOOL animat
             //
             save.translatesAutoresizingMaskIntoConstraints = NO;
             [self addSubview:save];
+
+            // The top constraint is kept rather than activated and forgotten: how far down the
+            // button belongs is a measurement of the app's own top row, and that row is a
+            // different height in fullscreen than it is inline.
+            NSLayoutConstraint *top =
+                [save.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor
+                                               constant:8];
+            objc_setAssociatedObject(self, &kSCIOverlayTopConstraint, top, OBJC_ASSOCIATION_RETAIN);
+
             [NSLayoutConstraint activateConstraints:@[
                 [save.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor
                                                    constant:56],
-                [save.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor
-                                               constant:8],
+                top,
                 [save.widthAnchor constraintEqualToConstant:36],
                 [save.heightAnchor constraintEqualToConstant:36]
             ]];
@@ -270,11 +303,16 @@ static void SCISyncSaveButton(YTMainAppControlsOverlayView *overlay, BOOL animat
         [self bringSubviewToFront:save];
 
         sciOverlayPlacement =
+            [NSString stringWithFormat:SCILocalized(@"diag_overlay_frame_inset"),
+                (double)sciOverlayTopInset,
+                [self respondsToSelector:@selector(topControlsHeight)]
+                    ? (double)[self topControlsHeight] : -1.0];
+        sciOverlayPlacement = [sciOverlayPlacement stringByAppendingFormat:@" · %@",
             [NSString stringWithFormat:SCILocalized(@"diag_overlay_frame"),
                 (double)save.frame.origin.x, (double)save.frame.origin.y,
                 (double)save.frame.size.width, (double)save.frame.size.height,
                 save.window ? SCILocalized(@"diag_overlay_in_window")
-                            : SCILocalized(@"diag_overlay_no_window")];
+                            : SCILocalized(@"diag_overlay_no_window")]];
 
         SCIReportOverlayState(joined);
     } @catch (NSException *exception) {
@@ -296,6 +334,20 @@ static void SCISyncSaveButton(YTMainAppControlsOverlayView *overlay, BOOL animat
 // -Werror turns into three fatal errors in one generated line. Every other %new in this
 // project writes a plain typed parameter for the same reason; an unused one is not warned
 // about in an Objective-C method the way it would be in a C function.
+- (void)layoutSubviews {
+    %orig;
+
+    // After %orig, because the row's own height is what is being read and %orig is what sets it.
+    NSLayoutConstraint *top = objc_getAssociatedObject(self, &kSCIOverlayTopConstraint);
+    if (!top) return;
+
+    CGFloat wanted = SCITopInsetFor(self);
+    if (wanted <= 0 || top.constant == wanted) return;
+
+    top.constant = wanted;
+    sciOverlayTopInset = wanted;
+}
+
 - (void)setOverlayVisible:(BOOL)visible {
     %orig;
     sciOverlayFadeSignals++;

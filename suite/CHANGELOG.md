@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.67.2
+
+**YouTube 1.28.2.** The save button inside the player overlapped the video's title in fullscreen.
+It now sits below the app's own top control row, measured from that row rather than placed at a
+fixed distance — so it is clear of whatever YouTube puts there in either layout.
+
 ## v1.67.1
 
 **Fixes a regression 1.66.0 introduced: app versions were missing from the panel, and some of

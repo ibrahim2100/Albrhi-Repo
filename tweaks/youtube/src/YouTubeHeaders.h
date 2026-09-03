@@ -283,6 +283,17 @@
 // that have nothing to do with the fade and not at all during one. These are the moments
 // YouTube itself calls the decision.
 //
+//
+// How tall the app's own top control row is, and what it put in it.
+//
+// `-topControlsHeight` (`d16@0:8`) and `titleView` are both declared on this class. **This is
+// the difference between placing a button and guessing at a number**: in fullscreen YouTube
+// draws the video's title across that row, and a button pinned eight points below the safe area
+// lands on top of it. The row measures itself; asking is free.
+//
+- (double)topControlsHeight;
+@property (nonatomic, readonly) UIView *titleView;
+
 - (BOOL)isOverlayVisible;
 - (void)setOverlayVisible:(BOOL)visible;
 - (void)setTopOverlayVisible:(BOOL)visible isAutonavCanceledState:(BOOL)cancelled;
