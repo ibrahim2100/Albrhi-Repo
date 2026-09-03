@@ -151,6 +151,7 @@ typedef NS_ENUM(NSInteger, SCILicenseRedeemResult) {
     SCILicenseRedeemUnknown,       ///< Correctly shaped and not in the published list.
     SCILicenseRedeemWindowClosed,  ///< Real, and its redemption window has passed.
     SCILicenseRedeemOffline,       ///< The list could not be read; nothing was decided.
+    SCILicenseRedeemTaken,         ///< Real, and already bound to a different device.
 };
 
 /// Redeems a short code like `ALB-4K7M-9QX2-P3RT` and binds it to this device.
@@ -179,6 +180,53 @@ void SCILicenseForgetCode(void);
 /// Never blocks: it returns immediately and the answer lands in the stored state for the next
 /// question. Called from the panel and once per launch from the gate.
 void SCILicenseCheckInIfDue(void);
+
+
+#pragma mark - The server
+
+///
+/// Where the licence server lives, or nil.
+///
+/// Read from the panel's own domain rather than compiled in, so a deployment can be pointed
+/// somewhere else — or unset — without rebuilding nine tweaks. **Absent means every server
+/// feature is simply unavailable and the offline key path works exactly as before**, which is the
+/// direction this has to fail in: a licence layer that stops working because a URL was not
+/// configured yet would be worse than no server at all.
+///
+NSString *_Nullable SCILicenseServerBase(void);
+
+/// Points the device at a server. Panel only — a sandboxed app cannot write this domain.
+void SCILicenseSetServerBase(NSString *_Nullable base);
+
+/// What a call to the server came back with.
+typedef NS_ENUM(NSInteger, SCILicenseServerResult) {
+    SCILicenseServerOK = 0,         ///< A licence arrived and was stored.
+    SCILicenseServerNoLicence,      ///< The server knows this device and has nothing for it.
+    SCILicenseServerRevoked,        ///< It had one and it was withdrawn.
+    SCILicenseServerExpired,        ///< It had one and its term ended.
+    SCILicenseServerPending,        ///< A request is waiting for an answer.
+    SCILicenseServerUnreachable,    ///< Nothing was decided.
+    SCILicenseServerNotConfigured,  ///< No server address on this device.
+};
+
+/// Asks the server for a fresh licence and stores it.
+///
+/// This is the renewal call. The token the server signs lasts a week, so this failing is not an
+/// emergency — there are six days of slack behind it — which is exactly why it never blocks and
+/// never reports a network problem as a licence problem.
+void SCILicenseSyncWithServer(void (^_Nullable completion)(SCILicenseServerResult result));
+
+/// Asks the server for a licence of `days`, on this device's behalf.
+void SCILicenseRequestFromServer(NSInteger days, NSString *_Nullable note,
+                                 void (^completion)(SCILicenseServerResult result));
+
+/// Redeems a short code against the server, which binds it to this device.
+void SCILicenseRedeemWithServer(NSString *code,
+                                void (^completion)(SCILicenseRedeemResult result));
+
+/// When the current licence's *term* ends, as opposed to when its token needs renewing.
+/// Zero when there is no licence or it carries no end date.
+NSTimeInterval SCILicenseTermEnds(void);
 
 /// One day, in seconds. The owner's choice, and the single place it lives.
 extern const NSTimeInterval SCILicenseGraceSeconds;

@@ -1,5 +1,33 @@
 # Albrhi Panel Changelog
 
+## v0.9.28
+
+**A licence server: requests arrive on their own, and a licence renews itself.**
+
+Settings › Albrhi › Licence gains a **server** section. With an address set, *Request a licence*
+sends the request instead of making a text to carry by hand, *Enter a code* is answered by the
+server, and the licence renews in the background — every six hours normally, every half hour once
+less than two days are left.
+
+**The licence the device holds is signed for seven days, not for the term.** That is the whole of
+the live-control design and it buys both halves at once: withdrawing a licence stops the device
+within a week without it having to fetch any list, and a flight or a captive portal costs nobody
+anything, because there are six days of slack behind every renewal. A failed check is reported as
+*nothing was decided* — never as a licence problem.
+
+**The term and the renewal date are two different dates and the page shows the term.** Telling
+somebody who bought a year that their licence expires in seven days is a screen that generates a
+support message on its own.
+
+**The server decides; it is never trusted.** A token that does not verify against the public key
+compiled into the tweak, or is not for this device, is dropped — so pointing the address at
+something hostile gains a refusal and nothing else. https is required: a licence arriving over
+plain http could be swapped in flight and the signature would still check out.
+
+**And the offline path is untouched.** No server set means everything works exactly as it did in
+0.9.27 — a key issued on the Mac, verified on the device, no network at any point. That is the way
+back in if the server is ever unreachable, which is why it stays.
+
 ## v0.9.27
 
 **Albrhi now requires a licence.** Without a valid one the tweaks stand down: no hook is installed

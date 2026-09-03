@@ -85,6 +85,22 @@ static NSString *const kSCIEnforceKey  = @"licence_enforced";
                                     symbol:@"checkmark.seal"
                                       tint:[UIColor systemGreenColor]]];
 
+    // The *term*, not the renewal date. A server-signed licence is renewed every seven days, and
+    // showing that as the expiry to somebody who bought a year is a screen that generates a
+    // support message on its own.
+    NSTimeInterval term = SCILicenseTermEnds();
+    if (term > 0) {
+        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+        formatter.dateStyle = NSDateFormatterMediumStyle;
+        formatter.timeStyle = NSDateFormatterNoStyle;
+
+        [specifiers addObject:[self factTitled:SCILocalized(@"lic_until")
+                                         value:[formatter stringFromDate:
+                                                   [NSDate dateWithTimeIntervalSince1970:term]]
+                                        symbol:@"calendar"
+                                          tint:[UIColor systemIndigoColor]]];
+    }
+
     PSSpecifier *enter = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"lic_enter")
                                                         target:self
                                                            set:NULL
@@ -105,6 +121,43 @@ static NSString *const kSCIEnforceKey  = @"licence_enforced";
                                                                edit:Nil];
         SCISetButtonAction(remove, @selector(removeKey));
         [specifiers addObject:remove];
+    }
+
+    // The server, if there is one. Above the asking, because whether a server is configured is
+    // what decides *how* asking works -- with one, a request is sent and answered; without one,
+    // it is a text you carry to the seller yourself.
+    NSString *server = SCILicenseServerBase();
+
+    [specifiers addObject:[self groupTitled:SCILocalized(@"lic_server_section")
+                                     footer:server ? SCILocalized(@"lic_server_footer")
+                                                   : SCILocalized(@"lic_server_none_footer")]];
+
+    [specifiers addObject:[self factTitled:SCILocalized(@"lic_server")
+                                     value:server ?: SCILocalized(@"lic_server_none")
+                                    symbol:@"antenna.radiowaves.left.and.right"
+                                      tint:server ? [UIColor systemTealColor]
+                                                  : [UIColor systemGrayColor]]];
+
+    PSSpecifier *setServer = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"lic_server_set")
+                                                            target:self
+                                                               set:NULL
+                                                               get:NULL
+                                                            detail:Nil
+                                                              cell:PSButtonCell
+                                                              edit:Nil];
+    SCISetButtonAction(setServer, @selector(setServerAddress));
+    [specifiers addObject:setServer];
+
+    if (server) {
+        PSSpecifier *sync = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"lic_sync")
+                                                           target:self
+                                                              set:NULL
+                                                              get:NULL
+                                                           detail:Nil
+                                                             cell:PSButtonCell
+                                                             edit:Nil];
+        SCISetButtonAction(sync, @selector(syncNow));
+        [specifiers addObject:sync];
     }
 
     // Asking for one, and redeeming a code. Both above the gate and below the state, because
@@ -261,6 +314,19 @@ static NSString *const kSCIEnforceKey  = @"licence_enforced";
         NSInteger days = sheet.textFields.firstObject.text.integerValue;
         NSString *note = sheet.textFields.lastObject.text;
 
+        // With a server, the request is *sent*. Without one, it becomes a text to carry to the
+        // seller by hand -- which is what shipped before the server existed and remains the way
+        // back in if it is ever unreachable.
+        if (SCILicenseServerBase()) {
+            SCILicenseRequestFromServer(days, note, ^(SCILicenseServerResult result) {
+                [weakSelf tell:result == SCILicenseServerPending
+                                    ? SCILocalized(@"lic_request_sent")
+                                    : SCILocalized(@"lic_sync_unreachable")];
+                [weakSelf reloadSpecifiers];
+            });
+            return;
+        }
+
         NSString *request = SCILicenseMakeRequest(days, note);
         if (!request.length) { [weakSelf tell:SCILocalized(@"lic_request_failed")]; return; }
 
@@ -328,7 +394,7 @@ static NSString *const kSCIEnforceKey  = @"licence_enforced";
                                             handler:^(__unused UIAlertAction *action) {
         NSString *typed = sheet.textFields.firstObject.text;
 
-        SCILicenseRedeemCode(typed, ^(SCILicenseRedeemResult result) {
+        SCILicenseRedeemWithServer(typed, ^(SCILicenseRedeemResult result) {
             NSString *message;
             switch (result) {
                 case SCILicenseRedeemedOK:          message = SCILocalized(@"lic_redeem_ok"); break;
@@ -336,6 +402,7 @@ static NSString *const kSCIEnforceKey  = @"licence_enforced";
                 case SCILicenseRedeemUnknown:       message = SCILocalized(@"lic_redeem_unknown"); break;
                 case SCILicenseRedeemWindowClosed:  message = SCILocalized(@"lic_redeem_late"); break;
                 case SCILicenseRedeemOffline:       message = SCILocalized(@"lic_redeem_offline"); break;
+                case SCILicenseRedeemTaken:         message = SCILocalized(@"lic_redeem_taken"); break;
             }
             [weakSelf tell:message];
             [weakSelf reloadSpecifiers];
@@ -346,6 +413,69 @@ static NSString *const kSCIEnforceKey  = @"licence_enforced";
                                               style:UIAlertActionStyleCancel
                                             handler:nil]];
     [self presentViewController:sheet animated:YES completion:nil];
+}
+
+- (void)setServerAddress {
+    UIAlertController *sheet =
+        [UIAlertController alertControllerWithTitle:SCILocalized(@"lic_server_set")
+                                            message:SCILocalized(@"lic_server_set_note")
+                                     preferredStyle:UIAlertControllerStyleAlert];
+
+    [sheet addTextFieldWithConfigurationHandler:^(UITextField *field) {
+        field.placeholder = @"https://albrhi-licence.….workers.dev";
+        field.keyboardType = UIKeyboardTypeURL;
+        field.autocorrectionType = UITextAutocorrectionTypeNo;
+        field.autocapitalizationType = UITextAutocapitalizationTypeNone;
+        field.clearButtonMode = UITextFieldViewModeWhileEditing;
+        field.text = SCILicenseServerBase() ?: @"https://";
+    }];
+
+    __weak __typeof(self) weakSelf = self;
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"lic_apply")
+                                              style:UIAlertActionStyleDefault
+                                            handler:^(__unused UIAlertAction *action) {
+        NSString *typed = sheet.textFields.firstObject.text;
+        SCILicenseSetServerBase(typed);
+
+        // Said rather than assumed: `SCILicenseServerBase` refuses anything that is not https,
+        // and a silently rejected address would look exactly like a server that is down.
+        if (typed.length > 8 && !SCILicenseServerBase()) {
+            [weakSelf tell:SCILocalized(@"lic_server_bad")];
+        } else {
+            [weakSelf syncNow];
+        }
+        [weakSelf reloadSpecifiers];
+    }]];
+
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"lic_server_clear")
+                                              style:UIAlertActionStyleDestructive
+                                            handler:^(__unused UIAlertAction *action) {
+        SCILicenseSetServerBase(nil);
+        [weakSelf reloadSpecifiers];
+    }]];
+
+    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
+                                              style:UIAlertActionStyleCancel
+                                            handler:nil]];
+    [self presentViewController:sheet animated:YES completion:nil];
+}
+
+- (void)syncNow {
+    __weak __typeof(self) weakSelf = self;
+    SCILicenseSyncWithServer(^(SCILicenseServerResult result) {
+        NSString *message;
+        switch (result) {
+            case SCILicenseServerOK:            message = SCILocalized(@"lic_sync_ok"); break;
+            case SCILicenseServerPending:       message = SCILocalized(@"lic_sync_pending"); break;
+            case SCILicenseServerNoLicence:     message = SCILocalized(@"lic_sync_none"); break;
+            case SCILicenseServerRevoked:       message = SCILocalized(@"lic_sync_revoked"); break;
+            case SCILicenseServerExpired:       message = SCILocalized(@"lic_sync_expired"); break;
+            case SCILicenseServerUnreachable:   message = SCILocalized(@"lic_sync_unreachable"); break;
+            case SCILicenseServerNotConfigured: message = SCILocalized(@"lic_server_none"); break;
+        }
+        [weakSelf tell:message];
+        [weakSelf reloadSpecifiers];
+    });
 }
 
 - (void)forgetCode {

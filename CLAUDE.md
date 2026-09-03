@@ -771,6 +771,36 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**There is a licence server as of Panel 0.9.28 — a Cloudflare Worker in `server/` — and the
+offline path is kept deliberately, not by inertia.** With a server configured, requests arrive on
+their own and the device renews a **seven-day** signed licence in the background. With none, a key
+issued by `tools/licence.py` verifies with no network at all. The second is the way back in when
+the first is unreachable, which is the only thing that makes "the server holds the only signing
+key" a decision rather than a single point of total failure.
+
+**Seven days is the whole live-control design, and both halves matter.** Revocation becomes real —
+withdraw a licence and the device stops within a week, with no list for it to decline to fetch —
+while a flight or a captive portal costs nobody anything, because six days of slack sit behind
+every renewal. Asking the server per launch would revoke faster and make every customer's tweaks
+dead the minute the network is. **A failed check is reported as "nothing was decided", never as a
+licence problem.**
+
+**The server decides; it is never trusted.** A token that does not verify against the compiled
+public key, or is not for this device, is dropped — so pointing the address at something hostile
+earns a refusal and nothing else. https is required, because a licence over plain http can be
+swapped in flight and the signature still checks out.
+
+**The term and the renewal date are two dates, and the screen must show the term.** The token
+carries `until` alongside `exp` for exactly this: telling somebody who bought a year that their
+licence expires in seven days is a support message the code wrote itself.
+
+**And the whole loop was proved before it shipped, in one harness rather than on a device.** The
+Worker was driven in node with a fake KV, the *panel's own script block* was pointed at it, and
+the token that came out of pressing «موافقة» was handed to the real Objective-C verifier, which
+accepted it. Three separate signers now exist — `licence.py`, the Worker, and the browser panel
+that preceded it — and all three had to agree byte for byte on sorted-key JSON and on P1363→DER,
+which is exactly the kind of agreement that fails silently and mints keys no phone will take.
+
 **Three ways in, and they are different instruments.** A device-bound key is the strong one. A
 *request* (`ALBREQ1.…`) is the phone asking for one: unsigned on purpose — nothing on a phone can
 sign it and nothing in it is worth forging, because it is a question and the panel's operator
@@ -1975,7 +2005,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.27** · Watch **0.5.3** · TikTok **0.20.1** ·
+Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.28** · Watch **0.5.3** · TikTok **0.20.1** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
 NextUp **0.1.6** · suite **1.70.0**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.

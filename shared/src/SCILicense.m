@@ -89,6 +89,7 @@ static NSString *SCIHardwareModel(void) {
 }
 
 static NSString *const kSCIDevicePref = @"licence_device";
+static NSString *const kSCIServerPref = @"licence_server";
 
 /// Eight random bytes as sixteen hex characters.
 ///
@@ -372,10 +373,39 @@ void SCILicenseForgetKey(void) {
 #pragma mark - Check-in
 
 void SCILicenseCheckInIfDue(void) {
-    if (!SCILicenseStoredKey()) return;
-
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSTimeInterval last = [defaults doubleForKey:kSCILastCheckDefault];
+
+    //
+    // **With a server configured, the check-in is a renewal and it runs whether or not there is a
+    // key already.** A device that has just been approved has nothing stored, so a `return` on an
+    // empty key would mean the licence never arrives without somebody opening the panel — which
+    // is exactly the sort of "works if you know the trick" behaviour this project keeps ending up
+    // with when a gate is placed before the thing it gates.
+    //
+    if (SCILicenseServerBase()) {
+        NSTimeInterval interval = kSCILicenseCheckInterval;
+
+        // Renew sooner when the token is close to running out. Six hours is right for a healthy
+        // token and far too slow for one with a day left: at that point the sync is not a
+        // formality, it is the only thing standing between a paying user and a closed gate.
+        NSDictionary *payload = nil;
+        if (SCIEvaluateKey(SCILicenseStoredKey(), &payload) == SCILicenseStateValid) {
+            NSNumber *expiry = payload[@"exp"];
+            double left = [expiry isKindOfClass:[NSNumber class]]
+                ? expiry.doubleValue - [NSDate date].timeIntervalSince1970 : 0;
+            if (left < 2 * 86400) interval = 30 * 60;
+        }
+
+        if (last > 0 && [NSDate date].timeIntervalSince1970 - last < interval) return;
+
+        // Not waited on, and its result is deliberately dropped: whatever it decides lands in the
+        // stored token for the *next* question, and a launch must never sit behind a network call.
+        SCILicenseSyncWithServer(nil);
+        return;
+    }
+
+    if (!SCILicenseStoredKey()) return;
     if (last > 0 && [NSDate date].timeIntervalSince1970 - last < kSCILicenseCheckInterval) return;
 
     NSURL *url = [NSURL URLWithString:kSCILicenseEndpoint];
@@ -411,6 +441,189 @@ void SCILicenseCheckInIfDue(void) {
         }];
 
     [task resume];
+}
+
+
+#pragma mark - The server
+
+NSString *SCILicenseServerBase(void) {
+    NSString *base = SCIPanelReadString(kSCIServerPref, nil);
+    if (!base.length) return nil;
+
+    // Trailing slashes trimmed here rather than at four call sites, and https demanded rather
+    // than assumed: a licence arriving over plain http could be swapped in flight by anyone on
+    // the same wifi, and the signature would still check out because they could simply replay an
+    // older, longer-lived one.
+    while ([base hasSuffix:@"/"]) base = [base substringToIndex:base.length - 1];
+    if (![base hasPrefix:@"https://"]) return nil;
+
+    return base;
+}
+
+void SCILicenseSetServerBase(NSString *base) {
+    CFStringRef domain = (__bridge CFStringRef)@"com.albrhi.panel";
+    NSString *trimmed = [base stringByTrimmingCharactersInSet:
+        [NSCharacterSet whitespaceAndNewlineCharacterSet]];
+
+    CFPreferencesSetAppValue((__bridge CFStringRef)kSCIServerPref,
+                             trimmed.length ? (__bridge CFStringRef)trimmed : NULL, domain);
+    CFPreferencesAppSynchronize(domain);
+}
+
+/// One JSON POST, with every failure folded into "nothing was decided".
+///
+/// **A network problem is never reported as a licence problem.** That distinction is the single
+/// most important thing in this file: a timeout, a 500 or a captive portal's login page must not
+/// cost a paying user their features, and the seven-day token is what makes it safe to simply
+/// shrug and try again later.
+static void SCIPostJSON(NSString *path, NSDictionary *body,
+                        void (^completion)(NSDictionary *_Nullable answer, NSInteger status)) {
+    NSString *base = SCILicenseServerBase();
+    if (!base) { completion(nil, 0); return; }
+
+    NSURL *url = [NSURL URLWithString:[base stringByAppendingString:path]];
+    if (!url) { completion(nil, 0); return; }
+
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+    request.HTTPMethod = @"POST";
+    [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+    request.HTTPBody = [NSJSONSerialization dataWithJSONObject:body options:0 error:NULL];
+    request.timeoutInterval = 12;
+
+    NSURLSessionConfiguration *configuration =
+        [NSURLSessionConfiguration ephemeralSessionConfiguration];
+    configuration.timeoutIntervalForRequest = 12;
+    configuration.timeoutIntervalForResource = 20;
+
+    NSURLSession *session = [NSURLSession sessionWithConfiguration:configuration];
+    [[session dataTaskWithRequest:request
+                completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        NSInteger status = [response isKindOfClass:[NSHTTPURLResponse class]]
+            ? ((NSHTTPURLResponse *)response).statusCode : 0;
+
+        id parsed = data.length ? [NSJSONSerialization JSONObjectWithData:data options:0 error:NULL]
+                                : nil;
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([parsed isKindOfClass:[NSDictionary class]] ? parsed : nil,
+                       error ? 0 : status);
+        });
+    }] resume];
+}
+
+/// Stores a token the server signed, but only after checking it here.
+///
+/// The server is trusted to *decide*; it is not trusted to be reachable, correct, or even the
+/// right server. A token that does not verify against the compiled public key, or is not for this
+/// device, is dropped -- so pointing the address at something hostile gains nothing but a
+/// refusal.
+static BOOL SCIAcceptServerToken(NSString *token) {
+    NSDictionary *payload = nil;
+    if (SCIEvaluateKey(token, &payload) != SCILicenseStateValid) return NO;
+
+    CFStringRef domain = (__bridge CFStringRef)@"com.albrhi.panel";
+    CFPreferencesSetAppValue((__bridge CFStringRef)kSCILicenseKeyPref,
+                             (__bridge CFStringRef)token, domain);
+    CFPreferencesAppSynchronize(domain);
+
+    [[NSUserDefaults standardUserDefaults] setDouble:[NSDate date].timeIntervalSince1970
+                                              forKey:kSCILastCheckDefault];
+    return YES;
+}
+
+static SCILicenseServerResult SCIResultForState(NSString *state) {
+    if ([state isEqualToString:@"revoked"]) return SCILicenseServerRevoked;
+    if ([state isEqualToString:@"expired"]) return SCILicenseServerExpired;
+    return SCILicenseServerNoLicence;
+}
+
+void SCILicenseSyncWithServer(void (^completion)(SCILicenseServerResult)) {
+    void (^finish)(SCILicenseServerResult) = ^(SCILicenseServerResult result) {
+        if (completion) completion(result);
+    };
+
+    if (!SCILicenseServerBase()) { finish(SCILicenseServerNotConfigured); return; }
+
+    SCIPostJSON(@"/v1/hello", @{@"dev": SCILicenseFingerprint()},
+                ^(NSDictionary *answer, NSInteger status) {
+        if (status != 200 || !answer) { finish(SCILicenseServerUnreachable); return; }
+
+        NSString *token = answer[@"token"];
+        if ([token isKindOfClass:[NSString class]] && SCIAcceptServerToken(token)) {
+            finish(SCILicenseServerOK);
+            return;
+        }
+
+        // A pending request is its own answer, not "no licence": the panel says "asked, waiting"
+        // rather than offering to ask again, which is what stops one person filling the inbox.
+        if ([answer[@"pending"] boolValue]) { finish(SCILicenseServerPending); return; }
+
+        finish(SCIResultForState(answer[@"state"]));
+    });
+}
+
+void SCILicenseRequestFromServer(NSInteger days, NSString *note,
+                                 void (^completion)(SCILicenseServerResult)) {
+    if (!SCILicenseServerBase()) { completion(SCILicenseServerNotConfigured); return; }
+
+    NSMutableDictionary *body = [@{
+        @"dev": SCILicenseFingerprint(),
+        @"days": @(days < 1 ? 365 : days),
+    } mutableCopy];
+
+    NSString *trimmed = [note stringByTrimmingCharactersInSet:
+        [NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (trimmed.length) body[@"note"] = trimmed;
+
+    SCIPostJSON(@"/v1/request", body, ^(NSDictionary *answer, NSInteger status) {
+        completion(status == 200 && answer ? SCILicenseServerPending
+                                          : SCILicenseServerUnreachable);
+    });
+}
+
+void SCILicenseRedeemWithServer(NSString *code, void (^completion)(SCILicenseRedeemResult)) {
+    if (!SCILicenseServerBase()) {
+        // Falls back to the published list, which is the scheme that shipped before the server
+        // existed. A device pointed at no server can still redeem.
+        SCILicenseRedeemCode(code, completion);
+        return;
+    }
+
+    SCIPostJSON(@"/v1/redeem", @{@"dev": SCILicenseFingerprint(), @"code": code ?: @""},
+                ^(NSDictionary *answer, NSInteger status) {
+        if (status == 0 || !answer) { completion(SCILicenseRedeemOffline); return; }
+
+        NSString *token = answer[@"token"];
+        if (status == 200 && [token isKindOfClass:[NSString class]] &&
+            SCIAcceptServerToken(token)) {
+            completion(SCILicenseRedeemedOK);
+            return;
+        }
+
+        NSString *state = answer[@"state"];
+        if ([state isEqualToString:@"malformed"])     { completion(SCILicenseRedeemMalformed); return; }
+        if ([state isEqualToString:@"window_closed"]) { completion(SCILicenseRedeemWindowClosed); return; }
+
+        // "Already bound to another device" is its own sentence in the panel: it is the one
+        // refusal here that means the code was real and somebody else got there first.
+        if ([state isEqualToString:@"already_used"])  { completion(SCILicenseRedeemTaken); return; }
+
+        completion(SCILicenseRedeemUnknown);
+    });
+}
+
+NSTimeInterval SCILicenseTermEnds(void) {
+    NSDictionary *payload = nil;
+    if (SCIEvaluateKey(SCILicenseStoredKey(), &payload) != SCILicenseStateValid) return 0;
+
+    // `until` when the server set one, `exp` otherwise. A manually issued offline key has no
+    // renewal cycle, so its expiry *is* its term -- and showing a seven-day renewal date to
+    // somebody who bought a year is the kind of screen that generates a support message.
+    NSNumber *until = payload[@"until"];
+    if ([until isKindOfClass:[NSNumber class]] && until.doubleValue > 0) return until.doubleValue;
+
+    NSNumber *expiry = payload[@"exp"];
+    return [expiry isKindOfClass:[NSNumber class]] ? expiry.doubleValue : 0;
 }
 
 

@@ -1,0 +1,23 @@
+# Albrhi licence server.
+#
+# Cloudflare Workers + KV: no host to patch, no TLS certificate to renew, no daemon to restart,
+# and the signing key lives in a Secret rather than on a disk somebody has to remember to protect.
+# At this scale it costs nothing.
+#
+#   npx wrangler kv namespace create DB
+#   npx wrangler secret put SIGNING_KEY     # the PKCS#8 PEM, from tools/licence.py export-web
+#   npx wrangler secret put ADMIN_TOKEN     # a long random string; the panel asks for it
+#   npx wrangler deploy
+#
+# Put the namespace id the first command prints into the binding below.
+
+name = "albrhi-licence"
+main = "src/worker.js"
+compatibility_date = "2026-09-01"
+
+[[kv_namespaces]]
+binding = "DB"
+id = "REPLACE_WITH_THE_ID_WRANGLER_PRINTS"
+
+[observability]
+enabled = true

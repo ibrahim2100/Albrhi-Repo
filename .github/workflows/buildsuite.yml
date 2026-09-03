@@ -410,9 +410,12 @@ jobs:
                 cp main/licence/revoked.json pages/licence/revoked.json
 
                 # And the short-code list the same way -- hashes, never codes, so publishing it
-                # is free. Copied rather than generated for the same reason: a human replaces it
-                # from the panel, and anything generated here would overwrite that on the next
-                # release.
+                # is free.
+                #
+                # Both files are the *offline* fallback now: with a licence server configured the
+                # device asks that instead, and these are what it falls back to when no server is
+                # set. Kept for exactly that reason -- a scheme that only works when a Worker is
+                # reachable has no way back in when it is not.
                 cp main/licence/codes.json pages/licence/codes.json
 
                 # The licence panel, beside the list it manages. Static: it does nothing at all
