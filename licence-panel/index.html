@@ -8,30 +8,28 @@
 <!--
   The licence panel.
 
-  ── What is safe about this and what is not ────────────────────────────────────────────
+  ── What changed, and why it is a better arrangement ───────────────────────────────────
 
-  **This page is public. The key is not.** It is served from GitHub Pages beside the APT index,
-  exactly as the deb editor already is, and it does nothing at all until a signing key is loaded
-  into it. Anyone can open it; nobody can issue anything with it.
+  **The signing key is no longer here.** It lives in a Cloudflare Worker Secret, and this page
+  talks to that Worker with an admin token. That is a real improvement over the version this
+  replaces, in three ways worth stating:
 
-  **Nothing here ever leaves the browser.** Signing happens in WebCrypto on the device you are
-  holding. There is one network call in the whole file and it is a GET of the repository's own
-  published revocation list — read-only, to show what is currently withdrawn. The signing key is
-  never sent anywhere, and there is no code path that could send it.
+    1. The one secret this page now holds is an *admin token*, which can be rotated in seconds
+       and grants nothing but access to this API. Losing it is a bad afternoon. Losing a signing
+       key means reissuing every licence ever sold.
+    2. Requests arrive by themselves. Nobody copies a string out of Settings and pastes it into a
+       chat window any more.
+    3. Revocation actually revokes. A device renews its seven-day licence in the background, so
+       withdrawing one stops that device within a week without it having to fetch a list.
 
-  **Storing the key is a real decision and it is presented as one.** Off by default. With it on,
-  the key sits in this browser's localStorage on this device: convenient, and worth exactly as
-  much protection as the device itself. On a shared or lost phone that is a signing key somebody
-  else now holds.
+  **What has not changed is the trust model on the device.** The token is still
+  `ALB1.<payload>.<signature>`, still ECDSA P-256, still verified against a public key compiled
+  into the tweak. The server decides; it is never trusted to be reachable, correct, or even the
+  right server — a token that does not verify locally is dropped.
 
-  ── The one non-obvious piece of engineering ───────────────────────────────────────────
-
-  WebCrypto's ECDSA returns a **P1363** signature — r and s as two fixed 32-byte halves. The tweak
-  verifies with `kSecKeyAlgorithmECDSASignatureMessageX962SHA256`, which wants **DER**. Getting
-  that conversion wrong does not fail loudly: it produces a key that looks perfectly well-formed
-  and is refused by every device, which is the worst shape a bug can take in a licence issuer.
-  `p1363ToDer` below is the conversion, and it was proved against the real Objective-C verifier
-  before this page existed — a key signed here was accepted by the same code that runs on a phone.
+  **And the offline path is still there.** `tools/licence.py` on the Mac issues a key that needs
+  no server at all. That is the way back in if this Worker is ever unreachable, and it is why the
+  server holding the only signing key is a decision with a stated cost rather than an oversight.
 
   Copyright (C) Ibrahim Ismail AL-Rahn. GPLv3.
 -->
@@ -64,11 +62,11 @@
     font: 16px/1.7 "SF Arabic", "Geeza Pro", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  main { max-width: 46rem; margin: 0 auto; }
+  main { max-width: 48rem; margin: 0 auto; }
 
   h1 { font-size: 1.9rem; margin: 0 0 .3rem; letter-spacing: -.01em; }
-  .lede { color: var(--muted); margin: 0 0 2rem; }
-  h2 { font-size: 1.05rem; margin: 0 0 .35rem; }
+  .lede { color: var(--muted); margin: 0 0 1.75rem; }
+  h2 { font-size: 1.05rem; margin: 0 0 .35rem; display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
 
   .card {
     background: var(--card); border: 1px solid var(--line);
@@ -83,12 +81,11 @@
     border: 1px solid var(--line); border-radius: 8px;
     font: 14px/1.6 var(--mono); direction: ltr; text-align: left;
   }
-  textarea { resize: vertical; min-height: 6.5rem; }
+  .ar { font-family: inherit; direction: rtl; text-align: right; }
   input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 
   .row { display: grid; gap: .75rem; grid-template-columns: 1fr 1fr; margin-block-end: .8rem; }
-  .row.one { grid-template-columns: 1fr; }
-  @media (max-width: 32rem) { .row { grid-template-columns: 1fr; } }
+  @media (max-width: 34rem) { .row { grid-template-columns: 1fr; } }
 
   button {
     font: 600 15px/1 inherit; padding: .7rem 1.1rem;
@@ -97,9 +94,8 @@
   }
   button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
   button:disabled { opacity: .45; cursor: not-allowed; }
-  button + button { margin-inline-start: .45rem; }
+  button.small { padding: .3rem .6rem; font: 600 12px/1.4 inherit; }
   .actions { display: flex; flex-wrap: wrap; gap: .45rem; margin-block-start: .3rem; }
-  .actions button + button { margin-inline-start: 0; }
 
   .pill {
     display: inline-block; font: 600 11px/1.6 var(--mono);
@@ -111,17 +107,18 @@
 
   .out {
     background: var(--sunken); border: 1px solid var(--line); border-radius: 8px;
-    padding: .7rem .8rem; font: 13px/1.7 var(--mono);
+    padding: .7rem .8rem; font: 13px/1.8 var(--mono);
     direction: ltr; text-align: left; word-break: break-all; white-space: pre-wrap;
     margin-block-start: .8rem;
   }
   .note { font-size: .85rem; color: var(--muted); margin: .6rem 0 0; }
   .danger { color: var(--bad); }
 
-  table { width: 100%; border-collapse: collapse; margin-block-start: .5rem; }
-  th, td { text-align: right; padding: .45rem .5rem; border-block-end: 1px solid var(--line); font-size: .88rem; }
-  th { font-size: .72rem; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
-  td.mono { font-family: var(--mono); direction: ltr; text-align: right; font-size: .8rem; }
+  .tablewrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; margin-block-start: .5rem; min-width: 30rem; }
+  th, td { text-align: right; padding: .5rem .55rem; border-block-end: 1px solid var(--line); font-size: .88rem; vertical-align: middle; }
+  th { font-size: .72rem; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; white-space: nowrap; }
+  td.mono { font-family: var(--mono); direction: ltr; text-align: right; font-size: .8rem; white-space: nowrap; }
   tbody tr:last-child td { border: 0; }
   .empty { color: var(--muted); font-size: .9rem; padding: .8rem 0 0; }
 
@@ -130,8 +127,8 @@
   .switch span { font-size: .88rem; color: var(--muted); }
 
   .banner {
-    border: 1px solid var(--line); border-inline-start: 3px solid var(--warn);
-    background: var(--warn-bg); color: var(--fg);
+    border: 1px solid var(--line); border-inline-start: 3px solid var(--accent);
+    background: var(--card); color: var(--fg);
     border-radius: 10px; padding: .85rem 1rem; margin-block-end: 1.5rem; font-size: .9rem;
   }
 </style>
@@ -140,105 +137,123 @@
 <main>
 
   <h1>لوحة التراخيص</h1>
-  <p class="lede">إصدار المفاتيح وسحبها. كلّ شيء هنا يجري داخل هذا المتصفّح.</p>
+  <p class="lede">الطلبات تصل وحدها، والتراخيص تُصدر وتُسحب من هنا.</p>
 
   <div class="banner">
-    <b>هذه الصفحة عامّة. المفتاح ليس كذلك.</b>
-    لا تفعل شيئاً حتى تُحمّل مفتاح التوقيع، والتوقيع يجري في متصفّحك — لا يُرسَل المفتاح إلى أيّ
-    مكان، ولا يوجد في هذا الملفّ مسارٌ يمكنه إرساله. النداء الشبكيّ الوحيد فيه قراءةٌ لقائمة السحب
-    المنشورة.
+    <b>مفتاح التوقيع ليس في هذه الصفحة.</b>
+    هو في Secret على الخادم لا يُقرأ منه. ما تحمله هذه الصفحة هو <b>رمز إدارة</b> — تبديله ثوانٍ،
+    ولا يمنح إلا الوصول إلى هذا الـAPI. أمّا ضياع مفتاح توقيع فيعني إعادة إصدار كلّ ترخيصٍ بِعته.
   </div>
 
-  <!-- ── 1. the key ─────────────────────────────────────────────────────────────── -->
+  <!-- ── connection ─────────────────────────────────────────────────────────────── -->
   <section class="card">
-    <h2>مفتاح التوقيع <span id="keyState" class="pill bad">غير محمَّل</span></h2>
-    <p>
-      من الطرفية: <code style="font-family:var(--mono);direction:ltr;display:inline-block">python3 tools/licence.py export-web</code>
-      ثم الصق الناتج هنا.
-    </p>
+    <h2>الاتّصال <span id="connState" class="pill bad">غير متّصل</span></h2>
+    <p>عنوان الـWorker ورمز الإدارة. كلاهما يبقى في هذا المتصفّح.</p>
 
-    <label for="privKey">المفتاح الخاص (PKCS#8)</label>
-    <textarea id="privKey" spellcheck="false" placeholder="-----BEGIN PRIVATE KEY-----&#10;…"></textarea>
+    <div class="row">
+      <div>
+        <label for="base">عنوان الخادم</label>
+        <input id="base" spellcheck="false" placeholder="https://albrhi-licence.….workers.dev">
+      </div>
+      <div>
+        <label for="token">رمز الإدارة</label>
+        <input id="token" type="password" spellcheck="false" placeholder="ADMIN_TOKEN">
+      </div>
+    </div>
 
     <div class="actions">
-      <button class="primary" id="loadKey">تحميل المفتاح</button>
-      <button id="clearKey">مسح</button>
+      <button class="primary" id="connect">اتّصل</button>
+      <button id="refresh">تحديث</button>
+      <button id="forget">انسَ</button>
     </div>
 
     <div class="switch">
-      <input type="checkbox" id="rememberKey">
-      <span>تذكّر المفتاح في هذا المتصفّح — <span class="danger">هاتفٌ ضائع يعني مفتاح توقيعٍ عند غيرك</span></span>
+      <input type="checkbox" id="remember">
+      <span>تذكّر في هذا المتصفّح — رمز إدارة فقط، لا مفتاح توقيع</span>
     </div>
 
-    <div class="out" id="keyOut" hidden></div>
+    <div class="switch">
+      <input type="checkbox" id="auto" checked>
+      <span>تحديث تلقائي كلّ ٢٠ ثانية <span id="freshness" class="pill warn"></span></span>
+    </div>
+
+    <p class="note">
+      <b>حدّان يستحقّان الذكر:</b> تخزين Cloudflare متّسقٌ في النهاية لا فوراً، فقد تستغرق الكتابة
+      حتى دقيقة لتُرى من كلّ مكان. والجهاز نفسه ليس فوريّاً بالتصميم — يُجدّد ترخيصه كلّ ست ساعات
+      ويحمل توقيعاً لسبعة أيام، فالسحب يصل خلال ست ساعات عادةً وسبعة أيام على الأكثر. هذا هو ما
+      يمنع رحلة طيرانٍ من قتل أدوات من دفع.
+    </p>
+
+    <div class="out" id="connOut" hidden></div>
   </section>
 
-  <!-- ── 2. issue ───────────────────────────────────────────────────────────────── -->
+  <!-- ── inbox ──────────────────────────────────────────────────────────────────── -->
   <section class="card">
-    <h2>إصدار مفتاح</h2>
-    <p>رمز الجهاز يظهر في الإعدادات › البرهان › الترخيص، ستّة عشر حرفاً ستّ عشريّاً.</p>
+    <h2>الطلبات الواردة <span id="inboxCount" class="pill warn">—</span></h2>
+    <p>يطلب المستخدم من الإعدادات › البرهان › الترخيص، فيظهر الطلب هنا وحده.</p>
+
+    <div class="tablewrap">
+      <table id="inbox" hidden>
+        <thead><tr><th>الجهاز</th><th>لمن</th><th>المطلوب</th><th>وصل</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="empty" id="inboxEmpty">لا طلبات.</p>
+  </section>
+
+  <!-- ── licences ───────────────────────────────────────────────────────────────── -->
+  <section class="card">
+    <h2>التراخيص <span id="licCount" class="pill warn">—</span></h2>
+    <p>السحب يوقف الجهاز خلال سبعة أيام على الأكثر — وهي مدّة الترخيص الموقّع الذي يحمله.</p>
+
+    <div class="tablewrap">
+      <table id="licences" hidden>
+        <thead><tr><th>الجهاز</th><th>لمن</th><th>سارٍ حتى</th><th>المصدر</th><th>الحالة</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="empty" id="licEmpty">لا تراخيص.</p>
+  </section>
+
+  <!-- ── issue by hand ──────────────────────────────────────────────────────────── -->
+  <section class="card">
+    <h2>إصدار مباشر</h2>
+    <p>لجهازٍ تعرف رمزه دون أن يُرسل طلباً. والتمديد يُضاف إلى ما تبقّى لا يُبدّله.</p>
 
     <div class="row">
       <div>
-        <label for="device">رمز الجهاز</label>
-        <input id="device" spellcheck="false" placeholder="a1b2c3d4e5f60718" maxlength="16">
+        <label for="issueDev">رمز الجهاز</label>
+        <input id="issueDev" spellcheck="false" placeholder="a1b2c3d4e5f60718" maxlength="16">
       </div>
       <div>
-        <label for="days">المدّة (أيام)</label>
-        <input id="days" type="number" value="365" min="1" max="3650">
+        <label for="issueDays">المدّة (أيام)</label>
+        <input id="issueDays" type="number" value="365" min="1" max="3650">
       </div>
     </div>
 
     <div class="row">
       <div>
-        <label for="name">لمن</label>
-        <input id="name" placeholder="اسم أو ملاحظة" style="font-family:inherit;direction:rtl;text-align:right">
+        <label for="issueNote">لمن</label>
+        <input id="issueNote" class="ar" placeholder="اسم أو ملاحظة">
       </div>
       <div>
-        <label for="tier">الباقة</label>
-        <select id="tier" style="font-family:inherit;direction:rtl;text-align:right">
+        <label for="issueTier">الباقة</label>
+        <select id="issueTier" class="ar">
           <option value="suite">الحزمة كاملة</option>
           <option value="trial">تجربة</option>
         </select>
       </div>
     </div>
 
-    <div class="actions">
-      <button class="primary" id="issue" disabled>إصدار</button>
-      <button id="copyKey" hidden>نسخ المفتاح</button>
-    </div>
-
-    <div class="out" id="issueOut" hidden></div>
+    <div class="actions"><button class="primary" id="issue" disabled>أصدر</button></div>
   </section>
 
-  <!-- ── 3. the inbox ───────────────────────────────────────────────────────────── -->
-  <section class="card">
-    <h2>الطلبات الواردة <span id="inboxCount" class="pill warn">0</span></h2>
-    <p>
-      يفتح المستخدم الإعدادات › البرهان › الترخيص، يضغط «طلب ترخيص»، ويرسل لك النصّ. الصقه هنا —
-      ويمكن لصق عدّة طلبات دفعةً واحدة، كلٌّ في سطر.
-    </p>
-
-    <label for="requests">نصّ الطلب</label>
-    <textarea id="requests" spellcheck="false" placeholder="ALBREQ1.…" style="min-height:4.5rem"></textarea>
-
-    <div class="actions"><button id="addRequests">أضف إلى الصندوق</button></div>
-
-    <table id="inbox" hidden>
-      <thead>
-        <tr><th>الجهاز</th><th>لمن</th><th>المطلوب</th><th>وصل</th><th></th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <p class="empty" id="inboxEmpty">لا طلبات.</p>
-  </section>
-
-  <!-- ── 4. codes ───────────────────────────────────────────────────────────────── -->
+  <!-- ── codes ──────────────────────────────────────────────────────────────────── -->
   <section class="card">
     <h2>أكواد قصيرة</h2>
     <p>
-      كود قصير لا يتّسع لتوقيع، فالجهاز يبحث عن بصمته في <code style="font-family:var(--mono);direction:ltr;display:inline-block">licence/codes.json</code>.
-      الملفّ يحوي بصمات لا أكواداً — فقراءته لا تعطي أحداً كوداً يعمل.
+      كودٌ يرتبط بأوّل جهازٍ يفعّله، وبعده لا يعمل عند غيره. تُعرَض مرّةً واحدة — الخادم يحفظ
+      بصماتٍ لا أكواداً، فلا يستطيع إظهارها ثانيةً، ومخزنُ أكوادٍ حيّة مخزنٌ يستحقّ السرقة.
     </p>
 
     <div class="row">
@@ -259,7 +274,7 @@
       </div>
       <div>
         <label for="codeTier">الباقة</label>
-        <select id="codeTier" style="font-family:inherit;direction:rtl;text-align:right">
+        <select id="codeTier" class="ar">
           <option value="suite">الحزمة كاملة</option>
           <option value="trial">تجربة</option>
         </select>
@@ -267,64 +282,18 @@
     </div>
 
     <div class="actions">
-      <button class="primary" id="mintCodes">أنشئ الأكواد</button>
-      <button id="copyCodes" hidden>نسخ الأكواد</button>
-      <button id="copyCodesJson">نسخ codes.json</button>
+      <button class="primary" id="mint" disabled>أنشئ</button>
+      <button id="copyCodes" hidden>نسخ</button>
     </div>
 
     <div class="out" id="codesOut" hidden></div>
-    <p class="note">
-      <b>ما لا يمكن هندسته بلا خادم:</b> كودٌ غير مرتبطٍ بجهاز يصلح لكلّ من يحصل عليه حتى يُزال من
-      الملفّ. حمايتاه مهلة التفعيل، وحذف بصمته عند الإساءة.
-    </p>
-  </section>
 
-  <!-- ── 5. the ledger ──────────────────────────────────────────────────────────── -->
-  <section class="card">
-    <h2>المفاتيح الصادرة</h2>
-    <p>محفوظة في هذا المتصفّح وحده. المعرّف هو ما يُسحب به المفتاح لاحقاً — بدونه لا سبيل لسحبه.</p>
-
-    <table id="ledger">
-      <thead>
-        <tr><th>المعرّف</th><th>الجهاز</th><th>لمن</th><th>ينتهي</th><th>الحالة</th><th></th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <p class="empty" id="ledgerEmpty">لم يُصدَر مفتاحٌ بعد.</p>
-
-    <div class="actions">
-      <button id="exportLedger">تصدير السجلّ</button>
-      <button id="importLedger">استيراد</button>
+    <div class="tablewrap">
+      <table id="codes" hidden>
+        <thead><tr><th>البصمة</th><th>المدّة</th><th>المهلة</th><th>الحالة</th></tr></thead>
+        <tbody></tbody>
+      </table>
     </div>
-  </section>
-
-  <!-- ── 6. revocation ──────────────────────────────────────────────────────────── -->
-  <section class="card">
-    <h2>السحب <span id="liveState" class="pill warn">لم يُقرأ بعد</span></h2>
-    <p>
-      علّم مفتاحاً كمسحوب في السجلّ أعلاه، ثم انسخ الملفّ الناتج إلى
-      <code style="font-family:var(--mono);direction:ltr;display:inline-block">licence/revoked.json</code>
-      وادفعه. الأجهزة تقرؤه مرّةً كلّ ستّ ساعات على الأكثر.
-    </p>
-
-    <div class="actions">
-      <button id="refreshLive">اقرأ المنشور الآن</button>
-      <button id="copyRevoked">نسخ revoked.json</button>
-    </div>
-
-    <div class="out" id="revokedOut" hidden></div>
-  </section>
-
-  <!-- ── 7. verify ──────────────────────────────────────────────────────────────── -->
-  <section class="card">
-    <h2>فحص مفتاح</h2>
-    <p>يُفحص بالنصف العامّ وحده — وهو بالضبط ما يفعله الجهاز، فالصيغة تُختبَر بالقواعد نفسها على الطرفين.</p>
-
-    <label for="checkKey">المفتاح</label>
-    <textarea id="checkKey" spellcheck="false" placeholder="ALB1.…" style="min-height:4.5rem"></textarea>
-
-    <div class="actions"><button id="verify">افحص</button></div>
-    <div class="out" id="verifyOut" hidden></div>
   </section>
 
 </main>
@@ -332,572 +301,340 @@
 <script>
 "use strict";
 
-// ── Encoding helpers ──────────────────────────────────────────────────────────────────
-const enc = new TextEncoder();
-const b64u = bytes =>
-  btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-const unb64u = text => {
-  const padded = text.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - text.length % 4) % 4);
-  return Uint8Array.from(atob(padded), c => c.charCodeAt(0));
-};
-const pemToBytes = pem =>
-  Uint8Array.from(atob(pem.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "")), c => c.charCodeAt(0));
-
-//
-// **WebCrypto signs P1363; the device verifies DER.**
-//
-// crypto.subtle.sign returns r and s as two fixed 32-byte halves. Security.framework's
-// kSecKeyAlgorithmECDSASignatureMessageX962SHA256 -- what the tweak uses, and what
-// `openssl dgst -sign` emits -- wants SEQUENCE { INTEGER r, INTEGER s }, minimally encoded.
-//
-// A wrong conversion here does not fail loudly. It mints keys that look perfectly well-formed and
-// are refused by every phone, which is the worst possible shape for a bug in a licence issuer --
-// so this exact function was run against the real Objective-C verifier before the page shipped.
-//
-function p1363ToDer(raw) {
-  const half = raw.length / 2;
-  const int = bytes => {
-    let i = 0;
-    while (i < bytes.length - 1 && bytes[i] === 0) i++;      // DER integers are minimal
-    let v = bytes.slice(i);
-    if (v[0] & 0x80) v = Uint8Array.from([0, ...v]);         // and signed, so keep them positive
-    return Uint8Array.from([0x02, v.length, ...v]);
-  };
-  const body = Uint8Array.from([...int(raw.slice(0, half)), ...int(raw.slice(half))]);
-  return Uint8Array.from([0x30, body.length, ...body]);
-}
-
-/// DER back to the r||s halves, for verifying in this page.
-function derToP1363(der) {
-  let i = 2;                                                  // skip SEQUENCE tag and length
-  const read = () => {
-    if (der[i++] !== 0x02) throw new Error("not an ECDSA signature");
-    const len = der[i++];
-    let v = der.slice(i, i + len); i += len;
-    while (v.length > 32 && v[0] === 0) v = v.slice(1);       // drop the sign byte
-    const out = new Uint8Array(32); out.set(v, 32 - v.length);
-    return out;
-  };
-  const r = read(), s = read();
-  return Uint8Array.from([...r, ...s]);
-}
-
-// The public half, verbatim from shared/src/SCILicense.m. Kept here so this page can check its
-// own output with the same key the phone uses -- a signer that cannot verify itself is a signer
-// nobody can trust the day something disagrees.
-const PUBLIC_POINT = new Uint8Array([
-  0x04,0xA4,0x5B,0x34,0x61,0x51,0xA7,0x8E,0xC0,0x2F,0x43,0x8D,
-  0x8A,0x09,0xC4,0x1C,0xF1,0x66,0x2E,0xE4,0x5F,0xEF,0xA8,0xFD,
-  0xFC,0xD6,0xD3,0x54,0x7A,0x7E,0x40,0x23,0x09,0x05,0x24,0xC6,
-  0xDB,0xBD,0x38,0x06,0x9A,0x2C,0x79,0x8A,0xDC,0xD8,0xA1,0x89,
-  0xA6,0xD0,0xDE,0x15,0x4C,0x22,0xC7,0xD0,0x4B,0x64,0xC9,0xB8,
-  0x4C,0x07,0xFC,0xDB,0xAE,
-]);
-
-// ── State ─────────────────────────────────────────────────────────────────────────────
-const LEDGER_STORE = "albrhi.licence.ledger";
-const KEY_STORE    = "albrhi.licence.key";
-
-let signingKey = null;
-let ledger = [];
-let livePublished = null;
-
 const $ = id => document.getElementById(id);
 const show = (el, text) => { el.hidden = false; el.textContent = text; };
 
-function store(key, value) {
-  // Every read and write wrapped: a private window, cleared site data or a browser set to block
-  // storage makes these throw, and a licence panel that will not open because it could not
-  // remember anything is worse than one that simply forgets.
-  try { value === null ? localStorage.removeItem(key) : localStorage.setItem(key, value); }
-  catch (e) { /* nothing to do; the page works without it */ }
-}
-function load(key) {
-  try { return localStorage.getItem(key); } catch (e) { return null; }
+const STORE = "albrhi.licence.admin";
+
+let state = null;
+
+function save() {
+  // Wrapped, like every storage touch in this repository's browser tools: a private window or a
+  // browser set to block site data makes these throw, and a panel that will not open because it
+  // could not remember an address is worse than one that forgets.
+  try {
+    if ($("remember").checked) {
+      localStorage.setItem(STORE, JSON.stringify({ base: $("base").value.trim(),
+                                                   token: $("token").value }));
+    } else {
+      localStorage.removeItem(STORE);
+    }
+  } catch (e) { /* nothing to do */ }
 }
 
-// ── The key ───────────────────────────────────────────────────────────────────────────
-async function importKey(pem, quiet) {
+function base() {
+  let value = $("base").value.trim();
+  while (value.endsWith("/")) value = value.slice(0, -1);
+  return value;
+}
+
+/// Every call to the server, with one failure shape.
+///
+/// A network error, a 401 and a 500 are three different things and are reported as three
+/// different things -- "could not reach it" must never read as "you are not authorised", because
+/// the first is a bad minute and the second is a wrong token.
+async function api(path, body) {
+  if (!base()) return { ok: false, why: "لا عنوان" };
+
   try {
-    signingKey = await crypto.subtle.importKey(
-      "pkcs8", pemToBytes(pem), { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
+    const response = await fetch(base() + path, {
+      method: body ? "POST" : "GET",
+      headers: {
+        "authorization": "Bearer " + $("token").value,
+        ...(body ? { "content-type": "application/json" } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      cache: "no-store",
+    });
+
+    const data = await response.json().catch(() => null);
+    if (response.status === 401) return { ok: false, why: "رمز الإدارة غير صحيح" };
+    if (!response.ok) return { ok: false, why: (data && data.error) || ("خطأ " + response.status) };
+    return { ok: true, data };
   } catch (e) {
-    signingKey = null;
-    $("keyState").className = "pill bad";
-    $("keyState").textContent = "غير صالح";
-    show($("keyOut"), "تعذّر قراءة المفتاح. تأكّد أنه ناتج export-web (PKCS#8) لا الملفّ كما هو على القرص.");
-    $("issue").disabled = true;
-    return false;
+    return { ok: false, why: "تعذّر الوصول إلى الخادم" };
   }
-
-  // A signer that cannot verify its own output is a signer nobody can trust the day something
-  // disagrees, so the loaded key is proved against the public half compiled into the tweak --
-  // which also catches the one mistake that matters most: a key from a *different* keypair,
-  // which would mint licences no device on earth accepts.
-  const probe = await issueToken({ v: 1, id: "selftest", dev: "0000000000000000",
-                                   tier: "selftest", iat: 0, exp: 0 });
-  const matches = await verifyToken(probe);
-
-  $("keyState").className = matches ? "pill good" : "pill bad";
-  $("keyState").textContent = matches ? "محمَّل ومطابق" : "لا يطابق المفتاح العامّ";
-  $("issue").disabled = !matches;
-
-  if (!matches) {
-    show($("keyOut"),
-      "هذا المفتاح الخاصّ لا يطابق المفتاح العامّ المدمج في الأداة.\n" +
-      "المفاتيح الصادرة منه سترفضها كلّ الأجهزة. تحقّق أنك لم تُنشئ زوجاً جديداً.");
-  } else if (!quiet) {
-    show($("keyOut"), "المفتاح محمَّل، ووُقِّع به مفتاحُ اختبارٍ تحقّق منه المفتاح العامّ نفسه الذي في الأداة.");
-  } else {
-    $("keyOut").hidden = true;
-  }
-  return matches;
 }
 
-async function issueToken(payload) {
-  // Sorted keys and no spaces, matching tools/licence.py exactly. The bytes signed have to be
-  // reproducible, and two issuers that serialise differently is two token formats.
-  const json = JSON.stringify(payload, Object.keys(payload).sort());
-  const body = b64u(enc.encode(json));
-  const raw = new Uint8Array(await crypto.subtle.sign(
-    { name: "ECDSA", hash: "SHA-256" }, signingKey, enc.encode("ALB1." + body)));
-  return "ALB1." + body + "." + b64u(p1363ToDer(raw));
+const fmtDate = unix => unix > 0 ? new Date(unix * 1000).toISOString().slice(0, 10) : "—";
+const days = seconds => Math.ceil(seconds / 86400);
+
+function cell(text, mono) {
+  const td = document.createElement("td");
+  if (mono) td.className = "mono";
+  td.textContent = text;
+  return td;
 }
 
-async function verifyToken(token) {
-  const parts = token.split(".");
-  if (parts.length !== 3 || parts[0] !== "ALB1") return false;
-  try {
-    const pub = await crypto.subtle.importKey(
-      "raw", PUBLIC_POINT, { name: "ECDSA", namedCurve: "P-256" }, false, ["verify"]);
-    return await crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, pub,
-      derToP1363(unb64u(parts[2])), enc.encode(parts[0] + "." + parts[1]));
-  } catch (e) { return false; }
+function pillFor(cls, label) {
+  const td = document.createElement("td");
+  const span = document.createElement("span");
+  span.className = "pill " + cls;
+  span.textContent = label;
+  td.append(span);
+  return td;
 }
 
-// ── The inbox ─────────────────────────────────────────────────────────────────────────
-//
-// A request is not signed, and that is deliberate: there is nothing on a phone to sign it with,
-// and nothing in it worth forging — it is a *question*, and you are the one who answers it. The
-// four-character check is for typos picked up in a chat window, and it is called a check
-// everywhere it appears so nobody comes to read it as a signature.
-
-const INBOX_STORE = "albrhi.licence.inbox";
-let inbox = [];
-
-async function sha256Hex(text, bytes) {
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(text)));
-  return [...digest.slice(0, bytes)].map(b => b.toString(16).padStart(2, "0")).join("");
+function actionButton(label, handler, destructive) {
+  const button = document.createElement("button");
+  button.className = "small";
+  button.textContent = label;
+  if (destructive) button.style.color = "var(--bad)";
+  button.onclick = async () => {
+    button.disabled = true;
+    await handler();
+    await refresh();
+  };
+  return button;
 }
 
-async function parseRequest(line) {
-  const parts = line.trim().split(".");
-  if (parts.length !== 3 || parts[0] !== "ALBREQ1") return null;
-  if (await sha256Hex(parts[1], 2) !== parts[2]) return null;   // a typo in transit
-
-  try {
-    const payload = JSON.parse(new TextDecoder().decode(unb64u(parts[1])));
-    if (!/^[0-9a-f]{16}$/.test(payload.dev || "")) return null;
-    return payload;
-  } catch (e) { return null; }
-}
+// ── Rendering ─────────────────────────────────────────────────────────────────────────
 
 function renderInbox() {
+  const rows = state.requests || [];
   const body = $("inbox").querySelector("tbody");
   body.innerHTML = "";
-  $("inbox").hidden = inbox.length === 0;
-  $("inboxEmpty").hidden = inbox.length > 0;
-  $("inboxCount").textContent = String(inbox.length);
-  $("inboxCount").className = inbox.length ? "pill good" : "pill warn";
+  $("inbox").hidden = rows.length === 0;
+  $("inboxEmpty").hidden = rows.length > 0;
+  $("inboxCount").textContent = String(rows.length);
+  $("inboxCount").className = rows.length ? "pill good" : "pill warn";
 
-  inbox.forEach((req, index) => {
+  rows.forEach(req => {
     const tr = document.createElement("tr");
-    const cell = (text, mono) => {
-      const td = document.createElement("td");
-      if (mono) td.className = "mono";
-      td.textContent = text;
-      return td;
-    };
-
-    tr.append(cell(req.dev, true), cell(req.note || "—", false), cell(req.days + " يوماً", false),
-              cell(new Date((req.ts || 0) * 1000).toISOString().slice(0, 10), true));
+    tr.append(cell(req.dev, true), cell(req.note || "—"), cell(req.days + " يوماً"),
+              cell(fmtDate(req.ts), true));
 
     const actions = document.createElement("td");
 
-    // Approving does not issue behind your back: it fills the form above with what was asked for
-    // and scrolls to it, so the duration and the name are still yours to change before signing.
-    const approve = document.createElement("button");
-    approve.textContent = "موافقة";
-    approve.style.padding = ".3rem .6rem";
-    approve.style.font = "600 12px/1 inherit";
-    approve.onclick = () => {
-      $("device").value = req.dev;
-      $("days").value = req.days || 365;
-      $("name").value = req.note || "";
-      inbox.splice(index, 1);
-      writeInbox();
-      $("device").scrollIntoView({ behavior: "smooth", block: "center" });
-    };
-
-    const drop = document.createElement("button");
-    drop.textContent = "رفض";
-    drop.style.padding = ".3rem .6rem";
-    drop.style.font = "600 12px/1 inherit";
-    drop.onclick = () => { inbox.splice(index, 1); writeInbox(); };
-
-    actions.append(approve, drop);
+    // Approving here issues immediately with exactly what was asked for -- there is a server to
+    // do it, so the two-step "fill the form and press again" the offline panel needed is gone.
+    // Changing the terms is what the issue-by-hand card above is for.
+    actions.append(
+      actionButton("موافقة", () => api("/admin/approve",
+        { dev: req.dev, days: req.days, note: req.note })),
+      actionButton("رفض", () => api("/admin/decline", { dev: req.dev }), true),
+    );
     tr.append(actions);
     body.append(tr);
   });
 }
 
-function writeInbox() { store(INBOX_STORE, JSON.stringify(inbox)); renderInbox(); }
-
-$("addRequests").onclick = async () => {
-  const lines = $("requests").value.split(/\s+/).filter(Boolean);
-  let added = 0, bad = 0, duplicate = 0;
-
-  for (const line of lines) {
-    const req = await parseRequest(line);
-    if (!req) { bad++; continue; }
-
-    // Matched on device *and* timestamp: the same person asking twice is two requests, and the
-    // same message pasted twice is one. Dropping by device alone would hide a renewal.
-    if (inbox.some(e => e.dev === req.dev && e.ts === req.ts)) { duplicate++; continue; }
-
-    inbox.push(req);
-    added++;
-  }
-
-  writeInbox();
-  $("requests").value = "";
-
-  // Counted separately, because "nothing happened" has three causes here and they need three
-  // different things done about them.
-  if (bad || duplicate) {
-    alert(`أُضيف ${added}` + (duplicate ? ` · ${duplicate} مكرّر` : "") +
-          (bad ? ` · ${bad} غير مقروء` : ""));
-  }
-};
-
-
-// ── Short codes ───────────────────────────────────────────────────────────────────────
-//
-// Crockford's alphabet: no I, no L, no O, no U. These get read down a phone line and typed by
-// hand, so there is no 1/I and no 0/O to mishear, and nothing that can land on an unfortunate
-// word by accident. The device folds the confusable characters back in before hashing, which is
-// the half that actually saves the support message.
-
-const CODE_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-
-function mintCode() {
-  const bytes = crypto.getRandomValues(new Uint8Array(12));
-  let out = "";
-  for (let i = 0; i < 12; i++) out += CODE_ALPHABET[bytes[i] % 32];
-  return out;
-}
-
-const pretty = code => "ALB-" + code.slice(0, 4) + "-" + code.slice(4, 8) + "-" + code.slice(8, 12);
-
-$("mintCodes").onclick = async () => {
-  const count = Math.min(200, Math.max(1, parseInt($("codeCount").value, 10) || 1));
-  const days = Math.max(1, parseInt($("codeDays").value, 10) || 365);
-  const window = Math.max(1, parseInt($("codeWindow").value, 10) || 90);
-  const tier = $("codeTier").value;
-  const now = Math.floor(Date.now() / 1000);
-
-  const minted = [];
-  for (let i = 0; i < count; i++) {
-    const code = mintCode();
-    minted.push({
-      code, hash: await sha256Hex(code, 8), days, tier,
-      rb: now + window * 86400, iat: now, kind: "code", revoked: false,
-    });
-  }
-
-  // Into the same ledger as the keys. Two lists would be two places to look when somebody says
-  // "my licence stopped working" -- and revocation reads from one of them.
-  minted.forEach(m => ledger.push({
-    id: m.hash, dev: "—", for: `كود · ${m.days} يوماً`, exp: m.rb,
-    iat: m.iat, tier: m.tier, kind: "code", code: m.code, days: m.days, revoked: false,
-  }));
-  writeLedger();
-  renderRevoked();
-
-  const text = minted.map(m => pretty(m.code)).join("\n");
-  show($("codesOut"), text);
-  $("copyCodes").hidden = false;
-  $("copyCodes").onclick = () => navigator.clipboard.writeText(text).then(() => {
-    $("copyCodes").textContent = "نُسخ";
-    setTimeout(() => ($("copyCodes").textContent = "نسخ الأكواد"), 1500);
-  });
-};
-
-/// The published list: hashes and terms, never a code.
-function codesJson() {
-  const codes = {};
-  ledger.filter(e => e.kind === "code" && !e.revoked)
-        .forEach(e => { codes[e.id] = { days: e.days, tier: e.tier, rb: e.exp }; });
-  return JSON.stringify({ v: 1, codes }, null, 2);
-}
-
-$("copyCodesJson").onclick = () => {
-  const text = codesJson();
-  show($("codesOut"), text);
-  navigator.clipboard.writeText(text).then(() => {
-    $("copyCodesJson").textContent = "نُسخ";
-    setTimeout(() => ($("copyCodesJson").textContent = "نسخ codes.json"), 1500);
-  });
-};
-
-
-// ── Ledger ────────────────────────────────────────────────────────────────────────────
-function readLedger() {
-  try { ledger = JSON.parse(load(LEDGER_STORE) || "[]"); }
-  catch (e) { ledger = []; }
-  if (!Array.isArray(ledger)) ledger = [];
-}
-function writeLedger() { store(LEDGER_STORE, JSON.stringify(ledger)); renderLedger(); }
-
-function stateOf(entry) {
-  if (entry.revoked) return ["bad", "مسحوب"];
-
-  // A code's date is its *redemption window*, not its expiry: the licence's clock starts when
-  // somebody redeems it, which this side cannot know. Saying "expired" about an unredeemed code
-  // would be describing the wrong deadline entirely.
-  const left = entry.exp - Math.floor(Date.now() / 1000);
-  if (entry.kind === "code") {
-    if (left <= 0) return ["bad", "انتهت مهلة التفعيل"];
-    return ["good", `للتفعيل خلال ${Math.ceil(left / 86400)} يوماً`];
-  }
-
-  if (left <= 0) return ["bad", "منتهٍ"];
-  if (left < 30 * 86400) return ["warn", `${Math.ceil(left / 86400)} يوماً`];
-  return ["good", "صالح"];
-}
-
-function renderLedger() {
-  const body = $("ledger").querySelector("tbody");
+function renderLicences() {
+  const rows = (state.licences || []).slice().sort((a, b) => (b.until || 0) - (a.until || 0));
+  const body = $("licences").querySelector("tbody");
   body.innerHTML = "";
-  $("ledgerEmpty").hidden = ledger.length > 0;
-  $("ledger").hidden = ledger.length === 0;
+  $("licences").hidden = rows.length === 0;
+  $("licEmpty").hidden = rows.length > 0;
 
-  // Newest first: the key just issued is the one being looked for.
-  [...ledger].reverse().forEach(entry => {
-    const [cls, label] = stateOf(entry);
+  const live = rows.filter(l => !l.revoked && l.until > state.now).length;
+  $("licCount").textContent = live + " سارٍ من " + rows.length;
+  $("licCount").className = live ? "pill good" : "pill warn";
+
+  rows.forEach(lic => {
     const tr = document.createElement("tr");
+    tr.append(cell(lic.key, true), cell(lic.note || "—"), cell(fmtDate(lic.until), true),
+              cell(lic.source === "code" ? "كود" : "موافقة"));
 
-    const cell = (text, mono) => {
-      const td = document.createElement("td");
-      if (mono) td.className = "mono";
-      td.textContent = text;
-      return td;
-    };
+    const left = (lic.until || 0) - state.now;
+    if (lic.revoked)      tr.append(pillFor("bad", "مسحوب"));
+    else if (left <= 0)   tr.append(pillFor("bad", "منتهٍ"));
+    else if (left < 30 * 86400) tr.append(pillFor("warn", days(left) + " يوماً"));
+    else                  tr.append(pillFor("good", days(left) + " يوماً"));
 
-    tr.append(cell(entry.id, true), cell(entry.dev, true), cell(entry.for || "—", false),
-              cell(new Date(entry.exp * 1000).toISOString().slice(0, 10), true));
-
-    const state = document.createElement("td");
-    const pill = document.createElement("span");
-    pill.className = "pill " + cls;
-    pill.textContent = label;
-    state.append(pill);
-    tr.append(state);
-
+    //
+    // Every way an end date can move, on the row it belongs to.
+    //
+    // **"+30" and "−30" are the same call with opposite signs**, and "تعديل" is the third
+    // question rather than a variation of the first two: extend adds to what is left, and set
+    // replaces it — which is the only way to *shorten* a licence to a specific length rather
+    // than by an amount.
+    //
     const actions = document.createElement("td");
-    const toggle = document.createElement("button");
-    toggle.textContent = entry.revoked ? "إرجاع" : "سحب";
-    toggle.style.padding = ".3rem .6rem";
-    toggle.style.font = "600 12px/1 inherit";
-    toggle.onclick = () => {
-      entry.revoked = !entry.revoked;
-      writeLedger();
-      renderRevoked();
+
+    const change = async (payload, confirmText) => {
+      if (confirmText && !confirm(confirmText)) return;
+      const result = await api("/admin/approve", { dev: lic.key, ...payload });
+      if (!result.ok) alert(result.why);
+      await refresh();
     };
-    actions.append(toggle);
+
+    actions.append(
+      actionButton("+٣٠", () => change({ mode: "extend", days: 30 })),
+      actionButton("−٣٠", () => change({ mode: "extend", days: -30 },
+        `تقصير ترخيص ${lic.key} بثلاثين يوماً؟`)),
+      actionButton("تعديل", () => {
+        const answer = prompt("كم يوماً من اليوم؟ (يستبدل المدّة الحالية)",
+                              String(Math.max(0, days(left))));
+        if (answer === null) return;
+        const value = parseInt(answer, 10);
+        if (!Number.isFinite(value) || value < 0) { alert("رقم غير صالح."); return; }
+        change({ mode: "set", days: value });
+      }),
+      lic.revoked
+        ? actionButton("إرجاع", async () => { await api("/admin/restore", { dev: lic.key }); await refresh(); })
+        : actionButton("سحب", async () => {
+            if (!confirm(`سحب ترخيص ${lic.key}؟ يتوقّف الجهاز خلال سبعة أيام على الأكثر.`)) return;
+            await api("/admin/revoke", { dev: lic.key });
+            await refresh();
+          }, true),
+    );
     tr.append(actions);
+    body.append(tr);
+  });
+}
+
+function renderCodes() {
+  const rows = (state.codes || []).slice().sort((a, b) => (b.iat || 0) - (a.iat || 0));
+  const body = $("codes").querySelector("tbody");
+  body.innerHTML = "";
+  $("codes").hidden = rows.length === 0;
+
+  rows.forEach(code => {
+    const tr = document.createElement("tr");
+    tr.append(cell(code.key, true), cell(code.days + " يوماً"), cell(fmtDate(code.rb), true));
+
+    // A code has three states and only one of them is about *its* clock: unredeemed codes expire
+    // by their window, redeemed ones have handed their clock to a device and no longer have one.
+    if (code.revoked)          tr.append(pillFor("bad", "مسحوب"));
+    else if (code.dev)         tr.append(pillFor("good", "مُفعَّل"));
+    else if (code.rb <= state.now) tr.append(pillFor("bad", "انتهت المهلة"));
+    else                       tr.append(pillFor("warn", "بانتظار التفعيل"));
 
     body.append(tr);
   });
 }
 
-function renderRevoked() {
-  const ids = ledger.filter(e => e.revoked).map(e => e.id);
-  const text = JSON.stringify({
-    revoked: ids,
-    note: "Licence ids withdrawn by Albrhi. Add an id here and it stops working on every device that reaches this file. Served from gh-pages; see docs/LICENCE-KEYS.md.",
-  }, null, 2);
-  show($("revokedOut"), text);
-  return text;
+async function refresh() {
+  const result = await api("/admin/state");
+  if (!result.ok) {
+    $("connState").className = "pill bad";
+    $("connState").textContent = "غير متّصل";
+    show($("connOut"), result.why);
+    $("issue").disabled = true;
+    $("mint").disabled = true;
+    return;
+  }
+
+  state = result.data;
+  $("connState").className = "pill good";
+  $("connState").textContent = "متّصل";
+  $("connOut").hidden = true;
+  $("issue").disabled = false;
+  $("mint").disabled = false;
+
+  renderInbox();
+  renderLicences();
+  renderCodes();
+
+  lastRefresh = Date.now();
+  markFreshness();
+}
+
+//
+// Kept live, with the two honest qualifications said on the page rather than hidden.
+//
+// **Cloudflare KV is eventually consistent**, so a write can take up to about a minute to be
+// visible from everywhere. Polling faster than that buys nothing and spends the free tier's reads
+// on the same answer.
+//
+// **And the device is not live by design.** It renews a seven-day licence every six hours, so a
+// revocation reaches a phone within six hours usually and seven days at worst. That is the trade
+// that keeps a flight or a captive portal from killing somebody's tweaks, and it is stated on the
+// page because a panel that says "revoked" while the phone still works would otherwise read as a
+// bug.
+//
+const REFRESH_MS = 20000;
+let lastRefresh = 0;
+let refreshTimer = null;
+
+function markFreshness() {
+  const seconds = Math.round((Date.now() - lastRefresh) / 1000);
+  const el = $("freshness");
+  if (!el) return;
+  el.textContent = lastRefresh
+    ? (seconds < 5 ? "الآن" : `قبل ${seconds} ثانية`)
+    : "";
+}
+
+function startAutoRefresh() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(() => {
+    // Paused while the tab is hidden. A panel left open in a background tab for a day would
+    // otherwise spend four thousand reads answering nobody.
+    if (document.hidden) { markFreshness(); return; }
+    if (!$("auto").checked) { markFreshness(); return; }
+    refresh();
+  }, REFRESH_MS);
+
+  setInterval(markFreshness, 1000);
 }
 
 // ── Wiring ────────────────────────────────────────────────────────────────────────────
-$("loadKey").onclick = async () => {
-  const pem = $("privKey").value.trim();
-  if (!pem) return;
-  const ok = await importKey(pem, false);
-  if (ok && $("rememberKey").checked) store(KEY_STORE, pem);
-};
 
-$("clearKey").onclick = () => {
-  signingKey = null;
-  $("privKey").value = "";
-  store(KEY_STORE, null);
-  $("keyState").className = "pill bad";
-  $("keyState").textContent = "غير محمَّل";
-  $("issue").disabled = true;
-  $("keyOut").hidden = true;
-};
+$("connect").onclick = async () => { save(); await refresh(); startAutoRefresh(); };
+$("refresh").onclick = refresh;
+$("remember").onchange = save;
 
-$("rememberKey").onchange = () => {
-  if ($("rememberKey").checked && $("privKey").value.trim()) store(KEY_STORE, $("privKey").value.trim());
-  if (!$("rememberKey").checked) store(KEY_STORE, null);
+$("forget").onclick = () => {
+  $("token").value = "";
+  $("remember").checked = false;
+  save();
+  $("connState").className = "pill bad";
+  $("connState").textContent = "غير متّصل";
 };
 
 $("issue").onclick = async () => {
-  const dev = $("device").value.trim().toLowerCase();
+  const dev = $("issueDev").value.trim().toLowerCase();
   if (!/^[0-9a-f]{16}$/.test(dev)) {
-    show($("issueOut"), "رمز الجهاز ستّة عشر حرفاً ستّ عشريّاً. انسخه من الإعدادات › البرهان › الترخيص.");
+    show($("connOut"), "رمز الجهاز ستّة عشر حرفاً ستّ عشريّاً.");
     return;
   }
 
-  const days = Math.max(1, parseInt($("days").value, 10) || 365);
-  const now = Math.floor(Date.now() / 1000);
-
-  // Nine random bytes, the same width tools/licence.py uses. Long enough that two ids never
-  // collide across every licence this will ever issue, short enough to paste into a JSON list.
-  const idBytes = crypto.getRandomValues(new Uint8Array(9));
-
-  const payload = {
-    v: 1, id: b64u(idBytes), dev, tier: $("tier").value, iat: now, exp: now + days * 86400,
-  };
-  const who = $("name").value.trim();
-  if (who) payload.for = who;
-
-  const token = await issueToken(payload);
-
-  // Checked before it is handed over. A key that does not verify must never leave this page --
-  // the person receiving it would find out on their phone, and by then it is a support thread
-  // rather than a line of red text.
-  if (!await verifyToken(token)) {
-    show($("issueOut"), "المفتاح الناتج لم يجتز الفحص، ولم يُصدَر. لا ترسله.");
-    return;
-  }
-
-  ledger.push({ ...payload, revoked: false });
-  writeLedger();
-  renderRevoked();
-
-  show($("issueOut"), token);
-  $("copyKey").hidden = false;
-  $("copyKey").onclick = () => {
-    navigator.clipboard.writeText(token).then(() => {
-      $("copyKey").textContent = "نُسخ";
-      setTimeout(() => ($("copyKey").textContent = "نسخ المفتاح"), 1500);
-    });
-  };
-};
-
-$("verify").onclick = async () => {
-  const token = $("checkKey").value.trim();
-  if (!token) return;
-
-  const ok = await verifyToken(token);
-  let lines = ["التوقيع : " + (ok ? "صالح" : "غير صالح")];
-
-  // Contents only after the signature, always. Reading a device id or an expiry out of a payload
-  // nobody has authenticated is reading whatever the holder decided to put there -- the same
-  // ordering the tweak itself keeps.
-  if (ok) {
-    try {
-      const payload = JSON.parse(new TextDecoder().decode(unb64u(token.split(".")[1])));
-      const left = payload.exp - Math.floor(Date.now() / 1000);
-      lines.push("الجهاز  : " + payload.dev);
-      lines.push("لمن     : " + (payload.for || "—"));
-      lines.push("الباقة  : " + (payload.tier || "—"));
-      lines.push("المعرّف  : " + payload.id);
-      lines.push("ينتهي   : " + new Date(payload.exp * 1000).toISOString().slice(0, 10) +
-                 (left <= 0 ? "  (منتهٍ)" : `  (${Math.ceil(left / 86400)} يوماً)`));
-      if (livePublished && livePublished.includes(payload.id)) lines.push("مسحوب   : نعم، وهو في القائمة المنشورة");
-    } catch (e) { lines.push("الحمولة : غير مقروءة"); }
-  }
-  show($("verifyOut"), lines.join("\n"));
-};
-
-$("refreshLive").onclick = async () => {
-  $("liveState").className = "pill warn";
-  $("liveState").textContent = "جارٍ القراءة";
-  try {
-    // The one network call in this file, and it is a read. Cache-busted because a stale copy of
-    // the revocation list is exactly the thing this button exists to rule out.
-    const response = await fetch("../licence/revoked.json?cb=" + Date.now(), { cache: "no-store" });
-    if (!response.ok) throw new Error(response.status);
-    const data = await response.json();
-    livePublished = Array.isArray(data.revoked) ? data.revoked : [];
-    $("liveState").className = "pill good";
-    $("liveState").textContent = livePublished.length + " مسحوب منشور";
-  } catch (e) {
-    // Named rather than swallowed: "the list is empty" and "the list could not be read" are
-    // different facts and only one of them means nothing is revoked.
-    $("liveState").className = "pill bad";
-    $("liveState").textContent = "تعذّرت القراءة";
-    livePublished = null;
-  }
-};
-
-$("copyRevoked").onclick = () => {
-  navigator.clipboard.writeText(renderRevoked()).then(() => {
-    $("copyRevoked").textContent = "نُسخ";
-    setTimeout(() => ($("copyRevoked").textContent = "نسخ revoked.json"), 1500);
+  const result = await api("/admin/approve", {
+    dev,
+    days: parseInt($("issueDays").value, 10) || 365,
+    note: $("issueNote").value.trim(),
+    tier: $("issueTier").value,
   });
+
+  if (!result.ok) { show($("connOut"), result.why); return; }
+  $("issueDev").value = "";
+  $("issueNote").value = "";
+  await refresh();
 };
 
-$("exportLedger").onclick = () => {
-  // A text box rather than a download: this page is opened on a phone as often as on a Mac, and
-  // a download there lands somewhere nobody can find. Selecting and copying always works.
-  show($("revokedOut"), JSON.stringify(ledger, null, 2));
-};
+$("mint").onclick = async () => {
+  const result = await api("/admin/codes", {
+    count: parseInt($("codeCount").value, 10) || 1,
+    days: parseInt($("codeDays").value, 10) || 365,
+    window: parseInt($("codeWindow").value, 10) || 90,
+    tier: $("codeTier").value,
+  });
 
-$("importLedger").onclick = () => {
-  const text = prompt("الصق سجلّاً مُصدَّراً");
-  if (!text) return;
-  try {
-    const parsed = JSON.parse(text);
-    if (!Array.isArray(parsed)) throw new Error("not a list");
+  if (!result.ok) { show($("connOut"), result.why); return; }
 
-    // Merged by id rather than replaced, so importing a second machine's ledger does not throw
-    // away this one's. An id that exists in both keeps whichever entry says revoked.
-    const byId = new Map(ledger.map(e => [e.id, e]));
-    parsed.forEach(entry => {
-      const existing = byId.get(entry.id);
-      byId.set(entry.id, existing ? { ...existing, ...entry, revoked: existing.revoked || entry.revoked }
-                                  : entry);
-    });
-    ledger = [...byId.values()].sort((a, b) => (a.iat || 0) - (b.iat || 0));
-    writeLedger();
-    renderRevoked();
-  } catch (e) {
-    alert("تعذّر قراءة السجلّ.");
-  }
+  const text = result.data.codes.join("\n");
+  show($("codesOut"), text + "\n\n— تُعرَض مرّةً واحدة —");
+
+  $("copyCodes").hidden = false;
+  $("copyCodes").onclick = () => navigator.clipboard.writeText(text).then(() => {
+    $("copyCodes").textContent = "نُسخ";
+    setTimeout(() => ($("copyCodes").textContent = "نسخ"), 1500);
+  });
+
+  await refresh();
 };
 
 // ── Start ─────────────────────────────────────────────────────────────────────────────
-readLedger();
-renderLedger();
-renderRevoked();
-
-try { inbox = JSON.parse(load(INBOX_STORE) || "[]"); } catch (e) { inbox = []; }
-if (!Array.isArray(inbox)) inbox = [];
-renderInbox();
-
-const remembered = load(KEY_STORE);
-if (remembered) {
-  $("privKey").value = remembered;
-  $("rememberKey").checked = true;
-  importKey(remembered, true);
-}
-
-$("refreshLive").click();
+try {
+  const saved = JSON.parse(localStorage.getItem(STORE) || "null");
+  if (saved && saved.base) {
+    $("base").value = saved.base;
+    $("token").value = saved.token || "";
+    $("remember").checked = true;
+    refresh();
+  }
+} catch (e) { /* nothing stored, or storage is blocked */ }
 </script>
 </body>
 </html>
