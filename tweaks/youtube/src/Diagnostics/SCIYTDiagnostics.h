@@ -158,6 +158,14 @@
 + (void)recordNativeDownloadNote:(NSString *)note;
 + (NSString *)nativeDownloadNote;
 
+/// The save button inside YouTube's own player controls.
+///
+/// Its own line, because for eight releases it had none: the one record it wrote went into
+/// `-recordMarkerBar:`, the SponsorBlock progress-bar slot, so an unconfirmed feature's only
+/// evidence was filed under an unrelated heading and no report ever showed it.
++ (void)recordOverlayButton:(NSString *)state;
++ (NSString *)overlayButtonState;
+
 /// What the last tap on that button actually tried to save. Its own slot: the line above is
 /// rewritten on every clip and buried this every time.
 + (void)recordShortsSave:(NSString *)detail;

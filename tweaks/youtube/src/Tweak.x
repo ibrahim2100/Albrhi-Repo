@@ -6,7 +6,7 @@
 #import "Diagnostics/SCIYTDiagnostics.h"
 #import "Features/Display/SCIYTDimmer.h"
 
-NSString *SCIVersionString = @"v1.26.1";  // AlbrhiYT
+NSString *SCIVersionString = @"v1.27.0";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.
@@ -155,7 +155,12 @@ NSString *SCIVersionString = @"v1.26.1";  // AlbrhiYT
         // from the hide switches above: those remove something that works, these act on two
         // classes read from YTVideoOverlay's source rather than confirmed on a device. A
         // surface nobody has yet seen attach should be asked for, not assumed.
-        SCIPrefOverlayButton: @NO,
+        // On since 1.27.0. It was off because it was unconfirmed, and it stayed unconfirmed
+        // because its only diagnostic was written into the SponsorBlock marker slot -- so no
+        // report has ever mentioned it and nobody could confirm anything. It is now the way a
+        // video is saved from the player, since YTSlimVideoDetailsActionView -- the row this
+        // tweak moved the download onto in 1.26.0 -- is not drawn in 21.32.4 at all.
+        SCIPrefOverlayButton: @YES,
         SCIPrefOverlayEndTime: @NO,
 
         // Fullscreen direction: off, meaning YouTube keeps deciding from how the phone is

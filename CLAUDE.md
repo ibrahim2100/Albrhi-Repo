@@ -713,6 +713,20 @@ counter is indistinguishable from a feature that works. The same shape sat one l
 post-to-image renderer, where `-drawViewHierarchyInRect:afterScreenUpdates:NO` returns a BOOL that
 was being discarded.
 
+**A diagnostic written into another feature's slot is worse than no diagnostic, and it hid a
+whole surface for eight releases.** YouTube's in-player save button recorded itself through
+`-recordMarkerBar:` — the SponsorBlock progress-bar line — so the one piece of evidence about an
+off-by-default, unconfirmed feature was filed under an unrelated heading and no report ever
+mentioned it. It could not be confirmed, so it stayed off; it stayed off, so nobody looked. **Check
+that a new record has its own slot and reaches the report**, the same way this file already
+demands that a row added to a screen is added to the copyable report as well.
+
+**And a class present in the binary is not a class the app draws — asked here only because the
+count made it cheap to ask.** `YTSlimVideoDetailsActionView` has real metadata in 21.34.3 and
+built exactly zero instances over a whole session on 21.32.4: YouTube composes that row from
+elements now. This is X's dead immersive rail again, one app over, and the thing that settled it
+in one report rather than one release was counting constructions rather than outcomes.
+
 **A counter that is only written out on the success branch is not a counter, and this one was
 written one branch away from the paragraph explaining why.** YouTube's new download-button hook
 counted taps on the action row and recorded the tally *only* where a download button was
@@ -1757,9 +1771,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.26.1** · X **0.18.1** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.27.0** · X **0.18.1** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.9.0** ·
-NextUp **0.1.5** · suite **1.64.1**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.65.0**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

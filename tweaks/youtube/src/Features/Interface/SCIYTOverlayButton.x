@@ -1,3 +1,4 @@
+#import <objc/runtime.h>
 #import "../../YouTubeHeaders.h"
 #import "../../SCILog.h"
 #import "../../Prefs.h"
@@ -34,6 +35,30 @@
 /// and a time needs a line of text, so it goes in the container beside the icons where
 /// there is room for one.
 ///
+
+///
+/// What this surface is actually doing, in numbers rather than in one overwritten sentence.
+///
+/// **This button shipped with no report at all for eight releases.** Its only record went into
+/// `-recordMarkerBar:`, which is the SponsorBlock progress-bar line — so a feature that was off
+/// by default and unconfirmed had its one piece of evidence filed under an unrelated heading,
+/// and no report has ever mentioned it. A diagnostic written into the wrong slot is worse than
+/// none: it reads as covered.
+static NSUInteger sciOverlaysSeen = 0;
+static NSUInteger sciOverlayButtonsMade = 0;
+static NSUInteger sciOverlayTaps = 0;
+
+static char kSCIOverlaySaveButton;
+static char kSCIOverlayJoined;
+
+static void SCIReportOverlayState(BOOL joined) {
+    [SCIYTDiagnostics recordOverlayButton:
+        [NSString stringWithFormat:SCILocalized(@"diag_overlay_counts"),
+            (unsigned long)sciOverlaysSeen,
+            (unsigned long)sciOverlayButtonsMade,
+            joined ? SCILocalized(@"diag_overlay_native") : SCILocalized(@"diag_overlay_placed"),
+            (unsigned long)sciOverlayTaps]];
+}
 
 static const NSInteger SCIOverlayButtonTag = 0x5C10B7;
 static const NSInteger SCIEndTimeTag       = 0x5C10B8;
@@ -79,50 +104,106 @@ static UIViewController *SCIOwningController(UIView *view) {
 
 %hook YTMainAppControlsOverlayView
 
+///
+/// The row of buttons across the top of the player, with ours added to it.
+///
+/// **Handed to YouTube's own layout rather than floated over it.** `-topControls` returns the
+/// array the player positions, so appending to that array is the same move the X tweak needed
+/// four releases to find: a button that is *in* the arrangement cannot be swept out by the next
+/// layout pass, and needs no constant of ours to say where it sits.
+///
+/// **And the button is built by YouTube's own factory**, which is what makes appending honest.
+/// `-playerButtonWithImage:selectedImage:accessibilityLabel:verticalContentPadding:minHitTargetSize:`
+/// hands back a YTQTMButton measured the way the app measures its own — so the array holds the
+/// kind of object its other members are, rather than a plain UIButton hoping nothing asks it a
+/// question. A build without that factory is not guessed at: the button is placed by us against
+/// the safe area instead, exactly as every release before this one did, and the report says
+/// which of the two happened.
+///
 - (NSArray *)topControls {
     NSArray *controls = %orig;
 
     if (!SCIPrefEnabled(SCIPrefOverlayButton)) return controls;
 
     @try {
-        // Once per view. -topControls is asked repeatedly and each answer would otherwise
-        // add another button to the same row.
-        if ([self viewWithTag:SCIOverlayButtonTag]) return controls;
+        sciOverlaysSeen++;
 
-        UIButton *save = [UIButton buttonWithType:UIButtonTypeSystem];
-        save.tag = SCIOverlayButtonTag;
-        save.tintColor = [UIColor whiteColor];
-        save.accessibilityLabel = SCILocalized(@"overlay_save");
-        [save setImage:[UIImage systemImageNamed:@"arrow.down.circle"]
-              forState:UIControlStateNormal];
-        [save addTarget:self action:@selector(sciSaveTapped:)
-       forControlEvents:UIControlEventTouchUpInside];
+        UIButton *save = objc_getAssociatedObject(self, &kSCIOverlaySaveButton);
+        BOOL joined = [objc_getAssociatedObject(self, &kSCIOverlayJoined) boolValue];
 
-        save.translatesAutoresizingMaskIntoConstraints = NO;
-        [self addSubview:save];
+        if (!save) {
+            UIImage *icon = [UIImage systemImageNamed:@"arrow.down.circle"];
 
-        // Pinned to this view's own margins, not laid out beside YouTube's controls.
-        //
-        // The X tweak's four broken releases are the lesson underneath this: a floating
-        // button fought -layoutSubviews every frame. There the fix was to become an
-        // arranged subview of a real UIStackView. Here -topControls answers an NSArray and
-        // there is no stack to join, so the button is anchored to the safe area instead --
-        // a constraint against a guide that always exists, rather than a frame recomputed
-        // against siblings whose positions this tweak does not own.
-        [NSLayoutConstraint activateConstraints:@[
-            [save.trailingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.trailingAnchor
-                                                constant:-52],
-            [save.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor
-                                            constant:8],
-            [save.widthAnchor constraintEqualToConstant:32],
-            [save.heightAnchor constraintEqualToConstant:32]
-        ]];
+            if ([self respondsToSelector:@selector(playerButtonWithImage:selectedImage:accessibilityLabel:verticalContentPadding:minHitTargetSize:)]) {
+                // 0 padding and a 48pt target: the padding is the app's to decide from its own
+                // metrics and 0 asks for that default, while 48 is the size a finger needs and
+                // the one number here that is about people rather than about YouTube.
+                id built = [self playerButtonWithImage:icon
+                                         selectedImage:icon
+                                    accessibilityLabel:SCILocalized(@"overlay_save")
+                                verticalContentPadding:0
+                                      minHitTargetSize:48];
 
-        [SCIYTDiagnostics recordMarkerBar:@"YTMainAppControlsOverlayView(button)" count:1];
+                // Checked rather than cast. A factory that answers with something that is not a
+                // control would otherwise be found out by -addTarget:, in the player, at the
+                // worst moment.
+                if ([built isKindOfClass:[UIControl class]]) {
+                    save = (UIButton *)built;
+                    joined = YES;
+                }
+            }
+
+            if (!save) {
+                save = [UIButton buttonWithType:UIButtonTypeSystem];
+                save.tintColor = [UIColor whiteColor];
+                save.accessibilityLabel = SCILocalized(@"overlay_save");
+                [save setImage:icon forState:UIControlStateNormal];
+            }
+
+            save.tag = SCIOverlayButtonTag;
+            [save addTarget:self action:@selector(sciSaveTapped:)
+           forControlEvents:UIControlEventTouchUpInside];
+
+            objc_setAssociatedObject(self, &kSCIOverlaySaveButton, save, OBJC_ASSOCIATION_RETAIN);
+            objc_setAssociatedObject(self, &kSCIOverlayJoined, @(joined), OBJC_ASSOCIATION_RETAIN);
+
+            if (!joined) {
+                // The fallback, unchanged from the releases that shipped it. Pinned to this
+                // view's own safe area rather than laid out beside YouTube's controls: a
+                // constraint against a guide that always exists, rather than a frame recomputed
+                // against siblings whose positions this tweak does not own.
+                save.translatesAutoresizingMaskIntoConstraints = NO;
+                [self addSubview:save];
+                [NSLayoutConstraint activateConstraints:@[
+                    [save.trailingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.trailingAnchor
+                                                        constant:-52],
+                    [save.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor
+                                                    constant:8],
+                    [save.widthAnchor constraintEqualToConstant:32],
+                    [save.heightAnchor constraintEqualToConstant:32]
+                ]];
+            }
+
+            sciOverlayButtonsMade++;
+        }
+
+        SCIReportOverlayState(joined);
+
+        // Only when the button is one of YouTube's own. Appending a plain UIButton to an array
+        // whose other members are YTQTMButtons is exactly the guess this file refuses to make
+        // everywhere else -- and it would be made inside the player, where being wrong is a
+        // crash rather than a missing button.
+        if (joined && ![controls containsObject:save]) {
+            NSMutableArray *withOurs = [controls mutableCopy] ?: [NSMutableArray array];
+            [withOurs addObject:save];
+            return withOurs;
+        }
     } @catch (NSException *exception) {
         // A button is a convenience and the player is not. Anything thrown here costs the
         // button and nothing else -- the same trade every drawing hook in this tweak makes.
         SCILogV(@"overlay: top button — %@", exception.reason);
+        [SCIYTDiagnostics recordOverlayButton:
+            [NSString stringWithFormat:SCILocalized(@"diag_overlay_threw"), exception.reason]];
     }
 
     return controls;
@@ -138,8 +219,15 @@ static UIViewController *SCIOwningController(UIView *view) {
 // about in an Objective-C method the way it would be in a C function.
 %new
 - (void)sciSaveTapped:(UIButton *)sender {
+    sciOverlayTaps++;
+    SCIReportOverlayState([objc_getAssociatedObject(self, &kSCIOverlayJoined) boolValue]);
+
     UIViewController *host = SCIOwningController(self);
-    if (host) [SCIYTDownload presentFrom:host];
+    if (!host) {
+        [SCIYTDiagnostics recordOverlayButton:SCILocalized(@"diag_overlay_no_host")];
+        return;
+    }
+    [SCIYTDownload presentFrom:host];
 }
 
 %end

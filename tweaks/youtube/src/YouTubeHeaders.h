@@ -270,6 +270,24 @@
 ///
 @interface YTMainAppControlsOverlayView : UIView
 - (NSArray *)topControls;
+
+//
+// YouTube's own factory for a button in the player controls.
+//
+// Encoding `@56@0:8@16@24@32d40d48`, read from 21.34.3's class metadata: two images, a label,
+// and two doubles. **Using it is what makes the button native rather than native-looking** --
+// what comes back is a YTQTMButton the app built to its own measurements, which is also the
+// only honest way to hand one back in `-topControls` without guessing what that array's
+// members are expected to answer.
+//
+// Behind `-respondsToSelector:` at the call site: a build without it gets a plain button
+// placed by us, which is what every release before this one had.
+//
+- (id)playerButtonWithImage:(UIImage *)image
+              selectedImage:(UIImage *)selectedImage
+         accessibilityLabel:(NSString *)label
+      verticalContentPadding:(double)padding
+            minHitTargetSize:(double)minimum;
 @end
 
 @interface YTInlinePlayerBarContainerView : UIView

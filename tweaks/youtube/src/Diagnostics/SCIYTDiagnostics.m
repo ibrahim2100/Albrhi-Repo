@@ -244,6 +244,16 @@ static NSString *sciNativeDownloadNote = nil;
     return sciNativeDownloadNote ?: SCILocalized(@"diag_native_button_no_tap");
 }
 
+static NSString *sciOverlayButton = nil;
+
++ (void)recordOverlayButton:(NSString *)state {
+    if (state.length) sciOverlayButton = [state copy];
+}
+
++ (NSString *)overlayButtonState {
+    return sciOverlayButton ?: SCILocalized(@"diag_overlay_none");
+}
+
 /// The last save actually attempted, kept apart from the placement line above.
 ///
 /// They shared one slot and placement won every time. Placement is written whenever an
@@ -977,6 +987,8 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     // not answered -- the whole reason both numbers travel in this one string.
     [out appendFormat:@"%@\n  %@\n  %@\n\n", SCILocalized(@"diag_native_button"),
         [self nativeDownloadButtonState], [self nativeDownloadNote]];
+
+    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_overlay"), [self overlayButtonState]];
 
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts"), [self shortsButtonState]];
 

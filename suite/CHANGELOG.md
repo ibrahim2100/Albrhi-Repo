@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.65.0
+
+**YouTube 1.27.0.** The report answered plainly: the row of buttons under a video is not drawn from
+the class 1.26.0 moved the download onto — YouTube builds it from elements now. The save button
+moves into the player's own controls instead, built with YouTube's own button factory and handed
+to YouTube's own layout, and it is on by default. It had existed, off and unconfirmed, since
+1.18.0 — unconfirmed because its only diagnostic was being written into the SponsorBlock line.
+
 ## v1.64.1
 
 **YouTube 1.26.1.** The new download button's own report could not say whether it had attached —

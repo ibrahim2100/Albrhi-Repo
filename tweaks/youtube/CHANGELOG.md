@@ -3,6 +3,35 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.27.0
+
+**The device answered: `YTSlimVideoDetailsActionView` is not drawn in 21.32.4 at all.** Not one of
+those buttons was built over a whole session — which is exactly what 1.26.1's construction count
+exists to say, and it took one report instead of a release of guessing. The class is in the binary
+and its metadata is real; YouTube simply builds that row out of elements now and leaves the class
+behind. **A class being present is not a class being used**, which this project already knew about
+X's immersive rail and had not thought to ask here.
+
+**So the save button moves into the player's own control overlay — and it was already written.**
+`YTMainAppControlsOverlayView -topControls` has been hooked since 1.18.0, off by default because
+it was unconfirmed, and **it stayed unconfirmed because its only diagnostic was written into
+`-recordMarkerBar:`** — the SponsorBlock progress-bar slot. Eight releases of reports, none of
+which could mention it. A diagnostic filed under the wrong heading is worse than none: it reads as
+covered. It has its own line now, counting overlays seen, buttons made and taps.
+
+**The button is built by YouTube's own factory and handed to YouTube's own layout.**
+`-playerButtonWithImage:selectedImage:accessibilityLabel:verticalContentPadding:minHitTargetSize:`
+(`@56@0:8@16@24@32d40d48`, read from the class metadata) returns a YTQTMButton measured the way the
+app measures its own — so it can be appended to the array `-topControls` returns and positioned by
+the player, which is the arranged-subview lesson the X tweak needed four releases to learn. It is
+appended **only** when the factory produced it: putting a plain UIButton into an array whose other
+members are YTQTMButtons is a guess, and inside the player a wrong guess is a crash rather than a
+missing button. A build without the factory gets the plain button placed against the safe area,
+exactly as before, and the report says which of the two happened.
+
+The 1.26.0 hook on the action row stays. It costs nothing where the class is not drawn, and its
+report line now says so in one sentence rather than leaving four possibilities open.
+
 ## v1.26.1
 
 **The report said `no tap has reached this hook`, and that line could not have told the truth.**
