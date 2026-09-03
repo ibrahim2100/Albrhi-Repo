@@ -42,13 +42,17 @@
 //  it is short: a phone in airplane mode for two days stops being licensed, which is a support
 //  question rather than a bug. `SCILicenseGraceSeconds` below is the one place to change it.
 //
-//  ── Enforcement is off in this release, deliberately ───────────────────────────────────
+//  ── Enforcement, and why it has no switch ─────────────────────────────────────────────
 //
-//  `SCILicenseIsEnforced()` answers NO unless the panel's own switch is on. The source has been
-//  public and free the whole time it has existed; turning a gate on in the same release that
-//  introduces it would break every existing install on update, before a single key has been
-//  issued. So this ships measuring: the panel shows the fingerprint, a key can be entered and is
-//  really verified, and nothing is withheld from anyone until that switch is flipped on purpose.
+//  It is always on. It shipped as a preference for one release so the layer could be introduced
+//  before it was enforced — proved end to end on a real device first, which is the right order —
+//  and then the preference was removed, because a preference lives in the panel, the panel ships
+//  to everybody, and **a licence gate with a user-visible off switch is not a gate**.
+//
+//  Nobody is locked out by that. The panel never asks the gate, so the screen that enters a
+//  licence is always reachable, and an offline key verifies with no network at all. The way back
+//  in is entering a licence — which is the only way back in that is not also a way around.
+//
 //
 //  Copyright (C) Ibrahim Ismail AL-Rahn. GPLv3.
 //
@@ -196,7 +200,6 @@ void SCILicenseCheckInIfDue(void);
 NSString *_Nullable SCILicenseServerBase(void);
 
 /// Points the device at a server. Panel only — a sandboxed app cannot write this domain.
-void SCILicenseSetServerBase(NSString *_Nullable base);
 
 /// What a call to the server came back with.
 typedef NS_ENUM(NSInteger, SCILicenseServerResult) {

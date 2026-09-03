@@ -1,5 +1,16 @@
 # Albrhi Changelog
 
+## v1.71.1
+
+**Albrhi requires a licence, and nothing on the phone turns that off any more.**
+
+Two controls that shipped in 1.70.0 reached every device: one that disabled licensing, and one that
+pointed the tweak at a different server. Both are removed, and a device that already used them is
+not exempt.
+
+Settings › Albrhi › Licence now simply says whether Albrhi is running or stopped. Entering a
+licence is always possible from that screen — it is never behind the gate.
+
 ## v1.71.0
 
 **Ask for a licence from the phone and it reaches Albrhi directly.**

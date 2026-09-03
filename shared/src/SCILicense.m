@@ -13,7 +13,6 @@ const NSTimeInterval SCILicenseGraceSeconds = 24 * 60 * 60;   // one day, the ow
 static const NSTimeInterval kSCILicenseCheckInterval = 6 * 60 * 60;
 
 static NSString *const kSCILicenseKeyPref     = @"licence_key";
-static NSString *const kSCILicenseEnforcePref = @"licence_enforced";
 static NSString *const kSCILicenseEndpoint    = @"https://ibrahim2100.github.io/albrhi-repo/licence/revoked.json";
 static NSString *const kSCICodesEndpoint     = @"https://ibrahim2100.github.io/albrhi-repo/licence/codes.json";
 
@@ -262,23 +261,19 @@ NSString *SCILicenseStoredKey(void) {
 
 BOOL SCILicenseIsEnforced(void) {
     //
-    // **On unless switched off, as of Panel 0.9.27.**
+    // **Always. There is no switch, and there was one for exactly one release.**
     //
-    // It shipped off for two releases on purpose, and that was the right order: the layer was
-    // introduced, proved end to end on a real device — issued, entered, accepted, refused — and
-    // only then turned on. Introducing a gate and enforcing it in the same release would have
-    // stopped every existing install on the next update, before a single key had been issued to
-    // fix them with.
+    // It shipped as a preference so the layer could be introduced before it was enforced, which
+    // was the right order — but a preference lives in the panel, the panel ships to everybody, and
+    // a licence gate with a user-visible off switch is not a gate. Anyone could turn it off and
+    // use the whole suite. That is not a hole to narrow; it is the wrong shape.
     //
-    // The absent-reads-as-on default is deliberate and is the opposite of the per-app switch
-    // three functions up. That one reads absence as *off* because installing the suite must not
-    // silently modify four apps nobody asked about. This one reads absence as *on* because the
-    // question is whether the software may be used at all, and silence is not a licence.
+    // **Nobody is locked out by this.** The panel is a Settings bundle and never asks the gate, so
+    // the screen that enters a licence is always reachable — and a key issued by
+    // `tools/licence.py` verifies with no server and no network at all. The way back in is
+    // entering a licence, which is the only way back in that is not also a way around.
     //
-    // Switching it off is always possible: the panel is a Settings bundle and never asks this,
-    // so nobody can be locked out of the screen that would let them back in.
-    //
-    return SCIPanelReadBool(kSCILicenseEnforcePref, YES);
+    return YES;
 }
 
 /// The last time the server confirmed the key, and the ids it has revoked.
@@ -460,12 +455,25 @@ void SCILicenseCheckInIfDue(void) {
 static NSString *const kSCIDefaultServer = @"https://albrhi-licence.ibrahimalrahan01.workers.dev";
 
 NSString *SCILicenseServerBase(void) {
-    NSString *base = SCIPanelReadString(kSCIServerPref, nil);
-
-    // The compiled-in address when nothing has been set, and only then. A device that has been
-    // pointed somewhere deliberately stays pointed there.
-    if (!base.length) base = kSCIDefaultServer;
-    if (!base.length) return nil;
+    //
+    // **Compiled in, and not overridable at runtime — for the same reason the enforcement switch
+    // is gone.**
+    //
+    // A settable address is a way around the gate, not a convenience: point it at a server you
+    // control and it issues you a licence signed by *your* key... except it cannot, because the
+    // token is verified against the public key compiled into this binary. So the worst a swapped
+    // address achieves is no licence at all. It comes out anyway, because a control that cannot
+    // help a user and can only confuse one is not worth the row it occupies — and because the
+    // next person to read this file should not have to work out which of those two it was.
+    //
+    // A staging deployment sets SCI_LICENCE_SERVER at build time. That is a decision made by
+    // whoever builds the package, which is the right place for it.
+    //
+#ifdef SCI_LICENCE_SERVER
+    NSString *base = @SCI_LICENCE_SERVER;
+#else
+    NSString *base = @"https://albrhi-licence.ibrahimalrahan01.workers.dev";
+#endif
 
     // Trailing slashes trimmed here rather than at four call sites, and https demanded rather
     // than assumed: a licence arriving over plain http could be swapped in flight by anyone on
@@ -477,15 +485,6 @@ NSString *SCILicenseServerBase(void) {
     return base;
 }
 
-void SCILicenseSetServerBase(NSString *base) {
-    CFStringRef domain = (__bridge CFStringRef)@"com.albrhi.panel";
-    NSString *trimmed = [base stringByTrimmingCharactersInSet:
-        [NSCharacterSet whitespaceAndNewlineCharacterSet]];
-
-    CFPreferencesSetAppValue((__bridge CFStringRef)kSCIServerPref,
-                             trimmed.length ? (__bridge CFStringRef)trimmed : NULL, domain);
-    CFPreferencesAppSynchronize(domain);
-}
 
 /// One JSON POST, with every failure folded into "nothing was decided".
 ///

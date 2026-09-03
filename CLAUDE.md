@@ -771,6 +771,25 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**A licence gate with a user-visible off switch is not a gate, and one shipped for a release —
+along with a settable server address, which is the same hole wearing a different hat.** Enforcement
+was a preference so the layer could be introduced before it was enforced, which was the right
+order. What it missed is *where a preference lives*: in the panel, which ships to everybody, so
+every user had a control reading "turn licensing off". Both are unconditional now, and a device
+that already used them is not grandfathered — the stored values are ignored rather than read,
+verified with enforcement set to NO and the server pointed elsewhere.
+
+**The address one is worth keeping for its shape rather than its severity.** A swapped server could
+never mint a working licence, because every token is verified against the compiled-in public key —
+the worst it achieved was no licence at all. It came out anyway: **a control that cannot help a
+user and can only confuse one is not worth the row it occupies**, and the next reader should not
+have to work out which of the two it was. A staging address is a build-time define, which is where
+a decision made by whoever builds the package belongs.
+
+**And the escape hatch has to be one that is not also a way around.** The panel never asks the gate,
+so the screen that enters a licence is always reachable, and an offline key verifies with no
+network. Entering a licence is the way back in; disabling the check never can be.
+
 **There is a licence server as of Panel 0.9.28 — a Cloudflare Worker in `server/` — and the
 offline path is kept deliberately, not by inertia.** With a server configured, requests arrive on
 their own and the device renews a **seven-day** signed licence in the background. With none, a key
@@ -836,13 +855,6 @@ when they do not match.
 **The private key lives in `~/.albrhi/` and never enters this repository** — not in a build, not
 in CI, not in a message. `.gitignore` carries the pattern as a second line of defence, not as the
 arrangement.
-
-**There is a licence server as of Panel 0.9.28 — a Cloudflare Worker in `server/` — and the
-offline path is kept deliberately, not by inertia.** With a server configured, requests arrive on
-their own and the device renews a **seven-day** signed licence in the background. With none, a key
-issued by `tools/licence.py` verifies with no network at all. The second is the way back in when
-the first is unreachable, which is the only thing that makes "the server holds the only signing
-key" a decision rather than a single point of total failure.
 
 **Seven days is the whole live-control design, and both halves matter.** Revocation becomes real —
 withdraw a licence and the device stops within a week, with no list for it to decline to fetch —
@@ -2042,9 +2054,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.28** · Watch **0.5.3** · TikTok **0.20.1** ·
+Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.29** · Watch **0.5.3** · TikTok **0.20.1** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.1.6** · suite **1.71.0**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.6** · suite **1.71.1**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

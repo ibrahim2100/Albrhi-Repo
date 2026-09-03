@@ -7,7 +7,6 @@
 #import "shared/src/SCIPanelGate.h"
 
 static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
-static NSString *const kSCIEnforceKey  = @"licence_enforced";
 
 @implementation SCIPanelLicenceController
 
@@ -133,28 +132,17 @@ static NSString *const kSCIEnforceKey  = @"licence_enforced";
     // the two is in use, because "the default" and "one I chose" are different facts and only one
     // of them is worth checking when something stops working.
     NSString *server = SCILicenseServerBase();
-    BOOL custom = SCIPanelReadString(@"licence_server", nil).length > 0;
 
     [specifiers addObject:[self groupTitled:SCILocalized(@"lic_server_section")
                                      footer:server ? SCILocalized(@"lic_server_footer")
                                                    : SCILocalized(@"lic_server_none_footer")]];
 
-    [specifiers addObject:[self factTitled:custom ? SCILocalized(@"lic_server_custom")
-                                                  : SCILocalized(@"lic_server")
+    [specifiers addObject:[self factTitled:SCILocalized(@"lic_server")
                                      value:server ?: SCILocalized(@"lic_server_none")
                                     symbol:@"antenna.radiowaves.left.and.right"
                                       tint:server ? [UIColor systemTealColor]
                                                   : [UIColor systemGrayColor]]];
 
-    PSSpecifier *setServer = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"lic_server_set")
-                                                            target:self
-                                                               set:NULL
-                                                               get:NULL
-                                                            detail:Nil
-                                                              cell:PSButtonCell
-                                                              edit:Nil];
-    SCISetButtonAction(setServer, @selector(setServerAddress));
-    [specifiers addObject:setServer];
 
     if (server) {
         PSSpecifier *sync = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"lic_sync")
@@ -211,25 +199,24 @@ static NSString *const kSCIEnforceKey  = @"licence_enforced";
         [specifiers addObject:forget];
     }
 
-    // The gate itself, last and with the plainest footer on the page.
+    // **No enforcement switch, and its absence is the feature.**
     //
-    // **Off by default and it stays off until somebody turns it on here.** The source has been
-    // free for as long as it has existed; a release that both introduced this layer and enforced
-    // it would stop every install already out there on the next update, before a single key had
-    // been issued to fix them with.
+    // One shipped, for one release, so the layer could be introduced before it was enforced. It
+    // reached every user's phone, where it read as "turn licensing off" -- which it was. A gate
+    // with an off switch on the far side of it is not a gate.
+    //
+    // What stands here instead is a statement of what is happening, because a tweak standing down
+    // is indistinguishable from a broken install and somebody has to be told which.
     [specifiers addObject:[self groupTitled:SCILocalized(@"lic_enforce_section")
                                      footer:SCILocalized(@"lic_enforce_footer")]];
 
-    PSSpecifier *enforce = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"lic_enforce")
-                                                          target:self
-                                                             set:@selector(setEnforce:specifier:)
-                                                             get:@selector(enforceForSpecifier:)
-                                                          detail:Nil
-                                                            cell:PSSwitchCell
-                                                            edit:Nil];
-    [enforce setProperty:SCIPanelBadgeImage(@"lock", [UIColor systemOrangeColor])
-                  forKey:@"iconImage"];
-    [specifiers addObject:enforce];
+    [specifiers addObject:[self factTitled:SCILocalized(@"lic_enforce")
+                                     value:SCILicenseAllows() ? SCILocalized(@"lic_running")
+                                                              : SCILocalized(@"lic_stopped")
+                                    symbol:SCILicenseAllows() ? @"checkmark.circle.fill"
+                                                              : @"exclamationmark.triangle.fill"
+                                      tint:SCILicenseAllows() ? [UIColor systemGreenColor]
+                                                              : [UIColor systemOrangeColor]]];
 
     // Assigned to the ivar, not just returned. PSListController reads `_specifiers` directly in
     // places an override's return value never reaches, and a page that only returns its rows
@@ -423,51 +410,6 @@ static NSString *const kSCIEnforceKey  = @"licence_enforced";
     [self presentViewController:sheet animated:YES completion:nil];
 }
 
-- (void)setServerAddress {
-    UIAlertController *sheet =
-        [UIAlertController alertControllerWithTitle:SCILocalized(@"lic_server_set")
-                                            message:SCILocalized(@"lic_server_set_note")
-                                     preferredStyle:UIAlertControllerStyleAlert];
-
-    [sheet addTextFieldWithConfigurationHandler:^(UITextField *field) {
-        field.placeholder = @"https://albrhi-licence.….workers.dev";
-        field.keyboardType = UIKeyboardTypeURL;
-        field.autocorrectionType = UITextAutocorrectionTypeNo;
-        field.autocapitalizationType = UITextAutocapitalizationTypeNone;
-        field.clearButtonMode = UITextFieldViewModeWhileEditing;
-        field.text = SCILicenseServerBase() ?: @"https://";
-    }];
-
-    __weak __typeof(self) weakSelf = self;
-    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"lic_apply")
-                                              style:UIAlertActionStyleDefault
-                                            handler:^(__unused UIAlertAction *action) {
-        NSString *typed = sheet.textFields.firstObject.text;
-        SCILicenseSetServerBase(typed);
-
-        // Said rather than assumed: `SCILicenseServerBase` refuses anything that is not https,
-        // and a silently rejected address would look exactly like a server that is down.
-        if (typed.length > 8 && !SCILicenseServerBase()) {
-            [weakSelf tell:SCILocalized(@"lic_server_bad")];
-        } else {
-            [weakSelf syncNow];
-        }
-        [weakSelf reloadSpecifiers];
-    }]];
-
-    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"lic_server_clear")
-                                              style:UIAlertActionStyleDestructive
-                                            handler:^(__unused UIAlertAction *action) {
-        SCILicenseSetServerBase(nil);
-        [weakSelf reloadSpecifiers];
-    }]];
-
-    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
-                                              style:UIAlertActionStyleCancel
-                                            handler:nil]];
-    [self presentViewController:sheet animated:YES completion:nil];
-}
-
 - (void)syncNow {
     __weak __typeof(self) weakSelf = self;
     SCILicenseSyncWithServer(^(SCILicenseServerResult result) {
@@ -495,26 +437,6 @@ static NSString *const kSCIEnforceKey  = @"licence_enforced";
 - (void)removeKey {
     SCILicenseForgetKey();
     [self tell:SCILocalized(@"lic_removed")];
-    [self reloadSpecifiers];
-}
-
-- (id)enforceForSpecifier:(__unused PSSpecifier *)specifier {
-    CFPreferencesAppSynchronize((__bridge CFStringRef)kSCIPanelDomain);
-    CFPropertyListRef value = CFPreferencesCopyAppValue((__bridge CFStringRef)kSCIEnforceKey,
-                                                        (__bridge CFStringRef)kSCIPanelDomain);
-    id stored = (__bridge_transfer id)value;
-
-    // YES when absent, matching SCILicenseIsEnforced exactly. A switch that shows off while the
-    // gate is on is a screen stating the opposite of what is happening -- which this project has
-    // shipped once already, in NextUp, and wrote down afterwards.
-    return @([stored isKindOfClass:[NSNumber class]] ? [stored boolValue] : YES);
-}
-
-- (void)setEnforce:(id)value specifier:(__unused PSSpecifier *)specifier {
-    CFPreferencesSetAppValue((__bridge CFStringRef)kSCIEnforceKey,
-                             (__bridge CFNumberRef)value,
-                             (__bridge CFStringRef)kSCIPanelDomain);
-    CFPreferencesAppSynchronize((__bridge CFStringRef)kSCIPanelDomain);
     [self reloadSpecifiers];
 }
 

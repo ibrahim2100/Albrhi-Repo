@@ -1,5 +1,33 @@
 # Albrhi Panel Changelog
 
+## v0.9.29
+
+**Two switches removed, and their absence is the feature: enforcement, and the server address.**
+
+Both shipped for one release so the licence layer could be introduced before it was enforced —
+the right order, and it was proved on a device that way. What that missed is *where a preference
+lives*: in the panel, which ships to everybody. So every user had a control reading "turn licensing
+off", and another that pointed the tweak at whatever server they liked.
+
+**A gate with an off switch on the far side of it is not a gate.** Both are gone, and a device that
+had already used them is not exempt — the stored values are ignored rather than read. Checked with
+enforcement explicitly set to NO *and* the server preference pointed somewhere else: the gate holds
+and the built-in address is used.
+
+Worth saying about the second one, because it is the less obvious of the two: a swapped address
+could never actually mint a working licence, since every token is verified against the public key
+compiled into this binary. The worst it achieved was no licence at all. It comes out anyway — a
+control that cannot help a user and can only confuse one is not worth the row it occupies. A
+staging deployment sets the address at build time, which is where that decision belongs.
+
+What stands in their place is a statement: **Albrhi — running**, or **stopped — no licence**. A
+tweak standing down is indistinguishable from a broken install, and somebody has to be told which.
+
+**Nobody is locked out.** The panel is a Settings bundle and never asks the gate, so the screen that
+enters a licence is always reachable, and an offline key issued by `tools/licence.py` verifies with
+no server and no network at all. The way back in is entering a licence — the only way back in that
+is not also a way around.
+
 ## v0.9.28
 
 **Albrhi's licence server is compiled in, so a request is sent rather than carried.**
@@ -26,34 +54,6 @@ would have written itself.
 Short codes are redeemed through the server too, and a code now binds to the first device that
 uses it: passing it to a friend does nothing. Without a server reachable, redemption falls back to
 the published list exactly as before.
-
-## v0.9.28
-
-**A licence server: requests arrive on their own, and a licence renews itself.**
-
-Settings › Albrhi › Licence gains a **server** section. With an address set, *Request a licence*
-sends the request instead of making a text to carry by hand, *Enter a code* is answered by the
-server, and the licence renews in the background — every six hours normally, every half hour once
-less than two days are left.
-
-**The licence the device holds is signed for seven days, not for the term.** That is the whole of
-the live-control design and it buys both halves at once: withdrawing a licence stops the device
-within a week without it having to fetch any list, and a flight or a captive portal costs nobody
-anything, because there are six days of slack behind every renewal. A failed check is reported as
-*nothing was decided* — never as a licence problem.
-
-**The term and the renewal date are two different dates and the page shows the term.** Telling
-somebody who bought a year that their licence expires in seven days is a screen that generates a
-support message on its own.
-
-**The server decides; it is never trusted.** A token that does not verify against the public key
-compiled into the tweak, or is not for this device, is dropped — so pointing the address at
-something hostile gains a refusal and nothing else. https is required: a licence arriving over
-plain http could be swapped in flight and the signature would still check out.
-
-**And the offline path is untouched.** No server set means everything works exactly as it did in
-0.9.27 — a key issued on the Mac, verified on the device, no network at any point. That is the way
-back in if the server is ever unreachable, which is why it stays.
 
 ## v0.9.27
 
