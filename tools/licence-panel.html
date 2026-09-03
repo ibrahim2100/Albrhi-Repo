@@ -506,6 +506,30 @@ function actionButton(label, handler, destructive) {
   return button;
 }
 
+// ── What "still valid" means ──────────────────────────────────────────────────────────
+//
+// **`until` of zero is a lifetime licence, and every comparison has to be told so.** The row's
+// own badge was taught this and the counter above it was not — so a panel holding two lifetime
+// licences and one dated one announced "0 valid of 3", which is the screen telling somebody
+// their paying customers have all lapsed.
+//
+// The lesson is the shape rather than the arithmetic: a sentinel value needs *one* function that
+// understands it, not a rule remembered at each of the places that compare it. There are three
+// here — the badge, the count and the sort — and only one of them had been fixed.
+
+function isLifetime(row) { return !row.until; }
+
+function isLive(row) {
+  return !row.revoked && (isLifetime(row) || row.until > state.now);
+}
+
+/// For sorting only: a lifetime licence outlasts every date, so it sorts above them all.
+/// Left as a bare `until`, zero sorts *below* everything and puts them at the bottom of the list.
+function termOrder(row) {
+  return isLifetime(row) ? Number.MAX_SAFE_INTEGER : (row.until || 0);
+}
+
+
 // ── Search ────────────────────────────────────────────────────────────────────────────
 //
 // One box over every table. What makes it worth calling smart is not the matching — it is that a
@@ -632,13 +656,13 @@ function renderInbox() {
 
 function renderLicences() {
   const rows = (state.licences || []).filter(matches)
-                  .slice().sort((a, b) => (b.until || 0) - (a.until || 0));
+                  .slice().sort((a, b) => termOrder(b) - termOrder(a));
   const body = $("licences").querySelector("tbody");
   body.innerHTML = "";
   $("licences").hidden = rows.length === 0;
   $("licEmpty").hidden = rows.length > 0;
 
-  const live = rows.filter(l => !l.revoked && l.until > state.now).length;
+  const live = rows.filter(isLive).length;
   $("licCount").textContent = live + " سارٍ من " + rows.length;
   $("licCount").className = live ? "pill good" : "pill warn";
 
@@ -647,7 +671,7 @@ function renderLicences() {
     tr.append(cell(lic.key, true),
               cell(lic.name || lic.note || "—"),
               cell(lic.contact || "—", true),
-              cell(lic.until ? fmtDate(lic.until) : "∞", true),
+              cell(isLifetime(lic) ? "∞" : fmtDate(lic.until), true),
               cell(lic.source === "code" ? "كود" : "موافقة"));
 
       const left = (lic.until || 0) - state.now;
@@ -655,7 +679,7 @@ function renderLicences() {
     // `until` of zero is a lifetime licence, not a date in 1970. Reading it as one would show
     // every lifetime customer as expired, which is the worst row this table could draw.
     if (lic.revoked)              tr.append(pillFor("bad", "مسحوب"));
-    else if (!lic.until)          tr.append(pillFor("good", "مدى الحياة"));
+    else if (isLifetime(lic))     tr.append(pillFor("good", "مدى الحياة"));
     else if (left <= 0)           tr.append(pillFor("bad", "منتهٍ"));
     else if (left < 30 * 86400) tr.append(pillFor("warn", days(left) + " يوماً"));
     else                  tr.append(pillFor("good", days(left) + " يوماً"));

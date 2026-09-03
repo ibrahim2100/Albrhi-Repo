@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.73.3
+
+**The panel counted lifetime licences as expired** — it said "0 valid of 3" while two of the three
+never expire. Counted correctly now, and they sort to the top rather than the bottom.
+
 ## v1.73.2
 
 **The licence panel shows the phone number and can be searched** — by device, name or number, and
