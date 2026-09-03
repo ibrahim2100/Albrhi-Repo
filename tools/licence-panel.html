@@ -172,6 +172,18 @@
       <span>تذكّر في هذا المتصفّح — رمز إدارة فقط، لا مفتاح توقيع</span>
     </div>
 
+    <div class="switch">
+      <input type="checkbox" id="auto" checked>
+      <span>تحديث تلقائي كلّ ٢٠ ثانية <span id="freshness" class="pill warn"></span></span>
+    </div>
+
+    <p class="note">
+      <b>حدّان يستحقّان الذكر:</b> تخزين Cloudflare متّسقٌ في النهاية لا فوراً، فقد تستغرق الكتابة
+      حتى دقيقة لتُرى من كلّ مكان. والجهاز نفسه ليس فوريّاً بالتصميم — يُجدّد ترخيصه كلّ ست ساعات
+      ويحمل توقيعاً لسبعة أيام، فالسحب يصل خلال ست ساعات عادةً وسبعة أيام على الأكثر. هذا هو ما
+      يمنع رحلة طيرانٍ من قتل أدوات من دفع.
+    </p>
+
     <div class="out" id="connOut" hidden></div>
   </section>
 
@@ -429,10 +441,43 @@ function renderLicences() {
     else if (left < 30 * 86400) tr.append(pillFor("warn", days(left) + " يوماً"));
     else                  tr.append(pillFor("good", days(left) + " يوماً"));
 
+    //
+    // Every way an end date can move, on the row it belongs to.
+    //
+    // **"+30" and "−30" are the same call with opposite signs**, and "تعديل" is the third
+    // question rather than a variation of the first two: extend adds to what is left, and set
+    // replaces it — which is the only way to *shorten* a licence to a specific length rather
+    // than by an amount.
+    //
     const actions = document.createElement("td");
-    actions.append(lic.revoked
-      ? actionButton("إرجاع", () => api("/admin/restore", { dev: lic.key }))
-      : actionButton("سحب", () => api("/admin/revoke", { dev: lic.key }), true));
+
+    const change = async (payload, confirmText) => {
+      if (confirmText && !confirm(confirmText)) return;
+      const result = await api("/admin/approve", { dev: lic.key, ...payload });
+      if (!result.ok) alert(result.why);
+      await refresh();
+    };
+
+    actions.append(
+      actionButton("+٣٠", () => change({ mode: "extend", days: 30 })),
+      actionButton("−٣٠", () => change({ mode: "extend", days: -30 },
+        `تقصير ترخيص ${lic.key} بثلاثين يوماً؟`)),
+      actionButton("تعديل", () => {
+        const answer = prompt("كم يوماً من اليوم؟ (يستبدل المدّة الحالية)",
+                              String(Math.max(0, days(left))));
+        if (answer === null) return;
+        const value = parseInt(answer, 10);
+        if (!Number.isFinite(value) || value < 0) { alert("رقم غير صالح."); return; }
+        change({ mode: "set", days: value });
+      }),
+      lic.revoked
+        ? actionButton("إرجاع", async () => { await api("/admin/restore", { dev: lic.key }); await refresh(); })
+        : actionButton("سحب", async () => {
+            if (!confirm(`سحب ترخيص ${lic.key}؟ يتوقّف الجهاز خلال سبعة أيام على الأكثر.`)) return;
+            await api("/admin/revoke", { dev: lic.key });
+            await refresh();
+          }, true),
+    );
     tr.append(actions);
     body.append(tr);
   });
@@ -480,11 +525,53 @@ async function refresh() {
   renderInbox();
   renderLicences();
   renderCodes();
+
+  lastRefresh = Date.now();
+  markFreshness();
+}
+
+//
+// Kept live, with the two honest qualifications said on the page rather than hidden.
+//
+// **Cloudflare KV is eventually consistent**, so a write can take up to about a minute to be
+// visible from everywhere. Polling faster than that buys nothing and spends the free tier's reads
+// on the same answer.
+//
+// **And the device is not live by design.** It renews a seven-day licence every six hours, so a
+// revocation reaches a phone within six hours usually and seven days at worst. That is the trade
+// that keeps a flight or a captive portal from killing somebody's tweaks, and it is stated on the
+// page because a panel that says "revoked" while the phone still works would otherwise read as a
+// bug.
+//
+const REFRESH_MS = 20000;
+let lastRefresh = 0;
+let refreshTimer = null;
+
+function markFreshness() {
+  const seconds = Math.round((Date.now() - lastRefresh) / 1000);
+  const el = $("freshness");
+  if (!el) return;
+  el.textContent = lastRefresh
+    ? (seconds < 5 ? "الآن" : `قبل ${seconds} ثانية`)
+    : "";
+}
+
+function startAutoRefresh() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(() => {
+    // Paused while the tab is hidden. A panel left open in a background tab for a day would
+    // otherwise spend four thousand reads answering nobody.
+    if (document.hidden) { markFreshness(); return; }
+    if (!$("auto").checked) { markFreshness(); return; }
+    refresh();
+  }, REFRESH_MS);
+
+  setInterval(markFreshness, 1000);
 }
 
 // ── Wiring ────────────────────────────────────────────────────────────────────────────
 
-$("connect").onclick = async () => { save(); await refresh(); };
+$("connect").onclick = async () => { save(); await refresh(); startAutoRefresh(); };
 $("refresh").onclick = refresh;
 $("remember").onchange = save;
 
