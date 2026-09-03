@@ -1,5 +1,25 @@
 # Albrhi Changelog
 
+## v1.68.0
+
+**A licence layer — and it is switched off.**
+
+Settings › Albrhi › Licence now shows a device code, accepts a key, and carries the switch that
+turns the gate on. **That switch ships off and nothing changes for anyone until it is turned on.**
+The source has been free for as long as it has existed, and a release that both introduced this
+and enforced it would stop every install already out there on the next update, before a single key
+had been issued to fix them with.
+
+A key is checked entirely on the device — ECDSA P-256 against a public key compiled into the
+binary — so it works with no internet. The device is named by a one-way fingerprint of the serial
+and model rather than by a UDID: it cannot be turned back into a serial number by whoever receives
+it. A periodic call, at most once every six hours and never waited on, is what allows a key to be
+withdrawn later; only a real answer counts, so a timeout or a captive portal never costs anybody
+their features.
+
+What this is not: unbreakable. No check running on the user's own device can be. It is said that
+way in the code, in the docs and on the page itself.
+
 ## v1.67.2
 
 **YouTube 1.28.2.** The save button inside the player overlapped the video's title in fullscreen.
