@@ -88,35 +88,77 @@ static NSString *SCIHardwareModel(void) {
     return [NSString stringWithUTF8String:buffer] ?: @"?";
 }
 
+static NSString *const kSCIDevicePref = @"licence_device";
+
+/// Eight random bytes as sixteen hex characters.
+///
+/// Random rather than derived, which is the whole correction. A derived id has to be derivable in
+/// every process that needs it, and the value this used to derive from -- MobileGestalt's serial
+/// number -- is readable in Settings and not in a sandboxed app. A random id has no such problem
+/// and identifies nothing about the phone or its owner.
+static NSString *SCIFreshDeviceIdentity(void) {
+    uint8_t bytes[8];
+    if (SecRandomCopyBytes(kSecRandomDefault, sizeof(bytes), bytes) != errSecSuccess) {
+        // Never a silent weaker fallback. An identity that might be predictable is worse than no
+        // identity, because a key would be issued against it and trusted.
+        return nil;
+    }
+
+    NSMutableString *hex = [NSMutableString string];
+    for (int i = 0; i < 8; i++) [hex appendFormat:@"%02x", bytes[i]];
+    return hex;
+}
+
+/// The legacy shape, kept only so a process with no provisioned identity still answers something.
+///
+/// Marked weak wherever it surfaces. It is deliberately *not* used for anything but saying "the
+/// panel has not been opened yet": issuing a key against it is what caused the fault this whole
+/// function was rewritten for.
+static NSString *SCIProvisionalIdentity(void) {
+    NSString *material = [NSString stringWithFormat:@"%@|%@|provisional",
+                          kSCILicenseSalt, SCIHardwareModel()];
+
+    NSData *bytes = [material dataUsingEncoding:NSUTF8StringEncoding];
+    unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+    CC_SHA256(bytes.bytes, (CC_LONG)bytes.length, digest);
+
+    NSMutableString *hex = [NSMutableString string];
+    for (int i = 0; i < 8; i++) [hex appendFormat:@"%02x", digest[i]];
+    return hex;
+}
+
+void SCILicenseProvisionDevice(void) {
+    NSString *stored = SCIPanelReadString(kSCIDevicePref, nil);
+    if (stored.length == 16) return;
+
+    NSString *fresh = SCIFreshDeviceIdentity();
+    if (!fresh) return;
+
+    CFStringRef domain = (__bridge CFStringRef)@"com.albrhi.panel";
+    CFPreferencesSetAppValue((__bridge CFStringRef)kSCIDevicePref,
+                             (__bridge CFStringRef)fresh, domain);
+    CFPreferencesAppSynchronize(domain);
+}
+
 NSString *SCILicenseFingerprint(void) {
-    static NSString *fingerprint = nil;
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        // Serial first, then UDID. Either is device-unique; neither leaves this function.
-        NSString *unique = SCIGestaltString(@"SerialNumber");
-        if (!unique.length) unique = SCIGestaltString(@"UniqueDeviceID");
+    // Not memoised across the process's life, unlike everything else here.
+    //
+    // The panel provisions the identity while this same process is running, so a cached "there
+    // isn't one" would outlive the moment one appeared -- and the page would go on showing a
+    // provisional id right after writing a real one. The read is a preference lookup; it is
+    // cheap enough to do honestly.
+    NSString *stored = SCIPanelReadString(kSCIDevicePref, nil);
+    if (stored.length == 16) {
+        sciFingerprintWeak = NO;
+        return stored.lowercaseString;
+    }
 
-        sciFingerprintWeak = (unique.length == 0);
-
-        NSString *material = [NSString stringWithFormat:@"%@|%@|%@",
-                              kSCILicenseSalt, SCIHardwareModel(), unique ?: @"-"];
-
-        NSData *bytes = [material dataUsingEncoding:NSUTF8StringEncoding];
-        unsigned char digest[CC_SHA256_DIGEST_LENGTH];
-        CC_SHA256(bytes.bytes, (CC_LONG)bytes.length, digest);
-
-        // Eight bytes of a SHA-256 is sixty-four bits: far too wide to collide across the
-        // number of phones this will ever run on, and short enough to be read aloud down a
-        // phone line, which is how a licence actually gets issued.
-        NSMutableString *hex = [NSMutableString string];
-        for (int i = 0; i < 8; i++) [hex appendFormat:@"%02x", digest[i]];
-        fingerprint = [hex copy];
-    });
-    return fingerprint;
+    sciFingerprintWeak = YES;
+    return SCIProvisionalIdentity();
 }
 
 BOOL SCILicenseFingerprintIsWeak(void) {
-    SCILicenseFingerprint();       // computes the flag as a side effect of the once-block
+    SCILicenseFingerprint();       // sets the flag as a side effect of answering
     return sciFingerprintWeak;
 }
 

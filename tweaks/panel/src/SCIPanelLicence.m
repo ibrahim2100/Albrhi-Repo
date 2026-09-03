@@ -49,6 +49,11 @@ static NSString *const kSCIEnforceKey  = @"licence_enforced";
 - (NSArray *)specifiers {
     NSMutableArray *specifiers = [NSMutableArray array];
 
+    // Provisioned here, because this is the one process that may write the domain every tweak
+    // reads. Until it has run, a sandboxed app and this page would answer two different device
+    // ids -- which is exactly the fault that made 1.70.0 refuse a licence it had just accepted.
+    SCILicenseProvisionDevice();
+
     // What this device is, first. Everything else on the page is about a key issued against it,
     // and a key cannot be issued at all until this string has been read off the screen.
     [specifiers addObject:[self groupTitled:SCILocalized(@"lic_device_section")
@@ -175,6 +180,14 @@ static NSString *const kSCIEnforceKey  = @"licence_enforced";
 #pragma mark - Actions
 
 - (void)copyFingerprint {
+    // Refused rather than copied while the identity is provisional. A key issued against a
+    // provisional id fits nothing at all, and the person would find that out on the phone that
+    // just told them the licence was accepted.
+    if (SCILicenseFingerprintIsWeak()) {
+        [self tell:SCILocalized(@"lic_device_provisional")];
+        return;
+    }
+
     [UIPasteboard generalPasteboard].string = SCILicenseFingerprint();
     [self tell:SCILocalized(@"lic_copied")];
 }

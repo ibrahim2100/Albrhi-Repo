@@ -63,15 +63,29 @@ extern "C" {
 
 /// How this device answers when a key is issued for it. Sixteen lowercase hex characters.
 ///
-/// Never nil: a device whose serial cannot be read still gets a fingerprint from what can be
-/// read, and `SCILicenseFingerprintIsWeak()` says so rather than the fingerprint silently
-/// meaning less than it looks like it does.
+/// **Provisioned once and then read, never recomputed per process — and that is a fix, not a
+/// preference.** It used to be a hash over the serial number from MobileGestalt, which is
+/// entitlement-gated *per process*: Settings can read it and a sandboxed app cannot. So the panel
+/// and Instagram computed two different fingerprints for one phone, a key issued from the panel
+/// was "for another device" everywhere it mattered, and the panel said `licensed` while every
+/// tweak stood down. Measured by forcing the fallback, not inferred.
+///
+/// **A value not readable from every process is not an identity.** What is stored instead is eight
+/// random bytes, written once by the panel into the domain every tweak already reads through
+/// `SCIPanelReadString`. It needs no entitlement, it is identical in every process by
+/// construction, it survives tweak updates because dpkg leaves that plist alone, and — better
+/// than what it replaces — it is not derived from anything about the person or the hardware.
 NSString *SCILicenseFingerprint(void);
 
-/// YES when the fingerprint had to be built without a device-unique value.
+/// Creates the stored identity if there is none. Called by the panel, which is the one place that
+/// can write this domain; a sandboxed tweak may only read it.
+void SCILicenseProvisionDevice(void);
+
+/// YES when no stored identity has been provisioned yet, so what `SCILicenseFingerprint()` just
+/// answered is a local guess that no other process will agree with.
 ///
-/// A key issued against a weak fingerprint is a key that fits every phone of that model. Worth
-/// knowing before issuing one, which is why the panel prints it beside the fingerprint.
+/// A key must not be issued against one: it would fit nothing. The panel says so where the
+/// fingerprint is shown, and the gate's report says so where a tweak refuses.
 BOOL SCILicenseFingerprintIsWeak(void);
 
 typedef NS_ENUM(NSInteger, SCILicenseState) {

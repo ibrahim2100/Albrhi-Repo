@@ -1156,8 +1156,18 @@ dpkg sorts above `1.62.2` and below `1.62.3`, so the published number space is u
 local build still installs. Bump it on every local build during a measurement loop, exactly as a
 released build bumps its own.
 
-**Publishing resumed on 2026-08-30 after a measurement loop; the `+N` rule below is what that
-loop taught.** While a pause is on, nothing is pushed and no release is cut — a version that goes
+**Publishing is PAUSED as of 2026-09-03. Nothing is pushed and no release is cut.** The licence
+layer is being rebuilt against a real server, and 1.70.0 shipped a fault that made it worth
+stopping: enforcement was turned on while the device fingerprint was computed from a value only
+some processes can read, so the panel said `licensed` and every tweak stood down. **The lesson is
+the one this file already keeps for measurements and now keeps for identity: a value that is not
+readable from every process is not an identity** — `MGCopyAnswer("SerialNumber")` is
+entitlement-gated per process, so Settings sees it and a sandboxed app does not, and the two
+computed different fingerprints from the same device. Proved on this machine by forcing the
+fallback, not inferred from the report.
+
+Local builds during the pause are roothide only and go to `~/Desktop/Albrhi/`. The `+N` rule below
+is what the previous pause taught. While a pause is on, nothing is pushed and no release is cut — a version that goes
 out is a version strangers update to without knowing what changed. Local builds during a pause are
 roothide only and go to `~/Desktop/Albrhi/`.
 
