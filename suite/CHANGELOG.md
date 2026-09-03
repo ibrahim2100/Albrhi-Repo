@@ -2,6 +2,9 @@
 
 ## v1.73.3
 
+*Released on its own push — the commit carrying the fix touched `tools/`, which all three
+publishing workflows watch, so the suite's run was dropped by the concurrency group.*
+
 **The panel counted lifetime licences as expired** — it said "0 valid of 3" while two of the three
 never expire. Counted correctly now, and they sort to the top rather than the bottom.
 
