@@ -181,14 +181,21 @@ static const size_t kSCIPlanCount = sizeof(kSCIPlans) / sizeof(kSCIPlans[0]);
     for (size_t i = 0; i < kSCIPlanCount; i++) {
         SCIPlan plan = kSCIPlans[i];
 
-        // The free week is drawn only while it can still be taken. A row that exists to be
-        // refused is a row that teaches somebody the screen is broken.
-        if (plan.trial && SCILicenseAllows()) continue;
+        // **The free week stays on the card even when it cannot be taken, greyed and explained.**
+        //
+        // It used to be hidden, on the reasoning that a row which can only be refused teaches
+        // somebody the screen is broken. The opposite happened: a person with a licence looked
+        // for the free week, found no row at all, and concluded the button was broken. An absence
+        // answers nothing — "why is there no trial here" is a real question and the row is the
+        // only place to answer it.
+        BOOL unavailable = plan.trial && SCILicenseAllows();
 
         // And the contact plans need somewhere to go. With no number set they would open nothing.
         if (!plan.trial && kSCIWhatsApp.length == 0) continue;
 
-        [self.rows addArrangedSubview:[self rowForPlan:plan index:(NSInteger)i]];
+        [self.rows addArrangedSubview:[self rowForPlan:plan
+                                                 index:(NSInteger)i
+                                           unavailable:unavailable]];
     }
 
     if (self.rows.arrangedSubviews.count == 0) {
@@ -202,9 +209,11 @@ static const size_t kSCIPlanCount = sizeof(kSCIPlans) / sizeof(kSCIPlans[0]);
     }
 }
 
-- (UIView *)rowForPlan:(SCIPlan)plan index:(NSInteger)index {
+- (UIView *)rowForPlan:(SCIPlan)plan index:(NSInteger)index unavailable:(BOOL)unavailable {
     UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
     button.tag = index;
+    button.enabled = !unavailable;
+    button.alpha = unavailable ? 0.5 : 1.0;
     button.backgroundColor = plan.trial ? [UIColor systemTealColor]
                                         : [UIColor tertiarySystemBackgroundColor];
     button.layer.cornerRadius = 14;
@@ -219,7 +228,7 @@ static const size_t kSCIPlanCount = sizeof(kSCIPlans) / sizeof(kSCIPlans[0]);
     title.textColor = plan.trial ? [UIColor whiteColor] : [UIColor labelColor];
 
     UILabel *note = [[UILabel alloc] init];
-    note.text = SCILocalized(plan.noteKey);
+    note.text = unavailable ? SCILocalized(@"plans_trial_have") : SCILocalized(plan.noteKey);
     note.font = [UIFont systemFontOfSize:13];
     note.textColor = plan.trial ? [UIColor.whiteColor colorWithAlphaComponent:0.85]
                                 : [UIColor secondaryLabelColor];
@@ -320,19 +329,70 @@ static const size_t kSCIPlanCount = sizeof(kSCIPlans) / sizeof(kSCIPlans[0]);
 
 @implementation SCIPanelPlans
 
-+ (void)presentWithChange:(void (^)(void))onChange {
-    UIWindow *key = nil;
-    for (UIWindow *window in [UIApplication sharedApplication].windows) {
-        if (window.isKeyWindow) { key = window; break; }
-    }
-    if (!key) return;
++ (void)presentFrom:(UIViewController *)host change:(void (^)(void))onChange {
+    //
+    // Four places to draw, in order of how well each one works — and every one of them pinned
+    // with constraints rather than a frame, which is the half the first fallback got wrong.
+    //
+    //   1. the controller's window        — covers the screen, above the navigation bar
+    //   2. any window the scenes offer    — `keyWindow` is deprecated and unreliable in a
+    //                                       preference bundle, so this does not ask for the flag
+    //   3. the navigation controller       — still covers the whole page
+    //   4. the controller's own view       — a PSListController's view *is* its table, so an
+    //                                       overlay here lives in scrolling content: the worst
+    //                                       of the four and still enormously better than nothing
+    //
+    UIView *canvas = host.view.window;
 
-    SCIPanelPlansView *view = [[SCIPanelPlansView alloc] initWithFrame:key.bounds];
-    view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    if (!canvas) {
+        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if (![scene isKindOfClass:[UIWindowScene class]]) continue;
+            for (UIWindow *window in ((UIWindowScene *)scene).windows) {
+                if (!window.hidden && window.bounds.size.width > 0) { canvas = window; break; }
+            }
+            if (canvas) break;
+        }
+    }
+
+    if (!canvas) canvas = host.navigationController.view;
+    if (!canvas) canvas = host.view;
+
+    if (!canvas) {
+        // Nothing left to draw on. Said out loud: this button exists to take somebody's money,
+        // and a silent failure here is the most expensive silence in the package.
+        UIAlertController *alert =
+            [UIAlertController alertControllerWithTitle:SCILocalized(@"plans_title")
+                                                message:SCILocalized(@"plans_cannot_show")
+                                         preferredStyle:UIAlertControllerStyleAlert];
+        [alert addAction:[UIAlertAction actionWithTitle:SCILocalized(@"ok_button")
+                                                  style:UIAlertActionStyleDefault
+                                                handler:nil]];
+        [host presentViewController:alert animated:YES completion:nil];
+        return;
+    }
+
+    SCIPanelPlansView *view = [[SCIPanelPlansView alloc] initWithFrame:canvas.bounds];
     view.onChange = onChange;
     view.alpha = 0;
 
-    [key addSubview:view];
+    // Constraints, not an autoresizing mask.
+    //
+    // The mask resizes against a *superview's* bounds, and canvas #4 is a scroll view whose
+    // bounds move as it scrolls -- so the overlay would drift off the top the moment somebody
+    // touched the list. Pinned to the edges it stays put on all four canvases.
+    view.translatesAutoresizingMaskIntoConstraints = NO;
+    [canvas addSubview:view];
+    [canvas bringSubviewToFront:view];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [view.leadingAnchor constraintEqualToAnchor:canvas.leadingAnchor],
+        [view.trailingAnchor constraintEqualToAnchor:canvas.trailingAnchor],
+        [view.topAnchor constraintEqualToAnchor:canvas.topAnchor],
+        [view.bottomAnchor constraintEqualToAnchor:canvas.bottomAnchor],
+        [view.widthAnchor constraintEqualToAnchor:canvas.widthAnchor],
+        [view.heightAnchor constraintEqualToAnchor:canvas.heightAnchor],
+    ]];
+
     [UIView animateWithDuration:0.2 animations:^{ view.alpha = 1; }];
 }
 

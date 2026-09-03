@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.72.2
+
+**The "Request a licence" button opens the plans screen now.** It was doing nothing at all on some
+devices — silently, which is why it read as broken rather than as missing.
+
+The free week is also shown, greyed, when you already have a licence, instead of vanishing.
+
 ## v1.72.1
 
 **Withdrawing a licence now stops the device at its next check instead of a week later**, and the

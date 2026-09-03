@@ -771,6 +771,23 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**`keyWindow` is not a thing to look for inside a preference bundle, and a lookup that fails
+quietly is worse than one that throws.** The plans card searched `UIApplication.windows` for a key
+window and returned when it found none — in Settings, where this runs. The button did nothing, said
+nothing, and was reported as broken, which it was. **Take the surface you already have** — the
+presenting controller — and fall back down a named list, with an alert at the bottom of it rather
+than a `return`.
+
+**And an autoresizing mask measures against the superview's bounds, which move on a scroll view.**
+The last fallback surface is a `PSListController`'s view, and a `PSListController`'s view *is* its
+table — so the overlay would have slid off screen at the first touch. Constraints on four edges
+work on every surface; a mask works on the one it was tried against.
+
+**An absence answers nothing.** The free week row was hidden once a device had a licence, on the
+reasoning that a row which can only be refused reads as broken. The opposite happened — somebody
+went looking for it, found nothing, and concluded the *button* was broken. "Why is there no trial
+here" is a real question and the row is the only place to answer it: greyed, with the reason on it.
+
 **Reporting a refusal is not acting on it, and a licence layer that only reports keeps working.**
 The renewal call received `revoked` from the server, handed that up to the caller, and left the
 signed token in place — valid for its remaining week — so withdrawing a licence changed nothing on
@@ -2115,9 +2132,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.32** · Watch **0.5.3** · TikTok **0.20.1** ·
+Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.33** · Watch **0.5.3** · TikTok **0.20.1** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.1.6** · suite **1.72.1**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.6** · suite **1.72.2**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

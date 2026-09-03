@@ -1,5 +1,30 @@
 # Albrhi Panel Changelog
 
+## v0.9.33
+
+**"Request a licence" did nothing at all, and doing nothing was the bug.**
+
+The card searched `UIApplication.windows` for a key window and returned quietly when it found
+none — which is what happens inside a preference bundle, where `keyWindow` is deprecated and
+unreliable. **A silent nothing is the worst outcome available to a button somebody presses in
+order to buy something**, and it was reported exactly as it looked: the button does not work.
+
+Four surfaces now, in order of how well each works — the controller's own window, then any window
+the scenes offer without asking for the key flag, then the navigation controller, then the
+controller's view — and an alert saying *this is a fault* if all four fail. Nothing silent is left.
+
+**The first fallback was itself weak and is fixed here too.** It attached the overlay with an
+autoresizing mask, which measures against the superview's bounds — and the last of those four
+surfaces is a table view whose bounds move as it scrolls, so the card would have slid off the
+screen at the first touch. Pinned with constraints on all four edges, it stays put on every one.
+
+**And the free week is shown rather than hidden when it cannot be taken.** It used to disappear
+once a device had a licence, on the reasoning that a row which can only be refused teaches people
+the screen is broken. The opposite happened: somebody with a licence looked for the free week,
+found no row, and concluded the button was broken. An absence answers nothing — "why is there no
+trial here" is a real question, and the row is the only place to answer it. It is greyed, and it
+says why.
+
 ## v0.9.32
 
 **Revoking a licence did not stop the device, and that was a weakness rather than a wait.**

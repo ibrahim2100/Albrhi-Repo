@@ -320,7 +320,7 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
 ///
 - (void)makeRequest {
     __weak __typeof(self) weakSelf = self;
-    [SCIPanelPlans presentWithChange:^{ [weakSelf reloadSpecifiers]; }];
+    [SCIPanelPlans presentFrom:self change:^{ [weakSelf reloadSpecifiers]; }];
 }
 
 ///

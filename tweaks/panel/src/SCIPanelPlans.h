@@ -28,9 +28,17 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface SCIPanelPlans : NSObject
 
-/// Shows the card. `onChange` fires whenever something happened that the page behind it should
-/// redraw for — a trial taken, a request sent — and it is called on the main thread.
-+ (void)presentWithChange:(void (^_Nullable)(void))onChange;
+/// Shows the card over `host`.
+///
+/// **The host is passed rather than looked up**, because the first version searched
+/// `UIApplication.windows` for a key window and did nothing at all when it did not find one — in
+/// Settings, which is where this runs. A silent nothing is the worst outcome available to a button
+/// somebody presses in order to buy something, so this takes the controller that already exists,
+/// falls back to a window only if it must, and puts up an alert rather than returning quietly.
+///
+/// `onChange` fires whenever something happened that the page behind it should redraw for — a
+/// trial taken, a request sent — and it is called on the main thread.
++ (void)presentFrom:(UIViewController *)host change:(void (^_Nullable)(void))onChange;
 
 @end
 
