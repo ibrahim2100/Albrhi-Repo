@@ -3,6 +3,37 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.26.1
+
+**The report said `no tap has reached this hook`, and that line could not have told the truth.**
+
+1.26.0 counted taps on the action row and wrote the count out **only on the branch where a
+download button was answered** — so a tap on Like moved a counter nobody could read, and the
+report went on saying nothing had reached the hook. That is the exact ambiguity the release
+claimed to have removed, reintroduced one branch away from the paragraph explaining it.
+
+Worse, one number could not separate four different faults: the class is not drawn in this build,
+it is drawn and this row carries no download button, it carries one and nobody pressed it, or it
+was pressed and something downstream failed. Those need four different pieces of work.
+
+**So the buttons are counted as they are built, which needs no tap at all.** If views are being
+constructed, the hook is attached and the class is live whatever anybody has pressed — and how
+many of them answered `-hasOfflineButton` says whether a download button is on screen. The report
+now reads `N built, M of them the download button · P taps seen, Q answered`, with the last event
+on its own line beneath it so a note about the tap that mattered is not erased by the next swipe.
+
+**And the download flag is asked once the view is on screen, not when its initialiser returns.**
+`-setOfflineStatus:offlineability:` is a separate call, so asking at construction would answer NO
+for a button that becomes the download button a moment later — `0 of 6` on a build where the
+feature works perfectly. This is the "asked too early" trap that had YouTube Music reporting a
+class as missing from a build that certainly had it.
+
+Recorded while it was in front of me and refused: `YTOfflineVideoStreamsDownloadController` — the
+class the diagnostics page has been calling "the path worth riding" for releases — is downstream
+of the account check. An account without Premium is shown the upsell and never reaches it, which
+is the whole reason this tweak downloads at all. A hook there fires only for the people who least
+need it.
+
 ## v1.26.0
 
 **Downloading moved off the long press and onto YouTube's own download button.**

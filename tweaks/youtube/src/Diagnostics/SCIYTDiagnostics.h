@@ -149,6 +149,15 @@
 + (void)recordNativeDownloadButton:(NSString *)state;
 + (NSString *)nativeDownloadButtonState;
 
+/// The last thing that happened at that button, kept apart from the counts above.
+///
+/// A status and an event do not share a variable: the counts are rewritten on every view
+/// built, which is on every video you scroll to, so a note about the one tap that mattered
+/// would be erased by the next swipe. This project has made that exact mistake twice, in
+/// two tweaks, after writing it down once.
++ (void)recordNativeDownloadNote:(NSString *)note;
++ (NSString *)nativeDownloadNote;
+
 /// What the last tap on that button actually tried to save. Its own slot: the line above is
 /// rewritten on every clip and buried this every time.
 + (void)recordShortsSave:(NSString *)detail;

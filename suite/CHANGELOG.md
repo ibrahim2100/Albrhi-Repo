@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.64.1
+
+**YouTube 1.26.1.** The new download button's own report could not say whether it had attached —
+it counted taps and only wrote the count out when a download button was answered, so an ordinary
+tap on Like looked identical to a hook that never fired. The buttons are counted as they are
+built now, which answers "is this class even drawn in your build" without anybody tapping
+anything.
+
 ## v1.64.0
 
 **YouTube 1.26.0.** Downloading moved off the long press and onto YouTube's own download button —
