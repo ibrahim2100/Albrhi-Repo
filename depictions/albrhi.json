@@ -106,12 +106,12 @@
       "views": [
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.63.0",
+          "title": "v1.65.1",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• **Albrhi for YouTube Music 0.9.0: downloading works.**",
+          "markdown": "• **YouTube 1.27.1.**",
           "useSpacing": true
         },
         {
@@ -120,12 +120,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.62.2",
+          "title": "v1.65.0",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• Albrhi for YouTube Music 0.8.7: the download diagnosis moves to the first settings screen, under the master switch — the Downloads tab's empty state is not where…",
+          "markdown": "• **YouTube 1.27.0.**",
           "useSpacing": true
         },
         {
@@ -134,12 +134,12 @@
         },
         {
           "class": "DepictionSubheaderView",
-          "title": "v1.62.1",
+          "title": "v1.64.1",
           "useBoldText": true
         },
         {
           "class": "DepictionMarkdownView",
-          "markdown": "• Albrhi for YouTube Music 0.8.6: **the Downloads screen now says why a download did not happen.** The Premium prompt appearing has three separate causes — the…",
+          "markdown": "• **YouTube 1.26.1.**",
           "useSpacing": true
         },
         {
@@ -155,7 +155,7 @@
         {
           "class": "DepictionTableTextView",
           "title": "Version",
-          "text": "1.63.0"
+          "text": "1.65.1"
         },
         {
           "class": "DepictionTableTextView",
