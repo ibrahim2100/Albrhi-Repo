@@ -2,6 +2,9 @@
 
 ## v1.74.0
 
+*Released on its own push, after Albrhi NextUp 0.2.0 and Albrhi Watch 0.6.0 went out from the
+same commit: three publishers share one concurrency group, and the queued one is dropped.*
+
 **Albrhi is a tweak for social apps, and only that now.**
 
 Albrhi NextUp and Albrhi Watch were always separate packages, but their settings pages shipped
