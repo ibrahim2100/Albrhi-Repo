@@ -194,7 +194,7 @@
 
     <div class="tablewrap">
       <table id="inbox" hidden>
-        <thead><tr><th>الجهاز</th><th>لمن</th><th>المطلوب</th><th>وصل</th><th></th></tr></thead>
+        <thead><tr><th>الجهاز</th><th>الاسم والجوال</th><th>المطلوب</th><th>وصل</th><th></th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -226,8 +226,17 @@
         <input id="issueDev" spellcheck="false" placeholder="a1b2c3d4e5f60718" maxlength="16">
       </div>
       <div>
-        <label for="issueDays">المدّة (أيام)</label>
-        <input id="issueDays" type="number" value="365" min="1" max="3650">
+        <label for="issuePlan">المدّة</label>
+        <select id="issuePlan" class="ar">
+          <option value="7">أسبوع</option>
+          <option value="30">شهر</option>
+          <option value="180">ستّة أشهر</option>
+          <option value="365" selected>سنة</option>
+          <option value="lifetime">مدى الحياة</option>
+          <option value="custom">مدّة أخرى…</option>
+        </select>
+        <input id="issueDays" type="number" value="365" min="1" max="3650" hidden
+               style="margin-block-start:.5rem" placeholder="عدد الأيام">
       </div>
     </div>
 
@@ -428,8 +437,12 @@ function renderInbox() {
 
   rows.forEach(req => {
     const tr = document.createElement("tr");
-    tr.append(cell(req.dev, true), cell(req.note || "—"), cell(req.days + " يوماً"),
-              cell(fmtDate(req.ts), true));
+    // Who, how to reach them, and what they asked for. A row that is only a device code makes
+    // approving one an exercise in remembering which conversation it belonged to.
+    const who = [req.name, req.contact].filter(Boolean).join(" · ") || req.note || "—";
+    const wanted = req.lifetime ? "مدى الحياة" : (req.days + " يوماً");
+
+    tr.append(cell(req.dev, true), cell(who), cell(wanted), cell(fmtDate(req.ts), true));
 
     const actions = document.createElement("td");
 
@@ -451,8 +464,9 @@ function renderInbox() {
     };
 
     actions.append(
-      actionButton("موافقة", () => act("/admin/approve",
-        { dev: req.dev, days: req.days, note: req.note })),
+      actionButton("موافقة", () => act("/admin/approve", req.lifetime
+        ? { dev: req.dev, mode: "lifetime", note: who }
+        : { dev: req.dev, days: req.days, note: who })),
       actionButton("رفض", () => act("/admin/decline", { dev: req.dev }), true),
     );
     tr.append(actions);
@@ -473,12 +487,17 @@ function renderLicences() {
 
   rows.forEach(lic => {
     const tr = document.createElement("tr");
-    tr.append(cell(lic.key, true), cell(lic.note || "—"), cell(fmtDate(lic.until), true),
+    tr.append(cell(lic.key, true), cell(lic.note || "—"),
+              cell(lic.until ? fmtDate(lic.until) : "∞", true),
               cell(lic.source === "code" ? "كود" : "موافقة"));
 
-    const left = (lic.until || 0) - state.now;
-    if (lic.revoked)      tr.append(pillFor("bad", "مسحوب"));
-    else if (left <= 0)   tr.append(pillFor("bad", "منتهٍ"));
+      const left = (lic.until || 0) - state.now;
+
+    // `until` of zero is a lifetime licence, not a date in 1970. Reading it as one would show
+    // every lifetime customer as expired, which is the worst row this table could draw.
+    if (lic.revoked)              tr.append(pillFor("bad", "مسحوب"));
+    else if (!lic.until)          tr.append(pillFor("good", "مدى الحياة"));
+    else if (left <= 0)           tr.append(pillFor("bad", "منتهٍ"));
     else if (left < 30 * 86400) tr.append(pillFor("warn", days(left) + " يوماً"));
     else                  tr.append(pillFor("good", days(left) + " يوماً"));
 
@@ -503,6 +522,8 @@ function renderLicences() {
       actionButton("+٣٠", () => change({ mode: "extend", days: 30 })),
       actionButton("−٣٠", () => change({ mode: "extend", days: -30 },
         `تقصير ترخيص ${lic.key} بثلاثين يوماً؟`)),
+      actionButton("مدى الحياة", () => change({ mode: "lifetime" },
+        `جعل ترخيص ${lic.key} مدى الحياة؟`)),
       actionButton("تعديل", () => {
         const answer = prompt("كم يوماً من اليوم؟ (يستبدل المدّة الحالية)",
                               String(Math.max(0, days(left))));
@@ -678,6 +699,12 @@ $("forget").onclick = () => {
   $("connState").textContent = "غير متّصل";
 };
 
+// The custom-days box only exists when it is asked for. A number field beside a menu that
+// already answers the question is two answers to one thing, which is where the bugs live.
+$("issuePlan").onchange = () => {
+  $("issueDays").hidden = $("issuePlan").value !== "custom";
+};
+
 $("issue").onclick = async () => {
   const dev = $("issueDev").value.trim().toLowerCase();
   if (!/^[0-9a-f]{16}$/.test(dev)) {
@@ -685,12 +712,21 @@ $("issue").onclick = async () => {
     return;
   }
 
-  const result = await api("/admin/approve", {
-    dev,
-    days: parseInt($("issueDays").value, 10) || 365,
-    note: $("issueNote").value.trim(),
-    tier: $("issueTier").value,
-  });
+  // The menu answers the question; the number box only exists for "another duration". Sending
+  // both would be two answers to one thing.
+  const plan = $("issuePlan").value;
+  const payload = { dev, note: $("issueNote").value.trim(), tier: $("issueTier").value };
+
+  if (plan === "lifetime") {
+    payload.mode = "lifetime";
+  } else {
+    // `set` rather than `extend` here: this card says "issue", and a person typing a year into it
+    // means a year from today, not a year added to whatever was there.
+    payload.mode = "set";
+    payload.days = plan === "custom" ? (parseInt($("issueDays").value, 10) || 365) : parseInt(plan, 10);
+  }
+
+  const result = await api("/admin/approve", payload);
 
   if (!result.ok) { show($("connOut"), result.why); return; }
   $("issueDev").value = "";
