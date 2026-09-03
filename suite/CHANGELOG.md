@@ -2,6 +2,9 @@
 
 ## v1.73.4
 
+*Released on its own push: the fix lives in `tools/` and `server/`, which every publisher watches,
+so the suite's run was dropped by the shared concurrency group.*
+
 **Editing a licence's name in the panel looked like it never saved.** The table draws the licence's
 `name`; the editor read and wrote `note`. So an edit to a licence that came from a request — which
 carries a real name — was written into a field nothing displays, and the row came back saying
