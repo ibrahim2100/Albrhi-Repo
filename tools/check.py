@@ -1137,6 +1137,42 @@ if os.path.isfile('control'):
                    'the file line by line and refuses to package it: %s'
                    % (_n, _line.strip()))
 
+# 24. A PSTitleValueCell that sets a value and has no getter.
+#
+#     It draws the title and an empty space. A `PSTitleValueCell` asks its specifier for the
+#     value *through the get selector*; setting the `value` property and passing `get:NULL`
+#     reads like it should work and produces a blank row.
+#
+#     **This has now been found twice, on two pages, and the second time the fix and the
+#     reasoning were already written down in the first file.** A comment in `SCIPanelRoot.m`
+#     did not stop `SCIPanelLicence.m` being written the same way -- the licence state and the
+#     licence term were both blank on a device -- which is the same shape as rule 23: a rule
+#     that lives only in prose is a rule that gets broken by whoever did not happen to read
+#     that file.
+#
+#     Narrow on purpose. A PSTitleValueCell with no `value` property is an ordinary title-only
+#     row and there are three of those on the panel's root page; only setting a value and then
+#     giving nothing that can return it is the mistake.
+for path in SRC:
+    _text = open(path, encoding='utf-8').read()
+
+    for _m in re.finditer(r'preferenceSpecifierNamed:.*?edit:\s*Nil\s*\]', _text, re.S):
+        _spec = _m.group(0)
+        if 'PSTitleValueCell' not in _spec or not re.search(r'get:\s*NULL', _spec):
+            continue
+
+        # The property is set after the specifier is built, so look just past it -- far enough
+        # to cover a wrapped call, close enough not to catch the next row's.
+        _after = _text[_m.end():_m.end() + 400]
+        if 'forKey:@"value"' not in _after:
+            continue
+
+        _line = _text[:_m.start()].count('\n') + 1
+        report('%s:%d builds a PSTitleValueCell with get:NULL and then sets its "value" '
+               'property — the cell asks for the value through the get selector, so this draws '
+               'the title and an empty space. Give it a getter that returns '
+               'propertyForKey:@"value", as SCIPanelRoot.m does.' % (path, _line))
+
 # 23. `-valueForKey:` on somebody else's object.
 #
 #     **The single most expensive habit in this repository's history**, and until now the

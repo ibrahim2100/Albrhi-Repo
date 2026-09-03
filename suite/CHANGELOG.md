@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.71.2
+
+**Settings › Albrhi › Licence showed no state and no expiry date.** The rows were there and empty —
+the one screen whose job is telling you whether Albrhi is licensed was answering with a blank.
+Fixed, and the tooling now refuses the shape that caused it.
+
 ## v1.71.1
 
 **Albrhi requires a licence, and nothing on the phone turns that off any more.**

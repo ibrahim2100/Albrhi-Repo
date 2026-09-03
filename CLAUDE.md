@@ -771,6 +771,14 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**A `PSTitleValueCell` asks for its value through the get selector, and this was found twice.**
+Setting the `value` property with `get:NULL` draws the title and an empty space. `SCIPanelRoot.m`
+found it, fixed it and wrote it down in exactly those words — and `SCIPanelLicence.m` was then
+written the same way, so the licence state and the licence term were both blank on the one page
+whose job is answering that question. **Rule 23's shape again: a rule that lives only in prose is
+a rule broken by whoever did not read that file**, so it is rule 24 now, narrowed to the real
+mistake — a title-only cell of that kind is an ordinary row and there are three on the root page.
+
 **A key that `list()` returns is not a key that still has a value, and spreading the `null` it
 answers with makes a record out of nothing.** Approving a request in the panel deleted `req:<dev>`
 and the very next `/admin/state` still listed it — Cloudflare KV's list index lags a delete by up
@@ -1775,7 +1783,7 @@ column one, which is exactly why it kept working while its neighbours silently d
 ## Verification
 
 `python tools/check.py` — runs in CI before Theos, so a typo fails in seconds
-rather than after a five-minute compile. Twenty-three rules, every one of them derived
+rather than after a five-minute compile. Twenty-four rules, every one of them derived
 from a real build failure:
 
 1. duplicate `@interface` definitions
@@ -2073,9 +2081,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.29** · Watch **0.5.3** · TikTok **0.20.1** ·
+Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.30** · Watch **0.5.3** · TikTok **0.20.1** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.1.6** · suite **1.71.1**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.6** · suite **1.71.2**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

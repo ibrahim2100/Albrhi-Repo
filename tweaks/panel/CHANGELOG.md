@@ -1,5 +1,23 @@
 # Albrhi Panel Changelog
 
+## v0.9.30
+
+**The licence state and the term were blank on the device. The getter is not optional.**
+
+A `PSTitleValueCell` asks its specifier for the value *through the get selector*. Setting the
+`value` property and passing `get:NULL` reads like it should work and draws the title with an empty
+space after it — so the row that says whether Albrhi is licensed said nothing at all, which on a
+page whose whole job is answering that question is the worst possible row to lose.
+
+**`SCIPanelRoot.m` had already found this, fixed it, and written it down in those exact words.**
+This file was written the same way anyway. That is rule 23's shape again — a rule that lives only
+in prose is a rule broken by whoever did not happen to read that file — so `tools/check.py` now
+refuses the combination: a PSTitleValueCell built with `get:NULL` that then sets a `value`. Proved
+by reintroducing the bug and watching it fail, then removing it and watching it pass.
+
+Narrow on purpose: a title-only PSTitleValueCell is an ordinary row and there are three on the root
+page. Only setting a value and giving nothing that can return it is the mistake.
+
 ## v0.9.29
 
 **Two switches removed, and their absence is the feature: enforcement, and the server address.**

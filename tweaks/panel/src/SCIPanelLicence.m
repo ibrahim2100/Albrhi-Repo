@@ -28,6 +28,16 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
 ///
 /// `PSStaticTextCell` would put the value underneath and wrap it; the fingerprint has to be read
 /// out loud to whoever is issuing the key, so it belongs on one line beside its label.
+///
+/// **The getter is not optional, and this file shipped without it.** Setting the `value` property
+/// and passing `get:NULL` reads like it should work and draws the title with an empty space after
+/// it -- a `PSTitleValueCell` asks its specifier for a value *through the get selector*, and with
+/// none there is nothing to ask. The licence state and the term were both blank on a device
+/// because of it.
+///
+/// `SCIPanelRoot.m` had already found this, written it down in exactly those words, and fixed it
+/// there. It was repeated here anyway, in a new file, which is why `tools/check.py` refuses the
+/// shape now rather than leaving it to a comment in another file to prevent.
 - (PSSpecifier *)factTitled:(NSString *)title
                       value:(NSString *)value
                      symbol:(NSString *)symbol
@@ -35,13 +45,18 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
     PSSpecifier *row = [PSSpecifier preferenceSpecifierNamed:title
                                                       target:self
                                                          set:NULL
-                                                         get:NULL
+                                                         get:@selector(fixedValue:)
                                                       detail:Nil
                                                         cell:PSTitleValueCell
                                                         edit:Nil];
     [row setProperty:(value ?: @"—") forKey:@"value"];
     if (symbol.length) [row setProperty:SCIPanelBadgeImage(symbol, tint) forKey:@"iconImage"];
     return row;
+}
+
+/// A row that shows what it was given and cannot be edited.
+- (id)fixedValue:(PSSpecifier *)specifier {
+    return [specifier propertyForKey:@"value"] ?: @"";
 }
 
 #pragma mark - The page
