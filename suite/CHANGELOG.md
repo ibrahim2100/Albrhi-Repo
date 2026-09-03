@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.72.0
+
+**Try Albrhi free for a week, and buy from inside it.**
+
+Settings › Albrhi › Licence now opens a proper screen: **a free week**, taken on the spot and good
+once per device, then a month, six months, a year, or **lifetime**. Choosing a paid plan opens a
+message to Albrhi with your device code already written in — nothing to copy by hand.
+
 ## v1.71.2
 
 *Released on its own push: the commit that carried this fix also touched `tools/`, which all

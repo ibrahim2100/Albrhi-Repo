@@ -578,6 +578,41 @@ void SCILicenseSyncWithServer(void (^completion)(SCILicenseServerResult)) {
     });
 }
 
+void SCILicenseStartTrial(void (^completion)(SCILicenseServerResult)) {
+    if (!SCILicenseServerBase()) { completion(SCILicenseServerNotConfigured); return; }
+
+    SCIPostJSON(@"/v1/trial", @{@"dev": SCILicenseFingerprint()},
+                ^(NSDictionary *answer, NSInteger status) {
+        if (status == 0 || !answer) { completion(SCILicenseServerUnreachable); return; }
+
+        NSString *token = answer[@"token"];
+        if (status == 200 && [token isKindOfClass:[NSString class]] && SCIAcceptServerToken(token)) {
+            completion(SCILicenseServerOK);
+            return;
+        }
+
+        // Three refusals, three answers. "you already used it", "you already have a licence" and
+        // "the network did not answer" need three different things said to a person, and folding
+        // them into one failure is how somebody who already paid is told to buy again.
+        NSString *state = answer[@"state"];
+        if ([state isEqualToString:@"trial_used"])       { completion(SCILicenseServerTrialUsed); return; }
+        if ([state isEqualToString:@"already_licensed"]) { completion(SCILicenseServerAlreadyLicensed); return; }
+
+        completion(SCILicenseServerUnreachable);
+    });
+}
+
+BOOL SCILicenseIsLifetime(void) {
+    NSDictionary *payload = nil;
+    if (SCIEvaluateKey(SCILicenseStoredKey(), &payload) != SCILicenseStateValid) return NO;
+
+    // `until` absent or zero on a *valid* licence means no end date. The validity check above is
+    // what makes that safe to read: without it, "no licence at all" would answer the same way.
+    NSNumber *until = payload[@"until"];
+    if (![until isKindOfClass:[NSNumber class]]) return NO;
+    return until.doubleValue == 0;
+}
+
 void SCILicenseRequestFromServer(NSInteger days, NSString *note,
                                  void (^completion)(SCILicenseServerResult)) {
     if (!SCILicenseServerBase()) { completion(SCILicenseServerNotConfigured); return; }
@@ -636,7 +671,11 @@ NSTimeInterval SCILicenseTermEnds(void) {
     // renewal cycle, so its expiry *is* its term -- and showing a seven-day renewal date to
     // somebody who bought a year is the kind of screen that generates a support message.
     NSNumber *until = payload[@"until"];
-    if ([until isKindOfClass:[NSNumber class]] && until.doubleValue > 0) return until.doubleValue;
+    if ([until isKindOfClass:[NSNumber class]]) {
+        // Present and zero is a lifetime licence, which has no date to show -- and must not fall
+        // through to `exp`, or the screen would announce that a lifetime licence ends next week.
+        return until.doubleValue;
+    }
 
     NSNumber *expiry = payload[@"exp"];
     return [expiry isKindOfClass:[NSNumber class]] ? expiry.doubleValue : 0;

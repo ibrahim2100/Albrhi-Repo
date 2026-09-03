@@ -1,5 +1,38 @@
 # Albrhi Panel Changelog
 
+## v0.9.31
+
+**A free week, a lifetime licence, and a screen worth deciding on.**
+
+**The free week** is taken from the licence screen itself, once per device, and it starts the
+moment it is taken. The server remembers that the week was spent in a record it never deletes —
+the licence it created expires and can be replaced, but that marker has to outlive everything or
+the trial is once a week rather than once a device. It also refuses a device that already holds a
+licence: somebody who has paid pressing the free button by accident must not end up with seven
+days.
+
+**What the trial cannot promise, and the code says so where it is written:** the device id is a
+random value the panel writes once, so wiping Albrhi's preferences produces a new id and a second
+trial. There is no fix that does not involve a real device identifier — deliberately not used here,
+for privacy and because it is not readable from every process. It is a convenience for honest
+people, not a lock, and it is worth having as long as nobody mistakes it for one.
+
+**Lifetime** is `until = 0`. Every date comparison in the licence layer was already written as
+`until > 0 && …`, because a licence with no end was always a shape it had to survive — so this is
+that shape given a name rather than a new branch through every check. The screen shows the word,
+not a blank where a date would go.
+
+**And the request screen is a card of ours, not an alert.** The `UIAlertController` it replaces
+asked for a number of days in a grey box with Albrhi's name nowhere on it — the wrong shape twice
+over, since an alert is for a decision and this is a choice between priced things, and it made the
+one screen where somebody decides whether to pay look like an error dialog. The card prices five
+choices, takes the free week in place, and writes the device code into the message itself: asking a
+person to copy sixteen hex characters from one screen into another is where a purchase is lost.
+
+A plan that cannot be reached is not drawn. The free week disappears once there is a licence, and
+the paid rows do not appear at all in a build with no contact number — a button that opens nothing
+is worse than no button, because the person has already decided to pay by the time they press it.
+
 ## v0.9.30
 
 **The licence state and the term were blank on the device. The getter is not optional.**

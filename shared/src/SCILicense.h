@@ -210,6 +210,8 @@ typedef NS_ENUM(NSInteger, SCILicenseServerResult) {
     SCILicenseServerPending,        ///< A request is waiting for an answer.
     SCILicenseServerUnreachable,    ///< Nothing was decided.
     SCILicenseServerNotConfigured,  ///< No server address on this device.
+    SCILicenseServerTrialUsed,      ///< The free week has already been taken on this device.
+    SCILicenseServerAlreadyLicensed,///< Asked for a trial while holding a real licence.
 };
 
 /// Asks the server for a fresh licence and stores it.
@@ -218,6 +220,20 @@ typedef NS_ENUM(NSInteger, SCILicenseServerResult) {
 /// emergency — there are six days of slack behind it — which is exactly why it never blocks and
 /// never reports a network problem as a licence problem.
 void SCILicenseSyncWithServer(void (^_Nullable completion)(SCILicenseServerResult result));
+
+/// Takes the free week, once per device.
+///
+/// **What it cannot promise, and the panel says so too:** the device id is a random value written
+/// once, so wiping Albrhi's preferences produces a new id and a second trial. There is no fix that
+/// does not involve a real device identifier — deliberately not used here, for privacy and because
+/// it is not readable from every process. A convenience for honest people, not a lock.
+void SCILicenseStartTrial(void (^completion)(SCILicenseServerResult result));
+
+/// Whether this licence has no end date at all.
+///
+/// A separate question from `SCILicenseTermEnds`, which answers 0 both for "forever" and for "no
+/// licence" — two states that must never be drawn the same way.
+BOOL SCILicenseIsLifetime(void);
 
 /// Asks the server for a licence of `days`, on this device's behalf.
 void SCILicenseRequestFromServer(NSInteger days, NSString *_Nullable note,

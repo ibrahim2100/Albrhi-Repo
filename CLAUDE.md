@@ -771,6 +771,26 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**A trial is a convenience for honest people, not a lock, and it is worth building only if
+nobody mistakes it for one.** The free week is once per device, marked by a KV record that is
+never deleted — the licence it creates expires and can be replaced, so anything shorter-lived
+would make it once a *week*. But the device id is a random value the panel writes once, so wiping
+Albrhi's preferences earns a second trial, and there is no fix that does not reintroduce a real
+device identifier — refused here for privacy and because it is not readable from every process.
+**Written down at the function, not only here**, so the next person to tighten it knows what they
+would be trading.
+
+**"Lifetime" is `until = 0`, and it cost one line because the shape already existed.** Every date
+comparison in this layer was written `until > 0 && …` from the start, since a licence with no end
+was always something it had to survive. A feature that fits an existing shape is a feature that
+needs a name, not a branch through every check — and the screen shows the word rather than a blank
+where a date would be, which is the same bug as the empty value row one release earlier.
+
+**A control that cannot do anything is not drawn.** The paid rows do not exist in a build with no
+contact number, and the free week disappears once there is a licence. A button that opens nothing
+is worse than no button on this screen in particular: the person has already decided to pay by the
+time they press it.
+
 **A `PSTitleValueCell` asks for its value through the get selector, and this was found twice.**
 Setting the `value` property with `get:NULL` draws the title and an empty space. `SCIPanelRoot.m`
 found it, fixed it and wrote it down in exactly those words — and `SCIPanelLicence.m` was then
@@ -2081,9 +2101,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.30** · Watch **0.5.3** · TikTok **0.20.1** ·
+Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.31** · Watch **0.5.3** · TikTok **0.20.1** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.1.6** · suite **1.71.2**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.6** · suite **1.72.0**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

@@ -28,6 +28,7 @@
 //
 
 const TOKEN_DAYS = 7;               // how long a signed licence lasts before it must be renewed
+const TRIAL_DAYS = 7;               // the free trial, once per device
 const MAX_NOTE = 120;
 const MAX_BODY = 4096;
 
@@ -189,6 +190,10 @@ const K = {
   request: (dev) => `req:${dev}`,
   licence: (dev) => `lic:${dev}`,
   code: (hash) => `code:${hash}`,
+  // **Never deleted, on purpose.** The licence it created expires and can be replaced; this is
+  // the record that the free week was already spent, and it has to outlive everything else or
+  // the trial is not once per device, it is once per week.
+  trial: (dev) => `trial:${dev}`,
 };
 
 // ── A licence, and the token for it ───────────────────────────────────────────────────
@@ -298,6 +303,51 @@ async function deviceRedeem(request, env) {
   return json(await tokenFor(env, body.dev, licence));
 }
 
+///
+/// The free week, once per device.
+///
+/// **What this cannot promise, said plainly:** the device id is a random value the panel writes
+/// once, so somebody who wipes Albrhi's preferences gets a new id and a second trial. There is no
+/// fix for that which does not involve a real device identifier -- which was deliberately not used
+/// here, for the privacy reason and because it is not readable from every process. The trial is a
+/// convenience for honest people, not a lock, and it is worth building as long as nobody mistakes
+/// it for one.
+///
+/// It refuses a device that already has a licence rather than replacing it: somebody who has paid
+/// pressing the free button by accident must not end up with seven days.
+///
+async function deviceTrial(request, env) {
+  const body = await readBody(request);
+  if (!body || !isDevice(body.dev)) return json({ error: 'bad device' }, 400);
+
+  const spent = await env.DB.get(K.trial(body.dev), 'json');
+  if (spent) return json({ state: 'trial_used', at: spent.at }, 403);
+
+  const existing = await env.DB.get(K.licence(body.dev), 'json');
+  if (existing && !existing.revoked && (existing.until === 0 || existing.until > now())) {
+    return json({ state: 'already_licensed' }, 409);
+  }
+
+  const licence = {
+    id: await sha256Hex(`trial:${body.dev}:${now()}`, 6),
+    tier: 'trial',
+    note: clean(body.note) || 'تجربة',
+    until: now() + TRIAL_DAYS * 86400,
+    revoked: false,
+    source: 'trial',
+  };
+
+  await env.DB.put(K.licence(body.dev), JSON.stringify(licence));
+
+  // Written before the token is returned, and with no expiry of its own. If this write failed and
+  // the token still went out, the week would be free every week.
+  await env.DB.put(K.trial(body.dev), JSON.stringify({ at: now(), until: licence.until }));
+  await env.DB.delete(K.request(body.dev));
+
+  return json(await tokenFor(env, body.dev, licence));
+}
+
+
 // ── Admin ─────────────────────────────────────────────────────────────────────────────
 
 async function adminState(env) {
@@ -322,14 +372,14 @@ async function adminState(env) {
     return rows.filter(Boolean);
   };
 
-  const [requests, licences, codes] = await Promise.all([
-    gather('req:'), gather('lic:'), gather('code:'),
+  const [requests, licences, codes, trials] = await Promise.all([
+    gather('req:'), gather('lic:'), gather('code:'), gather('trial:'),
   ]);
 
   // Codes come back without anything that could reconstruct one. The server stores only hashes,
   // so there is nothing to strip -- said here because it is the kind of guarantee that quietly
   // stops being true when somebody adds a convenience field.
-  return json({ ok: true, now: now(), requests, licences, codes });
+  return json({ ok: true, now: now(), requests, licences, codes, trials });
 }
 
 async function adminApprove(request, env) {
@@ -353,12 +403,18 @@ async function adminApprove(request, env) {
   // A negative `days` under `extend` shortens too, which is the same arithmetic said the other
   // way round, and is what the panel's "−30" button sends.
   //
-  const mode = body.mode === 'set' ? 'set' : body.mode === 'until' ? 'until' : 'extend';
+  const mode = ['set', 'until', 'lifetime'].includes(body.mode) ? body.mode : 'extend';
 
   const live = existing && !existing.revoked && existing.until > now();
   let until;
 
-  if (mode === 'until') {
+  if (mode === 'lifetime') {
+    // **Zero means no end, and it is not a sentinel bolted on.** Every date comparison here is
+    // already written as `until > 0 && ...`, because a licence with no end date was always a
+    // shape this had to survive; lifetime is that shape given a name rather than a new branch
+    // through every check.
+    until = 0;
+  } else if (mode === 'until') {
     until = parseInt(body.until, 10) || 0;
     if (until < now()) return json({ error: 'that date has passed' }, 400);
   } else if (mode === 'set') {
@@ -377,7 +433,7 @@ async function adminApprove(request, env) {
 
   const licence = {
     id: existing?.id || (await sha256Hex(`${body.dev}:${now()}:${crypto.randomUUID()}`, 6)),
-    tier: body.tier || existing?.tier || 'suite',
+    tier: mode === 'lifetime' ? 'lifetime' : (body.tier || existing?.tier || 'suite'),
     note: clean(body.note) || existing?.note || '',
     until,
     // Approving a revoked device brings it back. Anything else would mean revoke is a one-way
@@ -508,6 +564,7 @@ export default {
       if (request.method === 'POST' && path === '/v1/hello')   return deviceHello(request, env);
       if (request.method === 'POST' && path === '/v1/request') return deviceRequest(request, env);
       if (request.method === 'POST' && path === '/v1/redeem')  return deviceRedeem(request, env);
+      if (request.method === 'POST' && path === '/v1/trial')   return deviceTrial(request, env);
 
       if (path.startsWith('/admin/')) {
         if (!isAdmin(request, env)) return json({ error: 'unauthorised' }, 401);

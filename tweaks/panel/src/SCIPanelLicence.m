@@ -5,6 +5,7 @@
 #import "SCIPanelButtonAction.h"
 #import "shared/src/SCILicense.h"
 #import "shared/src/SCIPanelGate.h"
+#import "SCIPanelPlans.h"
 
 static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
 
@@ -103,6 +104,15 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
     // The *term*, not the renewal date. A server-signed licence is renewed every seven days, and
     // showing that as the expiry to somebody who bought a year is a screen that generates a
     // support message on its own.
+    // A lifetime licence has no date to show, and a blank row where the date goes is exactly the
+    // fault this page shipped with last week. It gets a word instead.
+    if (SCILicenseIsLifetime()) {
+        [specifiers addObject:[self factTitled:SCILocalized(@"lic_until")
+                                         value:SCILocalized(@"lic_lifetime")
+                                        symbol:@"infinity"
+                                          tint:[UIColor systemIndigoColor]]];
+    }
+
     NSTimeInterval term = SCILicenseTermEnds();
     if (term > 0) {
         NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
@@ -301,81 +311,16 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
 /// Copying is offered too, because a share sheet on a jailbroken Settings is not a thing to
 /// depend on alone.
 ///
+///
+/// Opens the plans card.
+///
+/// It used to be a `UIAlertController` asking for a number of days — correct, and it looked like
+/// an error dialog on the one screen where somebody decides whether to pay. The card is ours, it
+/// prices the choices, and the free week is taken in it without leaving.
+///
 - (void)makeRequest {
-    UIAlertController *sheet =
-        [UIAlertController alertControllerWithTitle:SCILocalized(@"lic_request")
-                                            message:SCILocalized(@"lic_request_note")
-                                     preferredStyle:UIAlertControllerStyleAlert];
-
-    [sheet addTextFieldWithConfigurationHandler:^(UITextField *field) {
-        field.placeholder = SCILocalized(@"lic_request_days");
-        field.keyboardType = UIKeyboardTypeNumberPad;
-        field.text = @"365";
-    }];
-    [sheet addTextFieldWithConfigurationHandler:^(UITextField *field) {
-        field.placeholder = SCILocalized(@"lic_request_who");
-        field.autocapitalizationType = UITextAutocapitalizationTypeWords;
-    }];
-
     __weak __typeof(self) weakSelf = self;
-    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"lic_request_make")
-                                              style:UIAlertActionStyleDefault
-                                            handler:^(__unused UIAlertAction *action) {
-        NSInteger days = sheet.textFields.firstObject.text.integerValue;
-        NSString *note = sheet.textFields.lastObject.text;
-
-        // With a server, the request is *sent*. Without one, it becomes a text to carry to the
-        // seller by hand -- which is what shipped before the server existed and remains the way
-        // back in if it is ever unreachable.
-        if (SCILicenseServerBase()) {
-            SCILicenseRequestFromServer(days, note, ^(SCILicenseServerResult result) {
-                [weakSelf tell:result == SCILicenseServerPending
-                                    ? SCILocalized(@"lic_request_sent")
-                                    : SCILocalized(@"lic_sync_unreachable")];
-                [weakSelf reloadSpecifiers];
-            });
-            return;
-        }
-
-        NSString *request = SCILicenseMakeRequest(days, note);
-        if (!request.length) { [weakSelf tell:SCILocalized(@"lic_request_failed")]; return; }
-
-        [weakSelf shareRequest:request];
-    }]];
-
-    [sheet addAction:[UIAlertAction actionWithTitle:SCILocalized(@"cancel")
-                                              style:UIAlertActionStyleCancel
-                                            handler:nil]];
-    [self presentViewController:sheet animated:YES completion:nil];
-}
-
-- (void)shareRequest:(NSString *)request {
-    [UIPasteboard generalPasteboard].string = request;
-
-    UIAlertController *done =
-        [UIAlertController alertControllerWithTitle:SCILocalized(@"lic_request_ready")
-                                            message:request
-                                     preferredStyle:UIAlertControllerStyleAlert];
-
-    [done addAction:[UIAlertAction actionWithTitle:SCILocalized(@"lic_request_share")
-                                             style:UIAlertActionStyleDefault
-                                           handler:^(__unused UIAlertAction *action) {
-        UIActivityViewController *share =
-            [[UIActivityViewController alloc] initWithActivityItems:@[request]
-                                              applicationActivities:nil];
-
-        // An iPad refuses a popover with no anchor, and Settings runs there too.
-        share.popoverPresentationController.sourceView = self.view;
-        share.popoverPresentationController.sourceRect =
-            CGRectMake(CGRectGetMidX(self.view.bounds), CGRectGetMidY(self.view.bounds), 1, 1);
-
-        [self presentViewController:share animated:YES completion:nil];
-    }]];
-
-    [done addAction:[UIAlertAction actionWithTitle:SCILocalized(@"ok_button")
-                                             style:UIAlertActionStyleCancel
-                                           handler:nil]];
-    [self presentViewController:done animated:YES completion:nil];
+    [SCIPanelPlans presentWithChange:^{ [weakSelf reloadSpecifiers]; }];
 }
 
 ///
@@ -437,6 +382,13 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
             case SCILicenseServerExpired:       message = SCILocalized(@"lic_sync_expired"); break;
             case SCILicenseServerUnreachable:   message = SCILocalized(@"lic_sync_unreachable"); break;
             case SCILicenseServerNotConfigured: message = SCILocalized(@"lic_server_none"); break;
+
+            // Neither can come back from a renewal -- they are answers to asking for the free
+            // week. Named rather than swallowed by a `default:`, which would also silence the
+            // next result added to the enum, and that warning is the reason this compiled wrong
+            // once already.
+            case SCILicenseServerTrialUsed:      message = SCILocalized(@"plans_trial_used"); break;
+            case SCILicenseServerAlreadyLicensed:message = SCILocalized(@"plans_trial_have"); break;
         }
         [weakSelf tell:message];
         [weakSelf reloadSpecifiers];
