@@ -352,7 +352,11 @@ static NSString *const kSCIEnforceKey  = @"licence_enforced";
     CFPropertyListRef value = CFPreferencesCopyAppValue((__bridge CFStringRef)kSCIEnforceKey,
                                                         (__bridge CFStringRef)kSCIPanelDomain);
     id stored = (__bridge_transfer id)value;
-    return @([stored isKindOfClass:[NSNumber class]] ? [stored boolValue] : NO);
+
+    // YES when absent, matching SCILicenseIsEnforced exactly. A switch that shows off while the
+    // gate is on is a screen stating the opposite of what is happening -- which this project has
+    // shipped once already, in NextUp, and wrote down afterwards.
+    return @([stored isKindOfClass:[NSNumber class]] ? [stored boolValue] : YES);
 }
 
 - (void)setEnforce:(id)value specifier:(__unused PSSpecifier *)specifier {

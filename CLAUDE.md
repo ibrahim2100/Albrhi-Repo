@@ -715,7 +715,21 @@ was being discarded.
 
 ### Licensing, and what it is honest about
 
-**Albrhi has a licence layer as of Panel 0.9.25, and enforcement ships off.** The whole of it is
+**Albrhi has a licence layer as of Panel 0.9.25, and it has been enforced since 0.9.27.**
+
+**The two-release gap was the design, not a delay.** Introduce the layer, prove it end to end on a
+real device — issued, entered, accepted, and refused again once the key was removed — and only
+then turn it on. A gate introduced and enforced in one release stops every existing install on the
+next update, before a key exists to fix them with. **And the two defaults point opposite ways on
+purpose**: the per-app switch reads absence as *off*, because installing the suite must not
+silently patch four apps nobody asked about; the licence reads absence as *on*, because the
+question is whether the software may be used at all and silence is not a licence.
+
+**A tweak standing down is indistinguishable from a broken install**, so the panel says why:
+switches showing ON while nothing happens is a screen actively lying, and somebody whose ad
+blocking stopped concludes the tweak broke, not that their licence lapsed. The panel itself is
+never behind the gate — it is a Settings bundle and does not ask — so nobody can be locked out of
+the screen that would let them back in. The whole of it is
 `shared/src/SCILicense.{h,m}`, `tools/licence.py`, `docs/LICENCE-KEYS.md` and one page in the
 panel. Read the doc before touching any of it.
 
@@ -1951,7 +1965,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.26** · Watch **0.5.3** · TikTok **0.20.1** ·
+Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.27** · Watch **0.5.3** · TikTok **0.20.1** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
 NextUp **0.1.6** · suite **1.69.0**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.

@@ -151,12 +151,16 @@ nothing is half-patched.
 
 ## Turning it on
 
-**Enforcement ships off and stays off until someone turns it on** in Settings › Albrhi › Licence.
-The source has been free for as long as it has existed, and a release that both introduced this
-layer and enforced it would stop every install already out there on the next update, before a
-single key had been issued to fix them with.
+**Enforcement is on as of Panel 0.9.27.** It shipped off for the two releases before that, which
+was the point: introduce the layer, prove it end to end on a real device, then turn it on.
+Introducing a gate and enforcing it in the same release would have stopped every existing install
+on the next update, before a key existed to fix them with.
 
-The order that works: issue keys → confirm a few devices report `licensed` → then switch it on.
+It can always be switched off again in Settings › Albrhi › Licence — that page is a Settings
+bundle and never asks the gate, so nobody can be locked out of the screen that lets them back in.
+
+A device with no licence does not fail silently: a row at the top of Settings › Albrhi says Albrhi
+is not running and why, and taps through to Licence.
 
 ## What this is honest about
 

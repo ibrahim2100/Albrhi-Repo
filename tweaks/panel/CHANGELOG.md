@@ -1,5 +1,31 @@
 # Albrhi Panel Changelog
 
+## v0.9.27
+
+**Albrhi now requires a licence.** Without a valid one the tweaks stand down: no hook is installed
+and every app behaves exactly as if Albrhi were not there.
+
+It shipped off for two releases on purpose, and that order was the point — introduce the layer,
+prove it end to end on a real device (issued, entered, accepted, and refused again when the key
+was removed), and only then turn it on. Introducing a gate and enforcing it in the same release
+would have stopped every existing install on the next update, before a single key had been issued
+to fix them with.
+
+**Absent now reads as *on*, which is the opposite of the per-app switch, and deliberately so.**
+That one reads absence as off because installing the suite must not silently modify four apps
+nobody asked about. This one reads absence as on because the question is whether the software may
+be used at all, and silence is not a licence.
+
+**And a stopped Albrhi says why.** Standing down is indistinguishable from a broken install from
+the outside: somebody whose YouTube stopped hiding ads thinks the tweak broke, not that their
+licence lapsed — and every switch below would be showing ON while nothing happened, which is a
+screen actively lying. So a row at the very top of Settings › Albrhi states it and taps straight
+through to Licence, and the app list's own footer says those switches are not deciding anything
+at the moment.
+
+**Nobody can be locked out of the way back in.** This page is a Settings bundle and never asks the
+gate, so enforcement can always be switched off from the same screen that turned it on.
+
 ## v0.9.26
 
 **Two ways to get a licence without reading a device code down a phone line.**

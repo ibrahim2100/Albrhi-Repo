@@ -218,10 +218,24 @@ NSString *SCILicenseStoredKey(void) {
 }
 
 BOOL SCILicenseIsEnforced(void) {
-    // Off unless switched on. The whole reasoning is in the header: a gate introduced in the
-    // same release that enforces it breaks every existing install before a key exists to fix
-    // them with.
-    return SCIPanelReadBool(kSCILicenseEnforcePref, NO);
+    //
+    // **On unless switched off, as of Panel 0.9.27.**
+    //
+    // It shipped off for two releases on purpose, and that was the right order: the layer was
+    // introduced, proved end to end on a real device — issued, entered, accepted, refused — and
+    // only then turned on. Introducing a gate and enforcing it in the same release would have
+    // stopped every existing install on the next update, before a single key had been issued to
+    // fix them with.
+    //
+    // The absent-reads-as-on default is deliberate and is the opposite of the per-app switch
+    // three functions up. That one reads absence as *off* because installing the suite must not
+    // silently modify four apps nobody asked about. This one reads absence as *on* because the
+    // question is whether the software may be used at all, and silence is not a licence.
+    //
+    // Switching it off is always possible: the panel is a Settings bundle and never asks this,
+    // so nobody can be locked out of the screen that would let them back in.
+    //
+    return SCIPanelReadBool(kSCILicenseEnforcePref, YES);
 }
 
 /// The last time the server confirmed the key, and the ids it has revoked.

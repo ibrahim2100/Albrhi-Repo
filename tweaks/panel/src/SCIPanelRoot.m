@@ -18,7 +18,7 @@
 #import <objc/message.h>
 #import <objc/runtime.h>
 
-NSString *SCIVersionString = @"v0.9.26";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.9.27";  // AlbrhiPanel
 
 ///
 /// Albrhi's own control panel, in the iOS Settings app.
@@ -105,6 +105,34 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
     [masterGroup setProperty:SCILocalized(@"master_footer") forKey:@"footerText"];
     [specifiers addObject:masterGroup];
 
+    //
+    // **When the gate is holding everything down, say so at the top and say why.**
+    //
+    // "Stand down" means every tweak installs no hooks at all, so the apps behave exactly as if
+    // Albrhi were not there -- which from the outside is indistinguishable from a broken install.
+    // Somebody whose YouTube stopped hiding ads will not think "ah, my licence": they will think
+    // the tweak is broken, and the switches below will all be showing ON while nothing happens,
+    // which is a screen actively lying.
+    //
+    // So it goes above the master switch, before anything it governs, and it is a row you can
+    // tap straight into the Licence page rather than a sentence in a footer nobody reads.
+    //
+    if (SCILicenseIsEnforced() && !SCILicenseAllows()) {
+        PSSpecifier *halted =
+            [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"lic_halted")
+                                           target:self
+                                              set:NULL
+                                              get:NULL
+                                           detail:[SCIPanelLicenceController class]
+                                             cell:PSLinkCell
+                                             edit:Nil];
+        [halted setProperty:SCILicenseStatusLine() forKey:@"subtitle"];
+        [halted setProperty:SCIPanelBadgeImage(@"exclamationmark.triangle.fill",
+                                               [UIColor systemOrangeColor])
+                     forKey:@"iconImage"];
+        [specifiers addObject:halted];
+    }
+
     PSSpecifier *master = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"master_title")
                                                          target:self
                                                             set:@selector(setMaster:forSpecifier:)
@@ -124,7 +152,11 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
     // **A row that cannot act must not look as though it does.** With the master off, every
     // switch below is still drawn at whatever it was set to, and every one of them is being
     // ignored -- so the footer says so rather than leaving the page to imply otherwise.
-    [group setProperty:([[self isMasterOn:nil] boolValue] ? SCILocalized(@"apps_footer")
+    // The gate outranks the master switch in what this footer says, because it outranks it in
+    // what actually happens: a row switched on under a closed gate patches nothing.
+    [group setProperty:((SCILicenseIsEnforced() && !SCILicenseAllows())
+                            ? SCILocalized(@"apps_footer_halted")
+                        : [[self isMasterOn:nil] boolValue] ? SCILocalized(@"apps_footer")
                                                           : SCILocalized(@"apps_footer_master_off"))
                 forKey:@"footerText"];
     [specifiers addObject:group];
