@@ -17,7 +17,7 @@ compatibility_date = "2026-09-01"
 
 [[kv_namespaces]]
 binding = "DB"
-id = "REPLACE_WITH_THE_ID_WRANGLER_PRINTS"
+id = "3537d89b14e842bf932bfd02bb4fa145"
 
 [observability]
 enabled = true
