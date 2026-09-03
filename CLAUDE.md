@@ -771,6 +771,18 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**A phone number is searched as digits or it is not searched at all.** Nobody writes one the same
+way twice — `0593010901`, `+966 59 301 0901` and `966593010901` are one number — so matching the
+characters somebody typed misses the row nine times out of ten. The panel compares the last nine
+digits of each, folds Arabic-Indic numerals first, and keeps `name` and `contact` as separate
+fields rather than flattening them into a sentence, because a number buried in prose cannot be
+compared to anything.
+
+**`|| existing` cannot tell "absent" from "empty", and that makes a field uncorrectable.** The
+licence's name fell back to its old value whenever a blank one arrived — so a name could be
+changed and never removed. `body.x === undefined ? existing : clean(body.x)` is the distinction
+that was missing: absent keeps, empty clears.
+
 **`prompt()` cannot offer a choice, so a control built on one silently narrows what is
 possible.** Editing a licence asked for a number of days in a browser prompt — which meant
 "lifetime" could not be expressed at all, the name could not be touched in the same breath, and
@@ -2167,7 +2179,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.35** · Watch **0.5.3** · TikTok **0.20.1** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.1.6** · suite **1.73.1**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.6** · suite **1.73.2**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

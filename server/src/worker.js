@@ -442,6 +442,18 @@ async function adminApprove(request, env) {
     id: existing?.id || (await sha256Hex(`${body.dev}:${now()}:${crypto.randomUUID()}`, 6)),
     tier: mode === 'lifetime' ? 'lifetime' : (body.tier || existing?.tier || 'suite'),
     note: clean(body.note) || existing?.note || '',
+
+    // **Two fields, not one line of prose.** They arrived that way on the request and were being
+    // flattened into `note` on approval — which is fine to read and useless to search: a phone
+    // number buried in a sentence cannot be matched against a number somebody types with spaces
+    // or dashes in it. Kept apart, they are searchable and the panel can show them in columns.
+    //
+    // **Absent keeps, empty clears** — and `||` cannot tell those apart. Written as `|| existing`
+    // it meant a name could be changed and never removed: clearing the box sent an empty string,
+    // which is falsy, so the old value came straight back. A field that cannot be emptied is a
+    // field that cannot be corrected.
+    name: body.name === undefined ? (existing?.name || '') : clean(body.name),
+    contact: body.contact === undefined ? (existing?.contact || '') : clean(body.contact),
     until,
     // Approving a revoked device brings it back. Anything else would mean revoke is a one-way
     // door with no handle on the other side, which is not a thing to build into billing.

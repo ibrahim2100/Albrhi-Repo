@@ -1,5 +1,10 @@
 # Albrhi Changelog
 
+## v1.73.2
+
+**The licence panel shows the phone number and can be searched** — by device, name or number, and
+a number matches however it was written. Nothing in the tweaks changed.
+
 ## v1.73.1
 
 **The licence panel edits properly now** — name and duration together, with lifetime in the menu,
