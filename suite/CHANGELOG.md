@@ -1,5 +1,16 @@
 # Albrhi Changelog
 
+## v1.69.0
+
+**Ask for a licence from the phone, and redeem a short code without asking anyone.**
+
+Settings › Albrhi › Licence gains two things. **Request a licence** builds a short string with your
+device, the duration you want and your name, and offers to share it — nothing is sent by the tweak,
+you send it. **Enter a code** takes something like `ALB-4K7M-9QX2-P3RT` and binds it to the device
+on the spot; it needs internet that once and never again.
+
+Enforcement is still off. None of this withholds anything from anybody yet.
+
 ## v1.68.1
 
 **A licence panel, served beside the source.** Issue keys, keep a ledger of what has been issued
