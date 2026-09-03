@@ -1,5 +1,20 @@
 # Albrhi Changelog
 
+## v1.66.1
+
+**1.66.0's packages were correct and the source stopped listing the rootless one.** A note
+explaining the withheld-package list was written *between the quotes* of the shell assignment it
+described, where `#` is not a comment but a word — so every word of that sentence became a
+withheld package name, and one of them was the suite's own identity. The roothide flavour and
+every other package stayed exactly where they were; `com.albrhi` vanished. Green build,
+published release, a perfectly well-formed index of the wrong set of packages.
+
+Caught by the workflow's own "does the source actually serve this version" step, which asks the
+live URL rather than the build's output — the one check in the pipeline that could have seen it.
+
+Nothing in the tweaks changed from 1.66.0. If Sileo already offered you 1.66.0, you have
+everything this carries.
+
 ## v1.66.0
 
 **An audit pass over the whole repository. Nothing a user can see changed; a great deal that
