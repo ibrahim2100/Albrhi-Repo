@@ -211,7 +211,75 @@
     <div class="out" id="issueOut" hidden></div>
   </section>
 
-  <!-- ── 3. the ledger ──────────────────────────────────────────────────────────── -->
+  <!-- ── 3. the inbox ───────────────────────────────────────────────────────────── -->
+  <section class="card">
+    <h2>الطلبات الواردة <span id="inboxCount" class="pill warn">0</span></h2>
+    <p>
+      يفتح المستخدم الإعدادات › البرهان › الترخيص، يضغط «طلب ترخيص»، ويرسل لك النصّ. الصقه هنا —
+      ويمكن لصق عدّة طلبات دفعةً واحدة، كلٌّ في سطر.
+    </p>
+
+    <label for="requests">نصّ الطلب</label>
+    <textarea id="requests" spellcheck="false" placeholder="ALBREQ1.…" style="min-height:4.5rem"></textarea>
+
+    <div class="actions"><button id="addRequests">أضف إلى الصندوق</button></div>
+
+    <table id="inbox" hidden>
+      <thead>
+        <tr><th>الجهاز</th><th>لمن</th><th>المطلوب</th><th>وصل</th><th></th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <p class="empty" id="inboxEmpty">لا طلبات.</p>
+  </section>
+
+  <!-- ── 4. codes ───────────────────────────────────────────────────────────────── -->
+  <section class="card">
+    <h2>أكواد قصيرة</h2>
+    <p>
+      كود قصير لا يتّسع لتوقيع، فالجهاز يبحث عن بصمته في <code style="font-family:var(--mono);direction:ltr;display:inline-block">licence/codes.json</code>.
+      الملفّ يحوي بصمات لا أكواداً — فقراءته لا تعطي أحداً كوداً يعمل.
+    </p>
+
+    <div class="row">
+      <div>
+        <label for="codeCount">كم كوداً</label>
+        <input id="codeCount" type="number" value="5" min="1" max="200">
+      </div>
+      <div>
+        <label for="codeDays">مدّة الترخيص (أيام)</label>
+        <input id="codeDays" type="number" value="365" min="1" max="3650">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="codeWindow">مهلة التفعيل (أيام)</label>
+        <input id="codeWindow" type="number" value="90" min="1" max="3650">
+      </div>
+      <div>
+        <label for="codeTier">الباقة</label>
+        <select id="codeTier" style="font-family:inherit;direction:rtl;text-align:right">
+          <option value="suite">الحزمة كاملة</option>
+          <option value="trial">تجربة</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="mintCodes">أنشئ الأكواد</button>
+      <button id="copyCodes" hidden>نسخ الأكواد</button>
+      <button id="copyCodesJson">نسخ codes.json</button>
+    </div>
+
+    <div class="out" id="codesOut" hidden></div>
+    <p class="note">
+      <b>ما لا يمكن هندسته بلا خادم:</b> كودٌ غير مرتبطٍ بجهاز يصلح لكلّ من يحصل عليه حتى يُزال من
+      الملفّ. حمايتاه مهلة التفعيل، وحذف بصمته عند الإساءة.
+    </p>
+  </section>
+
+  <!-- ── 5. the ledger ──────────────────────────────────────────────────────────── -->
   <section class="card">
     <h2>المفاتيح الصادرة</h2>
     <p>محفوظة في هذا المتصفّح وحده. المعرّف هو ما يُسحب به المفتاح لاحقاً — بدونه لا سبيل لسحبه.</p>
@@ -230,7 +298,7 @@
     </div>
   </section>
 
-  <!-- ── 4. revocation ──────────────────────────────────────────────────────────── -->
+  <!-- ── 6. revocation ──────────────────────────────────────────────────────────── -->
   <section class="card">
     <h2>السحب <span id="liveState" class="pill warn">لم يُقرأ بعد</span></h2>
     <p>
@@ -247,7 +315,7 @@
     <div class="out" id="revokedOut" hidden></div>
   </section>
 
-  <!-- ── 5. verify ──────────────────────────────────────────────────────────────── -->
+  <!-- ── 7. verify ──────────────────────────────────────────────────────────────── -->
   <section class="card">
     <h2>فحص مفتاح</h2>
     <p>يُفحص بالنصف العامّ وحده — وهو بالضبط ما يفعله الجهاز، فالصيغة تُختبَر بالقواعد نفسها على الطرفين.</p>
@@ -407,6 +475,182 @@ async function verifyToken(token) {
   } catch (e) { return false; }
 }
 
+// ── The inbox ─────────────────────────────────────────────────────────────────────────
+//
+// A request is not signed, and that is deliberate: there is nothing on a phone to sign it with,
+// and nothing in it worth forging — it is a *question*, and you are the one who answers it. The
+// four-character check is for typos picked up in a chat window, and it is called a check
+// everywhere it appears so nobody comes to read it as a signature.
+
+const INBOX_STORE = "albrhi.licence.inbox";
+let inbox = [];
+
+async function sha256Hex(text, bytes) {
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(text)));
+  return [...digest.slice(0, bytes)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function parseRequest(line) {
+  const parts = line.trim().split(".");
+  if (parts.length !== 3 || parts[0] !== "ALBREQ1") return null;
+  if (await sha256Hex(parts[1], 2) !== parts[2]) return null;   // a typo in transit
+
+  try {
+    const payload = JSON.parse(new TextDecoder().decode(unb64u(parts[1])));
+    if (!/^[0-9a-f]{16}$/.test(payload.dev || "")) return null;
+    return payload;
+  } catch (e) { return null; }
+}
+
+function renderInbox() {
+  const body = $("inbox").querySelector("tbody");
+  body.innerHTML = "";
+  $("inbox").hidden = inbox.length === 0;
+  $("inboxEmpty").hidden = inbox.length > 0;
+  $("inboxCount").textContent = String(inbox.length);
+  $("inboxCount").className = inbox.length ? "pill good" : "pill warn";
+
+  inbox.forEach((req, index) => {
+    const tr = document.createElement("tr");
+    const cell = (text, mono) => {
+      const td = document.createElement("td");
+      if (mono) td.className = "mono";
+      td.textContent = text;
+      return td;
+    };
+
+    tr.append(cell(req.dev, true), cell(req.note || "—", false), cell(req.days + " يوماً", false),
+              cell(new Date((req.ts || 0) * 1000).toISOString().slice(0, 10), true));
+
+    const actions = document.createElement("td");
+
+    // Approving does not issue behind your back: it fills the form above with what was asked for
+    // and scrolls to it, so the duration and the name are still yours to change before signing.
+    const approve = document.createElement("button");
+    approve.textContent = "موافقة";
+    approve.style.padding = ".3rem .6rem";
+    approve.style.font = "600 12px/1 inherit";
+    approve.onclick = () => {
+      $("device").value = req.dev;
+      $("days").value = req.days || 365;
+      $("name").value = req.note || "";
+      inbox.splice(index, 1);
+      writeInbox();
+      $("device").scrollIntoView({ behavior: "smooth", block: "center" });
+    };
+
+    const drop = document.createElement("button");
+    drop.textContent = "رفض";
+    drop.style.padding = ".3rem .6rem";
+    drop.style.font = "600 12px/1 inherit";
+    drop.onclick = () => { inbox.splice(index, 1); writeInbox(); };
+
+    actions.append(approve, drop);
+    tr.append(actions);
+    body.append(tr);
+  });
+}
+
+function writeInbox() { store(INBOX_STORE, JSON.stringify(inbox)); renderInbox(); }
+
+$("addRequests").onclick = async () => {
+  const lines = $("requests").value.split(/\s+/).filter(Boolean);
+  let added = 0, bad = 0, duplicate = 0;
+
+  for (const line of lines) {
+    const req = await parseRequest(line);
+    if (!req) { bad++; continue; }
+
+    // Matched on device *and* timestamp: the same person asking twice is two requests, and the
+    // same message pasted twice is one. Dropping by device alone would hide a renewal.
+    if (inbox.some(e => e.dev === req.dev && e.ts === req.ts)) { duplicate++; continue; }
+
+    inbox.push(req);
+    added++;
+  }
+
+  writeInbox();
+  $("requests").value = "";
+
+  // Counted separately, because "nothing happened" has three causes here and they need three
+  // different things done about them.
+  if (bad || duplicate) {
+    alert(`أُضيف ${added}` + (duplicate ? ` · ${duplicate} مكرّر` : "") +
+          (bad ? ` · ${bad} غير مقروء` : ""));
+  }
+};
+
+
+// ── Short codes ───────────────────────────────────────────────────────────────────────
+//
+// Crockford's alphabet: no I, no L, no O, no U. These get read down a phone line and typed by
+// hand, so there is no 1/I and no 0/O to mishear, and nothing that can land on an unfortunate
+// word by accident. The device folds the confusable characters back in before hashing, which is
+// the half that actually saves the support message.
+
+const CODE_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+
+function mintCode() {
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  let out = "";
+  for (let i = 0; i < 12; i++) out += CODE_ALPHABET[bytes[i] % 32];
+  return out;
+}
+
+const pretty = code => "ALB-" + code.slice(0, 4) + "-" + code.slice(4, 8) + "-" + code.slice(8, 12);
+
+$("mintCodes").onclick = async () => {
+  const count = Math.min(200, Math.max(1, parseInt($("codeCount").value, 10) || 1));
+  const days = Math.max(1, parseInt($("codeDays").value, 10) || 365);
+  const window = Math.max(1, parseInt($("codeWindow").value, 10) || 90);
+  const tier = $("codeTier").value;
+  const now = Math.floor(Date.now() / 1000);
+
+  const minted = [];
+  for (let i = 0; i < count; i++) {
+    const code = mintCode();
+    minted.push({
+      code, hash: await sha256Hex(code, 8), days, tier,
+      rb: now + window * 86400, iat: now, kind: "code", revoked: false,
+    });
+  }
+
+  // Into the same ledger as the keys. Two lists would be two places to look when somebody says
+  // "my licence stopped working" -- and revocation reads from one of them.
+  minted.forEach(m => ledger.push({
+    id: m.hash, dev: "—", for: `كود · ${m.days} يوماً`, exp: m.rb,
+    iat: m.iat, tier: m.tier, kind: "code", code: m.code, days: m.days, revoked: false,
+  }));
+  writeLedger();
+  renderRevoked();
+
+  const text = minted.map(m => pretty(m.code)).join("\n");
+  show($("codesOut"), text);
+  $("copyCodes").hidden = false;
+  $("copyCodes").onclick = () => navigator.clipboard.writeText(text).then(() => {
+    $("copyCodes").textContent = "نُسخ";
+    setTimeout(() => ($("copyCodes").textContent = "نسخ الأكواد"), 1500);
+  });
+};
+
+/// The published list: hashes and terms, never a code.
+function codesJson() {
+  const codes = {};
+  ledger.filter(e => e.kind === "code" && !e.revoked)
+        .forEach(e => { codes[e.id] = { days: e.days, tier: e.tier, rb: e.exp }; });
+  return JSON.stringify({ v: 1, codes }, null, 2);
+}
+
+$("copyCodesJson").onclick = () => {
+  const text = codesJson();
+  show($("codesOut"), text);
+  navigator.clipboard.writeText(text).then(() => {
+    $("copyCodesJson").textContent = "نُسخ";
+    setTimeout(() => ($("copyCodesJson").textContent = "نسخ codes.json"), 1500);
+  });
+};
+
+
 // ── Ledger ────────────────────────────────────────────────────────────────────────────
 function readLedger() {
   try { ledger = JSON.parse(load(LEDGER_STORE) || "[]"); }
@@ -417,7 +661,16 @@ function writeLedger() { store(LEDGER_STORE, JSON.stringify(ledger)); renderLedg
 
 function stateOf(entry) {
   if (entry.revoked) return ["bad", "مسحوب"];
+
+  // A code's date is its *redemption window*, not its expiry: the licence's clock starts when
+  // somebody redeems it, which this side cannot know. Saying "expired" about an unredeemed code
+  // would be describing the wrong deadline entirely.
   const left = entry.exp - Math.floor(Date.now() / 1000);
+  if (entry.kind === "code") {
+    if (left <= 0) return ["bad", "انتهت مهلة التفعيل"];
+    return ["good", `للتفعيل خلال ${Math.ceil(left / 86400)} يوماً`];
+  }
+
   if (left <= 0) return ["bad", "منتهٍ"];
   if (left < 30 * 86400) return ["warn", `${Math.ceil(left / 86400)} يوماً`];
   return ["good", "صالح"];
@@ -632,6 +885,10 @@ $("importLedger").onclick = () => {
 readLedger();
 renderLedger();
 renderRevoked();
+
+try { inbox = JSON.parse(load(INBOX_STORE) || "[]"); } catch (e) { inbox = []; }
+if (!Array.isArray(inbox)) inbox = [];
+renderInbox();
 
 const remembered = load(KEY_STORE);
 if (remembered) {
