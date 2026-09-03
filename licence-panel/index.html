@@ -210,6 +210,19 @@
     <div class="out" id="connOut" hidden></div>
   </section>
 
+  <!-- ── search ─────────────────────────────────────────────────────────────────── -->
+  <section class="card">
+    <h2>بحث <span id="searchCount" class="pill warn" hidden></span></h2>
+    <p>
+      بالجهاز أو الاسم أو الرقم — أو أيّ جزءٍ منها. الأرقام تُطابَق بأرقامها وحدها، فالمسافات
+      والشُّرَط و<code style="font-family:var(--mono);direction:ltr;display:inline-block">+966</code>
+      مقابل الصفر لا تمنع المطابقة.
+    </p>
+
+    <input id="search" class="ar" placeholder="اسم، رقم جوال، أو رمز جهاز" spellcheck="false">
+    <div class="actions"><button id="clearSearch" hidden>امسح البحث</button></div>
+  </section>
+
   <!-- ── inbox ──────────────────────────────────────────────────────────────────── -->
   <section class="card">
     <h2>الطلبات الواردة <span id="inboxCount" class="pill warn">—</span></h2>
@@ -231,7 +244,7 @@
 
     <div class="tablewrap">
       <table id="licences" hidden>
-        <thead><tr><th>الجهاز</th><th>لمن</th><th>سارٍ حتى</th><th>المصدر</th><th>الحالة</th><th></th></tr></thead>
+        <thead><tr><th>الجهاز</th><th>الاسم</th><th>الجوال</th><th>سارٍ حتى</th><th>المصدر</th><th>الحالة</th><th></th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -493,10 +506,80 @@ function actionButton(label, handler, destructive) {
   return button;
 }
 
+// ── Search ────────────────────────────────────────────────────────────────────────────
+//
+// One box over every table. What makes it worth calling smart is not the matching — it is that a
+// phone number is compared as *digits*, so `0593010901`, `+966 59 301 0901` and `966593010901`
+// all find each other. A search that only matched what was typed character for character would
+// miss the number on nine rows out of ten, since nobody writes one the same way twice.
+//
+// Arabic-Indic digits are folded too. A number typed on an Arabic keyboard is the same number.
+
+let query = "";
+
+const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
+
+function foldDigits(text) {
+  return [...String(text || "")].map(c => {
+    const i = ARABIC_DIGITS.indexOf(c);
+    return i >= 0 ? String(i) : c;
+  }).join("");
+}
+
+/// Just the digits, and only the last nine of them.
+///
+/// A country code is the part people leave off: `966593010901` and `0593010901` are one number
+/// written two ways, and the nine digits at the end are what they share.
+function digitsOf(text) {
+  const digits = foldDigits(text).replace(/\D/g, "");
+  return digits.length > 9 ? digits.slice(-9) : digits;
+}
+
+function matches(row) {
+  if (!query) return true;
+
+  const haystack = [row.key, row.dev, row.name, row.contact, row.note, row.tier]
+    .filter(Boolean).map(v => foldDigits(String(v)).toLowerCase()).join(" ");
+
+  if (haystack.includes(query)) return true;
+
+  // And the digits, separately, so a number matches however either side wrote it.
+  const wanted = digitsOf(query);
+  if (wanted.length >= 4) {
+    for (const field of [row.contact, row.name, row.note]) {
+      if (field && digitsOf(field).includes(wanted)) return true;
+    }
+  }
+  return false;
+}
+
+function applySearch() {
+  query = foldDigits($("search").value.trim()).toLowerCase();
+  $("clearSearch").hidden = !query;
+
+  renderInbox();
+  renderLicences();
+  renderTrials();
+  renderCodes();
+
+  // How many rows survived, across everything. A search with no hits and no count reads as a
+  // broken filter rather than as an answer.
+  const total = ["inbox", "licences", "trials", "codes"]
+    .reduce((n, id) => n + $(id).querySelectorAll("tbody tr").length, 0);
+
+  $("searchCount").hidden = !query;
+  $("searchCount").textContent = total ? (total + " نتيجة") : "لا نتائج";
+  $("searchCount").className = "pill " + (total ? "good" : "bad");
+}
+
+$("search").oninput = applySearch;
+$("clearSearch").onclick = () => { $("search").value = ""; applySearch(); };
+
+
 // ── Rendering ─────────────────────────────────────────────────────────────────────────
 
 function renderInbox() {
-  const rows = state.requests || [];
+  const rows = (state.requests || []).filter(matches);
   const body = $("inbox").querySelector("tbody");
   body.innerHTML = "";
   $("inbox").hidden = rows.length === 0;
@@ -533,9 +616,13 @@ function renderInbox() {
     };
 
     actions.append(
-      actionButton("موافقة", () => act("/admin/approve", req.lifetime
-        ? { dev: req.dev, mode: "lifetime", note: who }
-        : { dev: req.dev, days: req.days, note: who })),
+      actionButton("موافقة", () => act("/admin/approve", {
+        dev: req.dev,
+        name: req.name || "",
+        contact: req.contact || "",
+        note: req.note || "",
+        ...(req.lifetime ? { mode: "lifetime" } : { days: req.days }),
+      })),
       actionButton("رفض", () => act("/admin/decline", { dev: req.dev }), true),
     );
     tr.append(actions);
@@ -544,7 +631,8 @@ function renderInbox() {
 }
 
 function renderLicences() {
-  const rows = (state.licences || []).slice().sort((a, b) => (b.until || 0) - (a.until || 0));
+  const rows = (state.licences || []).filter(matches)
+                  .slice().sort((a, b) => (b.until || 0) - (a.until || 0));
   const body = $("licences").querySelector("tbody");
   body.innerHTML = "";
   $("licences").hidden = rows.length === 0;
@@ -556,7 +644,9 @@ function renderLicences() {
 
   rows.forEach(lic => {
     const tr = document.createElement("tr");
-    tr.append(cell(lic.key, true), cell(lic.note || "—"),
+    tr.append(cell(lic.key, true),
+              cell(lic.name || lic.note || "—"),
+              cell(lic.contact || "—", true),
               cell(lic.until ? fmtDate(lic.until) : "∞", true),
               cell(lic.source === "code" ? "كود" : "موافقة"));
 
@@ -737,7 +827,7 @@ function editLicence(lic) {
 }
 
 function renderTrials() {
-  const rows = state.trials || [];
+  const rows = (state.trials || []).filter(matches);
   const body = $("trials").querySelector("tbody");
   body.innerHTML = "";
   $("trials").hidden = rows.length === 0;
@@ -775,7 +865,8 @@ function renderTrials() {
 }
 
 function renderCodes() {
-  const rows = (state.codes || []).slice().sort((a, b) => (b.iat || 0) - (a.iat || 0));
+  const rows = (state.codes || []).filter(matches)
+                  .slice().sort((a, b) => (b.iat || 0) - (a.iat || 0));
   const body = $("codes").querySelector("tbody");
   body.innerHTML = "";
   $("codes").hidden = rows.length === 0;
