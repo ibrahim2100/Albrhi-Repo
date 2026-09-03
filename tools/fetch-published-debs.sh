@@ -112,17 +112,27 @@ OWNER_TWEAK="${5:-}"
 # Matched exactly, against the archive's own Package field. Every flavour has to be named
 # because rootless and roothide are separate package identities: listing only the first
 # would withhold one and go on serving the other.
+#
+# TikTok and YouTube Music are in the suite exactly as the four above them are, and were
+# missing from this list purely because their own workflows have never published anything --
+# so the asymmetry cost nothing and looked deliberate. It is a trap either way: whoever gives
+# one of them a publishing step later would find the index offering it beside the suite with
+# no warning. Withholding is an explicit list here, never an absence of action.
+#
+# **Nothing but package names may go between the quotes below.** The note above was first
+# written *inside* them, where `#` is not a comment -- it is a word. Every word of that
+# sentence became a withheld package name, and one of them was the suite's own, so the
+# rootless `com.albrhi` disappeared from the source entirely while the roothide flavour and
+# every other package stayed exactly where they were. The build was green; the index was
+# simply missing the package most people install. `buildsuite.yml`'s "does the source
+# actually serve this version" step is what caught it, which is precisely why that step
+# exists and why it runs against the live URL rather than against the build's own output.
 WITHHELD_PACKAGES="
 com.albrhi.carplay          com.albrhi.carplay.roothide
 com.albrhi.tweak            com.albrhi.tweak.roothide
 com.albrhi.youtube          com.albrhi.youtube.roothide
 com.albrhi.twitter          com.albrhi.twitter.roothide
 com.albrhi.panel            com.albrhi.panel.roothide
-# TikTok and YouTube Music are in the suite exactly as the four above are, and were missing
-# from this list purely because their own workflows have never published anything -- so the
-# asymmetry cost nothing and looked deliberate. It is a trap either way: whoever gives one of
-# them a publishing step later would find the index offering it beside com.albrhi with no
-# warning. Withholding is an explicit list here, never an absence of action.
 com.albrhi.tiktok           com.albrhi.tiktok.roothide
 com.albrhi.ytmusic          com.albrhi.ytmusic.roothide
 com.albrhi.locket           com.albrhi.locket.roothide

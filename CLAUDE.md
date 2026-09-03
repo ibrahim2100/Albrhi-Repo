@@ -713,6 +713,21 @@ counter is indistinguishable from a feature that works. The same shape sat one l
 post-to-image renderer, where `-drawViewHierarchyInRect:afterScreenUpdates:NO` returns a BOOL that
 was being discarded.
 
+**A `#` inside a quoted shell string is not a comment — it is a word, and one of those words
+was `com.albrhi`.** A note explaining `WITHHELD_PACKAGES` was written *between the quotes* of
+that very assignment, so every word of the prose became a withheld package name. The suite's own
+identity appeared in the sentence, so **the rootless `com.albrhi` vanished from the source
+entirely** while the roothide flavour and every other package stayed exactly where they were:
+the build was green, the release was published, and the index was simply missing the package
+most people install. It is the same family as the heredoc `\n` this file already records five
+instances of — a comment convention that does not hold inside the construct it was written into.
+
+**And the step that caught it is the one that asks the live URL.** `buildsuite.yml`'s "does the
+source actually serve this version" check failed while everything upstream of it passed, which
+is exactly what it is for and exactly why it must never be relaxed to test the build's own
+output instead. Nothing else in the pipeline could have noticed: the workflow had faithfully
+built, released and deployed a correct index of the wrong set of packages.
+
 **A rule that lives only in this file is a rule that gets broken — `-valueForKey:` was
 documented here for a year and used 108 times.** Two paragraphs above explain that it runs the
 receiver's own code and that `@catch` does not protect it, and neither stopped thirty-three
