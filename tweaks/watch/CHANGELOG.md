@@ -2,6 +2,12 @@
 
 ## v0.5.3
 
+*Released on its own push. The audit commit that produced it touched `tools/**` and `shared/**`,
+which all three publishing workflows watch — so three runs started, the `albrhi-pages`
+concurrency group kept only the most recent pending member, and this one was dropped twice in a
+row. Cancelled, not failed: no error anywhere and no release. CLAUDE.md describes that trap and
+the answer is the one it gives — push the tweak-local change by itself.*
+
 **A repository-wide audit pass. No feature changed; what changed is that three rules this
 project already had in writing are now enforced by the tools instead of remembered.**
 
