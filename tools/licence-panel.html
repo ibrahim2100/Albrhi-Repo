@@ -366,7 +366,13 @@
 
       <div id="dlgFields">
         <label for="dlgName">الاسم</label>
-        <input id="dlgName" class="ar" placeholder="اسم أو ملاحظة">
+        <input id="dlgName" class="ar" placeholder="اسم صاحب الترخيص">
+
+        <div style="margin-block-start:.8rem">
+          <label for="dlgContact">الجوال</label>
+          <input id="dlgContact" placeholder="05xxxxxxxx" spellcheck="false"
+                 style="direction:ltr;text-align:left;font-family:var(--mono)">
+        </div>
 
         <div style="margin-block-start:.8rem">
           <label for="dlgPlan">المدّة</label>
@@ -812,7 +818,16 @@ $("dlgSave").onclick = async () => {
 
 /// The edit dialog for one licence, prefilled with what it currently says.
 function editLicence(lic) {
-  $("dlgName").value = lic.note || "";
+  // **The row and the editor must read the same field, or every edit looks like it was thrown
+  // away.** The table draws `name || note`; the editor read and wrote `note` alone. So editing
+  // the name of a licence that came from a request — which carries a real `name` — wrote the new
+  // text into `note`, where nothing displays it while a `name` exists, and the row came back
+  // saying exactly what it said before. The edit had saved perfectly and was invisible.
+  //
+  // `name` is the field now, on both sides, and saving folds `note` into it so there is never
+  // again a second place the same fact can hide in.
+  $("dlgName").value = lic.name || lic.note || "";
+  $("dlgContact").value = lic.contact || "";
   $("dlgPlan").value = "keep";
   $("dlgDays").value = 365;
   $("dlgMode").value = "set";
@@ -824,7 +839,12 @@ function editLicence(lic) {
     note: lic.until ? ("ينتهي حالياً في " + fmtDate(lic.until)) : "مدى الحياة حالياً",
     onSave: async () => {
       const plan = $("dlgPlan").value;
-      const payload = { dev: lic.key, note: $("dlgName").value.trim() };
+      const payload = {
+        dev: lic.key,
+        name: $("dlgName").value.trim(),
+        contact: $("dlgContact").value.trim(),
+        note: "",
+      };
 
       if (plan === "lifetime") {
         payload.mode = "lifetime";

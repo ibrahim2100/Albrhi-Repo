@@ -771,6 +771,17 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**A screen that reads one field and an editor that writes another is a save that works and looks
+discarded.** The licence table drew `name || note`; the edit dialog was written when only `note`
+existed and never moved. Editing a licence approved from a request — which carries a real `name` —
+wrote the new text into `note`, where nothing displays it while a name exists, so the row came back
+unchanged after every single edit. Nothing failed, nothing warned, and the round trip was perfect;
+the reported symptom, "it goes back to how it was", describes a write being ignored and was in fact
+a read looking somewhere else. **When a field appears twice, the editor and the display are one
+change, not two** — and the save now folds the old field into the new one so there is no second
+place for the same fact to hide in. The absent-keeps/empty-clears rule below had already been
+applied to `name` and `contact` and left `note` behind, which is the same omission one layer down.
+
 **A sentinel value needs one function that understands it, not a rule remembered at each place
 that compares it.** `until = 0` means a lifetime licence. The row's badge was taught that; the
 counter above it was not, and neither was the sort — so a panel holding two lifetime licences and
@@ -2187,7 +2198,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.35** · Watch **0.5.3** · TikTok **0.20.1** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.1.6** · suite **1.73.3**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.6** · suite **1.73.4**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

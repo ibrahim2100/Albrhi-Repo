@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.73.4
+
+**Editing a licence's name in the panel looked like it never saved.** The table draws the licence's
+`name`; the editor read and wrote `note`. So an edit to a licence that came from a request — which
+carries a real name — was written into a field nothing displays, and the row came back saying
+exactly what it said before. It had saved every time. One field on both sides now, and the phone
+number is editable beside it.
+
 ## v1.73.3
 
 *Released on its own push — the commit carrying the fix touched `tools/`, which all three

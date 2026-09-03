@@ -441,7 +441,9 @@ async function adminApprove(request, env) {
   const licence = {
     id: existing?.id || (await sha256Hex(`${body.dev}:${now()}:${crypto.randomUUID()}`, 6)),
     tier: mode === 'lifetime' ? 'lifetime' : (body.tier || existing?.tier || 'suite'),
-    note: clean(body.note) || existing?.note || '',
+    // Absent keeps, empty clears -- the same rule as the two fields below, and for the same
+    // reason: `||` cannot tell "not mentioned" from "deliberately emptied".
+    note: body.note === undefined ? (existing?.note || '') : clean(body.note),
 
     // **Two fields, not one line of prose.** They arrived that way on the request and were being
     // flattened into `note` on approval — which is fine to read and useless to search: a phone
