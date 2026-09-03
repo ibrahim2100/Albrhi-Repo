@@ -368,3 +368,23 @@
 /// per time it is opened.
 @property (nonatomic, assign) BOOL sciAddedExtraRates; // new
 @end
+
+
+//
+// One button in the row under a video — like, dislike, share, download, save.
+//
+// **The class answers "am I the download button" itself**, which is the whole reason this
+// surface was chosen over anything measured or guessed: `-hasOfflineButton` is declared on
+// it (`B16@0:8`), read out of 21.34.3's own class metadata alongside `-didTapButton:`
+// (`v24@0:8@16`) and `-setOfflineStatus:offlineability:`. Every earlier attempt in this
+// project at "which button is this one" ended in a string compare against a localised
+// title or a guess at a view's position; here the app is simply asked.
+//
+@interface YTSlimVideoDetailsActionView : UIView
+- (void)didTapButton:(id)sender;
+- (void)handleLongPressOnButton:(id)sender;
+/// YES on the download button and nowhere else. Behind `-respondsToSelector:` at every call
+/// site: a build that does not answer it is a build where nothing is intercepted, which is
+/// the direction a gate like this has to fail in.
+- (BOOL)hasOfflineButton;
+@end

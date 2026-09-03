@@ -84,6 +84,20 @@
                            detail:SCILocalized(@"set_parallel_note")
                            symbol:@"arrow.down.to.line"
                            action:^{ [SCIYTDownloadsPage askForParallel]; }],
+            //
+            // The two ways a save starts, next to each other on purpose: they are one
+            // decision seen from two sides, and a screen that puts them apart is a screen
+            // where somebody turns both on and then wonders why holding the video still
+            // opens a sheet.
+            //
+            [SCIRow switchRow:SCILocalized(@"set_native_download")
+                       detail:SCILocalized(@"set_native_download_note")
+                       symbol:@"arrow.down.circle"
+                      prefKey:SCIPrefNativeDownload],
+            [SCIRow switchRow:SCILocalized(@"set_hold_to_save")
+                       detail:SCILocalized(@"set_hold_to_save_note")
+                       symbol:@"hand.tap"
+                      prefKey:SCIPrefHoldToSave],
             [SCIRow switchRow:SCILocalized(@"set_shorts_button")
                        detail:SCILocalized(@"set_shorts_button_note")
                        symbol:@"play.rectangle.on.rectangle"

@@ -5,18 +5,21 @@ NS_ASSUME_NONNULL_BEGIN
 ///
 /// Saving a video to Photos.
 ///
-/// Two ways in, and **no view of YouTube's is hooked to reach either**: a row in our own
-/// panel, and holding the video itself.
+/// Three ways in: YouTube's own download button, a row in our panel, and — off by
+/// default since 1.26.0 — holding the video itself.
 ///
-/// The hold is on YTPlayerViewController's own `view` — a class already verified and
-/// already hooked, and a property that belongs to UIViewController rather than to
-/// YouTube. So the gesture sits over the picture without depending on a single one of
-/// YouTube's view classes, nineteen of which this project's own survey found missing
-/// from the build a well-known tweak ships for.
+/// **The button is the one that is meant to be used, and it is not placed, measured or
+/// matched by title.** `YTSlimVideoDetailsActionView` declares `-hasOfflineButton`, so
+/// the app itself says which of the buttons in that row is Download; see
+/// SCIYTDownloadButton.x. Every earlier route this project has taken to "which button is
+/// this" on any app has been wrong on some build.
 ///
-/// That is the difference worth keeping: every other tweak that downloads puts a button
-/// inside YouTube's player controls, which means hooking the view hierarchy that gets
-/// renamed between releases. A gesture on a controller's view cannot go stale that way.
+/// **The hold was over YouTube's own hold.** It sits on YTPlayerViewController's `view`,
+/// which never goes stale — but the app puts hold-to-speed-up on that same picture, and
+/// two long presses over one surface meant a habit built around the app's feature started
+/// producing a download sheet. Avoiding YouTube's view classes was the right instinct and
+/// it solved the wrong problem: a gesture cannot go missing, and it can still be in the
+/// way. Kept behind a switch, off, for anyone who learned it.
 ///
 /// What it operates on is what the player is already holding: the streams captured for
 /// the diagnostics page. So "download" means "save the video currently playing", which

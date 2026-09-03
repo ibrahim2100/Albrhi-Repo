@@ -3,6 +3,43 @@
 **Tested on YouTube 21.30.5.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.26.0
+
+**Downloading moved off the long press and onto YouTube's own download button.**
+
+Reported plainly: holding the video to speed it up had started downloading it instead. That is
+not a tuning problem. YouTube puts hold-to-speed-up on the player's own picture, this tweak put
+hold-to-save on that same picture, and both recognisers were armed and answering YES to
+simultaneous recognition — so one surface carried two long presses and the wrong one won often
+enough to break a habit built around the app's own feature.
+
+**Which button is the download button is asked, not measured.** `YTSlimVideoDetailsActionView` —
+the row of buttons under a video — declares `-hasOfflineButton` (`B16@0:8`), read out of 21.34.3's
+own class metadata beside the `-didTapButton:` it answers. Every other route this project has
+taken to identify one button among several, on any app, has been a frame, a subview index, an icon
+enum or a localised title, and every one of them has been wrong on some build. A flag the app
+maintains for its own layout cannot be. It is behind `-respondsToSelector:` all the same, and a
+build that does not answer it gets YouTube's own behaviour untouched — a gate that cannot identify
+its target has to fail toward leaving the app alone.
+
+YouTube's offline download is not disabled or reached into; the tap is answered before it starts
+one, and with the switch off the class behaves exactly as it does with nothing installed. When
+there is nothing to present the sheet from, the tap goes through to YouTube rather than being
+swallowed: a button that does nothing at all is worse than one that does what it always did.
+
+**The hold stays, off, and the switch it needed turned out to be missing in a second way.** It was
+armed from inside the SponsorBlock hook, *below* that feature's own gate and below a `return`
+taken whenever a video id could not be read — so saving by hold was silently switched off for
+anyone who turned SponsorBlock off, and for any video whose id the segment lookup could not read.
+Two unrelated conditions gating a feature neither of them is about, for eleven releases. It is now
+armed above both, on its own preference, and the preference is asked again when the press fires:
+a recogniser already added to a view stays added, and the moment somebody reaches for this switch
+is the moment a press has just done the wrong thing.
+
+The report counts taps seen on that row and taps answered as the download button, separately —
+none seen and some-seen-none-answered are different faults, and this project has spent a release
+on that exact ambiguity before.
+
 ## v1.25.1
 
 **An ad at launch that disappears after a pull to refresh is a filter watching one door out

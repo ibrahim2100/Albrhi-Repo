@@ -1,5 +1,14 @@
 # Albrhi Changelog
 
+## v1.64.0
+
+**YouTube 1.26.0.** Downloading moved off the long press and onto YouTube's own download button —
+holding the video to speed it up had started saving it instead, because both gestures were on the
+same picture. Which button is the download button is read from the app's own flag rather than
+measured or matched by title, and a build that does not carry that flag is left alone. The hold is
+still there, off, and the switch it always needed: it had been armed from inside the SponsorBlock
+hook, so it was silently dead for anyone who turned SponsorBlock off.
+
 ## v1.63.0
 
 **Albrhi for YouTube Music 0.9.0: downloading works.**

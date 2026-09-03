@@ -483,6 +483,12 @@ shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)other 
 - (void)pressed:(UILongPressGestureRecognizer *)recognizer {
     if (recognizer.state != UIGestureRecognizerStateBegan) return;
 
+    // Asked again here, not only where the gesture is armed. A recogniser already added to
+    // a view stays added, so switching this off would otherwise take effect on the next
+    // video and not on the one in front of you -- and the whole reason somebody reaches for
+    // this switch is that a press just did the wrong thing.
+    if (!SCIPrefEnabled(SCIPrefHoldToSave)) return;
+
     UIResponder *responder = recognizer.view;
     while (responder && ![responder isKindOfClass:[UIViewController class]]) {
         responder = responder.nextResponder;
@@ -535,6 +541,17 @@ static void SCIArmDownloadGesture(UIView *view) {
            withPlaybackData:(id)playbackData {
     %orig;
 
+    // The player's own view is where the hold-to-save gesture lives. Armed here rather than
+    // in a viewDidLoad hook because this is already a verified hook on a verified class,
+    // and self.view is UIViewController's own API -- so nothing new can go missing.
+    //
+    // **Above the SponsorBlock gate, and that is a fix rather than tidying.** It sat below
+    // it for eleven releases, so downloading by hold was silently switched off for anybody
+    // who turned SponsorBlock off -- and it also sat below a `return` taken whenever a video
+    // id could not be read, which is a fact about segment lookup and nothing to do with
+    // saving a file. Two unrelated conditions gating a feature neither of them is about.
+    if (SCIPrefEnabled(SCIPrefHoldToSave)) SCIArmDownloadGesture(self.view);
+
     if (!SCIPrefEnabled(SCIPrefSponsorBlock)) return;
 
     // The video object first, then the controller. Two objects rather than one because
@@ -554,11 +571,6 @@ static void SCIArmDownloadGesture(UIView *view) {
                 NSStringFromClass([video class])]];
         return;
     }
-
-    // The player's own view is where the download gesture lives. Armed here rather than
-    // in a viewDidLoad hook because this is already a verified hook on a verified class,
-    // and self.view is UIViewController's own API -- so nothing new can go missing.
-    SCIArmDownloadGesture(self.view);
 
     if ([videoID isEqualToString:sciCurrentVideoID] && sciSegments) return;
 

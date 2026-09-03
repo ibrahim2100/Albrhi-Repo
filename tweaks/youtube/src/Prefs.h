@@ -47,6 +47,23 @@
 /// there is no way at all to save one, and a feature nobody can reach is not a choice.
 #define SCIPrefShortsButton     @"shorts_download_button"
 
+/// YouTube's own download button, answered by us instead of by YouTube.
+///
+/// **On, and it is what replaces the hold below.** The hold was over the player's own
+/// picture, which is exactly where YouTube puts its hold-to-speed-up — so the two were
+/// competing for one gesture and ours won often enough that speeding a video up became
+/// a download. A button that already means "save this video" cannot be confused with
+/// anything else, and it costs no gesture at all.
+#define SCIPrefNativeDownload   @"native_download_button"
+
+/// Holding the picture to save it.
+///
+/// **Off, and that is the point of 1.26.0.** It stays because somebody may have learned it
+/// and because a build where YouTube renames the action row still has a way in — but a
+/// gesture laid over the app's own gesture is a cost paid on every long press, and it was
+/// being paid by everybody to serve a feature the button now serves better.
+#define SCIPrefHoldToSave       @"hold_to_save"
+
 /// Writing the cover into the sound file itself.
 ///
 /// **Off, and that is a retreat.** It shipped on in 0.22.0 and rewrote every saved song to

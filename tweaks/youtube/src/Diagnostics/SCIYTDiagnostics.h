@@ -141,6 +141,14 @@
 + (void)recordShortsButton:(NSString *)state;
 + (NSString *)shortsButtonState;
 
+/// What happened the last time YouTube's own download button was tapped.
+///
+/// A tally, not a snapshot of the last event: "seen" and "answered" have different causes
+/// and a single line naming only the most recent one cannot tell them apart. Empty until a
+/// tap reaches the hook at all, which is itself the answer when the class is not drawn.
++ (void)recordNativeDownloadButton:(NSString *)state;
++ (NSString *)nativeDownloadButtonState;
+
 /// What the last tap on that button actually tried to save. Its own slot: the line above is
 /// rewritten on every clip and buried this every time.
 + (void)recordShortsSave:(NSString *)detail;

@@ -221,6 +221,19 @@ static NSString *sciShortsButton = nil;
     if (state.length) sciShortsButton = [state copy];
 }
 
+
+/// Latest only, and it is a tally rather than an event: the string handed in already
+/// carries both counts, so overwriting it loses nothing.
+static NSString *sciNativeDownloadButton = nil;
+
++ (void)recordNativeDownloadButton:(NSString *)state {
+    if (state.length) sciNativeDownloadButton = [state copy];
+}
+
++ (NSString *)nativeDownloadButtonState {
+    return sciNativeDownloadButton ?: SCILocalized(@"diag_native_button_none");
+}
+
 /// The last save actually attempted, kept apart from the placement line above.
 ///
 /// They shared one slot and placement won every time. Placement is written whenever an
@@ -948,6 +961,12 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     // which section identifiers, so a scattered ad on Home can be matched to the exact
     // marker that needs adding to the list.
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_feed_sample"), [self feedKeptSampleState]];
+
+    // Above the Shorts lines because it is the surface a save now starts from. Empty means
+    // no tap ever reached the hook, which is a different fault from a tap that was seen and
+    // not answered -- the whole reason both numbers travel in this one string.
+    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_native_button"),
+        [self nativeDownloadButtonState]];
 
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts"), [self shortsButtonState]];
 

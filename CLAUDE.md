@@ -713,6 +713,33 @@ counter is indistinguishable from a feature that works. The same shape sat one l
 post-to-image renderer, where `-drawViewHierarchyInRect:afterScreenUpdates:NO` returns a BOOL that
 was being discarded.
 
+**A gesture cannot go missing, and it can still be in the way — this project optimised for the
+first and never asked the second.** YouTube's hold-to-save was deliberately put on
+`YTPlayerViewController`'s own `view` rather than on any YouTube view class, and the reasoning was
+right: a controller's `view` cannot be renamed out from under a hook. What it never asked is what
+*else* is already listening there. YouTube puts hold-to-speed-up on that same picture, ours
+answered YES to simultaneous recognition to win contention at all, and the result was two long
+presses on one surface with ours arriving first often enough that a habit built around the app's
+own feature started producing a download sheet. **Placement robustness and placement correctness
+are different questions**, and a hook that cannot break is not thereby a hook that belongs.
+
+**And the replacement is the shape to reach for first: ask the class which button it is.**
+`YTSlimVideoDetailsActionView` — the row under a video — declares `-hasOfflineButton` (`B16@0:8`)
+beside the `-didTapButton:` it answers. Every previous attempt in this repository at "which of
+these is the download button" on any app has been a frame, a subview index, an icon enum or a
+localised title, and each has been wrong on some build; a BOOL the app maintains for its own layout
+cannot be. Behind `-respondsToSelector:`, so a build that does not answer it is left alone — **a
+gate that cannot identify its target must fail toward not intercepting**, which is the same
+direction the TikTok download button's own refusal gets wrong when it is put at the wrong step.
+
+**Two unrelated gates on one feature is a feature switched off by things it has nothing to do
+with, and it hid for eleven releases.** That same hold-to-save was armed from inside the
+SponsorBlock hook, below SponsorBlock's own preference check *and* below a `return` taken whenever
+a video id could not be read — so it was silently dead for anyone who turned SponsorBlock off, and
+for any video whose id the segment lookup could not resolve. Neither condition is about saving a
+file. **Where a feature is armed from is part of its gate**, and a convenient hook is not a free
+one; check what returns above the line you are adding.
+
 **The safe area describes the device, never the app's own bars — and a screen placed inside
 somebody else's controller has to clear both.** YouTube Music's Downloads page cleared the status
 bar correctly and its heading still vanished, under the app's own header with the logo in it. The
@@ -1709,9 +1736,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.14** · YouTube **1.25.1** · X **0.18.1** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
+Instagram **4.1.14** · YouTube **1.26.0** · X **0.18.1** · Panel **0.9.22** · Watch **0.5.2** · TikTok **0.20.0** ·
 Spotify **0.2.3** · YT Music **0.9.0** ·
-NextUp **0.1.5** · suite **1.63.0**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.1.5** · suite **1.64.0**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being
