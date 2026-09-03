@@ -203,58 +203,6 @@ Name: Albrhi (rootless)
 Sileodepiction: https://ibrahim2100.github.io/albrhi-repo/depictions/albrhi.json
 
 Package: com.albrhi.nextup
-Version: 0.1.4
-Architecture: iphoneos-arm64
-Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
-Installed-Size: 896
-Depends: mobilesubstrate, preferenceloader, com.opa334.libsandy
-Conflicts: com.albrhi.nextup.roothide, com.yves.nextup3
-Replaces: com.albrhi.nextup.roothide
-Filename: debs/com.albrhi.nextup_0.1.4_iphoneos-arm64.deb
-Size: 159662
-MD5sum: 806cabfbbb781534b3207eba0ffe933f
-SHA1: 800ec2c4c78fcf3901e1c0d65093b3fb8bf6c39b
-SHA256: 16ce191466dad2c675adc70253066e0917b9389546a112b9da29941fb68ee371
-Section: Tweaks
-Homepage: https://github.com/ibrahim2100/Albrhi-Repo
-Description: See and skip what plays next, from the Lock Screen.
- .
- ▍WHAT PLAYS NEXT, WITHOUT OPENING THE APP
- A row under the now-playing controls showing the next track — its title, artist and
- cover — on the Lock Screen, in Control Center and in the Dynamic Island. Tap the cover
- to play it now, or skip it without ever opening the app.
- .
- ▍FIVE APPS
- Apple Music, Apple Podcasts, YouTube, YouTube Music and Spotify. Each reads that app's
- own playback queue, so the row shows what the app itself would play next — not a guess.
- .
- ▍SETTINGS IN ALBRHI
- Settings › Albrhi › Albrhi NextUp: a master switch, one per surface — Lock Screen,
- Dynamic Island, Control Center — and one per app. Changes apply immediately, without a
- respring.
- .
- iOS 14.2 through 26. Every hook is chosen at runtime from the iOS version and the host
- process, so one build serves all of them.
- .
- ▍CREDIT — THIS IS A PORT, NOT AN ORIGINAL
- Albrhi NextUp is a port of NextUp 3 by Yves (github.com/Yves000/NextUp3), used and
- redistributed under the GNU GPL v3 — the same licence this project ships under, which
- is what makes carrying the code over lawful where an unlicensed tweak could only be
- read for architecture. The original design, the private-API research and very nearly
- all of the implementation are Yves's work. What this port changes: the Settings pane
- was replaced by a page inside Albrhi Panel, and the package was rebranded. Nothing
- about the feature itself is this project's invention.
- .
- Ported and maintained by Ibrahim Ismail AL-Rahn. Free and open source under the GNU
- GPL v3; the full licence text ships with the source.
-Tag: role::enduser
-Author: Yves <github.com/Yves000> (original NextUp 3), ported by Ibrahim Ismail AL-Rahn
-Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-nextup.html
-Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Name: Albrhi NextUp (rootless)
-Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-nextup.json
-
-Package: com.albrhi.nextup
 Version: 0.1.5
 Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
@@ -358,21 +306,21 @@ Icon: https://ibrahim2100.github.io/albrhi-repo/CydiaIcon.png
 Name: Albrhi NextUp (rootless)
 Sileodepiction: https://ibrahim2100.github.io/albrhi-repo/depictions/albrhi-nextup.json
 
-Package: com.albrhi.nextup.roothide
-Version: 0.1.4
-Architecture: iphoneos-arm64e
+Package: com.albrhi.nextup
+Version: 0.2.0
+Architecture: iphoneos-arm64
 Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
-Installed-Size: 896
+Installed-Size: 1224
 Depends: mobilesubstrate, preferenceloader, com.opa334.libsandy
-Conflicts: com.albrhi.nextup, com.yves.nextup3
-Replaces: com.albrhi.nextup
-Filename: debs/com.albrhi.nextup.roothide_0.1.4_iphoneos-arm64e.deb
-Size: 159602
-MD5sum: d2ae708191cd7ed96bd2868016267f47
-SHA1: 3ea273bc18356a43eef31ea2b5dfd30e20643c9b
-SHA256: 801fc7c77996abad743ac065631fa497618dd00c5402bac2b469c7a667309f23
+Conflicts: com.albrhi.nextup.roothide, com.yves.nextup3
+Replaces: com.albrhi.nextup.roothide
+Filename: debs/com.albrhi.nextup_0.2.0_iphoneos-arm64.deb
+Size: 202952
+MD5sum: 239a7bf2d7c8e9600069183bd21d4d6d
+SHA1: 570b23af118600c6928c30212789af697fb44213
+SHA256: 927fc6fa0046b102fff7acfc350e5ce131f72c5d44671a41c8d72a2bcd6150f7
 Section: Tweaks
-Homepage: https://github.com/ibrahim2100/Albrhi-Repo
+Homepage: https://github.com/ibrahim2100/albrhi-repo
 Description: See and skip what plays next, from the Lock Screen.
  .
  ▍WHAT PLAYS NEXT, WITHOUT OPENING THE APP
@@ -384,8 +332,8 @@ Description: See and skip what plays next, from the Lock Screen.
  Apple Music, Apple Podcasts, YouTube, YouTube Music and Spotify. Each reads that app's
  own playback queue, so the row shows what the app itself would play next — not a guess.
  .
- ▍SETTINGS IN ALBRHI
- Settings › Albrhi › Albrhi NextUp: a master switch, one per surface — Lock Screen,
+ ▍ITS OWN ROW IN SETTINGS
+ Settings › Albrhi NextUp: a master switch, one per surface — Lock Screen,
  Dynamic Island, Control Center — and one per app. Changes apply immediately, without a
  respring.
  .
@@ -398,17 +346,17 @@ Description: See and skip what plays next, from the Lock Screen.
  is what makes carrying the code over lawful where an unlicensed tweak could only be
  read for architecture. The original design, the private-API research and very nearly
  all of the implementation are Yves's work. What this port changes: the Settings pane
- was replaced by a page inside Albrhi Panel, and the package was rebranded. Nothing
+ was rebuilt as the page this package ships, and the package was rebranded. Nothing
  about the feature itself is this project's invention.
  .
  Ported and maintained by Ibrahim Ismail AL-Rahn. Free and open source under the GNU
  GPL v3; the full licence text ships with the source.
 Tag: role::enduser
 Author: Yves <github.com/Yves000> (original NextUp 3), ported by Ibrahim Ismail AL-Rahn
-Depiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-nextup.html
-Icon: https://ibrahim2100.github.io/Albrhi-Repo/CydiaIcon.png
-Name: Albrhi NextUp (roothide)
-Sileodepiction: https://ibrahim2100.github.io/Albrhi-Repo/depictions/albrhi-nextup.json
+Depiction: https://ibrahim2100.github.io/albrhi-repo/depictions/albrhi-nextup.html
+Icon: https://ibrahim2100.github.io/albrhi-repo/CydiaIcon.png
+Name: Albrhi NextUp (rootless)
+Sileodepiction: https://ibrahim2100.github.io/albrhi-repo/depictions/albrhi-nextup.json
 
 Package: com.albrhi.nextup.roothide
 Version: 0.1.5
@@ -503,6 +451,58 @@ Description: See and skip what plays next, from the Lock Screen.
  read for architecture. The original design, the private-API research and very nearly
  all of the implementation are Yves's work. What this port changes: the Settings pane
  was replaced by a page inside Albrhi Panel, and the package was rebranded. Nothing
+ about the feature itself is this project's invention.
+ .
+ Ported and maintained by Ibrahim Ismail AL-Rahn. Free and open source under the GNU
+ GPL v3; the full licence text ships with the source.
+Tag: role::enduser
+Author: Yves <github.com/Yves000> (original NextUp 3), ported by Ibrahim Ismail AL-Rahn
+Depiction: https://ibrahim2100.github.io/albrhi-repo/depictions/albrhi-nextup.html
+Icon: https://ibrahim2100.github.io/albrhi-repo/CydiaIcon.png
+Name: Albrhi NextUp (roothide)
+Sileodepiction: https://ibrahim2100.github.io/albrhi-repo/depictions/albrhi-nextup.json
+
+Package: com.albrhi.nextup.roothide
+Version: 0.2.0
+Architecture: iphoneos-arm64e
+Maintainer: Ibrahim Ismail AL-Rahn <ibrahimalrahan01@gmail.com>
+Installed-Size: 1224
+Depends: mobilesubstrate, preferenceloader, com.opa334.libsandy
+Conflicts: com.albrhi.nextup, com.yves.nextup3
+Replaces: com.albrhi.nextup
+Filename: debs/com.albrhi.nextup.roothide_0.2.0_iphoneos-arm64e.deb
+Size: 202930
+MD5sum: ff6e86b331709efa0b4020fd757fe84c
+SHA1: 71abcf614b1447427f48df8df8818dffee624b28
+SHA256: 77eea45bca1ae7e769500011a0e534df79278459d06f8067e27cd075317ca350
+Section: Tweaks
+Homepage: https://github.com/ibrahim2100/albrhi-repo
+Description: See and skip what plays next, from the Lock Screen.
+ .
+ ▍WHAT PLAYS NEXT, WITHOUT OPENING THE APP
+ A row under the now-playing controls showing the next track — its title, artist and
+ cover — on the Lock Screen, in Control Center and in the Dynamic Island. Tap the cover
+ to play it now, or skip it without ever opening the app.
+ .
+ ▍FIVE APPS
+ Apple Music, Apple Podcasts, YouTube, YouTube Music and Spotify. Each reads that app's
+ own playback queue, so the row shows what the app itself would play next — not a guess.
+ .
+ ▍ITS OWN ROW IN SETTINGS
+ Settings › Albrhi NextUp: a master switch, one per surface — Lock Screen,
+ Dynamic Island, Control Center — and one per app. Changes apply immediately, without a
+ respring.
+ .
+ iOS 14.2 through 26. Every hook is chosen at runtime from the iOS version and the host
+ process, so one build serves all of them.
+ .
+ ▍CREDIT — THIS IS A PORT, NOT AN ORIGINAL
+ Albrhi NextUp is a port of NextUp 3 by Yves (github.com/Yves000/NextUp3), used and
+ redistributed under the GNU GPL v3 — the same licence this project ships under, which
+ is what makes carrying the code over lawful where an unlicensed tweak could only be
+ read for architecture. The original design, the private-API research and very nearly
+ all of the implementation are Yves's work. What this port changes: the Settings pane
+ was rebuilt as the page this package ships, and the package was rebranded. Nothing
  about the feature itself is this project's invention.
  .
  Ported and maintained by Ibrahim Ismail AL-Rahn. Free and open source under the GNU
