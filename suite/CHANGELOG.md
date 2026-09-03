@@ -1,5 +1,15 @@
 # Albrhi Changelog
 
+## v1.68.1
+
+**A licence panel, served beside the source.** Issue keys, keep a ledger of what has been issued
+and to whom, and build the revocation list — from a browser, on a phone as readily as on a Mac.
+
+It is public and it does nothing until a signing key is pasted into it. Signing happens in the
+browser; the file contains exactly one network call and it is a read of the published revocation
+list. Nothing in the tweaks changed — this is a tool for the person issuing keys, not for the
+person using them.
+
 ## v1.68.0
 
 **A licence layer — and it is switched off.**
