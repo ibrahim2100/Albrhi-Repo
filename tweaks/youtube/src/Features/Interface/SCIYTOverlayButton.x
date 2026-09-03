@@ -49,6 +49,15 @@ static NSUInteger sciOverlaysSeen = 0;
 static NSUInteger sciOverlayButtonsMade = 0;
 static NSUInteger sciOverlayTaps = 0;
 
+/// How many times YouTube told us the controls were appearing or disappearing.
+///
+/// Counted because the whole fade rides on those two calls arriving: a zero here and a button
+/// that never moves is "this build does not call these setters", while a rising count and a
+/// button that never moves is a placement or alpha problem. Those need different work, and one
+/// symptom cannot say which -- the same reason the button's own construction is counted
+/// separately from its taps.
+static NSUInteger sciOverlayFadeSignals = 0;
+
 static char kSCIOverlaySaveButton;
 static char kSCIOverlayJoined;
 
@@ -68,6 +77,7 @@ static void SCIReportOverlayState(BOOL joined) {
             (unsigned long)sciOverlayButtonsMade,
             joined ? SCILocalized(@"diag_overlay_native") : SCILocalized(@"diag_overlay_placed"),
             (unsigned long)sciOverlayTaps,
+            (unsigned long)sciOverlayFadeSignals,
             sciOverlayPlacement ?: SCILocalized(@"diag_overlay_unplaced")]];
 }
 
@@ -102,25 +112,75 @@ static NSString *SCIEndTimeText(double totalTime, double elapsed) {
 /// on a surface where every class name is already a lead.
 
 
+///
+/// Fading with YouTube's own controls, on YouTube's own signal.
+///
+/// The button used to sit there permanently, over the picture, whether or not the controls were
+/// showing — which is wrong in the ordinary way a guest is wrong: everything else on that layer
+/// comes and goes with a tap, and one thing that does not reads as stuck rather than as ours.
+///
+/// **Two flags rather than one, because the app has two.** `-setOverlayVisible:` governs the
+/// whole control layer and `-setTopOverlayVisible:isAutonavCanceledState:` governs the top row
+/// alone, which is the row this button is in — so it shows only when both say so. The top flag
+/// starts YES and is only ever changed by its own setter: a build that never calls it would
+/// otherwise leave the button invisible forever, which is the failure direction that looks like
+/// the feature was never installed.
+///
+/// **Nothing is polled.** `-layoutSubviews` runs at times unrelated to a fade and does not run
+/// during one; these are the two moments YouTube itself decides.
+static char kSCIOverlayShown;
+static char kSCIOverlayTopShown;
+
+static void SCISyncSaveButton(YTMainAppControlsOverlayView *overlay, BOOL animated) {
+    UIButton *save = objc_getAssociatedObject(overlay, &kSCIOverlaySaveButton);
+    if (!save) return;
+
+    NSNumber *shown = objc_getAssociatedObject(overlay, &kSCIOverlayShown);
+    NSNumber *topShown = objc_getAssociatedObject(overlay, &kSCIOverlayTopShown);
+
+    // Absent reads as visible for the top flag and as "ask the view" for the whole layer, so a
+    // button built before either setter has fired matches whatever is on screen right now.
+    BOOL wanted = (topShown ? topShown.boolValue : YES) &&
+                  (shown ? shown.boolValue
+                         : ([overlay respondsToSelector:@selector(isOverlayVisible)]
+                            ? [overlay isOverlayVisible] : YES));
+
+    CGFloat target = wanted ? 1.0 : 0.0;
+    if (save.alpha == target) return;
+
+    // The duration is YouTube's own fade to within a frame, and a reduced-motion setting is
+    // honoured by skipping it rather than by leaving the button behind.
+    if (!animated || UIAccessibilityIsReduceMotionEnabled()) {
+        save.alpha = target;
+        return;
+    }
+
+    [UIView animateWithDuration:0.2
+                          delay:0
+                        options:UIViewAnimationOptionBeginFromCurrentState |
+                                UIViewAnimationOptionCurveEaseInOut
+                     animations:^{ save.alpha = target; }
+                     completion:nil];
+}
+
+
 %group SCIOverlayTop
 
 %hook YTMainAppControlsOverlayView
 
 ///
-/// The row of buttons across the top of the player, with ours added to it.
+/// The row of buttons across the top of the player, and where ours is made.
 ///
-/// **Handed to YouTube's own layout rather than floated over it.** `-topControls` returns the
-/// array the player positions, so appending to that array is the same move the X tweak needed
-/// four releases to find: a button that is *in* the arrangement cannot be swept out by the next
-/// layout pass, and needs no constant of ours to say where it sits.
+/// `-topControls` is not modified — 1.27.0 appended the button to the array this returns on the
+/// reasoning that the player would then place it, and a view in an array is not a view in a
+/// hierarchy: it had no superview and nothing drew it. This hook is simply a moment that fires
+/// once the overlay exists, which is when the button can be built and added.
 ///
-/// **And the button is built by YouTube's own factory**, which is what makes appending honest.
+/// **The button is built by YouTube's own factory where there is one.**
 /// `-playerButtonWithImage:selectedImage:accessibilityLabel:verticalContentPadding:minHitTargetSize:`
-/// hands back a YTQTMButton measured the way the app measures its own — so the array holds the
-/// kind of object its other members are, rather than a plain UIButton hoping nothing asks it a
-/// question. A build without that factory is not guessed at: the button is placed by us against
-/// the safe area instead, exactly as every release before this one did, and the report says
-/// which of the two happened.
+/// hands back a YTQTMButton measured the way the app measures its own, so it looks like the
+/// controls beside it rather than like a guest. A build without that factory is not guessed at:
+/// a plain button is used instead and the report says which of the two happened.
 ///
 - (NSArray *)topControls {
     NSArray *controls = %orig;
@@ -199,6 +259,10 @@ static NSString *SCIEndTimeText(double totalTime, double elapsed) {
             ]];
 
             sciOverlayButtonsMade++;
+
+            // Matched to what is on screen the instant it exists, without animating: a button
+            // that fades in the moment it is built would read as something appearing on its own.
+            SCISyncSaveButton(self, NO);
         }
 
         // Kept in front of whatever the player draws over the picture. Ours is the last thing
@@ -232,6 +296,20 @@ static NSString *SCIEndTimeText(double totalTime, double elapsed) {
 // -Werror turns into three fatal errors in one generated line. Every other %new in this
 // project writes a plain typed parameter for the same reason; an unused one is not warned
 // about in an Objective-C method the way it would be in a C function.
+- (void)setOverlayVisible:(BOOL)visible {
+    %orig;
+    sciOverlayFadeSignals++;
+    objc_setAssociatedObject(self, &kSCIOverlayShown, @(visible), OBJC_ASSOCIATION_RETAIN);
+    SCISyncSaveButton(self, YES);
+}
+
+- (void)setTopOverlayVisible:(BOOL)visible isAutonavCanceledState:(BOOL)cancelled {
+    %orig;
+    sciOverlayFadeSignals++;
+    objc_setAssociatedObject(self, &kSCIOverlayTopShown, @(visible), OBJC_ASSOCIATION_RETAIN);
+    SCISyncSaveButton(self, YES);
+}
+
 %new
 - (void)sciSaveTapped:(UIButton *)sender {
     sciOverlayTaps++;

@@ -3,6 +3,36 @@
 **Tested on YouTube 21.32.4.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.28.0
+
+**The save button in the player now comes and goes with the controls instead of sitting over the
+video permanently.**
+
+It was wrong in the ordinary way a guest is wrong: tap the picture and the title, the scrubber
+and every button fade in together, and one thing that stayed put read as stuck rather than as
+ours.
+
+**YouTube announces this, so nothing here polls for it.** `YTMainAppControlsOverlayView` declares
+`-setOverlayVisible:` (`v20@0:8B16`) for the whole control layer and
+`-setTopOverlayVisible:isAutonavCanceledState:` (`v24@0:8B16B20`) for the top row alone — read
+from the class's own metadata, alongside `-isOverlayVisible`. The obvious alternative was to copy
+a sibling's alpha in `-layoutSubviews`, which runs at moments unrelated to a fade and does not
+run during one.
+
+**Two flags, because the app has two**, and the button shows only when both say so — it lives in
+the top row, so the whole layer being up is not enough on its own. The top flag starts YES and
+changes only when its own setter fires: a build that never calls it would otherwise hide the
+button forever, and "invisible always" is indistinguishable from "never installed", which is the
+wrong direction for a gate to fail in. The initial state is taken from `-isOverlayVisible` the
+moment the button is built, without animating — a button that faded in as it was created would
+read as something appearing by itself.
+
+`UIAccessibilityIsReduceMotionEnabled()` skips the fade rather than skipping the change.
+
+And the report counts the show/hide signals separately: none arriving with a button that never
+moves means this build does not call those setters, while signals arriving with a button that
+never moves is an alpha or placement problem. One symptom, two investigations.
+
 ## v1.27.2
 
 **A repository-wide audit pass. No feature changed; what changed is that three rules this

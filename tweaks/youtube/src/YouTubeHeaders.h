@@ -272,6 +272,22 @@
 - (NSArray *)topControls;
 
 //
+// Whether the player's controls are currently on screen, and the two setters that change it.
+//
+// Read from 21.34.3's class metadata: `-isOverlayVisible` (`B16@0:8`), `-setOverlayVisible:`
+// (`v20@0:8B16`), and `-setTopOverlayVisible:isAutonavCanceledState:` (`v24@0:8B16B20`) for the
+// top row alone, which is the row our own button sits in.
+//
+// **The app announces this; nothing here has to watch for it.** A tweak that wanted a button to
+// fade with the controls could poll a sibling's alpha in `-layoutSubviews`, which runs at times
+// that have nothing to do with the fade and not at all during one. These are the moments
+// YouTube itself calls the decision.
+//
+- (BOOL)isOverlayVisible;
+- (void)setOverlayVisible:(BOOL)visible;
+- (void)setTopOverlayVisible:(BOOL)visible isAutonavCanceledState:(BOOL)cancelled;
+
+//
 // YouTube's own factory for a button in the player controls.
 //
 // Encoding `@56@0:8@16@24@32d40d48`, read from 21.34.3's class metadata: two images, a label,

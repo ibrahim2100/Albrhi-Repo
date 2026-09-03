@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.67.0
+
+**YouTube 1.28.0.** The save button inside the player fades in and out with YouTube's own
+controls now instead of sitting over the video permanently — driven by the two setters the app
+already calls when the controls appear, rather than by watching a neighbour's alpha.
+
 ## v1.66.1
 
 **1.66.0's packages were correct and the source stopped listing the rootless one.** A note
