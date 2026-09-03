@@ -1,4 +1,5 @@
 #import "SCIPanelGate.h"
+#import "SCILicense.h"
 #import <dlfcn.h>
 
 /// The panel's own preference domain. Both sides name it here rather than each spelling it
@@ -181,7 +182,28 @@ BOOL SCIPanelAllowsThisApp(void) {
         NSString *key = SCIPanelKeyForThisApp();
         if (!key) return;   // no bundle id to ask about; stays off, as above
 
-        allowed = SCIPanelReadBool(key, NO);
+        if (!SCIPanelReadBool(key, NO)) return;
+
+        //
+        // **The licence, asked here and nowhere else.**
+        //
+        // Every tweak in this repository already calls this one function before installing a
+        // single hook, so the licence needed no change in any of them -- the same reason the
+        // master switch was put here rather than added to eight `%ctor`s.
+        //
+        // `SCILicenseAllows()` answers YES whenever enforcement is switched off, which is the
+        // shipped default, so this line changes nothing for anybody until a key exists to
+        // enter. And the check-in that can revoke a key is started, never waited on: a
+        // licence check that can hold up a launch will one day hold up every launch.
+        //
+        SCILicenseCheckInIfDue();
+
+        if (!SCILicenseAllows()) {
+            sciGateSource = [NSString stringWithFormat:@"licence — %@", SCILicenseStatusLine()];
+            return;
+        }
+
+        allowed = YES;
     });
 
     return allowed;

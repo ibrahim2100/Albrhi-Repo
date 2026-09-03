@@ -75,7 +75,7 @@ AlbrhiSpotify_SWIFTFLAGS += -D ROOTHIDE
 AlbrhiSpotify_LDFLAGS += -Xlinker -rpath -Xlinker @loader_path/.jbroot/Library/Frameworks
 endif
 
-AlbrhiSpotify_FRAMEWORKS = Foundation UIKit
+AlbrhiSpotify_FRAMEWORKS = Foundation UIKit Security
 
 #
 # **shared/tweak.mk is deliberately not included**, the same decision Albrhi NextUp and Albrhi

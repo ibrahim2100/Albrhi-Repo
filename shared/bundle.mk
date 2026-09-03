@@ -29,6 +29,8 @@ $(BUNDLE_NAME)_CFLAGS += -I$(ROOT)
 # under shared/ arrives on its own -- and the panel reads filter plists' contents off
 # objects it does not own, which is exactly what SCIKVC exists for.
 $(BUNDLE_NAME)_FILES += $(ROOT)/shared/src/SCIKVC.m
+$(BUNDLE_NAME)_FILES += $(ROOT)/shared/src/SCIPanelGate.m
+$(BUNDLE_NAME)_FILES += $(ROOT)/shared/src/SCILicense.m
 
 $(BUNDLE_NAME)_CFLAGS += -fobjc-arc \
 	-Wno-deprecated-declarations -Wno-nullability-completeness \
@@ -47,7 +49,7 @@ $(BUNDLE_NAME)_CFLAGS += -fobjc-arc \
 # iPhoneOS16.2 here would break the day it changes.
 $(BUNDLE_NAME)_PRIVATE_FRAMEWORKS = Preferences
 $(BUNDLE_NAME)_LDFLAGS += -F$(SYSROOT)/System/Library/PrivateFrameworks
-$(BUNDLE_NAME)_FRAMEWORKS += UIKit Foundation CoreGraphics
+$(BUNDLE_NAME)_FRAMEWORKS += UIKit Foundation CoreGraphics Security
 
 # Where a preference bundle has to land for Settings to find it. Under rootless
 # this is rewritten to /var/jb/... by Theos itself, which is why it is written

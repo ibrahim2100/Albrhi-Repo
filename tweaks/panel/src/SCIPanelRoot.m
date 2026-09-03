@@ -11,12 +11,14 @@
 #import "SCIPanelBackup.h"
 #import "SCIPanelUpdate.h"
 #import "SCIPanelGuideController.h"
+#import "SCIPanelLicence.h"
+#import "shared/src/SCILicense.h"
 #import "Localization/SCILocalize.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <objc/message.h>
 #import <objc/runtime.h>
 
-NSString *SCIVersionString = @"v0.9.24";  // AlbrhiPanel
+NSString *SCIVersionString = @"v0.9.25";  // AlbrhiPanel
 
 ///
 /// Albrhi's own control panel, in the iOS Settings app.
@@ -306,6 +308,19 @@ static NSString *const kSCIPanelDomain = kSCIPanelPreferenceDomain;
                                                                edit:Nil];
     [toolsGroup setProperty:SCILocalized(@"tools_footer") forKey:@"footerText"];
     [specifiers addObject:toolsGroup];
+
+    // One row, showing the state in a sentence. The four facts and two actions behind it are a
+    // page of their own -- interleaving them with the per-app switches would make two screens
+    // out of one, which is the mistake TikTok's settings screen already cost a release.
+    PSSpecifier *licence = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"lic_title")
+                                                          target:self
+                                                             set:NULL
+                                                             get:NULL
+                                                          detail:[SCIPanelLicenceController class]
+                                                            cell:PSLinkCell
+                                                            edit:Nil];
+    [licence setProperty:SCILicenseStatusLine() forKey:@"subtitle"];
+    [specifiers addObject:licence];
 
     PSSpecifier *guide = [PSSpecifier preferenceSpecifierNamed:SCILocalized(@"guide_title")
                                                         target:self

@@ -401,6 +401,14 @@ jobs:
                 mkdir -p pages/inject
                 cp main/tools/ipa-inject.html pages/inject/index.html
 
+                # The revocation list the licence layer reads, at most once every six hours.
+                #
+                # Copied from the branch on every run rather than generated: it is a file a human
+                # edits when a key has to be withdrawn, and anything generated here would
+                # overwrite that edit on the next release. An empty list is the normal state.
+                mkdir -p pages/licence
+                cp main/licence/revoked.json pages/licence/revoked.json
+
                 # Regenerated every run so the version and changelog shown on the
                 # package page always match what was actually built. The generator
                 # reads CHANGELOG.md relative to its own working directory, hence

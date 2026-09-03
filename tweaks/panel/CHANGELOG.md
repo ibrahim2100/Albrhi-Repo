@@ -1,5 +1,34 @@
 # Albrhi Panel Changelog
 
+## v0.9.25
+
+**A Licence page: the device code to send, the key to enter, and the switch that turns the gate
+on — which ships off.**
+
+The device is named by a **derived fingerprint**, sixteen hex characters of SHA-256 over the
+serial, the model and a fixed salt. It is stable across reinstalls and tweak updates, needs
+nothing written to disk to compute, and cannot be turned back into a serial number by whoever
+receives it. That was chosen over sending a real UDID on purpose, and the page says so.
+
+A key is `ALB1.<payload>.<signature>` — ECDSA P-256 over SHA-256, verified against a public key
+compiled into the binary, so it works with no internet at all. The payload is readable: a licence
+the buyer can inspect is one the buyer can check.
+
+**Three refusals, three sentences.** "expired", "issued to another device" and "not a key" need
+different things done about them, and a single "invalid" makes somebody holding a perfectly good
+key for their other phone think they were sold nothing.
+
+**Enforcement is off and stays off until it is switched on here.** The source has been free for as
+long as it has existed; a release that both introduced this layer and enforced it would stop every
+install already out there on the next update, before a single key had been issued to fix them
+with. With it off, `SCILicenseAllows()` answers yes unconditionally — verified rather than
+assumed, against a build with no key stored at all.
+
+And the page states plainly what this is: no check running on the user's own device can be made
+unbreakable. What it buys is that most people do not crack anything, that removing it is real work
+rather than one `if`, and — the part no client-side trick provides — that a key which turns up on
+a forum can be withdrawn.
+
 ## v0.9.24
 
 **A regression from the audit pass, found on a device and fixed: some version numbers and

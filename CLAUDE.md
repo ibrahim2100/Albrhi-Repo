@@ -713,6 +713,54 @@ counter is indistinguishable from a feature that works. The same shape sat one l
 post-to-image renderer, where `-drawViewHierarchyInRect:afterScreenUpdates:NO` returns a BOOL that
 was being discarded.
 
+### Licensing, and what it is honest about
+
+**Albrhi has a licence layer as of Panel 0.9.25, and enforcement ships off.** The whole of it is
+`shared/src/SCILicense.{h,m}`, `tools/licence.py`, `docs/LICENCE-KEYS.md` and one page in the
+panel. Read the doc before touching any of it.
+
+**No check that runs on the user's own device can be made unbreakable, and this one is not sold
+as such.** The tweak is a dylib on a jailbroken phone; whoever holds the phone holds the file.
+What a licence layer actually buys is that most people do not crack anything, that removing it is
+real work rather than one `if`, and — the part no client-side trick provides — **revocation**: a
+key that turns up on a forum is named in a list and stops working on every device that reaches
+the file. Building as though it bought certainty is how a licence layer ends up breaking things
+for paying users while the crack circulates anyway.
+
+**ECDSA P-256, not Ed25519, and the reason is this repository's own history.** Ed25519 on iOS
+means CryptoKit (Swift-only) or a vendored crypto library, and the one Swift tweak here cost
+three separate things Logos does not. `Security.framework` verifies P-256 from plain
+Objective-C with `SecKeyVerifySignature`, with no dependency at all.
+`kSecKeyAlgorithmECDSASignatureMessageX962SHA256` consumes exactly what `openssl dgst -sha256
+-sign` produces — the two sides were chosen together rather than made to meet afterwards, and the
+round trip was proved on this machine before either shipped.
+
+**The gate is one line in `SCIPanelAllowsThisApp()`**, which every tweak already calls before
+installing a hook — the same reason the master switch went there rather than into eight `%ctor`s.
+No tweak needed a change. `SCILicenseAllows()` answers YES whenever enforcement is off, so the
+line changes nothing until a key exists to enter.
+
+**Signature first, contents afterwards.** Reading a device id or an expiry out of a payload
+nobody has authenticated is reading whatever the person holding the file decided to put there.
+
+**Three refusals need three sentences.** "expired", "issued to another device" and "not a key"
+are different problems, and `SCILicenseDescribeState` exists because asking for the *stored*
+key's status after a rejection describes the wrong key entirely — the rejected one was never
+stored.
+
+**Only a 200 with real JSON counts as "revoked".** A timeout, a 500 or a captive portal's login
+page must never withdraw a paying user's features because a coffee shop asked them to sign in.
+The check-in never blocks and is never waited on: a licence check that can hold up a launch will
+one day hold up every launch.
+
+**The grace period is one day, which is short, and that is the owner's decision recorded rather
+than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
+is the single place it lives.
+
+**The private key lives in `~/.albrhi/` and never enters this repository** — not in a build, not
+in CI, not in a message. `.gitignore` carries the pattern as a second line of defence, not as the
+arrangement.
+
 **`class_getInstanceMethod` returning NULL does not mean the object cannot answer — and reading
 that as "no" broke two whole families of class at once.** `SCISafeValueForKey`, written to retire
 `-valueForKey:`, decided whether a getter returns an object by reading its `Method`'s type
@@ -1871,7 +1919,7 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.24** · Watch **0.5.3** · TikTok **0.20.1** ·
+Instagram **4.1.16** · YouTube **1.28.2** · X **0.18.2** · Panel **0.9.25** · Watch **0.5.3** · TikTok **0.20.1** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
 NextUp **0.1.6** · suite **1.67.2**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.

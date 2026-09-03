@@ -26,13 +26,14 @@ TWEAK_NAME = AlbrhiYTM
 AlbrhiYTM_FILES = $(shell find src -type f \( -iname \*.x -o -iname \*.xm -o -iname \*.m \)) \
 	$(ROOT)/shared/src/SCIPanelGate.m \
 	$(ROOT)/shared/src/SCIKVC.m \
-	$(ROOT)/shared/src/SCIResponder.m
+	$(ROOT)/shared/src/SCIResponder.m \
+	$(ROOT)/shared/src/SCILicense.m
 
 AlbrhiYTM_CFLAGS = -fobjc-arc -I$(ROOT) -Isrc \
 	-DDISABLE_ROOTLESS_COMPAT_WARNING \
 	-Wno-deprecated-declarations -Wno-nullability-completeness -Wno-unused-function
 
-AlbrhiYTM_FRAMEWORKS = Foundation UIKit
+AlbrhiYTM_FRAMEWORKS = Foundation UIKit Security
 
 #
 # **shared/tweak.mk is deliberately not included**, the same decision Watch and Spotify made:

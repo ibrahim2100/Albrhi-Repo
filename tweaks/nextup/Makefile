@@ -42,9 +42,11 @@ AlbrhiNU_FILES = $(shell find src -type f \( -iname \*.x -o -iname \*.xm -o -ina
 # does inside an @try -- which runs the receiver's own code, in SpringBoard, where a probe
 # that fails takes the home screen rather than a feature.
 AlbrhiNU_FILES += $(ROOT)/shared/src/SCIKVC.m
+AlbrhiNU_FILES += $(ROOT)/shared/src/SCIPanelGate.m
+AlbrhiNU_FILES += $(ROOT)/shared/src/SCILicense.m
 
 # ImageIO for the artwork downscale; the rest is what the row and the hooks draw with.
-AlbrhiNU_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore ImageIO
+AlbrhiNU_FRAMEWORKS = UIKit Foundation CoreGraphics QuartzCore ImageIO Security
 
 # LIGHTMESSAGING_TIMEOUT (ms) bounds the synchronous mach round trip. Upstream's own
 # note, kept verbatim in intent because the failure it describes is severe: without it

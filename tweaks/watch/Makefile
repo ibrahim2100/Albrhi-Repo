@@ -33,7 +33,7 @@ AlbrhiWatch_CFLAGS = -fobjc-arc -I$(ROOT) -Isrc \
 	-DDISABLE_ROOTLESS_COMPAT_WARNING \
 	-Wno-deprecated-declarations -Wno-nullability-completeness -Wno-unused-function
 
-AlbrhiWatch_FRAMEWORKS = Foundation UIKit
+AlbrhiWatch_FRAMEWORKS = Foundation UIKit Security
 
 #
 # **shared/tweak.mk is deliberately not included, the same decision Albrhi NextUp made.**
