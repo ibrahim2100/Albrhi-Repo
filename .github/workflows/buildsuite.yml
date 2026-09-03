@@ -409,6 +409,13 @@ jobs:
                 mkdir -p pages/licence
                 cp main/licence/revoked.json pages/licence/revoked.json
 
+                # The licence panel, beside the list it manages. Static: it does nothing at all
+                # until a signing key is loaded into it by hand, and the key never leaves the
+                # browser -- so hosting it publicly costs nothing, the same reasoning the deb
+                # editor above already ships under.
+                mkdir -p pages/licence-panel
+                cp main/tools/licence-panel.html pages/licence-panel/index.html
+
                 # Regenerated every run so the version and changelog shown on the
                 # package page always match what was actually built. The generator
                 # reads CHANGELOG.md relative to its own working directory, hence

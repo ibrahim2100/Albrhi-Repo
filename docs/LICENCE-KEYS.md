@@ -14,7 +14,41 @@ already issued, which is why `keygen` refuses to overwrite one.
 The public half is already embedded in `shared/src/SCILicense.m`. Re-run `python3
 tools/licence.py pubkey` and paste it there only if the keypair is ever deliberately replaced.
 
-## Issuing a key
+## The panel — the usual way
+
+<https://ibrahim2100.github.io/albrhi-repo/licence-panel/>
+
+Issue keys, keep a ledger of what has been issued, and build the revocation list, from a browser —
+on a phone as readily as on the Mac. Load the signing key once:
+
+```bash
+python3 tools/licence.py export-web
+```
+
+and paste the result into the page's first box. WebCrypto cannot import the key file as it sits on
+disk (it is SEC1; `importKey('pkcs8', …)` is the only EC import the API offers), which is the only
+reason that command exists.
+
+**The page is public and the key is not.** It is served beside the APT index and does nothing at
+all until a key is loaded into it. Signing happens in the browser; there is exactly one network
+call in the whole file and it is a read of the published revocation list. It is deliberately not
+linked from the repository's landing page — there is nothing to protect, and nothing to advertise
+either.
+
+**"Remember the key in this browser" is off by default.** With it on the key sits in that
+browser's localStorage: convenient, and worth exactly as much protection as the device. On a
+shared or lost phone that is a signing key somebody else now holds.
+
+Two guards worth knowing about, because both catch a mistake whose symptom would otherwise appear
+days later on somebody else's phone:
+
+- **The loaded key is proved against the public half compiled into the tweak**, by signing a probe
+  and verifying it. A key from a *different* keypair mints licences no device on earth accepts;
+  the page refuses to issue at all and says so.
+- **Every issued key is verified before it is shown.** One that does not check out is not handed
+  over — the alternative is finding out through a support thread.
+
+## Issuing from the terminal
 
 The buyer opens **Settings › Albrhi › Licence** and sends the sixteen-character device code.
 
@@ -25,7 +59,12 @@ python3 tools/licence.py issue <device-code> --days 365 --name "who it is for"
 The key goes to stdout; everything else — expiry, and the id to revoke it by — goes to stderr, so
 `... | pbcopy` copies the key alone.
 
-Keep the ids. They are the only way to withdraw a key later.
+Keep the ids. They are the only way to withdraw a key later; the panel keeps them for you, the
+terminal does not.
+
+Both issuers produce the same format and were checked against each other and against the device's
+own verifier — a key signed in the browser is accepted by the Objective-C code that runs on the
+phone, and by `licence.py verify`, and the reverse.
 
 ## Checking one
 
@@ -45,7 +84,8 @@ every six hours:
 { "revoked": ["QlVwnd00Ztq8", "…"] }
 ```
 
-Add the id, commit, and the key stops working on every device that reaches the file. **Only a
+The panel builds this file for you: mark a key withdrawn in the ledger and copy the result. Add
+the id, commit, and the key stops working on every device that reaches the file. **Only a
 200 with real JSON counts**: a timeout, a 500 or a captive portal's login page is never read as
 "revoked", because that would take a paying user's features away over a coffee shop's wifi.
 

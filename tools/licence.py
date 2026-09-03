@@ -5,6 +5,7 @@
     python3 tools/licence.py issue <fingerprint> [--days 365] [--name "..."]
     python3 tools/licence.py verify <key>
     python3 tools/licence.py pubkey                       # the C array to embed
+    python3 tools/licence.py export-web                   # the key the browser panel imports
 
 **Why ECDSA P-256 and not Ed25519.** Ed25519 on iOS means CryptoKit, which is Swift-only, or a
 vendored crypto library -- and this repository ships one Swift tweak precisely because Swift and
@@ -128,6 +129,26 @@ def issue(fingerprint, days, name, tier):
     print('id      %s   <- the string to revoke' % payload['id'], file=sys.stderr)
 
 
+def export_web():
+    """The private key in the one format WebCrypto can import.
+
+    `crypto.subtle.importKey('pkcs8', ...)` is the only EC private-key import the Web Crypto API
+    offers, and `openssl ecparam -genkey` writes SEC1 -- so the browser panel cannot read the key
+    file as it sits on disk. This converts it without altering the key.
+
+    Printed to stdout so it can be piped, with every warning on stderr so a pipe stays clean.
+    """
+    if not os.path.exists(PRIV):
+        sys.exit('no private key at %s — run: python3 tools/licence.py keygen' % PRIV)
+
+    print('This is the signing key itself.', file=sys.stderr)
+    print('Anyone holding it can mint a licence for every device, forever.', file=sys.stderr)
+    print('Paste it only into your own licence panel, on a device you control.', file=sys.stderr)
+    print(file=sys.stderr)
+
+    sys.stdout.write(run(['openssl', 'pkcs8', '-topk8', '-nocrypt', '-in', PRIV]).stdout.decode())
+
+
 def verify(token):
     """Verify with the public key alone, which is what the device does.
 
@@ -187,6 +208,8 @@ def main():
         name = args[args.index('--name') + 1] if '--name' in args else None
         tier = args[args.index('--tier') + 1] if '--tier' in args else 'suite'
         issue(sys.argv[2], days, name, tier)
+    elif command == 'export-web':
+        export_web()
     elif command == 'verify':
         if len(sys.argv) < 3:
             sys.exit('usage: licence.py verify <key>')
