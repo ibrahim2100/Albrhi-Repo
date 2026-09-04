@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.75.1
+
+**The Save button in YouTube's actions row did not appear, and the report could not say why.** It
+can now — the row's own classes are audited, its state reaches the page, and a new scanner
+(Settings › General, with a video open) writes down what YouTube actually built under the player.
+
 ## v1.75.0
 
 **A Save button beside Like and Share in YouTube.** Added as one more renderer in YouTube's own

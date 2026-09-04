@@ -3,6 +3,34 @@
 **Tested on YouTube 21.32.4.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.30.1
+
+**The button did not appear, and the report could not say why — which is the fault worth fixing
+first.**
+
+1.30.0 set the action row's state at load and never wrote it to the report, so the page printed
+the empty-slot sentence — "no action row has been built" — whether the class was missing, present
+and never called, or hooked and waiting. Three investigations behind one sentence. **Setting a
+variable is not reporting it**, and this file's own diagnostics exist because of that exact
+mistake one level up.
+
+Now:
+
+- the state is recorded at load, so the report says which of the three it is;
+- `YTSlimVideoScrollableDetailsActionsView`, `YTSlimVideoDetailsActionView` and
+  `YTSlimVideoScrollableActionBarCell` are in the audit table, so the report says found or
+  missing about the row itself rather than leaving it to be inferred;
+- **and there is a scanner.** Settings › General › "Scan what is on screen", run with a video
+  open, walks the live view hierarchy and writes down what YouTube actually built under the
+  player, with frames.
+
+That last one is the point. The same report already says **"not one of these buttons has been
+built"** about `YTSlimVideoDetailsActionView` — the class every action in that row is drawn with —
+which is the strongest evidence yet that this build composes the row from elements and that no
+renderer added to it can become a button. A class dump says what exists in the binary; it has
+never once said what the app builds. Instagram has had this scanner for a year and it is what
+ended the guessing there.
+
 ## v1.30.0
 
 **Save, in the row with Like and Share — asked for directly, and built the way YouTube builds

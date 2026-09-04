@@ -771,6 +771,22 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**Setting a state variable is not reporting it, and one sentence covered three investigations.**
+The action-row feature recorded its state into a static at load and never wrote it to the
+diagnostics page, so the report printed the empty-slot line — "no action row has been built" —
+whether the class was absent, present and never called, or hooked and waiting. The same mistake
+this file already records for the overlay button (written into SponsorBlock's slot) and for the
+TikTok tally that reported the last event: **a diagnostic is not what a variable holds, it is what
+reaches the page.**
+
+**And the report already answered the question the feature was built to ask.** It says *"not one
+of these buttons has been built"* about `YTSlimVideoDetailsActionView` — the class every action in
+that row is drawn with — which is the same zero-construction finding recorded here for 21.32.4,
+now confirmed on 21.30.5. A build that constructs none of them composes that row from elements,
+and no renderer appended to it can become a button. **A class dump says what is in the binary and
+has never once said what the app builds**, which is why the YouTube tweak now has the live
+hierarchy scanner Instagram has had for a year: Settings › General, with a video open.
+
 **Adding a button to somebody else's row means adding a renderer, not a view — and YouTube's
 action row is the third place this has now been the answer.** The row under a video is
 `YTSlimVideoScrollableDetailsActionsView`, handed its buttons through
@@ -2315,9 +2331,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.17** · YouTube **1.30.0** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
+Instagram **4.1.17** · YouTube **1.30.1** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.2.1** · suite **1.75.0**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.2.1** · suite **1.75.1**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

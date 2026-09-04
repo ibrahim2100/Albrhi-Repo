@@ -179,6 +179,20 @@
 /// confirm anything: a diagnostic filed under another feature's heading reads as covered.
 + (void)recordActionRow:(NSString *)state;
 + (NSString *)actionRowState;
+
+/// Walks the live view hierarchy and writes down what is actually on screen.
+///
+/// **Every placement question in this tweak has been answered twice: once from a class dump and
+/// once, correctly, from the device.** A dump says what exists in the binary; it does not say
+/// what the app builds, and this project has now shipped three features aimed at classes that
+/// were never constructed on the phone in front of it. Instagram has had this page's equivalent
+/// for a year and it is what ended the guessing there.
+///
+/// Run it with a video open. It records the classes under the player -- anything whose name
+/// carries Action, Slim, Metadata, ELM or Button -- with each one's frame, capped so the report
+/// stays readable.
++ (void)scanWatchPage;
++ (NSString *)watchScanState;
 + (NSString *)overlayButtonState;
 
 /// What the last tap on that button actually tried to save. Its own slot: the line above is

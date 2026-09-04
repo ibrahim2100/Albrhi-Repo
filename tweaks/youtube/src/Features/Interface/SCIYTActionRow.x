@@ -280,4 +280,13 @@ static void SCIMarkOurActionView(UIView *row) {
     } else {
         sciActionRowState = SCILocalized(@"diag_action_row_absent");
     }
+
+    // **Written to the report here, and this is the whole of what 1.30.0 got wrong.**
+    //
+    // The state was set and never recorded, so the page printed "no action row has been built"
+    // -- the empty-slot sentence -- whether the class was missing, present and never called, or
+    // hooked and waiting. One sentence for three different investigations, which is the exact
+    // failure this file's own diagnostics were written to prevent, one level up: setting a
+    // variable is not reporting it.
+    SCIReportActionRow();
 }

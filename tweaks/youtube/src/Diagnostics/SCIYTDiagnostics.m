@@ -35,6 +35,17 @@ static NSArray<NSDictionary *> *SCIAuditTable(void) {
         @{@"class": @"YTAppSettingsPresentationData",
           @"why": @"legacy category order; present but not consulted on 21.30.5"},
 
+        // The row under a video, and the button in it. A device report said "not one of these
+        // buttons has been built" about the second, which is the answer to whether a button can
+        // be added to that row at all -- so both are named here rather than left to be inferred
+        // from a feature's own line.
+        @{@"class": @"YTSlimVideoScrollableDetailsActionsView",
+          @"why": @"the row with Like and Share -- where a Save button would go"},
+        @{@"class": @"YTSlimVideoDetailsActionView",
+          @"why": @"one button in that row; never constructed on 21.32.4"},
+        @{@"class": @"YTSlimVideoScrollableActionBarCell",
+          @"why": @"the cell that hosts the row"},
+
         @{@"class": @"YTPlayerOverlayWrapper",        @"why": @"hands us the player response"},
         @{@"class": @"MLVideo",                       @"why": @"carries the streams in use"},
         @{@"class": @"YTIPlayerResponse",            @"why": @"the response itself"},
@@ -271,6 +282,73 @@ static NSString *sciActionRow = nil;
 
 + (NSString *)actionRowState {
     return sciActionRow ?: SCILocalized(@"diag_action_row_none");
+}
+
+
+static NSString *sciWatchScan = nil;
+
+/// The names worth printing. Everything else on a watch page is UIKit and YouTube's own
+/// containers, and a dump of all of it is a dump nobody reads to the end of.
+static BOOL SCINameIsInteresting(NSString *name) {
+    for (NSString *needle in @[@"Action", @"Slim", @"Metadata", @"ELM", @"Button"]) {
+        if ([name rangeOfString:needle].location != NSNotFound) return YES;
+    }
+    return NO;
+}
+
++ (void)scanWatchPage {
+    UIWindow *window = nil;
+    for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+        if (![scene isKindOfClass:[UIWindowScene class]]) continue;
+        for (UIWindow *candidate in ((UIWindowScene *)scene).windows) {
+            if (candidate.isKeyWindow) { window = candidate; break; }
+            if (!window) window = candidate;
+        }
+    }
+
+    if (!window) {
+        sciWatchScan = SCILocalized(@"diag_scan_no_window");
+        [self writeReportToFile];
+        return;
+    }
+
+    NSMutableString *out = [NSMutableString string];
+    NSUInteger printed = 0;
+
+    // Breadth-first with the depth carried alongside, so the output reads as a tree rather than
+    // as a list of names with no relationship between them.
+    NSMutableArray *queue = [NSMutableArray arrayWithObject:@[window, @0]];
+    while (queue.count && printed < 80) {
+        NSArray *pair = queue.firstObject;
+        [queue removeObjectAtIndex:0];
+
+        UIView *view = pair[0];
+        NSUInteger depth = [pair[1] unsignedIntegerValue];
+        NSString *name = NSStringFromClass([view class]);
+
+        if (SCINameIsInteresting(name)) {
+            CGRect frame = view.frame;
+            [out appendFormat:@"  %@%@  %.0f,%.0f %.0f×%.0f%@\n",
+                [@"" stringByPaddingToLength:MIN(depth, 8) * 2 withString:@" " startingAtIndex:0],
+                name, frame.origin.x, frame.origin.y, frame.size.width, frame.size.height,
+                view.hidden ? SCILocalized(@"diag_scan_hidden") : @""];
+            printed++;
+        }
+
+        for (UIView *child in view.subviews) {
+            [queue addObject:@[child, @(depth + 1)]];
+        }
+    }
+
+    sciWatchScan = printed
+        ? [NSString stringWithFormat:SCILocalized(@"diag_scan_found"), (unsigned long)printed, out]
+        : SCILocalized(@"diag_scan_nothing");
+
+    [self writeReportToFile];
+}
+
++ (NSString *)watchScanState {
+    return sciWatchScan ?: SCILocalized(@"diag_scan_none");
 }
 
 /// The last save actually attempted, kept apart from the placement line above.
@@ -1005,6 +1083,7 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     // In the report as well as on the screen. A row added to one and not the other is a round
     // trip spent looking for a line that was never where it was being looked for.
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_action_row_title"), [self actionRowState]];
+    [out appendFormat:@"%@\n%@\n\n", SCILocalized(@"diag_scan_title"), [self watchScanState]];
 
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts"), [self shortsButtonState]];
 

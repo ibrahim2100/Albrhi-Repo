@@ -76,6 +76,26 @@ static void SCIOpenDiagnostics(SCIYTSettingsHostController *host) {
                            detail:SCILocalized(@"dl_row_note")
                            symbol:@"arrow.down.circle.fill"
                            action:^{ [SCIYTDownload presentFrom:host]; }],
+            [SCIRow disclosureRow:SCILocalized(@"scan_watch")
+                           detail:SCILocalized(@"scan_watch_note")
+                           symbol:@"viewfinder"
+                           action:^{
+                               [SCIYTDiagnostics scanWatchPage];
+
+                               // Said plainly, because a scan that writes into a page you are
+                               // not looking at is indistinguishable from a row that does
+                               // nothing -- which is a mistake this project has made twice on
+                               // two different apps.
+                               UIAlertController *done = [UIAlertController
+                                   alertControllerWithTitle:nil
+                                                    message:SCILocalized(@"scan_done")
+                                             preferredStyle:UIAlertControllerStyleAlert];
+                               [done addAction:[UIAlertAction
+                                   actionWithTitle:SCILocalized(@"ok")
+                                             style:UIAlertActionStyleDefault
+                                           handler:nil]];
+                               [host presentViewController:done animated:YES completion:nil];
+                           }],
             [SCIRow disclosureRow:SCILocalized(@"diagnostics")
                            detail:SCILocalized(@"diagnostics_note")
                            symbol:@"stethoscope"
