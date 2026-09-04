@@ -990,6 +990,16 @@ workflow and attached to the same release: a fourth publisher would race the thr
 exist for `gh-pages`, and that race has served an index a version behind a release once already.
 The job compiles all four tweaks anyway, so a tweak that will not build already fails it.
 
+**The licence panel is pages now, and the tabs carry the same attribute the cards do.** Six cards
+on one scroll meant "where is the thing I came for" was a scroll rather than a click, and which
+card mattered changed by the day — which is exactly what a fixed order cannot serve. Every card
+kept its element and its id; each gained the page it belongs to, and the tabs hide the rest.
+
+**The one thing that had to be got right is the selector.** `document.querySelectorAll("[data-page]")`
+also matches the tabs, so the first version hid the navigation along with the page and left no way
+back to any other. `section[data-page]`. Proved in node against a small DOM rather than by looking:
+switching pages shows only that page's sections, hides no tab, and marks exactly one.
+
 ### Store copies
 
 **A build for one shop: one code, any number of devices, three months — and it is a different

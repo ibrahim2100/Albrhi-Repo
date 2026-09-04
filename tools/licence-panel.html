@@ -152,6 +152,27 @@
   }
   .dialog .actions { margin-block-start: 1rem; justify-content: flex-start; }
 
+  .tabs {
+    display: flex; flex-wrap: wrap; gap: .4rem;
+    margin-block: 1.2rem .8rem;
+  }
+  .tabs button {
+    padding: .5rem .9rem; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--line); color: var(--muted);
+    font-size: .95rem; cursor: pointer;
+  }
+  .tabs button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tabCount { opacity: .8; font-family: var(--mono); font-size: .8rem; }
+
+  .summary { display: flex; flex-wrap: wrap; gap: .7rem; }
+  .summary button {
+    flex: 1 1 8rem; text-align: start; cursor: pointer;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: .8rem .9rem; color: inherit;
+  }
+  .summary b { display: block; font-size: 1.5rem; font-family: var(--mono); }
+  .summary span { color: var(--muted); font-size: .85rem; }
+
   .banner {
     border: 1px solid var(--line); border-inline-start: 3px solid var(--accent);
     background: var(--card); color: var(--fg);
@@ -171,8 +192,54 @@
     ولا يمنح إلا الوصول إلى هذا الـAPI. أمّا ضياع مفتاح توقيع فيعني إعادة إصدار كلّ ترخيصٍ بِعته.
   </div>
 
+  <!--
+       **Pages rather than one long scroll.**
+
+       Everything here used to sit on one page, and the ordering said what mattered: the
+       connection first, then whatever had been added last. Six cards down, "where is the thing I
+       came for" is a scroll rather than a click -- and the answer differs by the day, which is
+       exactly what a page cannot be arranged for.
+
+       So the cards are grouped and the group is chosen. No card was rewritten and no id changed:
+       every one of them is the same element it was, with the page it belongs to written on it,
+       and the tabs do nothing but hide the others.
+  -->
+  <nav class="tabs" id="tabs">
+    <button data-page="home" class="on">الرئيسية</button>
+    <button data-page="requests">الطلبات <span id="tabRequests" class="tabCount"></span></button>
+    <button data-page="licences">التراخيص <span id="tabLicences" class="tabCount"></span></button>
+    <button data-page="devices">الأجهزة <span id="tabDevices" class="tabCount"></span></button>
+    <button data-page="stores">المتاجر <span id="tabStores" class="tabCount"></span></button>
+    <button data-page="codes">الأكواد</button>
+  </nav>
+
+  <!-- ── the home page's own summary ────────────────────────────────────────────── -->
+  <section class="card" data-page="home">
+    <h2>نظرة عامة</h2>
+    <p>
+      ما يستحقّ النظر أوّلاً: طلبٌ ينتظر، ترخيصٌ قارب على الانتهاء، متجرٌ قاربت مدّته.
+      كلّ رقمٍ هنا يفتح صفحته.
+    </p>
+    <div id="summary" class="summary"></div>
+  </section>
+
+  <!-- ── devices ────────────────────────────────────────────────────────────────── -->
+  <section class="card" data-page="devices">
+    <h2>الأجهزة <span id="deviceCount" class="pill warn">0</span></h2>
+    <p>
+      كل جهازٍ عُرف عنه شيء: من ترخيصٍ مباشر، أو من تفعيل نسخة متجر. الأداة والإصدار وآخر ظهور
+      تأتي من الجهاز نفسه عند المزامنة — فما لم يُزامن بعد يظهر بلا تفاصيل، وذلك حقيقةٌ عن التقرير
+      لا عن الجهاز.
+    </p>
+
+    <table id="devices">
+      <thead><tr><th>الجهاز</th><th>المصدر</th><th>الأداة</th><th>الإصدار</th><th>آخر ظهور</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
   <!-- ── connection ─────────────────────────────────────────────────────────────── -->
-  <section class="card">
+  <section class="card" data-page="home">
     <h2>الاتّصال <span id="connState" class="pill bad">غير متّصل</span></h2>
     <p>عنوان الـWorker ورمز الإدارة. كلاهما يبقى في هذا المتصفّح.</p>
 
@@ -214,7 +281,7 @@
   </section>
 
   <!-- ── search ─────────────────────────────────────────────────────────────────── -->
-  <section class="card">
+  <section class="card" data-page="home">
     <h2>بحث <span id="searchCount" class="pill warn" hidden></span></h2>
     <p>
       بالجهاز أو الاسم أو الرقم — أو أيّ جزءٍ منها. الأرقام تُطابَق بأرقامها وحدها، فالمسافات
@@ -227,7 +294,7 @@
   </section>
 
   <!-- ── inbox ──────────────────────────────────────────────────────────────────── -->
-  <section class="card">
+  <section class="card" data-page="requests">
     <h2>الطلبات الواردة <span id="inboxCount" class="pill warn">—</span></h2>
     <p>يطلب المستخدم من الإعدادات › البرهي › الترخيص، فيظهر الطلب هنا وحده.</p>
 
@@ -241,7 +308,7 @@
   </section>
 
   <!-- ── licences ───────────────────────────────────────────────────────────────── -->
-  <section class="card">
+  <section class="card" data-page="licences">
     <h2>التراخيص <span id="licCount" class="pill warn">—</span></h2>
     <p>السحب يوقف الجهاز خلال سبعة أيام على الأكثر — وهي مدّة الترخيص الموقّع الذي يحمله.</p>
 
@@ -255,7 +322,7 @@
   </section>
 
   <!-- ── issue by hand ──────────────────────────────────────────────────────────── -->
-  <section class="card">
+  <section class="card" data-page="licences">
     <h2>إصدار مباشر</h2>
     <p>لجهازٍ تعرف رمزه دون أن يُرسل طلباً. والتمديد يُضاف إلى ما تبقّى لا يُبدّله.</p>
 
@@ -302,7 +369,7 @@
   </section>
 
   <!-- ── trials ─────────────────────────────────────────────────────────────────── -->
-  <section class="card">
+  <section class="card" data-page="devices">
     <h2>الأسابيع المجانية <span id="trialCount" class="pill warn">0</span></h2>
     <p>
       سجلٌّ بكلّ جهازٍ أخذ أسبوعه المجاني. لا يُحذف مع الترخيص — وهو ما يجعل التجربة مرّةً لكلّ
@@ -319,7 +386,7 @@
   </section>
 
   <!-- ── stores ─────────────────────────────────────────────────────────────────── -->
-  <section class="card">
+  <section class="card" data-page="stores">
     <h2>المتاجر <span id="storeCount" class="pill warn"></span></h2>
     <p>
       نسخ مخصّصة لمتجرٍ واحد: كودٌ واحد، بلا حدٍّ لعدد الأجهزة، ومدّةٌ تُمدَّد من هنا.
@@ -360,7 +427,7 @@
   </section>
 
   <!-- ── codes ──────────────────────────────────────────────────────────────────── -->
-  <section class="card">
+  <section class="card" data-page="codes">
     <h2>أكواد قصيرة</h2>
     <p>
       كودٌ يرتبط بأوّل جهازٍ يفعّله، وبعده لا يعمل عند غيره. تُعرَض مرّةً واحدة — الخادم يحفظ
@@ -679,6 +746,8 @@ function applySearch() {
   renderTrials();
   renderStores();
   renderCodes();
+  renderDevices();
+  renderSummary();
 
   // How many rows survived, across everything. A search with no hits and no count reads as a
   // broken filter rather than as an answer.
@@ -1061,6 +1130,127 @@ function renderTrials() {
   });
 }
 
+//
+// **Which page is showing, and nothing else.**
+//
+// The cards are the same elements they always were; this hides the ones that belong to other
+// pages. Deliberately not a router: a licence panel is one screen with six views, and a URL
+// scheme for it would be machinery in place of a class name.
+//
+let page = "home";
+
+function showPage(name) {
+  page = name;
+
+  // `section[data-page]`, not `[data-page]`: the tabs carry the same attribute, and hiding them
+  // would leave a page with no way back to any other.
+  for (const card of document.querySelectorAll("section[data-page]")) {
+    card.hidden = card.dataset.page !== name;
+  }
+  for (const tab of document.querySelectorAll("#tabs button")) {
+    tab.classList.toggle("on", tab.dataset.page === name);
+  }
+
+  // The search box lives on the home page and filters the tables on the others, so moving away
+  // from a filtered view without saying so would be a table that is quietly incomplete.
+  if (query && name !== "home") {
+    $("searchCount").hidden = false;
+  }
+}
+
+for (const tab of document.querySelectorAll("#tabs button")) {
+  tab.onclick = () => showPage(tab.dataset.page);
+}
+
+/// The numbers on the front page, each one a way in.
+function renderSummary() {
+  const licences = state.licences || [];
+  const requests = state.requests || [];
+  const stores = state.stores || [];
+
+  const soon = state.now + 14 * 86400;
+
+  const cards = [
+    ["requests", requests.length, "طلب ينتظر"],
+    ["licences", licences.filter(isLive).length, "ترخيص سارٍ"],
+    // Named separately because it is the one number worth acting on before it becomes a
+    // complaint: a licence that ends this fortnight is a conversation, not an incident.
+    ["licences", licences.filter(l => isLive(l) && !isLifetime(l) && l.until < soon).length,
+     "ينتهي خلال أسبوعين"],
+    ["devices", deviceRows().length, "جهاز معروف"],
+    ["stores", stores.reduce((n, st) => n + (st.recent || 0), 0), "جهاز متجر نشِط"],
+  ];
+
+  const box = $("summary");
+  box.innerHTML = "";
+
+  for (const [target, value, label] of cards) {
+    const button = document.createElement("button");
+    const number = document.createElement("b");
+    number.textContent = String(value);
+    const text = document.createElement("span");
+    text.textContent = label;
+    button.append(number, text);
+    button.onclick = () => showPage(target);
+    box.append(button);
+  }
+}
+
+/// Every device anything is known about, from both sources.
+///
+/// A licence names one device and carries what its apps reported; a store activation names a
+/// device and no licence at all. Both are devices, and a page that showed only the first would be
+/// missing exactly the people a store copy was sold to.
+function deviceRows() {
+  const rows = [];
+
+  for (const lic of state.licences || []) {
+    const installs = lic.installs || {};
+    const names = Object.keys(installs);
+
+    if (!names.length) {
+      rows.push({ dev: lic.key, source: lic.name || scopeName(lic.tier), product: "—",
+                  version: "—", last: 0 });
+      continue;
+    }
+    for (const name of names) {
+      rows.push({ dev: lic.key, source: lic.name || scopeName(lic.tier), product: name,
+                  version: installs[name].version || "—", last: installs[name].at || 0 });
+    }
+  }
+
+  for (const st of state.stores || []) {
+    for (const d of st.sample || []) {
+      rows.push({ dev: d.dev, source: st.name || st.id, product: d.product || "—",
+                  version: d.version || "—", last: d.last || 0 });
+    }
+  }
+
+  rows.sort((a, b) => (b.last || 0) - (a.last || 0));
+  return rows;
+}
+
+function renderDevices() {
+  const rows = deviceRows().filter(r => !query || matches({ key: r.dev, name: r.source, note: r.product }));
+  const body = $("devices").querySelector("tbody");
+  body.innerHTML = "";
+
+  $("deviceCount").textContent = String(rows.length);
+  $("deviceCount").className = "pill " + (rows.length ? "good" : "warn");
+
+  for (const row of rows.slice(0, 300)) {
+    const tr = document.createElement("tr");
+    tr.append(
+      cell(row.dev, true),
+      cell(row.source),
+      cell(row.product),
+      cell(row.version, true),
+      cell(row.last ? fmtDate(row.last) : "—", true),
+    );
+    body.append(tr);
+  }
+}
+
 function renderStores() {
   const rows = state.stores || [];
   const body = $("stores").querySelector("tbody");
@@ -1212,6 +1402,17 @@ async function refresh() {
   renderTrials();
   renderStores();
   renderCodes();
+  renderDevices();
+  renderSummary();
+
+  // The counts on the tabs themselves, so the page you are not looking at can still say it has
+  // something waiting.
+  $("tabRequests").textContent = (state.requests || []).length || "";
+  $("tabLicences").textContent = (state.licences || []).filter(isLive).length || "";
+  $("tabDevices").textContent = deviceRows().length || "";
+  $("tabStores").textContent = (state.stores || []).length || "";
+
+  showPage(page);
 
   lastRefresh = Date.now();
   markFreshness();
