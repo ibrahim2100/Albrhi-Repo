@@ -30,6 +30,21 @@ TWEAKS="${*:-instagram youtube twitter tiktok}"
 export THEOS="${THEOS:-$HOME/theos}"
 export PATH="/opt/homebrew/opt/make/libexec/gnubin:/opt/homebrew/bin:$PATH"
 
+# The app each dylib belongs in, in the file's own name.
+#
+# `AlbrhiTT_0.20.2.dylib` is obvious to whoever built it and to nobody else -- and the one mistake
+# this naming has to prevent is injecting the wrong dylib into an app, which does not fail loudly:
+# the hooks simply attach to nothing and the app looks untweaked.
+app_name() {
+    case "$1" in
+        instagram) echo "Instagram" ;;
+        youtube)   echo "YouTube" ;;
+        twitter)   echo "X-Twitter" ;;
+        tiktok)    echo "TikTok" ;;
+        *)         echo "$1" ;;
+    esac
+}
+
 mkdir -p "$OUT"
 
 for TWEAK in $TWEAKS; do
@@ -66,10 +81,11 @@ for TWEAK in $TWEAKS; do
 
     VERSION=$(grep -m1 '^Version:' "tweaks/$TWEAK/control" | awk '{print $2}')
     NAME=$(basename "$DYLIB" .dylib)
-    cp "$DYLIB" "$OUT/${NAME}_${VERSION}.dylib"
+    FILE="$(app_name "$TWEAK")_${NAME}_${VERSION}.dylib"
+    cp "$DYLIB" "$OUT/$FILE"
 
-    SIZE=$(du -h "$OUT/${NAME}_${VERSION}.dylib" | awk '{print $1}')
-    echo "  standalone, no MS symbols, licence inside  ·  ${NAME}_${VERSION}.dylib  (${SIZE})"
+    SIZE=$(du -h "$OUT/$FILE" | awk '{print $1}')
+    echo "  standalone, no MS symbols, licence inside  ·  $FILE  (${SIZE})"
 
     # The objects must not be inherited by a package build, or a .deb would ship the injected
     # flavour of the dylib -- which loads on a jailbreak and hooks nothing through Substrate.

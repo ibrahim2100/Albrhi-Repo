@@ -43,6 +43,21 @@ TWEAKS="instagram youtube twitter tiktok"
 export THEOS="${THEOS:-$HOME/theos}"
 export PATH="/opt/homebrew/opt/make/libexec/gnubin:/opt/homebrew/bin:$PATH"
 
+# The app each dylib belongs in, in the file's own name.
+#
+# `AlbrhiTT_0.20.2.dylib` is obvious to whoever built it and to nobody else -- and the one mistake
+# this naming has to prevent is injecting the wrong dylib into an app, which does not fail loudly:
+# the hooks simply attach to nothing and the app looks untweaked.
+app_name() {
+    case "$1" in
+        instagram) echo "Instagram" ;;
+        youtube)   echo "YouTube" ;;
+        twitter)   echo "X-Twitter" ;;
+        tiktok)    echo "TikTok" ;;
+        *)         echo "$1" ;;
+    esac
+}
+
 mkdir -p "$OUT"
 
 echo "store   : $STORE  ($STORE_NAME, $STORE_SITE)"
@@ -90,9 +105,10 @@ for TWEAK in $TWEAKS; do
 
     VERSION=$(grep -m1 '^Version:' "tweaks/$TWEAK/control" | awk '{print $2}')
     NAME=$(basename "$DYLIB" .dylib)
-    cp "$DYLIB" "$OUT/${NAME}_${VERSION}_${STORE}.dylib"
+    FILE="$(app_name "$TWEAK")_${NAME}_${VERSION}_${STORE}.dylib"
+    cp "$DYLIB" "$OUT/$FILE"
 
-    echo "  standalone · licence inside · code '$STORE' present  ·  ${NAME}_${VERSION}_${STORE}.dylib"
+    echo "  standalone · licence inside · code '$STORE' present  ·  $FILE"
 
     ( cd "tweaks/$TWEAK" && make clean >/dev/null 2>&1 || true; rm -rf .theos )
 done
@@ -108,6 +124,12 @@ $(printf '=%.0s' $(seq 1 40))
 كود واحد لكل الأجهزة، بلا حدّ لعدد المستخدمين:
 
         ${STORE}
+
+الملفات، وكل واحد لتطبيقه:
+  Instagram_*.dylib    إنستغرام   com.burbn.instagram
+  YouTube_*.dylib      يوتيوب     com.google.ios.youtube
+  X-Twitter_*.dylib    X          com.atebits.Tweetie2
+  TikTok_*.dylib       تيك توك    com.zhiliaoapp.musically
 
 من داخل التطبيق:
   إنستغرام / يوتيوب : إعدادات الأداة › الترخيص
