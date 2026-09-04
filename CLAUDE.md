@@ -927,6 +927,60 @@ is the signature of work that re-arms itself**, and the first question to ask of
 `-layoutSubviews`, `-didMoveToWindow` or a getter used by layout is what it does on the *second*
 call.
 
+### Separate tweaks, licensed on their own
+
+**Each social tweak ships three ways now, and the licence is what made that possible rather than
+the packaging.** Instagram, YouTube, X and TikTok are built as individual `.deb`s and as
+**standalone dylibs** for injecting into an IPA, alongside `com.albrhi` itself — which declares
+`Conflicts`/`Replaces` on all of them, so somebody who wants one tweak installs it *instead of*
+the suite and the same dylib can never be injected twice. Spotify and YouTube Music are
+deliberately not in that set: neither has a settings screen, so neither has anywhere to enter a
+key, and a tweak that cannot be licensed is not one to sell on its own.
+
+**The gap this closed is the one nobody would have reported.** `SCIPanelAllowsThisApp()` answered
+`YES` **unconditionally** under `SCI_SELFCONTAINED` — written when Albrhi Panel was a jailbreak
+package that could never be installed beside a sideloaded tweak, and correct about the *switch*
+while being wrong about the *licence*. Every self-contained build was therefore ungated. The fix
+is not in that branch alone: it needed somewhere to say no *from*, which is
+`shared/src/SCILicenseUI` — the panel's licence page rewritten in UIKit, one file, presented from
+a row in each of the four tweaks' own settings.
+
+**Three kinds of licence, carried in a field that already existed.** `tier` has been on every
+token since the server was written, defaulting to `suite`; reading it as a *scope* costs no new
+field and leaves every licence already issued working exactly as before — absent or `suite` means
+everything. `apps` is the shared code across the separate tweaks; `app:<name>` is one tweak alone.
+**The device answers an unrecognised scope as "everything"** — an old build meeting a newer server
+must not refuse a licence somebody paid for — while the *server* refuses an unknown value at the
+point of writing, so a typo in the panel is caught where it is made.
+
+**And "lifetime" came out of that field**, where it had been sitting as though it were a scope:
+the term lives in `until`, and conflating the two is how a lifetime licence for one app becomes a
+lifetime licence for everything.
+
+**Identity falls back to the app itself, and the test is a read after the write.** On a jailbreak
+every tweak reads `com.albrhi.panel` through `SCIPanelGate`'s file fallback, so one identity serves
+the install and one licence covers the phone — that behaviour is kept. A dylib injected into an IPA
+has no such file, and a sandboxed write to that domain is *redirected* rather than refused, which
+cost the Watch tweak a release: so the write is read back, and only a failure sends the identity to
+the app's own defaults.
+
+**The check-in says which tweak is asking and at what version**, and the panel has a page per
+licence: device, scope, term, source, the code as it was typed, and every app the key runs in with
+its version and when it was last seen. Bounded to eight products and written at most hourly per
+product — a record that grows with every launch costs money to store and says nothing its last line
+did not.
+
+**One publisher, still.** The individual packages and the dylibs are built by the *suite's* own
+workflow and attached to the same release: a fourth publisher would race the three that already
+exist for `gh-pages`, and that race has served an index a version behind a release once already.
+The job compiles all four tweaks anyway, so a tweak that will not build already fails it.
+
+**`otool -L` prints the file's own install name before its dependencies, and every tweak here
+installs under `/Library/MobileSubstrate/`.** A standalone check grepping that output for
+"substrate" matches the file describing itself and calls a standalone build linked; skipping one
+line is not enough, because the echoed filename comes first. `tail -n +3`. Both mistakes were made
+in turn and both were caught by running the check on this machine before it ever ran in CI.
+
 **"Free and open source" came out of every description, and the licence statement did not.**
 The software needs a licence to run, and the first line of every package page said it was free —
 one word, in eight `control` files, the source's own landing page and three in-app credit strings,
