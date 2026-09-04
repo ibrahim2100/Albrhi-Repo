@@ -262,6 +262,114 @@ jobs:
                   dpkg-deb -c "$DEB" | awk '{print $NF}' | sort
                 done
 
+            - name: Build each app tweak on its own
+              if: steps.release_check.outputs.needed == 'true'
+              # **The same four tweaks, packaged one by one, in the workflow that already
+              # compiles them.**
+              #
+              # Somebody who wants one tweak and not the panel installs the individual package
+              # instead of com.albrhi -- which the suite's own Conflicts/Replaces already
+              # arrange, so the two can never both inject the same dylib.
+              #
+              # Built here rather than in a workflow of its own on purpose. A fourth publisher
+              # would race this one for gh-pages, and that race has already served an index a
+              # version behind a release; and this job compiles every one of these tweaks
+              # anyway, so a tweak that will not build already fails this run. Spotify, YouTube
+              # Music, NextUp and Watch are not in the list: the first two have no settings
+              # screen to enter a licence in, and the last two are separate packages already.
+              run: |
+                cd main
+                mkdir -p apps
+
+                for TWEAK in instagram youtube twitter tiktok; do
+                  for FLAVOUR in rootless roothide; do
+                    echo "=== $TWEAK ($FLAVOUR)"
+
+                    if [ "$FLAVOUR" = "roothide" ]; then
+                      export THEOS="${{ github.workspace }}/theos-roothide"
+                    else
+                      export THEOS="${{ github.workspace }}/theos"
+                    fi
+
+                    ( cd "tweaks/$TWEAK" && make clean >/dev/null 2>&1 || true )
+                    ./build.sh "$TWEAK" "$FLAVOUR"
+
+                    cp "tweaks/$TWEAK"/packages/*.deb apps/ 2>/dev/null || {
+                      echo "::error::$TWEAK ($FLAVOUR) produced no .deb"
+                      exit 1
+                    }
+                    rm -f "tweaks/$TWEAK"/packages/*.deb
+                  done
+                done
+
+                ls -la apps/
+
+                # Eight: four tweaks, two flavours. Counted rather than eyeballed, for the
+                # reason the suite's own two are counted -- 1.0.0 shipped rootless only because
+                # nobody was counting.
+                COUNT=$(ls apps/*.deb 2>/dev/null | wc -l | tr -d ' ')
+                if [ "$COUNT" != "8" ]; then
+                  echo "::error::expected eight packages (four tweaks, two flavours), found $COUNT"
+                  exit 1
+                fi
+                echo "ok  eight individual packages"
+
+            - name: Build a standalone dylib for each app tweak
+              if: steps.release_check.outputs.needed == 'true'
+              # For injecting into an IPA: no CydiaSubstrate, no PreferenceLoader, no panel.
+              #
+              # **Proved rather than claimed.** Whether a dylib is genuinely standalone is
+              # something the buyer would otherwise discover on their own device, where the
+              # failure is silent -- the app simply looks untweaked. Two checks, and the second
+              # is the strict one: a library can be dropped from the load commands while an
+              # undefined MS* symbol remains, which fails at load time instead of here.
+              run: |
+                cd main
+                export THEOS="${{ github.workspace }}/theos"
+                mkdir -p apps
+
+                for TWEAK in instagram youtube twitter tiktok; do
+                  echo "=== $TWEAK (standalone)"
+                  ( cd "tweaks/$TWEAK" && make clean >/dev/null 2>&1 || true )
+
+                  ( cd "tweaks/$TWEAK" && make SELFCONTAINED=1 FINALPACKAGE=1 )
+
+                  DYLIB=$(find "tweaks/$TWEAK/.theos/obj" -name '*.dylib' -type f | head -n1)
+                  if [ -z "$DYLIB" ]; then
+                    echo "::error::$TWEAK produced no standalone dylib"
+                    exit 1
+                  fi
+
+                  otool -L "$DYLIB"
+                  if otool -L "$DYLIB" | grep -qi 'substrate'; then
+                    echo "::error::$TWEAK still links CydiaSubstrate — it is not standalone"
+                    exit 1
+                  fi
+                  if nm -u "$DYLIB" | grep -qE '^_MS'; then
+                    echo "::error::$TWEAK still expects Substrate symbols at load time"
+                    nm -u "$DYLIB" | grep -E '^_MS'
+                    exit 1
+                  fi
+
+                  # And the licence has to be inside it. A standalone build used to answer the
+                  # gate with an unconditional yes -- there was no panel to say no from -- so a
+                  # dylib without this symbol is one that would run unlicensed, which is the one
+                  # failure nobody would report.
+                  if ! nm "$DYLIB" | grep -q 'SCILicenseAllowsProduct'; then
+                    echo "::error::$TWEAK has no licence check compiled in"
+                    exit 1
+                  fi
+
+                  VERSION=$(grep -m1 '^Version:' "tweaks/$TWEAK/control" | awk '{print $2}')
+                  NAME=$(basename "$DYLIB" .dylib)
+                  cp "$DYLIB" "apps/${NAME}_${VERSION}.dylib"
+
+                  ( cd "tweaks/$TWEAK" && make clean >/dev/null 2>&1 || true; rm -rf .theos )
+                done
+
+                ls -la apps/
+                echo "Standalone: no Substrate library, no Substrate symbols, licence compiled in."
+
             - name: Upload both debs
               uses: actions/upload-artifact@v4
               with:
@@ -284,7 +392,10 @@ jobs:
                 name: Albrhi ${{ env.SUITE_VERSION }}
                 tag_name: v${{ env.SUITE_VERSION }}
                 body_path: /tmp/notes.md
-                files: main/packages/*.deb
+                files: |
+                  main/packages/*.deb
+                  main/apps/*.deb
+                  main/apps/*.dylib
                 fail_on_unmatched_files: true
 
             - name: Prepare added packages

@@ -127,17 +127,47 @@ static NSString *SCIProvisionalIdentity(void) {
     return hex;
 }
 
+/// The identity this process can actually read back.
+///
+/// **`com.albrhi.panel` is the right home and it is not always reachable.** On a jailbroken phone
+/// every tweak reads that domain through `SCIPanelGate`'s file fallback, so one identity serves
+/// the whole install and one licence covers everything — which is the behaviour to keep. A tweak
+/// injected into an IPA on a phone with no jailbreak has no such file and no such domain: writing
+/// there is answered by cfprefsd putting the value in this app's own container, and the next app
+/// reads nothing at all.
+///
+/// So the write goes to the panel's domain when this process can read the panel's domain back,
+/// and to the app's own otherwise. The test is a *read after write*, because a sandboxed write is
+/// redirected rather than refused — the Watch tweak spent a release believing a write that had
+/// gone somewhere else entirely.
+static NSString *const kSCIOwnDomainDevicePref = @"albrhi_device_local";
+
+static BOOL SCIWriteIdentity(NSString *value, NSString *domain) {
+    CFPreferencesSetAppValue((__bridge CFStringRef)kSCIDevicePref,
+                             (__bridge CFStringRef)value, (__bridge CFStringRef)domain);
+    CFPreferencesAppSynchronize((__bridge CFStringRef)domain);
+
+    NSString *back = SCIPanelReadString(kSCIDevicePref, nil);
+    return [back isEqualToString:value];
+}
+
 void SCILicenseProvisionDevice(void) {
     NSString *stored = SCIPanelReadString(kSCIDevicePref, nil);
     if (stored.length == 16) return;
 
+    // The app's own, from an earlier launch of a self-contained build.
+    NSString *own = [[NSUserDefaults standardUserDefaults] stringForKey:kSCIOwnDomainDevicePref];
+    if (own.length == 16) return;
+
     NSString *fresh = SCIFreshDeviceIdentity();
     if (!fresh) return;
 
-    CFStringRef domain = (__bridge CFStringRef)@"com.albrhi.panel";
-    CFPreferencesSetAppValue((__bridge CFStringRef)kSCIDevicePref,
-                             (__bridge CFStringRef)fresh, domain);
-    CFPreferencesAppSynchronize(domain);
+    if (SCIWriteIdentity(fresh, @"com.albrhi.panel")) return;
+
+    // Not readable there, so this process is on its own: its own defaults, which it can always
+    // read, and a licence issued to this app rather than to the phone. That is the trade a
+    // sideloaded install makes, and it is why licences carry a scope.
+    [[NSUserDefaults standardUserDefaults] setObject:fresh forKey:kSCIOwnDomainDevicePref];
 }
 
 NSString *SCILicenseFingerprint(void) {
@@ -151,6 +181,15 @@ NSString *SCILicenseFingerprint(void) {
     if (stored.length == 16) {
         sciFingerprintWeak = NO;
         return stored.lowercaseString;
+    }
+
+    // The app's own, written when the panel's domain could not be read back. Second, never
+    // first: where the panel is reachable its identity is the one that makes a single licence
+    // cover the whole phone.
+    NSString *own = [[NSUserDefaults standardUserDefaults] stringForKey:kSCIOwnDomainDevicePref];
+    if (own.length == 16) {
+        sciFingerprintWeak = NO;
+        return own.lowercaseString;
     }
 
     sciFingerprintWeak = YES;
@@ -597,7 +636,29 @@ void SCILicenseSyncWithServer(void (^completion)(SCILicenseServerResult)) {
 
     if (!SCILicenseServerBase()) { finish(SCILicenseServerNotConfigured); return; }
 
-    SCIPostJSON(@"/v1/hello", @{@"dev": SCILicenseFingerprint()},
+    //
+    // **The check-in says which tweak is asking, and at what version.**
+    //
+    // It already carried the device id; these three fields are what turn a licence's own page in
+    // the panel from a row into an answer -- *which* apps a key is running in, and whether the
+    // one complaining is even on the current build. Nothing about the person is sent: the product
+    // name is one of four words this project chose, the version is ours, and the bundle
+    // identifier is the app the tweak was written for and could not be anything else.
+    //
+    NSMutableDictionary *hello = [@{@"dev": SCILicenseFingerprint()} mutableCopy];
+
+    NSString *product = SCIPanelProductForThisApp();
+    if (product.length) {
+        hello[@"product"] = product;
+        hello[@"app"] = [[NSBundle mainBundle] bundleIdentifier] ?: @"";
+
+        // The tweak's own version, declared by every tweak here as SCIVersionString. Weakly
+        // looked up rather than imported: the panel links this file too and has no such symbol.
+        NSString *const *version = (NSString *const *)dlsym(RTLD_DEFAULT, "SCIVersionString");
+        if (version && *version) hello[@"version"] = *version;
+    }
+
+    SCIPostJSON(@"/v1/hello", hello,
                 ^(NSDictionary *answer, NSInteger status) {
         if (status != 200 || !answer) { finish(SCILicenseServerUnreachable); return; }
 

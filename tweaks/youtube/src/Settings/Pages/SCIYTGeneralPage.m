@@ -3,6 +3,7 @@
 #import "../../SCILog.h"
 #import "../../Localization/SCILocalize.h"
 #import "../../Diagnostics/SCIYTDiagnostics.h"
+#import "shared/src/SCILicenseUI.h"
 #import "../../Features/Download/SCIYTDownload.h"
 
 ///
@@ -76,6 +77,17 @@ static void SCIOpenDiagnostics(SCIYTSettingsHostController *host) {
                            detail:SCILocalized(@"dl_row_note")
                            symbol:@"arrow.down.circle.fill"
                            action:^{ [SCIYTDownload presentFrom:host]; }],
+            // **The licence, inside the app.**
+            //
+            // Albrhi Panel's licence page exists only where PreferenceLoader does. A tweak
+            // installed on its own -- and above all one injected into an IPA on a phone with no
+            // jailbreak -- has no panel, no Settings row, and until this had no way to enter a
+            // key at all. That is what let a self-contained build ship ungated: there was nowhere
+            // to say no from.
+            [SCIRow disclosureRow:SCILocalized(@"licence_row")
+                           detail:SCILocalized(@"licence_row_note")
+                           symbol:@"key.fill"
+                           action:^{ [SCILicenseUI presentFrom:host]; }],
             [SCIRow disclosureRow:SCILocalized(@"scan_watch")
                            detail:SCILocalized(@"scan_watch_note")
                            symbol:@"viewfinder"

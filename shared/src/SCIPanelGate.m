@@ -196,7 +196,21 @@ BOOL SCIPanelAllowsThisApp(void) {
     //
     // So this asks nothing and answers yes unconditionally, restoring the older
     // "installed it deliberately" reading for the one case that is still true of.
-    sciGateSource = @"self-contained build — panel not applicable";
+    //
+    // **Corrected: the panel is not applicable, and the licence still is.**
+    //
+    // The paragraph above is right about the per-app switch and was wrong to answer the whole
+    // question with it. `SCIPanelAllowsThisApp()` is the one gate every tweak here calls, so
+    // returning YES from it skipped the licence as well -- and the builds that take this branch
+    // are exactly the ones sold on their own and injected into an IPA, where there is no panel to
+    // enter a key in either. `SCILicenseUI` is that missing screen, and this is the gate it feeds.
+    //
+    if (!SCILicenseAllowsProduct(SCIPanelProductForThisApp())) {
+        sciGateSource = [NSString stringWithFormat:@"licence — %@", SCILicenseStatusLine()];
+        return NO;
+    }
+
+    sciGateSource = @"self-contained build — licensed";
     return YES;
 #else
     static BOOL allowed = NO;

@@ -143,6 +143,9 @@
     box-shadow: 0 20px 60px rgba(0,0,0,.35);
   }
   .dialog h3 { margin: 0 0 .2rem; font-size: 1.05rem; }
+  /* The detail page is a block of lines, and a <p> collapses them without this. */
+  .dialog .note { white-space: pre-wrap; text-align: start; line-height: 1.7; }
+
   .dialog .sub {
     margin: 0 0 1rem; color: var(--muted); font-size: .84rem;
     font-family: var(--mono); direction: ltr; text-align: right;
@@ -757,6 +760,7 @@ function renderLicences() {
     actions.append(
       actionButton("+٣٠", () => change({ mode: "extend", days: 30 })),
 
+      actionButton("تفاصيل", () => { licenceDetail(lic); return false; }),
       actionButton("تعديل", () => { editLicence(lic); return false; }),
 
       lic.revoked
@@ -854,6 +858,63 @@ $("dlgSave").onclick = async () => {
   $("dlgSave").disabled = true;
   try { await handler(); } finally { $("dlgSave").disabled = false; }
 };
+
+/// Everything known about one licence, on its own page.
+///
+/// **Built because a row cannot answer the question that actually gets asked.** "It stopped
+/// working" needs to know which apps that key is running in and at what version, and whether the
+/// person is even on the current build -- none of which fits in a table and all of which the
+/// devices themselves report on every check-in.
+///
+/// Read-only on purpose: editing has its own dialog, and a page that both shows and edits is a
+/// page where a stray keystroke changes something nobody meant to touch.
+function licenceDetail(lic) {
+  const lines = [];
+
+  lines.push("الجهاز: " + lic.key);
+  if (lic.name)    lines.push("الاسم: " + lic.name);
+  if (lic.contact) lines.push("الجوال: " + lic.contact);
+
+  lines.push("يغطّي: " + scopeName(lic.tier));
+  lines.push("المدّة: " + (isLifetime(lic) ? "مدى الحياة" : ("حتى " + fmtDate(lic.until))));
+  lines.push("الحالة: " + (lic.revoked ? "مسحوب" : (isLive(lic) ? "سارٍ" : "منتهٍ")));
+
+  const sources = { approved: "موافقة من البانل", code: "كود", trial: "أسبوع مجاني", issued: "إصدار يدوي" };
+  lines.push("المصدر: " + (sources[lic.source] || lic.source || "—"));
+
+  // The code as it was typed, not its hash: the hash is what the server keeps and the code is
+  // what the person has in a message somewhere.
+  if (lic.codeText)  lines.push("الكود المفعَّل: " + lic.codeText);
+  else if (lic.code) lines.push("بصمة الكود: " + lic.code);
+
+  lines.push("");
+  lines.push("الأدوات التي فُعِّل فيها:");
+
+  const installs = lic.installs || {};
+  const names = Object.keys(installs);
+
+  if (!names.length) {
+    // Said plainly rather than left blank. An empty list here means the device has not checked in
+    // since this was added, which is a fact about the report and not about the licence.
+    lines.push("  لا شيء بعد — تُسجَّل عند أوّل مزامنة من الجهاز.");
+  } else {
+    names.sort((a, b) => (installs[b].at || 0) - (installs[a].at || 0));
+    for (const name of names) {
+      const seen = installs[name];
+      lines.push("  " + scopeName("app:" + name) + " — إصدار " + (seen.version || "?") +
+                 " · آخر ظهور " + fmtDate(seen.at) + (seen.app ? (" · " + seen.app) : ""));
+    }
+  }
+
+  openDialog({
+    title: "تفاصيل الترخيص",
+    device: "",
+    fields: false,
+    save: "إغلاق",
+    note: lines.join("\n"),
+    onSave: () => { closeDialog(); },
+  });
+}
 
 /// The edit dialog for one licence, prefilled with what it currently says.
 function editLicence(lic) {

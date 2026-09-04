@@ -252,12 +252,60 @@ async function tokenFor(env, dev, licence) {
 
 // ── Routes ────────────────────────────────────────────────────────────────────────────
 
+//
+// **What the device says about itself, kept beside the licence.**
+//
+// The check-in already carries the device id; it now also carries which tweak is asking, that
+// tweak's version, and the app it is inside. That is the whole of what a licence's own page has
+// to show — *which* apps a key is actually running in and at what version — and it is answered by
+// the devices themselves rather than by asking the owner to remember.
+//
+// Bounded on purpose: at most eight products, each one line, each overwritten by the next
+// check-in. A record that grows with every launch is a record that eventually costs money to
+// store and tells nobody anything more than its last line did.
+//
+function noteInstall(licence, body) {
+  const product = clean(body.product).slice(0, 24);
+  if (!licence || !product) return licence;
+
+  const installs = { ...(licence.installs || {}) };
+  installs[product] = {
+    version: clean(body.version).slice(0, 24),
+    app: clean(body.app).slice(0, 40),
+    at: now(),
+  };
+
+  // Oldest out when there are more than eight. Four tweaks ship today; the cap is for a device
+  // that has been through several of them, not a limit anybody should ever meet.
+  const keys = Object.keys(installs);
+  if (keys.length > 8) {
+    keys.sort((a, b) => (installs[a].at || 0) - (installs[b].at || 0));
+    for (const stale of keys.slice(0, keys.length - 8)) delete installs[stale];
+  }
+
+  return { ...licence, installs };
+}
+
 async function deviceHello(request, env) {
   const body = await readBody(request);
   if (!body || !isDevice(body.dev)) return json({ error: 'bad device' }, 400);
 
   const licence = await env.DB.get(K.licence(body.dev), 'json');
   const answer = await tokenFor(env, body.dev, licence);
+
+  // Written only for a licence that exists, and only when something changed worth writing: a
+  // check-in from a device with no licence is not a record, it is noise.
+  if (licence && clean(body.product)) {
+    const updated = noteInstall(licence, body);
+    const before = licence.installs?.[clean(body.product)];
+    const after = updated.installs[clean(body.product)];
+
+    // Once an hour per product, or when the version changes. Without this every launch is a KV
+    // write, which is a bill rather than a diagnostic.
+    if (!before || before.version !== after.version || (after.at - (before.at || 0)) > 3600) {
+      await env.DB.put(K.licence(body.dev), JSON.stringify(updated));
+    }
+  }
 
   // Whether a request is already waiting travels with the answer, so the panel on the phone can
   // say "asked, waiting" instead of offering to ask again and stacking duplicates.
@@ -323,6 +371,11 @@ async function deviceRedeem(request, env) {
     revoked: false,
     source: 'code',
     code: hash,
+
+    // **The code as it was typed, kept apart from `note`.** `note` is editable from the panel and
+    // an edit that clears it would take the one record of which code was used with it -- the same
+    // "one field, two meanings" fault the name and the note already cost a round trip over.
+    codeText: pretty(code),
   };
 
   await env.DB.put(K.licence(body.dev), JSON.stringify(licence));
@@ -481,6 +534,12 @@ async function adminApprove(request, env) {
     // it meant a name could be changed and never removed: clearing the box sent an empty string,
     // which is falsy, so the old value came straight back. A field that cannot be emptied is a
     // field that cannot be corrected.
+    // Carried through every edit: these are what the device and the redemption said, not
+    // something the panel's operator types, and an approval must not quietly erase them.
+    ...(existing?.codeText ? { codeText: existing.codeText } : {}),
+    ...(existing?.code ? { code: existing.code } : {}),
+    ...(existing?.installs ? { installs: existing.installs } : {}),
+
     name: body.name === undefined ? (existing?.name || '') : clean(body.name),
     contact: body.contact === undefined ? (existing?.contact || '') : clean(body.contact),
     until,
