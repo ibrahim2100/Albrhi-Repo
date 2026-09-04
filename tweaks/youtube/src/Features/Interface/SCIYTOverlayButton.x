@@ -134,27 +134,10 @@ static NSString *SCIEndTimeText(double totalTime, double elapsed) {
 /// during one; these are the two moments YouTube itself decides.
 static char kSCIOverlayShown;
 static char kSCIOverlayTopShown;
-static char kSCIOverlayTopConstraint;
 
-/// How far below the safe area the button belongs, measured rather than chosen.
-///
-/// **In fullscreen YouTube draws the video's title across the top row**, and a button pinned
-/// eight points below the safe area lands on top of it — reported from the device exactly that
-/// way. The obvious fix is to detect fullscreen and add a number, which is two guesses: that the
-/// detection is right, and that the number is. The class measures the row itself
-/// (`-topControlsHeight`, `d16@0:8`), so the button goes underneath whatever is in it, in both
-/// layouts, by construction.
-///
-/// A height of zero is a row that has not been laid out yet rather than a row with no height, so
-/// the previous value is kept instead of collapsing the button onto the title for one frame.
-static CGFloat SCITopInsetFor(YTMainAppControlsOverlayView *overlay) {
-    if (![overlay respondsToSelector:@selector(topControlsHeight)]) return 8;
-
-    double height = [overlay topControlsHeight];
-    if (!(height > 0) || !isfinite(height)) return 0;   // 0 == "leave it where it is"
-
-    return (CGFloat)height + 6;
-}
+// SCITopInsetFor is gone with the constraint it fed. It measured `-topControlsHeight` to put the
+// button *under* the top row; the button is now *in* that row, sized and lined up from the
+// buttons beside it, so a measurement of the row's height has nothing left to decide.
 
 
 /// **Placement happens once per overlay, and never from inside a layout pass.**
@@ -171,29 +154,71 @@ static CGFloat SCITopInsetFor(YTMainAppControlsOverlayView *overlay) {
 /// The rule this leaves behind is worth more than the fix: **a hook on a getter that layout calls
 /// must be free the second time.** Do the work when there is work — build the button once, place
 /// it once — and hand back `%orig` untouched ever after.
-static const NSUInteger kSCIOverlayInsetWriteCap = 16;
+/// Generous, because this frame legitimately changes: inline, fullscreen, rotated, and every
+/// time YouTube adds or removes a button from that row. Still bounded, because the thing being
+/// guarded against is a measurement that will not settle.
+static const NSUInteger kSCIOverlayInsetWriteCap = 200;
 
 static char kSCIOverlayInsetWrites;
 
 /// Writes the top constraint, bounded twice: only for a real change, and only so many times for
 /// one overlay. A measurement that will not settle then costs a button six points out of place
 /// rather than an app that will not start.
+/// The frame our button wants: one gap to the left of the top row's right-hand group.
+///
+/// Measured from the overlay's own buttons rather than chosen. The right of that row carries
+/// cast, subtitles and the gear on a build that has all three and fewer on one that does not, so
+/// a number written here would be right on one phone and wrong on the next.
+static CGRect SCIFrameBesideTopControls(YTMainAppControlsOverlayView *overlay, UIView *ours) {
+    CGRect best = CGRectNull;
+    CGFloat leftMost = CGFLOAT_MAX;
+
+    // The top row only: buttons in the upper third of the player, on its right-hand side. The
+    // playback controls sit in the middle and the progress bar at the bottom, and neither is
+    // something this button should be lining itself up with.
+    CGFloat topBand = MAX(44.0, overlay.bounds.size.height * 0.35);
+
+    for (UIView *child in overlay.subviews) {
+        if (child == ours || child.hidden || !child.userInteractionEnabled) continue;
+
+        CGRect frame = child.frame;
+        if (frame.size.width < 16 || frame.size.height < 16) continue;
+        if (CGRectGetMaxY(frame) > topBand) continue;
+        if (CGRectGetMidX(frame) < overlay.bounds.size.width / 2.0) continue;   // the chevron
+
+        if (CGRectGetMinX(frame) < leftMost) {
+            leftMost = CGRectGetMinX(frame);
+            best = frame;
+        }
+    }
+
+    if (CGRectIsNull(best)) return CGRectNull;
+
+    // Its neighbours' size, and their centre line. The gap between two of them is the gap this
+    // takes: 8 points is what the row uses and what it looks wrong without.
+    CGFloat gap = 8;
+    return CGRectMake(CGRectGetMinX(best) - best.size.width - gap, CGRectGetMinY(best),
+                      best.size.width, best.size.height);
+}
+
 static void SCIApplyTopInset(YTMainAppControlsOverlayView *overlay) {
-    NSLayoutConstraint *top = objc_getAssociatedObject(overlay, &kSCIOverlayTopConstraint);
-    if (!top) return;
+    UIButton *save = objc_getAssociatedObject(overlay, &kSCIOverlaySaveButton);
+    if (!save || save.superview != overlay) return;
 
     NSNumber *written = objc_getAssociatedObject(overlay, &kSCIOverlayInsetWrites);
     if (written.unsignedIntegerValue >= kSCIOverlayInsetWriteCap) return;
 
-    CGFloat wanted = SCITopInsetFor(overlay);
-    if (wanted <= 0) return;
+    CGRect wanted = SCIFrameBesideTopControls(overlay, save);
+    if (CGRectIsNull(wanted)) return;
 
-    // Half a point, because a difference smaller than that is rounding, and writing rounding
-    // back into a constraint is how a settled layout is made to move again.
-    if (ABS(top.constant - wanted) < 0.5) return;
+    // Half a point, because a difference smaller than that is rounding, and writing rounding back
+    // into a frame from a layout-adjacent path is how a settled layout is made to move again.
+    if (ABS(save.frame.origin.x - wanted.origin.x) < 0.5 &&
+        ABS(save.frame.origin.y - wanted.origin.y) < 0.5 &&
+        ABS(save.frame.size.width - wanted.size.width) < 0.5) return;
 
-    top.constant = wanted;
-    sciOverlayTopInset = wanted;
+    save.frame = wanted;
+    sciOverlayTopInset = wanted.origin.y;
     objc_setAssociatedObject(overlay, &kSCIOverlayInsetWrites,
                              @(written.unsignedIntegerValue + 1), OBJC_ASSOCIATION_RETAIN);
 }
@@ -294,7 +319,11 @@ static void SCISyncSaveButton(YTMainAppControlsOverlayView *overlay, BOOL animat
         sciOverlaysSeen++;
 
         if (!save) {
-            UIImage *icon = [UIImage systemImageNamed:@"arrow.down.circle"];
+            // **The app's own glyph, not ours.** YouTube draws downloading as an arrow into a
+            // tray, and a circled arrow beside it reads as a guest even when everything else
+            // about the button is the app's. `arrow.down.to.line` is that shape in SF Symbols.
+            UIImage *icon = [UIImage systemImageNamed:@"arrow.down.to.line"]
+                          ?: [UIImage systemImageNamed:@"arrow.down.circle"];
 
             if ([self respondsToSelector:@selector(playerButtonWithImage:selectedImage:accessibilityLabel:verticalContentPadding:minHitTargetSize:)]) {
                 // 0 padding and a 48pt target: the padding is the app's to decide from its own
@@ -347,24 +376,20 @@ static void SCISyncSaveButton(YTMainAppControlsOverlayView *overlay, BOOL animat
             // has no way to measure their widths from here; the left of it carries one button
             // and then nothing.
             //
-            save.translatesAutoresizingMaskIntoConstraints = NO;
+            //
+            // **In the top row, beside subtitles and the gear — placed by frame, not by anchors.**
+            //
+            // Anchors need something to be anchored *to*, and the buttons in that row are laid
+            // out by the overlay itself: there is no guide for "left of the leftmost of the right
+            // group" and pinning to the safe area is what put this button under the title in the
+            // first place. So the frame is taken from the neighbours themselves, on the two
+            // visibility signals -- their size, their centre line, one gap to the left of them.
+            //
+            // Which makes the button the same height as the row's own controls, moving with them
+            // in fullscreen and inline alike, without a number in this file deciding any of it.
+            //
+            save.translatesAutoresizingMaskIntoConstraints = YES;
             [self addSubview:save];
-
-            // The top constraint is kept rather than activated and forgotten: how far down the
-            // button belongs is a measurement of the app's own top row, and that row is a
-            // different height in fullscreen than it is inline.
-            NSLayoutConstraint *top =
-                [save.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor
-                                               constant:8];
-            objc_setAssociatedObject(self, &kSCIOverlayTopConstraint, top, OBJC_ASSOCIATION_RETAIN);
-
-            [NSLayoutConstraint activateConstraints:@[
-                [save.leadingAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.leadingAnchor
-                                                   constant:56],
-                top,
-                [save.widthAnchor constraintEqualToConstant:36],
-                [save.heightAnchor constraintEqualToConstant:36]
-            ]];
 
             sciOverlayButtonsMade++;
 
