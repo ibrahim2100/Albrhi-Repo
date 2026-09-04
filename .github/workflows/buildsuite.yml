@@ -341,7 +341,19 @@ jobs:
                   fi
 
                   otool -L "$DYLIB"
-                  if otool -L "$DYLIB" | grep -qi 'substrate'; then
+
+                  # `tail -n +3`, and this is not a detail.
+                  #
+                  # `otool -L`'s first line is the dylib's **own install name**, which for every
+                  # tweak here is /Library/MobileSubstrate/DynamicLibraries/<name>.dylib -- and
+                  # the line above *that* is the filename otool echoes back. So two lines are
+                  # skipped, not one: a plain grep for "substrate" matches the file describing
+                  # itself and reports a standalone build as not standalone.
+                  #
+                  # Both mistakes were made here in turn and both were caught by running the
+                  # check on this machine before the step ever ran in CI, which is the only
+                  # reason neither is a red release.
+                  if otool -L "$DYLIB" | tail -n +3 | grep -qi 'substrate'; then
                     echo "::error::$TWEAK still links CydiaSubstrate — it is not standalone"
                     exit 1
                   fi

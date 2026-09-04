@@ -217,7 +217,10 @@ jobs:
                 echo "Linked libraries:"
                 otool -L "$DYLIB"
 
-                if otool -L "$DYLIB" | grep -qi 'substrate'; then
+                # tail -n +2: otool's first line is this dylib's own install name, which is
+                # itself under /Library/MobileSubstrate/DynamicLibraries -- so a plain grep
+                # matches the file describing itself and calls a standalone build linked.
+                if otool -L "$DYLIB" | tail -n +3 | grep -qi 'substrate'; then
                   echo "::error::The dylib still links CydiaSubstrate — it is not standalone"
                   exit 1
                 fi
