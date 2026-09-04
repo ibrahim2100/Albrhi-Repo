@@ -294,7 +294,123 @@ static CGRect SCIGapInRow(UIView *row, UIView *ours) {
 }
 
 
+///
+/// **Finding the row by its shape, because it has no name of its own on this build.**
+///
+/// Three classes have now been hooked for this row and none of them is ever constructed here:
+/// `YTSlimVideoScrollableDetailsActionsView`, `YTSlimVideoDetailsActionView` and
+/// `YTSlimVideoScrollableActionBarCell` — all three present in the binary, all three at zero.
+/// The row is Texture nodes inside an element-rendered cell, and `_ASDisplayView` is the class
+/// of a thousand other things, so there is nothing left to hook by name.
+///
+/// So it is found by what it is: a view as wide as the list, about the height of a row, holding
+/// an element-drawn icon somewhere under it. **The icon is the part that makes this honest** —
+/// plenty of views are 390×48, and only the actions row has `ELMAnimatedVectorViewObjC` in it.
+///
+/// This is the technique this project normally refuses, and the refusal is about *identity*: a
+/// frame or a subview index must never be used to decide *which button* something is. Here it
+/// decides only *where there is room*, the icon check is the identity, and nothing is modified
+/// but our own button's frame.
+static BOOL SCIHasElementIcon(UIView *view, NSUInteger depth) {
+    if (depth > 6) return NO;
+    for (UIView *child in view.subviews) {
+        if ([NSStringFromClass([child class]) isEqualToString:@"ELMAnimatedVectorViewObjC"]) return YES;
+        if (SCIHasElementIcon(child, depth + 1)) return YES;
+    }
+    return NO;
+}
+
+static UIView *SCIFindActionsRow(UIView *root) {
+    NSMutableArray<UIView *> *queue = [NSMutableArray arrayWithObject:root];
+    NSUInteger walked = 0;
+
+    while (queue.count && walked < 600) {
+        UIView *next = queue.firstObject;
+        [queue removeObjectAtIndex:0];
+        walked++;
+
+        CGSize size = next.bounds.size;
+        if (!next.hidden && size.width >= 300 && size.height >= 36 && size.height <= 64 &&
+            next.subviews.count >= 2 && SCIHasElementIcon(next, 0)) {
+            return next;
+        }
+
+        for (UIView *child in next.subviews) {
+            if (!child.hidden) [queue addObject:child];
+        }
+    }
+    return nil;
+}
+
+
 %group SCIActionBar
+
+%hook YTAsyncCollectionView
+
+- (void)layoutSubviews {
+    %orig;
+
+    if (SCIYTStoodDown() || !SCIPrefEnabled(SCIPrefActionRowButton)) return;
+
+    @try {
+        UIButton *save = objc_getAssociatedObject(self, &kSCIBarButton);
+
+        // Searched only when there is something to search for. The row is found once and kept;
+        // a walk of six hundred views on every layout pass of a collection view is the kind of
+        // cost that turns into a report about the app being slow.
+        if (save && save.superview && save.superview.window) {
+            CGRect wanted = SCIGapInRow(save.superview, save);
+            if (!CGRectIsNull(wanted) && !CGRectEqualToRect(save.frame, wanted)) save.frame = wanted;
+            return;
+        }
+
+        UIView *row = SCIFindActionsRow(self);
+        if (!row) { sciBarState = SCILocalized(@"diag_action_bar_no_row"); return; }
+
+        sciBarCellsBuilt++;
+
+        if (!save) {
+            save = [UIButton buttonWithType:UIButtonTypeSystem];
+            [save setImage:[UIImage systemImageNamed:@"arrow.down.circle"]
+                  forState:UIControlStateNormal];
+            save.accessibilityLabel = SCILocalized(@"action_save");
+            save.tintColor = [UIColor labelColor];
+            [save addTarget:self action:@selector(sciBarSaveTapped:)
+           forControlEvents:UIControlEventTouchUpInside];
+            objc_setAssociatedObject(self, &kSCIBarButton, save, OBJC_ASSOCIATION_RETAIN);
+        }
+
+        CGRect wanted = SCIGapInRow(row, save);
+        if (CGRectIsNull(wanted)) {
+            sciBarState = SCILocalized(@"diag_action_bar_no_room");
+            SCIReportBar();
+            return;
+        }
+
+        save.frame = wanted;
+        [row addSubview:save];
+        sciBarButtonsPlaced++;
+        sciBarState = SCILocalized(@"diag_action_bar_placed");
+        SCIReportBar();
+    } @catch (NSException *exception) {
+        sciBarState = [NSString stringWithFormat:SCILocalized(@"diag_action_row_threw"),
+                       exception.reason ?: @"?"];
+        SCIReportBar();
+    }
+}
+
+%new
+- (void)sciBarSaveTapped:(UIButton *)sender {
+    UIViewController *host = SCIControllerForView(sender);
+    if (host) {
+        [SCIYTDownload presentFrom:host];
+    } else {
+        sciBarState = SCILocalized(@"diag_action_row_no_host");
+        SCIReportBar();
+    }
+}
+
+%end
 
 %hook YTSlimVideoScrollableActionBarCell
 
@@ -476,7 +592,10 @@ static CGRect SCIGapInRow(UIView *row, UIView *ours) {
         sciActionRowState = SCILocalized(@"diag_action_row_absent");
     }
 
-    if (NSClassFromString(@"YTSlimVideoScrollableActionBarCell")) {
+    // Both classes in one group: the cell if this build ever builds one, and the collection view
+    // that certainly exists -- the scan found `YTAsyncCollectionView 0,0 390×577` under the
+    // player on the device.
+    if (NSClassFromString(@"YTAsyncCollectionView")) {
         %init(SCIActionBar);
     } else {
         sciBarState = SCILocalized(@"diag_action_bar_absent");

@@ -425,6 +425,14 @@
 // project at "which button is this one" ended in a string compare against a localised
 // title or a guess at a view's position; here the app is simply asked.
 //
+/// The list under the player: title, actions row, comments preview, up-next.
+///
+/// Hooked for its layout, because the actions row inside it has no class of its own to hook --
+/// it is Texture nodes drawn by the element system, and `_ASDisplayView` is the class of a
+/// thousand other things.
+@interface YTAsyncCollectionView : UICollectionView
+@end
+
 /// The cell that hosts the row of actions under a video's title.
 ///
 /// Confirmed present and hooked on 21.30.5. Its insides are Texture -- `_ASDisplayView` nodes
