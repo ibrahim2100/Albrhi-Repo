@@ -154,12 +154,10 @@ static char kSCIOverlayTopShown;
 /// The rule this leaves behind is worth more than the fix: **a hook on a getter that layout calls
 /// must be free the second time.** Do the work when there is work — build the button once, place
 /// it once — and hand back `%orig` untouched ever after.
-/// Generous, because this frame legitimately changes: inline, fullscreen, rotated, and every
-/// time YouTube adds or removes a button from that row. Still bounded, because the thing being
-/// guarded against is a measurement that will not settle.
-static const NSUInteger kSCIOverlayInsetWriteCap = 200;
-
-static char kSCIOverlayInsetWrites;
+// The write cap is gone with the constraint it protected. It bounded how many times a constraint
+// constant could be written, because a measurement that would not settle was a loop; a frame
+// written onto a child cannot loop, and this frame legitimately changes on every rotation,
+// fullscreen toggle and reflow. What stops needless writes is the half-point comparison below.
 
 /// Writes the top constraint, bounded twice: only for a real change, and only so many times for
 /// one overlay. A measurement that will not settle then costs a button six points out of place
@@ -205,9 +203,6 @@ static void SCIApplyTopInset(YTMainAppControlsOverlayView *overlay) {
     UIButton *save = objc_getAssociatedObject(overlay, &kSCIOverlaySaveButton);
     if (!save || save.superview != overlay) return;
 
-    NSNumber *written = objc_getAssociatedObject(overlay, &kSCIOverlayInsetWrites);
-    if (written.unsignedIntegerValue >= kSCIOverlayInsetWriteCap) return;
-
     CGRect wanted = SCIFrameBesideTopControls(overlay, save);
     if (CGRectIsNull(wanted)) return;
 
@@ -219,8 +214,6 @@ static void SCIApplyTopInset(YTMainAppControlsOverlayView *overlay) {
 
     save.frame = wanted;
     sciOverlayTopInset = wanted.origin.y;
-    objc_setAssociatedObject(overlay, &kSCIOverlayInsetWrites,
-                             @(written.unsignedIntegerValue + 1), OBJC_ASSOCIATION_RETAIN);
 }
 
 
@@ -346,10 +339,13 @@ static void SCISyncSaveButton(YTMainAppControlsOverlayView *overlay, BOOL animat
 
             if (!save) {
                 save = [UIButton buttonWithType:UIButtonTypeSystem];
-                save.tintColor = [UIColor whiteColor];
                 save.accessibilityLabel = SCILocalized(@"overlay_save");
                 [save setImage:icon forState:UIControlStateNormal];
             }
+
+            // White, like every other control on that row. The factory hands back a button
+            // tinted for wherever it was going to be used, which is not necessarily over video.
+            save.tintColor = [UIColor whiteColor];
 
             save.tag = SCIOverlayButtonTag;
             [save addTarget:self action:@selector(sciSaveTapped:)
@@ -426,13 +422,27 @@ static void SCISyncSaveButton(YTMainAppControlsOverlayView *overlay, BOOL animat
 // -Werror turns into three fatal errors in one generated line. Every other %new in this
 // project writes a plain typed parameter for the same reason; an unused one is not warned
 // about in an Objective-C method the way it would be in a C function.
-// **There is no -layoutSubviews hook here any more, and that is the fix rather than a tidy-up.**
 //
-// 1.28.2 read `-topControlsHeight` in it and wrote the constraint constant from what it found.
-// The button sits in the row being measured, so writing the constant changed the measurement,
-// which asked for another layout, which wrote again. The inset is applied on the two visibility
-// signals below instead — moments YouTube itself decides — which is where this file's own note
-// about not polling from -layoutSubviews already said the work belonged.
+// **The frame is written from -layoutSubviews, and the difference from what broke the app is
+// exactly what is written.**
+//
+// Applying it only on the two visibility signals left the button drifting: the overlay lays its
+// own controls out whenever the player resizes, rotates, enters fullscreen or simply reflows, and
+// a frame measured from where the neighbours *were* is wrong the moment they move. The button
+// looked placed and then wandered.
+//
+// What made 1.28.2 unlaunchable was not writing from layout — it was writing a **constraint
+// constant** measured from the row this button is inside: that invalidates the constraint system
+// upward, the parent lays out again, and the measurement moves again. Setting a *child's frame*
+// marks the child as needing layout and does not ask the parent for anything, so it settles in
+// one pass. With the half-point guard below, an unchanged frame is not written at all.
+- (void)layoutSubviews {
+    %orig;
+
+    // After %orig: the neighbours have to be where they are going to be before anything is
+    // measured from them.
+    SCIApplyTopInset(self);
+}
 
 - (void)setOverlayVisible:(BOOL)visible {
     %orig;
