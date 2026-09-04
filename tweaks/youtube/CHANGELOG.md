@@ -3,6 +3,29 @@
 **Tested on YouTube 21.32.4.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.29.1
+
+**Still would not launch after 1.29.0, so this release stops guessing and does two things: it
+removes the last expensive thing on the launch path, and it makes a hang impossible to ship
+again.**
+
+**The feed filter tests a section by building its `-description`** — a renderer's whole subtree
+written out as text — and the diagnostics sample then described every kept section *a second
+time*, with case-insensitive searches over those strings. On a large home feed that is tens of
+megabytes of string building on the main thread, while the app is still showing its logo, and
+nothing of ours had to change for it to cross from slow into never finishing: the responses come
+from Google and they grew. Each section is described once now, the text is carried to the
+diagnostics rather than rebuilt, and the batch gets a **twelve-hundredths-of-a-second budget** —
+past that the rest goes through unexamined and the report says so. An ad getting through is a
+complaint; an app that will not open is not.
+
+**And the launch guard.** If the app has not become active within eight seconds of this tweak
+loading, everything expensive stands down for the rest of that session — the feed filter, the tab
+painting, the player overlay, the progress-bar markers — and the diagnostics page says in as many
+words that it happened. The timer runs on a background queue, because a main-queue one cannot fire
+while the main thread is the thing that is stuck. A tweak may cost a feature; it may not cost the
+app.
+
 ## v1.29.0
 
 **The app would not start: it sat on the YouTube logo, and three of our own hooks were asking

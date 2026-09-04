@@ -771,6 +771,25 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**`-description` on a protobuf is the whole subtree as text, and testing a feed with it is a cost
+that grows on somebody else's side of the network.** YouTube's ad filter decides whether a section
+is promoted by matching identifiers against `[section description]`, and the diagnostics sample
+then described every *kept* section a second time and ran case-insensitive searches over those
+strings. Tens of megabytes of string building on the main thread, on the first home response —
+which is while the app is still showing its logo. **Nothing of ours had to change for that to stop
+being survivable: the responses come from Google and they grew.** That is the shape worth keeping —
+a cost proportional to data you do not control is a fault waiting for a quiet day. Described once
+now and carried to the diagnostics, with a 120 ms budget per batch past which the rest goes through
+unexamined and the report names how many.
+
+**And a tweak may cost a feature; it may not cost the app.** Two releases were spent reading code
+for the cause of a hang, each finding something real and none of them the whole of it, which is the
+point at which the shape matters more than the identity. The launch guard watches for the app
+becoming active and, eight seconds after the tweak loads, stands every expensive hook down for that
+session and says so on the diagnostics page. **Its timer is on a background queue**, because a
+main-queue one cannot fire while the main thread is the thing that is stuck — the failure it exists
+for is exactly the failure that would silence it.
+
 **A view that changes itself during layout asks for another layout, and three hooks doing it at
 once is an app that never finishes launching.** YouTube sat on its own logo; turning Albrhi's
 YouTube switch off opened it instantly. The code had not changed in a day, which is exactly why
@@ -2254,9 +2273,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.17** · YouTube **1.29.0** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
+Instagram **4.1.17** · YouTube **1.29.1** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.2.1** · suite **1.74.2**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.2.1** · suite **1.74.3**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

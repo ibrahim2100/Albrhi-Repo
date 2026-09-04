@@ -3,6 +3,7 @@
 #import "../../YouTubeHeaders.h"
 #import "../../SCILog.h"
 #import "../../Prefs.h"
+#import "../../SCIYTLaunchGuard.h"
 #import "../../Localization/SCILocalize.h"
 #import "../../Diagnostics/SCIYTDiagnostics.h"
 #import "../Download/SCIYTDownload.h"
@@ -278,6 +279,7 @@ static void SCISyncSaveButton(YTMainAppControlsOverlayView *overlay, BOOL animat
 - (NSArray *)topControls {
     NSArray *controls = %orig;
 
+    if (SCIYTStoodDown()) return controls;
     if (!SCIPrefEnabled(SCIPrefOverlayButton)) return controls;
 
     @try {

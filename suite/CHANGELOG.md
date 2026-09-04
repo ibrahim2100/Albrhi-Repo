@@ -1,5 +1,16 @@
 # Albrhi Changelog
 
+## v1.74.3
+
+**YouTube still would not launch after 1.74.2.** The ad filter describes every feed section to
+test it, and the diagnostics described them all again — tens of megabytes of string building on
+the main thread while the app was still showing its logo. Described once now, with a time budget
+past which the rest of the batch goes through unexamined.
+
+**And a launch guard, so this cannot ship again**: if the app has not become active eight seconds
+after the tweak loads, every expensive hook stands down for that session and the diagnostics page
+says so. The app opens; the features are what is lost.
+
 ## v1.74.2
 
 **YouTube would not start — it sat on its own logo — and three Albrhi hooks were asking for a

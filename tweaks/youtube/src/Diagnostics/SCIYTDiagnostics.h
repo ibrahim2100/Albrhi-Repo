@@ -134,7 +134,14 @@
 /// answers is scattered ads on Home while scrolling, which is the feed filter missing a
 /// section rather than the player showing one, and the fastest way to find what it missed
 /// is to look at what it did not drop right after seeing one slip through.
-+ (void)recordFeedKeptSample:(NSArray *)sections;
+/// The kept sections, **already described**.
+///
+/// It used to take the sections themselves and call `-description` on each one — a second full
+/// description of every section in the batch, on top of the one the filter had just built to
+/// test it. A section renderer's description is its whole subtree as text, so on a large home
+/// feed that was tens of megabytes of string building on the main thread, twice, while the app
+/// was still showing its logo. The filter builds each text once now and hands it here.
++ (void)recordFeedKeptSampleTexts:(NSArray<NSString *> *)texts;
 + (NSString *)feedKeptSampleState;
 
 /// What the Shorts save button did, or why there is none.

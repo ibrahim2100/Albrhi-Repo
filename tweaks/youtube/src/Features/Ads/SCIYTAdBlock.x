@@ -1,6 +1,7 @@
 #import "../../YouTubeHeaders.h"
 #import "../../SCILog.h"
 #import "../../Prefs.h"
+#import "../../SCIYTLaunchGuard.h"
 #import "../../Diagnostics/SCIYTDiagnostics.h"
 
 ///
@@ -169,20 +170,22 @@ static NSArray<NSString *> *SCIPromotedIdentifiers(void) {
 /// is a GPBMessage, whose description prints the whole message tree including the
 /// element identifier. That needs no field name to be known, and a field name is
 /// precisely the kind of thing that changes between builds.
-static BOOL SCISectionIsPromoted(id section) {
-    if (!section) return NO;
-
-    NSString *text = nil;
+/// One description per section, per batch — the expensive half, kept separate so the caller can
+/// hand the same string to the diagnostics rather than paying for it twice.
+static NSString *SCIDescribeSection(id section) {
+    if (!section) return nil;
 
     @try {
-        text = [section description];
+        return [section description];
     } @catch (NSException *exception) {
         // A section that cannot describe itself is left alone. Hiding something on the
         // strength of a failed read would be worse than showing an ad.
         SCILogV(@"ads: could not describe a section: %@", exception.reason);
-        return NO;
+        return nil;
     }
+}
 
+static BOOL SCITextIsPromoted(NSString *text) {
     if (!text.length) return NO;
 
     for (NSString *identifier in SCIPromotedIdentifiers()) {
@@ -208,11 +211,56 @@ static BOOL SCISectionIsPromoted(id section) {
 /// `where` is carried through into the diagnostics so the next report names the door the
 /// ad came in by, rather than saying only that something got through.
 static NSArray *SCIFilterSections(NSArray *sections, NSString *where) {
+    if (SCIYTStoodDown()) return sections;
     if (!SCIPrefEnabled(SCIPrefHideAds) || !sections.count) return sections;
 
+    //
+    // **A time budget, because the test is `-description` and that is not a cheap question.**
+    //
+    // A section renderer describes itself by writing out its whole subtree, so the cost is the
+    // size of the feed rather than the number of sections — and this runs on the main thread,
+    // on the first home response, while the app is still showing its logo. Nothing here changed
+    // for that to matter: the *response* grew, on Google's side, and one day the arithmetic
+    // crossed from slow to a launch that never finished.
+    //
+    // So the batch gets twelve hundredths of a second. Past that everything left is kept
+    // unexamined and the report says so. An ad getting through is a complaint; an app that will
+    // not open is not a complaint, it is a broken phone — the same trade the brake below makes
+    // for a filter that drops too much.
+    //
+    static const NSTimeInterval kSCIFilterBudget = 0.12;
+    CFAbsoluteTime started = CFAbsoluteTimeGetCurrent();
+    NSUInteger examined = 0;
+
     NSMutableArray *kept = [NSMutableArray arrayWithCapacity:sections.count];
+
+    // Built once and carried, rather than described a second time for the diagnostics sample.
+    NSMutableArray<NSString *> *keptTexts = [NSMutableArray array];
+
     for (id section in sections) {
-        if (!SCISectionIsPromoted(section)) [kept addObject:section];
+        if (CFAbsoluteTimeGetCurrent() - started > kSCIFilterBudget) {
+            [kept addObject:section];
+            continue;
+        }
+
+        examined++;
+
+        NSString *text = SCIDescribeSection(section);
+        if (!SCITextIsPromoted(text)) {
+            [kept addObject:section];
+
+            // Only the first part of the first few, so the report cannot hold megabytes of
+            // somebody's feed in memory for the life of the process.
+            if (keptTexts.count < 24 && text.length) {
+                [keptTexts addObject:text.length > 4000 ? [text substringToIndex:4000] : text];
+            }
+        }
+    }
+
+    if (examined < sections.count) {
+        [SCIYTDiagnostics recordFeedBrake:
+            [NSString stringWithFormat:@"%@: out of time after %lu of %lu — the rest went through unexamined",
+             where, (unsigned long)examined, (unsigned long)sections.count]];
     }
 
     // The brake.
@@ -256,7 +304,7 @@ static NSArray *SCIFilterSections(NSArray *sections, NSString *where) {
     // Reported separately from the counts above because a scattered ad on Home is this
     // list still holding one, and the fastest way to find which identifier is missing is
     // to look at what came through right after seeing it happen.
-    [SCIYTDiagnostics recordFeedKeptSample:kept];
+    [SCIYTDiagnostics recordFeedKeptSampleTexts:keptTexts];
 
     return kept;
 }

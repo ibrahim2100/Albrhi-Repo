@@ -1,4 +1,5 @@
 #import "SCIYTDiagnostics.h"
+#import "../SCIYTLaunchGuard.h"
 #import "shared/src/SCIKVC.h"
 #import "../YouTubeHeaders.h"
 #import "../Tweak.h"
@@ -202,6 +203,12 @@ static NSUInteger sciFeedDropped = 0;
 static NSString *sciFeedBrake = nil;
 
 + (NSString *)feedState {
+    // First, and above everything else this section says, because if the guard tripped then
+    // every number below it is the number for a session in which the tweak was standing down.
+    // A report that lists "0 dropped" without saying that is a report that sends the next hour
+    // in the wrong direction.
+    if (SCIYTStoodDown()) return SCIYTLaunchGuardReport();
+
     if (!sciFeedSeen) return SCILocalized(@"diag_feed_none");
 
     NSString *counts = [NSString stringWithFormat:SCILocalized(@"diag_feed_counts"),
@@ -343,18 +350,12 @@ static NSArray<NSString *> *SCISuspiciousMarkers(void) {
 /// gets a short excerpt, so twelve untagged videos do not turn one report into a log file.
 static NSMutableArray<NSString *> *sciFeedKeptSample = nil;
 
-+ (void)recordFeedKeptSample:(NSArray *)sections {
++ (void)recordFeedKeptSampleTexts:(NSArray<NSString *> *)texts {
     NSArray<NSString *> *markers = SCISuspiciousMarkers();
     NSMutableArray<NSString *> *flagged = [NSMutableArray array];
     NSMutableArray<NSString *> *ordinary = [NSMutableArray array];
 
-    for (id section in sections) {
-        NSString *text = nil;
-        @try {
-            text = [section description];
-        } @catch (__unused NSException *exception) {
-            continue;
-        }
+    for (NSString *text in texts) {
         if (!text.length) continue;
 
         BOOL suspicious = NO;

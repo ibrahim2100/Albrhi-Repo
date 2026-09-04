@@ -1,4 +1,5 @@
 #import "SCIYTHistoryTab.h"
+#import "../../SCIYTLaunchGuard.h"
 #import "shared/src/SCIKVC.h"
 #import <objc/message.h>
 #import "../../Tweak.h"

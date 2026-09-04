@@ -3,10 +3,11 @@
 #import "UI/SCIYTWelcome.h"
 #import "SCILog.h"
 #import "Prefs.h"
+#import "SCIYTLaunchGuard.h"
 #import "Diagnostics/SCIYTDiagnostics.h"
 #import "Features/Display/SCIYTDimmer.h"
 
-NSString *SCIVersionString = @"v1.29.0";  // AlbrhiYT
+NSString *SCIVersionString = @"v1.29.1";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.
@@ -179,6 +180,9 @@ NSString *SCIVersionString = @"v1.29.0";  // AlbrhiYT
         SCIPrefNightStart: @1320,   // 22:00
         SCIPrefNightEnd: @420,      // 07:00
     }];
+
+    // Before anything else, because what it guards against is this launch not finishing.
+    SCIYTLaunchGuardStart();
 
     // Unconditional, and the only line here that is.
     //

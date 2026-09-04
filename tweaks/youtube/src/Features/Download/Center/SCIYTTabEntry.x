@@ -7,6 +7,7 @@
 #import "SCIYTIcon.h"
 #import "../../../SCILog.h"
 #import "../../../Prefs.h"
+#import "../../../SCIYTLaunchGuard.h"
 #import "../../../Localization/SCILocalize.h"
 #import "../../../Diagnostics/SCIYTDiagnostics.h"
 #import "../../Tabs/SCIYTTabBar.h"
@@ -315,6 +316,8 @@ static BOOL SCIPaintIcon(UIView *view) {
 /// cache lookup.
 - (void)layoutSubviews {
     %orig;
+
+    if (SCIYTStoodDown()) return;
 
     NSString *mark = objc_getAssociatedObject(self, &kSCIIsOurItemView);
     if ([mark isEqualToString:@"history"]) SCIYTPaintHistoryIcon((UIView *)self);

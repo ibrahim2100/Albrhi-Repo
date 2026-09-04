@@ -2,6 +2,7 @@
 #import "shared/src/SCIResponder.h"
 #import "../../SCILog.h"
 #import "../../Prefs.h"
+#import "../../SCIYTLaunchGuard.h"
 #import "../../Localization/SCILocalize.h"
 #import "SCIYTSponsorClient.h"
 #import "../Download/SCIYTDownload.h"
@@ -274,7 +275,7 @@ static __weak UIView *sciLastBar = nil;
 /// resizes -- rotation, fullscreen, the miniplayer -- and a stale marker is worse than
 /// none.
 static void SCIDrawMarkers(UIView *bar, double barTotalTime) {
-    if (!bar) return;
+    if (!bar || SCIYTStoodDown()) return;
 
     sciLastBar = bar;
 
