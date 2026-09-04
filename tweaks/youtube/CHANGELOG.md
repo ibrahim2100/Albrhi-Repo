@@ -3,6 +3,25 @@
 **Tested on YouTube 21.32.4.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.29.2
+
+**The tab-bar changes are off until a device says they are safe, and the reason they are the
+suspect is that they had never actually run before.**
+
+`-setRenderer:` on `YTPivotBarView` is where this tweak appends the Download Centre tab, appends
+History and applies a stored tab order — all by mutating YouTube's own items array, from inside a
+method YouTube calls **while it builds the bar during launch**, before the app has drawn anything.
+
+It reaches that array through `SCISafeValueForKey`, and until the fix of 2026-09-03 that helper
+answered **nil for every protobuf class** — `YTIPivotBarRenderer` included. So the whole block was
+dead code from the day it was written; the release before the app stopped launching is the release
+that woke it up. Nothing in this tweak's own history said "the tab bar changed" because, as far as
+this tweak was concerned, nothing had.
+
+Off by default, with a switch in Settings › Downloads to turn it back on, and the launch guard
+covers it as well. The Download Centre is still in this tweak's settings screen; what is off is
+its tab.
+
 ## v1.29.1
 
 **Still would not launch after 1.29.0, so this release stops guessing and does two things: it

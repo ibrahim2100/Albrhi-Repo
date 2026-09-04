@@ -98,6 +98,23 @@
 /// Both default off. Every other switch here acts on a class this project has confirmed;
 /// these two act on leads read from YTVideoOverlay (MIT), and a surface nobody has yet seen
 /// attach on a device should be asked for rather than assumed.
+/// Whether this tweak may change YouTube's own tab bar at all -- the Download Centre tab, the
+/// History tab and the stored order.
+///
+/// **Off until a device says otherwise, and that is a retreat rather than a design.** These
+/// appends are made from `-setRenderer:` on `YTPivotBarView`, which YouTube calls while it is
+/// building the bar during launch, and the bar is built before the app draws anything. A device
+/// reported YouTube sitting on its logo and then being killed; the switch for the whole tweak
+/// opened it instantly; three real faults were found and fixed and it still would not start.
+///
+/// This is the largest thing left that runs at launch and mutates one of YouTube's own model
+/// objects — and it is newly live: it reads the items array through `SCISafeValueForKey`, which
+/// answered nil for every protobuf class until the fix of 2026-09-03. Code that had been dead
+/// since it was written started running on the release before the app stopped launching.
+///
+/// The Download Centre is still reachable from this tweak's own settings; what is off is the tab.
+#define SCIPrefPivotBar         @"pivot_bar_changes"
+
 #define SCIPrefOverlayButton    @"overlay_save_button"
 #define SCIPrefOverlayEndTime   @"overlay_end_time"
 

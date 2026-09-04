@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.74.4
+
+**YouTube's tab-bar changes are switched off until a device says otherwise.** They rewrite one of
+YouTube's own model objects while it builds the tab bar during launch — and they had never once
+run before: the helper they read that object through answered nil for every protobuf class until
+the day before the app stopped launching. Everything else in the YouTube tweak is unchanged; the
+Download Centre is still in its settings screen, and a switch there puts the tab back.
+
 ## v1.74.3
 
 **YouTube still would not launch after 1.74.2.** The ad filter describes every feed section to

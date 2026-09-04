@@ -184,6 +184,14 @@ static BOOL SCIPaintIcon(UIView *view) {
         return;
     }
 
+    // Nothing at all unless this is switched on, and nothing once the launch guard has given
+    // up. This runs while YouTube builds its tab bar, which is before the app has drawn
+    // anything -- the worst moment in the process to be rewriting one of its model objects.
+    if (SCIYTStoodDown() || !SCIPrefEnabled(SCIPrefPivotBar)) {
+        %orig;
+        return;
+    }
+
     // Two things happen to this array and they are deliberately in one hook rather than
     // two: our tab is appended, and then the whole bar is arranged. Written as separate
     // %hooks in separate files they would still both run, but which ran first would decide

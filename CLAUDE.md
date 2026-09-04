@@ -771,6 +771,21 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**Fixing a helper turns dead code live, and nothing in the tweak that owns that code says so.**
+YouTube would not launch — logo, then killed — and three releases of reading found three real
+faults, none of them the whole of it. The thing that had actually changed was one directory away:
+`SCISafeValueForKey` answered **nil for every protobuf class** until the `-methodSignatureForSelector:`
+fix, and `YTPivotBarView -setRenderer:` reads YouTube's own items array through it to append the
+Download Centre tab, append History and apply a stored order — **while YouTube builds the bar
+during launch, before the app has drawn anything.** That block had been dead since it was written.
+The release before the app stopped launching is the release that woke it up, and this tweak's own
+history contains no line saying the tab bar changed, because as far as it knew nothing had.
+
+**So the question after fixing shared code is not "does it still compile" but "what starts running
+that was not running before".** A `nil` that a caller reads as "not on this build" is a feature
+that has been silently absent, and un-silencing it is a behaviour change in every tweak that calls
+it. Grep the callers, not just the tests.
+
 **`-description` on a protobuf is the whole subtree as text, and testing a feed with it is a cost
 that grows on somebody else's side of the network.** YouTube's ad filter decides whether a section
 is promoted by matching identifiers against `[section description]`, and the diagnostics sample
@@ -2273,9 +2288,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.17** · YouTube **1.29.1** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
+Instagram **4.1.17** · YouTube **1.29.2** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.2.1** · suite **1.74.3**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.2.1** · suite **1.74.4**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

@@ -98,6 +98,10 @@
                        detail:SCILocalized(@"set_hold_to_save_note")
                        symbol:@"hand.tap"
                       prefKey:SCIPrefHoldToSave],
+            [SCIRow switchRow:SCILocalized(@"set_pivot_bar")
+                       detail:SCILocalized(@"set_pivot_bar_note")
+                       symbol:@"rectangle.bottomthird.inset.filled"
+                      prefKey:SCIPrefPivotBar],
             [SCIRow switchRow:SCILocalized(@"set_shorts_button")
                        detail:SCILocalized(@"set_shorts_button_note")
                        symbol:@"play.rectangle.on.rectangle"
