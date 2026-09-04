@@ -1,7 +1,31 @@
 # Albrhi Changelog
 
-*Between releases: the licence panel and the licence screen inside each tweak are being built and
-tested locally. Nothing here is released yet.*
+## v1.76.1
+
+**Each social tweak is now available on its own, licensed on its own.**
+
+Somebody who wants one tweak and not the whole of Albrhi installs the individual package instead
+of `com.albrhi` — the suite declares `Conflicts` and `Replaces` on all of them, so the same dylib
+can never be injected twice. Instagram, YouTube, X and TikTok; Spotify and YouTube Music stay
+inside Albrhi, because neither has a settings screen to enter a key in.
+
+**Each also ships as a standalone dylib**, for injecting into an IPA on a phone with no jailbreak
+at all — no CydiaSubstrate, no PreferenceLoader, no panel. Proved rather than claimed: the build
+refuses a dylib that still links Substrate, one that still expects an `MS` symbol at load time,
+or one without the licence check compiled in.
+
+**And the licence moved into the apps.** Albrhi Panel's licence page exists only where
+PreferenceLoader does, so a tweak on its own had nowhere to enter a key — which is why a
+self-contained build used to run ungated. Every tweak now carries the same screen in its own
+settings: status, device code, key or code entry, and removal.
+
+Licences come in three kinds now, in a field that already existed, so nothing already issued
+changes: the jailbreak licence covers everything, a shared code covers the separate tweaks, and an
+app licence covers one. **On a jailbreak nothing about activation changes** — one activation in
+Settings › Albrhi still licenses every tweak on the phone.
+
+The panel gained a page per licence: what it covers, the code as it was typed, and every app the
+key is running in with its version and when it was last seen.
 
 ## v1.76.0
 
