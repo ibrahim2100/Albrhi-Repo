@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.75.0
+
+**A Save button beside Like and Share in YouTube.** Added as one more renderer in YouTube's own
+action row, so the app builds the button itself and it behaves like the ones next to it — the same
+technique as the Download Centre tab, and every hop of the chain read from the app's own class
+metadata.
+
 ## v1.74.5
 
 **The YouTube Download Centre and History tabs are back**, applied a moment after the app opens

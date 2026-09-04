@@ -426,6 +426,10 @@
 // title or a guess at a view's position; here the app is simply asked.
 //
 @interface YTSlimVideoDetailsActionView : UIView
+/// The YTQTMButton this action view draws -- confirmed as `button : @"YTQTMButton"` in the app's
+/// own class metadata. Typed as UIButton here because what this tweak does with it is paint an
+/// image on it, and YTQTMButton is one.
+@property (nonatomic, readonly) UIButton *button;
 - (void)didTapButton:(id)sender;
 - (void)handleLongPressOnButton:(id)sender;
 /// YES on the download button and nowhere else. Behind `-respondsToSelector:` at every call

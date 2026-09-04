@@ -115,6 +115,9 @@
 /// The Download Centre is still reachable from this tweak's own settings; what is off is the tab.
 #define SCIPrefPivotBar         @"pivot_bar_changes"
 
+/// Save in the row with Like and Share -- YouTube's own action row, with one more renderer in it.
+#define SCIPrefActionRowButton  @"action_row_save"
+
 #define SCIPrefOverlayButton    @"overlay_save_button"
 #define SCIPrefOverlayEndTime   @"overlay_end_time"
 

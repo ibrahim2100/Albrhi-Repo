@@ -3,6 +3,34 @@
 **Tested on YouTube 21.32.4.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.30.0
+
+**Save, in the row with Like and Share — asked for directly, and built the way YouTube builds
+that row rather than as a button placed over it.**
+
+The row is `YTSlimVideoScrollableDetailsActionsView`, and it is handed its buttons through
+`-createActionViewsFromSupportedRenderers:`. One more entry in that array and **YouTube builds the
+button itself**: its own metrics, its own label, its own collapse behaviour when the row runs out
+of width, its own scrolling. Nothing of ours is drawn, so there is nothing to keep in sync — the
+same reason the Download Centre is a pivot renderer rather than a circle painted over the tab bar.
+
+Every hop was read from the app's own class metadata rather than guessed, which is the only kind
+of chain that has ever worked here:
+
+    YTISlimMetadataButtonSupportedRenderers . slimMetadataButtonRenderer : YTISlimMetadataButtonRenderer
+    YTISlimMetadataButtonRenderer           . button   : YTIButtonSupportedRenderers
+    YTIButtonSupportedRenderers             . buttonRenderer : YTIButtonRenderer
+    YTIButtonRenderer                       . text : YTIFormattedString, targetId : NSString
+
+`targetId` is what makes the tap unambiguous: the button is recognised by a string this tweak
+wrote, not by comparing a label against an English word — a test that fails on an Arabic phone.
+The icon is painted onto the button afterwards, because `YTIIcon` wants an enum whose values are
+not readable from the binary, and a refusal to guess at that is older than this feature.
+
+**It is not on the launch path** — the row is built when a video is opened — which is why it can
+be on by default a day after the tab bar had to be moved off it. The launch guard covers it
+anyway, the diagnostics page has its own section for it, and Settings › Downloads has its switch.
+
 ## v1.29.3
 
 **The Download Centre and History tabs are back, applied a second after the app opens instead of

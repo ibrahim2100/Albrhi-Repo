@@ -7,7 +7,7 @@
 #import "Diagnostics/SCIYTDiagnostics.h"
 #import "Features/Display/SCIYTDimmer.h"
 
-NSString *SCIVersionString = @"v1.29.3";  // AlbrhiYT
+NSString *SCIVersionString = @"v1.30.0";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.
@@ -166,6 +166,11 @@ NSString *SCIVersionString = @"v1.29.3";  // AlbrhiYT
         // later. A fault there costs a tab and can be switched off from inside a running app,
         // which is the whole difference from what 1.29.2 shipped.
         SCIPrefPivotBar: @YES,
+
+        // In the row with Like and Share, where the owner asked for it. On: it is a renderer
+        // handed to YouTube's own row builder rather than a view of ours placed over anything,
+        // and it is built when a video opens rather than during the launch.
+        SCIPrefActionRowButton: @YES,
 
         SCIPrefOverlayButton: @YES,
         SCIPrefOverlayEndTime: @NO,

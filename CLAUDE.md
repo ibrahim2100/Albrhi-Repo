@@ -771,6 +771,18 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**Adding a button to somebody else's row means adding a renderer, not a view — and YouTube's
+action row is the third place this has now been the answer.** The row under a video is
+`YTSlimVideoScrollableDetailsActionsView`, handed its buttons through
+`-createActionViewsFromSupportedRenderers:`; one more entry in that array and the app builds the
+button with its own metrics, label, collapse behaviour and scrolling, so there is nothing of ours
+to keep in sync. The chain was read hop by hop out of the app's own class metadata —
+`YTISlimMetadataButtonSupportedRenderers.slimMetadataButtonRenderer` → `.button` →
+`.buttonRenderer` → `YTIButtonRenderer{text, targetId, icon}` — and **`targetId` is what makes the
+tap unambiguous**: a string this project wrote, rather than an accessibility label compared against
+an English word on an Arabic phone. The icon is still painted on afterwards, because `YTIIcon`'s
+enum is not readable from the binary; that refusal is older than the feature and unchanged by it.
+
 **The launch is the one part of a process a tweak must not be inside, and the fix for anything
 that must touch it is a moment rather than a rewrite.** YouTube's tab bar is changed from
 `YTPivotBarView -setRenderer:`, which the app calls while building the bar — before it has drawn
@@ -2303,9 +2315,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.17** · YouTube **1.29.3** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
+Instagram **4.1.17** · YouTube **1.30.0** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.2.1** · suite **1.74.5**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.2.1** · suite **1.75.0**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

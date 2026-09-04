@@ -262,6 +262,17 @@ static NSString *sciOverlayButton = nil;
     return sciOverlayButton ?: SCILocalized(@"diag_overlay_none");
 }
 
+/// The action row's own slot. See the header for why it is not shared with the overlay's.
+static NSString *sciActionRow = nil;
+
++ (void)recordActionRow:(NSString *)state {
+    if (state.length) sciActionRow = [state copy];
+}
+
++ (NSString *)actionRowState {
+    return sciActionRow ?: SCILocalized(@"diag_action_row_none");
+}
+
 /// The last save actually attempted, kept apart from the placement line above.
 ///
 /// They shared one slot and placement won every time. Placement is written whenever an
@@ -991,6 +1002,9 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
         [self nativeDownloadButtonState], [self nativeDownloadNote]];
 
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_overlay"), [self overlayButtonState]];
+    // In the report as well as on the screen. A row added to one and not the other is a round
+    // trip spent looking for a line that was never where it was being looked for.
+    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_action_row_title"), [self actionRowState]];
 
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts"), [self shortsButtonState]];
 

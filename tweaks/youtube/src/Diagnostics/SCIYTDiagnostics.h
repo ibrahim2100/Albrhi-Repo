@@ -171,6 +171,14 @@
 /// `-recordMarkerBar:`, the SponsorBlock progress-bar slot, so an unconfirmed feature's only
 /// evidence was filed under an unrelated heading and no report ever showed it.
 + (void)recordOverlayButton:(NSString *)state;
+
+/// The Save button in YouTube's own action row -- rows seen, renderers added, views found, taps.
+///
+/// Its own slot, not shared with the player overlay's. The overlay button spent eight releases
+/// recording into the SponsorBlock marker line, so no report ever mentioned it and nobody could
+/// confirm anything: a diagnostic filed under another feature's heading reads as covered.
++ (void)recordActionRow:(NSString *)state;
++ (NSString *)actionRowState;
 + (NSString *)overlayButtonState;
 
 /// What the last tap on that button actually tried to save. Its own slot: the line above is
