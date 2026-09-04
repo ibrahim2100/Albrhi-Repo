@@ -156,6 +156,74 @@ static CGFloat SCITopInsetFor(YTMainAppControlsOverlayView *overlay) {
 }
 
 
+/// **Placement happens once per overlay, and never from inside a layout pass.**
+///
+/// `-topControls` is a getter YouTube calls *while it is laying out*, and 1.27.1 put
+/// `-bringSubviewToFront:` in it, plus two localized format strings and a diagnostics write, on
+/// every single call. Bringing a subview to the front marks the hierarchy as needing layout;
+/// laying out asks for `-topControls` again; and that is a loop with nothing to stop it. On top
+/// of it 1.28.2 set a constraint constant from `-layoutSubviews`, measured with
+/// `-topControlsHeight` — the height of the row this button is inside — so the measurement moved
+/// every time the button did. Two feedback loops on the main thread, in the player, which is why
+/// YouTube sat on its own logo and never finished launching.
+///
+/// The rule this leaves behind is worth more than the fix: **a hook on a getter that layout calls
+/// must be free the second time.** Do the work when there is work — build the button once, place
+/// it once — and hand back `%orig` untouched ever after.
+static const NSUInteger kSCIOverlayInsetWriteCap = 16;
+
+static char kSCIOverlayInsetWrites;
+
+/// Writes the top constraint, bounded twice: only for a real change, and only so many times for
+/// one overlay. A measurement that will not settle then costs a button six points out of place
+/// rather than an app that will not start.
+static void SCIApplyTopInset(YTMainAppControlsOverlayView *overlay) {
+    NSLayoutConstraint *top = objc_getAssociatedObject(overlay, &kSCIOverlayTopConstraint);
+    if (!top) return;
+
+    NSNumber *written = objc_getAssociatedObject(overlay, &kSCIOverlayInsetWrites);
+    if (written.unsignedIntegerValue >= kSCIOverlayInsetWriteCap) return;
+
+    CGFloat wanted = SCITopInsetFor(overlay);
+    if (wanted <= 0) return;
+
+    // Half a point, because a difference smaller than that is rounding, and writing rounding
+    // back into a constraint is how a settled layout is made to move again.
+    if (ABS(top.constant - wanted) < 0.5) return;
+
+    top.constant = wanted;
+    sciOverlayTopInset = wanted;
+    objc_setAssociatedObject(overlay, &kSCIOverlayInsetWrites,
+                             @(written.unsignedIntegerValue + 1), OBJC_ASSOCIATION_RETAIN);
+}
+
+
+/// Where the button actually ended up, read on a visibility signal rather than during layout.
+///
+/// It used to be built on every `-topControls` call — two localized format strings per call, on a
+/// getter layout asks for constantly. Here it costs two strings each time the controls appear or
+/// disappear, which is a handful a minute, and the numbers in it are real: the button has been
+/// laid out by the time these fire, so a frame of zero means something rather than "too early".
+static void SCIRecordOverlayPlacement(YTMainAppControlsOverlayView *overlay) {
+    UIButton *save = objc_getAssociatedObject(overlay, &kSCIOverlaySaveButton);
+    if (!save) return;
+
+    sciOverlayPlacement =
+        [NSString stringWithFormat:SCILocalized(@"diag_overlay_frame_inset"),
+            (double)sciOverlayTopInset,
+            [overlay respondsToSelector:@selector(topControlsHeight)]
+                ? (double)[overlay topControlsHeight] : -1.0];
+    sciOverlayPlacement = [sciOverlayPlacement stringByAppendingFormat:@" · %@",
+        [NSString stringWithFormat:SCILocalized(@"diag_overlay_frame"),
+            (double)save.frame.origin.x, (double)save.frame.origin.y,
+            (double)save.frame.size.width, (double)save.frame.size.height,
+            save.window ? SCILocalized(@"diag_overlay_in_window")
+                        : SCILocalized(@"diag_overlay_no_window")]];
+
+    SCIReportOverlayState([objc_getAssociatedObject(overlay, &kSCIOverlayJoined) boolValue]);
+}
+
+
 static void SCISyncSaveButton(YTMainAppControlsOverlayView *overlay, BOOL animated) {
     UIButton *save = objc_getAssociatedObject(overlay, &kSCIOverlaySaveButton);
     if (!save) return;
@@ -213,10 +281,15 @@ static void SCISyncSaveButton(YTMainAppControlsOverlayView *overlay, BOOL animat
     if (!SCIPrefEnabled(SCIPrefOverlayButton)) return controls;
 
     @try {
-        sciOverlaysSeen++;
-
         UIButton *save = objc_getAssociatedObject(self, &kSCIOverlaySaveButton);
         BOOL joined = [objc_getAssociatedObject(self, &kSCIOverlayJoined) boolValue];
+
+        // **Nothing at all once the button is placed.** Everything below belongs to building it,
+        // and this method is called during layout: anything it does on every call is something
+        // layout does on every call, and two of those together stopped the app from starting.
+        if (save && save.superview == self) return controls;
+
+        sciOverlaysSeen++;
 
         if (!save) {
             UIImage *icon = [UIImage systemImageNamed:@"arrow.down.circle"];
@@ -302,18 +375,10 @@ static void SCISyncSaveButton(YTMainAppControlsOverlayView *overlay, BOOL animat
         // added and the first thing a redraw of YouTube's own controls would bury.
         [self bringSubviewToFront:save];
 
-        sciOverlayPlacement =
-            [NSString stringWithFormat:SCILocalized(@"diag_overlay_frame_inset"),
-                (double)sciOverlayTopInset,
-                [self respondsToSelector:@selector(topControlsHeight)]
-                    ? (double)[self topControlsHeight] : -1.0];
-        sciOverlayPlacement = [sciOverlayPlacement stringByAppendingFormat:@" · %@",
-            [NSString stringWithFormat:SCILocalized(@"diag_overlay_frame"),
-                (double)save.frame.origin.x, (double)save.frame.origin.y,
-                (double)save.frame.size.width, (double)save.frame.size.height,
-                save.window ? SCILocalized(@"diag_overlay_in_window")
-                            : SCILocalized(@"diag_overlay_no_window")]];
-
+        // The frame is not read here: at build time it is zero, because nothing has been laid
+        // out yet, and a report of 0×0 would say the placement failed when it has not happened
+        // yet. It is recorded on the visibility signals below, where the button has a frame and
+        // where the work is not on a layout path.
         SCIReportOverlayState(joined);
     } @catch (NSException *exception) {
         // A button is a convenience and the player is not. Anything thrown here costs the
@@ -334,32 +399,30 @@ static void SCISyncSaveButton(YTMainAppControlsOverlayView *overlay, BOOL animat
 // -Werror turns into three fatal errors in one generated line. Every other %new in this
 // project writes a plain typed parameter for the same reason; an unused one is not warned
 // about in an Objective-C method the way it would be in a C function.
-- (void)layoutSubviews {
-    %orig;
-
-    // After %orig, because the row's own height is what is being read and %orig is what sets it.
-    NSLayoutConstraint *top = objc_getAssociatedObject(self, &kSCIOverlayTopConstraint);
-    if (!top) return;
-
-    CGFloat wanted = SCITopInsetFor(self);
-    if (wanted <= 0 || top.constant == wanted) return;
-
-    top.constant = wanted;
-    sciOverlayTopInset = wanted;
-}
+// **There is no -layoutSubviews hook here any more, and that is the fix rather than a tidy-up.**
+//
+// 1.28.2 read `-topControlsHeight` in it and wrote the constraint constant from what it found.
+// The button sits in the row being measured, so writing the constant changed the measurement,
+// which asked for another layout, which wrote again. The inset is applied on the two visibility
+// signals below instead — moments YouTube itself decides — which is where this file's own note
+// about not polling from -layoutSubviews already said the work belonged.
 
 - (void)setOverlayVisible:(BOOL)visible {
     %orig;
     sciOverlayFadeSignals++;
     objc_setAssociatedObject(self, &kSCIOverlayShown, @(visible), OBJC_ASSOCIATION_RETAIN);
+    SCIApplyTopInset(self);
     SCISyncSaveButton(self, YES);
+    SCIRecordOverlayPlacement(self);
 }
 
 - (void)setTopOverlayVisible:(BOOL)visible isAutonavCanceledState:(BOOL)cancelled {
     %orig;
     sciOverlayFadeSignals++;
     objc_setAssociatedObject(self, &kSCIOverlayTopShown, @(visible), OBJC_ASSOCIATION_RETAIN);
+    SCIApplyTopInset(self);
     SCISyncSaveButton(self, YES);
+    SCIRecordOverlayPlacement(self);
 }
 
 %new
@@ -422,8 +485,18 @@ static void SCISyncSaveButton(YTMainAppControlsOverlayView *overlay, BOOL animat
             [SCIYTDiagnostics recordMarkerBar:@"YTInlinePlayerBarContainerView(endtime)" count:1];
         }
 
-        label.text = text;
-        [self bringSubviewToFront:label];
+        // **Only when it changed, and the reorder only when it is not already on top.**
+        //
+        // This ran on every layout pass: `-setText:` invalidates the label's layout and
+        // `-bringSubviewToFront:` reorders this view's subviews, and each of those asks for
+        // another layout pass, which arrives here and does both again. A loop on the main
+        // thread inside the player — the second of the two in this file that kept YouTube
+        // sitting on its own logo.
+        //
+        // A clock time changes once a minute, so the comparison is nearly always the answer,
+        // and the button below is added last anyway.
+        if (![label.text isEqualToString:text]) label.text = text;
+        if (self.subviews.lastObject != label) [self bringSubviewToFront:label];
     } @catch (NSException *exception) {
         SCILogV(@"overlay: end time — %@", exception.reason);
     }

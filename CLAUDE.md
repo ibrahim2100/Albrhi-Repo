@@ -771,6 +771,31 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**A view that changes itself during layout asks for another layout, and three hooks doing it at
+once is an app that never finishes launching.** YouTube sat on its own logo; turning Albrhi's
+YouTube switch off opened it instantly. The code had not changed in a day, which is exactly why
+reading it beat bisecting: what was new was two releases nobody had run on a device. All three
+faults are the same shape — **work done on a layout path must be free the second time**:
+
+- `-topControls` is a *getter YouTube calls while laying out*, and it carried
+  `-bringSubviewToFront:`, two localised `stringWithFormat:` calls and a diagnostics write **per
+  call**. Reordering subviews invalidates layout, layout asks for `-topControls`, and round it
+  goes. It builds the button once now and returns `%orig` untouched afterwards.
+- A constraint constant was written from `-layoutSubviews`, measured from `-topControlsHeight` —
+  the height of the row the button is *inside*, so our own change moved the measurement. Applied
+  on the visibility signals instead, only past a half-point threshold, and capped per player.
+- Tab icons were repainted every pass. **`-setImage:forState:` invalidates a button's layout even
+  when the image is identical**, and the pivot bar is built while the splash is up. The guard
+  compares against images held in statics rather than fetched from an `NSCache`, because an
+  eviction would hand back an equal image at a new address and quietly restore the loop.
+
+`setNeedsLayout` inside `layoutSubviews` does not recurse immediately — it schedules the next
+pass — so the symptom is not a stack overflow but a main thread that never goes idle, which is
+indistinguishable from a hang and survives every crash log. **A launch that hangs with no crash
+is the signature of work that re-arms itself**, and the first question to ask of any hook on
+`-layoutSubviews`, `-didMoveToWindow` or a getter used by layout is what it does on the *second*
+call.
+
 **"Free and open source" came out of every description, and the licence statement did not.**
 The software needs a licence to run, and the first line of every package page said it was free —
 one word, in eight `control` files, the source's own landing page and three in-app credit strings,
@@ -2229,9 +2254,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.17** · YouTube **1.28.3** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
+Instagram **4.1.17** · YouTube **1.29.0** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.2.1** · suite **1.74.1**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.2.1** · suite **1.74.2**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

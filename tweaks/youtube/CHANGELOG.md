@@ -3,6 +3,33 @@
 **Tested on YouTube 21.32.4.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.29.0
+
+**The app would not start: it sat on the YouTube logo, and three of our own hooks were asking
+for a layout pass from inside one.**
+
+Reported as "it suddenly stopped launching", and the switch settled it in one step — off, the app
+opened immediately. Our code had not changed in a day, which is what made it worth reading rather
+than bisecting: what was new was 1.27.1 and 1.28.2, neither confirmed on a device.
+
+Three places, one mistake:
+
+- `-topControls` is a getter YouTube calls **while it is laying out**, and 1.27.1 put
+  `-bringSubviewToFront:` in it, along with two localised format strings and a diagnostics write,
+  on every single call. Reordering subviews asks for another layout; another layout asks for
+  `-topControls`. It does its work once now and hands back the app's own array ever after.
+- 1.28.2 measured the top row from `-layoutSubviews` and wrote a constraint constant from it. The
+  button is *inside* the row being measured, so the measurement moved every time the button did.
+  The inset is applied on the two visibility signals instead, only for a real change, and at most
+  sixteen times per player.
+- The tab-bar icons were repainted on every layout pass — `-setImage:forState:` invalidates a
+  button's layout whether or not the image changed, and the tab bar is built while the app is
+  still showing its logo. Painted only when it is not already ours, against images held for the
+  life of the process so the comparison cannot be defeated by a cache eviction.
+
+The end-time label had the same fault, set and reordered every pass; it is off by default, so
+nobody met it. Fixed in the same pass.
+
 ## v1.28.3
 
 **"Free" is out of every description.** The tweak needs a licence; a package page saying it is

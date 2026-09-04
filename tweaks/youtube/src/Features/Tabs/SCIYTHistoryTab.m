@@ -98,7 +98,12 @@ id SCIYTMakeHistoryItem(void) {
 BOOL SCIYTPaintHistoryIcon(UIView *view) {
     if (!view) return NO;
 
-    UIImage *clock = [UIImage systemImageNamed:@"clock.arrow.circlepath"];
+    // Held for the life of the process so the comparison below compares a stable pointer:
+    // UIKit's own cache for a system image is not a promise about identity, and the moment a
+    // second instance came back the repaint-guard would stop matching.
+    static UIImage *clock = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{ clock = [UIImage systemImageNamed:@"clock.arrow.circlepath"]; });
     if (!clock) return NO;
 
     // Breadth-first to the first button, exactly as the Download Centre tab does: a pivot
@@ -111,10 +116,18 @@ BOOL SCIYTPaintHistoryIcon(UIView *view) {
 
         if ([next isKindOfClass:[UIButton class]]) {
             UIButton *button = (UIButton *)next;
-            [button setImage:clock forState:UIControlStateNormal];
-            [button setImage:clock forState:UIControlStateSelected];
-            [button setImage:clock forState:UIControlStateHighlighted];
-            button.tintColor = SCIAccent();
+
+            // Only when it is not already ours. `-setImage:forState:` invalidates the button's
+            // layout even when the image is identical, and this is called from the item view's
+            // `-layoutSubviews` -- so painting unconditionally asks for the layout pass that
+            // paints again. The tab bar is built during launch, which is where that loop was
+            // seen: the app on its own logo, at full CPU, for ever.
+            if ([button imageForState:UIControlStateNormal] != clock) {
+                [button setImage:clock forState:UIControlStateNormal];
+                [button setImage:clock forState:UIControlStateSelected];
+                [button setImage:clock forState:UIControlStateHighlighted];
+                button.tintColor = SCIAccent();
+            }
             return YES;
         }
         [queue addObjectsFromArray:next.subviews];

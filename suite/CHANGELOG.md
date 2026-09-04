@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.74.2
+
+**YouTube would not start — it sat on its own logo — and three Albrhi hooks were asking for a
+layout pass from inside one.** A view that reorders, repaints or re-measures itself during layout
+asks for another layout, which does it again: the main thread never went idle and the app never
+finished launching. Fixed in YouTube 1.29.0; nothing else was affected.
+
 ## v1.74.1
 
 *Released on its own push again — the two standalone tweaks went out from the same commit and

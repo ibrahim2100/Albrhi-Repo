@@ -112,8 +112,20 @@ static id SCIMakePivotItem(void) {
 static BOOL SCIPaintIcon(UIView *view) {
     if (!view) return NO;
 
-    UIImage *mark = [SCIYTIcon downloadMarkOfSize:24 filled:NO];
-    UIImage *filled = [SCIYTIcon downloadMarkOfSize:24 filled:YES];
+    // **Held here, not fetched each time, so identity is stable.**
+    //
+    // The comparison below is what stops a repaint on every layout pass, and it compares
+    // pointers. `+downloadMarkOfSize:filled:` answers from an NSCache, which is free to evict
+    // under memory pressure and hand back a freshly drawn image with a different address --
+    // and the moment it did, the comparison would stop matching and the loop would be back.
+    // A static holds the two images for the life of the process, which is a few kilobytes.
+    static UIImage *mark = nil;
+    static UIImage *filled = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        mark = [SCIYTIcon downloadMarkOfSize:24 filled:NO];
+        filled = [SCIYTIcon downloadMarkOfSize:24 filled:YES];
+    });
     if (!mark) return NO;
 
     NSMutableArray<UIView *> *queue = [NSMutableArray arrayWithObject:view];
@@ -125,10 +137,20 @@ static BOOL SCIPaintIcon(UIView *view) {
 
         if ([next isKindOfClass:[UIButton class]]) {
             UIButton *button = (UIButton *)next;
-            [button setImage:mark forState:UIControlStateNormal];
-            [button setImage:filled forState:UIControlStateSelected];
-            [button setImage:filled forState:UIControlStateHighlighted];
-            button.tintColor = SCIAccent();
+
+            // **Only when it is not already ours — this is what "idempotent" has to mean here.**
+            //
+            // `-setImage:forState:` marks the button as needing layout whether or not the image
+            // changed. Called from `-layoutSubviews`, as it is, that asks for another layout
+            // pass, which paints again: a loop on the main thread, on the tab bar, which is
+            // built while the app is still showing its logo. The comment on the caller said
+            // running every pass "costs a cache lookup"; it cost the launch.
+            if ([button imageForState:UIControlStateNormal] != mark) {
+                [button setImage:mark forState:UIControlStateNormal];
+                [button setImage:filled forState:UIControlStateSelected];
+                [button setImage:filled forState:UIControlStateHighlighted];
+                button.tintColor = SCIAccent();
+            }
             return YES;
         }
 
@@ -140,8 +162,11 @@ static BOOL SCIPaintIcon(UIView *view) {
     }
 
     if (fallback) {
-        fallback.image = mark;
-        fallback.tintColor = SCIAccent();
+        // Same rule as the button above: assigning an identical image still invalidates layout.
+        if (fallback.image != mark) {
+            fallback.image = mark;
+            fallback.tintColor = SCIAccent();
+        }
         return YES;
     }
     return NO;
