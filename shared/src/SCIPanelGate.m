@@ -73,6 +73,34 @@ static NSString *sciGateSource = nil;
 /// CFPreferences is still tried first because where it does work it is the cheaper answer
 /// and it sees a value that has been written but not yet flushed to disk.
 ///
+/// Whether Albrhi Panel is on this device at all.
+///
+/// **Asked so that a tweak never provisions an identity the panel is going to provision.** On a
+/// jailbreak the licence lives in the panel's domain and one activation covers every tweak; the
+/// per-app fallback exists only for a dylib injected into an IPA, where that domain cannot be
+/// read. Deciding between the two by "did my write come back" is not enough on its own: a
+/// sandboxed write is *redirected* into the app's own container, and reading it back there
+/// succeeds — so an app that provisioned before the panel did would take an identity of its own
+/// and quietly stop sharing the phone's licence.
+///
+/// The panel's own preference file answers it. Its presence means a panel wrote something here,
+/// which means this device has one and the identity is its business.
+BOOL SCIPanelIsInstalled(void) {
+    NSString *leaf = [NSString stringWithFormat:@"var/mobile/Library/Preferences/%@.plist",
+                      kSCIPanelDomain];
+
+    NSMutableArray<NSString *> *candidates = [NSMutableArray array];
+    [candidates addObject:[@"/" stringByAppendingPathComponent:leaf]];
+
+    NSString *prefix = SCIJailbreakPrefix();
+    if (prefix.length > 1) [candidates addObject:[prefix stringByAppendingPathComponent:leaf]];
+
+    for (NSString *path in candidates) {
+        if ([[NSFileManager defaultManager] fileExistsAtPath:path]) return YES;
+    }
+    return NO;
+}
+
 /// Whichever plist type the panel actually wrote for this key -- an NSNumber for a
 /// switch, an NSString for something like the preferred-microphone choice -- or nil
 /// once every place this looks has been checked and nothing is there.

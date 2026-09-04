@@ -162,6 +162,23 @@ void SCILicenseProvisionDevice(void) {
     NSString *fresh = SCIFreshDeviceIdentity();
     if (!fresh) return;
 
+    //
+    // **Where a panel exists, the panel provisions and nothing else does.**
+    //
+    // One activation in Settings › Albrhi is meant to license every tweak on the phone, and that
+    // only holds while they all share one identity. A tweak that provisions its own would take a
+    // second identity that the panel cannot see -- and it would *seem* to work, because a
+    // sandboxed write to the panel's domain is redirected into this app's container and reads
+    // back perfectly from there.
+    //
+    // So on a device with a panel this waits. The screen says to activate from the panel, which
+    // is the true answer rather than a provisional id nobody can issue a licence against.
+    //
+    if (SCIPanelIsInstalled()) {
+        SCIWriteIdentity(fresh, @"com.albrhi.panel");
+        return;
+    }
+
     if (SCIWriteIdentity(fresh, @"com.albrhi.panel")) return;
 
     // Not readable there, so this process is on its own: its own defaults, which it can always

@@ -58,6 +58,10 @@ BOOL SCIPanelMasterEnabled(void);
 /// The short name this process's tweak is known by in a licence's `app:` scope, or nil.
 NSString *SCIPanelProductForThisApp(void);
 
+/// Whether Albrhi Panel is installed on this device — read from its preference file rather than
+/// from a write that may have been redirected into this app's own container.
+BOOL SCIPanelIsInstalled(void);
+
 BOOL SCIPanelAllowsThisApp(void);
 
 /// How that answer was arrived at, for a diagnostics page.

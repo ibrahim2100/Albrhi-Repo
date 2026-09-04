@@ -957,6 +957,15 @@ point of writing, so a typo in the panel is caught where it is made.
 the term lives in `until`, and conflating the two is how a lifetime licence for one app becomes a
 lifetime licence for everything.
 
+**On a jailbreak the panel owns the identity, and asking "did my write come back" is not enough
+to decide that.** One activation in Settings › Albrhi is meant to license every tweak on the
+phone, and that only holds while they share one identity — so a tweak must never provision one of
+its own where a panel exists. The obvious test fails: a sandboxed write to `com.albrhi.panel` is
+**redirected into the app's own container and reads back perfectly from there**, so an app that
+provisioned before the panel did would take a second identity, appear to succeed, and quietly stop
+sharing the phone's licence. `SCIPanelIsInstalled()` reads the panel's own preference *file*
+instead, and where it is found the tweak waits.
+
 **Identity falls back to the app itself, and the test is a read after the write.** On a jailbreak
 every tweak reads `com.albrhi.panel` through `SCIPanelGate`'s file fallback, so one identity serves
 the install and one licence covers the phone — that behaviour is kept. A dylib injected into an IPA

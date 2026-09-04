@@ -80,6 +80,16 @@ static NSString *SCIText(NSString *english, NSString *arabic) {
         @"Albrhi needs a licence. Without one the tweak installs nothing and the app behaves as if it were not there.",
         @"البرهي يحتاج ترخيصاً. بلا ترخيص لا تُركّب الأداة شيئاً ويتصرّف التطبيق كأنها غير موجودة.")]];
 
+    // **Said only where it is true.** On a jailbreak with the panel installed, one activation
+    // there licenses every tweak on the phone -- entering a key here writes to the same place, so
+    // both routes work, but pointing at the one screen that covers everything is the better
+    // answer. On a sideloaded install there is no panel and this screen is the only route.
+    if (SCIPanelIsInstalled()) {
+        [stack addArrangedSubview:[self note:SCIText(
+            @"Albrhi Panel is installed on this device: activating there licenses every Albrhi tweak at once, and a key entered here does the same thing.",
+            @"بانل البرهي مثبَّت على هذا الجهاز: التفعيل منه يرخّص كل أدوات البرهي دفعةً واحدة، ومفتاحٌ يُدخَل هنا يفعل الشيء نفسه.")]];
+    }
+
     [stack addArrangedSubview:[self heading:SCIText(@"This device", @"هذا الجهاز")]];
     [stack addArrangedSubview:self.deviceLabel];
     [stack addArrangedSubview:[self button:SCIText(@"Copy device code", @"نسخ رمز الجهاز")
