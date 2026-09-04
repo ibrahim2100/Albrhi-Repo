@@ -351,6 +351,32 @@ static BOOL SCINameIsInteresting(NSString *name) {
     return sciWatchScan ?: SCILocalized(@"diag_scan_none");
 }
 
+
++ (NSString *)methodsOfClassNamed:(NSString *)name {
+    Class cls = NSClassFromString(name);
+    if (!cls) return [NSString stringWithFormat:SCILocalized(@"diag_methods_absent"), name];
+
+    unsigned int count = 0;
+    Method *methods = class_copyMethodList(cls, &count);
+    if (!methods) return [NSString stringWithFormat:SCILocalized(@"diag_methods_none"), name];
+
+    NSMutableArray<NSString *> *names = [NSMutableArray arrayWithCapacity:count];
+    for (unsigned int i = 0; i < count; i++) {
+        [names addObject:NSStringFromSelector(method_getName(methods[i]))];
+    }
+    free(methods);
+
+    [names sortUsingSelector:@selector(caseInsensitiveCompare:)];
+
+    // Capped, because a report nobody reads to the end of answers nothing. Sixty selectors is
+    // more than any class this tweak has needed to be told about.
+    NSUInteger shown = MIN(names.count, (NSUInteger)60);
+    NSString *list = [[names subarrayWithRange:NSMakeRange(0, shown)] componentsJoinedByString:@", "];
+
+    return [NSString stringWithFormat:SCILocalized(@"diag_methods_list"),
+            name, (unsigned long)count, list];
+}
+
 /// The last save actually attempted, kept apart from the placement line above.
 ///
 /// They shared one slot and placement won every time. Placement is written whenever an
@@ -1084,6 +1110,12 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     // trip spent looking for a line that was never where it was being looked for.
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_action_row_title"), [self actionRowState]];
     [out appendFormat:@"%@\n%@\n\n", SCILocalized(@"diag_scan_title"), [self watchScanState]];
+
+    // The row's own class, as this device declares it. Printed unconditionally rather than
+    // behind a switch: it is the one question three releases of this feature have turned on,
+    // and it costs one runtime call.
+    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_methods_title"),
+        [self methodsOfClassNamed:@"YTSlimVideoScrollableDetailsActionsView"]];
 
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_shorts"), [self shortsButtonState]];
 

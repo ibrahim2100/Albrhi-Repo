@@ -54,6 +54,15 @@ static NSString *const kSCIActionTargetId = @"albrhi.download.action";
 /// Set on the action view YouTube built for our renderer, so the tap knows which button it is.
 static char kSCIIsOurActionView;
 
+/// How many of these rows the app actually *built*, counted separately from how many times it
+/// asked us to fill one.
+///
+/// **Two different answers hide behind "no button": the class is never constructed, or it is
+/// constructed and the method we hook is not the one it uses.** The first means the row is drawn
+/// some other way entirely and no renderer can help; the second is a selector to find. One number
+/// cannot say which, and this project has paid for that confusion on four features now.
+static NSUInteger sciActionRowsBuilt = 0;
+
 static NSUInteger sciActionRowsSeen = 0;
 static NSUInteger sciActionRenderersAdded = 0;
 static NSUInteger sciActionViewsFound = 0;
@@ -63,6 +72,7 @@ static NSString *sciActionRowState = nil;
 static void SCIReportActionRow(void) {
     [SCIYTDiagnostics recordActionRow:
         [NSString stringWithFormat:SCILocalized(@"diag_action_row"),
+            (unsigned long)sciActionRowsBuilt,
             (unsigned long)sciActionRowsSeen, (unsigned long)sciActionRenderersAdded,
             (unsigned long)sciActionViewsFound, (unsigned long)sciActionTaps,
             sciActionRowState ?: SCILocalized(@"diag_action_row_nothing")]];
@@ -237,6 +247,19 @@ static void SCIMarkOurActionView(UIView *row) {
 
     %orig;
     SCIMarkOurActionView(self);
+}
+
+%end
+
+
+%hook YTSlimVideoScrollableDetailsActionsView
+
+/// Counted here and nowhere else: `-didMoveToWindow` fires once per instance and changes nothing,
+/// so it can say "the app built one of these" without being on a layout path.
+- (void)didMoveToWindow {
+    %orig;
+    sciActionRowsBuilt++;
+    SCIReportActionRow();
 }
 
 %end

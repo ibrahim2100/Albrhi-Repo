@@ -771,6 +771,20 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**`tools/objc-classes.py` reads a binary somebody downloaded; the device is the only thing that
+knows what *this* build declares — and `class_copyMethodList` in a diagnostics page is that tool
+run where it matters.** Three features here have been written against selectors confirmed in one
+YouTube build and absent from another, each costing a release:
+`-createActionViewsFromSupportedRenderers:` is real in 21.34.3 and was never once asked of the
+21.30.5 in the reporter's hand. The YouTube report prints the actions row's own method list now.
+
+**And "the class exists" plus "our method was never called" is still two faults, not one.** A row
+class that is `[found]` and a hook that never fires means either the app never builds one — the
+row is composed some other way and no renderer can help — or it builds them and fills them through
+a selector this build names differently. Counting the *constructions* separately from the *calls*
+is what separates them, which is this file's own "count the attempt, not only the result" rule
+applied to a class rather than to a feature.
+
 **Setting a state variable is not reporting it, and one sentence covered three investigations.**
 The action-row feature recorded its state into a static at load and never wrote it to the
 diagnostics page, so the report printed the empty-slot line — "no action row has been built" —
@@ -2331,9 +2345,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.17** · YouTube **1.30.1** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
+Instagram **4.1.17** · YouTube **1.30.2** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.2.1** · suite **1.75.1**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.2.1** · suite **1.75.2**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

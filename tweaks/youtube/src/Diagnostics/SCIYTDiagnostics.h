@@ -193,6 +193,15 @@
 /// stays readable.
 + (void)scanWatchPage;
 + (NSString *)watchScanState;
+
+/// The real method list of one class, read from the runtime on the device.
+///
+/// **This is `tools/objc-classes.py`, run where it matters.** That tool reads a binary somebody
+/// downloaded; this reads the build in front of the person reporting. Three features in this
+/// tweak have now been written against selectors confirmed in one YouTube build and absent from
+/// another, and each cost a release to discover -- `-createActionViewsFromSupportedRenderers:`
+/// is confirmed in 21.34.3 and the class on 21.30.5 was never asked whether it answers it.
++ (NSString *)methodsOfClassNamed:(NSString *)name;
 + (NSString *)overlayButtonState;
 
 /// What the last tap on that button actually tried to save. Its own slot: the line above is

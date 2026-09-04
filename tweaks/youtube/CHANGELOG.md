@@ -3,6 +3,28 @@
 **Tested on YouTube 21.32.4.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.30.2
+
+**The report now asks the device the one question three releases have turned on, instead of asking
+a binary somebody downloaded.**
+
+1.30.1's report was exact and it narrowed the fault to a fork nothing could yet separate: the row
+class `YTSlimVideoScrollableDetailsActionsView` is **[found]** on 21.30.5, its hook attached, and
+`-createActionViewsFromSupportedRenderers:` was called **zero times** across a session with videos
+played. That is two entirely different situations behind one number — the app never builds one of
+these rows at all, or it builds them and fills them through a method this build names something
+else. The first means no renderer can ever help; the second is a selector to find.
+
+So two things are added, and both are measurements rather than attempts:
+
+- **The rows the app itself builds are counted**, from `-didMoveToWindow` — once per instance,
+  changing nothing. `0 built` and `0 handed to us` says the row is drawn some other way entirely;
+  `n built, 0 handed` says the method is named differently here.
+- **And the class's real method list is printed**, read out of the runtime with
+  `class_copyMethodList` on the device. That is `tools/objc-classes.py` run where it matters:
+  that tool reads a binary someone downloaded, and this tweak has now written three features
+  against selectors confirmed in one YouTube build and missing from another.
+
 ## v1.30.1
 
 **The button did not appear, and the report could not say why — which is the fault worth fixing

@@ -1,5 +1,12 @@
 # Albrhi Changelog
 
+## v1.75.2
+
+**The YouTube report now prints the actions row's real method list, read from the runtime on the
+device**, and counts the rows the app builds separately from the ones it hands us to fill. Those
+two numbers separate "this build draws that row some other way" from "it uses a different
+selector" — which one number could not.
+
 ## v1.75.1
 
 **The Save button in YouTube's actions row did not appear, and the report could not say why.** It
