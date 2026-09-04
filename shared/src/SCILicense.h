@@ -250,6 +250,41 @@ BOOL SCILicenseIsLifetime(void);
 /// `product` is the tweak asking: the same short name the `app:` form uses. A tweak that does not
 /// know its own name passes nil, which is answered as "any licence will do" — the behaviour every
 /// caller had before this existed.
+///
+/// A build made for one store, with one licence, on any number of devices.
+///
+/// **This is a different product from the licence layer beside it, and saying so plainly is the
+/// point.** Everything else here is device-bound, revocable and signed: a key names one phone and
+/// the server can withdraw it. A store build is the opposite by request — one code, unlimited
+/// devices, unlimited people, three months — because what is being sold is a copy in a shop
+/// rather than a licence to a person.
+///
+/// So the honest description of its strength: **the code is compiled into a dylib the store hands
+/// out, and anyone holding that dylib can read it.** It cannot be otherwise — a credential that
+/// works on any device with no server has nothing left to check against. What it does buy is that
+/// the code works on *these* builds and nowhere else, and that they stop by themselves on a date
+/// chosen when they were built. It is a shelf life, not a lock.
+///
+/// Compiled in with `STORE=na9`; absent from every ordinary build, where the code below is not a
+/// string that can be typed but a path that does not exist.
+NSString *_Nullable SCILicenseStoreID(void);
+
+/// The store's own name and address, for the licence screen.
+NSString *_Nullable SCILicenseStoreName(void);
+NSString *_Nullable SCILicenseStoreSite(void);
+
+/// When this build stops. Zero in an ordinary build.
+NSTimeInterval SCILicenseStoreExpiry(void);
+
+/// Whether `code` is this store's code, and whether the build is still inside its window.
+BOOL SCILicenseStoreAccepts(NSString *_Nullable code);
+
+/// Whether the store code has been entered on this device and is still in date.
+BOOL SCILicenseStoreActive(void);
+
+/// Remembers a store code that this build accepts. Ignores anything else.
+void SCILicenseStoreRemember(NSString *_Nullable code);
+
 NSString *SCILicenseScope(void);
 BOOL SCILicenseCoversProduct(NSString *_Nullable product);
 

@@ -990,6 +990,32 @@ workflow and attached to the same release: a fourth publisher would race the thr
 exist for `gh-pages`, and that race has served an index a version behind a release once already.
 The job compiles all four tweaks anyway, so a tweak that will not build already fails it.
 
+### Store copies
+
+**A build for one shop: one code, any number of devices, three months — and it is a different
+product from the licence layer beside it.** Everything else here is device-bound, signed and
+revocable. A store copy is none of those by request: a shop sells copies, and asking its customers
+for a device code each turns the shop into a support desk. `tools/build-store.sh` makes them.
+
+**What it is worth, said plainly rather than glossed.** The code is compiled into a dylib the shop
+hands out, so anyone holding the dylib can read it — a credential that works on any device with no
+server has nothing left to check against. Two things it does buy, and both are real: the code works
+on *those* builds and nowhere else (an ordinary Albrhi does not refuse it — the path that would
+accept it is not compiled in, so there is no string in the binary to find), and each copy **stops
+by itself** on a date fixed when it was built. A shelf life, not a lock, and the shelf life is the
+only part that cannot be shared away.
+
+**`-D` with a quoted string survives make and the shell only as `'"$(VAR)"'`.** Written `\"…\"`
+the backslashes are stripped on the way through and the compiler is handed a bare word — which
+fails as a stray identifier if it is used, and silently defines nothing if it is not. The build
+looked perfectly successful and carried no store code at all.
+
+**And `strings` answers "no" about a three-character string.** Its default minimum length is four,
+so a code like `na9` is invisible to it — and with `-n 3` it still did not report a string
+`otool -s __TEXT __cstring` finds in the same file. Two confident wrong answers from one tool.
+The check searches the file's bytes for `na9\0` now: unambiguous, and not confusable with
+`na9.me`.
+
 **A step copied between workflows brings its `if:` with it, and a condition naming a step that
 does not exist is silently false.** The two new steps carried `steps.release_check.outputs.needed`
 from `buildtweak.yml` into `buildsuite.yml`, whose gate is `steps.gate.outputs.release` — so they

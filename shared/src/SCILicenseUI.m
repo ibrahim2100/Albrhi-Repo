@@ -80,6 +80,35 @@ static NSString *SCIText(NSString *english, NSString *arabic) {
         @"Albrhi needs a licence. Without one the tweak installs nothing and the app behaves as if it were not there.",
         @"البرهي يحتاج ترخيصاً. بلا ترخيص لا تُركّب الأداة شيئاً ويتصرّف التطبيق كأنها غير موجودة.")]];
 
+    // **A store copy says so, at the top, before anything about keys.**
+    //
+    // Somebody who bought this in a shop did not buy a licence to a device and should not be
+    // asked to think about one. The screen names the shop, gives the one code, and says when the
+    // copy stops -- which is the only part of it that will ever surprise anybody.
+    if (SCILicenseStoreID().length) {
+        NSDateFormatter *when = [[NSDateFormatter alloc] init];
+        when.dateStyle = NSDateFormatterMediumStyle;
+        when.timeStyle = NSDateFormatterNoStyle;
+        NSString *until = [when stringFromDate:
+            [NSDate dateWithTimeIntervalSince1970:SCILicenseStoreExpiry()]];
+
+        [stack addArrangedSubview:[self heading:SCIText(@"This copy", @"هذه النسخة")]];
+
+        UILabel *store = [self label:[NSString stringWithFormat:
+            SCIText(@"A copy for %@ — %@", @"نسخة خاصة بـ%@ — %@"),
+            SCILicenseStoreName() ?: SCILicenseStoreID(),
+            SCILicenseStoreSite() ?: @""] bold:NO];
+        store.font = [UIFont systemFontOfSize:15 weight:UIFontWeightSemibold];
+        [stack addArrangedSubview:store];
+
+        [stack addArrangedSubview:[self note:[NSString stringWithFormat:
+            SCIText(@"One code for every device: type %@ below. This copy works until %@, after "
+                    @"which the store has a new one.",
+                    @"كودٌ واحد لكل الأجهزة: اكتب %@ في الأسفل. هذه النسخة تعمل حتى %@، وبعدها "
+                    @"يوفّر المتجر نسخةً جديدة."),
+            SCILicenseStoreID().uppercaseString, until]]];
+    }
+
     // **Said only where it is true.** On a jailbreak with the panel installed, one activation
     // there licenses every tweak on the phone -- entering a key here writes to the same place, so
     // both routes work, but pointing at the one screen that covers everything is the better
@@ -179,6 +208,14 @@ static NSString *SCIText(NSString *english, NSString *arabic) {
 - (void)refresh {
     self.statusLabel.text = SCILicenseStatusLine();
 
+    // A store copy is licensed or it is not, and the ordinary status line -- written for keys,
+    // servers and grace periods -- describes none of that.
+    if (SCILicenseStoreID().length) {
+        self.statusLabel.text = SCILicenseStoreActive()
+            ? SCIText(@"Active", @"مفعَّلة")
+            : SCIText(@"Not activated — enter the code below", @"غير مفعَّلة — اكتب الكود في الأسفل");
+    }
+
     NSString *device = SCILicenseFingerprint();
     self.deviceLabel.text = device.length ? device : SCIText(@"not created yet", @"لم يُنشأ بعد");
 
@@ -223,6 +260,16 @@ static NSString *SCIText(NSString *english, NSString *arabic) {
     if (!text.length) return;
 
     [self.view endEditing:YES];
+
+    // The store's own code, tried first and only where such a build exists. It is not a key and
+    // not a short code: it goes to neither the verifier nor the server.
+    if (SCILicenseStoreAccepts(text)) {
+        SCILicenseStoreRemember(text);
+        self.entry.text = @"";
+        [self refresh];
+        [self say:SCIText(@"Activated.", @"فُعِّلت.")];
+        return;
+    }
 
     if ([text hasPrefix:@"ALB1."]) {
         SCILicenseState state = SCILicenseStateNone;

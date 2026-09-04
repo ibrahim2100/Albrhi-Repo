@@ -377,6 +377,92 @@ SCILicenseState SCILicenseCurrentState(void) {
     return SCILicenseStateValid;
 }
 
+#pragma mark - The store build
+
+///
+/// **One code, any number of devices, and a date it stops on.**
+///
+/// Everything else in this file is device-bound and revocable. This is not, by request: a store
+/// sells copies, not licences to named people, and asking a shop's customers for a device code
+/// each is asking the shop to run a support desk.
+///
+/// What that costs, stated rather than glossed: **the code is inside a dylib the store hands out,
+/// so anyone with the dylib can read it.** There is nothing to hide it behind — a credential that
+/// works on any device with no server has nothing left to check against. The two things it does
+/// buy are real, and they are what it is for:
+///
+///   * it works on **these builds only**. An ordinary Albrhi does not merely refuse this code; the
+///     path that would accept it is not compiled in, so there is no string to find;
+///   * and the build **stops by itself** on a date fixed when it was built. Three months, then the
+///     store gets a fresh dylib. It is a shelf life rather than a lock, and it is the only part of
+///     this that cannot be shared away.
+///
+static NSString *const kSCIStoreCodePref = @"albrhi_store_code";
+
+NSString *SCILicenseStoreID(void) {
+#ifdef SCI_STORE_ID
+    return @SCI_STORE_ID;
+#else
+    return nil;
+#endif
+}
+
+NSString *SCILicenseStoreName(void) {
+#ifdef SCI_STORE_NAME
+    return @SCI_STORE_NAME;
+#else
+    return nil;
+#endif
+}
+
+NSString *SCILicenseStoreSite(void) {
+#ifdef SCI_STORE_SITE
+    return @SCI_STORE_SITE;
+#else
+    return nil;
+#endif
+}
+
+NSTimeInterval SCILicenseStoreExpiry(void) {
+#ifdef SCI_STORE_UNTIL
+    return (NSTimeInterval)SCI_STORE_UNTIL;
+#else
+    return 0;
+#endif
+}
+
+BOOL SCILicenseStoreAccepts(NSString *code) {
+    NSString *wanted = SCILicenseStoreID();
+    if (!wanted.length || !code.length) return NO;
+
+    // Typed by a person, so folded the way every other code here is: spaces, dashes and case are
+    // how somebody writes a word down, not part of it.
+    NSString *given = [[code stringByTrimmingCharactersInSet:
+                            [NSCharacterSet whitespaceAndNewlineCharacterSet]] lowercaseString];
+    given = [given stringByReplacingOccurrencesOfString:@"-" withString:@""];
+
+    if (![given isEqualToString:wanted.lowercaseString]) return NO;
+
+    // In date, and the date is the build's own. A store copy that outlived its window would be a
+    // copy nobody can take back.
+    NSTimeInterval until = SCILicenseStoreExpiry();
+    return until > 0 && [NSDate date].timeIntervalSince1970 < until;
+}
+
+BOOL SCILicenseStoreActive(void) {
+    if (!SCILicenseStoreID().length) return NO;
+
+    NSString *stored = [[NSUserDefaults standardUserDefaults] stringForKey:kSCIStoreCodePref];
+    return SCILicenseStoreAccepts(stored);
+}
+
+/// Remembers the code on this device. Local defaults, not the panel's domain: a store build is
+/// installed inside one app and has no panel to share anything with.
+void SCILicenseStoreRemember(NSString *code) {
+    if (!SCILicenseStoreAccepts(code)) return;
+    [[NSUserDefaults standardUserDefaults] setObject:code forKey:kSCIStoreCodePref];
+}
+
 NSString *SCILicenseScope(void) {
     NSDictionary *payload = nil;
     if (SCIEvaluateKey(SCILicenseStoredKey(), &payload) == SCILicenseStateValid) {
@@ -410,6 +496,11 @@ BOOL SCILicenseCoversProduct(NSString *product) {
 
 BOOL SCILicenseAllowsProduct(NSString *product) {
     if (!SCILicenseIsEnforced()) return YES;
+
+    // The store code first, and it answers alone: a store build has no server, no device binding
+    // and no scope to check -- one code for every app in that store's own dylibs.
+    if (SCILicenseStoreActive()) return YES;
+
     if (!SCILicenseAllows()) return NO;
     return SCILicenseCoversProduct(product);
 }
