@@ -284,6 +284,16 @@ static NSString *sciActionRow = nil;
     return sciActionRow ?: SCILocalized(@"diag_action_row_none");
 }
 
+static NSString *sciActionBar = nil;
+
++ (void)recordActionBar:(NSString *)state {
+    if (state.length) sciActionBar = [state copy];
+}
+
++ (NSString *)actionBarState {
+    return sciActionBar ?: SCILocalized(@"diag_action_bar_none");
+}
+
 
 static NSString *sciWatchScan = nil;
 
@@ -1241,6 +1251,7 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     // In the report as well as on the screen. A row added to one and not the other is a round
     // trip spent looking for a line that was never where it was being looked for.
     [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_action_row_title"), [self actionRowState]];
+    [out appendFormat:@"%@\n  %@\n\n", SCILocalized(@"diag_action_bar_title"), [self actionBarState]];
     [out appendFormat:@"%@\n%@\n\n", SCILocalized(@"diag_scan_title"), [self watchScanState]];
 
     // The row's own class, as this device declares it. Printed unconditionally rather than

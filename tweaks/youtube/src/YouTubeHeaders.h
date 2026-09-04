@@ -425,6 +425,15 @@
 // project at "which button is this one" ended in a string compare against a localised
 // title or a guess at a view's position; here the app is simply asked.
 //
+/// The cell that hosts the row of actions under a video's title.
+///
+/// Confirmed present and hooked on 21.30.5. Its insides are Texture -- `_ASDisplayView` nodes
+/// drawn by the element system -- so there is nothing in it to hook by name; what this
+/// declaration buys is `self.window` and `self.bounds` inside the hook, which Logos would
+/// otherwise leave as a forward declaration.
+@interface YTSlimVideoScrollableActionBarCell : UICollectionViewCell
+@end
+
 @interface YTSlimVideoDetailsActionView : UIView
 /// The YTQTMButton this action view draws -- confirmed as `button : @"YTQTMButton"` in the app's
 /// own class metadata. Typed as UIButton here because what this tweak does with it is paint an

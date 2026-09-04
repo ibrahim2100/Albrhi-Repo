@@ -201,6 +201,178 @@ static void SCIMarkOurActionView(UIView *row) {
 }
 
 
+///
+/// **What that row actually is, measured on the device rather than assumed.**
+///
+/// The scan settled it:
+///
+///     (from _ASDisplayView)  0,0 390×48        <- the row
+///       _ASDisplayView  12,0  96×48            <- the like/dislike pill
+///       _ASDisplayView  185,0 205×48           <- five more, 41 wide each
+///         ELMAnimatedVectorViewObjC / LOTAnimationView   <- the icons themselves
+///
+/// So the row is Texture (`_ASDisplayView` is an AsyncDisplayKit node's view) driven by the
+/// element system: no UIButtons, no YouTube view class to hook, and nothing that answers a
+/// selector worth guessing at. Every renderer-based approach is closed -- the class that would
+/// have built the buttons, `YTSlimVideoDetailsActionView`, is never constructed in this build,
+/// which the report has now said four times.
+///
+/// **What is open is the space between the two groups.** The left group ends at 108 and the
+/// right begins at 185: seventy-seven points of nothing, on every video measured. A button
+/// placed there sits in the row, at the row's own height, beside Like and Share -- which is what
+/// was asked for.
+///
+/// Three rules this obeys, each of them paid for earlier this week:
+///
+///   - **the frame is written only when it differs.** Writing an equal frame from a layout pass
+///     invalidates layout, which asks for another pass -- that is what kept the app from
+///     launching two days ago;
+///   - **nothing is brought to the front on every pass**, for the same reason;
+///   - **and if there is no gap wide enough, nothing is placed at all** and the report says so.
+///     A button overlapping Like is worse than no button, and guessing that the gap is always
+///     there is exactly the kind of assumption this file exists to avoid.
+///
+
+static char kSCIBarButton;
+
+static NSUInteger sciBarCellsBuilt = 0;
+static NSUInteger sciBarButtonsPlaced = 0;
+static NSString *sciBarState = nil;
+
+static void SCIReportBar(void) {
+    [SCIYTDiagnostics recordActionBar:
+        [NSString stringWithFormat:SCILocalized(@"diag_action_bar"),
+            (unsigned long)sciBarCellsBuilt, (unsigned long)sciBarButtonsPlaced,
+            sciBarState ?: SCILocalized(@"diag_action_row_nothing")]];
+}
+
+/// The widest child that looks like the row itself.
+static UIView *SCIRowInside(UIView *cell) {
+    UIView *best = nil;
+    NSMutableArray<UIView *> *queue = [NSMutableArray arrayWithObject:cell];
+
+    while (queue.count) {
+        UIView *next = queue.firstObject;
+        [queue removeObjectAtIndex:0];
+
+        CGSize size = next.bounds.size;
+        if (size.width >= 300 && size.height > 20 && size.height <= 80) {
+            if (!best || size.width > best.bounds.size.width) best = next;
+        }
+        [queue addObjectsFromArray:next.subviews];
+    }
+    return best;
+}
+
+/// The gap between the row's own groups, in the row's coordinates.
+///
+/// Measured from the direct children rather than chosen: the left group is wider on a video with
+/// a like count than on one without, and a number written here would be right on one of them.
+static CGRect SCIGapInRow(UIView *row, UIView *ours) {
+    CGFloat rightEdgeOfLeft = 0;
+    CGFloat leftEdgeOfRight = row.bounds.size.width;
+
+    for (UIView *child in row.subviews) {
+        if (child == ours || child.hidden) continue;
+        CGRect frame = child.frame;
+        if (frame.size.width <= 0) continue;
+
+        CGFloat middle = CGRectGetMidX(frame);
+        if (middle < row.bounds.size.width / 2.0) {
+            rightEdgeOfLeft = MAX(rightEdgeOfLeft, CGRectGetMaxX(frame));
+        } else {
+            leftEdgeOfRight = MIN(leftEdgeOfRight, CGRectGetMinX(frame));
+        }
+    }
+
+    CGFloat width = leftEdgeOfRight - rightEdgeOfLeft;
+    if (width < 44) return CGRectNull;
+
+    // Centred in the gap, at the row's height, with the same 41-point width its neighbours use.
+    CGFloat button = MIN(44, width - 4);
+    return CGRectMake(rightEdgeOfLeft + (width - button) / 2.0, 0, button, row.bounds.size.height);
+}
+
+
+%group SCIActionBar
+
+%hook YTSlimVideoScrollableActionBarCell
+
+- (void)didMoveToWindow {
+    %orig;
+    if (!self.window) return;
+
+    sciBarCellsBuilt++;
+    SCIReportBar();
+}
+
+- (void)layoutSubviews {
+    %orig;
+
+    if (SCIYTStoodDown() || !SCIPrefEnabled(SCIPrefActionRowButton)) return;
+
+    @try {
+        UIView *row = SCIRowInside(self);
+        if (!row) { sciBarState = SCILocalized(@"diag_action_bar_no_row"); return; }
+
+        UIButton *save = objc_getAssociatedObject(self, &kSCIBarButton);
+        if (!save) {
+            save = [UIButton buttonWithType:UIButtonTypeSystem];
+            [save setImage:[UIImage systemImageNamed:@"arrow.down.circle"]
+                  forState:UIControlStateNormal];
+            save.accessibilityLabel = SCILocalized(@"action_save");
+            save.tintColor = [UIColor labelColor];
+            [save addTarget:self action:@selector(sciBarSaveTapped:)
+           forControlEvents:UIControlEventTouchUpInside];
+            objc_setAssociatedObject(self, &kSCIBarButton, save, OBJC_ASSOCIATION_RETAIN);
+        }
+
+        if (save.superview != row) {
+            [row addSubview:save];
+            sciBarButtonsPlaced++;
+        }
+
+        CGRect wanted = SCIGapInRow(row, save);
+        if (CGRectIsNull(wanted)) {
+            save.hidden = YES;
+            sciBarState = SCILocalized(@"diag_action_bar_no_room");
+            SCIReportBar();
+            return;
+        }
+
+        save.hidden = NO;
+
+        // Only when it differs. An equal frame written from -layoutSubviews still invalidates
+        // layout, and that is the loop that stopped the app launching.
+        if (!CGRectEqualToRect(save.frame, wanted)) save.frame = wanted;
+
+        if (!sciBarState || ![sciBarState isEqualToString:SCILocalized(@"diag_action_bar_placed")]) {
+            sciBarState = SCILocalized(@"diag_action_bar_placed");
+            SCIReportBar();
+        }
+    } @catch (NSException *exception) {
+        sciBarState = [NSString stringWithFormat:SCILocalized(@"diag_action_row_threw"),
+                       exception.reason ?: @"?"];
+        SCIReportBar();
+    }
+}
+
+%new
+- (void)sciBarSaveTapped:(UIButton *)sender {
+    UIViewController *host = SCIControllerForView(sender);
+    if (host) {
+        [SCIYTDownload presentFrom:host];
+    } else {
+        sciBarState = SCILocalized(@"diag_action_row_no_host");
+        SCIReportBar();
+    }
+}
+
+%end
+
+%end
+
+
 %group SCIActionRow
 
 %hook YTSlimVideoScrollableDetailsActionsView
@@ -303,6 +475,13 @@ static void SCIMarkOurActionView(UIView *row) {
     } else {
         sciActionRowState = SCILocalized(@"diag_action_row_absent");
     }
+
+    if (NSClassFromString(@"YTSlimVideoScrollableActionBarCell")) {
+        %init(SCIActionBar);
+    } else {
+        sciBarState = SCILocalized(@"diag_action_bar_absent");
+    }
+    SCIReportBar();
 
     // **Written to the report here, and this is the whole of what 1.30.0 got wrong.**
     //

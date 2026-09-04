@@ -180,6 +180,10 @@
 + (void)recordActionRow:(NSString *)state;
 + (NSString *)actionRowState;
 
+/// The bar cell that really draws the row on this build, and whether a button went into it.
++ (void)recordActionBar:(NSString *)state;
++ (NSString *)actionBarState;
+
 /// Walks the live view hierarchy and writes down what is actually on screen.
 ///
 /// **Every placement question in this tweak has been answered twice: once from a class dump and
