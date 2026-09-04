@@ -409,6 +409,30 @@ static UIView *SCIFindByClassName(UIView *root, NSString *name) {
     UIView *watchNext = SCIFindByClassName(window, @"YTWatchNextView");
     if (watchNext) window = watchNext;
 
+    //
+    // **And then narrower still, to the row itself.**
+    //
+    // Starting from the list under the video printed its title, its chips and two
+    // `ELMAnimatedVectorViewObjC`s -- element-drawn icons, which is what Like and Dislike are in
+    // this build. Everything else in that row is a plain `UIView` the element system made, so a
+    // filter that prints `YT…` and `ELM…` names shows the icons and hides the container they sit
+    // in, which is the one thing being looked for.
+    //
+    // So: find an element icon, climb to the ancestor wide enough to be the row, and print that
+    // subtree with **no name filter at all**. A name filter is right for a whole window and
+    // wrong here, for the same reason it was wrong before -- it cannot show a name nobody has
+    // guessed yet.
+    //
+    UIView *icon = SCIFindByClassName(window, @"ELMAnimatedVectorViewObjC");
+    UIView *row = nil;
+    for (UIView *up = icon; up; up = up.superview) {
+        if (up.bounds.size.width >= 300 && up.bounds.size.height > 0 &&
+            up.bounds.size.height <= 120) { row = up; break; }
+        if (up == window) break;
+    }
+    if (row) window = row;
+    BOOL nameFilter = (row == nil);
+
     NSMutableString *out = [NSMutableString string];
     NSUInteger printed = 0;
 
@@ -432,7 +456,7 @@ static UIView *SCIFindByClassName(UIView *root, NSString *name) {
 
         // Hidden views are skipped. YouTube keeps a screenful of ghost placeholder cells around
         // and they are all hidden, all interesting by name, and none of them on screen.
-        if (!view.hidden && SCINameIsInteresting(name)) {
+        if (!view.hidden && (!nameFilter || SCINameIsInteresting(name))) {
             CGRect frame = view.frame;
             [out appendFormat:@"  %@%@  %.0f,%.0f %.0f×%.0f%@\n",
                 [@"" stringByPaddingToLength:MIN(depth, 8) * 2 withString:@" " startingAtIndex:0],
