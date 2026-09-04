@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.75.4
+
+**The YouTube screen scan now starts from the player's own view rather than from the key window**,
+so it describes the watch page even while a settings screen is presented over it — which is what
+made the last two scans describe a settings table, accurately.
+
 ## v1.75.3
 
 **The YouTube screen scanner now runs from the player instead of from the settings screen** — a

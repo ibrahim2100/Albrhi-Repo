@@ -3,6 +3,22 @@
 **Tested on YouTube 21.32.4.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.30.4
+
+**The scan described the settings table a second time, and the reason is the same one, one layer
+further in.**
+
+1.30.3 moved the scan off the settings screen and onto the player's own overlay — the right idea —
+and it still walked **the key window**. Our settings is presented full screen, so YouTube's
+hierarchy is not in that window while it is up; what was in it was a navigation bar and three
+`_UITableCellAccessoryButton`s, which is our own settings table, reported accurately.
+
+**A view that is off the window still has a root.** The scan starts from the overlay itself now
+and walks up to whatever tree that view is in, which is the watch page whether or not something is
+presented over it. It also says which class it started from and how many views it walked, because
+"nothing matched" and "there was almost nothing there" are different answers and only the second
+means the scan is still looking at the wrong tree.
+
 ## v1.30.3
 
 **Two answers arrived and both were exact, and one of them was an accurate scan of the wrong

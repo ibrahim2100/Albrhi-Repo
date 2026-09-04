@@ -771,11 +771,16 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
-**A view-hierarchy scan run from a full-screen settings page scans the settings page.** UIKit
+**A view-hierarchy scan asks the window what is on screen, and the window is the wrong question
+whenever anything is presented over what you want to see.** UIKit
 removes the presenting hierarchy from the window once a full-screen transition finishes, so the
 watch page this was built to describe was not there — the report listed a navigation bar's buttons
 and every line of it was true. The request is remembered and the scan is taken from the player's
-own overlay now. **And its filter was five hand-picked words** (Action, Slim, Metadata, ELM,
+own overlay now — **and from that view's own root rather than from the window**, which is the half
+that took a second release: moving *when* the scan runs did not change *what* it walked, so it
+described our settings table twice, accurately, and the second report looked exactly like the
+first. A view that is off the window still has a root, and that root is the page being asked
+about. **And its filter was five hand-picked words** (Action, Slim, Metadata, ELM,
 Button) for a class whose name carries none of them, which is why it was being looked for at all:
 a filter built from the names you expect cannot show you the name you did not. Every `YT…` and
 `ELM…` class is printed now.
@@ -2361,9 +2366,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.17** · YouTube **1.30.3** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
+Instagram **4.1.17** · YouTube **1.30.4** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.2.1** · suite **1.75.3**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.2.1** · suite **1.75.4**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

@@ -415,7 +415,7 @@ static void SCISyncSaveButton(YTMainAppControlsOverlayView *overlay, BOOL animat
 
     // The scan, taken here because here is where the watch page certainly exists. Asked for from
     // a settings screen and run from one, it described the settings screen.
-    if ([SCIYTDiagnostics watchScanRequested]) [SCIYTDiagnostics scanWatchPage];
+    if ([SCIYTDiagnostics watchScanRequested]) [SCIYTDiagnostics scanFromView:self];
     objc_setAssociatedObject(self, &kSCIOverlayShown, @(visible), OBJC_ASSOCIATION_RETAIN);
     SCIApplyTopInset(self);
     SCISyncSaveButton(self, YES);

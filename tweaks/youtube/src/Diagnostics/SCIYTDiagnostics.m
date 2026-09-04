@@ -331,18 +331,42 @@ static BOOL sciWatchScanWanted = NO;
         return;
     }
 
+    [self scanTree:window];
+}
+
++ (void)scanFromView:(UIView *)view {
+    if (!view) return;
+
+    // Up to the top of whatever tree this view is in, which is not the same as the window: a
+    // full-screen presentation detaches the hierarchy behind it, and that hierarchy is exactly
+    // the one being asked about.
+    UIView *root = view;
+    while (root.superview) root = root.superview;
+
+    [self scanTree:root];
+}
+
++ (void)scanTree:(UIView *)window {
+
     NSMutableString *out = [NSMutableString string];
     NSUInteger printed = 0;
+
+    // Counted as well as printed. "Nothing matched" and "there was almost nothing there" are two
+    // different answers, and the second means the scan was taken from the wrong tree again.
+    NSUInteger walked = 0;
+
+    [out appendFormat:@"  (from %@)\n", NSStringFromClass([window class])];
 
     // Breadth-first with the depth carried alongside, so the output reads as a tree rather than
     // as a list of names with no relationship between them.
     NSMutableArray *queue = [NSMutableArray arrayWithObject:@[window, @0]];
-    while (queue.count && printed < 80) {
+    while (queue.count && printed < 120) {
         NSArray *pair = queue.firstObject;
         [queue removeObjectAtIndex:0];
 
         UIView *view = pair[0];
         NSUInteger depth = [pair[1] unsignedIntegerValue];
+        walked++;
         NSString *name = NSStringFromClass([view class]);
 
         if (SCINameIsInteresting(name)) {
@@ -359,9 +383,11 @@ static BOOL sciWatchScanWanted = NO;
         }
     }
 
+    [out appendFormat:@"  (%lu view(s) walked in all)\n", (unsigned long)walked];
+
     sciWatchScan = printed
         ? [NSString stringWithFormat:SCILocalized(@"diag_scan_found"), (unsigned long)printed, out]
-        : SCILocalized(@"diag_scan_nothing");
+        : [NSString stringWithFormat:@"%@\n%@", SCILocalized(@"diag_scan_nothing"), out];
 
     [self writeReportToFile];
 }

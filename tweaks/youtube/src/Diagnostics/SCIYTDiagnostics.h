@@ -202,6 +202,14 @@
 /// nothing else, which is an accurate scan of the wrong screen. The request is remembered instead,
 /// and the scan runs from the player's own overlay -- a moment when what is being asked about is
 /// certainly on screen.
+/// Scans the tree `view` belongs to, from its topmost ancestor down.
+///
+/// **Not the key window, and that distinction is the whole of two failed scans.** Our settings
+/// screen is presented full screen, which takes YouTube's hierarchy out of the window — so a scan
+/// of the window described the settings table, twice, accurately. A view that is off the window
+/// still has its own root, and that root is the watch page.
++ (void)scanFromView:(UIView *)view;
+
 + (void)requestWatchScan;
 + (BOOL)watchScanRequested;
 
