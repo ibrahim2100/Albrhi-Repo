@@ -7,7 +7,7 @@
 #import "Diagnostics/SCIYTDiagnostics.h"
 #import "Features/Display/SCIYTDimmer.h"
 
-NSString *SCIVersionString = @"v1.30.4+11";  // AlbrhiYT
+NSString *SCIVersionString = @"v1.31.0";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.
@@ -167,10 +167,12 @@ NSString *SCIVersionString = @"v1.30.4+11";  // AlbrhiYT
         // which is the whole difference from what 1.29.2 shipped.
         SCIPrefPivotBar: @YES,
 
-        // In the row with Like and Share, where the owner asked for it. On: it is a renderer
-        // handed to YouTube's own row builder rather than a view of ours placed over anything,
-        // and it is built when a video opens rather than during the launch.
-        SCIPrefActionRowButton: @YES,
+        // The row with Like and Share: **off, and the switch is kept rather than the code
+        // deleted.** Three classes were hooked for that row and this build constructs none of
+        // them, so what is left is a placement found by shape -- correct in principle, never
+        // confirmed on a device, and it would be putting a button into a row somebody is using.
+        // The request moved to the player's own top row, which is confirmed and on.
+        SCIPrefActionRowButton: @NO,
 
         SCIPrefOverlayButton: @YES,
         SCIPrefOverlayEndTime: @NO,

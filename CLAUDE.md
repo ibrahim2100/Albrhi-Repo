@@ -771,6 +771,25 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**A button placed beside somebody else's is placed by their numbers, and every one of those
+numbers is a way to be wrong.** YouTube's save button moved into the player's top row and took
+three device reports to settle, each a different measurement error, none of them a placement
+error: it was written only on the fade signals while the overlay re-lays out on every resize
+(so it drifted); it was anchored to "the leftmost control on the right", which is a different
+button before playback starts and after, because the autoplay switch is hidden until then (so it
+jumped); and its *size* came from the leftmost thing found there, which was a **container 96
+points wide**, while the placement puts the button its own width plus a gap to the left of the
+anchor (so it flew off, and "it goes far away" was arithmetic, not flight). What holds: anchor to
+the control that *changes*, take size only from a real `UIButton` of plausible size, and convert
+every frame into the coordinate space you are placing in.
+
+**And writing a frame from `-layoutSubviews` is not what made the app unlaunchable — writing a
+constraint constant was.** A constant measured from the row a view sits in invalidates the
+constraint system upward, so the parent lays out again and the measurement moves again; setting a
+*child's* frame asks the parent for nothing and settles in one pass. The distinction is worth
+keeping precisely because the earlier rule, applied without it, leaves a button that cannot be
+kept in place at all.
+
 **A view-hierarchy scan asks the window what is on screen, and the window is the wrong question
 whenever anything is presented over what you want to see.** UIKit
 removes the presenting hierarchy from the window once a full-screen transition finishes, so the
@@ -2366,9 +2385,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.17** · YouTube **1.30.4** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
+Instagram **4.1.17** · YouTube **1.31.0** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.2.1** · suite **1.75.4**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.2.1** · suite **1.76.0**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

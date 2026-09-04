@@ -3,6 +3,51 @@
 **Tested on YouTube 21.32.4.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.31.0
+
+**The save button moves into the player's own top row, beside the subtitles and settings
+buttons — confirmed on a device, after eleven local builds and no releases.**
+
+It sat under the video title, in the top left, because that is where it could be *proved* to
+exist: 1.27.0 had tried the row with Like and Share first and found the class that draws it is
+never constructed in this build. The request was to move it up among the app's own controls and
+make it look like one of them.
+
+**Placed by frame, from its neighbours.** Anchors need something to be anchored to, and that row
+is laid out by the overlay itself — there is no guide for "left of the leftmost of the right
+group", and pinning to the safe area is what put the button over the title in the first place. Its
+size, its height and its centre line are read from the buttons beside it, so it matches the row
+inline, in fullscreen and rotated, with no number in the source deciding any of it. White, and
+built with YouTube's own player-button factory, with `arrow.down.to.line` — the app draws
+downloading as an arrow into a tray, and a circled arrow beside its own controls reads as a guest.
+
+Three reports, three real faults, each a different kind of measurement error:
+
+- **it drifted** — the frame was applied only when the controls faded in or out, and the overlay
+  re-lays itself out whenever the player resizes, rotates or reflows. Written from
+  `-layoutSubviews` now, after `%orig`. *That is not what made the app unlaunchable two days ago:*
+  what did was writing a **constraint constant** measured from the row the button is inside, which
+  invalidates the constraint system upward; setting a child's frame asks the parent for nothing;
+- **it jumped when playback started** — the autoplay switch is hidden until then, so "the leftmost
+  control" was a different button before and after. The switch is the anchor now, in both states;
+- **and it flew off** — the reference for its *size* was a container 96 points wide, and the button
+  is placed its own width plus a gap to the left of the anchor. The reference is a real `UIButton`
+  no wider than 56 points, with every frame converted into the overlay's coordinates.
+
+**The row under the title is closed, and the switch for it ships off.** Three classes were hooked
+for it — `YTSlimVideoScrollableDetailsActionsView`, `YTSlimVideoDetailsActionView` and
+`YTSlimVideoScrollableActionBarCell` — all three present in the binary, all three constructed
+**zero** times. A live scan settled what it is instead: Texture nodes drawn by the element system,
+`390×48`, a 96-wide like/dislike pill at x=12 and five 41-wide items from x=185. The code that
+finds that row by shape is kept behind its switch, off, because a placement that has never been
+seen on a device does not belong in a row somebody is using.
+
+**And the diagnostics page grew the tool that ended the guessing**: Settings › General › "Scan
+what is on screen" walks the live view hierarchy ten seconds after it is asked, prints what
+YouTube actually built with frames, and prints the actions row's real method list read from the
+runtime with `class_copyMethodList` — `tools/objc-classes.py`, run on the device rather than on a
+binary somebody downloaded.
+
 ## v1.30.4
 
 **The scan described the settings table a second time, and the reason is the same one, one layer

@@ -1,5 +1,15 @@
 # Albrhi Changelog
 
+## v1.76.0
+
+**YouTube's save button now sits in the player's own top row, beside the subtitles and settings
+buttons** — white, built with YouTube's own button factory, sized and lined up from the controls
+next to it, and anchored to the autoplay switch so it stays put when playback starts.
+
+Eleven local builds and no releases went into it, which is the point: every one of them was a
+measurement, and the three faults between them were a frame applied at the wrong moment, an anchor
+that appears only during playback, and a size read from a container instead of a button.
+
 ## v1.75.4
 
 **The YouTube screen scan now starts from the player's own view rather than from the key window**,
