@@ -307,6 +307,26 @@ static BOOL sciWatchScanWanted = NO;
 + (void)requestWatchScan {
     sciWatchScanWanted = YES;
     sciWatchScan = SCILocalized(@"diag_scan_waiting");
+
+    //
+    // **On a timer, because neither of the two clever answers reached the right tree.**
+    //
+    // Run from the settings row, it scanned the settings screen -- a full-screen presentation
+    // takes YouTube's hierarchy out of the window. Run from the player's overlay and walked from
+    // that view's own root, it scanned **the overlay**: 48 views of playback controls, because
+    // the overlay is the root of its own tree and the metadata row under the video is not in it.
+    // Both reports were accurate and neither was about the row.
+    //
+    // Ten seconds and the key window is the dull answer that works: by then the settings screen
+    // is closed and a video is open, so the window holds the watch page and the walk starts above
+    // everything rather than inside one branch of it.
+    //
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10.0 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        if (!sciWatchScanWanted) return;   // a player already answered it
+        sciWatchScanWanted = NO;
+        [self scanWatchPage];
+    });
 }
 
 + (BOOL)watchScanRequested {
@@ -336,6 +356,11 @@ static BOOL sciWatchScanWanted = NO;
 
 + (void)scanFromView:(UIView *)view {
     if (!view) return;
+
+    // The window first, when there is one: a view's own root is its own branch, and the row this
+    // is looking for is a sibling of the player rather than a child of it. Only when the view is
+    // off the window entirely does its own root become the best available answer.
+    if (view.window) { [self scanTree:view.window]; return; }
 
     // Up to the top of whatever tree this view is in, which is not the same as the window: a
     // full-screen presentation detaches the hierarchy behind it, and that hierarchy is exactly
