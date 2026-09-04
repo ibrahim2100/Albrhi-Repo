@@ -413,9 +413,16 @@ static void SCISyncSaveButton(YTMainAppControlsOverlayView *overlay, BOOL animat
     %orig;
     sciOverlayFadeSignals++;
 
-    // The scan, taken here because here is where the watch page certainly exists. Asked for from
-    // a settings screen and run from one, it described the settings screen.
-    if ([SCIYTDiagnostics watchScanRequested]) [SCIYTDiagnostics scanFromView:self];
+    // **No scan is taken here any more, and the reason is worth keeping.**
+    //
+    // This looked like the right moment -- the player is on screen when the controls fade in --
+    // and it was the wrong *object*. These overlays exist off-screen too: the one that answered
+    // had a nil window and a frame of 0×0, so the walk started at the overlay itself and
+    // described 48 playback controls, three reports running. Worse, answering here consumed the
+    // request, so the timer that would have scanned the whole window never ran.
+    //
+    // A trigger that can fire on a detached instance is a trigger that reports the wrong tree
+    // and hides the one that would have been right.
     objc_setAssociatedObject(self, &kSCIOverlayShown, @(visible), OBJC_ASSOCIATION_RETAIN);
     SCIApplyTopInset(self);
     SCISyncSaveButton(self, YES);

@@ -336,13 +336,24 @@ static BOOL sciWatchScanWanted = NO;
 }
 
 + (void)scanWatchPage {
+    // The biggest window of an active scene, and key beats size.
+    //
+    // Not simply "the first window": an app has several -- a keyboard's, an alert's, a
+    // screenshot's -- and the small ones are the ones most likely to be answered first.
     UIWindow *window = nil;
     for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
         if (![scene isKindOfClass:[UIWindowScene class]]) continue;
+        if (scene.activationState != UISceneActivationStateForegroundActive) continue;
+
         for (UIWindow *candidate in ((UIWindowScene *)scene).windows) {
+            if (candidate.hidden) continue;
             if (candidate.isKeyWindow) { window = candidate; break; }
-            if (!window) window = candidate;
+
+            CGFloat area = candidate.bounds.size.width * candidate.bounds.size.height;
+            CGFloat best = window.bounds.size.width * window.bounds.size.height;
+            if (!window || area > best) window = candidate;
         }
+        if (window.isKeyWindow) break;
     }
 
     if (!window) {
