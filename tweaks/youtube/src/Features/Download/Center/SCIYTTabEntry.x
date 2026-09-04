@@ -176,6 +176,12 @@ static BOOL SCIPaintIcon(UIView *view) {
 
 #pragma mark - The bar
 
+/// Declared because the deferred re-application sends `-setRenderer:` to the bar itself: inside a
+/// `%hook` Logos only forward-declares the class, and a message sent to it needs a complete type.
+@interface YTPivotBarView : UIView
+- (void)setRenderer:(id)renderer;
+@end
+
 %hook YTPivotBarView
 
 - (void)setRenderer:(id)renderer {
@@ -184,11 +190,38 @@ static BOOL SCIPaintIcon(UIView *view) {
         return;
     }
 
-    // Nothing at all unless this is switched on, and nothing once the launch guard has given
-    // up. This runs while YouTube builds its tab bar, which is before the app has drawn
-    // anything -- the worst moment in the process to be rewriting one of its model objects.
     if (SCIYTStoodDown() || !SCIPrefEnabled(SCIPrefPivotBar)) {
         %orig;
+        return;
+    }
+
+    //
+    // **Not during the launch. The same change, made a second later.**
+    //
+    // This is where the app stopped starting. YouTube calls `-setRenderer:` while it builds the
+    // bar, which is before anything has been drawn and while iOS's own watchdog is counting --
+    // so a fault here does not cost a tab, it costs the app, and it cannot be undone from
+    // inside an app that will not open. The block had been dead code for months and was woken
+    // by a fix to a shared helper, which is why nothing in this tweak's own history pointed at
+    // it.
+    //
+    // So the bar is left exactly as YouTube built it until the app is active, and then this
+    // same method is called again with the renderer it was given. The mutation is unchanged;
+    // only its moment is. Whatever it costs is now paid by a running app, in front of somebody
+    // who can switch it off.
+    //
+    if (!SCIYTAppIsActive()) {
+        %orig;
+
+        __weak YTPivotBarView *weakBar = self;
+        __weak id weakRenderer = renderer;
+        SCIYTWhenActive(^{
+            YTPivotBarView *bar = weakBar;
+            id held = weakRenderer;
+            // Both gone means the bar was rebuilt while we waited, and YouTube's own rebuild
+            // will have come back through here with the app active. Nothing to do.
+            if (bar && held) [bar setRenderer:held];
+        });
         return;
     }
 

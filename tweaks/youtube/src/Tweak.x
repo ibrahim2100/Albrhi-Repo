@@ -7,7 +7,7 @@
 #import "Diagnostics/SCIYTDiagnostics.h"
 #import "Features/Display/SCIYTDimmer.h"
 
-NSString *SCIVersionString = @"v1.29.2";  // AlbrhiYT
+NSString *SCIVersionString = @"v1.29.3";  // AlbrhiYT
 
 ///
 /// Capture, so the diagnostics page has something true to report.
@@ -161,10 +161,11 @@ NSString *SCIVersionString = @"v1.29.2";  // AlbrhiYT
         // report has ever mentioned it and nobody could confirm anything. It is now the way a
         // video is saved from the player, since YTSlimVideoDetailsActionView -- the row this
         // tweak moved the download onto in 1.26.0 -- is not drawn in 21.32.4 at all.
-        // Off, pending a device. See Prefs.h: this is the one thing left that rewrites a
-        // YouTube model object during launch, and it only started running at all when the
-        // KVC replacement was taught to read protobuf classes.
-        SCIPrefPivotBar: @NO,
+        // On again, because the work no longer happens during the launch: the bar is left as
+        // YouTube built it until the app is active, and the same change is applied a moment
+        // later. A fault there costs a tab and can be switched off from inside a running app,
+        // which is the whole difference from what 1.29.2 shipped.
+        SCIPrefPivotBar: @YES,
 
         SCIPrefOverlayButton: @YES,
         SCIPrefOverlayEndTime: @NO,

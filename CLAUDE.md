@@ -771,6 +771,21 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**The launch is the one part of a process a tweak must not be inside, and the fix for anything
+that must touch it is a moment rather than a rewrite.** YouTube's tab bar is changed from
+`YTPivotBarView -setRenderer:`, which the app calls while building the bar — before it has drawn
+anything, with iOS's watchdog counting. Switching that off made the app launch, which is how the
+fault was finally located after three releases of reading. The change was then put back
+**unaltered**, applied on the first `didBecomeActive` by calling the same method again with the
+renderer it was handed. What that buys is not correctness, it is *recoverability*: the same bug,
+a second later, costs a tab in front of somebody who can switch it off, instead of an app that
+cannot be repaired from a settings screen nobody can reach.
+
+**And the last thing changed is the first thing suspected, which here was wrong.** The in-player
+save button was the newest work and the owner's own suspicion; it was on throughout the release
+that launched cleanly, so it was innocent, and the culprit was months-old code that had never once
+run. A suspicion ordered by recency is a heuristic, not evidence — the switch that isolates it is.
+
 **Fixing a helper turns dead code live, and nothing in the tweak that owns that code says so.**
 YouTube would not launch — logo, then killed — and three releases of reading found three real
 faults, none of them the whole of it. The thing that had actually changed was one directory away:
@@ -2288,9 +2303,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.17** · YouTube **1.29.2** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
+Instagram **4.1.17** · YouTube **1.29.3** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.2.1** · suite **1.74.4**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.2.1** · suite **1.74.5**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

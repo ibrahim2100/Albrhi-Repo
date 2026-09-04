@@ -35,3 +35,18 @@ BOOL SCIYTStoodDown(void);
 
 /// What the guard has to say, for the diagnostics page.
 NSString *SCIYTLaunchGuardReport(void);
+
+/// YES once the app has finished launching and become active.
+///
+/// **The launch is the one part of the process nothing of ours may be inside.** Work done here is
+/// work done before the app has drawn anything, with iOS's own watchdog counting — and a fault
+/// costs the whole app rather than the feature. Anything that can wait asks this instead, and
+/// what it buys is the difference between a tweak that cannot be uninstalled without a computer
+/// and one that is merely slow until it is switched off.
+BOOL SCIYTAppIsActive(void);
+
+/// Runs `block` on the main queue as soon as the app is active — now, if it already is.
+///
+/// Used once, and it is the reason the tab bar can be changed at all: the change is the same
+/// change, made a second later, at a moment when getting it wrong is survivable.
+void SCIYTWhenActive(void (^block)(void));

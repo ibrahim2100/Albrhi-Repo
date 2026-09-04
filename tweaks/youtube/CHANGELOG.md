@@ -3,6 +3,28 @@
 **Tested on YouTube 21.32.4.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.29.3
+
+**The Download Centre and History tabs are back, applied a second after the app opens instead of
+while it is starting.**
+
+1.29.2 switched them off and the app launched, which settled where the fault was: `-setRenderer:`
+on `YTPivotBarView`, rewriting YouTube's own items array from inside the bar's construction —
+before anything is drawn, with iOS's watchdog counting, in a process that cannot be repaired from
+a settings screen nobody can reach.
+
+Nothing about the change itself is different. What changed is its moment: the bar is left exactly
+as YouTube built it until the app becomes active, and then the same method is called again with
+the renderer it was handed. The tabs appear a moment after the first screen, and if anything there
+misbehaves it costs a tab, in front of somebody who can switch it off — which is the difference
+between a bug and a phone that needs a computer.
+
+**The in-player save button was suspected and it is not the cause.** It was on throughout 1.29.2,
+which launched; the pivot-bar switch was the only thing that changed. Worth writing down rather
+than leaving as a hunch: the last thing changed is the first thing suspected, and here it was
+innocent — the actual culprit was months-old code that a fix to a shared helper had just brought
+to life.
+
 ## v1.29.2
 
 **The tab-bar changes are off until a device says they are safe, and the reason they are the

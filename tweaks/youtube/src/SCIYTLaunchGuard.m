@@ -31,6 +31,47 @@ NSString *SCIYTLaunchGuardReport(void) {
     return @"launch guard: watching — the app has not reported itself active yet";
 }
 
+BOOL SCIYTAppIsActive(void) {
+    return atomic_load_explicit(&sciLaunched, memory_order_relaxed);
+}
+
+/// Blocks waiting for the app to be active, and the observer that drains them.
+///
+/// A plain notification observer per caller would do the same thing; this exists so the queue can
+/// be drained exactly once and on the main thread, since what waits here changes views.
+static NSMutableArray<void (^)(void)> *sciWaiting = nil;
+
+void SCIYTWhenActive(void (^block)(void)) {
+    if (!block) return;
+
+    if (SCIYTAppIsActive()) {
+        dispatch_async(dispatch_get_main_queue(), block);
+        return;
+    }
+
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{ sciWaiting = [NSMutableArray array]; });
+
+    @synchronized (sciWaiting) { [sciWaiting addObject:[block copy]]; }
+}
+
+static void SCIDrainWaiting(void) {
+    NSArray<void (^)(void)> *blocks = nil;
+    if (!sciWaiting) return;
+
+    @synchronized (sciWaiting) {
+        blocks = [sciWaiting copy];
+        [sciWaiting removeAllObjects];
+    }
+
+    // A turn later, on purpose: `didBecomeActive` is delivered while UIKit is still finishing
+    // the transition, and the point of waiting at all was to be out of the way.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        for (void (^block)(void) in blocks) block();
+    });
+}
+
 void SCIYTLaunchGuardStart(void) {
     sciStartedAt = [NSDate date].timeIntervalSince1970;
 
@@ -45,6 +86,7 @@ void SCIYTLaunchGuardStart(void) {
                                                            queue:nil
                                                       usingBlock:^(__unused NSNotification *note) {
             atomic_store_explicit(&sciLaunched, true, memory_order_relaxed);
+            SCIDrainWaiting();
         }];
     }
 

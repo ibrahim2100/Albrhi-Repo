@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.74.5
+
+**The YouTube Download Centre and History tabs are back**, applied a moment after the app opens
+rather than while it is starting. That timing was the whole fault: the same change, made during
+the bar's construction, is what kept the app from launching.
+
 ## v1.74.4
 
 **YouTube's tab-bar changes are switched off until a device says otherwise.** They rewrite one of
