@@ -244,7 +244,7 @@
 
     <div class="tablewrap">
       <table id="licences" hidden>
-        <thead><tr><th>الجهاز</th><th>الاسم</th><th>الجوال</th><th>سارٍ حتى</th><th>المصدر</th><th>الحالة</th><th></th></tr></thead>
+        <thead><tr><th>الجهاز</th><th>الاسم</th><th>الجوال</th><th>يغطّي</th><th>سارٍ حتى</th><th>المصدر</th><th>الحالة</th><th></th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -337,7 +337,12 @@
       <div>
         <label for="codeTier">الباقة</label>
         <select id="codeTier" class="ar">
-          <option value="suite">الحزمة كاملة</option>
+          <option value="suite">الحزمة كاملة (جيلبريك)</option>
+          <option value="apps">كود شامل — كل الأدوات المنفصلة</option>
+          <option value="app:instagram">إنستغرام وحدها</option>
+          <option value="app:youtube">يوتيوب وحدها</option>
+          <option value="app:twitter">X وحدها</option>
+          <option value="app:tiktok">تيك توك وحدها</option>
           <option value="trial">تجربة</option>
         </select>
       </div>
@@ -372,6 +377,19 @@
           <label for="dlgContact">الجوال</label>
           <input id="dlgContact" placeholder="05xxxxxxxx" spellcheck="false"
                  style="direction:ltr;text-align:left;font-family:var(--mono)">
+        </div>
+
+        <div style="margin-block-start:.8rem">
+          <label for="dlgScope">ما يغطّيه</label>
+          <select id="dlgScope" class="ar">
+          <option value="suite">الحزمة كاملة (جيلبريك)</option>
+          <option value="apps">كود شامل — كل الأدوات المنفصلة</option>
+          <option value="app:instagram">إنستغرام وحدها</option>
+          <option value="app:youtube">يوتيوب وحدها</option>
+          <option value="app:twitter">X وحدها</option>
+          <option value="app:tiktok">تيك توك وحدها</option>
+          <option value="trial">تجربة</option>
+          </select>
         </div>
 
         <div style="margin-block-start:.8rem">
@@ -522,6 +540,26 @@ function actionButton(label, handler, destructive) {
 // The lesson is the shape rather than the arithmetic: a sentinel value needs *one* function that
 // understands it, not a rule remembered at each of the places that compare it. There are three
 // here — the badge, the count and the sort — and only one of them had been fixed.
+
+/// What a licence covers, in words.
+///
+/// `lifetime` appears here because an older server wrote the *term* into this field; it meant
+/// everything, which is what `suite` means. Anything unknown is shown as it is rather than
+/// guessed at -- a panel that renames a value it does not understand is a panel that hides a
+/// server newer than itself.
+function scopeName(tier) {
+  const names = {
+    "suite": "الكل (جيلبريك)",
+    "apps": "الأدوات المنفصلة",
+    "app:instagram": "إنستغرام",
+    "app:youtube": "يوتيوب",
+    "app:twitter": "X",
+    "app:tiktok": "تيك توك",
+    "trial": "تجربة",
+    "lifetime": "الكل",
+  };
+  return names[tier] || tier || "الكل";
+}
 
 function isLifetime(row) { return !row.until; }
 
@@ -677,6 +715,7 @@ function renderLicences() {
     tr.append(cell(lic.key, true),
               cell(lic.name || lic.note || "—"),
               cell(lic.contact || "—", true),
+              cell(scopeName(lic.tier)),
               cell(isLifetime(lic) ? "∞" : fmtDate(lic.until), true),
               cell(lic.source === "code" ? "كود" : "موافقة"));
 
@@ -828,6 +867,11 @@ function editLicence(lic) {
   // again a second place the same fact can hide in.
   $("dlgName").value = lic.name || lic.note || "";
   $("dlgContact").value = lic.contact || "";
+
+  // `lifetime` was written into this field by an older server, when the term and the scope shared
+  // one word. It means "everything", which is what `suite` means now.
+  $("dlgScope").value = (lic.tier === "lifetime" || !lic.tier) ? "suite" : lic.tier;
+  if (!$("dlgScope").value) $("dlgScope").value = "suite";
   $("dlgPlan").value = "keep";
   $("dlgDays").value = 365;
   $("dlgMode").value = "set";
@@ -844,6 +888,7 @@ function editLicence(lic) {
         name: $("dlgName").value.trim(),
         contact: $("dlgContact").value.trim(),
         note: "",
+        tier: $("dlgScope").value,
       };
 
       if (plan === "lifetime") {

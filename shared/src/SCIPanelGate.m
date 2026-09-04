@@ -14,6 +14,30 @@ static NSString *SCIPanelKeyForThisApp(void) {
     return bundle.length ? [@"app_enabled_" stringByAppendingString:bundle] : nil;
 }
 
+/// The short name a licence's `app:` scope uses for the tweak running in this process.
+///
+/// **From the bundle identifier, because that is the one thing the process knows about itself.**
+/// A `#define` per tweak would be one more thing to forget when a tweak is added, and a tweak that
+/// forgot it would silently accept a licence issued for a different app.
+///
+/// nil for anything not in the table, which `SCILicenseCoversProduct` answers as "any licence will
+/// do" -- the right direction for a process this file has never heard of.
+NSString *SCIPanelProductForThisApp(void) {
+    static NSDictionary *table = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        table = @{
+            @"com.burbn.instagram":         @"instagram",
+            @"com.google.ios.youtube":      @"youtube",
+            @"com.atebits.Tweetie2":        @"twitter",
+            @"com.zhiliaoapp.musically":    @"tiktok",
+        };
+    });
+
+    NSString *bundle = [[NSBundle mainBundle] bundleIdentifier];
+    return bundle.length ? table[bundle] : nil;
+}
+
 /// Where this dylib is, and therefore where the jailbreak is.
 ///
 /// Rootful is "/", rootless "/var/jb", and roothide a directory with a different random
@@ -203,7 +227,10 @@ BOOL SCIPanelAllowsThisApp(void) {
         //
         SCILicenseCheckInIfDue();
 
-        if (!SCILicenseAllows()) {
+        // Scope, not merely validity: a licence issued for one tweak must not switch on the
+        // other three. `SCILicenseAllowsProduct` answers both halves, and answers the second one
+        // as yes for a licence whose scope this build does not recognise.
+        if (!SCILicenseAllowsProduct(SCIPanelProductForThisApp())) {
             sciGateSource = [NSString stringWithFormat:@"licence — %@", SCILicenseStatusLine()];
             return;
         }

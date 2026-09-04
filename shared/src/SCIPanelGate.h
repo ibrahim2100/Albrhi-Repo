@@ -54,6 +54,10 @@ extern "C" {
 /// see SCIPanelAllowsApp.
 BOOL SCIPanelMasterEnabled(void);
 
+
+/// The short name this process's tweak is known by in a licence's `app:` scope, or nil.
+NSString *SCIPanelProductForThisApp(void);
+
 BOOL SCIPanelAllowsThisApp(void);
 
 /// How that answer was arrived at, for a diagnostics page.

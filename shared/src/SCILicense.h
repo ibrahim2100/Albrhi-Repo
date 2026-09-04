@@ -235,6 +235,28 @@ void SCILicenseStartTrial(void (^completion)(SCILicenseServerResult result));
 /// licence" — two states that must never be drawn the same way.
 BOOL SCILicenseIsLifetime(void);
 
+/// What a licence covers, and whether it covers `product`.
+///
+/// **Three kinds, and the field they travel in already existed.** Every token has carried `tier`
+/// since the server was written, defaulting to `suite`; reading it as a *scope* rather than as a
+/// label costs no new field and leaves every licence already issued working exactly as before —
+/// absent or `suite` means everything.
+///
+///   `suite`            the jailbreak licence: Albrhi and every tweak in it.
+///   `apps`             the shared code: every separately installed tweak, wherever it runs.
+///   `app:<name>`       one tweak alone — `app:youtube`, `app:instagram`, `app:twitter`,
+///                      `app:tiktok`.
+///
+/// `product` is the tweak asking: the same short name the `app:` form uses. A tweak that does not
+/// know its own name passes nil, which is answered as "any licence will do" — the behaviour every
+/// caller had before this existed.
+NSString *SCILicenseScope(void);
+BOOL SCILicenseCoversProduct(NSString *_Nullable product);
+
+/// Licensed *and* in scope. This is what a gate should ask; `SCILicenseAllows()` answers only the
+/// first half and is kept for the panel, which is not gated by anything.
+BOOL SCILicenseAllowsProduct(NSString *_Nullable product);
+
 /// Asks the server for a licence of `days`, on this device's behalf.
 ///
 /// `lifetime` overrides `days`. `name` and `contact` are who to answer — without them the panel

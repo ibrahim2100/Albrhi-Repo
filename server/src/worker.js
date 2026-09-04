@@ -196,6 +196,30 @@ const K = {
   trial: (dev) => `trial:${dev}`,
 };
 
+//
+// **What a licence covers, carried in the field that already existed.**
+//
+// `tier` has been on every token since this server was written, defaulting to `suite`. It is read
+// as a *scope* now rather than as a label, which costs no new field and leaves every licence
+// already issued working exactly as it did: absent or `suite` means everything.
+//
+//   suite        the jailbreak licence -- Albrhi and every tweak in it
+//   apps         the shared code -- every separately installed tweak
+//   app:<name>   one tweak alone: app:instagram, app:youtube, app:twitter, app:tiktok
+//   trial        the free week, unchanged
+//
+// An unknown value is refused here rather than stored: the device reads anything it does not
+// recognise as "everything", which is the right direction for an old build meeting a new server
+// and the wrong one for a typo in the panel.
+const APPS = ['instagram', 'youtube', 'twitter', 'tiktok'];
+
+function cleanTier(value, fallback) {
+  if (typeof value !== 'string' || !value) return fallback;
+  if (value === 'suite' || value === 'apps' || value === 'trial' || value === 'lifetime') return value;
+  if (value.startsWith('app:') && APPS.includes(value.slice(4))) return value;
+  return fallback;
+}
+
 // ── A licence, and the token for it ───────────────────────────────────────────────────
 
 /// Turns a stored licence into a fresh short-lived token, or says why not.
@@ -440,7 +464,10 @@ async function adminApprove(request, env) {
 
   const licence = {
     id: existing?.id || (await sha256Hex(`${body.dev}:${now()}:${crypto.randomUUID()}`, 6)),
-    tier: mode === 'lifetime' ? 'lifetime' : (body.tier || existing?.tier || 'suite'),
+    // Lifetime is a *term*, not a scope, and conflating the two is how a lifetime licence for
+    // one app silently became a lifetime licence for everything. The term lives in `until` (0),
+    // so `tier` is free to say only what is covered.
+    tier: cleanTier(body.tier, existing?.tier || 'suite'),
     // Absent keeps, empty clears -- the same rule as the two fields below, and for the same
     // reason: `||` cannot tell "not mentioned" from "deliberately emptied".
     note: body.note === undefined ? (existing?.note || '') : clean(body.note),
@@ -546,7 +573,7 @@ async function adminCodes(request, env) {
   const count = Math.min(200, Math.max(1, parseInt(body.count, 10) || 1));
   const days = Math.min(3650, Math.max(1, parseInt(body.days, 10) || 365));
   const window = Math.min(3650, Math.max(1, parseInt(body.window, 10) || 90));
-  const tier = body.tier === 'trial' ? 'trial' : 'suite';
+  const tier = cleanTier(body.tier, 'suite');
 
   const minted = [];
   for (let i = 0; i < count; i++) {

@@ -321,6 +321,43 @@ SCILicenseState SCILicenseCurrentState(void) {
     return SCILicenseStateValid;
 }
 
+NSString *SCILicenseScope(void) {
+    NSDictionary *payload = nil;
+    if (SCIEvaluateKey(SCILicenseStoredKey(), &payload) == SCILicenseStateValid) {
+        NSString *tier = payload[@"tier"];
+        if ([tier isKindOfClass:[NSString class]] && tier.length) return tier;
+        return @"suite";
+    }
+
+    // A redeemed code keeps its own tier beside it, written when the server answered. Same
+    // question, different instrument.
+    NSString *stored = SCIPanelReadString(kSCICodeTierPref, nil);
+    if (stored.length) return stored;
+
+    return @"suite";
+}
+
+BOOL SCILicenseCoversProduct(NSString *product) {
+    if (!product.length) return YES;          // a caller that does not know what it is
+
+    NSString *scope = SCILicenseScope();
+
+    // The jailbreak licence covers everything, and so does anything unrecognised: a scope this
+    // build has not been taught is a licence somebody paid for, and refusing it would be this
+    // project deciding that its own newer server is wrong.
+    if ([scope isEqualToString:@"suite"] || [scope isEqualToString:@"apps"]) return YES;
+
+    if ([scope hasPrefix:@"app:"]) return [[scope substringFromIndex:4] isEqualToString:product];
+
+    return YES;
+}
+
+BOOL SCILicenseAllowsProduct(NSString *product) {
+    if (!SCILicenseIsEnforced()) return YES;
+    if (!SCILicenseAllows()) return NO;
+    return SCILicenseCoversProduct(product);
+}
+
 BOOL SCILicenseAllows(void) {
     if (!SCILicenseIsEnforced()) return YES;
 
