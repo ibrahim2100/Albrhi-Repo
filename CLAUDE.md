@@ -990,6 +990,13 @@ workflow and attached to the same release: a fourth publisher would race the thr
 exist for `gh-pages`, and that race has served an index a version behind a release once already.
 The job compiles all four tweaks anyway, so a tweak that will not build already fails it.
 
+**Re-signing an injected app with `ldid -S` alone erases its entitlements**, and nothing says
+so: the binary signs, the IPA builds, and the app is missing its keychain groups, its app groups
+and its associated domains. TikTok carries twenty of them. They are read out of the *original*
+binary with `ldid -e` **before anything is modified** and handed back with `ldid -S<file>` — read
+first, because the moment a load command is added the signature is gone and with it any chance of
+asking the file what it was allowed to do.
+
 **`otool -L` prints the file's own install name before its dependencies, and every tweak here
 installs under `/Library/MobileSubstrate/`.** A standalone check grepping that output for
 "substrate" matches the file describing itself and calls a standalone build linked; skipping one
