@@ -382,7 +382,32 @@ static BOOL sciWatchScanWanted = NO;
     [self scanTree:root];
 }
 
+/// The first view of this class in `root`'s tree, breadth-first.
+static UIView *SCIFindByClassName(UIView *root, NSString *name) {
+    NSMutableArray<UIView *> *queue = [NSMutableArray arrayWithObject:root];
+    while (queue.count) {
+        UIView *next = queue.firstObject;
+        [queue removeObjectAtIndex:0];
+        if ([NSStringFromClass([next class]) isEqualToString:name]) return next;
+        [queue addObjectsFromArray:next.subviews];
+    }
+    return nil;
+}
+
 + (void)scanTree:(UIView *)window {
+    //
+    // **Aimed at the list under the player rather than at the whole window.**
+    //
+    // The first scan that reached the right window walked 210 views and printed 120 of them
+    // before its budget ran out -- and every one was chrome: the tab bar, the mini player, the
+    // ghost cells YouTube draws while a page loads. The row being looked for is deeper than a
+    // breadth-first walk of a whole window can reach on any budget worth printing.
+    //
+    // `YTWatchNextView` is the list below the video, named by that same scan. Starting there
+    // spends the whole budget on the part of the screen the question is about.
+    //
+    UIView *watchNext = SCIFindByClassName(window, @"YTWatchNextView");
+    if (watchNext) window = watchNext;
 
     NSMutableString *out = [NSMutableString string];
     NSUInteger printed = 0;
@@ -396,7 +421,7 @@ static BOOL sciWatchScanWanted = NO;
     // Breadth-first with the depth carried alongside, so the output reads as a tree rather than
     // as a list of names with no relationship between them.
     NSMutableArray *queue = [NSMutableArray arrayWithObject:@[window, @0]];
-    while (queue.count && printed < 120) {
+    while (queue.count && printed < 200) {
         NSArray *pair = queue.firstObject;
         [queue removeObjectAtIndex:0];
 
@@ -405,7 +430,9 @@ static BOOL sciWatchScanWanted = NO;
         walked++;
         NSString *name = NSStringFromClass([view class]);
 
-        if (SCINameIsInteresting(name)) {
+        // Hidden views are skipped. YouTube keeps a screenful of ghost placeholder cells around
+        // and they are all hidden, all interesting by name, and none of them on screen.
+        if (!view.hidden && SCINameIsInteresting(name)) {
             CGRect frame = view.frame;
             [out appendFormat:@"  %@%@  %.0f,%.0f %.0f×%.0f%@\n",
                 [@"" stringByPaddingToLength:MIN(depth, 8) * 2 withString:@" " startingAtIndex:0],
