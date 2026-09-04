@@ -263,7 +263,7 @@ jobs:
                 done
 
             - name: Build each app tweak on its own
-              if: steps.release_check.outputs.needed == 'true'
+              if: steps.gate.outputs.release == 'true'
               # **The same four tweaks, packaged one by one, in the workflow that already
               # compiles them.**
               #
@@ -315,7 +315,7 @@ jobs:
                 echo "ok  eight individual packages"
 
             - name: Build a standalone dylib for each app tweak
-              if: steps.release_check.outputs.needed == 'true'
+              if: steps.gate.outputs.release == 'true'
               # For injecting into an IPA: no CydiaSubstrate, no PreferenceLoader, no panel.
               #
               # **Proved rather than claimed.** Whether a dylib is genuinely standalone is

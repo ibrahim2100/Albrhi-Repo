@@ -990,6 +990,13 @@ workflow and attached to the same release: a fourth publisher would race the thr
 exist for `gh-pages`, and that race has served an index a version behind a release once already.
 The job compiles all four tweaks anyway, so a tweak that will not build already fails it.
 
+**A step copied between workflows brings its `if:` with it, and a condition naming a step that
+does not exist is silently false.** The two new steps carried `steps.release_check.outputs.needed`
+from `buildtweak.yml` into `buildsuite.yml`, whose gate is `steps.gate.outputs.release` — so they
+were **skipped**, and the release step that lists their output failed on the missing files. GitHub
+does not warn about a condition referring to a step id that is not in the job; it evaluates to
+false and the step quietly does not run. Grep the workflow's own ids after pasting a step into it.
+
 **Re-signing an injected app with `ldid -S` alone erases its entitlements**, and nothing says
 so: the binary signs, the IPA builds, and the app is missing its keychain groups, its app groups
 and its associated domains. TikTok carries twenty of them. They are read out of the *original*
