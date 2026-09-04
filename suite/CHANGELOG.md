@@ -1,5 +1,8 @@
 # Albrhi Changelog
 
+*Between releases: the licence panel and the licence screen inside each tweak are being built and
+tested locally. Nothing here is released yet.*
+
 ## v1.76.0
 
 **YouTube's save button now sits in the player's own top row, beside the subtitles and settings
