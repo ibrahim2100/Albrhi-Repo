@@ -167,6 +167,24 @@ static char kSCIOverlayTopShown;
 /// Measured from the overlay's own buttons rather than chosen. The right of that row carries
 /// cast, subtitles and the gear on a build that has all three and fewer on one that does not, so
 /// a number written here would be right on one phone and wrong on the next.
+/// The autoplay switch, wherever it is in the overlay's own tree.
+///
+/// **It is the anchor because it is the one that moves.** It starts hidden and appears when
+/// playback begins, so "the leftmost control on the right" is a different button before and after
+/// a video starts — which is exactly what was seen: the save button sat correctly, the switch
+/// arrived, and the button jumped away. Anchoring to the thing that changes is what stops the
+/// measurement changing under it.
+static UIView *SCIAutonavSwitch(UIView *root, NSUInteger depth) {
+    if (depth > 3) return nil;
+
+    for (UIView *child in root.subviews) {
+        if ([NSStringFromClass([child class]) isEqualToString:@"YTAutonavSwitch"]) return child;
+        UIView *deeper = SCIAutonavSwitch(child, depth + 1);
+        if (deeper) return deeper;
+    }
+    return nil;
+}
+
 static CGRect SCIFrameBesideTopControls(YTMainAppControlsOverlayView *overlay, UIView *ours) {
     CGRect best = CGRectNull;
     CGFloat leftMost = CGFLOAT_MAX;
@@ -178,6 +196,10 @@ static CGRect SCIFrameBesideTopControls(YTMainAppControlsOverlayView *overlay, U
 
     for (UIView *child in overlay.subviews) {
         if (child == ours || child.hidden || !child.userInteractionEnabled) continue;
+
+        // The switch is the anchor below; measuring the button's own size from it would give a
+        // 36×27 button among 24×40 ones.
+        if ([NSStringFromClass([child class]) isEqualToString:@"YTAutonavSwitch"]) continue;
 
         CGRect frame = child.frame;
         if (frame.size.width < 16 || frame.size.height < 16) continue;
@@ -192,11 +214,32 @@ static CGRect SCIFrameBesideTopControls(YTMainAppControlsOverlayView *overlay, U
 
     if (CGRectIsNull(best)) return CGRectNull;
 
-    // Its neighbours' size, and their centre line. The gap between two of them is the gap this
-    // takes: 8 points is what the row uses and what it looks wrong without.
     CGFloat gap = 8;
-    return CGRectMake(CGRectGetMinX(best) - best.size.width - gap, CGRectGetMinY(best),
-                      best.size.width, best.size.height);
+
+    //
+    // **Anchored to the autoplay switch when there is one, and to the leftmost control otherwise.**
+    //
+    // The switch is hidden until a video is playing and then appears at the left of that group.
+    // Measuring "the leftmost control" therefore gives one answer before playback and another
+    // after it, and the button moved between them -- reported exactly that way. Anchoring to the
+    // switch itself gives the same answer in both cases.
+    //
+    // A switch that has no frame yet is not used: an anchor of zero would put the button off the
+    // left edge, which is a worse answer than the one already on screen.
+    //
+    UIView *autonav = SCIAutonavSwitch(overlay, 0);
+    CGRect anchor = (autonav && autonav.bounds.size.width > 0 && CGRectGetMinX(autonav.frame) > 0)
+        ? [autonav convertRect:autonav.bounds toView:overlay]
+        : best;
+
+    // Our neighbours' size and centre line, never the switch's own: the switch is a wide, short
+    // control and a button cut to its shape would be the one thing in that row that is not a
+    // button shape.
+    CGFloat side = best.size.width;
+    CGFloat centreY = CGRectGetMidY(anchor);
+
+    return CGRectMake(CGRectGetMinX(anchor) - side - gap, centreY - best.size.height / 2.0,
+                      side, best.size.height);
 }
 
 static void SCIApplyTopInset(YTMainAppControlsOverlayView *overlay) {
