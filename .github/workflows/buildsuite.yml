@@ -466,7 +466,11 @@ jobs:
                 # main/packages is where make-suite.sh leaves both flavours, and
                 # "albrhi" is the name fetch_by_tag uses to ask for this run's own
                 # release if the listing has not caught up with it yet.
-                ./main/tools/fetch-published-debs.sh published "${{ github.repository }}" 3 "main/packages" albrhi
+                # Both directories: the suite's own two packages and the eight individual ones this
+                # run just built. The releases listing is eventually consistent -- a release
+                # published a minute ago is not reliably in it -- so a run folds its own output
+                # in rather than waiting to be told about it.
+                ./main/tools/fetch-published-debs.sh published "${{ github.repository }}" 3 "main/packages main/apps" albrhi
 
             - name: Publish APT repo to GitHub Pages
               if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
