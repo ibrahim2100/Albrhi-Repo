@@ -953,6 +953,12 @@ everything. `apps` is the shared code across the separate tweaks; `app:<name>` i
 must not refuse a licence somebody paid for — while the *server* refuses an unknown value at the
 point of writing, so a typo in the panel is caught where it is made.
 
+**A scope picker in two of the three places that set one is a scope nobody can issue.** The
+codes card and the edit dialog got the list and the *issue by hand* card kept "suite or trial" —
+so the one route that mints a licence directly could not mint an app-scoped one at all, which is
+exactly the licence somebody buying a single tweak needs. Three selects, one list, checked
+together: any place that writes `tier` offers every value the server accepts.
+
 **And "lifetime" came out of that field**, where it had been sitting as though it were a scope:
 the term lives in `until`, and conflating the two is how a lifetime licence for one app becomes a
 lifetime licence for everything.
