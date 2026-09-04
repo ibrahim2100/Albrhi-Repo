@@ -264,10 +264,36 @@ static NSString *SCIText(NSString *english, NSString *arabic) {
     // The store's own code, tried first and only where such a build exists. It is not a key and
     // not a short code: it goes to neither the verifier nor the server.
     if (SCILicenseStoreAccepts(text)) {
-        SCILicenseStoreRemember(text);
-        self.entry.text = @"";
-        [self refresh];
-        [self say:SCIText(@"Activated.", @"فُعِّلت.")];
+        SCILicenseActivateStore(text, ^(SCILicenseServerResult result) {
+            [self refresh];
+
+            switch (result) {
+                case SCILicenseServerOK:
+                    self.entry.text = @"";
+                    [self say:SCIText(@"Activated.", @"فُعِّلت.")];
+                    break;
+
+                // A shop's window can be extended or withdrawn from the panel now, so these are
+                // real answers rather than "wrong code" -- and each needs the person to do
+                // something different about it.
+                case SCILicenseServerExpired:
+                    [self say:SCIText(@"This copy's period has ended. The store has a new one.",
+                                      @"انتهت مدّة هذه النسخة. المتجر لديه نسخة جديدة.")];
+                    break;
+                case SCILicenseServerRevoked:
+                    [self say:SCIText(@"This copy has been withdrawn by the store.",
+                                      @"سُحبت هذه النسخة من قِبل المتجر.")];
+                    break;
+                case SCILicenseServerUnreachable:
+                case SCILicenseServerNotConfigured:
+                    [self say:SCIText(@"The server could not be reached. Try again on a connection.",
+                                      @"تعذّر الوصول إلى الخادم. أعد المحاولة على اتصال.")];
+                    break;
+                default:
+                    [self say:SCIText(@"That code was not accepted.", @"لم يُقبل هذا الكود.")];
+                    break;
+            }
+        });
         return;
     }
 

@@ -194,6 +194,16 @@ const K = {
   // the record that the free week was already spent, and it has to outlive everything else or
   // the trial is not once per device, it is once per week.
   trial: (dev) => `trial:${dev}`,
+
+  // **A shop, and the devices that activated from it.**
+  //
+  // A store licence is the opposite of every other one here: one code, any number of devices, no
+  // person named. That is what a shop sells -- and the reason it lives on the server rather than
+  // being compiled into the dylib is everything the compiled version could not do. The shop's
+  // window can be extended without rebuilding anything, it can be withdrawn, and the panel can
+  // say how many devices are actually using it.
+  store: (id) => `store:${id}`,
+  storeDevice: (id, dev) => `sdev:${id}:${dev}`,
 };
 
 //
@@ -284,6 +294,64 @@ function noteInstall(licence, body) {
   }
 
   return { ...licence, installs };
+}
+
+//
+// **Activating a store copy.**
+//
+// The dylib is built for one shop and sends that shop's own code. What comes back is an ordinary
+// signed token -- so renewal, grace, revocation and the seven-day window all work exactly as they
+// do for a named licence, with no second mechanism to keep in step. What is different is only
+// what the server checks: a code rather than a device, and no limit on how many devices ask.
+//
+// The device is recorded, which is the whole reason this moved off the compiled-in code: a shop
+// that cannot see how many people are using its copies cannot decide whether to renew.
+//
+async function deviceStore(request, env) {
+  const body = await readBody(request);
+  if (!body || !isDevice(body.dev)) return json({ error: 'bad device' }, 400);
+
+  const id = clean(body.store).toLowerCase().slice(0, 24);
+  if (!id) return json({ state: 'unknown' }, 404);
+
+  const store = await env.DB.get(K.store(id), 'json');
+  if (!store) return json({ state: 'unknown' }, 404);
+  if (store.revoked) return json({ state: 'revoked' }, 403);
+
+  // The code is compared, not the store name: a build says which shop it is for, and the person
+  // types what the shop gave them. Both have to agree.
+  const given = clean(body.code).toLowerCase().replace(/[\s-]/g, '');
+  if (!given || given !== String(store.code || '').toLowerCase()) {
+    return json({ state: 'wrong_code' }, 403);
+  }
+
+  const until = store.until || 0;
+  if (until > 0 && until <= now()) return json({ state: 'expired', until }, 403);
+
+  // One line per device, overwritten on every activation. Enough to count them and to say when
+  // each was last seen; nothing about the person, because there is nothing to know.
+  const seen = await env.DB.get(K.storeDevice(id, body.dev), 'json');
+  await env.DB.put(K.storeDevice(id, body.dev), JSON.stringify({
+    first: seen?.first || now(),
+    last: now(),
+    product: clean(body.product).slice(0, 24),
+    version: clean(body.version).slice(0, 24),
+  }));
+
+  const expiry = Math.min(now() + TOKEN_DAYS * 86400, until > 0 ? until : Infinity);
+
+  const token = await mintToken(env, {
+    v: 1,
+    id: `store:${id}`,
+    dev: body.dev,
+    tier: `store:${id}`,
+    iat: now(),
+    exp: expiry,
+    until,
+    for: store.name || id,
+  });
+
+  return json({ state: 'ok', token, until, tier: `store:${id}` });
 }
 
 async function deviceHello(request, env) {
@@ -625,6 +693,87 @@ async function adminDelete(request, env) {
   return json({ ok: true, note: `the device stops within ${TOKEN_DAYS} days, or at its next check` });
 }
 
+//
+// **The shops, and how many devices each one is being used on.**
+//
+// A store licence has no person and no device attached, so the only meaningful thing to show
+// about it is how far it has spread and when it stops -- which is exactly what a shop asks before
+// renewing. Counted from the device records the activations wrote, not from a number kept by
+// hand: a counter that is incremented is a counter that drifts.
+//
+async function adminStores(request, env) {
+  const { keys } = await env.DB.list({ prefix: 'store:' });
+
+  const stores = [];
+  for (const key of keys) {
+    const id = key.name.slice('store:'.length);
+    const store = await env.DB.get(key.name, 'json');
+    if (!store) continue;
+
+    // Devices are listed rather than counted in the record: KV's list is the only count that
+    // cannot disagree with what is actually stored.
+    const seen = await env.DB.list({ prefix: `sdev:${id}:` });
+
+    let recent = 0;
+    const week = now() - 7 * 86400;
+    const devices = [];
+
+    for (const entry of seen.keys) {
+      const row = await env.DB.get(entry.name, 'json');
+      if (!row) continue;
+      if ((row.last || 0) > week) recent++;
+      devices.push({ dev: entry.name.split(':').pop(), ...row });
+    }
+
+    devices.sort((a, b) => (b.last || 0) - (a.last || 0));
+
+    stores.push({
+      id,
+      ...store,
+      devices: devices.length,
+      recent,
+      // Enough to look at, not the whole list: a shop with ten thousand activations should not
+      // send ten thousand rows to a page nobody scrolls to the end of.
+      sample: devices.slice(0, 50),
+    });
+  }
+
+  return json({ ok: true, stores });
+}
+
+/// Creates a shop, or changes one: its code, its name, when it stops, whether it is withdrawn.
+async function adminStore(request, env) {
+  const body = await readBody(request);
+  if (!body) return json({ error: 'bad body' }, 400);
+
+  const id = clean(body.id).toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 24);
+  if (!id) return json({ error: 'bad id' }, 400);
+
+  const existing = await env.DB.get(K.store(id), 'json');
+
+  // Absent keeps, empty clears -- the rule the licence fields already follow, and for the same
+  // reason: `||` cannot tell "not mentioned" from "deliberately emptied", which is what made a
+  // name uncorrectable once.
+  const store = {
+    name: body.name === undefined ? (existing?.name || id) : clean(body.name),
+    site: body.site === undefined ? (existing?.site || '') : clean(body.site),
+    code: body.code === undefined ? (existing?.code || id) : clean(body.code).toLowerCase(),
+    until: body.until === undefined ? (existing?.until || 0) : (parseInt(body.until, 10) || 0),
+    revoked: body.revoked === undefined ? Boolean(existing?.revoked) : Boolean(body.revoked),
+    iat: existing?.iat || now(),
+  };
+
+  // Days, as the panel sends them: from today, not added to what was there. A shop renewing for
+  // three months means three months from now.
+  if (body.days !== undefined) {
+    const days = Math.min(3650, Math.max(0, parseInt(body.days, 10) || 0));
+    store.until = days > 0 ? now() + days * 86400 : 0;
+  }
+
+  await env.DB.put(K.store(id), JSON.stringify(store));
+  return json({ ok: true, store: { id, ...store } });
+}
+
 async function adminCodes(request, env) {
   const body = await readBody(request);
   if (!body) return json({ error: 'bad body' }, 400);
@@ -693,6 +842,7 @@ export default {
       if (request.method === 'POST' && path === '/v1/hello')   return deviceHello(request, env);
       if (request.method === 'POST' && path === '/v1/request') return deviceRequest(request, env);
       if (request.method === 'POST' && path === '/v1/redeem')  return deviceRedeem(request, env);
+      if (request.method === 'POST' && path === '/v1/store')   return deviceStore(request, env);
       if (request.method === 'POST' && path === '/v1/trial')   return deviceTrial(request, env);
 
       if (path.startsWith('/admin/')) {
@@ -704,6 +854,8 @@ export default {
         if (path === '/admin/revoke')  return adminRevoke(request, env);
         if (path === '/admin/restore') return adminRestore(request, env);
         if (path === '/admin/codes')   return adminCodes(request, env);
+        if (path === '/admin/stores')  return adminStores(request, env);
+        if (path === '/admin/store')   return adminStore(request, env);
         if (path === '/admin/delete')  return adminDelete(request, env);
       }
 

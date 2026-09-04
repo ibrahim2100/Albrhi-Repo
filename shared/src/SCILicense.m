@@ -431,6 +431,62 @@ NSTimeInterval SCILicenseStoreExpiry(void) {
 #endif
 }
 
+///
+/// Activates a store copy against the server.
+///
+/// **The compiled-in date was the first version of this and the server replaced it for what it
+/// could not do.** A date inside the dylib cannot be extended without rebuilding, cannot be
+/// withdrawn at all, and tells the shop nothing about how many devices are using its copies --
+/// which is the question a shop asks before renewing. So the code goes to the server, which
+/// answers with an ordinary signed token: renewal, grace, revocation and the seven-day window all
+/// work exactly as they do for a named licence, with no second mechanism to keep in step.
+///
+/// Unlimited devices is the *server's* rule, not an absence of one here. It counts them.
+// Declared here because this function sits above them in the file: both belong to the server
+// section further down, and moving that section up to satisfy one caller would put the network
+// code in the middle of the offline verifier for no reason.
+static BOOL SCIAcceptServerToken(NSString *token);
+static SCILicenseServerResult SCIResultForState(NSString *state);
+static void SCIPostJSON(NSString *path, NSDictionary *body,
+                        void (^completion)(NSDictionary *_Nullable answer, NSInteger status));
+
+void SCILicenseActivateStore(NSString *code, void (^completion)(SCILicenseServerResult result)) {
+    NSString *store = SCILicenseStoreID();
+    if (!store.length) { if (completion) completion(SCILicenseServerNoLicence); return; }
+    if (!SCILicenseServerBase()) { if (completion) completion(SCILicenseServerNotConfigured); return; }
+
+    NSMutableDictionary *body = [@{
+        @"store": store,
+        @"code": code ?: @"",
+        @"dev": SCILicenseFingerprint(),
+    } mutableCopy];
+
+    NSString *product = SCIPanelProductForThisApp();
+    if (product.length) {
+        body[@"product"] = product;
+        NSString *const *version = (NSString *const *)dlsym(RTLD_DEFAULT, "SCIVersionString");
+        if (version && *version) body[@"version"] = *version;
+    }
+
+    SCIPostJSON(@"/v1/store", body, ^(NSDictionary *answer, NSInteger status) {
+        if (status != 200 || !answer) {
+            if (completion) completion(SCILicenseServerUnreachable);
+            return;
+        }
+
+        NSString *token = answer[@"token"];
+        if ([token isKindOfClass:[NSString class]] && SCIAcceptServerToken(token)) {
+            // Remembered as well, so the screen can say "activated" before the first renewal and
+            // so a reinstall of the app does not send somebody back to the shop for the code.
+            [[NSUserDefaults standardUserDefaults] setObject:code forKey:kSCIStoreCodePref];
+            if (completion) completion(SCILicenseServerOK);
+            return;
+        }
+
+        if (completion) completion(SCIResultForState(answer[@"state"]));
+    });
+}
+
 BOOL SCILicenseStoreAccepts(NSString *code) {
     NSString *wanted = SCILicenseStoreID();
     if (!wanted.length || !code.length) return NO;
@@ -441,19 +497,39 @@ BOOL SCILicenseStoreAccepts(NSString *code) {
                             [NSCharacterSet whitespaceAndNewlineCharacterSet]] lowercaseString];
     given = [given stringByReplacingOccurrencesOfString:@"-" withString:@""];
 
-    if (![given isEqualToString:wanted.lowercaseString]) return NO;
-
-    // In date, and the date is the build's own. A store copy that outlived its window would be a
-    // copy nobody can take back.
-    NSTimeInterval until = SCILicenseStoreExpiry();
-    return until > 0 && [NSDate date].timeIntervalSince1970 < until;
+    // **Shape only.** Whether this code is live, and until when, is the server's answer -- see
+    // SCILicenseActivateStore. This says one thing: that the string somebody typed is the code
+    // this build was made for, so it can be sent to the right place rather than tried as a key.
+    //
+    // The compiled date stays as a backstop for a copy that can never reach the server at all;
+    // where there is a server it decides, and it can extend, withdraw and count.
+    return [given isEqualToString:wanted.lowercaseString];
 }
 
 BOOL SCILicenseStoreActive(void) {
-    if (!SCILicenseStoreID().length) return NO;
+    NSString *store = SCILicenseStoreID();
+    if (!store.length) return NO;
 
+    // The token the server issued, checked the way every other token is: signed, for this device,
+    // in date. A store copy is licensed by the same machinery as everything else -- what differs
+    // is only who the server hands one to.
+    NSDictionary *payload = nil;
+    if (SCIEvaluateKey(SCILicenseStoredKey(), &payload) == SCILicenseStateValid) {
+        NSString *tier = payload[@"tier"];
+        if ([tier isKindOfClass:[NSString class]] &&
+            [tier isEqualToString:[@"store:" stringByAppendingString:store]]) {
+            return YES;
+        }
+    }
+
+    // The offline backstop: a copy built with a window and never able to reach a server. It is
+    // deliberately the *second* answer -- where the server can be asked, its word is the one that
+    // can be extended and withdrawn.
     NSString *stored = [[NSUserDefaults standardUserDefaults] stringForKey:kSCIStoreCodePref];
-    return SCILicenseStoreAccepts(stored);
+    if (!SCILicenseStoreAccepts(stored)) return NO;
+
+    NSTimeInterval until = SCILicenseStoreExpiry();
+    return until > 0 && [NSDate date].timeIntervalSince1970 < until;
 }
 
 /// Remembers the code on this device. Local defaults, not the panel's domain: a store build is
@@ -488,6 +564,14 @@ BOOL SCILicenseCoversProduct(NSString *product) {
     // build has not been taught is a licence somebody paid for, and refusing it would be this
     // project deciding that its own newer server is wrong.
     if ([scope isEqualToString:@"suite"] || [scope isEqualToString:@"apps"]) return YES;
+
+    // A store token covers everything in that store's own builds, and nothing anywhere else: an
+    // ordinary build has no store id, so `store:` never matches and the licence is refused --
+    // which is the exclusivity, expressed where it can be checked rather than promised.
+    if ([scope hasPrefix:@"store:"]) {
+        NSString *store = SCILicenseStoreID();
+        return store.length && [[scope substringFromIndex:6] isEqualToString:store];
+    }
 
     if ([scope hasPrefix:@"app:"]) return [[scope substringFromIndex:4] isEqualToString:product];
 

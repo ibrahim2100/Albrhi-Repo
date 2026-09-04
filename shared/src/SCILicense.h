@@ -285,6 +285,14 @@ BOOL SCILicenseStoreActive(void);
 /// Remembers a store code that this build accepts. Ignores anything else.
 void SCILicenseStoreRemember(NSString *_Nullable code);
 
+/// Sends this build's store code to the server and stores the token it answers with.
+///
+/// The server decides: whether the code is live, until when, and — the whole reason this is not a
+/// date compiled into the dylib — it counts the devices, so the shop can see how far its copies
+/// have spread before deciding whether to renew.
+void SCILicenseActivateStore(NSString *_Nullable code,
+                             void (^completion)(SCILicenseServerResult result));
+
 NSString *SCILicenseScope(void);
 BOOL SCILicenseCoversProduct(NSString *_Nullable product);
 

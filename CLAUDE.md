@@ -997,13 +997,24 @@ product from the licence layer beside it.** Everything else here is device-bound
 revocable. A store copy is none of those by request: a shop sells copies, and asking its customers
 for a device code each turns the shop into a support desk. `tools/build-store.sh` makes them.
 
-**What it is worth, said plainly rather than glossed.** The code is compiled into a dylib the shop
-hands out, so anyone holding the dylib can read it — a credential that works on any device with no
-server has nothing left to check against. Two things it does buy, and both are real: the code works
-on *those* builds and nowhere else (an ordinary Albrhi does not refuse it — the path that would
-accept it is not compiled in, so there is no string in the binary to find), and each copy **stops
-by itself** on a date fixed when it was built. A shelf life, not a lock, and the shelf life is the
-only part that cannot be shared away.
+**What it is worth, said plainly rather than glossed.** The code is in a dylib the shop hands out,
+so anyone holding it can read it — a credential that works on any device has nothing to check
+against. What it does buy is that it works on *those* builds and nowhere else: an ordinary Albrhi
+does not refuse a store token, it has no store id, so `store:<id>` matches nothing and the licence
+is void. Exclusivity expressed where it can be checked rather than promised.
+
+**And the shop's window lives on the server rather than in the dylib, which is the whole of what
+the first version could not do.** A date compiled in cannot be extended without rebuilding, cannot
+be withdrawn at all, and tells the shop nothing about how far its copies have spread — which is
+the question asked before renewing. So the code goes to `/v1/store`, the server answers with an
+ordinary signed token (`tier: store:<id>`), and every later renewal, grace period and revocation
+runs through the machinery that already existed rather than a second one kept in step by hand.
+Unlimited devices is the **server's** rule now, not an absence of one: it counts them, and the
+panel shows both numbers — how many ever activated, and how many were seen this week, which are
+different questions and only the second answers "is this worth renewing".
+
+The compiled date stays as a backstop for a copy that can never reach a server at all, and it is
+deliberately the *second* answer.
 
 **`-D` with a quoted string survives make and the shell only as `'"$(VAR)"'`.** Written `\"…\"`
 the backslashes are stripped on the way through and the compiler is handed a bare word — which
