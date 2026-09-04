@@ -80,7 +80,7 @@ static void SCIOpenDiagnostics(SCIYTSettingsHostController *host) {
                            detail:SCILocalized(@"scan_watch_note")
                            symbol:@"viewfinder"
                            action:^{
-                               [SCIYTDiagnostics scanWatchPage];
+                               [SCIYTDiagnostics requestWatchScan];
 
                                // Said plainly, because a scan that writes into a page you are
                                // not looking at is indistinguishable from a row that does

@@ -290,10 +290,29 @@ static NSString *sciWatchScan = nil;
 /// The names worth printing. Everything else on a watch page is UIKit and YouTube's own
 /// containers, and a dump of all of it is a dump nobody reads to the end of.
 static BOOL SCINameIsInteresting(NSString *name) {
-    for (NSString *needle in @[@"Action", @"Slim", @"Metadata", @"ELM", @"Button"]) {
+    // YouTube's own classes, first and foremost. The first version of this listed five words --
+    // Action, Slim, Metadata, ELM, Button -- and the row being looked for is drawn by a class
+    // whose name carries none of them, which is precisely why it is being looked for. A filter
+    // built from the names you expect cannot show you the name you did not.
+    if ([name hasPrefix:@"YT"] || [name hasPrefix:@"ELM"]) return YES;
+
+    for (NSString *needle in @[@"Action", @"Slim", @"Metadata", @"Button", @"Engagement"]) {
         if ([name rangeOfString:needle].location != NSNotFound) return YES;
     }
     return NO;
+}
+
+static BOOL sciWatchScanWanted = NO;
+
++ (void)requestWatchScan {
+    sciWatchScanWanted = YES;
+    sciWatchScan = SCILocalized(@"diag_scan_waiting");
+}
+
++ (BOOL)watchScanRequested {
+    if (!sciWatchScanWanted) return NO;
+    sciWatchScanWanted = NO;
+    return YES;
 }
 
 + (void)scanWatchPage {

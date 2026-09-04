@@ -771,6 +771,22 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**A view-hierarchy scan run from a full-screen settings page scans the settings page.** UIKit
+removes the presenting hierarchy from the window once a full-screen transition finishes, so the
+watch page this was built to describe was not there — the report listed a navigation bar's buttons
+and every line of it was true. The request is remembered and the scan is taken from the player's
+own overlay now. **And its filter was five hand-picked words** (Action, Slim, Metadata, ELM,
+Button) for a class whose name carries none of them, which is why it was being looked for at all:
+a filter built from the names you expect cannot show you the name you did not. Every `YT…` and
+`ELM…` class is printed now.
+
+**That pair settled the actions row for good.** The live class dump showed
+`-createActionViewsFromSupportedRenderers:` really is declared on 21.30.5 — the selector was never
+the problem — while the construction count read **zero**: the app builds none of those rows. So
+the row under a video in that build is a different class entirely and no renderer handed to this
+one can become a button. Two numbers, one release, and an approach closed on evidence instead of
+on a fourth attempt.
+
 **`tools/objc-classes.py` reads a binary somebody downloaded; the device is the only thing that
 knows what *this* build declares — and `class_copyMethodList` in a diagnostics page is that tool
 run where it matters.** Three features here have been written against selectors confirmed in one
@@ -2345,9 +2361,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.17** · YouTube **1.30.2** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
+Instagram **4.1.17** · YouTube **1.30.3** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.2.1** · suite **1.75.2**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.2.1** · suite **1.75.3**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

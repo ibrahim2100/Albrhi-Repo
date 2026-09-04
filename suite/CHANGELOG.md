@@ -1,5 +1,11 @@
 # Albrhi Changelog
 
+## v1.75.3
+
+**The YouTube screen scanner now runs from the player instead of from the settings screen** — a
+full-screen presentation removes the page behind it, so the first scan described a navigation bar,
+accurately. It also prints every YT… and ELM… class it finds rather than five hand-picked words.
+
 ## v1.75.2
 
 **The YouTube report now prints the actions row's real method list, read from the runtime on the

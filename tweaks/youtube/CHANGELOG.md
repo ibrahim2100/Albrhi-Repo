@@ -3,6 +3,31 @@
 **Tested on YouTube 21.32.4.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.30.3
+
+**Two answers arrived and both were exact, and one of them was an accurate scan of the wrong
+screen.**
+
+The class dump settled the row: `YTSlimVideoScrollableDetailsActionsView` declares
+`-createActionViewsFromSupportedRenderers:` on 21.30.5 — the selector was right all along — and
+**the app builds none of these rows at all**: `0 built by the app`, counted from `-didMoveToWindow`
+on the class itself. So the row under a video in this build is some other class entirely, and no
+renderer handed to this one can ever become a button. That closes the approach 1.30.0 shipped, on
+evidence rather than on inference.
+
+**And the scanner scanned the settings screen.** It was run from a row inside our own settings,
+which is presented full screen — and a full-screen presentation takes the presenting hierarchy out
+of the window once the transition finishes. The watch page was not there to look at. Every line it
+printed was true and every line was about a navigation bar.
+
+Both are fixed by asking at the right moment and looking with the right filter:
+
+- the row now *asks* for a scan, and the scan is taken **from the player's own overlay**, where
+  the thing being asked about is certainly on screen;
+- and it prints every `YT…` and `ELM…` class it finds, not five hand-picked words. **A filter
+  built from the names you expect cannot show you the name you did not** — and the whole point of
+  this scan is a class nobody here has named yet.
+
 ## v1.30.2
 
 **The report now asks the device the one question three releases have turned on, instead of asking

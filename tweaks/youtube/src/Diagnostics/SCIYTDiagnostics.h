@@ -194,6 +194,17 @@
 + (void)scanWatchPage;
 + (NSString *)watchScanState;
 
+/// Asks for a scan the next time a player is on screen.
+///
+/// **Running it from the settings screen scanned the settings screen.** A full-screen presentation
+/// takes the presenting hierarchy out of the window once the transition finishes, so the watch page
+/// was not there to be looked at: the first report back listed a navigation bar's buttons and
+/// nothing else, which is an accurate scan of the wrong screen. The request is remembered instead,
+/// and the scan runs from the player's own overlay -- a moment when what is being asked about is
+/// certainly on screen.
++ (void)requestWatchScan;
++ (BOOL)watchScanRequested;
+
 /// The real method list of one class, read from the runtime on the device.
 ///
 /// **This is `tools/objc-classes.py`, run where it matters.** That tool reads a binary somebody
