@@ -1575,7 +1575,12 @@ tweak already reads — no entitlement, identical everywhere by construction, an
 nothing about the phone or its owner.
 
 The pause also had a second use: the licence layer got a real server behind it before anything
-went out. **Local builds during a pause are roothide only, go to `~/Desktop/Albrhi/`, and carry a
+went out. **A `+N` suffix is for this machine and must never be pushed.** Committed to main it becomes the
+version CI reads, so the workflow tries to cut a release tagged `v1.76.0+1` and the publish step
+refuses it — a red run for a build that was never meant to leave the Desktop. Bump it, build, and
+leave it out of the commit.
+
+**Local builds during a pause are roothide only, go to `~/Desktop/Albrhi/`, and carry a
 `+N` suffix** — dpkg sorts `1.70.0+1` above `1.70.0` and below `1.70.1`, so the published number
 space is untouched and every local build still installs over the last one. While a pause is on,
 nothing is pushed and no release is cut: a version that goes out is a version strangers update to
