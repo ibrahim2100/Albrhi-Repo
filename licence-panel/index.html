@@ -318,6 +318,47 @@
     <p class="empty" id="trialsEmpty">لا أحد أخذ التجربة بعد.</p>
   </section>
 
+  <!-- ── stores ─────────────────────────────────────────────────────────────────── -->
+  <section class="card">
+    <h2>المتاجر <span id="storeCount" class="pill warn"></span></h2>
+    <p>
+      نسخ مخصّصة لمتجرٍ واحد: كودٌ واحد، بلا حدٍّ لعدد الأجهزة، ومدّةٌ تُمدَّد من هنا.
+      العدد أدناه محسوبٌ من الأجهزة التي فعّلت فعلاً، لا من رقمٍ يُدار باليد — فهو الجواب
+      حين يسأل المتجر: هل يستحقّ التجديد؟
+    </p>
+
+    <div class="row">
+      <div>
+        <label for="storeId">رمز المتجر</label>
+        <input id="storeId" spellcheck="false" placeholder="na9" maxlength="24">
+      </div>
+      <div>
+        <label for="storeCode">الكود الذي يكتبه المشترك</label>
+        <input id="storeCode" spellcheck="false" placeholder="na9" maxlength="24">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="storeName">اسم المتجر</label>
+        <input id="storeName" class="ar" placeholder="متجر ناصر للتطبيقات">
+      </div>
+      <div>
+        <label for="storeDays">المدّة (أيام)</label>
+        <input id="storeDays" type="number" value="90" min="0" max="3650">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="storeSave" disabled>احفظ / جدّد</button>
+    </div>
+
+    <table id="stores">
+      <thead><tr><th>المتجر</th><th>الكود</th><th>الأجهزة</th><th>نشِطة هذا الأسبوع</th><th>حتى</th><th>الحالة</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
   <!-- ── codes ──────────────────────────────────────────────────────────────────── -->
   <section class="card">
     <h2>أكواد قصيرة</h2>
@@ -636,6 +677,7 @@ function applySearch() {
   renderInbox();
   renderLicences();
   renderTrials();
+  renderStores();
   renderCodes();
 
   // How many rows survived, across everything. A search with no hits and no count reads as a
@@ -1019,6 +1061,104 @@ function renderTrials() {
   });
 }
 
+function renderStores() {
+  const rows = state.stores || [];
+  const body = $("stores").querySelector("tbody");
+  body.innerHTML = "";
+
+  const live = rows.filter(st => !st.revoked && (!st.until || st.until > state.now)).length;
+  $("storeCount").textContent = live + " سارٍ من " + rows.length;
+  $("storeCount").className = "pill " + (live ? "good" : "warn");
+
+  for (const st of rows) {
+    const tr = document.createElement("tr");
+    const running = !st.revoked && (!st.until || st.until > state.now);
+
+    tr.append(
+      cell(st.name || st.id),
+      cell(st.code || st.id, true),
+      cell(String(st.devices ?? 0)),
+      // Two counts, because they answer different questions: how far the copies spread, and how
+      // many are still in use. A shop deciding whether to renew is asking the second.
+      cell(String(st.recent ?? 0)),
+      cell(st.until ? fmtDate(st.until) : "∞", true),
+    );
+
+    const status = document.createElement("td");
+    status.append(pillFor(st.revoked ? "bad" : (running ? "good" : "warn"),
+                          st.revoked ? "مسحوب" : (running ? "سارٍ" : "منتهٍ")));
+    tr.append(status);
+
+    const actions = document.createElement("td");
+    actions.append(
+      actionButton("+٩٠", async () => {
+        await api("/admin/store", { id: st.id, days: 90 });
+        await refresh();
+      }),
+      actionButton("تفاصيل", () => { storeDetail(st); return false; }),
+      st.revoked
+        ? actionButton("إرجاع", async () => {
+            await api("/admin/store", { id: st.id, revoked: false });
+            await refresh();
+          })
+        : actionButton("سحب", async () => {
+            await api("/admin/store", { id: st.id, revoked: true });
+            await refresh();
+          }, true),
+    );
+    tr.append(actions);
+
+    body.append(tr);
+  }
+}
+
+/// One shop, and the devices its copies are actually running on.
+function storeDetail(st) {
+  const lines = [];
+  lines.push("المتجر: " + (st.name || st.id));
+  if (st.site) lines.push("الموقع: " + st.site);
+  lines.push("الكود: " + (st.code || st.id));
+  lines.push("المدّة: " + (st.until ? ("حتى " + fmtDate(st.until)) : "بلا نهاية"));
+  lines.push("الأجهزة: " + (st.devices ?? 0) + " · نشِطة هذا الأسبوع: " + (st.recent ?? 0));
+  lines.push("");
+  lines.push("آخر الأجهزة:");
+
+  const sample = st.sample || [];
+  if (!sample.length) {
+    lines.push("  لا شيء بعد — تُسجَّل عند أوّل تفعيل.");
+  } else {
+    for (const d of sample.slice(0, 25)) {
+      lines.push("  " + d.dev + " — " + (d.product || "?") + " " + (d.version || "") +
+                 " · آخر ظهور " + fmtDate(d.last));
+    }
+    if (sample.length > 25) lines.push("  … و" + (sample.length - 25) + " غيرها");
+  }
+
+  openDialog({
+    title: "تفاصيل المتجر",
+    device: "",
+    fields: false,
+    save: "إغلاق",
+    note: lines.join("\n"),
+    onSave: () => { closeDialog(); },
+  });
+}
+
+$("storeSave").onclick = async () => {
+  const id = $("storeId").value.trim().toLowerCase();
+  if (!id) { show($("connOut"), "رمز المتجر مطلوب"); return; }
+
+  const result = await api("/admin/store", {
+    id,
+    code: $("storeCode").value.trim() || id,
+    name: $("storeName").value.trim() || id,
+    days: parseInt($("storeDays").value, 10) || 0,
+  });
+
+  if (!result.ok) { show($("connOut"), result.why); return; }
+  await refresh();
+};
+
 function renderCodes() {
   const rows = (state.codes || []).filter(matches)
                   .slice().sort((a, b) => (b.iat || 0) - (a.iat || 0));
@@ -1049,6 +1189,7 @@ async function refresh() {
     show($("connOut"), result.why);
     $("issue").disabled = true;
     $("mint").disabled = true;
+    $("storeSave").disabled = true;
     return;
   }
 
@@ -1058,11 +1199,18 @@ async function refresh() {
   $("connOut").hidden = true;
   $("issue").disabled = false;
   $("mint").disabled = false;
+  $("storeSave").disabled = false;
 
-  renderTrials();
-renderInbox();
+  // The shops are a second call: /admin/state is the licences, the requests, the trials and the
+  // codes, and adding a fourth listing to it would make every refresh slower for a card most
+  // days have nothing to say about.
+  const shops = await api("/admin/stores");
+  state.stores = shops.ok ? (shops.data.stores || []) : [];
+
+  renderInbox();
   renderLicences();
   renderTrials();
+  renderStores();
   renderCodes();
 
   lastRefresh = Date.now();
