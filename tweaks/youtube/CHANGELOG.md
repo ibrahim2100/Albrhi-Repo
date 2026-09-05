@@ -3,6 +3,23 @@
 **Tested on YouTube 21.32.4.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.31.1
+
+**Two guards on the tab bar, after a device reported the app stuck again — cured by clearing its
+data, and on a second phone by deleting the app.** The only state on that path which clearing
+removes is the stored tab arrangement, so:
+
+- the deferred rebuild is **queued once per bar**. It calls `-setRenderer:` again, and YouTube
+  calls that itself on every page style change, rotation and account switch — so without this a
+  bar could queue one rebuild per call and then rebuild once per queued block;
+- and the arranger **writes nothing when the order it computed is the order it was given**. It
+  mutates YouTube's own array and YouTube rebuilds the bar from it, so an arrangement that changes
+  nothing still cost a rebuild, and a rebuild comes back through the same hook. Compared by
+  identity rather than equality: these are the same objects in a different order.
+
+Both are the rule this tweak has now paid for three times — **work on a path the app re-enters
+must be free the second time**.
+
 ## v1.31.0
 
 **The save button moves into the player's own top row, beside the subtitles and settings

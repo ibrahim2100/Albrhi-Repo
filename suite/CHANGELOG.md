@@ -1,5 +1,20 @@
 # Albrhi Changelog
 
+## v1.76.2
+
+**A licence entered inside an app changed nothing until the app was killed.** The gate that decides
+whether a tweak may install anything cached its answer for the life of the process — correct on a
+jailbreak, where the panel is set before the app opens, and exactly wrong in a tweak installed on
+its own: the app is opened first, unlicensed, and that "no" was frozen. Reported as "I activate it
+and then no setting applies", which is precisely what it was.
+
+It is dropped now whenever a licence is entered or removed, and the licence screen says to reopen
+the app — the hooks a launch did not install cannot appear retroactively, and a screen claiming
+otherwise would be lying.
+
+**And two guards on YouTube's tab bar**, after it stopped launching again on a device where
+clearing the app's data cured it.
+
 ## v1.76.1
 
 **Each social tweak is now available on its own, licensed on its own.**
