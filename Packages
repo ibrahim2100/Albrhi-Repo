@@ -727,10 +727,10 @@ Depends: mobilesubstrate
 Conflicts: com.albrhi.tiktok.roothide
 Replaces: com.albrhi.tiktok.roothide
 Filename: debs/com.albrhi.tiktok_0.20.2_iphoneos-arm64.deb
-Size: 117462
-MD5sum: 09870e0924c4365d231fbdecdfccabb0
-SHA1: e862b5b4c14bc73ea0821db2d52f4721395561c8
-SHA256: c5eb0106c5b3531f201b9b5ea55501950b4c916e9af4585e8b4af617a4ab4f59
+Size: 115704
+MD5sum: acf15db590c35c1b33182a6a0ee41572
+SHA1: d416bcd9783579ff828e791adf67294f5afec144
+SHA256: 8f11f9a5e16edce545602e2263758dd5725431a9a52ad26160606fd01272a5a0
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/albrhi-repo
 Description: No ads, downloads, privacy, and TikTok's own checks answered the way an
@@ -789,10 +789,10 @@ Depends: mobilesubstrate
 Conflicts: com.albrhi.tiktok
 Replaces: com.albrhi.tiktok
 Filename: debs/com.albrhi.tiktok.roothide_0.20.2_iphoneos-arm64e.deb
-Size: 117276
-MD5sum: c2c391e30a26a07a684f406f260df7b1
-SHA1: 15a4aeb8599e5cc7a0505f2cf438dc51514ffe43
-SHA256: 13ec6b1c5be21f38a3fc9912d0278a98fd85009bd05bc3256d3ae37ea08cad64
+Size: 115616
+MD5sum: b06fe021587d8d1fa4c2a86c74e03a9a
+SHA1: cf2288b6cd568bd7883adca1ca742f5a688ca837
+SHA256: e8c01c1f6989210c2d9ca53328e4a9d8a5a5051272bfc659aa2445ccf79d5723
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/albrhi-repo
 Description: No ads, downloads, privacy, and TikTok's own checks answered the way an
@@ -851,10 +851,10 @@ Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak.roothide
 Replaces: com.albrhi.tweak.roothide
 Filename: debs/com.albrhi.tweak_4.1.17_iphoneos-arm64.deb
-Size: 493484
-MD5sum: 8061d8dcb547f53ce3d263c2466cb2fb
-SHA1: 228d96cd07d2703b8c5b4e8006f5025d630b5468
-SHA256: 3005e628b684d542fdcf436be0d83504d8a1558eebc9820bcdf16abcde1d5041
+Size: 491972
+MD5sum: 00574738f685374daa544eba11fddade
+SHA1: 6bceedf22797151f958328022021ee15e201246b
+SHA256: ebb32e6305d981a9d61fa1dd99d8b436490810033cfa9e0932f3dd184b2da98d
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/albrhi-repo
 Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
@@ -923,10 +923,10 @@ Depends: mobilesubstrate
 Conflicts: com.albrhi.tweak
 Replaces: com.albrhi.tweak
 Filename: debs/com.albrhi.tweak.roothide_4.1.17_iphoneos-arm64e.deb
-Size: 493716
-MD5sum: b1d8229bc65ab1175180abb579e50286
-SHA1: bf70a0c4e091e459d88a2e3f6348efbdd7feede4
-SHA256: fc0087a74d80c5e5e637b0291ea1b5dde095434b53ccddb85324e21fccea8da1
+Size: 492176
+MD5sum: ef7999227a64dd8a6273a895d064412e
+SHA1: dd5f11e84b4c008d679babc5a29ae054f0159822
+SHA256: c99a72a7fbfa95b49baa7072b7dc598c68839ccfb20533e84a2a70b1dae8e8f0
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/albrhi-repo
 Description: Download anything, hide the noise, browse invisibly — in Arabic or English.
@@ -995,10 +995,10 @@ Depends: mobilesubstrate
 Conflicts: com.albrhi.twitter.roothide
 Replaces: com.albrhi.twitter.roothide
 Filename: debs/com.albrhi.twitter_0.18.3_iphoneos-arm64.deb
-Size: 97038
-MD5sum: 51b5f10b6eade7fe6d001d0d601c68a7
-SHA1: f6f1f88d1ff1b5908605909bc6620ecc52e45cd2
-SHA256: fe91d0e258b32705936514df74d4e9115c9ef563894c5349d8c787342437a382
+Size: 95508
+MD5sum: 9f09e0b4e1c8180734fadf7c7d91f329
+SHA1: b7552d42648b5b52d9f66e0ba8a43e9a1ceeb46e
+SHA256: 6840644b44d12c7ff409f44c34ca3cd9c4a73268d80ff2a478f354ba5bdf8794
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/albrhi-repo
 Description: Save any video, photo or GIF — no ads, no Grok, less tracking. Arabic or English.
@@ -1067,10 +1067,10 @@ Depends: mobilesubstrate
 Conflicts: com.albrhi.twitter
 Replaces: com.albrhi.twitter
 Filename: debs/com.albrhi.twitter.roothide_0.18.3_iphoneos-arm64e.deb
-Size: 96978
-MD5sum: 63166ec4d7880eeff2e57dcfcad4d568
-SHA1: bc7a8aa89b5961b88749451caeadf29b8467c14c
-SHA256: 5ddd262230d2efac9b210a171ad6112aecfe0fc9bd571084fd3d9253e5e5a039
+Size: 95358
+MD5sum: 039984f2de1f6f5d4adc3a8287a78e1a
+SHA1: f74e68196e1b518e1a8c4cbf28db267067418a43
+SHA256: c3db9c7dbd5764a86f8923545e8a7dea335cf312fa87888a6754a23b9232c5bd
 Section: Tweaks
 Homepage: https://github.com/ibrahim2100/albrhi-repo
 Description: Save any video, photo or GIF — no ads, no Grok, less tracking. Arabic or English.
