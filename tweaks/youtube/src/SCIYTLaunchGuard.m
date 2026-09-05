@@ -11,6 +11,57 @@ static atomic_bool sciLaunched = false;
 static atomic_bool sciStoodDown = false;
 static NSTimeInterval sciStartedAt = 0;
 
+///
+/// The trail, and why it is written the way it is.
+///
+/// Appended under a lock because hooks fire on whatever thread the app is using, and rewritten to
+/// the report on a short delay rather than on every mark: the point is to survive a launch that
+/// dies, and a file written twenty times a second during a hang is a file being written while the
+/// thing it describes is stuck.
+///
+static NSMutableArray<NSString *> *sciTrail = nil;
+static NSLock *sciTrailLock = nil;
+static NSTimeInterval sciFirstMark = 0;
+
+void SCIYTLaunchMark(NSString *milestone) {
+    if (!milestone.length) return;
+
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        sciTrail = [NSMutableArray array];
+        sciTrailLock = [[NSLock alloc] init];
+        sciFirstMark = [NSDate date].timeIntervalSince1970;
+    });
+
+    [sciTrailLock lock];
+    BOOL already = [sciTrail containsObject:milestone];
+    if (!already) {
+        [sciTrail addObject:[NSString stringWithFormat:@"%@ (+%.1fs)", milestone,
+            [NSDate date].timeIntervalSince1970 - sciFirstMark]];
+    }
+    [sciTrailLock unlock];
+
+    // Once per milestone, not once per call: several of these are hooks that fire constantly, and
+    // what is being recorded is that they fired at all.
+    if (already) return;
+
+    // A moment later and off the main thread. The report is written to the app's own container,
+    // and the launch this is describing may be the one that is stuck.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)),
+                   dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+        [NSClassFromString(@"SCIYTDiagnostics") performSelector:@selector(writeReportToFile)];
+    });
+}
+
+NSString *SCIYTLaunchTrail(void) {
+    if (!sciTrail) return @"nothing marked — the tweak did not reach its first milestone";
+
+    [sciTrailLock lock];
+    NSString *trail = [sciTrail componentsJoinedByString:@" → "];
+    [sciTrailLock unlock];
+    return trail;
+}
+
 BOOL SCIYTStoodDown(void) {
     return atomic_load_explicit(&sciStoodDown, memory_order_relaxed);
 }
@@ -99,5 +150,10 @@ void SCIYTLaunchGuardStart(void) {
         atomic_store_explicit(&sciStoodDown, true, memory_order_relaxed);
         NSLog(@"[AlbrhiYT] launch guard tripped after %.0fs — standing every hook down",
               kSCILaunchBudget);
+
+        // Written down as well as logged. A log line is gone when the phone reboots and cannot be
+        // read from a settings screen; the report is a file, and it is the only evidence a launch
+        // that never finished leaves behind.
+        SCIYTLaunchMark(@"launch guard TRIPPED");
     });
 }

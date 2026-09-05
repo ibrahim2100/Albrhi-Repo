@@ -1186,6 +1186,12 @@ static NSMutableArray<NSString *> *sciStreamAttempts = nil;
     [out appendFormat:@"  %@: %@\n\n", SCILocalized(@"diag_bundle"),
         [[NSBundle mainBundle] bundleIdentifier] ?: @"?"];
 
+    // Before anything else: how far this launch got. A report whose every section says "nothing
+    // yet" is a report of a launch that never got anywhere, and until this line it could not say
+    // where it stopped -- which is the state a device came back in.
+    [out appendFormat:@"HOW FAR THIS LAUNCH GOT\n  %@\n  %@\n\n",
+        SCIYTLaunchTrail(), SCIYTLaunchGuardReport()];
+
     [out appendFormat:@"%@\n", SCILocalized(@"diag_attached")];
     for (NSDictionary *row in SCIAuditTable()) {
         NSString *name = row[@"class"];

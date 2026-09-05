@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import "SCIYTLaunchGuard.h"
 #import "shared/src/SCIPanelGate.h"
 
 ///
@@ -204,7 +205,12 @@ static inline BOOL SCIPrefEnabled(NSString *key) {
     // through this one function, so turning the app off in the panel stands all of them
     // down at once -- the hooks stay installed and answer %orig, which is the only way to
     // stop that cannot leave the app half-patched.
+    // Marked once: this is the first thing a preference read does, and a launch that never
+    // reaches it is a launch that died before any feature asked anything.
+    SCIYTLaunchMark(@"first preference read");
+
     if (!SCIPanelAllowsThisApp()) return NO;
+    SCIYTLaunchMark(@"gate allowed");
 
     return [[NSUserDefaults standardUserDefaults] boolForKey:key];
 }

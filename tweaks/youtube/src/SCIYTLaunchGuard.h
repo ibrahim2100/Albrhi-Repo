@@ -26,6 +26,21 @@
 
 #import <Foundation/Foundation.h>
 
+/// A milestone on the way through a launch, written down.
+///
+/// **A report that says "nothing yet" everywhere is a report of a launch that never got anywhere,
+/// and it cannot say how far it did get.** That is the state a device came back with: the tweak
+/// loaded, wrote its report from `%ctor`, and the app then hung before YouTube built its tab bar
+/// — so every line was empty and none of them was the fault.
+///
+/// These are the few points worth knowing about between the constructor and a usable app. Each is
+/// recorded and the report is rewritten a moment later, so the file left behind by a launch that
+/// died says which milestone was the last one reached.
+void SCIYTLaunchMark(NSString *milestone);
+
+/// Everything marked so far, oldest first.
+NSString *SCIYTLaunchTrail(void);
+
 /// Starts watching. Called once, from `%ctor`, before anything else.
 void SCIYTLaunchGuardStart(void);
 
