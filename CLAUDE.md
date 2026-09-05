@@ -990,6 +990,28 @@ workflow and attached to the same release: a fourth publisher would race the thr
 exist for `gh-pages`, and that race has served an index a version behind a release once already.
 The job compiles all four tweaks anyway, so a tweak that will not build already fails it.
 
+**`_ASDisplayView` is not a class, it is every view in the app — and a hook on it runs before the
+first frame, thousands of times.** YouTube's whole interface is AsyncDisplayKit, so a
+`-didMoveToWindow` hook written to catch one ad card fires for every view the app ever puts in a
+window. Each call read a preference and then asked the view for `accessibilityIdentifier`, which
+on a node-backed view is not a field lookup: it can make the node materialise, scheduling work on
+top of the work a launch is already doing. The trail a device left behind has exactly that shape —
+a preference read at +0.0s and then nothing at all for the eight seconds until the guard gave up.
+It stands aside until the app is active now, which costs nothing: a Shorts ad cannot be on screen
+before the app is.
+
+**And a diagnostic must be free on the path it is watching.** The first version of the launch trail
+took a lock and searched an array on *every* mark — on that hook, that is the main thread
+contending with itself, added to the launch it was meant to measure. It is one atomic read after
+the first call now, with the milestone folded into a bit; a hash collision costs a missing line in
+a report and can cost nothing else.
+
+**`git checkout -- <file>` to strip a local version suffix threw away the day's work in that
+file.** The marks that made the trail readable were added and committed in one round — except the
+commit came *after* a checkout meant to remove only a `+N`, and the file went back to HEAD with
+the marks in it. Two builds later the trail was missing its first two lines and the source no
+longer had them. Strip the suffix the same way it was added: by editing the three values back.
+
 **A gate answered once is a gate that cannot be answered again, and on a standalone build the
 first answer is always "no".** `SCIPanelAllowsThisApp()` cached its result in a `dispatch_once`,
 which is right on a jailbreak — the switch and the licence are set in the panel, before the app is

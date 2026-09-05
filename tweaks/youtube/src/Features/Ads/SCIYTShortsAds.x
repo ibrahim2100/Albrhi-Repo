@@ -1,5 +1,6 @@
 #import <UIKit/UIKit.h>
 #import "../../SCILog.h"
+#import "../../SCIYTLaunchGuard.h"
 #import "../../Prefs.h"
 #import "../../Diagnostics/SCIYTDiagnostics.h"
 #import "../../YouTubeHeaders.h"
@@ -81,6 +82,27 @@ static NSArray<NSString *> *SCIAdNodeIdentifiers(void) {
 
 - (void)didMoveToWindow {
     %orig;
+
+    //
+    // **Nothing here until the app is running, and this is where a launch was dying.**
+    //
+    // `_ASDisplayView` is AsyncDisplayKit's own view class: YouTube's entire interface is built
+    // out of it, so this method is not "a hook on an ad card" -- it is a hook on **every view the
+    // app ever puts in a window**. During a launch that is thousands of calls before the first
+    // frame, each one reading a preference and then asking a Texture view for a property.
+    //
+    // Asking is the expensive half. `accessibilityIdentifier` on a node-backed view is not a
+    // field lookup; it can make the node materialise, which during startup means work scheduled
+    // on top of the work the app is already doing to start. The trail from a device that would
+    // not open shows exactly this shape: a preference read at +0.0s and then nothing at all for
+    // the eight seconds until the guard gave up.
+    //
+    // Shorts ads cannot be on screen before the app is, so the moment costs nothing: this stands
+    // aside for the launch and works exactly as before from the first moment the app is active.
+    //
+    if (!SCIYTAppIsActive() || SCIYTStoodDown()) return;
+
+    SCIYTLaunchMark(@"shorts ads: _ASDisplayView didMoveToWindow");
 
     if (!SCIPrefEnabled(SCIPrefHideAds)) return;
 

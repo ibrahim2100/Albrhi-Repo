@@ -196,6 +196,7 @@ NSString *SCIVersionString = @"v1.31.1";  // AlbrhiYT
 
     // Before anything else, because what it guards against is this launch not finishing.
     SCIYTLaunchGuardStart();
+    SCIYTLaunchMark(@"ctor entered");
 
     // Unconditional, and the only line here that is.
     //
@@ -216,5 +217,6 @@ NSString *SCIVersionString = @"v1.31.1";  // AlbrhiYT
 
     // Written once at launch and refreshed whenever a video is captured, so the
     // report is retrievable from the app's container even if no hook attached.
+    SCIYTLaunchMark(@"ctor finished");
     [SCIYTDiagnostics writeReportToFile];
 }

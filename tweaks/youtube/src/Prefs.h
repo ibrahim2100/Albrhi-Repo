@@ -207,6 +207,10 @@ static inline BOOL SCIPrefEnabled(NSString *key) {
     // stop that cannot leave the app half-patched.
     // Marked once: this is the first thing a preference read does, and a launch that never
     // reaches it is a launch that died before any feature asked anything.
+    // Marked, and the mark is a single atomic read after the first time -- this function is
+    // called from a hook that fires for every view in the app, so anything here that takes a
+    // lock is a lock the main thread contends with itself for, during the launch it is meant to
+    // be measuring.
     SCIYTLaunchMark(@"first preference read");
 
     if (!SCIPanelAllowsThisApp()) return NO;

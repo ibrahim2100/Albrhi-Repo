@@ -23,8 +23,27 @@ static NSMutableArray<NSString *> *sciTrail = nil;
 static NSLock *sciTrailLock = nil;
 static NSTimeInterval sciFirstMark = 0;
 
+/// Milestones already recorded, as a set of pointers to the constant strings passed in.
+///
+/// **The check has to be free, because some of these marks sit on paths that run thousands of
+/// times before the first frame.** The first version took a lock and did `containsObject:` on
+/// every call — on a hook that fires for every view in the app, that is a lock contended by the
+/// main thread against itself, added to the very launch it was meant to measure.
+static atomic_uint sciMarkBits = 0;
+
+static unsigned SCIMarkBit(NSString *milestone) {
+    // A hash of the string, folded to one of 32 bits. A collision costs a missing line in a
+    // diagnostic; it cannot cost correctness, which is the right way round for something on this
+    // path.
+    return 1u << (unsigned)(milestone.hash % 32);
+}
+
 void SCIYTLaunchMark(NSString *milestone) {
     if (!milestone.length) return;
+
+    unsigned bit = SCIMarkBit(milestone);
+    if (atomic_load_explicit(&sciMarkBits, memory_order_relaxed) & bit) return;
+    atomic_fetch_or_explicit(&sciMarkBits, bit, memory_order_relaxed);
 
     static dispatch_once_t once;
     dispatch_once(&once, ^{
