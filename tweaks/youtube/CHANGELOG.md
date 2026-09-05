@@ -3,6 +3,36 @@
 **Tested on YouTube 21.32.4.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.31.2
+
+**The app stopped launching, and this release is the hook that was doing it — found by making the
+launch say how far it got.**
+
+A report from a device that would not open had "nothing yet" in every section: the tweak had
+loaded, written its report from `%ctor`, and the app had then died before YouTube built anything.
+That report could not say *where* it stopped, so the launch now leaves a trail — each milestone
+marked once, with the seconds since the first, written to the file a moment later on a background
+queue so a launch that is stuck still leaves it behind.
+
+The trail read: constructor entered, preference read, gate allowed, constructor finished — all
+inside a tenth of a second — then nothing at all until the guard gave up at 8.4 seconds. And the
+ad-request hooks never fired, which cleared them.
+
+**`_ASDisplayView` is AsyncDisplayKit's view class, and YouTube's whole interface is built out of
+it.** A `-didMoveToWindow` hook written to catch one Shorts ad card therefore runs for **every view
+the app ever puts in a window** — thousands of times before the first frame, each call reading a
+preference and then asking a node-backed view for `accessibilityIdentifier`, which is not a field
+lookup and can make the node materialise. It stands aside until the app is active now, which costs
+nothing: a Shorts ad cannot be on screen before the app is.
+
+The two ad-request hooks — the only ones here that swallow their call entirely — do the same, for
+the same reason: during a launch they pass the call through untouched.
+
+**And the save button is placed by leading and trailing rather than left and right.** It was
+reported as correct in English and wrong in Arabic, which is exactly what "the leftmost control on
+the right half, one gap to its left" means in a mirrored layout. The side comes from
+`effectiveUserInterfaceLayoutDirection` now — the answer UIKit itself uses to mirror.
+
 ## v1.31.1
 
 **Two guards on the tab bar, after a device reported the app stuck again — cured by clearing its

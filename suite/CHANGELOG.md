@@ -1,5 +1,18 @@
 # Albrhi Changelog
 
+## v1.76.3
+
+**YouTube launches again.** The hook responsible ran for every view in the app: `_ASDisplayView` is
+AsyncDisplayKit's own view class and YouTube's interface is built out of it, so a hook written to
+catch one ad card fired thousands of times before the first frame. It waits for the app to be
+active now, and so do the two ad-request hooks.
+
+It was found rather than guessed: the launch leaves a trail of milestones in the report, so a
+launch that dies says where it stopped.
+
+**And the save button in the player is placed correctly in Arabic** — by leading and trailing
+rather than by left and right, which is the same thing only in English.
+
 ## v1.76.2
 
 **A licence entered inside an app changed nothing until the app was killed.** The gate that decides
