@@ -1015,6 +1015,28 @@ also matches the tabs, so the first version hid the navigation along with the pa
 back to any other. `section[data-page]`. Proved in node against a small DOM rather than by looking:
 switching pages shows only that page's sections, hides no tab, and marks exactly one.
 
+### The panel as an app
+
+**`app/` is the licence panel on the owner's own phone — a Theos application, no Xcode project,
+fake-signed for TrollStore.** What it adds is exactly what a web page cannot have, and each is the
+reason it exists rather than a nicety: the admin token in the **Keychain** instead of a browser's
+storage (that one string can revoke every licence sold), **Face ID** in front of it, and an icon on
+a home screen rather than a URL to find.
+
+**The screen is the published panel loaded over https, deliberately.** Six tables, the dialog, the
+digit-folding search and three signers that must agree byte for byte all exist and are used daily;
+a second implementation in UIKit would be two of everything to keep in step, which is the failure
+this file already records about maps, lists, and a screen and the report that mirrors it.
+
+**`file://` was the obvious way to bundle the page and is the wrong one.** `crypto.subtle` exists
+only in a secure context, so a page loaded from a file silently loses the signing path — and
+*silently* is the word that matters. https keeps the page exactly what it is on a desktop.
+
+Two details worth keeping: the shield goes up **before** the load, not after (a panel that appears
+for a moment has already shown a customer list to whoever was looking), and the token is
+**injected** rather than typed — a sixty-character admin token typed on a phone keyboard in public
+is the one thing a screen lock does not help with.
+
 ### Store copies
 
 **A build for one shop: one code, any number of devices, three months — and it is a different
