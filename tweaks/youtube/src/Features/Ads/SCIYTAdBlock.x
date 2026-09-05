@@ -21,17 +21,39 @@
 
 // MARK: - 1. Never ask for ads
 
+//
+// **Not during the launch, and this is where the app stopped starting.**
+//
+// The trail from a device that would not open reads: our constructor entered, read a preference,
+// passed the gate and finished — all inside a tenth of a second — and then nothing at all until
+// the launch guard gave up eight seconds later. No tab bar, no feed batch, no player. YouTube was
+// busy with its own startup, and the only thing of ours running in that window is a hook.
+//
+// These two are the only hooks in this tweak that **swallow the call entirely**. `-decorateContext:`
+// is what attaches ad capabilities and targeting to an InnerTube request, and skipping it was the
+// cheap way to get a response with no ads in it. It is also, at launch, refusing to let the app
+// finish preparing the first request it makes — and a startup that never gets its response is a
+// splash screen that never goes away.
+//
+// So the moment is the fix, exactly as it was for the tab bar: during the launch the call goes
+// through untouched, and from the first moment the app is active it is skipped as before. What
+// that costs is ads in the first response of a cold start, which the feed filter downstream is
+// already there to drop.
+//
+static BOOL SCIMayAlterRequests(void) {
+    if (SCIYTStoodDown()) return NO;
+    return SCIYTAppIsActive();
+}
+
 %hook YTAdsInnerTubeContextDecorator
 
 - (void)decorateContext:(id)context {
-    if (!SCIPrefEnabled(SCIPrefHideAds)) {
+    SCIYTLaunchMark(@"ads: decorateContext");
+
+    if (!SCIPrefEnabled(SCIPrefHideAds) || !SCIMayAlterRequests()) {
         %orig;
         return;
     }
-
-    // Deliberately not calling through. This method is what attaches ad capabilities
-    // and targeting to the request, so skipping it means the response comes back
-    // without ads in it -- cheaper and quieter than receiving them and hiding them.
 }
 
 %end
@@ -39,7 +61,9 @@
 %hook YTAccountScopedAdsInnerTubeContextDecorator
 
 - (void)decorateContext:(id)context {
-    if (!SCIPrefEnabled(SCIPrefHideAds)) {
+    SCIYTLaunchMark(@"ads: decorateContext (account)");
+
+    if (!SCIPrefEnabled(SCIPrefHideAds) || !SCIMayAlterRequests()) {
         %orig;
         return;
     }
@@ -53,14 +77,18 @@
 // alone: a client that reports no ads shown *and* a full signal set is a more
 // interesting client than one that reports nothing.
 + (NSDictionary *)spamSignalsDictionary {
-    if (!SCIPrefEnabled(SCIPrefHideAds)) {
+    SCIYTLaunchMark(@"ads: spamSignals");
+
+    if (!SCIPrefEnabled(SCIPrefHideAds) || !SCIMayAlterRequests()) {
         return %orig;
     }
     return @{};
 }
 
 + (NSDictionary *)spamSignalsDictionaryWithoutIDFA {
-    if (!SCIPrefEnabled(SCIPrefHideAds)) {
+    SCIYTLaunchMark(@"ads: spamSignals (no IDFA)");
+
+    if (!SCIPrefEnabled(SCIPrefHideAds) || !SCIMayAlterRequests()) {
         return %orig;
     }
     return @{};
