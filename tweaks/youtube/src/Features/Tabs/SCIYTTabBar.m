@@ -223,6 +223,20 @@ void SCIYTTabBarArrange(NSMutableArray *items) {
     sciLastKeptCount = kept.count;
     sciLastDroppedCount = items.count > kept.count ? items.count - kept.count : 0;
 
+    // **Nothing written when nothing changes.**
+    //
+    // This mutates YouTube's own items array, and YouTube rebuilds the bar from it -- so an
+    // arrangement that produces the array it was given still costs a rebuild, and a rebuild comes
+    // back through here. The comparison is by identity because these are the same objects in a
+    // different order: what is being asked is "is this already the order", not "is this equal".
+    if (kept.count == items.count) {
+        BOOL same = YES;
+        for (NSUInteger i = 0; i < kept.count; i++) {
+            if (kept[i] != items[i]) { same = NO; break; }
+        }
+        if (same) return;
+    }
+
     [items removeAllObjects];
     [items addObjectsFromArray:kept];
 }

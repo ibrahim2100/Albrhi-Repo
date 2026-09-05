@@ -51,6 +51,9 @@ static NSString *const kSCIPivotIdentifier = @"albrhi.downloads.pivot";
 /// belongs on the view and not in a variable.
 static char kSCIIsOurItemView;
 
+/// Marks a bar whose deferred rebuild has already been queued. See -setRenderer:.
+static char kSCIDeferredOnce;
+
 /// Which of YouTube's own tabs was open before ours took over.
 ///
 /// Kept because telling the bar our identifier is selected leaves it holding a name it has
@@ -212,6 +215,15 @@ static BOOL SCIPaintIcon(UIView *view) {
     //
     if (!SCIYTAppIsActive()) {
         %orig;
+
+        // **Asked for once per bar.** The re-application calls this same method again, and
+        // YouTube calls it itself on every page style change, rotation and account switch -- so
+        // without this a bar can queue one deferred rebuild per call and then rebuild itself
+        // once per queued block. A device reported YouTube stuck again after a licence and a
+        // settings change, cured by clearing the app's data; the only state on this path that
+        // clearing removes is the stored tab arrangement below.
+        if (objc_getAssociatedObject(self, &kSCIDeferredOnce)) return;
+        objc_setAssociatedObject(self, &kSCIDeferredOnce, @YES, OBJC_ASSOCIATION_RETAIN);
 
         __weak YTPivotBarView *weakBar = self;
         __weak id weakRenderer = renderer;
