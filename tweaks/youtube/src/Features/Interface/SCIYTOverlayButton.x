@@ -187,18 +187,31 @@ static UIView *SCIAutonavSwitch(UIView *root, NSUInteger depth) {
 
 static CGRect SCIFrameBesideTopControls(YTMainAppControlsOverlayView *overlay, UIView *ours) {
     //
+    // **Leading and trailing, not left and right — reported from an Arabic phone.**
+    //
+    // The placement was written as "the leftmost control on the right half, and our button one gap
+    // to its left". Every word of that is correct in English and wrong in Arabic: UIKit mirrors
+    // the row, so the cast, subtitles and gear group moves to the *left* and the collapse chevron
+    // to the right. The old rule then measured the chevron, or nothing, and put the button
+    // wherever that arithmetic landed.
+    //
+    // Nothing about the layout is detected here: `effectiveUserInterfaceLayoutDirection` is the
+    // answer UIKit itself uses to mirror, asked of the same view being measured.
+    //
+    BOOL mirrored = (overlay.effectiveUserInterfaceLayoutDirection ==
+                     UIUserInterfaceLayoutDirectionRightToLeft);
+    CGFloat middle = overlay.bounds.size.width / 2.0;
+
+    //
     // **Buttons only, and only button-sized ones.**
     //
-    // The last attempt measured "the leftmost control on the right", which caught a *container*
-    // — 96 points wide — and gave our button that width. It was then placed its own width plus a
-    // gap to the left of the anchor, which is why it appeared to fly off the moment the autoplay
-    // switch arrived: the placement was right and the size it was placed by was a container's.
-    //
-    // So the reference must be a button, and button-shaped: a real `UIButton` (YouTube's own
-    // `YTQTMButton` is one) no wider than 56 points. Anything else in that row is scenery.
+    // An earlier version measured "the leftmost control", which caught a *container* 96 points
+    // wide and gave our button that width -- and the button is placed its own width from the
+    // anchor, so it landed a container's width away. It looked like flight; it was arithmetic on
+    // the wrong number.
     //
     CGRect reference = CGRectNull;
-    CGFloat leftMost = CGFLOAT_MAX;
+    CGFloat best = mirrored ? -CGFLOAT_MAX : CGFLOAT_MAX;
     CGFloat topBand = MAX(44.0, overlay.bounds.size.height * 0.35);
 
     NSMutableArray<UIView *> *queue = [NSMutableArray arrayWithArray:overlay.subviews];
@@ -217,20 +230,25 @@ static CGRect SCIFrameBesideTopControls(YTMainAppControlsOverlayView *overlay, U
         CGRect frame = [child convertRect:child.bounds toView:overlay];
         if (frame.size.width < 16 || frame.size.width > 56) continue;
         if (frame.size.height < 16) continue;
-        if (CGRectGetMaxY(frame) > topBand) continue;                          // the top row only
-        if (CGRectGetMidX(frame) < overlay.bounds.size.width / 2.0) continue;  // not the chevron
+        if (CGRectGetMaxY(frame) > topBand) continue;          // the top row only
 
-        if (CGRectGetMinX(frame) < leftMost) {
-            leftMost = CGRectGetMinX(frame);
-            reference = frame;
-        }
+        // The trailing side, whichever side that is: the right in English, the left in Arabic.
+        // The chevron lives on the leading side and is what this must never measure.
+        BOOL trailingSide = mirrored ? (CGRectGetMidX(frame) < middle)
+                                     : (CGRectGetMidX(frame) > middle);
+        if (!trailingSide) continue;
+
+        // The one nearest the middle of the row, which is where our button goes next to.
+        CGFloat edge = mirrored ? CGRectGetMaxX(frame) : CGRectGetMinX(frame);
+        BOOL nearer = mirrored ? (edge > best) : (edge < best);
+        if (nearer) { best = edge; reference = frame; }
     }
 
     if (CGRectIsNull(reference)) return CGRectNull;
 
-    // The anchor: the autoplay switch when it has been laid out, the leftmost button otherwise.
-    // The switch is what appears when playback starts, and measuring from anything else means one
-    // answer before that and another after it.
+    // The anchor: the autoplay switch when it has been laid out, the innermost button otherwise.
+    // The switch is what appears when playback starts, so measuring from anything else gives one
+    // answer before that and another after it -- which was reported as the button jumping.
     UIView *autonav = SCIAutonavSwitch(overlay, 0);
     CGRect anchor = reference;
     if (autonav && autonav.bounds.size.width > 0) {
@@ -239,8 +257,10 @@ static CGRect SCIFrameBesideTopControls(YTMainAppControlsOverlayView *overlay, U
     }
 
     CGFloat gap = 8;
-    return CGRectMake(CGRectGetMinX(anchor) - reference.size.width - gap,
-                      CGRectGetMidY(anchor) - reference.size.height / 2.0,
+    CGFloat x = mirrored ? (CGRectGetMaxX(anchor) + gap)
+                         : (CGRectGetMinX(anchor) - reference.size.width - gap);
+
+    return CGRectMake(x, CGRectGetMidY(anchor) - reference.size.height / 2.0,
                       reference.size.width, reference.size.height);
 }
 

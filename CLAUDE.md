@@ -771,6 +771,15 @@ one day hold up every launch.
 than argued.** A phone in airplane mode for two days stops being licensed. `SCILicenseGraceSeconds`
 is the single place it lives.
 
+**A placement written as "left" and "right" is a placement that is wrong in Arabic, and only in
+Arabic.** The save button in YouTube's top row was measured as "the leftmost control on the right
+half, one gap to its left" — every word correct in English. UIKit mirrors that row in a
+right-to-left interface: the cast, subtitles and gear group moves to the left and the collapse
+chevron to the right, so the old rule measured the chevron and placed the button by arithmetic on
+it. Written as **leading and trailing** now, with the side taken from
+`effectiveUserInterfaceLayoutDirection` — the same answer UIKit uses to mirror, asked of the very
+view being measured, rather than a language check or a guess.
+
 **A button placed beside somebody else's is placed by their numbers, and every one of those
 numbers is a way to be wrong.** YouTube's save button moved into the player's top row and took
 three device reports to settle, each a different measurement error, none of them a placement
