@@ -62,6 +62,14 @@ NSString *SCIPanelProductForThisApp(void);
 /// from a write that may have been redirected into this app's own container.
 BOOL SCIPanelIsInstalled(void);
 
+/// Forgets the gate's cached answer.
+///
+/// The gate is asked once and remembered, which is right for a jailbreak — the switch and the
+/// licence are set in the panel before the app opens. In a standalone or injected build the app is
+/// opened first, unlicensed, and freezing that answer meant a licence entered afterwards changed
+/// nothing until the app was killed. Call this whenever a licence is entered or removed.
+void SCIPanelGateInvalidate(void);
+
 BOOL SCIPanelAllowsThisApp(void);
 
 /// How that answer was arrived at, for a diagnostics page.

@@ -9,6 +9,9 @@ static NSString *const kSCIPanelDomain = @"com.albrhi.panel";
 /// One key per app, so the panel can write a decision about an app it has never seen a
 /// tweak for, and so two tweaks in the same app are governed by the same switch — which is
 /// what "turn this app off" means to the person reading it.
+/// -1 not asked yet, 0 no, 1 yes. See SCIPanelAllowsThisApp for why this is not a dispatch_once.
+static int sciGateAnswer = -1;
+
 static NSString *SCIPanelKeyForThisApp(void) {
     NSString *bundle = [[NSBundle mainBundle] bundleIdentifier];
     return bundle.length ? [@"app_enabled_" stringByAppendingString:bundle] : nil;
@@ -241,10 +244,35 @@ BOOL SCIPanelAllowsThisApp(void) {
     sciGateSource = @"self-contained build — licensed";
     return YES;
 #else
-    static BOOL allowed = NO;
-    static dispatch_once_t once;
+    //
+    // **Answered once, and answerable again — which it was not, and that is a real bug this
+    // shipped with.**
+    //
+    // A `dispatch_once` here means the first question of the process decides for its whole life.
+    // On a jailbreak that was harmless: the switch and the licence are both set in the panel,
+    // before the app is opened. On a standalone or injected build it is exactly wrong — the app
+    // is opened *first*, unlicensed, this answers no, and the answer is then frozen. Entering a
+    // key on the licence screen changes nothing at all until the app is killed and reopened.
+    //
+    // What that looks like from the outside is precisely what was reported: activate, then toggle
+    // any setting and nothing happens. Instagram and YouTube ask this gate inside every
+    // preference read, so every setting reads as off; TikTok and X ask it once in `%ctor` and
+    // install no hooks at all.
+    //
+    // So the answer is cached rather than frozen, and `SCIPanelGateInvalidate()` drops it. The
+    // hooks a `%ctor` did not install still cannot appear retroactively -- the licence screen says
+    // to reopen the app for that -- but every tweak that reads its preferences through this gate
+    // starts working the moment a licence is entered.
+    //
+    if (sciGateAnswer >= 0) return sciGateAnswer == 1;
 
-    dispatch_once(&once, ^{
+    // `__block`, because the decision is written from inside the block below. The block itself is
+    // kept rather than flattened into straight-line code so the early `return`s inside it stay
+    // exactly as they were when this was a dispatch_once -- rewriting eight exits into a chain of
+    // ifs is how a gate quietly changes meaning.
+    __block BOOL allowed = NO;
+    {
+        void (^decide)(void) = ^{
         if (!SCIPanelMasterEnabled()) {
             sciGateSource = @"master switch is off";
             return;
@@ -277,11 +305,25 @@ BOOL SCIPanelAllowsThisApp(void) {
             return;
         }
 
-        allowed = YES;
-    });
+            allowed = YES;
+        };
 
+        decide();
+    }
+
+    sciGateAnswer = allowed ? 1 : 0;
     return allowed;
 #endif
+}
+
+//
+// Forgets the cached answer, so the next question is asked afresh.
+//
+// Called when a licence is entered or removed. Nothing else invalidates it: the per-app switch is
+// set in the panel, which is a different process, and a tweak that re-read it constantly would be
+// asking cfprefsd about another application's domain on every preference read.
+void SCIPanelGateInvalidate(void) {
+    sciGateAnswer = -1;
 }
 
 NSString *SCIPanelGateReport(void) {

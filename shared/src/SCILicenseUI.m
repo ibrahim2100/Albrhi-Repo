@@ -205,6 +205,25 @@ static NSString *SCIText(NSString *english, NSString *arabic) {
 
 #pragma mark - State
 
+/// What happens the moment a licence is accepted, wherever it came from.
+///
+/// **The gate is asked once and remembered** — right on a jailbreak, where the switch and the
+/// licence are set in the panel before the app is opened, and wrong here: a standalone app is
+/// opened *first*, unlicensed, so the answer it froze was "no". Dropping it is what makes this
+/// tweak's own switches start deciding something.
+///
+/// The hooks a `%ctor` did not install cannot appear retroactively, so this says to reopen the app
+/// rather than pretending everything is live: a screen that says "activated" while half the
+/// features are missing tells the same lie as a switch that decides nothing.
+- (void)accepted {
+    SCIPanelGateInvalidate();
+    [self refresh];
+
+    [self say:SCIText(@"Activated. Close the app fully and open it again so every part of the "
+                      @"tweak starts.",
+                      @"فُعِّلت. أغلق التطبيق تماماً وافتحه من جديد ليبدأ كل جزء من الأداة.")];
+}
+
 - (void)refresh {
     self.statusLabel.text = SCILicenseStatusLine();
 
@@ -270,7 +289,7 @@ static NSString *SCIText(NSString *english, NSString *arabic) {
             switch (result) {
                 case SCILicenseServerOK:
                     self.entry.text = @"";
-                    [self say:SCIText(@"Activated.", @"فُعِّلت.")];
+                    [self accepted];
                     break;
 
                 // A shop's window can be extended or withdrawn from the panel now, so these are
@@ -301,8 +320,7 @@ static NSString *SCIText(NSString *english, NSString *arabic) {
         SCILicenseState state = SCILicenseStateNone;
         if (SCILicenseStoreKey(text, &state)) {
             self.entry.text = @"";
-            [self refresh];
-            [self say:SCIText(@"Key accepted.", @"قُبل المفتاح.")];
+            [self accepted];
         } else {
             [self say:SCILicenseDescribeState(state)];
         }
@@ -317,7 +335,7 @@ static NSString *SCIText(NSString *english, NSString *arabic) {
         switch (result) {
             case SCILicenseRedeemedOK:
                 self.entry.text = @"";
-                [self say:SCIText(@"Code accepted.", @"قُبل الكود.")];
+                [self accepted];
                 break;
 
             // Four refusals and four sentences, because they need four different things done
@@ -383,6 +401,11 @@ static NSString *SCIText(NSString *english, NSString *arabic) {
                                             handler:^(__unused UIAlertAction *action) {
         SCILicenseForgetKey();
         SCILicenseForgetCode();
+
+        // The gate remembers its answer, so removing a key has to say so too -- otherwise the
+        // tweak goes on working for the rest of the session, and "I removed it and it still
+        // works" would be a report about this line.
+        SCIPanelGateInvalidate();
         [self refresh];
     }]];
 

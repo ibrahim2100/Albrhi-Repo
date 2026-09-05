@@ -990,6 +990,21 @@ workflow and attached to the same release: a fourth publisher would race the thr
 exist for `gh-pages`, and that race has served an index a version behind a release once already.
 The job compiles all four tweaks anyway, so a tweak that will not build already fails it.
 
+**A gate answered once is a gate that cannot be answered again, and on a standalone build the
+first answer is always "no".** `SCIPanelAllowsThisApp()` cached its result in a `dispatch_once`,
+which is right on a jailbreak — the switch and the licence are set in the panel, before the app is
+opened — and exactly wrong for a tweak installed on its own or injected into an IPA: **the app is
+opened first, unlicensed, and that answer was then frozen for the life of the process.** Entering a
+key changed nothing until the app was killed. From the outside it is reported as "I activated it,
+then toggling any setting does nothing", which is precisely what it is: Instagram and YouTube ask
+this gate inside *every* preference read, so every setting reads as off, and TikTok and X ask it
+once in `%ctor` and install no hooks at all.
+
+The answer is cached rather than frozen now, and `SCIPanelGateInvalidate()` drops it wherever a
+licence is entered or removed. **What that cannot fix is the hooks a `%ctor` did not install** — so
+the licence screen says to reopen the app rather than claiming everything is live, which is the
+same honesty a switch that decides nothing fails at.
+
 **The licence panel is pages now, and the tabs carry the same attribute the cards do.** Six cards
 on one scroll meant "where is the thing I came for" was a scroll rather than a click, and which
 card mattered changed by the day — which is exactly what a fixed order cannot serve. Every card
