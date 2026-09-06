@@ -6,6 +6,7 @@
 #import "SCIPages.h"
 #import "SCIAPI.h"
 #import "SCINotify.h"
+#import "SCIMessages.h"
 
 #pragma mark - Summary
 
@@ -73,11 +74,11 @@
             }
 
             self->_cards = @[
-                @{@"n": @(requests.count), @"t": @"طلب ينتظر"},
-                @{@"n": @(live),           @"t": @"ترخيص سارٍ"},
-                @{@"n": @(soon),           @"t": @"ينتهي خلال أسبوعين"},
-                @{@"n": @(devices),        @"t": @"جهازاً بترخيص"},
-                @{@"n": @(storeDevices),   @"t": @"جهاز متجر نشِطاً هذا الأسبوع"},
+                @{@"n": @(requests.count), @"t": @"طلب ينتظر", @"tab": @1},
+                @{@"n": @(live),           @"t": @"ترخيص سارٍ", @"tab": @2, @"scope": @1},
+                @{@"n": @(soon),           @"t": @"ينتهي خلال أسبوعين", @"tab": @2, @"scope": @2},
+                @{@"n": @(devices),        @"t": @"جهازاً بترخيص", @"tab": @3},
+                @{@"n": @(storeDevices),   @"t": @"جهاز متجر نشِطاً هذا الأسبوع", @"tab": @4},
                 @{@"n": @(trials.count),   @"t": @"أسبوعاً مجانياً مُنح"},
             ];
             [self loaded];
@@ -99,6 +100,26 @@
     // number is red is a dashboard nobody reads.
     BOOL urgent = (row == 0 || row == 2) && [card[@"n"] integerValue] > 0;
     cell.textLabel.textColor = urgent ? [UIColor systemOrangeColor] : [UIColor labelColor];
+
+    // A number worth acting on has somewhere to go. «Ends within a fortnight: 1» that cannot be
+    // tapped is the most important line on the screen and a dead end.
+    cell.accessoryType = card[@"tab"] ? UITableViewCellAccessoryDisclosureIndicator
+                                      : UITableViewCellAccessoryNone;
+}
+
+- (void)tapped:(NSInteger)row {
+    NSDictionary *card = _cards[(NSUInteger)row];
+    NSNumber *tab = card[@"tab"];
+    if (!tab) return;
+
+    SCIPage *page = [self showTab:tab.integerValue];
+
+    // The filter the card was counting with, so the list that opens holds exactly those rows and
+    // not a longer list the reader has to narrow again by hand.
+    NSNumber *scope = card[@"scope"];
+    if (scope && [page respondsToSelector:@selector(applyScope:)]) {
+        [(id)page applyScope:scope.integerValue];
+    }
 }
 
 @end
@@ -120,7 +141,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    _rows = @[@"عنوان الخادم", @"رمز الإدارة", @"الإشعارات", @"جرّب الاتّصال", @"عن التطبيق"];
+    _rows = @[@"عنوان الخادم", @"رمز الإدارة", @"الإشعارات", @"رسائل واتساب",
+              @"جرّب الاتّصال", @"عن التطبيق"];
 }
 
 - (void)fetch { [self loaded]; }
@@ -148,7 +170,18 @@
             cell.detailTextLabel.text = [SCINotify isOn]
                 ? @"تصلك إشعارات عند وصول طلب جديد" : @"مطفأة";
             break;
-        case 3:
+        case 3: {
+            NSUInteger edited = 0;
+            for (NSInteger kind = 0; kind < SCIMessageCount; kind++) {
+                if ([SCIMessages isEdited:(SCIMessageKind)kind]) edited++;
+            }
+            cell.detailTextLabel.text = edited
+                ? [NSString stringWithFormat:@"%lu معدّلة من %d", (unsigned long)edited,
+                   (int)SCIMessageCount]
+                : @"النصوص الأصلية";
+            break;
+        }
+        case 4:
             cell.detailTextLabel.text = @"يسأل الخادم ويقول ما جاء";
             break;
         default:
@@ -198,6 +231,12 @@
         }
 
         case 3: {
+            [self.navigationController pushViewController:[[SCIMessagesPage alloc] init]
+                                                 animated:YES];
+            break;
+        }
+
+        case 4: {
             [SCIAPI state:^(NSDictionary *state, NSString *error) {
                 if (error) { [weakSelf say:error]; return; }
                 NSArray *licences = state[@"licences"];

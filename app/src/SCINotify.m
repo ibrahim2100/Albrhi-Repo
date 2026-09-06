@@ -12,6 +12,15 @@ static NSString *const kTaskID = @"com.albrhi.licences.refresh";
 static NSString *const kOnKey = @"notify-on";
 static NSString *const kSeenKey = @"requests-last-seen";
 
+/// The day a licence was last mentioned, keyed by device. **Once per licence per day, not once
+/// per check**: the background refresh runs whenever iOS feels like it, and a reminder that
+/// arrives six times about the same person is a reminder that gets switched off.
+static NSString *const kToldKey = @"expiry-told";
+
+/// A week, which is the whole point of the reminder: it is long enough to have the conversation
+/// and short enough that the answer is still "renew" rather than "I stopped using it".
+static const NSTimeInterval kSoon = 7 * 86400;
+
 NSString *const SCIRequestsWaitingNotification = @"SCIRequestsWaiting";
 
 @implementation SCINotify
@@ -80,6 +89,98 @@ NSString *const SCIRequestsWaitingNotification = @"SCIRequestsWaiting";
     [[BGTaskScheduler sharedScheduler] submitTaskRequest:request error:&error];
 }
 
+/// Licences ending within the week, said once a day and by name.
+///
+/// **Named, not counted.** "Three licences end this week" is a number to go and look up; the
+/// person's own name is the message, because the next step after reading it is opening WhatsApp
+/// and typing that name.
++ (void)noticeExpiring:(id)licences {
+    if (![self isOn] || ![licences isKindOfClass:[NSArray class]]) return;
+
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSMutableDictionary *told = [([defaults dictionaryForKey:kToldKey] ?: @{}) mutableCopy];
+
+    double now = [NSDate date].timeIntervalSince1970;
+    double today = floor(now / 86400);
+
+    for (NSDictionary *licence in licences) {
+        if (![licence isKindOfClass:[NSDictionary class]]) continue;
+        if ([licence[@"revoked"] boolValue]) continue;
+
+        double until = [licence[@"until"] doubleValue];
+        if (until <= 0 || until < now || until > now + kSoon) continue;   // lifetime, gone, or far
+
+        NSString *device = licence[@"key"] ?: licence[@"dev"];
+        if (!device.length) continue;
+        if ([told[device] doubleValue] == today) continue;
+
+        told[device] = @(today);
+
+        NSInteger days = (NSInteger)ceil((until - now) / 86400.0);
+        NSString *who = [licence[@"name"] length] ? licence[@"name"] : device;
+
+        UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
+        content.title = @"ترخيص ينتهي قريباً";
+        content.body = days <= 1
+            ? [NSString stringWithFormat:@"ترخيص %@ ينتهي اليوم", who]
+            : [NSString stringWithFormat:@"ترخيص %@ ينتهي خلال %ld أيام", who, (long)days];
+        content.sound = [UNNotificationSound defaultSound];
+
+        [[UNUserNotificationCenter currentNotificationCenter]
+            addNotificationRequest:[UNNotificationRequest
+                requestWithIdentifier:[@"expiry-" stringByAppendingString:device]
+                              content:content trigger:nil]
+             withCompletionHandler:nil];
+    }
+
+    // Devices no longer expiring are forgotten, or this dictionary grows for the life of the app
+    // and a renewed licence could never be reminded about again.
+    NSMutableDictionary *kept = [NSMutableDictionary dictionary];
+    for (NSDictionary *licence in licences) {
+        NSString *device = [licence isKindOfClass:[NSDictionary class]]
+            ? (licence[@"key"] ?: licence[@"dev"]) : nil;
+        if (device.length && told[device]) kept[device] = told[device];
+    }
+    [defaults setObject:kept forKey:kToldKey];
+}
+
+/// The three numbers the home screen shows, left in the shared container.
+///
+/// **The widget is never given the token.** An extension is a second process iOS launches on its
+/// own schedule, and a token that can revoke every licence sold has no business being reachable
+/// from one — so the app does the asking and the widget reads a file with nothing secret in it.
+/// Nothing here fails loudly: without the app group the container is nil, and the widget says the
+/// app has not been opened yet, which is exactly what is true.
++ (void)writeCounts:(NSDictionary *)state {
+    NSURL *container = [[NSFileManager defaultManager]
+        containerURLForSecurityApplicationGroupIdentifier:@"group.com.albrhi.licences"];
+    if (!container) return;
+
+    id licences = state[@"licences"];
+    if (![licences isKindOfClass:[NSArray class]]) licences = @[];
+
+    double now = [NSDate date].timeIntervalSince1970;
+    NSUInteger live = 0, soon = 0;
+
+    for (NSDictionary *licence in licences) {
+        if (![licence isKindOfClass:[NSDictionary class]]) continue;
+        if ([licence[@"revoked"] boolValue]) continue;
+
+        double until = [licence[@"until"] doubleValue];
+        if (until != 0 && until <= now) continue;
+
+        live++;
+        if (until > 0 && until < now + 14 * 86400) soon++;
+    }
+
+    NSDictionary *counts = @{@"waiting": @([state[@"requests"] count]),
+                             @"live": @(live), @"soon": @(soon),
+                             @"at": @(now)};
+
+    NSData *data = [NSJSONSerialization dataWithJSONObject:counts options:0 error:NULL];
+    [data writeToURL:[container URLByAppendingPathComponent:@"counts.json"] atomically:YES];
+}
+
 + (void)checkAndNotify:(void (^)(BOOL))then {
     if (![SCIAPI isConfigured]) { if (then) then(NO); return; }
 
@@ -88,6 +189,9 @@ NSString *const SCIRequestsWaitingNotification = @"SCIRequestsWaiting";
             if (then) then(NO);
             return;
         }
+
+        [self noticeExpiring:state[@"licences"]];
+        [self writeCounts:state];
 
         NSUInteger waiting = [state[@"requests"] count];
         NSUInteger seen = [[NSUserDefaults standardUserDefaults] integerForKey:kSeenKey];

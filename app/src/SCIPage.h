@@ -19,6 +19,15 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// One choice on a sheet.
+@interface SCIChoice : NSObject
++ (instancetype)titled:(NSString *)title does:(void (^)(void))does;
++ (instancetype)dangerous:(NSString *)title does:(void (^)(void))does;   // drawn in red
+@property (nonatomic, copy, readonly) NSString *title;
+@property (nonatomic, copy, readonly) void (^does)(void);
+@property (nonatomic, assign, readonly) BOOL dangerous;
+@end
+
 @interface SCIPage : UIViewController <UITableViewDataSource, UITableViewDelegate>
 
 @property (nonatomic, strong, readonly) UITableView *table;
@@ -78,7 +87,19 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Turns this page's list into a searchable one. Call from -viewDidLoad; read `query`.
 - (void)searchableWith:(NSString *)placeholder;
+
+/// The same, with a row of filters under the search field. `scope` is the chosen index.
+///
+/// The scope bar rather than a control of our own: it is where iOS puts a filter over a list, it
+/// appears and disappears with the search field, and it costs no layout.
+- (void)searchableWith:(NSString *)placeholder scopes:(NSArray<NSString *> *)scopes;
+
 @property (nonatomic, copy, readonly, nullable) NSString *query;
+@property (nonatomic, assign, readonly) NSInteger scope;
+
+/// Chooses a filter without the user touching the bar, and moves the bar to match. A filter
+/// applied invisibly is a list that has silently hidden rows.
+- (void)selectScope:(NSInteger)scope;
 
 /// Whether a row's own fields answer the current search.
 ///
@@ -88,9 +109,18 @@ NS_ASSUME_NONNULL_BEGIN
 /// Text is matched as an ordinary substring beside it.
 - (BOOL)matches:(NSArray<NSString *> *)fields;
 
-/// Called when the search text changes, before the table is asked to draw again. A page that
-/// keeps its unfiltered list refilters here.
+/// Called when the search text or the chosen filter changes, before the table is asked to draw
+/// again. A page that keeps its unfiltered list refilters here.
 - (void)queryChanged;
+
+/// What a swipe from the row's trailing edge offers. Empty by default.
+///
+/// The same `SCIChoice` a sheet is built from, so a page describes an action once and it can be
+/// reached both ways — two lists of one truth is the shape this project keeps paying for.
+- (NSArray<SCIChoice *> *)swipeActionsAt:(NSInteger)row;
+
+/// Shows another tab, and hands it back so the caller can aim it before it appears.
+- (nullable __kindof SCIPage *)showTab:(NSInteger)index;
 
 /// A date, formatted the one way this app formats dates.
 + (NSString *)dateFrom:(NSNumber *)seconds;
@@ -107,14 +137,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// a mistake only ever seen on an Arabic phone.
 NSString *SCIRun(NSString *_Nullable text);
 
-/// One choice on a sheet.
-@interface SCIChoice : NSObject
-+ (instancetype)titled:(NSString *)title does:(void (^)(void))does;
-+ (instancetype)dangerous:(NSString *)title does:(void (^)(void))does;   // drawn in red
-@property (nonatomic, copy, readonly) NSString *title;
-@property (nonatomic, copy, readonly) void (^does)(void);
-@property (nonatomic, assign, readonly) BOOL dangerous;
-@end
 
 @interface SCIPage (Sheet)
 

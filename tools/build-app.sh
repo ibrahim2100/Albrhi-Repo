@@ -24,10 +24,33 @@ mkdir -p "$OUT"
 APP=$(find app/.theos/obj -maxdepth 2 -name '*.app' -type d | head -n1)
 [ -n "$APP" ] || { echo "no .app was produced" >&2; exit 1; }
 
-# Fake-signed, and the app carries no entitlements of its own: it talks to one https API and keeps
-# one string in the keychain, and asking for anything more would be asking for what it does not
-# need.
-ldid -S "$APP/AlbrhiLicences"
+# ── the home screen widget ────────────────────────────────────────────────────────────────────
+#
+# Built apart from the app and folded in afterwards, for two reasons. It is Swift against Xcode's
+# own iOS SDK while the app is Objective-C against the pinned 16.2 one, and — the half that
+# matters — **a widget that will not build must never take the app with it**: this is an extra on
+# a home screen, and the app it belongs to is the thing somebody is waiting for.
+WIDGET_SDK=$(xcrun --sdk iphoneos --show-sdk-path 2>/dev/null || true)
+WIDGET_BIN=$(mktemp -d)/AlbrhiWidget
+
+if [ -n "$WIDGET_SDK" ] && xcrun --sdk iphoneos swiftc \
+        -target arm64-apple-ios15.0 -sdk "$WIDGET_SDK" -O -whole-module-optimization \
+        -parse-as-library -Xlinker -e -Xlinker _NSExtensionMain \
+        -o "$WIDGET_BIN" app/widget/Widget.swift 2>/dev/null; then
+
+    APPEX="$APP/PlugIns/AlbrhiWidget.appex"
+    mkdir -p "$APPEX"
+    cp "$WIDGET_BIN" "$APPEX/AlbrhiWidget"
+    cp app/widget/Info.plist "$APPEX/Info.plist"
+    ldid -Sapp/widget/entitlements.plist "$APPEX/AlbrhiWidget"
+    echo "الودجت: ضُمّت"
+else
+    echo "الودجت: لم تُبنَ — التطبيق نفسه سليم"
+fi
+
+# Fake-signed. The one entitlement is the app group the widget reads its numbers from -- the token
+# stays in the keychain and is never shared with the extension.
+ldid -Sapp/entitlements.plist "$APP/AlbrhiLicences"
 
 STAGE=$(mktemp -d)
 mkdir -p "$STAGE/Payload"

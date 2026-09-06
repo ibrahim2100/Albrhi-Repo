@@ -8,11 +8,15 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface SCIRequestsPage : SCIPage @end
-@interface SCILicencesPage : SCIPage @end
+@interface SCILicencesPage : SCIPage
+/// Shows one of the filters from outside — the summary card that counted those rows opens them.
+- (void)applyScope:(NSInteger)scope;
+@end
 @interface SCIDevicesPage  : SCIPage @end
 @interface SCIStoresPage   : SCIPage @end
 @interface SCICodesPage    : SCIPage @end
 @interface SCITrialsPage   : SCIPage @end
+@interface SCIMessagesPage : SCIPage @end
 @interface SCISummaryPage  : SCIPage @end
 @interface SCISettingsPage : SCIPage @end
 

@@ -9,6 +9,7 @@
 
 #import "SCIPage.h"
 #import "SCIAPI.h"
+#import "SCIMessages.h"
 #import "SCIPages.h"
 
 #pragma mark - Requests
@@ -64,6 +65,33 @@
     return @"لا طلبات تنتظر.\nتصل هنا وحدها حين يطلب أحدهم ترخيصاً من جهازه.";
 }
 
+- (NSArray<SCIChoice *> *)swipeActionsAt:(NSInteger)row {
+    NSDictionary *request = _rows[(NSUInteger)row];
+    NSString *device = request[@"key"] ?: @"";
+    __weak typeof(self) weakSelf = self;
+
+    return @[
+        [SCIChoice dangerous:@"رفض" does:^{
+            [SCIAPI call:@"/admin/decline" body:@{@"dev": device}
+                    then:^(NSDictionary *answer, NSString *error) {
+                if (error) { [weakSelf failed:error]; return; }
+                [weakSelf reload];
+            }];
+        }],
+        [SCIChoice titled:@"سنة" does:^{
+            NSDictionary *body = @{@"dev": device, @"mode": @"set", @"days": @365,
+                                   @"name": request[@"name"] ?: @"",
+                                   @"contact": request[@"contact"] ?: @""};
+            [SCIAPI call:@"/admin/approve" body:body
+                    then:^(NSDictionary *answer, NSString *error) {
+                if (error) { [weakSelf failed:error]; return; }
+                [weakSelf say:@"تمّت الموافقة — سنة"];
+                [weakSelf reload];
+            }];
+        }],
+    ];
+}
+
 - (void)configure:(UITableViewCell *)cell at:(NSInteger)row {
     NSDictionary *request = _rows[(NSUInteger)row];
 
@@ -116,8 +144,7 @@
         [SCIChoice titled:@"انسخ رمز الجهاز" does:^{ [weakSelf copyText:device]; }],
         [SCIChoice titled:@"واتساب" does:^{
             if (![weakSelf whatsApp:request[@"contact"]
-                             saying:[NSString stringWithFormat:@"أهلاً %@ — بخصوص طلب ترخيص البرهي",
-                                     request[@"name"] ?: @""]]) {
+                             saying:[SCIMessages fill:SCIMessageRequest with:request]]) {
                 [weakSelf say:@"لا رقم في هذا الطلب"];
             }
         }],
@@ -183,7 +210,8 @@ static NSArray<NSArray<NSString *> *> *SCIScopes(void) {
         [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd
                                                       target:self action:@selector(issue)];
 
-    [self searchableWith:@"اسم، رقم جوال، رمز جهاز، أو كود"];
+    [self searchableWith:@"اسم، رقم جوال، رمز جهاز، أو كود"
+                  scopes:@[@"الكل", @"سارٍ", @"قريب", @"منتهٍ", @"مسحوب"]];
 }
 
 /// Live means: not withdrawn, and either without an end date or with one still ahead.
@@ -218,9 +246,27 @@ static BOOL SCIIsLive(NSDictionary *licence) {
     }];
 }
 
+/// The filter and the search are one pass, and the filter is asked first because it is cheaper.
+- (BOOL)passesFilter:(NSDictionary *)licence {
+    double until = [licence[@"until"] doubleValue];
+    double now = [NSDate date].timeIntervalSince1970;
+    BOOL revoked = [licence[@"revoked"] boolValue];
+    BOOL live = SCIIsLive(licence);
+
+    switch (self.scope) {
+        case 1: return live;
+        case 2: return live && until > 0 && until < now + 14 * 86400;   // ends within a fortnight
+        case 3: return !live && !revoked;
+        case 4: return revoked;
+        default: return YES;
+    }
+}
+
 - (void)queryChanged {
     NSMutableArray *kept = [NSMutableArray array];
     for (NSDictionary *licence in _all) {
+        if (![self passesFilter:licence]) continue;
+
         if ([self matches:@[licence[@"name"] ?: @"", licence[@"contact"] ?: @"",
                             licence[@"key"] ?: @"", licence[@"codeText"] ?: @"",
                             licence[@"note"] ?: @""]]) {
@@ -228,6 +274,34 @@ static BOOL SCIIsLive(NSDictionary *licence) {
         }
     }
     _rows = kept;
+}
+
+/// A swipe offers the two things done most often, and the same blocks the sheet uses.
+- (NSArray<SCIChoice *> *)swipeActionsAt:(NSInteger)row {
+    NSDictionary *licence = _rows[(NSUInteger)row];
+    NSString *device = licence[@"key"] ?: @"";
+    __weak typeof(self) weakSelf = self;
+
+    NSMutableArray<SCIChoice *> *actions = [NSMutableArray array];
+
+    if ([licence[@"contact"] length]) {
+        [actions addObject:[SCIChoice titled:@"واتساب" does:^{
+            SCIMessageKind kind = SCIIsLive(licence) ? SCIMessageRenewal : SCIMessageExpired;
+            [weakSelf whatsApp:licence[@"contact"] saying:[SCIMessages fill:kind with:licence]];
+        }]];
+    }
+
+    [actions addObject:[SCIChoice titled:@"سنة" does:^{
+        [SCIAPI call:@"/admin/approve"
+                body:@{@"dev": device, @"mode": @"extend", @"days": @365}
+                then:^(NSDictionary *answer, NSString *error) {
+            if (error) { [weakSelf failed:error]; return; }
+            [weakSelf say:@"مُدّد سنة"];
+            [weakSelf reload];
+        }];
+    }]];
+
+    return actions;
 }
 
 - (NSInteger)rowCount { return (NSInteger)_rows.count; }
@@ -299,16 +373,18 @@ static BOOL SCIIsLive(NSDictionary *licence) {
     // Only when there is a number to open it with: a row that cannot do anything is not drawn.
     if ([licence[@"contact"] length]) {
         [choices addObject:[SCIChoice titled:@"واتساب" does:^{
-            NSString *term = [licence[@"until"] doubleValue] == 0
-                ? @"مدى الحياة"
-                : [NSString stringWithFormat:@"حتى %@", [SCIPage dateFrom:licence[@"until"]]];
+            // Which of the three it is follows from the licence rather than from a choice: a
+            // renewal reminder sent to somebody whose licence lapsed last month reads as a shop
+            // that does not know its own customers.
+            SCIMessageKind kind = !SCIIsLive(licence) ? SCIMessageExpired
+                : ([licence[@"until"] doubleValue] > 0 &&
+                   [licence[@"until"] doubleValue] < [NSDate date].timeIntervalSince1970
+                       + 14 * 86400) ? SCIMessageRenewal : SCIMessageWelcome;
 
-            BOOL opened = [weakSelf whatsApp:licence[@"contact"]
-                                      saying:[NSString stringWithFormat:
-                @"ترخيص البرهي — %@\nالجهاز: %@\nيغطّي: %@\n%@",
-                licence[@"name"] ?: @"", device, SCIScopeName(licence[@"tier"]), term]];
-
-            if (!opened) [weakSelf say:@"لا رقم صالح في هذا الترخيص"];
+            if (![weakSelf whatsApp:licence[@"contact"]
+                             saying:[SCIMessages fill:kind with:licence]]) {
+                [weakSelf say:@"لا رقم صالح في هذا الترخيص"];
+            }
         }]];
     }
 
@@ -443,6 +519,13 @@ static BOOL SCIIsLive(NSDictionary *licence) {
     [self presentViewController:detail animated:YES completion:nil];
 }
 
+- (void)applyScope:(NSInteger)scope {
+    // The view has to exist before its search bar can be moved, and a tab's page is not built
+    // until it is shown — which it has been, by the time this is called.
+    [self loadViewIfNeeded];
+    [self selectScope:scope];
+}
+
 - (void)showCodes {
     [self.navigationController pushViewController:[[SCICodesPage alloc] init] animated:YES];
 }
@@ -557,6 +640,47 @@ static BOOL SCIIsLive(NSDictionary *licence) {
 
     cell.detailTextLabel.text = [NSString stringWithFormat:@"%@\n%@  ·  %@",
         SCIRun(device[@"dev"]), SCIRun(device[@"what"]), SCIRun(when)];
+}
+
+@end
+
+
+#pragma mark - Messages
+
+/// The four sentences this app sends, and the placeholders they are filled from.
+@implementation SCIMessagesPage
+
+- (instancetype)init {
+    if ((self = [super init])) self.title = @"رسائل واتساب";
+    return self;
+}
+
+- (void)fetch { [self loaded]; }
+- (NSInteger)rowCount { return SCIMessageCount; }
+
+- (void)configure:(UITableViewCell *)cell at:(NSInteger)row {
+    SCIMessageKind kind = (SCIMessageKind)row;
+
+    cell.textLabel.text = [SCIMessages nameOf:kind];
+    cell.detailTextLabel.text = [SCIMessages textFor:kind];
+    cell.detailTextLabel.numberOfLines = 0;
+    cell.detailTextLabel.textColor = [SCIMessages isEdited:kind] ? [UIColor labelColor]
+                                                                 : [UIColor secondaryLabelColor];
+    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+}
+
+- (void)tapped:(NSInteger)row {
+    SCIMessageKind kind = (SCIMessageKind)row;
+    __weak typeof(self) weakSelf = self;
+
+    [self askTitled:[SCIMessages nameOf:kind]
+            message:@"{name} {device} {scope} {until} تُملأ من الترخيص. اتركها فارغة للعودة "
+                     "إلى النصّ الأصلي."
+              value:[SCIMessages textFor:kind] keyboard:UIKeyboardTypeDefault
+               then:^(NSString *text) {
+        [SCIMessages setText:text for:kind];
+        [weakSelf reload];
+    }];
 }
 
 @end

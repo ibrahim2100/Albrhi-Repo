@@ -1112,6 +1112,37 @@ two things only a phone can do: **WhatsApp with the message already written**, s
 sold ends in one and the number is already on the record, and **copy** on anything anyone would
 otherwise transcribe by eye.
 
+**A number worth acting on has somewhere to go.** The summary cards counted and then stopped:
+«ends within a fortnight: 1» was the most important line on the screen and a dead end. Each card
+now opens the list it counted *with the filter it counted by* — the search bar's own scope bar,
+pinned open, because a filter applied while its control is off screen is a list that looks wrong
+for no visible reason.
+
+**The message is a template, not a string in the code.** Every licence sold ends in a WhatsApp
+message, and the wording of a renewal reminder is exactly the thing that gets changed after the
+third person misreads it. Four of them, editable, filled from the licence — and *which* one is
+chosen follows from the licence's own state, because a renewal reminder sent to somebody who
+lapsed last month reads as a shop that does not know its customers.
+
+**The expiry notice names the person and says it once a day.** "Three licences end this week" is
+a number to go and look up; a name is the next action. Once per licence per day, because the
+background refresh runs whenever iOS feels like it and a reminder arriving six times gets the
+notifications switched off — and the record of who has been told is pruned to who is still
+expiring, or a renewed licence could never be reminded about again.
+
+**A swipe never performs its first action on a full swipe.** The first one here withdraws a
+licence or refuses a request, and a gesture that fires it without stopping costs somebody a
+licence on a bumpy car ride.
+
+**The widget is a second binary, and it is never given the token.** An extension is a process iOS
+launches on its own schedule; a token that can revoke every licence sold has no business being
+reachable from one. The app writes three numbers into the shared container and the widget reads
+them — so a widget with nothing to show says the app has not been opened yet, which is what is
+true, rather than a zero, which would be a fact about the licences. It is Swift against Xcode's
+own SDK while the app is Objective-C against the pinned 16.2 one, so it is **built apart and
+folded in afterwards, and a failure to build it is printed rather than fatal**: it is an extra on
+a home screen, and the app is the thing somebody is waiting for.
+
 **A phone number is searched as digits or it is not searched at all** — the panel's own rule,
 carried over rather than rediscovered: Arabic-Indic numerals folded, everything but digits thrown
 away, matched on the last nine, so `+966 50 000 0000` finds a licence stored as `0500000000`. And

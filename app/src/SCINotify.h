@@ -33,6 +33,13 @@ extern NSString *const SCIRequestsWaitingNotification;
 
 @interface SCINotify : NSObject
 
+/// Warns about licences ending within the week, once a day each. Called by the refresh; exposed
+/// so the state screen can say what it would do.
++ (void)noticeExpiring:(nullable id)licences;
+
+/// Leaves the home screen widget's three numbers in the shared container. Nothing secret goes in.
++ (void)writeCounts:(NSDictionary *)state;
+
 /// Registers the background task. Called once, from the app delegate, before the launch finishes:
 /// the system requires the identifier to be known by then and refuses it afterwards.
 + (void)registerTask;

@@ -1,9 +1,11 @@
 #import "SCIPage.h"
 #import "SCIAPI.h"
 
-@interface SCIPage () <UISearchResultsUpdating>
+@interface SCIPage () <UISearchResultsUpdating, UISearchBarDelegate>
 @property (nonatomic, strong) UITableView *table;
 @property (nonatomic, copy, nullable) NSString *query;
+@property (nonatomic, assign) NSInteger scope;
+@property (nonatomic, strong, nullable) UISearchController *search;
 @property (nonatomic, strong) UILabel *notice;
 @property (nonatomic, copy, nullable) NSString *failure;
 @property (nonatomic, assign) BOOL loading;
@@ -137,11 +139,46 @@ NSString *SCIRun(NSString *text) {
 - (NSString *)emptyMessage { return nil; }
 - (void)tapped:(NSInteger)row { }
 - (void)queryChanged { }
+- (NSArray<SCIChoice *> *)swipeActionsAt:(NSInteger)row { return @[]; }
 
 #pragma mark - Table
 
 - (NSInteger)tableView:(UITableView *)table numberOfRowsInSection:(NSInteger)section {
     return [self rowCount];
+}
+
+- (UISwipeActionsConfiguration *)tableView:(UITableView *)table
+    trailingSwipeActionsConfigurationForRowAtIndexPath:(NSIndexPath *)path {
+
+    NSArray<SCIChoice *> *offered = [self swipeActionsAt:path.row];
+    if (!offered.count) return nil;
+
+    NSMutableArray<UIContextualAction *> *actions = [NSMutableArray array];
+    for (SCIChoice *choice in offered) {
+        void (^does)(void) = choice.does;
+
+        UIContextualAction *action = [UIContextualAction
+            contextualActionWithStyle:choice.dangerous ? UIContextualActionStyleDestructive
+                                                        : UIContextualActionStyleNormal
+                                title:choice.title
+                              handler:^(UIContextualAction *a, UIView *view,
+                                        void (^done)(BOOL)) {
+            does();
+            done(YES);
+        }];
+
+        if (!choice.dangerous) action.backgroundColor = [UIColor systemBlueColor];
+        [actions addObject:action];
+    }
+
+    UISwipeActionsConfiguration *configuration =
+        [UISwipeActionsConfiguration configurationWithActions:actions];
+
+    // **Never on a full swipe.** The first action here withdraws a licence or refuses a request,
+    // and a gesture that performs the destructive one without stopping at it is a gesture that
+    // costs somebody a licence on a bumpy car ride.
+    configuration.performsFirstActionWithFullSwipe = NO;
+    return configuration;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)table cellForRowAtIndexPath:(NSIndexPath *)path {
@@ -306,6 +343,50 @@ static NSString *SCITail(NSString *digits) {
     return YES;
 }
 
+- (void)searchableWith:(NSString *)placeholder scopes:(NSArray<NSString *> *)scopes {
+    [self searchableWith:placeholder];
+
+    self.search.searchBar.scopeButtonTitles = scopes;
+    self.search.searchBar.showsScopeBar = YES;
+    self.search.searchBar.delegate = self;
+}
+
+- (void)searchBar:(UISearchBar *)bar selectedScopeButtonIndexDidChange:(NSInteger)index {
+    self.scope = index;
+    [self queryChanged];
+    [self.table reloadData];
+    [self showNotice];
+}
+
+- (void)selectScope:(NSInteger)scope {
+    self.scope = scope;
+    self.search.searchBar.selectedScopeButtonIndex = scope;
+
+    // The search bar is pinned open here rather than left to a scroll: a filter that is applied
+    // while its own control is off screen is a list that looks wrong for no visible reason.
+    self.navigationItem.hidesSearchBarWhenScrolling = NO;
+
+    [self queryChanged];
+    [self.table reloadData];
+    [self showNotice];
+}
+
+- (__kindof SCIPage *)showTab:(NSInteger)index {
+    UITabBarController *tabs = self.tabBarController;
+    if (index < 0 || index >= (NSInteger)tabs.viewControllers.count) return nil;
+
+    tabs.selectedIndex = (NSUInteger)index;
+
+    UIViewController *chosen = tabs.viewControllers[(NSUInteger)index];
+    if ([chosen isKindOfClass:[UINavigationController class]]) {
+        UINavigationController *nav = (UINavigationController *)chosen;
+        [nav popToRootViewControllerAnimated:NO];
+        chosen = nav.viewControllers.firstObject;
+    }
+
+    return [chosen isKindOfClass:[SCIPage class]] ? (SCIPage *)chosen : nil;
+}
+
 - (void)searchableWith:(NSString *)placeholder {
     UISearchController *search = [[UISearchController alloc] initWithSearchResultsController:nil];
     search.searchResultsUpdater = self;
@@ -313,6 +394,7 @@ static NSString *SCITail(NSString *digits) {
     search.searchBar.placeholder = placeholder;
 
     self.navigationItem.searchController = search;
+    self.search = search;
 
     // Shown from the start rather than hidden until a pull. A search nobody can see is a search
     // nobody uses, and this is the one screen where finding one row among many is the whole task.
