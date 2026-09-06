@@ -1778,6 +1778,22 @@ before a hook was written, which is the discipline three earlier releases on thr
 paid for. **A switch that decides nothing is worse than a missing one**: it reads as a feature that
 does not work, and it is indistinguishable from one that broke.
 
+**And hiding a section is not switching a capability off — "Hide Spaces" was doing both, and
+the second half is what broke.** The feature set `voice_rooms_consumption_enabled: NO`, which is
+X being told this account may not *listen* to a Space at all, so a link somebody sent came back
+"unavailable": a broken app rather than a tidy timeline, reported in exactly those words.
+`audio_articles_enabled` was the same shape one surface over. **Neither key was ever what hid
+anything** — the strip is hidden by withholding `-_t1_initializeFleets` and the tab by its own
+`audiospace` entry, and both kept working with the keys removed.
+
+Settled by measurement rather than reasoning: **BHTwitter 4.5 hides the same strip through the
+same selector, names the same `audiospace` tab, and carries none of the four voice-room keys
+anywhere in its binary.** A hide that has worked for years never touches the capability. What
+stays are the two keys that gate *surfaces* — the button that starts a Space, the avatar ring
+that advertises one — and the row now says that in both languages instead of promising to remove
+spoken articles. **Ask of any feature-switch override whether it hides a thing or forbids it**;
+the name of the switch on the screen is the promise, and «إخفاء» is not «تعطيل».
+
 **And "Hide Spaces" was aiming at the wrong surface the whole time — it was never a tab.** Two
 releases moved tabs, correctly, while the thing being complained about was the row of live audio
 rooms above the Home timeline. That strip is set up by `-_t1_initializeFleets` (named for Fleets,
@@ -2746,9 +2762,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.17** · YouTube **1.31.3** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
+Instagram **4.1.17** · YouTube **1.31.3** · X **0.18.4** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.2.1** · suite **1.76.4**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.2.1** · suite **1.76.5**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

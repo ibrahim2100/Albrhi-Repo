@@ -1,5 +1,29 @@
 # Albrhi for X — what changed
 
+## v0.18.4
+
+**«إخفاء المساحات» كان يعطّلها لا يخفيها، وهذا بلاغ من جهاز.** فتح مساحة يرسلها أحدهم كان
+يردّ «غير متوفرة».
+
+**Hiding a section is not switching a capability off, and this feature was doing both.**
+`voice_rooms_consumption_enabled: NO` tells X this account may not *listen* to a Space at all,
+so a link somebody sends comes back "unavailable" — a broken app rather than a tidy timeline.
+`audio_articles_enabled` is the same shape one surface over: an article that will not play.
+Both keys are gone.
+
+What actually hides the strip has never been a feature switch: `-_t1_initializeFleets` is
+withheld, and the tab is removed by its own `audiospace` entry. Two surfaces, neither of which
+decides whether Spaces work when you ask for one deliberately.
+
+**Measured rather than reasoned about.** BHTwitter 4.5 hides the same strip through the same
+selector and names the same `audiospace` tab, and carries **none** of these four keys anywhere
+in its binary — a hide that has worked for years never touches the capability, which is the
+whole finding. Read for architecture only, as every unlicensed reference here is.
+
+The two keys kept are gates on *surfaces*: the button that starts a Space, and the avatar ring
+that advertises one in the timeline. The row now says exactly that, in both languages, instead
+of promising to remove spoken articles.
+
 ## v0.18.3
 
 **"Free" is out of every description.** The tweak needs a licence; a package page saying it is

@@ -191,12 +191,33 @@ static SCITWFeature *Feature(NSString *identifier,
                 @"ios_rank_badge_enabled": @NO,
             }),
 
+            //
+            // **Hiding a section is not switching a capability off, and this feature was
+            // doing both.**
+            //
+            // `voice_rooms_consumption_enabled: NO` is X being told this account may not
+            // *listen* to a Space at all — so opening a link somebody sent came back
+            // "unavailable", which is a broken app rather than a tidy timeline, and was
+            // reported in exactly those words. `audio_articles_enabled` is the same shape
+            // one surface over: an article that will not play.
+            //
+            // Both are gone. What hides the Spaces strip is `-_t1_initializeFleets` being
+            // withheld (`Features/Spaces/`) and what hides the tab is its own `audiospace`
+            // entry (`Features/Tabs/`) — two surfaces, neither of which touches whether the
+            // thing works when you ask for it deliberately.
+            //
+            // **Measured against BHTwitter 4.5 rather than reasoned about**: it hides the
+            // same strip through the same selector, names the same `audiospace` tab, and
+            // carries **none** of these four keys anywhere in its binary. A tweak whose hide
+            // has worked for years never touches the capability, which is the whole finding.
+            //
+            // The two kept are gates on *surfaces*: the button that starts a Space, and the
+            // avatar ring that advertises one in the timeline. The row says so.
+            //
             Feature(@"spaces", @"f_spaces", @"f_spaces_note", NO,
                     @"waveform", [UIColor systemPurpleColor], @{
-                @"voice_rooms_consumption_enabled": @NO,
                 @"voice_rooms_main_fab_creation_enabled": @NO,
                 @"ios_timeline_avatar_discovery_spaces_experiment": @NO,
-                @"audio_articles_enabled": @NO,
             }),
 
             // A warning being removed, so it is marked cautious and defaults off like every

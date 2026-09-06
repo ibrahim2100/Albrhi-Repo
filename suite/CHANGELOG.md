@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.76.5
+
+**X 0.18.4 — «إخفاء المساحات» يخفي فقط.** كان يضبط `voice_rooms_consumption_enabled` إلى NO،
+وهو أن يُقال لتويتر إن هذا الحساب لا يجوز له سماع أي مساحة — ففتح مساحة يرسلها أحدهم يردّ «غير
+متوفرة». الإخفاء نفسه لم يكن من هذا المفتاح أصلاً: الشريط يُخفى بحجب `-_t1_initializeFleets`
+والتبويب بمدخله `audiospace`. مقيس على BHTwitter 4.5، الذي يخفي بنفس المُحدِّد ولا يحمل أياً من
+تلك المفاتيح في ثنائيّه.
+
 ## v1.76.4
 
 **The licence check-in no longer starts during a launch.** It waits a minute after the app is
