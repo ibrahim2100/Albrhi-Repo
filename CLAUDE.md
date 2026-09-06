@@ -1069,6 +1069,47 @@ digit-folding search and three signers that must agree byte for byte all exist a
 a second implementation in UIKit would be two of everything to keep in step, which is the failure
 this file already records about maps, lists, and a screen and the report that mirrors it.
 
+**The screen is native now, seven UIKit pages over the same admin API, and the web panel stays
+where it is.** The reasoning above — that a second implementation of six tables is two things to
+keep in step — is still true of the *tables*, and what changed is what the app adds that a page
+cannot: a badge on the tab of requests still waiting, a background refresh that notices one while
+the app is closed, and a notification about it. Neither is a copy of the other's screens; they are
+one server seen from a desk and from a pocket.
+
+**Five tabs, because a sixth is not a tab.** A `UITabBarController` on an iPhone shows five items
+and folds every one after them into a "More" list — so the first build's seven put Stores, Codes
+and Settings behind a grey table nobody would think to open. Codes moved onto Licences (a code is
+a licence nobody has redeemed yet) and Settings onto the front page as a gear.
+
+**A page inside a navigation controller does not own the tab bar's item.** The badge was written
+to `self.tabBarItem` and never appeared: the tab bar holds the *navigation controller*, so the
+count went onto an item nothing displays. And it cannot wait for the page's own fetch either — a
+tab's page is not built until somebody taps it, which is exactly when the badge stops being
+useful. `SCINotify` posts the count and the delegate puts it on the tab.
+
+**A title set in `-viewDidLoad` is a title the tab bar asks for too early.** Every unvisited tab
+showed an icon and no word. It is set in `-init` now.
+
+**A dictionary of actions is a sheet in no particular order.** The approve sheet came out «ستّة
+أشهر · رفض · مدى الحياة · شهر · سنة» — terms out of sequence with the destructive one in the
+middle of them, which is where a mis-tap costs somebody a licence. `SCIChoice` in an array; the
+red one is last by construction.
+
+**A Latin run and a date on one Arabic line merge into nonsense.** «متجر na9 · 15/09/2026»
+rendered as «متجر 15 · 2026/09/na9»: bidi reads the id and the digits as one left-to-right run
+because the separator between them is neutral. `SCIRun()` wraps a run in FSI…PDI, which is the
+fact the algorithm was missing. Same family as the post-to-image mirroring — **a bug that only
+exists on an Arabic phone**, and one nobody would find by reading the format string.
+
+**Zero means two different things and only one of them is ∞.** A licence's `until` of zero is
+lifetime; a device's last-seen of zero is *never seen*, and the shared date formatter printed ∞
+for both — a screen saying a device that has never once reported in is reporting in forever.
+
+Every one of those was found by compiling the pages into a simulator app and looking, in one
+sitting: an admin API stub outside the repository, seven screens, six faults. **The simulator is
+still the cheapest tool here for anything drawn on a screen**, and this is the second feature to
+prove it.
+
 **`file://` was the obvious way to bundle the page and is the wrong one.** `crypto.subtle` exists
 only in a secure context, so a page loaded from a file silently loses the signing path — and
 *silently* is the word that matters. https keeps the page exactly what it is on a desktop.

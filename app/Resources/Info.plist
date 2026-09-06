@@ -24,8 +24,11 @@
 	<true/>
 	<key>MinimumOSVersion</key>
 	<string>15.0</string>
-	<key>UILaunchStoryboardName</key>
-	<string></string>
+	<!-- An empty UILaunchStoryboardName is not “no launch screen”; it names a storyboard that
+	     does not exist, and an app iOS cannot find a launch screen for is run letterboxed at the
+	     old 4-inch size. An empty UILaunchScreen dict is the iOS 14+ way of saying “plain”. -->
+	<key>UILaunchScreen</key>
+	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
@@ -35,5 +38,30 @@
 	     is worth exactly one sentence of explanation to whoever is holding it. -->
 	<key>NSFaceIDUsageDescription</key>
 	<string>لفتح لوحة التراخيص</string>
+
+	<!-- The background refresh that notices a new request while the app is closed.
+	     Both keys are needed and the identifier must match SCINotify's exactly: an identifier the
+	     plist does not list is refused at registration, and iOS refuses it by throwing at launch. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.albrhi.licences.refresh</string>
+	</array>
+
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>AppIcon60x60</string>
+			</array>
+			<key>UIPrerenderedIcon</key>
+			<true/>
+		</dict>
+	</dict>
 </dict>
 </plist>
