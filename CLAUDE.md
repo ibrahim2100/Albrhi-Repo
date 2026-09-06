@@ -1105,6 +1105,23 @@ exists on an Arabic phone**, and one nobody would find by reading the format str
 lifetime; a device's last-seen of zero is *never seen*, and the shared date formatter printed ∞
 for both — a screen saying a device that has never once reported in is reporting in forever.
 
+**The address is compiled in, and the app asks for the token alone.** 1.0.0 required both, which
+put a URL in front of somebody before anything had been tried — and one wrong character answers
+«no such route on the server», a sentence about the server that is really about the typing. It is
+the same decision the tweaks made when the licence layer shipped, arriving late here only because
+the app was a web view first. A stored address still wins, empty clears it, and the row says which
+of the two is in use. The 404 now names the URL it asked.
+
+**A Latin field on an Arabic phone is laid out right-to-left, and a pasted token reads back
+reversed.** Which is worse than it sounds: a token that *looks* wrong gets retyped by hand, so a
+correct paste becomes a wrong one. Every field but a name forces left-to-right now.
+
+**Declaring `CFBundleLocalizations` as `ar, en` made an English phone lay the whole app out
+left-to-right** — title on the left, tabs reversed — while every string on it stayed Arabic. The
+screens are written in one language and are laid out in that language's direction whatever the
+phone is set to, so the array names Arabic alone. **A localization list is a layout decision**,
+which is not what it looks like.
+
 Every one of those was found by compiling the pages into a simulator app and looking, in one
 sitting: an admin API stub outside the repository, seven screens, six faults. **The simulator is
 still the cheapest tool here for anything drawn on a screen**, and this is the second feature to

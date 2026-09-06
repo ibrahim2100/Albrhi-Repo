@@ -132,7 +132,10 @@
 
     switch (row) {
         case 0:
-            cell.detailTextLabel.text = [SCIAPI base] ?: @"غير مضبوط";
+            // Which of the two it is, named. «The built-in one» and «one I chose» are different
+            // facts, and only the second is worth suspecting when something stops working.
+            cell.detailTextLabel.text = [NSString stringWithFormat:@"%@\n%@",
+                [SCIAPI baseIsMine] ? @"اخترته" : @"المدمج", SCIRun([SCIAPI base])];
             break;
         case 1:
             // Never the token itself, not even partly. A screen that shows a secret is a screen
@@ -160,10 +163,16 @@
     switch (row) {
         case 0: {
             [self askTitled:@"عنوان الخادم"
-                    message:@"لا بدّ أن يبدأ بـ https — ترخيصٌ عبر http يمكن تبديله في الطريق"
-                      value:[SCIAPI base] ?: @"https://"
+                    message:@"اتركه فارغاً للعودة إلى العنوان المدمج. https فقط — ترخيصٌ عبر http "
+                             "يمكن تبديله في الطريق"
+                      value:[SCIAPI baseIsMine] ? [SCIAPI base] : @""
                    keyboard:UIKeyboardTypeURL then:^(NSString *base) {
-                if (![base hasPrefix:@"https://"]) { [weakSelf say:@"لا بدّ من https"]; return; }
+                // Empty clears, which is the only way back to the built-in address once one has
+                // been typed — the same absent-keeps/empty-clears rule the server itself follows.
+                if (base.length && ![base hasPrefix:@"https://"]) {
+                    [weakSelf say:@"لا بدّ من https"];
+                    return;
+                }
                 [SCIAPI setBase:base];
                 [weakSelf reload];
             }];

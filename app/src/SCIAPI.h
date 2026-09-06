@@ -24,6 +24,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// Where the server is, and the token that may command it. Both live in the Keychain; these read
 /// and write there rather than keeping a copy.
 + (nullable NSString *)base;
+
+/// Whether that address was chosen here or is the one built in. Two different facts, and only one
+/// of them is worth checking when something stops working.
++ (BOOL)baseIsMine;
 + (void)setBase:(nullable NSString *)base;
 + (nullable NSString *)token;
 + (void)setToken:(nullable NSString *)token;

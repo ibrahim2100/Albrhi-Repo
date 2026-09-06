@@ -225,6 +225,16 @@ NSString *SCIRun(NSString *text) {
         field.autocorrectionType = UITextAutocorrectionTypeNo;
         field.autocapitalizationType = UITextAutocapitalizationTypeNone;
         field.clearButtonMode = UITextFieldViewModeWhileEditing;
+
+        // **An address, a token and a code are left-to-right text and must be laid out as such.**
+        // On an Arabic phone a field is right-aligned and right-to-left by default, so a pasted
+        // `https://…/x` or `ALB-4K7M-…` has its punctuation placed at the wrong end and reads
+        // back reversed — and a token that *looks* wrong is retyped by hand, which is how a
+        // correct paste becomes a wrong one. Only a name is left in the phone's own direction.
+        if (keyboard != UIKeyboardTypeDefault) {
+            field.textAlignment = NSTextAlignmentLeft;
+            field.semanticContentAttribute = UISemanticContentAttributeForceLeftToRight;
+        }
     }];
 
     [ask addAction:[UIAlertAction actionWithTitle:@"إلغاء"

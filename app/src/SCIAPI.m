@@ -6,7 +6,21 @@ static NSString *const kTokenKey = @"admin-token";
 
 @implementation SCIAPI
 
-+ (NSString *)base  { return [SCIKeychain stringForKey:kBaseKey]; }
+/// The same address every tweak is built with.
+///
+/// **Typed by nobody.** The tweaks have had this compiled in since the licence layer shipped, for
+/// the reason written down there: telling a person a URL and asking them to type it correctly is
+/// a support conversation before anything has even been tried, and a single wrong character
+/// answers «no such route on the server» — a sentence about the server that is really about the
+/// typing. A stored address still wins, for a staging deployment.
+static NSString *const kDefaultBase = @"https://albrhi-licence.ibrahimalrahan01.workers.dev";
+
++ (NSString *)base {
+    NSString *stored = [SCIKeychain stringForKey:kBaseKey];
+    return stored.length ? stored : kDefaultBase;
+}
+
++ (BOOL)baseIsMine { return [SCIKeychain stringForKey:kBaseKey].length > 0; }
 + (NSString *)token { return [SCIKeychain stringForKey:kTokenKey]; }
 
 + (void)setBase:(NSString *)base {
@@ -75,7 +89,13 @@ static NSString *const kTokenKey = @"admin-token";
         // a server saying no are different problems, and one message covering all of them sends
         // somebody to check the wrong thing.
         if (status == 401) { finish(nil, @"الرمز مرفوض — تحقّق من رمز الإدارة"); return; }
-        if (status == 404) { finish(nil, @"لا وجود لهذا المسار على الخادم"); return; }
+        if (status == 404) {
+            // With the address named. «No such route» on its own sends somebody to check the
+            // server, and the answer is almost always the address they are asking it at.
+            finish(nil, [NSString stringWithFormat:@"لا وجود لهذا المسار على الخادم:\n%@",
+                         url.absoluteString]);
+            return;
+        }
         if (status != 200) {
             NSString *why = answer[@"error"] ?: answer[@"state"];
             finish(nil, why ?: [NSString stringWithFormat:@"الخادم أجاب %ld", (long)status]);
