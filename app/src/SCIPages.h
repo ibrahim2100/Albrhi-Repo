@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface SCICodesPage    : SCIPage @end
 @interface SCITrialsPage   : SCIPage @end
 @interface SCIMessagesPage : SCIPage @end
+@interface SCIProductsPage : SCIPage @end
 @interface SCISummaryPage  : SCIPage @end
 @interface SCISettingsPage : SCIPage @end
 

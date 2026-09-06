@@ -534,6 +534,46 @@ async function adminState(env) {
   return json({ ok: true, now: now(), requests, licences, codes, trials });
 }
 
+//
+// **Everything, as one file, because there is otherwise no copy of any of it.**
+//
+// Every licence sold, every code, every trial record and every shop lives in one KV namespace
+// with no export and no history: an account locked, a namespace deleted, or a mistake in this
+// very file passing over a `delete`, and there is nothing to restore from — not even a list of
+// who the customers are.
+//
+// Deliberately the raw records rather than a tidied shape: a backup is read by whoever is
+// putting the thing back together, and the useful form for that is exactly what the store held.
+// Nothing secret is added by this route that /admin/state did not already return; the codes are
+// hashes there and hashes here.
+//
+async function adminExport(env) {
+  const gather = async (prefix) => {
+    const { keys } = await env.DB.list({ prefix });
+    const rows = await Promise.all(keys.map(async (k) => {
+      const value = await env.DB.get(k.name, 'json');
+      return value ? { key: k.name, value } : null;
+    }));
+    return rows.filter(Boolean);
+  };
+
+  const [licences, requests, codes, trials, stores, rest] = await Promise.all([
+    gather('lic:'), gather('req:'), gather('code:'), gather('trial:'), gather('store:'),
+    gather('sdev:'),   // a shop's activated devices; the prefix K.storeDevice writes
+  ]);
+
+  return json({
+    ok: true,
+    at: now(),
+    format: 1,
+    counts: {
+      licences: licences.length, requests: requests.length, codes: codes.length,
+      trials: trials.length, stores: stores.length, storeDevices: rest.length,
+    },
+    records: [...licences, ...requests, ...codes, ...trials, ...stores, ...rest],
+  });
+}
+
 async function adminApprove(request, env) {
   const body = await readBody(request);
   if (!body || !isDevice(body.dev)) return json({ error: 'bad device' }, 400);
@@ -872,6 +912,7 @@ export default {
         if (path === '/admin/stores')  return adminStores(request, env);
         if (path === '/admin/store')   return adminStore(request, env);
         if (path === '/admin/delete')  return adminDelete(request, env);
+        if (path === '/admin/export')  return adminExport(env);
       }
 
       return json({ error: 'no such route' }, 404);

@@ -107,16 +107,90 @@ static NSString *const kDefaultBase = @"https://albrhi-licence.ibrahimalrahan01.
     }] resume];
 }
 
+#pragma mark - The copy on disk
+
+static NSTimeInterval sciStaleSince = 0;
+
++ (NSTimeInterval)staleSince { return sciStaleSince; }
+
++ (NSURL *)cacheFor:(NSString *)name {
+    NSURL *directory = [[[NSFileManager defaultManager]
+        URLsForDirectory:NSCachesDirectory inDomains:NSUserDomainMask] firstObject];
+    return [directory URLByAppendingPathComponent:name];
+}
+
+/// Kept in Caches on purpose: iOS may reclaim it, and losing it costs one refresh. A customer
+/// list has no business sitting in a backed-up directory when the server is its home.
++ (void)keep:(NSDictionary *)answer as:(NSString *)name {
+    NSMutableDictionary *wrapped = [@{@"at": @([NSDate date].timeIntervalSince1970)} mutableCopy];
+    wrapped[@"answer"] = answer;
+
+    NSData *data = [NSJSONSerialization dataWithJSONObject:wrapped options:0 error:NULL];
+    [data writeToURL:[self cacheFor:name] atomically:YES];
+}
+
++ (NSDictionary *)keptAs:(NSString *)name at:(NSTimeInterval *)at {
+    NSData *data = [NSData dataWithContentsOfURL:[self cacheFor:name]];
+    if (!data) return nil;
+
+    id wrapped = [NSJSONSerialization JSONObjectWithData:data options:0 error:NULL];
+    if (![wrapped isKindOfClass:[NSDictionary class]]) return nil;
+
+    if (at) *at = [wrapped[@"at"] doubleValue];
+    id answer = wrapped[@"answer"];
+    return [answer isKindOfClass:[NSDictionary class]] ? answer : nil;
+}
+
 + (void)state:(void (^)(NSDictionary *_Nullable, NSString *_Nullable))then {
     [self call:@"/admin/state" body:nil then:^(NSDictionary *answer, NSString *error) {
-        then(answer, error);
+        if (!error && answer) {
+            sciStaleSince = 0;
+            [self keep:answer as:@"state.json"];
+            then(answer, nil);
+            return;
+        }
+
+        // **The copy is offered, and its age is said.** Silently showing an hour-old list as
+        // though it were live is worse than the error was: every screen would be plausible and
+        // some of it wrong, and nothing on it would say so.
+        NSTimeInterval at = 0;
+        NSDictionary *kept = [self keptAs:@"state.json" at:&at];
+        if (kept) {
+            sciStaleSince = at;
+            then(kept, nil);
+            return;
+        }
+
+        then(nil, error);
+    }];
+}
+
++ (void)exportAll:(void (^)(NSData *_Nullable, NSString *_Nullable))then {
+    [self call:@"/admin/export" body:nil then:^(NSDictionary *answer, NSString *error) {
+        if (error) { then(nil, error); return; }
+
+        // Written out again rather than handing over the bytes that arrived: the file that lands
+        // in Files is then indented and readable by whoever opens it in a hurry, which is the
+        // only circumstance in which anyone ever opens a backup.
+        NSData *data = [NSJSONSerialization dataWithJSONObject:answer
+                                                        options:NSJSONWritingPrettyPrinted
+                                                          error:NULL];
+        then(data, data ? nil : @"تعذّرت كتابة الملف");
     }];
 }
 
 + (void)stores:(void (^)(NSArray *_Nullable, NSString *_Nullable))then {
     [self call:@"/admin/stores" body:nil then:^(NSDictionary *answer, NSString *error) {
-        id stores = answer[@"stores"];
-        then([stores isKindOfClass:[NSArray class]] ? stores : nil, error);
+        if (!error && answer) {
+            [self keep:answer as:@"stores.json"];
+            id stores = answer[@"stores"];
+            then([stores isKindOfClass:[NSArray class]] ? stores : nil, nil);
+            return;
+        }
+
+        NSDictionary *kept = [self keptAs:@"stores.json" at:NULL];
+        id stores = kept[@"stores"];
+        then([stores isKindOfClass:[NSArray class]] ? stores : nil, kept ? nil : error);
     }];
 }
 

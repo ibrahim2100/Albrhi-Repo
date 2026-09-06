@@ -71,6 +71,15 @@ NS_ASSUME_NONNULL_BEGIN
 /// Says something briefly, without a button to dismiss.
 - (void)say:(NSString *)message;
 
+/// Does something destructive in five seconds, with a bar offering to call it off.
+///
+/// **Undo rather than another confirmation.** A second «are you sure» is read and dismissed
+/// without being seen by the third day; a strip that says what just happened and offers to take
+/// it back is read *because* something has already happened. And it is a real delay, not a
+/// pretend one: nothing is sent until the five seconds are up, so calling it off leaves no trace
+/// anywhere — including on a server that has no undo of its own.
+- (void)afterUndo:(NSString *)what does:(void (^)(void))does;
+
 /// Puts text on the pasteboard and says so, with a tap of haptic behind it.
 ///
 /// Half of what this app is for ends up in a WhatsApp message, and a code that has to be

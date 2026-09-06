@@ -1112,6 +1112,33 @@ two things only a phone can do: **WhatsApp with the message already written**, s
 sold ends in one and the number is already on the record, and **copy** on anything anyone would
 otherwise transcribe by eye.
 
+**Nothing here had a second copy, and that was the largest risk in the whole project.** Every
+licence sold, every code, every trial record lives in one KV namespace with no export and no
+history: an account locked, a namespace deleted, or one wrong `delete` in that file, and there
+is not even a list of who the customers are. `/admin/export` returns the raw records — the shape
+whoever is putting it back together actually wants — and the app hands the file to the share
+sheet, dated in its name, because a backup nobody can put anywhere is a screenful of text.
+
+**Undo, not a second confirmation.** A second «are you sure» is dismissed unread by the third
+day; a strip that says what just happened is read *because* something already happened. And it is
+a real five-second delay rather than a pretend one — nothing is sent until it elapses, so calling
+it back leaves no trace on a server that has no undo of its own. Leaving the screen sends it:
+the row is already gone as far as the reader is concerned, and a destructive action that quietly
+did not happen is worse than one that did.
+
+**A cached answer is offered and its age is said.** Opening with no signal used to be an error
+and an empty screen, while the answer from an hour ago covers every question except "has anything
+changed". Showing it silently would have been worse than the error: every screen plausible, some
+of it wrong, nothing saying so. The navigation prompt carries «بلا اتّصال — آخر تحديث قبل ساعة»,
+and the copy lives in Caches, because a customer list has no business in a backed-up directory
+when the server is its home.
+
+**Two things were already in the records and nobody was reading them.** The server keeps the last
+ten changes to every licence — which answers "when was this extended, and by how much", asked
+constantly and until now only from memory — and every tweak writes its product and version on
+check-in, which answers "which of these is worth my week". Both are screens, not features: the
+data had been arriving for months.
+
 **Editing a name was refused by the server, and the refusal was arithmetic.** An approval with no
 `days` fell into the extend branch, where a missing number reads as zero and zero is answered
 «no change asked for» — so changing a name, a number or a scope on its own earned a 400, which

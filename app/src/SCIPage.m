@@ -1,11 +1,22 @@
 #import "SCIPage.h"
 #import "SCIAPI.h"
 
+/// How long a destructive action waits before it is really sent.
+///
+/// Five: long enough to notice what just happened and reach the button, short enough that nobody
+/// wonders whether it worked. Overridable at build time only so the preview harness can hold the
+/// bar open long enough to be photographed — never changed for a shipped build.
+#ifndef SCI_UNDO_SECONDS
+#define SCI_UNDO_SECONDS 5
+#endif
+
 @interface SCIPage () <UISearchResultsUpdating, UISearchBarDelegate>
 @property (nonatomic, strong) UITableView *table;
 @property (nonatomic, copy, nullable) NSString *query;
 @property (nonatomic, assign) NSInteger scope;
 @property (nonatomic, strong, nullable) UISearchController *search;
+@property (nonatomic, strong, nullable) UIView *undoBar;
+@property (nonatomic, copy, nullable) void (^pending)(void);
 @property (nonatomic, strong) UILabel *notice;
 @property (nonatomic, copy, nullable) NSString *failure;
 @property (nonatomic, assign) BOOL loading;
@@ -91,9 +102,26 @@ NSString *SCIRun(NSString *text) {
     [self fetch];
 }
 
+/// «An hour ago», in words, for the copy that is being shown instead of the server's answer.
+static NSString *SCIAgo(NSTimeInterval when) {
+    NSInteger minutes = (NSInteger)((([NSDate date].timeIntervalSince1970 - when) / 60.0) + 0.5);
+    if (minutes < 2) return @"الآن";
+    if (minutes < 60) return [NSString stringWithFormat:@"قبل %ld دقيقة", (long)minutes];
+
+    NSInteger hours = minutes / 60;
+    if (hours < 24) return [NSString stringWithFormat:@"قبل %ld ساعة", (long)hours];
+    return [NSString stringWithFormat:@"قبل %ld يوماً", (long)(hours / 24)];
+}
+
 - (void)loaded {
     self.loading = NO;
     self.failure = nil;
+
+    // The title carries the age when what is on screen is not what the server just said. On the
+    // title, because it is the one thing visible from every row of a long list.
+    NSTimeInterval stale = [SCIAPI staleSince];
+    self.navigationItem.prompt = stale > 0
+        ? [NSString stringWithFormat:@"بلا اتّصال — آخر تحديث %@", SCIAgo(stale)] : nil;
     [self.table.refreshControl endRefreshing];
     [self.table reloadData];
     [self showNotice];
@@ -436,6 +464,88 @@ static NSString *SCITail(NSString *digits) {
     }
 
     return NO;
+}
+
+- (void)afterUndo:(NSString *)what does:(void (^)(void))does {
+    // A second action while one is waiting sends the first: they are different rows, and holding
+    // both would mean the earlier one silently never happening.
+    [self sendPending];
+
+    self.pending = does;
+
+    UIView *bar = [[UIView alloc] init];
+    bar.translatesAutoresizingMaskIntoConstraints = NO;
+    bar.backgroundColor = [UIColor secondarySystemBackgroundColor];
+    bar.layer.cornerRadius = 14;
+    bar.layer.borderWidth = 1;
+    bar.layer.borderColor = [UIColor separatorColor].CGColor;
+
+    UILabel *label = [[UILabel alloc] init];
+    label.translatesAutoresizingMaskIntoConstraints = NO;
+    label.text = what;
+    label.font = [UIFont systemFontOfSize:15];
+    label.numberOfLines = 2;
+
+    UIButton *undo = [UIButton buttonWithType:UIButtonTypeSystem];
+    undo.translatesAutoresizingMaskIntoConstraints = NO;
+    [undo setTitle:@"تراجع" forState:UIControlStateNormal];
+    undo.titleLabel.font = [UIFont systemFontOfSize:16 weight:UIFontWeightSemibold];
+    [undo addTarget:self action:@selector(undoPending) forControlEvents:UIControlEventTouchUpInside];
+
+    [bar addSubview:label];
+    [bar addSubview:undo];
+    [self.view addSubview:bar];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [bar.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:16],
+        [bar.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-16],
+        [bar.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor
+                                          constant:-12],
+
+        [label.leadingAnchor constraintEqualToAnchor:bar.leadingAnchor constant:14],
+        [label.topAnchor constraintEqualToAnchor:bar.topAnchor constant:12],
+        [label.bottomAnchor constraintEqualToAnchor:bar.bottomAnchor constant:-12],
+
+        [undo.leadingAnchor constraintEqualToAnchor:label.trailingAnchor constant:12],
+        [undo.trailingAnchor constraintEqualToAnchor:bar.trailingAnchor constant:-14],
+        [undo.centerYAnchor constraintEqualToAnchor:bar.centerYAnchor],
+    ]];
+
+    [self.undoBar removeFromSuperview];
+    self.undoBar = bar;
+
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(SCI_UNDO_SECONDS * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        // Only if it is still *this* one: a later action replaced the block, and sending it twice
+        // is worse than the delay was.
+        if (self.undoBar == bar) [self sendPending];
+    });
+}
+
+- (void)sendPending {
+    void (^does)(void) = self.pending;
+    self.pending = nil;
+
+    [self.undoBar removeFromSuperview];
+    self.undoBar = nil;
+
+    if (does) does();
+}
+
+- (void)undoPending {
+    self.pending = nil;
+    [self.undoBar removeFromSuperview];
+    self.undoBar = nil;
+    [self say:@"أُلغي"];
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];
+
+    // Leaving the screen is not calling it off. The row is already gone from the list as far as
+    // the reader is concerned, and a destructive action that quietly did not happen is worse than
+    // one that did.
+    [self sendPending];
 }
 
 - (void)say:(NSString *)message {

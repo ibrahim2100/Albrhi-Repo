@@ -72,10 +72,14 @@
 
     return @[
         [SCIChoice dangerous:@"رفض" does:^{
-            [SCIAPI call:@"/admin/decline" body:@{@"dev": device}
-                    then:^(NSDictionary *answer, NSString *error) {
-                if (error) { [weakSelf failed:error]; return; }
-                [weakSelf reload];
+            // Refusing deletes the request, and with it the name and the number. There is no
+            // undo on the server's side, which is exactly why there is one here.
+            [weakSelf afterUndo:@"رُفض الطلب" does:^{
+                [SCIAPI call:@"/admin/decline" body:@{@"dev": device}
+                        then:^(NSDictionary *answer, NSString *error) {
+                    if (error) { [weakSelf failed:error]; return; }
+                    [weakSelf reload];
+                }];
             }];
         }],
         [SCIChoice titled:@"سنة" does:^{
@@ -149,10 +153,14 @@
             }
         }],
         [SCIChoice dangerous:@"رفض" does:^{
-            [SCIAPI call:@"/admin/decline" body:@{@"dev": device}
-                    then:^(NSDictionary *answer, NSString *error) {
-                if (error) { [weakSelf failed:error]; return; }
-                [weakSelf reload];
+            // Refusing deletes the request, and with it the name and the number. There is no
+            // undo on the server's side, which is exactly why there is one here.
+            [weakSelf afterUndo:@"رُفض الطلب" does:^{
+                [SCIAPI call:@"/admin/decline" body:@{@"dev": device}
+                        then:^(NSDictionary *answer, NSString *error) {
+                    if (error) { [weakSelf failed:error]; return; }
+                    [weakSelf reload];
+                }];
             }];
         }],
     ]];
@@ -397,8 +405,10 @@ static BOOL SCIIsLive(NSDictionary *licence) {
         }]];
     } else {
         [choices addObject:[SCIChoice dangerous:@"سحب" does:^{
-            [SCIAPI call:@"/admin/revoke" body:@{@"dev": device}
-                    then:^(NSDictionary *answer, NSString *error) { [weakSelf reload]; }];
+            [weakSelf afterUndo:@"سُحب الترخيص" does:^{
+                [SCIAPI call:@"/admin/revoke" body:@{@"dev": device}
+                        then:^(NSDictionary *answer, NSString *error) { [weakSelf reload]; }];
+            }];
         }]];
     }
 
@@ -407,11 +417,12 @@ static BOOL SCIIsLive(NSDictionary *licence) {
     [choices addObject:[SCIChoice dangerous:@"احذفه نهائياً" does:^{
         [weakSelf sheetTitled:@"حذف الترخيص" message:@"لا رجعة فيه. «سحب» يوقفه ويُبقي سجلّه."
                       choices:@[[SCIChoice dangerous:@"احذف" does:^{
-            [SCIAPI call:@"/admin/delete" body:@{@"dev": device}
-                    then:^(NSDictionary *answer, NSString *error) {
-                if (error) { [weakSelf failed:error]; return; }
-                [weakSelf say:@"حُذف"];
-                [weakSelf reload];
+            [weakSelf afterUndo:@"حُذف الترخيص" does:^{
+                [SCIAPI call:@"/admin/delete" body:@{@"dev": device}
+                        then:^(NSDictionary *answer, NSString *error) {
+                    if (error) { [weakSelf failed:error]; return; }
+                    [weakSelf reload];
+                }];
             }];
         }]]];
     }]];
@@ -508,6 +519,27 @@ static BOOL SCIIsLive(NSDictionary *licence) {
         }
     } else {
         [text appendString:@"  لا شيء بعد — تُسجَّل عند أوّل مزامنة.\n"];
+    }
+
+    // **The ledger was already being kept and never shown.** The server stores the last ten
+    // changes to every licence, which is the answer to "when was this extended, and by how much"
+    // — asked constantly and, until now, answerable only from memory.
+    NSArray *history = licence[@"history"];
+    if ([history isKindOfClass:[NSArray class]] && history.count) {
+        [text appendString:@"\nما جرى:\n"];
+
+        for (NSDictionary *entry in [history reverseObjectEnumerator]) {
+            if (![entry isKindOfClass:[NSDictionary class]]) continue;
+
+            double became = [entry[@"until"] doubleValue];
+            NSString *what = [entry[@"mode"] isEqualToString:@"lifetime"]
+                ? @"صار مدى الحياة"
+                : [NSString stringWithFormat:@"حتى %@",
+                   became > 0 ? [SCIPage dateFrom:entry[@"until"]] : @"∞"];
+
+            [text appendFormat:@"  %@ · %@\n",
+                SCIRun([SCIPage dateFrom:entry[@"at"]]), SCIRun(what)];
+        }
     }
 
     UIAlertController *detail =
@@ -640,6 +672,91 @@ static BOOL SCIIsLive(NSDictionary *licence) {
 
     cell.detailTextLabel.text = [NSString stringWithFormat:@"%@\n%@  ·  %@",
         SCIRun(device[@"dev"]), SCIRun(device[@"what"]), SCIRun(when)];
+}
+
+@end
+
+
+#pragma mark - Products
+
+/// Which tweak is actually being used, from what the devices themselves report.
+///
+/// **The data was already arriving and nobody was counting it.** Every tweak writes its product
+/// and version into the licence on check-in, so "which of these is worth my week" has had an
+/// answer sitting in the records for months. Two numbers per tool, because they are two
+/// questions: how many devices have *ever* run it, and how many ran it in the last week — only
+/// the second says whether it is alive.
+@implementation SCIProductsPage {
+    NSArray<NSDictionary *> *_rows;
+}
+
+- (instancetype)init {
+    if ((self = [super init])) self.title = @"الأدوات";
+    return self;
+}
+
+- (void)fetch {
+    [SCIAPI state:^(NSDictionary *state, NSString *error) {
+        if (error) { [self failed:error]; return; }
+
+        NSMutableDictionary<NSString *, NSMutableDictionary *> *tally = [NSMutableDictionary
+            dictionary];
+        double week = [NSDate date].timeIntervalSince1970 - 7 * 86400;
+
+        for (NSDictionary *licence in state[@"licences"] ?: @[]) {
+            NSDictionary *installs = licence[@"installs"];
+            if (![installs isKindOfClass:[NSDictionary class]]) continue;
+
+            for (NSString *product in installs) {
+                NSDictionary *seen = installs[product];
+                if (![seen isKindOfClass:[NSDictionary class]]) continue;
+
+                NSMutableDictionary *row = tally[product];
+                if (!row) {
+                    row = [@{@"product": product, @"all": @0, @"week": @0,
+                             @"version": seen[@"version"] ?: @"—", @"at": @0} mutableCopy];
+                    tally[product] = row;
+                }
+
+                row[@"all"] = @([row[@"all"] integerValue] + 1);
+                if ([seen[@"at"] doubleValue] > week) {
+                    row[@"week"] = @([row[@"week"] integerValue] + 1);
+                }
+
+                // The newest version seen wins the row's label: an old one on a forgotten phone
+                // says nothing about what people are running.
+                if ([seen[@"at"] doubleValue] > [row[@"at"] doubleValue]) {
+                    row[@"at"] = seen[@"at"] ?: @0;
+                    row[@"version"] = seen[@"version"] ?: @"—";
+                }
+            }
+        }
+
+        self->_rows = [tally.allValues sortedArrayUsingComparator:^NSComparisonResult(
+                NSDictionary *a, NSDictionary *b) {
+            return [b[@"week"] compare:a[@"week"]];
+        }];
+        [self loaded];
+    }];
+}
+
+- (NSInteger)rowCount { return (NSInteger)_rows.count; }
+
+- (NSString *)emptyMessage {
+    return @"لا شيء بعد.\nتُسجَّل الأداة ونسختها عند أوّل مزامنة من الجهاز.";
+}
+
+- (void)configure:(UITableViewCell *)cell at:(NSInteger)row {
+    NSDictionary *tool = _rows[(NSUInteger)row];
+
+    cell.textLabel.text = SCIRun(tool[@"product"]);
+    cell.detailTextLabel.text = [NSString stringWithFormat:
+        @"%@ نشِطاً هذا الأسبوع  ·  %@ إجمالاً\nآخر نسخة %@ · %@",
+        tool[@"week"], tool[@"all"], SCIRun(tool[@"version"]),
+        SCIRun([SCIPage dateFrom:tool[@"at"]])];
+
+    NSInteger week = [tool[@"week"] integerValue];
+    cell.textLabel.textColor = week ? [UIColor labelColor] : [UIColor secondaryLabelColor];
 }
 
 @end

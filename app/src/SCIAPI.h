@@ -48,6 +48,18 @@ NS_ASSUME_NONNULL_BEGIN
 /// The whole state in one call, as the panel fetches it: requests, licences, trials, codes.
 + (void)state:(void (^)(NSDictionary *_Nullable state, NSString *_Nullable error))then;
 
+/// **The last answer that worked, kept on disk.**
+///
+/// A phone is used where a desk is not: in a car, in a shop, on a plane. Without this, opening the
+/// app with no signal is an error message and nothing at all — while the answer from an hour ago
+/// would have been enough for every question except "has anything changed". So a failed call
+/// falls back to the copy and the screen says how old it is; `staleSince` is when that copy was
+/// taken, and zero means what is on screen came from the server just now.
++ (NSTimeInterval)staleSince;
+
+/// Everything the server holds, as one JSON file's worth of bytes. See -/admin/export.
++ (void)exportAll:(void (^)(NSData *_Nullable json, NSString *_Nullable error))then;
+
 /// The stores, which are a second call on purpose -- most days have nothing to say about them and
 /// every refresh should not pay for the listing.
 + (void)stores:(void (^)(NSArray *_Nullable stores, NSString *_Nullable error))then;

@@ -32,6 +32,15 @@
                                           style:UIBarButtonItemStylePlain
                                          target:self
                                          action:@selector(showSettings)];
+
+    self.navigationItem.leftBarButtonItem =
+        [[UIBarButtonItem alloc] initWithTitle:@"الأدوات"
+                                          style:UIBarButtonItemStylePlain
+                                         target:self action:@selector(showTools)];
+}
+
+- (void)showTools {
+    [self.navigationController pushViewController:[[SCIProductsPage alloc] init] animated:YES];
 }
 
 - (void)showSettings {
@@ -142,7 +151,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     _rows = @[@"عنوان الخادم", @"رمز الإدارة", @"الإشعارات", @"رسائل واتساب",
-              @"جرّب الاتّصال", @"عن التطبيق"];
+              @"نسخة احتياطية", @"جرّب الاتّصال", @"عن التطبيق"];
 }
 
 - (void)fetch { [self loaded]; }
@@ -182,6 +191,9 @@
             break;
         }
         case 4:
+            cell.detailTextLabel.text = @"كل التراخيص والأكواد والتجارب في ملف واحد";
+            break;
+        case 5:
             cell.detailTextLabel.text = @"يسأل الخادم ويقول ما جاء";
             break;
         default:
@@ -237,6 +249,11 @@
         }
 
         case 4: {
+            [self backup];
+            break;
+        }
+
+        case 5: {
             [SCIAPI state:^(NSDictionary *state, NSString *error) {
                 if (error) { [weakSelf say:error]; return; }
                 NSArray *licences = state[@"licences"];
@@ -249,6 +266,46 @@
         default:
             break;
     }
+}
+
+/// **The one thing that has no other copy.**
+///
+/// Every licence sold, every code and every trial record lives in one KV namespace with no
+/// history and no export: an account locked or one wrong `delete` and there is not even a list of
+/// who the customers are. This asks for all of it and hands it to the share sheet, so it lands
+/// wherever the person keeps things — Files, iCloud Drive, a message to themselves. Saved rather
+/// than displayed, because a backup nobody can put anywhere is a screenful of text.
+- (void)backup {
+    __weak typeof(self) weakSelf = self;
+    [self say:@"يُجهَّز…"];
+
+    [SCIAPI exportAll:^(NSData *json, NSString *error) {
+        if (error || !json) { [weakSelf say:error ?: @"تعذّر"]; return; }
+
+        // Dated in the name, because a folder of files all called "backup" is one backup.
+        NSDateFormatter *stamp = [[NSDateFormatter alloc] init];
+        stamp.dateFormat = @"yyyy-MM-dd-HHmm";
+        stamp.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+
+        NSString *name = [NSString stringWithFormat:@"albrhi-licences-%@.json",
+                          [stamp stringFromDate:[NSDate date]]];
+        NSURL *file = [[NSURL fileURLWithPath:NSTemporaryDirectory()]
+            URLByAppendingPathComponent:name];
+
+        if (![json writeToURL:file atomically:YES]) { [weakSelf say:@"تعذّرت الكتابة"]; return; }
+
+        UIActivityViewController *share =
+            [[UIActivityViewController alloc] initWithActivityItems:@[file]
+                                              applicationActivities:nil];
+
+        // An iPad needs somewhere to point at or it throws; one line against a crash.
+        share.popoverPresentationController.sourceView = weakSelf.view;
+        share.popoverPresentationController.sourceRect =
+            CGRectMake(CGRectGetMidX(weakSelf.view.bounds),
+                       CGRectGetMidY(weakSelf.view.bounds), 1, 1);
+
+        [weakSelf presentViewController:share animated:YES completion:nil];
+    }];
 }
 
 @end
