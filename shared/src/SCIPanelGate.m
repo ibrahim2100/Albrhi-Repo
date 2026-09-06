@@ -295,7 +295,24 @@ BOOL SCIPanelAllowsThisApp(void) {
         // enter. And the check-in that can revoke a key is started, never waited on: a
         // licence check that can hold up a launch will one day hold up every launch.
         //
-        SCILicenseCheckInIfDue();
+        //
+        // **Off the launch, like everything else this project has had to move.**
+        //
+        // The call is asynchronous and always has been, but starting it means building a URL
+        // session inside whatever moment the gate is first asked -- which for a tweak whose
+        // preferences are read from a `%ctor` is the launch itself. Five reports from a device
+        // that would not open show our constructor finishing and then nothing of ours running at
+        // all, so nothing here is proven to be the cause; what is true is that this is the last
+        // thing we do in a window the app has not finished, and this project's own rule is that
+        // a tweak does not belong in that window.
+        //
+        // A minute after the app is active is soon enough: the licence is good for seven days and
+        // the grace period is a day, so nothing about it is urgent to the second.
+        //
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(60 * NSEC_PER_SEC)),
+                       dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+            SCILicenseCheckInIfDue();
+        });
 
         // Scope, not merely validity: a licence issued for one tweak must not switch on the
         // other three. `SCILicenseAllowsProduct` answers both halves, and answers the second one

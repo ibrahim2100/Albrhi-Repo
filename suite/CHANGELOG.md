@@ -1,5 +1,13 @@
 # Albrhi Changelog
 
+## v1.76.4
+
+**The licence check-in no longer starts during a launch.** It waits a minute after the app is
+active. Nothing proves it was behind the YouTube launches that hung — the build that launched
+cleanly differs from the one that hung by diagnostic marks alone, so what is known is that the
+fault is intermittent — but a licence good for seven days has no business being asked about while
+an app is still starting.
+
 ## v1.76.3
 
 **YouTube launches again.** The hook responsible ran for every view in the app: `_ASDisplayView` is

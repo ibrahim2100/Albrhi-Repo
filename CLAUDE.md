@@ -999,6 +999,16 @@ workflow and attached to the same release: a fourth publisher would race the thr
 exist for `gh-pages`, and that race has served an index a version behind a release once already.
 The job compiles all four tweaks anyway, so a tweak that will not build already fails it.
 
+**A build that launches once has not fixed an intermittent fault, and the diff says which it is.**
+YouTube hung on two builds and launched on a third — and the third differed from the second by
+*diagnostic marks alone*, no functional line between them. So the honest reading is not "fixed" but
+"intermittent", and the five reports narrow it usefully: **in every failed launch not one hook of
+ours fired**, not even the request decorator that runs at +0.2s in a healthy one. The app stops
+before its own first request and before reaching anything of ours, which is also why standing the
+hooks down rescued nothing. `make NOHOOKS=1` builds a YouTube dylib with no hooks at all, for the
+next occurrence: it separates a hook's *installation* from the dylib's mere presence, which no
+amount of reading can.
+
 **`_ASDisplayView` is not a class, it is every view in the app — and a hook on it runs before the
 first frame, thousands of times.** YouTube's whole interface is AsyncDisplayKit, so a
 `-didMoveToWindow` hook written to catch one ad card fires for every view the app ever puts in a
@@ -2588,9 +2598,9 @@ far less surface area than a real compressor for a few-kilobyte archive.
 
 ## Known state
 
-Instagram **4.1.17** · YouTube **1.31.2** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
+Instagram **4.1.17** · YouTube **1.31.3** · X **0.18.3** · Panel **0.9.37** · Watch **0.6.1** · TikTok **0.20.2** ·
 Spotify **0.2.4** · YT Music **0.9.2** ·
-NextUp **0.2.1** · suite **1.76.3**. **CarPlay is gone** — removed from this repository, to be
+NextUp **0.2.1** · suite **1.76.4**. **CarPlay is gone** — removed from this repository, to be
 rebuilt from scratch in one of its own.
 
 **This line is read first in every session, so it being out of date costs more than it being

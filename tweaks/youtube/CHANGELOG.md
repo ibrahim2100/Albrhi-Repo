@@ -3,6 +3,32 @@
 **Tested on YouTube 21.32.4.** Nothing is pinned to a version number: every class the
 tweak touches is looked up at runtime and skipped if it is not there.
 
+## v1.31.3
+
+**Not a fix, and saying so is the point.** The build that launched cleanly differs from the one that
+hung by *diagnostic marks alone* — no functional line between them — so what was learned is that
+the fault is **intermittent**, not that it is gone. Several cold launches over days would be
+evidence; one launch is not.
+
+What five reports do establish, and it narrows the search a great deal: **in every failed launch not
+one hook of ours fired** — not even the request decorator that runs at +0.2s in a healthy launch.
+The app stops before its own first request and before reaching anything of ours, which is also why
+standing the hooks down did not rescue it.
+
+So the one thing this tweak still did inside that window is moved out of it: the licence check-in
+now starts a minute after the app is active rather than the moment the gate is first asked. Nothing
+proves it was the cause. What is true is that a licence is good for seven days with a day of grace,
+so nothing about it was ever urgent enough to belong in a launch — and this project's own rule is
+that a tweak does not belong there.
+
+The marks are kept and sharpened: `_ASDisplayView` marks before its guard rather than after (a
+measurement defeated by the thing it measured), the display link and the overlay wrapper mark
+themselves, and the moment the app becomes active is in the trail.
+
+**And `make NOHOOKS=1` builds a YouTube dylib with no hooks at all**, for the question that
+separates a hook's installation from the dylib's mere presence. It is in the repository rather than
+in a note, because the next occurrence will want it again.
+
 ## v1.31.2
 
 **The app stopped launching, and this release is the hook that was doing it — found by making the
