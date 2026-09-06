@@ -1,6 +1,7 @@
 #import <QuartzCore/QuartzCore.h>
 #import <UIKit/UIKit.h>
 #import "../../SCILog.h"
+#import "../../SCIYTLaunchGuard.h"
 #import "../../Prefs.h"
 
 ///
@@ -21,6 +22,8 @@
 %hook CADisplayLink
 
 - (void)setPreferredFramesPerSecond:(NSInteger)framesPerSecond {
+    SCIYTLaunchMark(@"display link: setPreferredFramesPerSecond");
+
     if (!SCIPrefEnabled(SCIPrefHighRefreshRate)) {
         %orig;
         return;

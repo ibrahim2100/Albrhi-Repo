@@ -27,6 +27,8 @@ NSString *SCIVersionString = @"v1.31.2";  // AlbrhiYT
 %hook YTPlayerOverlayWrapper
 
 - (void)setPlayerResponse:(id)playerResponse {
+    SCIYTLaunchMark(@"overlay wrapper: setPlayerResponse");
+
     %orig;
     [SCIYTDiagnostics recordPlayerResponse:playerResponse];
 }

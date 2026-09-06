@@ -100,9 +100,13 @@ static NSArray<NSString *> *SCIAdNodeIdentifiers(void) {
     // Shorts ads cannot be on screen before the app is, so the moment costs nothing: this stands
     // aside for the launch and works exactly as before from the first moment the app is active.
     //
-    if (!SCIYTAppIsActive() || SCIYTStoodDown()) return;
-
+    // **Marked before the return, not after.** The previous build put this line below the guard,
+    // so a hook that fired thousands of times during a launch left no trace of having fired at
+    // all -- a measurement defeated by the thing it was measuring, which is the same mistake as
+    // counting only the success branch.
     SCIYTLaunchMark(@"shorts ads: _ASDisplayView didMoveToWindow");
+
+    if (!SCIYTAppIsActive() || SCIYTStoodDown()) return;
 
     if (!SCIPrefEnabled(SCIPrefHideAds)) return;
 

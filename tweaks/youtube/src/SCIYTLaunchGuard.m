@@ -156,6 +156,7 @@ void SCIYTLaunchGuardStart(void) {
                                                            queue:nil
                                                       usingBlock:^(__unused NSNotification *note) {
             atomic_store_explicit(&sciLaunched, true, memory_order_relaxed);
+            SCIYTLaunchMark([@"app became active: " stringByAppendingString:name]);
             SCIDrainWaiting();
         }];
     }
