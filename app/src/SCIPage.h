@@ -62,6 +62,36 @@ NS_ASSUME_NONNULL_BEGIN
 /// Says something briefly, without a button to dismiss.
 - (void)say:(NSString *)message;
 
+/// Puts text on the pasteboard and says so, with a tap of haptic behind it.
+///
+/// Half of what this app is for ends up in a WhatsApp message, and a code that has to be
+/// transcribed by eye from a screen is a code that arrives wrong.
+- (void)copyText:(NSString *)text;
+
+/// Opens WhatsApp on that number with the message already written.
+///
+/// **The number is normalised to digits first.** People write one four ways — `0593010901`,
+/// `+966 59 301 0901`, `٠٥٩٣٠١٠٩٠١` — and `wa.me` takes none of them but the last shape. A
+/// leading zero becomes the Saudi country code, which is the one assumption here and is said out
+/// loud rather than hidden. Answers NO when there is nothing dialable.
+- (BOOL)whatsApp:(nullable NSString *)number saying:(NSString *)message;
+
+/// Turns this page's list into a searchable one. Call from -viewDidLoad; read `query`.
+- (void)searchableWith:(NSString *)placeholder;
+@property (nonatomic, copy, readonly, nullable) NSString *query;
+
+/// Whether a row's own fields answer the current search.
+///
+/// **Digits are compared as digits.** Nobody writes a phone number the same way twice, so the
+/// comparison folds Arabic-Indic numerals, throws away everything that is not a digit, and
+/// matches on the last nine — which is what makes `+966 59 301 0901` and `0593010901` one number.
+/// Text is matched as an ordinary substring beside it.
+- (BOOL)matches:(NSArray<NSString *> *)fields;
+
+/// Called when the search text changes, before the table is asked to draw again. A page that
+/// keeps its unfiltered list refilters here.
+- (void)queryChanged;
+
 /// A date, formatted the one way this app formats dates.
 + (NSString *)dateFrom:(NSNumber *)seconds;
 

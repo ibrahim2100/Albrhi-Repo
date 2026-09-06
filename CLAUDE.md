@@ -1105,6 +1105,28 @@ exists on an Arabic phone**, and one nobody would find by reading the format str
 lifetime; a device's last-seen of zero is *never seen*, and the shared date formatter printed ∞
 for both — a screen saying a device that has never once reported in is reporting in forever.
 
+**What the app is for decides what belongs in it, and the web panel is not the specification.**
+1.0.2 closed the parity gaps that were real work — issuing by hand, editing a name, a number or a
+scope, deleting as distinct from withdrawing, the free-weeks record, and search — and added the
+two things only a phone can do: **WhatsApp with the message already written**, since every licence
+sold ends in one and the number is already on the record, and **copy** on anything anyone would
+otherwise transcribe by eye.
+
+**A phone number is searched as digits or it is not searched at all** — the panel's own rule,
+carried over rather than rediscovered: Arabic-Indic numerals folded, everything but digits thrown
+away, matched on the last nine, so `+966 50 000 0000` finds a licence stored as `0500000000`. And
+the digit path only runs when the query really is a number, or three digits inside a name would
+match every phone on the screen.
+
+**A search that found nothing and a list with nothing in it are different sentences.** The second
+sends somebody looking for a fault that is not there. The requests badge counts what is waiting
+and never what the search left of it, for the same reason.
+
+**A lock that fires on every switch is a lock that gets turned off.** The shield goes up whenever
+the app leaves the foreground — that is what keeps a customer list out of the app switcher — but
+the face is asked for only after a minute away, because leaving to WhatsApp and coming straight
+back is the normal path through this app rather than an interruption to it.
+
 **The address is compiled in, and the app asks for the token alone.** 1.0.0 required both, which
 put a URL in front of somebody before anything had been tried — and one wrong character answers
 «no such route on the server», a sentence about the server that is really about the typing. It is

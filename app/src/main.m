@@ -28,6 +28,7 @@
 @property (nonatomic, strong) UIView *shield;
 @property (nonatomic, assign) BOOL unlocked;
 @property (nonatomic, weak) UITabBarController *tabs;
+@property (nonatomic, assign) NSTimeInterval leftAt;
 @end
 
 @implementation SCIAppDelegate
@@ -83,11 +84,23 @@
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application {
+    self.leftAt = [NSDate date].timeIntervalSince1970;
     [self raiseShield];
 }
 
+/// **The shield goes up every time; the face is asked for only after a minute away.**
+///
+/// Half of what this app does ends in a WhatsApp message, so leaving and coming straight back is
+/// the normal path — and a lock that fires on every switch is a lock that gets turned off. The
+/// screen is still covered in the app switcher, which is the half that matters for a customer
+/// list; a phone left in somebody else's hand is a minute away, not a switch away.
 - (void)applicationDidBecomeActive:(UIApplication *)application {
-    if (!self.unlocked) [self unlock];
+    if (!self.unlocked) {
+        NSTimeInterval away = [NSDate date].timeIntervalSince1970 - self.leftAt;
+        if (self.leftAt > 0 && away < 60) [self lower];
+        else [self unlock];
+    }
+
     [SCINotify checkAndNotify:nil];
 }
 

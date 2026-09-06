@@ -14,6 +14,7 @@
 #pragma mark - Requests
 
 @implementation SCIRequestsPage {
+    NSArray<NSDictionary *> *_all;
     NSArray<NSDictionary *> *_rows;
 }
 
@@ -27,6 +28,18 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    [self searchableWith:@"اسم، رقم جوال، أو رمز جهاز"];
+}
+
+- (void)queryChanged {
+    NSMutableArray *kept = [NSMutableArray array];
+    for (NSDictionary *request in _all) {
+        if ([self matches:@[request[@"name"] ?: @"", request[@"contact"] ?: @"",
+                            request[@"key"] ?: @"", request[@"note"] ?: @""]]) {
+            [kept addObject:request];
+        }
+    }
+    _rows = kept;
 }
 
 - (void)fetch {
@@ -34,11 +47,14 @@
         if (error) { [self failed:error]; return; }
 
         id rows = state[@"requests"];
-        self->_rows = [rows isKindOfClass:[NSArray class]] ? rows : @[];
+        self->_all = [rows isKindOfClass:[NSArray class]] ? rows : @[];
+        [self queryChanged];
         [self loaded];
 
-        [self badge:self->_rows.count
-            ? [NSString stringWithFormat:@"%lu", (unsigned long)self->_rows.count] : nil];
+        // The badge counts what is waiting, never what the search left of it: a filtered list is
+        // a question being asked, not a change in how many people are waiting for an answer.
+        [self badge:self->_all.count
+            ? [NSString stringWithFormat:@"%lu", (unsigned long)self->_all.count] : nil];
     }];
 }
 
@@ -97,6 +113,14 @@
         [SCIChoice titled:@"ستّة أشهر" does:^{ approve(@{@"mode": @"set", @"days": @180}); }],
         [SCIChoice titled:@"سنة" does:^{ approve(@{@"mode": @"set", @"days": @365}); }],
         [SCIChoice titled:@"مدى الحياة" does:^{ approve(@{@"mode": @"lifetime"}); }],
+        [SCIChoice titled:@"انسخ رمز الجهاز" does:^{ [weakSelf copyText:device]; }],
+        [SCIChoice titled:@"واتساب" does:^{
+            if (![weakSelf whatsApp:request[@"contact"]
+                             saying:[NSString stringWithFormat:@"أهلاً %@ — بخصوص طلب ترخيص البرهي",
+                                     request[@"name"] ?: @""]]) {
+                [weakSelf say:@"لا رقم في هذا الطلب"];
+            }
+        }],
         [SCIChoice dangerous:@"رفض" does:^{
             [SCIAPI call:@"/admin/decline" body:@{@"dev": device}
                     then:^(NSDictionary *answer, NSString *error) {
@@ -112,8 +136,27 @@
 
 #pragma mark - Licences
 
+/// Every scope the server accepts, in the order the panel offers them.
+///
+/// **One list, because three places used to keep their own.** The panel shipped with a scope
+/// picker in two of the three cards that set one, so the single route that mints a licence by
+/// hand could not mint an app-scoped licence at all — which is exactly the licence somebody
+/// buying one tweak needs.
+static NSArray<NSArray<NSString *> *> *SCIScopes(void) {
+    return @[
+        @[@"suite",         @"الحزمة كاملة (جيلبريك)"],
+        @[@"apps",          @"كل الأدوات المنفصلة"],
+        @[@"app:instagram", @"إنستغرام وحدها"],
+        @[@"app:youtube",   @"يوتيوب وحدها"],
+        @[@"app:twitter",   @"X وحدها"],
+        @[@"app:tiktok",    @"تيك توك وحدها"],
+        @[@"trial",         @"تجربة"],
+    ];
+}
+
 @implementation SCILicencesPage {
-    NSArray<NSDictionary *> *_rows;
+    NSArray<NSDictionary *> *_all;      // everything the server has
+    NSArray<NSDictionary *> *_rows;     // what the search leaves of it
 }
 
 - (instancetype)init {
@@ -129,11 +172,18 @@
 
     // Codes live here rather than on a tab of their own: a code is a licence nobody has redeemed
     // yet, and the bar holds five tabs before it starts hiding things in a "More" list.
-    self.navigationItem.rightBarButtonItem =
+    self.navigationItem.leftBarButtonItem =
         [[UIBarButtonItem alloc] initWithTitle:@"الأكواد"
                                           style:UIBarButtonItemStylePlain
                                          target:self
                                          action:@selector(showCodes)];
+
+    // Issuing by hand, for a device whose code you were given without a request being sent.
+    self.navigationItem.rightBarButtonItem =
+        [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd
+                                                      target:self action:@selector(issue)];
+
+    [self searchableWith:@"اسم، رقم جوال، رمز جهاز، أو كود"];
 }
 
 /// Live means: not withdrawn, and either without an end date or with one still ahead.
@@ -156,15 +206,28 @@ static BOOL SCIIsLive(NSDictionary *licence) {
 
         // Lifetime first, then by end date, newest first. Sorted by the term rather than by the
         // raw field: zero sorts below every date and would put the best licences at the bottom.
-        self->_rows = [all sortedArrayUsingComparator:^NSComparisonResult(NSDictionary *a,
+        self->_all = [all sortedArrayUsingComparator:^NSComparisonResult(NSDictionary *a,
                                                                          NSDictionary *b) {
             double first = [a[@"until"] doubleValue] == 0 ? DBL_MAX : [a[@"until"] doubleValue];
             double second = [b[@"until"] doubleValue] == 0 ? DBL_MAX : [b[@"until"] doubleValue];
             return second > first ? NSOrderedDescending : (second < first ? NSOrderedAscending
                                                                           : NSOrderedSame);
         }];
+        [self queryChanged];
         [self loaded];
     }];
+}
+
+- (void)queryChanged {
+    NSMutableArray *kept = [NSMutableArray array];
+    for (NSDictionary *licence in _all) {
+        if ([self matches:@[licence[@"name"] ?: @"", licence[@"contact"] ?: @"",
+                            licence[@"key"] ?: @"", licence[@"codeText"] ?: @"",
+                            licence[@"note"] ?: @""]]) {
+            [kept addObject:licence];
+        }
+    }
+    _rows = kept;
 }
 
 - (NSInteger)rowCount { return (NSInteger)_rows.count; }
@@ -201,12 +264,53 @@ static BOOL SCIIsLive(NSDictionary *licence) {
         }];
     };
 
+    // **Absent keeps, empty clears** — the server's own rule, so a field must be sent only when
+    // it is being changed. Sending @"" for everything untouched would wipe a name on every edit.
     NSMutableArray<SCIChoice *> *choices = [@[
         [SCIChoice titled:@"تفاصيل" does:^{ [weakSelf showDetail:licence]; }],
+        [SCIChoice titled:@"انسخ رمز الجهاز" does:^{ [weakSelf copyText:device]; }],
         [SCIChoice titled:@"مدّد ٣٠ يوماً" does:^{ change(@{@"mode": @"extend", @"days": @30}); }],
         [SCIChoice titled:@"مدّد سنة" does:^{ change(@{@"mode": @"extend", @"days": @365}); }],
+        [SCIChoice titled:@"مدّة أخرى…" does:^{
+            [weakSelf askTitled:@"كم يوماً تُضاف؟"
+                        message:@"تُضاف إلى ما تبقّى، لا تُبدّله. رقم سالب يُقصّر."
+                          value:@"" keyboard:UIKeyboardTypeNumbersAndPunctuation
+                           then:^(NSString *days) {
+                if (!days.length) return;
+                change(@{@"mode": @"extend", @"days": @(days.integerValue)});
+            }];
+        }],
         [SCIChoice titled:@"اجعله مدى الحياة" does:^{ change(@{@"mode": @"lifetime"}); }],
+        [SCIChoice titled:@"غيّر الاسم" does:^{
+            [weakSelf askTitled:@"الاسم" message:@"اتركه فارغاً لمسحه"
+                          value:licence[@"name"] keyboard:UIKeyboardTypeDefault
+                           then:^(NSString *name) { change(@{@"name": name}); }];
+        }],
+        [SCIChoice titled:@"غيّر الجوال" does:^{
+            [weakSelf askTitled:@"الجوال" message:@"اتركه فارغاً لمسحه"
+                          value:licence[@"contact"] keyboard:UIKeyboardTypePhonePad
+                           then:^(NSString *contact) { change(@{@"contact": contact}); }];
+        }],
+        [SCIChoice titled:@"غيّر ما يغطّيه" does:^{ [weakSelf pickScope:^(NSString *tier) {
+            change(@{@"tier": tier});
+        }]; }],
     ] mutableCopy];
+
+    // Only when there is a number to open it with: a row that cannot do anything is not drawn.
+    if ([licence[@"contact"] length]) {
+        [choices addObject:[SCIChoice titled:@"واتساب" does:^{
+            NSString *term = [licence[@"until"] doubleValue] == 0
+                ? @"مدى الحياة"
+                : [NSString stringWithFormat:@"حتى %@", [SCIPage dateFrom:licence[@"until"]]];
+
+            BOOL opened = [weakSelf whatsApp:licence[@"contact"]
+                                      saying:[NSString stringWithFormat:
+                @"ترخيص البرهي — %@\nالجهاز: %@\nيغطّي: %@\n%@",
+                licence[@"name"] ?: @"", device, SCIScopeName(licence[@"tier"]), term]];
+
+            if (!opened) [weakSelf say:@"لا رقم صالح في هذا الترخيص"];
+        }]];
+    }
 
     // Withdrawing is the last row and the only red one; restoring is neither, because putting a
     // licence back is not a thing anybody needs warning about.
@@ -222,7 +326,86 @@ static BOOL SCIIsLive(NSDictionary *licence) {
         }]];
     }
 
-    [self sheetTitled:licence[@"name"] ?: device message:nil choices:choices];
+    // Withdrawing keeps the record; deleting does not. Two different acts — "was this taken away
+    // or did I never issue it" is answerable six months later only if the first keeps its row.
+    [choices addObject:[SCIChoice dangerous:@"احذفه نهائياً" does:^{
+        [weakSelf sheetTitled:@"حذف الترخيص" message:@"لا رجعة فيه. «سحب» يوقفه ويُبقي سجلّه."
+                      choices:@[[SCIChoice dangerous:@"احذف" does:^{
+            [SCIAPI call:@"/admin/delete" body:@{@"dev": device}
+                    then:^(NSDictionary *answer, NSString *error) {
+                if (error) { [weakSelf failed:error]; return; }
+                [weakSelf say:@"حُذف"];
+                [weakSelf reload];
+            }];
+        }]]];
+    }]];
+
+    [self sheetTitled:licence[@"name"] ?: device
+              message:[NSString stringWithFormat:@"%@  ·  %@",
+                       SCIRun(device), SCIScopeName(licence[@"tier"])]
+              choices:choices];
+}
+
+/// One picker for every place that sets a scope.
+- (void)pickScope:(void (^)(NSString *tier))then {
+    NSMutableArray<SCIChoice *> *choices = [NSMutableArray array];
+    for (NSArray<NSString *> *scope in SCIScopes()) {
+        [choices addObject:[SCIChoice titled:scope[1] does:^{ then(scope[0]); }]];
+    }
+    [self sheetTitled:@"ما الذي يغطّيه؟" message:nil choices:choices];
+}
+
+/// A licence for a device that never sent a request.
+///
+/// The device code is asked for first because it is the one thing that can be wrong in a way
+/// nothing later can fix: sixteen hex characters, checked here rather than by the server's
+/// refusal.
+- (void)issue {
+    __weak typeof(self) weakSelf = self;
+
+    [self askTitled:@"إصدار مباشر"
+            message:@"رمز الجهاز كما يظهر في صفحة الترخيص عنده"
+              value:@"" keyboard:UIKeyboardTypeASCIICapable then:^(NSString *typed) {
+
+        NSString *device = [[typed stringByTrimmingCharactersInSet:
+            [NSCharacterSet whitespaceAndNewlineCharacterSet]] lowercaseString];
+
+        NSCharacterSet *notHex = [[NSCharacterSet characterSetWithCharactersInString:
+            @"0123456789abcdef"] invertedSet];
+
+        if (device.length < 8 ||
+            [device rangeOfCharacterFromSet:notHex].location != NSNotFound) {
+            [weakSelf say:@"رمز الجهاز غير صالح"];
+            return;
+        }
+
+        [weakSelf pickScope:^(NSString *tier) {
+            [weakSelf askTitled:@"لمن" message:@"اسم أو ملاحظة — يظهر في القائمة"
+                          value:@"" keyboard:UIKeyboardTypeDefault then:^(NSString *name) {
+
+                void (^grant)(NSDictionary *) = ^(NSDictionary *term) {
+                    NSMutableDictionary *body = [@{@"dev": device, @"tier": tier,
+                                                   @"name": name ?: @""} mutableCopy];
+                    [body addEntriesFromDictionary:term];
+
+                    [SCIAPI call:@"/admin/approve" body:body
+                            then:^(NSDictionary *answer, NSString *error) {
+                        if (error) { [weakSelf failed:error]; return; }
+                        [weakSelf say:@"صدر الترخيص"];
+                        [weakSelf reload];
+                    }];
+                };
+
+                [weakSelf sheetTitled:@"المدّة" message:nil choices:@[
+                    [SCIChoice titled:@"أسبوع" does:^{ grant(@{@"mode": @"set", @"days": @7}); }],
+                    [SCIChoice titled:@"شهر" does:^{ grant(@{@"mode": @"set", @"days": @30}); }],
+                    [SCIChoice titled:@"ستّة أشهر" does:^{ grant(@{@"mode": @"set", @"days": @180}); }],
+                    [SCIChoice titled:@"سنة" does:^{ grant(@{@"mode": @"set", @"days": @365}); }],
+                    [SCIChoice titled:@"مدى الحياة" does:^{ grant(@{@"mode": @"lifetime"}); }],
+                ]];
+            }];
+        }];
+    }];
 }
 
 /// Everything known about one licence, including which apps it is running in.
@@ -270,6 +453,7 @@ static BOOL SCIIsLive(NSDictionary *licence) {
 #pragma mark - Devices
 
 @implementation SCIDevicesPage {
+    NSArray<NSDictionary *> *_all;
     NSArray<NSDictionary *> *_rows;
 }
 
@@ -283,6 +467,27 @@ static BOOL SCIIsLive(NSDictionary *licence) {
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    [self searchableWith:@"اسم، أو رمز جهاز"];
+
+    self.navigationItem.rightBarButtonItem =
+        [[UIBarButtonItem alloc] initWithTitle:@"الأسابيع المجانية"
+                                          style:UIBarButtonItemStylePlain
+                                         target:self action:@selector(showTrials)];
+}
+
+- (void)showTrials {
+    [self.navigationController pushViewController:[[SCITrialsPage alloc] init] animated:YES];
+}
+
+- (void)queryChanged {
+    NSMutableArray *kept = [NSMutableArray array];
+    for (NSDictionary *device in _all) {
+        if ([self matches:@[device[@"who"] ?: @"", device[@"dev"] ?: @"",
+                            device[@"what"] ?: @""]]) {
+            [kept addObject:device];
+        }
+    }
+    _rows = kept;
 }
 
 /// Both sources, because a store activation names a device with no licence at all and a page
@@ -325,7 +530,8 @@ static BOOL SCIIsLive(NSDictionary *licence) {
                 return [b[@"at"] compare:a[@"at"]];
             }];
 
-            self->_rows = rows;
+            self->_all = rows;
+            [self queryChanged];
             [self loaded];
         }];
     }];
@@ -333,6 +539,11 @@ static BOOL SCIIsLive(NSDictionary *licence) {
 
 - (NSInteger)rowCount { return (NSInteger)_rows.count; }
 - (NSString *)emptyMessage { return @"لا أجهزة معروفة بعد."; }
+
+- (void)tapped:(NSInteger)row {
+    NSDictionary *device = _rows[(NSUInteger)row];
+    [self copyText:device[@"dev"]];
+}
 
 - (void)configure:(UITableViewCell *)cell at:(NSInteger)row {
     NSDictionary *device = _rows[(NSUInteger)row];
@@ -346,6 +557,105 @@ static BOOL SCIIsLive(NSDictionary *licence) {
 
     cell.detailTextLabel.text = [NSString stringWithFormat:@"%@\n%@  ·  %@",
         SCIRun(device[@"dev"]), SCIRun(device[@"what"]), SCIRun(when)];
+}
+
+@end
+
+
+#pragma mark - Trials
+
+/// Who took a free week, and the one thing that can be done about it.
+///
+/// **The record outlives the licence it created**, which is what makes the trial once per device
+/// rather than once per week — so it has a screen of its own rather than being folded into the
+/// devices list, where "why can this phone not take a trial" would have no answer.
+@implementation SCITrialsPage {
+    NSArray<NSDictionary *> *_all;
+    NSArray<NSDictionary *> *_rows;
+}
+
+- (instancetype)init {
+    if ((self = [super init])) self.title = @"الأسابيع المجانية";
+    return self;
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self searchableWith:@"رمز جهاز"];
+}
+
+- (void)queryChanged {
+    NSMutableArray *kept = [NSMutableArray array];
+    for (NSDictionary *trial in _all) {
+        if ([self matches:@[trial[@"key"] ?: @""]]) [kept addObject:trial];
+    }
+    _rows = kept;
+}
+
+- (void)fetch {
+    [SCIAPI state:^(NSDictionary *state, NSString *error) {
+        if (error) { [self failed:error]; return; }
+
+        id rows = state[@"trials"];
+        NSArray *all = [rows isKindOfClass:[NSArray class]] ? rows : @[];
+
+        self->_all = [all sortedArrayUsingComparator:^NSComparisonResult(NSDictionary *a,
+                                                                        NSDictionary *b) {
+            return [b[@"at"] ?: @0 compare:a[@"at"] ?: @0];   // newest first
+        }];
+        [self queryChanged];
+        [self loaded];
+    }];
+}
+
+- (NSInteger)rowCount { return (NSInteger)_rows.count; }
+
+- (NSString *)emptyMessage {
+    return @"لا أحد أخذ التجربة بعد.\nالسجلّ يبقى بعد انتهاء الأسبوع، وهو ما يجعلها مرّةً "
+            "واحدة لكلّ جهاز.";
+}
+
+- (void)configure:(UITableViewCell *)cell at:(NSInteger)row {
+    NSDictionary *trial = _rows[(NSUInteger)row];
+    double until = [trial[@"until"] doubleValue];
+    BOOL running = until > [NSDate date].timeIntervalSince1970;
+
+    cell.textLabel.text = SCIRun(trial[@"key"] ?: @"?");
+    cell.textLabel.font = [UIFont monospacedSystemFontOfSize:15 weight:UIFontWeightRegular];
+    // ∞ belongs to a term with no end. A trial always ends, so a missing date here is a missing
+    // date and says so — the same sentinel confusion the devices list had.
+    NSString *ends = until > 0 ? [SCIPage dateFrom:trial[@"until"]] : @"—";
+
+    cell.detailTextLabel.text = [NSString stringWithFormat:@"%@  ·  أُخذ %@  ·  ينتهي %@",
+        running ? @"جارٍ" : @"انتهى", SCIRun([SCIPage dateFrom:trial[@"at"]]), SCIRun(ends)];
+    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+}
+
+- (void)tapped:(NSInteger)row {
+    NSDictionary *trial = _rows[(NSUInteger)row];
+    NSString *device = trial[@"key"] ?: @"";
+    __weak typeof(self) weakSelf = self;
+
+    [self sheetTitled:device message:nil choices:@[
+        [SCIChoice titled:@"انسخ رمز الجهاز" does:^{ [weakSelf copyText:device]; }],
+
+        // The server deletes the licence alongside the trial record, and that is said here rather
+        // than discovered: it is the difference between "grant another week" and "take away what
+        // they are using right now".
+        [SCIChoice dangerous:@"امنحه أسبوعاً آخر" does:^{
+            [weakSelf sheetTitled:@"أسبوع مجاني آخر"
+                          message:@"يُحذف سجلّ التجربة وأيّ ترخيصٍ قائم لهذا الجهاز، فيستطيع "
+                                   "أخذ أسبوعه من جديد."
+                          choices:@[[SCIChoice dangerous:@"امنح" does:^{
+                [SCIAPI call:@"/admin/delete" body:@{@"dev": device, @"trial": @YES}
+                        then:^(NSDictionary *answer, NSString *error) {
+                    if (error) { [weakSelf failed:error]; return; }
+                    [weakSelf say:@"يستطيع أخذ أسبوعٍ جديد"];
+                    [weakSelf reload];
+                }];
+            }]]];
+        }],
+    ]];
 }
 
 @end
@@ -499,11 +809,36 @@ static BOOL SCIIsLive(NSDictionary *licence) {
 
 - (void)mint {
     __weak typeof(self) weakSelf = self;
+
+    // Scope first, then term, then how many. **A minting route that cannot mint every scope is a
+    // scope nobody can sell**, which is the mistake the web panel made in exactly this card.
+    [self pickScope:^(NSString *tier) {
+    [weakSelf sheetTitled:@"مدّة الكود" message:@"تبدأ عند استعماله، لا عند إصداره" choices:@[
+        [SCIChoice titled:@"شهر" does:^{ [weakSelf mintTier:tier days:30]; }],
+        [SCIChoice titled:@"ستّة أشهر" does:^{ [weakSelf mintTier:tier days:180]; }],
+        [SCIChoice titled:@"سنة" does:^{ [weakSelf mintTier:tier days:365]; }],
+        [SCIChoice titled:@"مدى الحياة" does:^{ [weakSelf mintTier:tier days:0]; }],
+    ]];
+    }];
+}
+
+/// One picker for every place that sets a scope. (The licences page has its own copy of this
+/// method for the same reason: two screens, one list, and the list itself is `SCIScopes()`.)
+- (void)pickScope:(void (^)(NSString *tier))then {
+    NSMutableArray<SCIChoice *> *choices = [NSMutableArray array];
+    for (NSArray<NSString *> *scope in SCIScopes()) {
+        [choices addObject:[SCIChoice titled:scope[1] does:^{ then(scope[0]); }]];
+    }
+    [self sheetTitled:@"ما الذي يغطّيه الكود؟" message:nil choices:choices];
+}
+
+- (void)mintTier:(NSString *)tier days:(NSInteger)days {
+    __weak typeof(self) weakSelf = self;
     [self askTitled:@"كم كوداً؟" message:@"تُعرَض مرّةً واحدة، فانسخها فوراً"
               value:@"5" keyboard:UIKeyboardTypeNumberPad then:^(NSString *count) {
         [SCIAPI call:@"/admin/codes"
-                body:@{@"count": @(count.integerValue ?: 1), @"days": @365, @"window": @90,
-                       @"tier": @"suite"}
+                body:@{@"count": @(count.integerValue ?: 1), @"days": @(days), @"window": @90,
+                       @"tier": tier}
                 then:^(NSDictionary *answer, NSString *error) {
             if (error) { [weakSelf failed:error]; return; }
 

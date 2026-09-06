@@ -1,8 +1,9 @@
 #import "SCIPage.h"
 #import "SCIAPI.h"
 
-@interface SCIPage ()
+@interface SCIPage () <UISearchResultsUpdating>
 @property (nonatomic, strong) UITableView *table;
+@property (nonatomic, copy, nullable) NSString *query;
 @property (nonatomic, strong) UILabel *notice;
 @property (nonatomic, copy, nullable) NSString *failure;
 @property (nonatomic, assign) BOOL loading;
@@ -117,7 +118,10 @@ NSString *SCIRun(NSString *text) {
     }
 
     if ([self rowCount] == 0) {
-        self.notice.text = [self emptyMessage] ?: @"لا شيء هنا بعد.";
+        // A search that found nothing and a list with nothing in it are different facts, and the
+        // second sentence sends somebody looking for a fault that is not there.
+        self.notice.text = self.query.length ? @"لا شيء يطابق هذا البحث."
+                                             : ([self emptyMessage] ?: @"لا شيء هنا بعد.");
         self.notice.hidden = NO;
         return;
     }
@@ -132,6 +136,7 @@ NSString *SCIRun(NSString *text) {
 - (void)configure:(UITableViewCell *)cell at:(NSInteger)row { }
 - (NSString *)emptyMessage { return nil; }
 - (void)tapped:(NSInteger)row { }
+- (void)queryChanged { }
 
 #pragma mark - Table
 
@@ -251,6 +256,104 @@ NSString *SCIRun(NSString *text) {
 - (void)badge:(NSString *)value {
     UIViewController *shown = self.navigationController ?: self;
     shown.tabBarItem.badgeValue = value;
+}
+
+#pragma mark - Copying, WhatsApp, searching
+
+- (void)copyText:(NSString *)text {
+    if (!text.length) return;
+
+    [UIPasteboard generalPasteboard].string = text;
+    [[[UINotificationFeedbackGenerator alloc] init]
+        notificationOccurred:UINotificationFeedbackTypeSuccess];
+    [self say:@"نُسخ"];
+}
+
+/// Digits only, Arabic-Indic folded to ASCII.
+static NSString *SCIDigits(NSString *text) {
+    if (!text.length) return @"";
+
+    NSMutableString *digits = [NSMutableString string];
+    for (NSUInteger i = 0; i < text.length; i++) {
+        unichar c = [text characterAtIndex:i];
+        if (c >= 0x0660 && c <= 0x0669) c = (unichar)('0' + (c - 0x0660));   // ٠-٩
+        if (c >= 0x06F0 && c <= 0x06F9) c = (unichar)('0' + (c - 0x06F0));   // ۰-۹ (Persian)
+        if (c >= '0' && c <= '9') [digits appendFormat:@"%C", c];
+    }
+    return digits;
+}
+
+/// The last nine, which is the part of a phone number that does not change with how it is written.
+static NSString *SCITail(NSString *digits) {
+    return digits.length > 9 ? [digits substringFromIndex:digits.length - 9] : digits;
+}
+
+- (BOOL)whatsApp:(NSString *)number saying:(NSString *)message {
+    NSString *digits = SCIDigits(number);
+    if (digits.length < 9) return NO;
+
+    // A local number written with a leading zero is a Saudi number here. Said plainly because it
+    // is an assumption: a number already carrying a country code is left exactly as it is.
+    if ([digits hasPrefix:@"0"]) digits = [@"966" stringByAppendingString:[digits substringFromIndex:1]];
+
+    NSString *escaped = [message stringByAddingPercentEncodingWithAllowedCharacters:
+        [NSCharacterSet URLQueryAllowedCharacterSet]];
+    NSURL *url = [NSURL URLWithString:
+        [NSString stringWithFormat:@"https://wa.me/%@?text=%@", digits, escaped ?: @""]];
+
+    if (!url) return NO;
+    [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+    return YES;
+}
+
+- (void)searchableWith:(NSString *)placeholder {
+    UISearchController *search = [[UISearchController alloc] initWithSearchResultsController:nil];
+    search.searchResultsUpdater = self;
+    search.obscuresBackgroundDuringPresentation = NO;
+    search.searchBar.placeholder = placeholder;
+
+    self.navigationItem.searchController = search;
+
+    // Shown from the start rather than hidden until a pull. A search nobody can see is a search
+    // nobody uses, and this is the one screen where finding one row among many is the whole task.
+    self.navigationItem.hidesSearchBarWhenScrolling = NO;
+}
+
+- (void)updateSearchResultsForSearchController:(UISearchController *)search {
+    NSString *typed = [search.searchBar.text stringByTrimmingCharactersInSet:
+        [NSCharacterSet whitespaceAndNewlineCharacterSet]];
+
+    if ([typed isEqualToString:self.query ?: @""]) return;
+
+    self.query = typed;
+    [self queryChanged];
+    [self.table reloadData];
+    [self showNotice];
+}
+
+- (BOOL)matches:(NSArray<NSString *> *)fields {
+    NSString *typed = self.query;
+    if (!typed.length) return YES;
+
+    NSString *wanted = SCITail(SCIDigits(typed));
+
+    for (NSString *field in fields) {
+        if (![field isKindOfClass:[NSString class]] || !field.length) continue;
+
+        if ([field rangeOfString:typed options:NSCaseInsensitiveSearch].location != NSNotFound) {
+            return YES;
+        }
+
+        // Only when the query really is a number: three digits inside a name would otherwise
+        // match every phone number on the screen.
+        if (wanted.length >= 3) {
+            NSString *field_digits = SCITail(SCIDigits(field));
+            if (field_digits.length >= 3 &&
+                ([field_digits hasSuffix:wanted] || [wanted hasSuffix:field_digits])) return YES;
+        }
+    }
+
+    return NO;
 }
 
 - (void)say:(NSString *)message {
