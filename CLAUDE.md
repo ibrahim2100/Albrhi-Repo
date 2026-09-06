@@ -1112,6 +1112,16 @@ two things only a phone can do: **WhatsApp with the message already written**, s
 sold ends in one and the number is already on the record, and **copy** on anything anyone would
 otherwise transcribe by eye.
 
+**Editing a name was refused by the server, and the refusal was arithmetic.** An approval with no
+`days` fell into the extend branch, where a missing number reads as zero and zero is answered
+«no change asked for» — so changing a name, a number or a scope on its own earned a 400, which
+from the app is a save that silently refuses. **Absent keeps** — the rule this very record already
+followed for `name`, `contact` and `note`, applied to the one field that had been left out of it.
+A device with no licence yet is refused in different words, because issuing one with no term is
+not something to guess at. Proved in node against a fake KV before it went anywhere: renaming
+keeps the term, an empty contact still clears, an explicit `days: 0` is still refused, and
+extending still extends.
+
 **A number worth acting on has somewhere to go.** The summary cards counted and then stopped:
 «ends within a fortnight: 1» was the most important line on the screen and a dead end. Each card
 now opens the list it counted *with the filter it counted by* — the search bar's own scope bar,

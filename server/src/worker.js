@@ -572,6 +572,21 @@ async function adminApprove(request, env) {
   } else if (mode === 'set') {
     const days = Math.min(3650, Math.max(0, parseInt(body.days, 10) || 0));
     until = now() + days * 86400;
+  } else if (body.days === undefined) {
+    //
+    // **Editing a name is not editing a term.**
+    //
+    // An approval with no `days` used to fall into the arithmetic below, where a missing number
+    // reads as zero and zero is refused as "no change asked for" — so changing a name, a number
+    // or a scope on its own was answered with a 400, and from the app that is a save that
+    // silently refuses. Absent keeps, which is the same rule this record already follows for
+    // `name`, `contact` and `note`, applied to the one field that had been left out of it.
+    //
+    // A device with no licence yet is a different question: issuing one with no term at all is
+    // not a thing to guess at, so it is refused in words that say which half is missing.
+    //
+    if (!existing) return json({ error: 'no term given for a new licence' }, 400);
+    until = existing.until;
   } else {
     const days = Math.min(3650, Math.max(-3650, parseInt(body.days, 10) || 0));
     if (days === 0) return json({ error: 'no change asked for' }, 400);
